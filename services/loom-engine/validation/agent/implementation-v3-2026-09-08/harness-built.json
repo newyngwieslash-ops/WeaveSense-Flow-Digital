@@ -1,0 +1,763 @@
+{
+  "identity": "loom-agent-harness-9a3cac8b",
+  "mode": "built",
+  "pids": [
+    {
+      "label": "app",
+      "pid": 24768
+    },
+    {
+      "label": "go-1",
+      "pid": 40732
+    },
+    {
+      "label": "go-2",
+      "pid": 36880
+    },
+    {
+      "label": "go-3",
+      "pid": 34392
+    },
+    {
+      "label": "rollback-app",
+      "pid": 39336
+    }
+  ],
+  "requests": [
+    {
+      "kind": "app",
+      "action": "claim",
+      "status": 404
+    },
+    {
+      "kind": "app",
+      "action": "claim",
+      "status": 404
+    },
+    {
+      "kind": "mcp",
+      "method": "initialize"
+    },
+    {
+      "kind": "mcp",
+      "method": "notifications/initialized"
+    },
+    {
+      "kind": "mcp",
+      "method": "tools/list"
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "model",
+      "number": 1,
+      "max_tokens": 1800,
+      "roles": [
+        "system",
+        "user"
+      ]
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "app",
+      "action": "claim",
+      "status": 404
+    },
+    {
+      "kind": "mcp",
+      "method": "initialize"
+    },
+    {
+      "kind": "mcp",
+      "method": "notifications/initialized"
+    },
+    {
+      "kind": "mcp",
+      "method": "tools/list"
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "model",
+      "number": 2,
+      "max_tokens": 1800,
+      "roles": [
+        "system",
+        "user"
+      ]
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "model",
+      "number": 3,
+      "max_tokens": 1800,
+      "roles": [
+        "system",
+        "user",
+        "assistant",
+        "tool"
+      ]
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "app",
+      "action": "get_item",
+      "status": 200
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "model",
+      "number": 4,
+      "max_tokens": 1800,
+      "roles": [
+        "system",
+        "user",
+        "assistant",
+        "tool",
+        "assistant",
+        "tool"
+      ]
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "app",
+      "action": "mcp_start",
+      "status": 200
+    },
+    {
+      "kind": "mcp",
+      "method": "tools/call"
+    },
+    {
+      "kind": "app",
+      "action": "mcp_receipt",
+      "status": 200
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "model",
+      "number": 5,
+      "max_tokens": 1800,
+      "roles": [
+        "system",
+        "user",
+        "assistant",
+        "tool",
+        "assistant",
+        "tool",
+        "assistant",
+        "tool"
+      ]
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "app",
+      "action": "claim",
+      "status": 200
+    },
+    {
+      "kind": "mcp",
+      "method": "initialize"
+    },
+    {
+      "kind": "mcp",
+      "method": "notifications/initialized"
+    },
+    {
+      "kind": "mcp",
+      "method": "tools/list"
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "model",
+      "number": 6,
+      "max_tokens": 1800,
+      "roles": [
+        "system",
+        "user"
+      ]
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "app",
+      "action": "save_checkpoint",
+      "status": 200
+    },
+    {
+      "kind": "app",
+      "action": "get_checkpoint",
+      "status": 200
+    },
+    {
+      "kind": "app",
+      "action": "complete",
+      "status": 200
+    },
+    {
+      "kind": "app",
+      "action": "complete",
+      "status": 200
+    },
+    {
+      "kind": "app",
+      "action": "claim",
+      "status": 200
+    },
+    {
+      "kind": "mcp",
+      "method": "initialize"
+    },
+    {
+      "kind": "mcp",
+      "method": "notifications/initialized"
+    },
+    {
+      "kind": "mcp",
+      "method": "tools/list"
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "model",
+      "number": 7,
+      "max_tokens": 1800,
+      "roles": [
+        "system",
+        "user"
+      ]
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "app",
+      "action": "save_checkpoint",
+      "status": 200
+    },
+    {
+      "kind": "app",
+      "action": "claim",
+      "status": 200
+    },
+    {
+      "kind": "mcp",
+      "method": "initialize"
+    },
+    {
+      "kind": "mcp",
+      "method": "notifications/initialized"
+    },
+    {
+      "kind": "mcp",
+      "method": "tools/list"
+    },
+    {
+      "kind": "app",
+      "action": "get_checkpoint",
+      "status": 200
+    },
+    {
+      "kind": "app",
+      "action": "complete",
+      "status": 200
+    },
+    {
+      "kind": "mcp",
+      "method": "initialize"
+    },
+    {
+      "kind": "mcp",
+      "method": "notifications/initialized"
+    },
+    {
+      "kind": "mcp",
+      "method": "tools/list"
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "model",
+      "number": 8,
+      "max_tokens": 1800,
+      "roles": [
+        "system",
+        "user"
+      ]
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "model",
+      "number": 9,
+      "max_tokens": 1800,
+      "roles": [
+        "system",
+        "user"
+      ]
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "mcp",
+      "method": "initialize"
+    },
+    {
+      "kind": "mcp",
+      "method": "notifications/initialized"
+    },
+    {
+      "kind": "mcp",
+      "method": "tools/list"
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "model",
+      "number": 10,
+      "max_tokens": 1800,
+      "roles": [
+        "system",
+        "user"
+      ]
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "app",
+      "action": "claim",
+      "status": 404
+    },
+    {
+      "kind": "mcp",
+      "method": "initialize"
+    },
+    {
+      "kind": "mcp",
+      "method": "notifications/initialized"
+    },
+    {
+      "kind": "mcp",
+      "method": "tools/list"
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "model",
+      "number": 11,
+      "max_tokens": 1800,
+      "roles": [
+        "system",
+        "user"
+      ]
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "model",
+      "number": 12,
+      "max_tokens": 1800,
+      "roles": [
+        "system",
+        "user",
+        "assistant",
+        "tool"
+      ]
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "model",
+      "number": 13,
+      "max_tokens": 1800,
+      "roles": [
+        "system",
+        "user",
+        "assistant",
+        "tool",
+        "assistant",
+        "tool"
+      ]
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "model",
+      "number": 14,
+      "max_tokens": 1800,
+      "roles": [
+        "system",
+        "user",
+        "assistant",
+        "tool",
+        "assistant",
+        "tool",
+        "assistant",
+        "tool"
+      ]
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "model",
+      "number": 15,
+      "max_tokens": 1800,
+      "roles": [
+        "system",
+        "user",
+        "assistant",
+        "tool",
+        "assistant",
+        "tool",
+        "assistant",
+        "tool",
+        "assistant",
+        "tool"
+      ]
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "model",
+      "number": 16,
+      "max_tokens": 1800,
+      "roles": [
+        "system",
+        "user"
+      ]
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "app",
+      "action": "claim",
+      "status": 404
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "model",
+      "number": 17,
+      "max_tokens": 1200,
+      "roles": [
+        "system",
+        "user"
+      ]
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "app",
+      "action": "claim",
+      "status": 404
+    },
+    {
+      "kind": "app",
+      "action": "claim",
+      "status": 404
+    },
+    {
+      "kind": "mcp",
+      "method": "initialize"
+    },
+    {
+      "kind": "mcp",
+      "method": "notifications/initialized"
+    },
+    {
+      "kind": "mcp",
+      "method": "tools/list"
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    },
+    {
+      "kind": "model",
+      "number": 18,
+      "max_tokens": 1800,
+      "roles": [
+        "system",
+        "user"
+      ]
+    },
+    {
+      "kind": "app",
+      "action": "model_call",
+      "status": 200
+    }
+  ],
+  "checks": [
+    "browser synchronous answer persisted",
+    "Skill + internal get_item + real fake MCP protocol + authenticated evidence receipt + cited note",
+    "async refresh and committed complete response loss retried without duplicate note",
+    "real process kill after durable Eino checkpoint; new worker Resume; no repeated model call",
+    "invalid output failure and new question",
+    "positive budget refusal; briefing and item analysis through browser",
+    "browser-smoke desktop/mobile content, console and dev/built baseline",
+    "C02 Eino unavailable: history readable, failed request no model/fallback/note; new request succeeds after worker restart",
+    "owned app rollback to legacy cancels unstarted job; claim gate closed; Agent down leaves browsing/history available; no new model request"
+  ],
+  "screenshots": [
+    "E:\\AI-JIANSHI-20260825\\WeaveSense\\screenshots\\agent-v3-built-desktop.png",
+    "E:\\AI-JIANSHI-20260825\\WeaveSense\\screenshots\\agent-v3-built-mobile.png"
+  ],
+  "container": {
+    "name": "loom-agent-harness-9a3cac8b",
+    "port": 14719
+  },
+  "counts": {
+    "modelCalls": 18,
+    "mcpCalls": 1,
+    "notes": 7,
+    "checkpoints": 2
+  },
+  "ok": true,
+  "runs": [
+    {
+      "id": "7ff112cf-cc7d-419c-8f2c-a409b0c5413a",
+      "mode": "research",
+      "provider": "eino",
+      "status": "succeeded",
+      "error_code": "",
+      "model_calls": 1,
+      "tool_calls": 0,
+      "input_tokens": "100",
+      "output_tokens": "20"
+    },
+    {
+      "id": "88e9c208-2d50-4f29-a8b3-c575131b20c0",
+      "mode": "research",
+      "provider": "eino",
+      "status": "succeeded",
+      "error_code": "",
+      "model_calls": 4,
+      "tool_calls": 3,
+      "input_tokens": "400",
+      "output_tokens": "80"
+    },
+    {
+      "id": "c10afa26-15b1-4abd-a726-02ef784f673f",
+      "mode": "research",
+      "provider": "eino",
+      "status": "succeeded",
+      "error_code": "",
+      "model_calls": 1,
+      "tool_calls": 0,
+      "input_tokens": "100",
+      "output_tokens": "20"
+    },
+    {
+      "id": "ffa303f5-5fe9-401b-8176-aaa8f510b65c",
+      "mode": "research",
+      "provider": "eino",
+      "status": "succeeded",
+      "error_code": "",
+      "model_calls": 1,
+      "tool_calls": 0,
+      "input_tokens": "100",
+      "output_tokens": "20"
+    },
+    {
+      "id": "5e933fd7-e72b-4cf8-9eb2-593ecdbd8c0f",
+      "mode": "research",
+      "provider": "eino",
+      "status": "failed",
+      "error_code": "invalid_output",
+      "model_calls": 2,
+      "tool_calls": 0,
+      "input_tokens": "200",
+      "output_tokens": "40"
+    },
+    {
+      "id": "4df83a0a-0593-4712-84c5-d56b3d23aa6c",
+      "mode": "research",
+      "provider": "eino",
+      "status": "succeeded",
+      "error_code": "",
+      "model_calls": 1,
+      "tool_calls": 0,
+      "input_tokens": "100",
+      "output_tokens": "20"
+    },
+    {
+      "id": "2317caea-267a-489f-bbf3-c7175389f1ac",
+      "mode": "research",
+      "provider": "eino",
+      "status": "failed",
+      "error_code": "budget_exceeded",
+      "model_calls": 5,
+      "tool_calls": 4,
+      "input_tokens": "500",
+      "output_tokens": "100"
+    },
+    {
+      "id": "f9845052-af7c-4884-aeff-ec5da5138450",
+      "mode": "briefing",
+      "provider": "eino",
+      "status": "succeeded",
+      "error_code": "",
+      "model_calls": 1,
+      "tool_calls": 1,
+      "input_tokens": "100",
+      "output_tokens": "20"
+    },
+    {
+      "id": "af2fabcd-05d0-4f23-b10a-7a52e5bcf519",
+      "mode": "analyze_item",
+      "provider": "eino",
+      "status": "succeeded",
+      "error_code": "",
+      "model_calls": 1,
+      "tool_calls": 1,
+      "input_tokens": "100",
+      "output_tokens": "20"
+    },
+    {
+      "id": "390f52d6-31c2-484a-87be-0d05a8642a81",
+      "mode": "research",
+      "provider": "eino",
+      "status": "failed",
+      "error_code": "agent_unavailable",
+      "model_calls": 0,
+      "tool_calls": 0,
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "id": "0799ccb5-6710-4350-9c31-f7a21708f654",
+      "mode": "research",
+      "provider": "eino",
+      "status": "succeeded",
+      "error_code": "",
+      "model_calls": 1,
+      "tool_calls": 0,
+      "input_tokens": "100",
+      "output_tokens": "20"
+    }
+  ]
+}

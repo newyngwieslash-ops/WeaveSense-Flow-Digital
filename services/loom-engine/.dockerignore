@@ -1,0 +1,32 @@
+node_modules
+**/*.local.json*
+*.local.json*
+# Secrets and runtime state that must never reach the build context. The context
+# is uploaded to the builder, so an ignored-from-git file is still shipped here.
+.env
+.env.*
+!env.example
+**/*.session
+**/*.sqlite
+**/*.sqlite-wal
+**/*.sqlite-shm
+**/*.dump
+**/*.key
+**/*.pem
+.repo
+.worktrees
+.vercel
+.git
+screenshots
+artifacts
+attachments
+.grok/skills
+.grok/references
+.grok/*.png
+.grok/*.jpg
+.grok/*.log
+.grok/*.pid
+AGENTS.md
+*.tsbuildinfo
+public/zhishi-loom-source.zip
+workers/telethon/__pycache__

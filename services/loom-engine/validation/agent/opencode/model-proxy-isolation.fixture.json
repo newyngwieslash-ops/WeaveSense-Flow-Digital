@@ -1,0 +1,600 @@
+{
+  "observed_at": "2026-10-07T08:49:54.511Z",
+  "docker_version": "28.5.2",
+  "bridge_image_id": "sha256:e5d21985027fbb8b03ccee7e97a9c8ef1c33b613cd6ec03df859da023288a6a5",
+  "runtime_image": "weavesense-opencode-runtime:1.3.13",
+  "network_checks": [
+    {
+      "name": "approved_bridge",
+      "allowed": true
+    },
+    {
+      "name": "vendor_bypass",
+      "allowed": false
+    },
+    {
+      "name": "public_egress",
+      "allowed": false
+    }
+  ],
+  "runtime_without_vendor_or_app_credentials": true,
+  "host_binds": null,
+  "published_ports": {},
+  "run_id": "05082b03-0e34-45fe-80a7-9bfe96b0ddcd",
+  "identity": {
+    "instance_id": "67f2207e-6730-4ae7-9b76-b4476c86d20a",
+    "epoch": "b73636b4-b2c1-4da3-82fb-9023916363bb"
+  },
+  "report": {
+    "title": "Trusted proxy fixture report",
+    "body": "Cotton conductivity has approved support.",
+    "citations": [
+      {
+        "item_id": "fixture-item",
+        "evidence_id": "host-read-evidence"
+      }
+    ]
+  },
+  "stats": {
+    "receipts": [
+      {
+        "action": "model_call",
+        "claim_token": "1fd51665-d699-4e9f-9d5c-beee4b5e0200",
+        "params": {
+          "call_id": "a3dd6791-a405-41a5-b1e1-a26f4a7401c0",
+          "model": "fixture",
+          "phase": "started",
+          "policy_version": "loom-agent-v1",
+          "request_digest": "9d7b0a75d05cf3c74b2ff115f689679155812dd9641397cf747e95290a4bebbf"
+        },
+        "run_id": "05082b03-0e34-45fe-80a7-9bfe96b0ddcd"
+      },
+      {
+        "action": "model_call",
+        "claim_token": "1fd51665-d699-4e9f-9d5c-beee4b5e0200",
+        "params": {
+          "call_id": "a3dd6791-a405-41a5-b1e1-a26f4a7401c0",
+          "input_tokens": 10,
+          "model": "fixture",
+          "output_tokens": 5,
+          "phase": "completed",
+          "policy_version": "loom-agent-v1",
+          "request_digest": "9d7b0a75d05cf3c74b2ff115f689679155812dd9641397cf747e95290a4bebbf"
+        },
+        "run_id": "05082b03-0e34-45fe-80a7-9bfe96b0ddcd"
+      },
+      {
+        "action": "tool_start",
+        "claim_token": "1fd51665-d699-4e9f-9d5c-beee4b5e0200",
+        "params": {
+          "call_id": "e198ddc1-abdb-4a6a-8d58-88c00c5cdcb4",
+          "request_digest": "29385f6748bbb2c6cfd5e327eefce5fe6798c6cdbf8fdd1b07a81b734b1a3f5e",
+          "tool": "search_items"
+        },
+        "run_id": "05082b03-0e34-45fe-80a7-9bfe96b0ddcd"
+      },
+      {
+        "action": "search_items",
+        "claim_token": "1fd51665-d699-4e9f-9d5c-beee4b5e0200",
+        "params": {
+          "call_id": "e198ddc1-abdb-4a6a-8d58-88c00c5cdcb4",
+          "limit": 8,
+          "query": "cotton",
+          "request_digest": "29385f6748bbb2c6cfd5e327eefce5fe6798c6cdbf8fdd1b07a81b734b1a3f5e"
+        },
+        "run_id": "05082b03-0e34-45fe-80a7-9bfe96b0ddcd"
+      },
+      {
+        "action": "tool_complete",
+        "claim_token": "1fd51665-d699-4e9f-9d5c-beee4b5e0200",
+        "params": {
+          "call_id": "e198ddc1-abdb-4a6a-8d58-88c00c5cdcb4",
+          "request_digest": "29385f6748bbb2c6cfd5e327eefce5fe6798c6cdbf8fdd1b07a81b734b1a3f5e",
+          "result_digest": "6c0e9e11299ad5d3a172ed24d9235fc1fa99a1b571ecb56418f5b5ea04c7b724",
+          "tool": "search_items"
+        },
+        "run_id": "05082b03-0e34-45fe-80a7-9bfe96b0ddcd"
+      },
+      {
+        "action": "model_call",
+        "claim_token": "1fd51665-d699-4e9f-9d5c-beee4b5e0200",
+        "params": {
+          "call_id": "909ec3a3-99a5-42ba-8396-46a54718559b",
+          "model": "fixture",
+          "phase": "started",
+          "policy_version": "loom-agent-v1",
+          "request_digest": "593c1d8eaadf0936c827fcec84d588e2dbc55c803faca2f557abeb0095d30cda"
+        },
+        "run_id": "05082b03-0e34-45fe-80a7-9bfe96b0ddcd"
+      },
+      {
+        "action": "model_call",
+        "claim_token": "1fd51665-d699-4e9f-9d5c-beee4b5e0200",
+        "params": {
+          "call_id": "909ec3a3-99a5-42ba-8396-46a54718559b",
+          "input_tokens": 10,
+          "model": "fixture",
+          "output_tokens": 5,
+          "phase": "completed",
+          "policy_version": "loom-agent-v1",
+          "request_digest": "593c1d8eaadf0936c827fcec84d588e2dbc55c803faca2f557abeb0095d30cda"
+        },
+        "run_id": "05082b03-0e34-45fe-80a7-9bfe96b0ddcd"
+      },
+      {
+        "action": "tool_start",
+        "claim_token": "1fd51665-d699-4e9f-9d5c-beee4b5e0200",
+        "params": {
+          "call_id": "29b1aaa3-600a-4c9c-b557-0db89a9df85e",
+          "request_digest": "267dbe3cca968a2e77c43bc0c486591bed5eff9be0f039f71b6eac3df67aed09",
+          "tool": "get_item"
+        },
+        "run_id": "05082b03-0e34-45fe-80a7-9bfe96b0ddcd"
+      },
+      {
+        "action": "get_item",
+        "claim_token": "1fd51665-d699-4e9f-9d5c-beee4b5e0200",
+        "params": {
+          "call_id": "29b1aaa3-600a-4c9c-b557-0db89a9df85e",
+          "item_id": "fixture-item",
+          "request_digest": "267dbe3cca968a2e77c43bc0c486591bed5eff9be0f039f71b6eac3df67aed09",
+          "start": 0
+        },
+        "run_id": "05082b03-0e34-45fe-80a7-9bfe96b0ddcd"
+      },
+      {
+        "action": "tool_complete",
+        "claim_token": "1fd51665-d699-4e9f-9d5c-beee4b5e0200",
+        "params": {
+          "call_id": "29b1aaa3-600a-4c9c-b557-0db89a9df85e",
+          "request_digest": "267dbe3cca968a2e77c43bc0c486591bed5eff9be0f039f71b6eac3df67aed09",
+          "result_digest": "1f9d3c33144a54acd8e33935e5b876e20611df55772a68f714581563e961dd2e",
+          "tool": "get_item"
+        },
+        "run_id": "05082b03-0e34-45fe-80a7-9bfe96b0ddcd"
+      },
+      {
+        "action": "model_call",
+        "claim_token": "1fd51665-d699-4e9f-9d5c-beee4b5e0200",
+        "params": {
+          "call_id": "1232cfbb-2c67-489d-8fb0-20ef30969e5a",
+          "model": "fixture",
+          "phase": "started",
+          "policy_version": "loom-agent-v1",
+          "request_digest": "d54eee36a4d69ea64dc39d897d402a02d2c18fb470fc6a8a79e56c112a6972cf"
+        },
+        "run_id": "05082b03-0e34-45fe-80a7-9bfe96b0ddcd"
+      },
+      {
+        "action": "model_call",
+        "claim_token": "1fd51665-d699-4e9f-9d5c-beee4b5e0200",
+        "params": {
+          "call_id": "1232cfbb-2c67-489d-8fb0-20ef30969e5a",
+          "input_tokens": 10,
+          "model": "fixture",
+          "output_tokens": 5,
+          "phase": "completed",
+          "policy_version": "loom-agent-v1",
+          "request_digest": "d54eee36a4d69ea64dc39d897d402a02d2c18fb470fc6a8a79e56c112a6972cf"
+        },
+        "run_id": "05082b03-0e34-45fe-80a7-9bfe96b0ddcd"
+      }
+    ],
+    "vendorRequests": [
+      {
+        "body": {
+          "max_tokens": 1800,
+          "messages": [
+            {
+              "content": "Research only the approved corpus using corpus_search_items and corpus_get_item. Never invoke shell, external websites, sub-agents or write files. Return the requested structured AgentResult JSON.\n---\r\nname: cross-source-check\r\ndescription: 比较多个媒体条目对同一行业事件的描述，找出一致、冲突与缺失证据。\r\n---\r\n\r\n使用 corpus_search_items 查找候选条目，再用 corpus_get_item 阅读支持结论的具体片段。\r\n区分原始发布与转载；多个转载不算多个独立信源。\r\n按“已知事实、存在分歧、尚缺证据”组织回答。\r\n每个关键事实使用运行时提供的 evidence_id，并摘录支持它的原文。\r\n材料没有给出的数字、日期与来源不要补写。\r\n没有足够材料时明确说明不足。\r\n\n---\r\nname: industry-analysis\r\ndescription: 从单条采集材料抽取对行业知识库有用的结构信息。\r\n---\r\n\r\n只根据提供的材料抽取 summary、topics、entities、insights 和 tags。\r\n每个关键判断使用运行时提供的 evidence_id，并摘录支持它的原文。\r\n材料没有给出的数字、日期与来源不要补写。\r\ncoverage 由程序提供，不得改成 full。\r\n没有足够材料时明确说明不足。\r\n\nYou are powered by the model named fixture. The exact model ID is bridge/fixture\nHere is some useful information about the environment you are running in:\n<env>\n  Working directory: /state/run-kPQocX/work\n  Workspace root folder: /\n  Is directory a git repo: no\n  Platform: linux\n  Today's date: Wed Oct 07 2026\n</env>\n<directories>\n  \n</directories>\nSkills provide specialized instructions and workflows for specific tasks.\nUse the skill tool to load a skill when a task matches its description.\n<available_skills>\n  <skill>\n    <name>cross-source-check</name>\n    <description>比较多个媒体条目对同一行业事件的描述，找出一致、冲突与缺失证据。</description>\n    <location>file:///state/run-kPQocX/approved-skills/cross-source-check/SKILL.md</location>\n  </skill>\n  <skill>\n    <name>industry-analysis</name>\n    <description>从单条采集材料抽取对行业知识库有用的结构信息。</description>\n    <location>file:///state/run-kPQocX/approved-skills/industry-analysis/SKILL.md</location>\n  </skill>\n</available_skills>",
+              "role": "system"
+            },
+            {
+              "content": "Use the approved cotton corpus and return report JSON with actual host evidence IDs.",
+              "role": "user"
+            }
+          ],
+          "model": "fixture",
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "tool_choice": "auto",
+          "tools": [
+            {
+              "function": {
+                "description": "Load a specialized skill that provides domain-specific instructions and workflows.\n\nWhen you recognize that a task matches one of the available skills listed below, use this tool to load the full skill instructions.\n\nThe skill will inject detailed instructions, workflows, and access to bundled resources (scripts, references, templates) into the conversation context.\n\nTool output includes a `<skill_content name=\"...\">` block with the loaded content.\n\nThe following skills provide specialized sets of instructions for particular tasks\nInvoke this tool to load a skill when a task matches one of the available skills listed below:\n\n## Available Skills\n- **cross-source-check**: 比较多个媒体条目对同一行业事件的描述，找出一致、冲突与缺失证据。\n- **industry-analysis**: 从单条采集材料抽取对行业知识库有用的结构信息。",
+                "name": "skill",
+                "parameters": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "description": "The name of the skill from available_skills (e.g., 'cross-source-check', 'industry-analysis', ...)",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "type": "function"
+            },
+            {
+              "function": {
+                "description": "Read one authorized corpus fragment; coverage and evidence IDs come from the host",
+                "name": "corpus_get_item",
+                "parameters": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "item_id": {
+                      "maxLength": 256,
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "start": {
+                      "maximum": 9007199254740991,
+                      "minimum": 0,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "item_id"
+                  ],
+                  "type": "object"
+                }
+              },
+              "type": "function"
+            },
+            {
+              "function": {
+                "description": "Search only this run's authorized corpus",
+                "name": "corpus_search_items",
+                "parameters": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "limit": {
+                      "maximum": 8,
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "query": {
+                      "maxLength": 200,
+                      "minLength": 2,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                }
+              },
+              "type": "function"
+            }
+          ]
+        },
+        "bytes": 4594,
+        "request_digest": "9d7b0a75d05cf3c74b2ff115f689679155812dd9641397cf747e95290a4bebbf",
+        "call_id": "a3dd6791-a405-41a5-b1e1-a26f4a7401c0",
+        "headers": {
+          "authorization": "[vendor credential]",
+          "content_type": "application/json"
+        }
+      },
+      {
+        "body": {
+          "max_tokens": 1800,
+          "messages": [
+            {
+              "content": "Research only the approved corpus using corpus_search_items and corpus_get_item. Never invoke shell, external websites, sub-agents or write files. Return the requested structured AgentResult JSON.\n---\r\nname: cross-source-check\r\ndescription: 比较多个媒体条目对同一行业事件的描述，找出一致、冲突与缺失证据。\r\n---\r\n\r\n使用 corpus_search_items 查找候选条目，再用 corpus_get_item 阅读支持结论的具体片段。\r\n区分原始发布与转载；多个转载不算多个独立信源。\r\n按“已知事实、存在分歧、尚缺证据”组织回答。\r\n每个关键事实使用运行时提供的 evidence_id，并摘录支持它的原文。\r\n材料没有给出的数字、日期与来源不要补写。\r\n没有足够材料时明确说明不足。\r\n\n---\r\nname: industry-analysis\r\ndescription: 从单条采集材料抽取对行业知识库有用的结构信息。\r\n---\r\n\r\n只根据提供的材料抽取 summary、topics、entities、insights 和 tags。\r\n每个关键判断使用运行时提供的 evidence_id，并摘录支持它的原文。\r\n材料没有给出的数字、日期与来源不要补写。\r\ncoverage 由程序提供，不得改成 full。\r\n没有足够材料时明确说明不足。\r\n\nYou are powered by the model named fixture. The exact model ID is bridge/fixture\nHere is some useful information about the environment you are running in:\n<env>\n  Working directory: /state/run-kPQocX/work\n  Workspace root folder: /\n  Is directory a git repo: no\n  Platform: linux\n  Today's date: Wed Oct 07 2026\n</env>\n<directories>\n  \n</directories>\nSkills provide specialized instructions and workflows for specific tasks.\nUse the skill tool to load a skill when a task matches its description.\n<available_skills>\n  <skill>\n    <name>cross-source-check</name>\n    <description>比较多个媒体条目对同一行业事件的描述，找出一致、冲突与缺失证据。</description>\n    <location>file:///state/run-kPQocX/approved-skills/cross-source-check/SKILL.md</location>\n  </skill>\n  <skill>\n    <name>industry-analysis</name>\n    <description>从单条采集材料抽取对行业知识库有用的结构信息。</description>\n    <location>file:///state/run-kPQocX/approved-skills/industry-analysis/SKILL.md</location>\n  </skill>\n</available_skills>",
+              "role": "system"
+            },
+            {
+              "content": "Use the approved cotton corpus and return report JSON with actual host evidence IDs.",
+              "role": "user"
+            },
+            {
+              "content": "",
+              "role": "assistant",
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "{\"query\":\"cotton\"}",
+                    "name": "corpus_search_items"
+                  },
+                  "id": "call_search",
+                  "type": "function"
+                }
+              ]
+            },
+            {
+              "content": "{\"items\":[{\"coverage\":\"partial\",\"evidence_id\":\"host-search-evidence\",\"item_id\":\"fixture-item\",\"snippet\":\"The approved corpus supports cotton conductivity.\"}]}",
+              "role": "tool",
+              "tool_call_id": "call_search"
+            }
+          ],
+          "model": "fixture",
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "tool_choice": "auto",
+          "tools": [
+            {
+              "function": {
+                "description": "Load a specialized skill that provides domain-specific instructions and workflows.\n\nWhen you recognize that a task matches one of the available skills listed below, use this tool to load the full skill instructions.\n\nThe skill will inject detailed instructions, workflows, and access to bundled resources (scripts, references, templates) into the conversation context.\n\nTool output includes a `<skill_content name=\"...\">` block with the loaded content.\n\nThe following skills provide specialized sets of instructions for particular tasks\nInvoke this tool to load a skill when a task matches one of the available skills listed below:\n\n## Available Skills\n- **cross-source-check**: 比较多个媒体条目对同一行业事件的描述，找出一致、冲突与缺失证据。\n- **industry-analysis**: 从单条采集材料抽取对行业知识库有用的结构信息。",
+                "name": "skill",
+                "parameters": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "description": "The name of the skill from available_skills (e.g., 'cross-source-check', 'industry-analysis', ...)",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "type": "function"
+            },
+            {
+              "function": {
+                "description": "Read one authorized corpus fragment; coverage and evidence IDs come from the host",
+                "name": "corpus_get_item",
+                "parameters": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "item_id": {
+                      "maxLength": 256,
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "start": {
+                      "maximum": 9007199254740991,
+                      "minimum": 0,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "item_id"
+                  ],
+                  "type": "object"
+                }
+              },
+              "type": "function"
+            },
+            {
+              "function": {
+                "description": "Search only this run's authorized corpus",
+                "name": "corpus_search_items",
+                "parameters": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "limit": {
+                      "maximum": 8,
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "query": {
+                      "maxLength": 200,
+                      "minLength": 2,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                }
+              },
+              "type": "function"
+            }
+          ]
+        },
+        "bytes": 4995,
+        "request_digest": "593c1d8eaadf0936c827fcec84d588e2dbc55c803faca2f557abeb0095d30cda",
+        "call_id": "909ec3a3-99a5-42ba-8396-46a54718559b",
+        "headers": {
+          "authorization": "[vendor credential]",
+          "content_type": "application/json"
+        }
+      },
+      {
+        "body": {
+          "max_tokens": 1800,
+          "messages": [
+            {
+              "content": "Research only the approved corpus using corpus_search_items and corpus_get_item. Never invoke shell, external websites, sub-agents or write files. Return the requested structured AgentResult JSON.\n---\r\nname: cross-source-check\r\ndescription: 比较多个媒体条目对同一行业事件的描述，找出一致、冲突与缺失证据。\r\n---\r\n\r\n使用 corpus_search_items 查找候选条目，再用 corpus_get_item 阅读支持结论的具体片段。\r\n区分原始发布与转载；多个转载不算多个独立信源。\r\n按“已知事实、存在分歧、尚缺证据”组织回答。\r\n每个关键事实使用运行时提供的 evidence_id，并摘录支持它的原文。\r\n材料没有给出的数字、日期与来源不要补写。\r\n没有足够材料时明确说明不足。\r\n\n---\r\nname: industry-analysis\r\ndescription: 从单条采集材料抽取对行业知识库有用的结构信息。\r\n---\r\n\r\n只根据提供的材料抽取 summary、topics、entities、insights 和 tags。\r\n每个关键判断使用运行时提供的 evidence_id，并摘录支持它的原文。\r\n材料没有给出的数字、日期与来源不要补写。\r\ncoverage 由程序提供，不得改成 full。\r\n没有足够材料时明确说明不足。\r\n\nYou are powered by the model named fixture. The exact model ID is bridge/fixture\nHere is some useful information about the environment you are running in:\n<env>\n  Working directory: /state/run-kPQocX/work\n  Workspace root folder: /\n  Is directory a git repo: no\n  Platform: linux\n  Today's date: Wed Oct 07 2026\n</env>\n<directories>\n  \n</directories>\nSkills provide specialized instructions and workflows for specific tasks.\nUse the skill tool to load a skill when a task matches its description.\n<available_skills>\n  <skill>\n    <name>cross-source-check</name>\n    <description>比较多个媒体条目对同一行业事件的描述，找出一致、冲突与缺失证据。</description>\n    <location>file:///state/run-kPQocX/approved-skills/cross-source-check/SKILL.md</location>\n  </skill>\n  <skill>\n    <name>industry-analysis</name>\n    <description>从单条采集材料抽取对行业知识库有用的结构信息。</description>\n    <location>file:///state/run-kPQocX/approved-skills/industry-analysis/SKILL.md</location>\n  </skill>\n</available_skills>",
+              "role": "system"
+            },
+            {
+              "content": "Use the approved cotton corpus and return report JSON with actual host evidence IDs.",
+              "role": "user"
+            },
+            {
+              "content": "",
+              "role": "assistant",
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "{\"query\":\"cotton\"}",
+                    "name": "corpus_search_items"
+                  },
+                  "id": "call_search",
+                  "type": "function"
+                }
+              ]
+            },
+            {
+              "content": "{\"items\":[{\"coverage\":\"partial\",\"evidence_id\":\"host-search-evidence\",\"item_id\":\"fixture-item\",\"snippet\":\"The approved corpus supports cotton conductivity.\"}]}",
+              "role": "tool",
+              "tool_call_id": "call_search"
+            },
+            {
+              "content": "",
+              "role": "assistant",
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "{\"item_id\":\"fixture-item\"}",
+                    "name": "corpus_get_item"
+                  },
+                  "id": "call_read",
+                  "type": "function"
+                }
+              ]
+            },
+            {
+              "content": "{\"coverage\":\"full\",\"end\":49,\"evidence_id\":\"host-read-evidence\",\"item_id\":\"fixture-item\",\"start\":0,\"text\":\"The approved corpus supports cotton conductivity.\"}",
+              "role": "tool",
+              "tool_call_id": "call_read"
+            }
+          ],
+          "model": "fixture",
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "tool_choice": "auto",
+          "tools": [
+            {
+              "function": {
+                "description": "Load a specialized skill that provides domain-specific instructions and workflows.\n\nWhen you recognize that a task matches one of the available skills listed below, use this tool to load the full skill instructions.\n\nThe skill will inject detailed instructions, workflows, and access to bundled resources (scripts, references, templates) into the conversation context.\n\nTool output includes a `<skill_content name=\"...\">` block with the loaded content.\n\nThe following skills provide specialized sets of instructions for particular tasks\nInvoke this tool to load a skill when a task matches one of the available skills listed below:\n\n## Available Skills\n- **cross-source-check**: 比较多个媒体条目对同一行业事件的描述，找出一致、冲突与缺失证据。\n- **industry-analysis**: 从单条采集材料抽取对行业知识库有用的结构信息。",
+                "name": "skill",
+                "parameters": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "description": "The name of the skill from available_skills (e.g., 'cross-source-check', 'industry-analysis', ...)",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "type": "function"
+            },
+            {
+              "function": {
+                "description": "Read one authorized corpus fragment; coverage and evidence IDs come from the host",
+                "name": "corpus_get_item",
+                "parameters": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "item_id": {
+                      "maxLength": 256,
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "start": {
+                      "maximum": 9007199254740991,
+                      "minimum": 0,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "item_id"
+                  ],
+                  "type": "object"
+                }
+              },
+              "type": "function"
+            },
+            {
+              "function": {
+                "description": "Search only this run's authorized corpus",
+                "name": "corpus_search_items",
+                "parameters": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "limit": {
+                      "maximum": 8,
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "query": {
+                      "maxLength": 200,
+                      "minLength": 2,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "query"
+                  ],
+                  "type": "object"
+                }
+              },
+              "type": "function"
+            }
+          ]
+        },
+        "bytes": 5397,
+        "request_digest": "d54eee36a4d69ea64dc39d897d402a02d2c18fb470fc6a8a79e56c112a6972cf",
+        "call_id": "1232cfbb-2c67-489d-8fb0-20ef30969e5a",
+        "headers": {
+          "authorization": "[vendor credential]",
+          "content_type": "application/json"
+        }
+      }
+    ],
+    "modelCalls": [
+      {
+        "call_id": "a3dd6791-a405-41a5-b1e1-a26f4a7401c0",
+        "input_tokens": 10,
+        "model": "fixture",
+        "output_tokens": 5,
+        "phase": "completed",
+        "policy_version": "loom-agent-v1",
+        "request_digest": "9d7b0a75d05cf3c74b2ff115f689679155812dd9641397cf747e95290a4bebbf"
+      },
+      {
+        "call_id": "909ec3a3-99a5-42ba-8396-46a54718559b",
+        "input_tokens": 10,
+        "model": "fixture",
+        "output_tokens": 5,
+        "phase": "completed",
+        "policy_version": "loom-agent-v1",
+        "request_digest": "593c1d8eaadf0936c827fcec84d588e2dbc55c803faca2f557abeb0095d30cda"
+      },
+      {
+        "call_id": "1232cfbb-2c67-489d-8fb0-20ef30969e5a",
+        "input_tokens": 10,
+        "model": "fixture",
+        "output_tokens": 5,
+        "phase": "completed",
+        "policy_version": "loom-agent-v1",
+        "request_digest": "d54eee36a4d69ea64dc39d897d402a02d2c18fb470fc6a8a79e56c112a6972cf"
+      }
+    ],
+    "toolCalls": [
+      {
+        "call_id": "e198ddc1-abdb-4a6a-8d58-88c00c5cdcb4",
+        "request_digest": "29385f6748bbb2c6cfd5e327eefce5fe6798c6cdbf8fdd1b07a81b734b1a3f5e",
+        "result_digest": "6c0e9e11299ad5d3a172ed24d9235fc1fa99a1b571ecb56418f5b5ea04c7b724",
+        "tool": "search_items",
+        "completed": true
+      },
+      {
+        "call_id": "29b1aaa3-600a-4c9c-b557-0db89a9df85e",
+        "request_digest": "267dbe3cca968a2e77c43bc0c486591bed5eff9be0f039f71b6eac3df67aed09",
+        "result_digest": "1f9d3c33144a54acd8e33935e5b876e20611df55772a68f714581563e961dd2e",
+        "tool": "get_item",
+        "completed": true
+      }
+    ],
+    "toolReads": 2
+  },
+  "real_paid_model_requests": 0,
+  "scope": "Real Linux OpenCode 1.3.13 and production Go bridge with fake application ledger and fake vendor. Does not prove real database, paid model quality, or deployment-host isolation."
+}

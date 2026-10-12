@@ -1,0 +1,396 @@
+services:
+  # ---------------------------------------------------------------------------
+  # 2026-09-21 加固（两项，均由实测发现）：
+  #
+  # 1) 端口收窄：app/minio 原为 "8080:8080" 式全网卡发布，实测同网段设备可直接
+  #    打开应用（无登录）与 MinIO 控制台，媒体桶且为匿名可读。现改为仅回环。
+  #    需要远程访问时必须显式改这一行，并先解决"应用无登录"这件事。
+  #
+  # 2) 凭据外部注入：原为 ${VAR:-公开默认值}，实际部署用的是公开默认口令。现统一
+  #    由工作树外的 env_file 提供（F:\loom-backups\loom-prod.env，600、不入 git）。
+  #    用 env_file 而不是命令行变量，是为了消除 T24 事故的复现路径——`compose up`
+  #    会把命令行变量注入全栈，曾导致 MinIO 密码被占位值覆盖、整栈重启循环。
+  #
+  # 注意：restart.bat 不改（它只补 CRON_SECRET 等三个变量，不再被 compose 读取，
+  # 因为下面已改为必填从 env_file 取值）。
+  # ---------------------------------------------------------------------------
+  postgres:
+    # Pinned by digest (from the image actually in use, 2026-09-16) so a
+    # redeploy cannot silently change the database engine version.
+    image: postgres:16-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
+    # 凭据由 env_file 直供容器。注意不能用 ${VAR:?} 插值——compose 的插值不读
+    # env_file，那样会因"变量缺失"直接拒绝启动（实测过）。
+    # 密码轮换需按 docs/operations/loom-backup-restore-runbook.md 的库内步骤改，
+    # 只改 env 不会更新 pgdata 里已存的口令。
+    env_file:
+      - F:/loom-backups/env/postgres.env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
+    command: server /data --console-address ":9001"
+    env_file:
+      - F:/loom-backups/env/minio.env
+    volumes:
+      - miniodata:/data
+    ports:
+      # 仅回环（loopback）：控制台与 API 是给宿主运维用的，不是给网络用的。
+      # 要远程读对象 URL 时须显式放宽并配 TLS；
+      # 见 docs/operations/loom-backup-restore-runbook.md。
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 2 bash -c ':> /dev/tcp/127.0.0.1/9000' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 8s
+    restart: unless-stopped
+
+  minio-init:
+    image: minio/mc:latest@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727
+    depends_on:
+      - minio
+    env_file:
+      - F:/loom-backups/env/minio-init.env
+    environment:
+      # "public" = 匿名可下载。仅因端口已收窄到回环才可接受：浏览器在宿主上，
+      # 仍能显示媒体。存私有素材时必须改 private（已有公开 URL 会失效，预期内），
+      # 不要把关闭它说成无影响。若日后要远程访问，先改 private 或改用签名 URL。
+      MINIO_BUCKET_ACCESS: public
+    restart: on-failure
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        sleep 4
+        mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD"
+        mc mb -p "local/$$MINIO_BUCKET" || true
+        if [ "$$MINIO_BUCKET_ACCESS" = "public" ]; then
+          mc anonymous set download "local/$$MINIO_BUCKET"
+        else
+          mc anonymous set none "local/$$MINIO_BUCKET" || true
+        fi
+
+
+  telethon:
+    build:
+      context: ./workers/telethon
+    env_file:
+      - F:/loom-backups/env/telethon.env
+    environment:
+      TELEGRAM_API_ID: ${TELEGRAM_API_ID:-}
+      TELEGRAM_API_HASH: ${TELEGRAM_API_HASH:-}
+      TELEGRAM_SESSION: ${TELEGRAM_SESSION:-}
+      TELEGRAM_SESSION_PATH: /data/loom.session
+      MINIO_ENDPOINT: minio:9000
+      TELETHON_CONCURRENCY: ${TELETHON_CONCURRENCY:-3}
+      PORT: "8787"
+    volumes:
+      - telethon-session:/data
+    depends_on:
+      minio:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8787/health', timeout=3)",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 20s
+    restart: unless-stopped
+
+  wechat-gateway:
+    build: .
+    command: ["npm", "run", "gateway:start"]
+    deploy:
+      replicas: 1
+    env_file:
+      - F:/loom-backups/env/wechat-gateway.env
+    environment:
+      DAJIALA_KEY: ${DAJIALA_KEY:-}
+      DAJIALA_VERIFYCODE: ${DAJIALA_VERIFYCODE:-}
+      DAJIALA_BASE_URL: ${DAJIALA_BASE_URL:-https://www.dajiala.com/fbmain/monitor/v3}
+      DAJIALA_DAILY_BUDGET_RMB: ${DAJIALA_DAILY_BUDGET_RMB:-20}
+      DAJIALA_DAILY_CALL_LIMIT: ${DAJIALA_DAILY_CALL_LIMIT:-250}
+      GATEWAY_DB_PATH: /data/wechat-gateway.sqlite
+      PORT: "8790"
+    volumes:
+      - wechat-gateway-data:/data
+    restart: unless-stopped
+
+  wechat-fixture:
+    profiles: ["qa"]
+    build: .
+    command: ["node", "workers/wechat-gateway/fixture-server.mjs"]
+
+  agent:
+    # Optional service, not started by default.
+    #
+    # Why: it refuses to start without AGENT_SERVICE_TOKEN (the app's default is
+    # empty), so `restart: unless-stopped` turned a missing configuration into a
+    # permanent restart loop — 581 restarts since the 2026-09-09 deploy, roughly
+    # one every 30 seconds, with a log line each time.
+    #
+    # It is also not on any live path: app runs AI_ENGINE=legacy, and both
+    # AGENT_WORKER_ENABLED and AGENT_ASYNC_RESEARCH_ENABLED are false, so nothing
+    # calls it. Async research has its own runtime switch; the trusted Reviewer
+    # also lives here, independently of the legacy synchronous engine.
+    #
+    # Start it explicitly when that decision is made:
+    #   docker compose --profile agent up -d agent
+    profiles: ["agent"]
+    build:
+      context: ./workers/agent
+    environment:
+      AGENT_LISTEN_ADDR: 0.0.0.0:8791
+      AGENT_SERVICE_TOKEN: ${AGENT_SERVICE_TOKEN:-}
+      AGENT_MODEL_BASE_URL: ${AGENT_MODEL_BASE_URL:-https://api.x.ai/v1}
+      AGENT_MODEL_NAME: ${AGENT_MODEL_NAME:-grok-4.5}
+      AGENT_MODEL_API_KEY: ${AGENT_MODEL_API_KEY:-${XAI_API_KEY:-}}
+      AGENT_DATA_URL: ${AGENT_DATA_URL:-http://app:8080/api/internal/agent-data}
+      AGENT_DATA_TOKEN: ${AGENT_DATA_TOKEN:-}
+      AGENT_SKILLS_DIR: /app/skills
+      AGENT_MCP_CONFIG: ${AGENT_MCP_CONFIG:-}
+      AGENT_MAX_CONCURRENT_RUNS: ${AGENT_MAX_CONCURRENT_RUNS:-2}
+      AGENT_EXECUTE_TIMEOUT_MS: ${AGENT_EXECUTE_TIMEOUT_MS:-120000}
+      AGENT_MODEL_TIMEOUT_MS: ${AGENT_MODEL_TIMEOUT_MS:-30000}
+      AGENT_WORKER_ENABLED: ${AGENT_WORKER_ENABLED:-false}
+    read_only: true
+    healthcheck:
+      test: ["CMD", "/app/agent", "healthcheck"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 10s
+    restart: unless-stopped
+
+  # Optional pilot. Keep disabled until the recorded offline/live adoption gates pass.
+  agent-bridge:
+    profiles: ["opencode"]
+    build:
+      context: ./workers/agent
+      dockerfile: Dockerfile.bridge
+    environment:
+      OPENCODE_BRIDGE_CONTROL_TOKEN: ${OPENCODE_BRIDGE_CONTROL_TOKEN:-}
+      AGENT_DATA_URL: http://app:8080/api/internal/agent-data
+      AGENT_ASSISTANT_DATA_URL: http://app:8080/api/internal/assistant-data
+      AGENT_DATA_TOKEN: ${AGENT_DATA_TOKEN:-}
+      AGENT_MODEL_BASE_URL: ${AGENT_MODEL_BASE_URL:-https://api.x.ai/v1}
+      AGENT_MODEL_NAME: ${AGENT_MODEL_NAME:-grok-4.5}
+      AGENT_MODEL_API_KEY: ${AGENT_MODEL_API_KEY:-${XAI_API_KEY:-}}
+      AGENT_EXECUTE_TIMEOUT_MS: ${AGENT_EXECUTE_TIMEOUT_MS:-120000}
+      AGENT_MODEL_TIMEOUT_MS: ${AGENT_MODEL_TIMEOUT_MS:-30000}
+    networks: ["default", "opencode-runtime"]
+    read_only: true
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 64
+    mem_limit: 256m
+    restart: unless-stopped
+
+  opencode-runtime:
+    profiles: ["opencode"]
+    build:
+      context: .
+      dockerfile: workers/opencode-runtime/Dockerfile
+      target: production
+    image: weavesense-opencode-runtime:1.3.13
+    environment:
+      OPENCODE_RUNTIME_TOKEN: ${OPENCODE_RUNTIME_TOKEN:-}
+      OPENCODE_BRIDGE_URL: http://agent-bridge:8792
+      OPENCODE_MODEL_NAME: ${AGENT_MODEL_NAME:-grok-4.5}
+      OPENCODE_MAX_OUTPUT_TOKENS: ${AGENT_ASSISTANT_MAX_OUTPUT_TOKENS:-1800}
+    networks: ["opencode-runtime"]
+    init: true
+    user: "1000:1000"
+    read_only: true
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    # The opencode child (bun) spawns dozens of threads during sqlite
+    # migration and boot; 64 pids aborts it non-deterministically
+    # (SIGABRT / "Failed to start HTTP Client thread: SystemResources").
+    pids_limit: 512
+    mem_limit: 768m
+    tmpfs:
+      - /state:rw,noexec,nosuid,size=256m,uid=1000,gid=1000
+      - /tmp:rw,noexec,nosuid,size=64m,uid=1000,gid=1000
+    restart: unless-stopped
+
+  # Control worker is trusted and holds no supplier API key. It uses the existing
+  # Go Reviewer over HTTP and is separate from the untrusted OpenCode process.
+  opencode-worker:
+    profiles: ["opencode"]
+    build:
+      context: ./workers/agent
+      dockerfile: Dockerfile.worker
+    environment:
+      OPENCODE_JOBS_URL: http://app:8080/api/internal/opencode-jobs
+      ASSISTANT_JOBS_URL: http://app:8080/api/internal/assistant-jobs
+      OPENCODE_WORKER_TOKEN: ${OPENCODE_WORKER_TOKEN:-}
+      ASSISTANT_WORKER_TOKEN: ${ASSISTANT_WORKER_TOKEN:-}
+      OPENCODE_RUNTIME_URL: http://opencode-runtime:4097
+      OPENCODE_RUNTIME_TOKEN: ${OPENCODE_RUNTIME_TOKEN:-}
+      OPENCODE_BRIDGE_URL: http://agent-bridge:8792
+      OPENCODE_BRIDGE_CONTROL_TOKEN: ${OPENCODE_BRIDGE_CONTROL_TOKEN:-}
+      OPENCODE_REVIEW_URL: http://agent:8791/v1/review
+      AGENT_SERVICE_TOKEN: ${AGENT_SERVICE_TOKEN:-}
+      OPENCODE_MODEL_NAME: ${AGENT_MODEL_NAME:-grok-4.5}
+    networks: ["default", "opencode-runtime"]
+    read_only: true
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 64
+    mem_limit: 256m
+    depends_on:
+      agent-bridge:
+        condition: service_started
+      opencode-runtime:
+        condition: service_started
+    restart: unless-stopped
+
+  app:
+    # 2026-09-30 merge: comet/local-model-settings is merged into main, so the
+    # root tree now IS the production source. `build: .` is safe again (T24's
+    # "root tree holds pre-fix code" no longer applies). Image tag kept as the
+    # friendly local cache name; compose builds it when absent.
+    build: .
+    image: loom-app:readiness-20260930-merged
+    # 凭据从工作树外的文件读入，不经命令行、不进仓库（见文件头注释）。
+    env_file:
+      - F:/loom-backups/env/app.env
+    ports:
+      # 仅回环发布：本应用无登录，全网卡绑定会把所有写端口暴露到网络。
+      # 远程入口必须是显式部署决策（反代 + 鉴权），不是默认值。
+      - "127.0.0.1:8080:8080"
+    # 容器内 localhost 默认指向容器自己；模型网关只接受来自回环的请求（它的
+    # DNS-rebinding 防护），所以把 localhost 额外指向宿主网关，让模型调用以
+    # 回环身份发出。实测：这样 /v1/models 与 /v1/chat/completions 均 200。
+    # 注意 /etc/hosts 里原有的 127.0.0.1 localhost 仍在，健康检查不受影响。
+    extra_hosts:
+      - "localhost:host-gateway"
+    environment:
+      # T02: a production runtime must refuse to start without a real database,
+      # instead of silently serving from the in-memory PGLite fallback.
+      LOOM_RUNTIME_MODE: production
+      # T05: this host resolves public domains into the proxy's fake-IP range
+      # (198.18.0.0/15); without this declaration the SSRF policy blocks ALL
+      # collection. Verified in rehearsal: with it, requests reach upstream
+      # (real 404/412/429 responses) and nothing reports blocked_address.
+      LOOM_EGRESS_CIDRS: 198.18.0.0/15
+      # 2026-09-21: 让应用读取模型配置。只作用于同步入口（分析/简报/问答的
+      # legacy 路径）；OCR/ASR 仍走 XAI_API_KEY。配置由下面的目录挂载提供。
+      #
+      # 关于「模型设置」页：2026-09-30 起在生产开放编辑（多档案管理）。
+      # LOOM_MODEL_MANAGE_ALLOWED 放宽了"对端必须是回环"的证明——容器内该证明
+      # 无法成立；安全边界改为端口绑定：应用只发布在宿主 127.0.0.1:8080，能到达
+      # 管理接口的只有本机进程。写操作仍强制同 origin（CSRF），VERCEL 环境恒拒绝。
+      # 配置目录可写（模型档案由 UI 保存，原子写 + 乐观并发），含 Key，不进仓库。
+      LOOM_MODEL_CONFIG: /app/config/model.local.json
+      LOOM_MODEL_MANAGE_ALLOWED: "true"
+      TELEGRAM_WORKER_URL: http://telethon:8787
+      MINIO_ENDPOINT: http://minio:9000
+      XAI_API_KEY: ${XAI_API_KEY:-}
+      TICK_LIMIT: ${TICK_LIMIT:-20}
+      CRON_TICK_LIMIT: ${CRON_TICK_LIMIT:-200}
+      EXTRACT_AUTO: ${EXTRACT_AUTO:-false}
+      AUTO_ANALYZE: ${AUTO_ANALYZE:-false}
+      AUTO_ANALYZE_DAILY_LIMIT: ${AUTO_ANALYZE_DAILY_LIMIT:-20}
+      AUTO_ANALYZE_DAILY_BUDGET_RMB: ${AUTO_ANALYZE_DAILY_BUDGET_RMB:-20}
+      AI_ENGINE: ${AI_ENGINE:-legacy}
+      AGENT_SERVICE_URL: ${AGENT_SERVICE_URL:-http://agent:8791}
+      AGENT_SERVICE_TOKEN: ${AGENT_SERVICE_TOKEN:-}
+      AGENT_DATA_TOKEN: ${AGENT_DATA_TOKEN:-}
+      AGENT_WORKER_ENABLED: ${AGENT_WORKER_ENABLED:-false}
+      AGENT_ASYNC_RESEARCH_ENABLED: ${AGENT_ASYNC_RESEARCH_ENABLED:-false}
+      AGENT_EXECUTE_TIMEOUT_MS: ${AGENT_EXECUTE_TIMEOUT_MS:-120000}
+      AGENT_HTTP_TIMEOUT_MS: ${AGENT_HTTP_TIMEOUT_MS:-130000}
+      AGENT_RESEARCH_QUEUE_TTL_MS: ${AGENT_RESEARCH_QUEUE_TTL_MS:-600000}
+      AGENT_RESEARCH_RUNTIME: ${AGENT_RESEARCH_RUNTIME:-eino}
+      AGENT_RESEARCH_REVIEW: ${AGENT_RESEARCH_REVIEW:-off}
+      AGENT_OPENCODE_WORKER_ENABLED: ${AGENT_OPENCODE_WORKER_ENABLED:-false}
+      OPENCODE_WORKER_TOKEN: ${OPENCODE_WORKER_TOKEN:-}
+      AGENT_ASSISTANT_ENABLED: ${AGENT_ASSISTANT_ENABLED:-false}
+      AGENT_ASSISTANT_ACTIONS_ENABLED: ${AGENT_ASSISTANT_ACTIONS_ENABLED:-false}
+      AGENT_ASSISTANT_DAILY_LIMIT: ${AGENT_ASSISTANT_DAILY_LIMIT:-20}
+      AGENT_ASSISTANT_DAILY_BUDGET_RMB: ${AGENT_ASSISTANT_DAILY_BUDGET_RMB:-20}
+      AGENT_ASSISTANT_MAX_MODEL_CALLS: ${AGENT_ASSISTANT_MAX_MODEL_CALLS:-6}
+      AGENT_ASSISTANT_MAX_TOOL_CALLS: ${AGENT_ASSISTANT_MAX_TOOL_CALLS:-8}
+      AGENT_SKILL_SNAPSHOT_DIGEST: ${AGENT_SKILL_SNAPSHOT_DIGEST:-}
+      AGENT_RESEARCH_DAILY_LIMIT: ${AGENT_RESEARCH_DAILY_LIMIT:-20}
+      AGENT_RESEARCH_DAILY_BUDGET_RMB: ${AGENT_RESEARCH_DAILY_BUDGET_RMB:-20}
+      AGENT_RESEARCH_PRICE_VERSION: ${AGENT_RESEARCH_PRICE_VERSION:-research-price-v1}
+      AGENT_MCP_ALLOWED_TOOLS: ${AGENT_MCP_ALLOWED_TOOLS:-}
+      AGENT_MODEL_NAME: ${AGENT_MODEL_NAME:-grok-4.5}
+      AGENT_PRICE_INPUT_RMB_PER_MILLION: ${AGENT_PRICE_INPUT_RMB_PER_MILLION:-}
+      AGENT_PRICE_OUTPUT_RMB_PER_MILLION: ${AGENT_PRICE_OUTPUT_RMB_PER_MILLION:-}
+      WECHAT_GATEWAY_URL: ${WECHAT_GATEWAY_URL:-http://wechat-gateway:8790}
+      VITE_AUTH_ENABLED: "false"
+    volumes:
+      # 模型配置目录（可写）：UI 多档案保存需要目录写权限（原子写 = 临时文件 +
+      # rename）。来自工作树外，含 Key，不进镜像层、不进仓库。旧单文件
+      # F:/loom-backups/model.local.json 原地保留作回滚备份。
+      - F:/loom-backups/model-config:/app/config
+    depends_on:
+      postgres:
+        condition: service_healthy
+      telethon:
+        condition: service_started
+      minio:
+        condition: service_started
+      wechat-gateway:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    restart: unless-stopped
+
+  scheduler:
+    # Same image as app — it runs the readiness scheduler code.
+    image: loom-app:readiness-20260930-merged
+    command: ["npm", "run", "cron:start"]
+    deploy:
+      replicas: 1
+    env_file:
+      - F:/loom-backups/env/scheduler.env
+    environment:
+      CRON_ENDPOINT: http://app:8080/api/cron/tick
+      # T09: 唤醒间隔是调度频率而非采集频率：信源有各自的 interval_minutes，
+      # 重任务由持久窗口表节流（见 env.example）。60s 让到期信源被尽快注意到。
+      CRON_INTERVAL_MS: ${CRON_INTERVAL_MS:-60000}
+      # T05: same egress declaration as app — the scheduler makes the outbound
+      # collection requests.
+      LOOM_EGRESS_CIDRS: 198.18.0.0/15
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  miniodata:
+  telethon-session:
+  wechat-gateway-data:
+
+# Docker 28+ isolated bridge gateway mode is part of the tested runtime boundary.
+# Re-run validation/agent/opencode/isolation.test.mjs on each deployment host.
+networks:
+  opencode-runtime:
+    internal: true
+    driver_opts:
+      com.docker.network.bridge.gateway_mode_ipv4: isolated

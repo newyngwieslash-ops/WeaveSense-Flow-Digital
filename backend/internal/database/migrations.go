@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const CurrentSchemaVersion int64 = 50
+const CurrentSchemaVersion int64 = 51
 
 const baselineSchemaChecksum = "sha256:open-ai-canvas-schema-v1-20260830"
 const schemaMigrationAppliedAtIndexChecksum = "sha256:schema-migrations-applied-at-index-v2-20260830"
@@ -166,6 +166,7 @@ var schemaMigrations = []migration{
 	{version: 50, name: "canvas_mutation_receipts", checksum: "sha256:canvas-mutation-receipts-v50-20261011", apply: func(tx *gorm.DB) error {
 		return tx.AutoMigrate(&model.CanvasMutationReceipt{})
 	}},
+	{version: 51, name: "flow_tenancy", checksum: "sha256:flow-tenancy-v51-20261012", apply: migrateFlowTenancy},
 }
 
 func migratePrefixedIDSequenceReconcile(tx *gorm.DB) error {
@@ -591,6 +592,25 @@ func RequireSchemaVersion(db *gorm.DB) error {
 	}
 	if status.Current > status.Expected {
 		return fmt.Errorf("数据库结构版本 %d 高于程序支持的 %d，拒绝使用旧程序连接新数据库", status.Current, status.Expected)
+	}
+	return nil
+}
+
+// migrateFlowTenancy adds WeaveSense-Flow tenancy tables and maps every existing
+// user to a personal tenant + default workspace (idempotent).
+func migrateFlowTenancy(tx *gorm.DB) error {
+	if err := tx.AutoMigrate(&model.Tenant{}, &model.Membership{}, &model.Workspace{}, &model.WorkspaceMembership{},
+		&model.ServicePrincipal{}, &model.FlowEventInbox{}, &model.FlowOperationProjection{}); err != nil {
+		return fmt.Errorf("创建租户表：%w", err)
+	}
+	var ids []string
+	if err := tx.Model(&model.User{}).Pluck("id", &ids).Error; err != nil {
+		return fmt.Errorf("读取用户：%w", err)
+	}
+	for _, id := range ids {
+		if err := model.EnsurePersonalTenantTx(tx, id); err != nil {
+			return err
+		}
 	}
 	return nil
 }

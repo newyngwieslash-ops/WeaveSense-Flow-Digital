@@ -15,6 +15,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"yingce/backend/internal/flow"
+	"yingce/backend/internal/model"
 
 	"yingce/backend/internal/database"
 	"yingce/backend/internal/handler"
@@ -121,6 +123,10 @@ func run(ctx context.Context) error {
 	registerSystemStatusRoutes(api, status)
 	handler.RegisterOAuthCallbackRoutes(r, svc)
 	handler.RegisterCanvasAPI(api, svc)
+	flow.RegisterRoutes(api, db, flow.ConfigFromEnv(), func(c *gin.Context) (*model.User, error) {
+		cookie, _ := c.Cookie(service.SessionCookieName)
+		return svc.CurrentUser(cookie)
+	})
 	r.NoRoute(handler.SystemProxyNoRouteHandler(svc))
 
 	listener, err := net.Listen("tcp", addr)

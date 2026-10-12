@@ -1,0 +1,109 @@
+# WeaveSense-Flow P0 portable stack. Relative paths + named volumes only.
+# Usage: cp .env.flow.example .env.flow && docker compose -f docker-compose.flow.yml --env-file .env.flow up -d
+# P0 baseline: services build from the imported upstream sources unchanged;
+# integration wiring (internal auth, outbox/inbox) lands in P1+.
+name: weavesense-flow
+x-restart: &restart
+  restart: unless-stopped
+services:
+  postgres:
+    <<: *restart
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_SUPERUSER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?set in .env.flow}
+      PLATFORM_DB_NAME: ${PLATFORM_DB_NAME:-flow_platform}
+      PLATFORM_DB_USER: ${PLATFORM_DB_USER:-flow_platform}
+      PLATFORM_DB_PASSWORD: ${PLATFORM_DB_PASSWORD:?set in .env.flow}
+      INTEL_DB_NAME: ${INTEL_DB_NAME:-flow_intel}
+      INTEL_DB_USER: ${INTEL_DB_USER:-flow_intel}
+      INTEL_DB_PASSWORD: ${INTEL_DB_PASSWORD:?set in .env.flow}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./deploy/flow/postgres/init-databases.sh:/docker-entrypoint-initdb.d/10-init.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 5s
+      retries: 20
+    networks: [internal]
+  redis:
+    <<: *restart
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?set in .env.flow}"]
+    volumes: [redisdata:/data]
+    networks: [internal]
+  minio:
+    <<: *restart
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?set in .env.flow}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set in .env.flow}
+    volumes: [objects:/data]
+    networks: [internal]
+  minio-init:
+    image: minio/mc:latest
+    depends_on: [minio]
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        until mc alias set flow http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"; do sleep 2; done;
+        mc mb -p flow/${PLATFORM_BUCKET:-flow-platform} flow/${INTEL_BUCKET:-flow-intel};
+        mc anonymous set none flow/${PLATFORM_BUCKET:-flow-platform}; mc anonymous set none flow/${INTEL_BUCKET:-flow-intel}
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    networks: [internal]
+  # Go platform: identity, authz, billing ledger, agent runs. Pi runtime is
+  # bundled in this image (backend/Dockerfile stage pi-runtime-deps).
+  platform:
+    <<: *restart
+    build: { context: ., dockerfile: backend/Dockerfile }
+    env_file: [.env.flow]
+    environment:
+      DATABASE_URL: postgres://${PLATFORM_DB_USER:-flow_platform}:${PLATFORM_DB_PASSWORD}@postgres:5432/${PLATFORM_DB_NAME:-flow_platform}?sslmode=disable
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      LOOM_ENGINE_URL: http://loom-engine:8080
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_started }
+    volumes: [platformdata:/app/data]
+    networks: [internal]
+  web:
+    <<: *restart
+    build: { context: ., dockerfile: Dockerfile }
+    depends_on: [platform]
+    ports: ["${FLOW_HTTP_PORT:-8088}:80"]   # the only published entrypoint
+    networks: [internal]
+  # Loom Engine (extracted from WeaveSense): sources, cursors, documents, jobs.
+  loom-engine:
+    <<: *restart
+    build: { context: ./services/loom-engine, dockerfile: Dockerfile }
+    env_file: [.env.flow]
+    environment:
+      DATABASE_URL: postgres://${INTEL_DB_USER:-flow_intel}:${INTEL_DB_PASSWORD}@postgres:5432/${INTEL_DB_NAME:-flow_intel}?sslmode=disable
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
+      LOOM_ROLE: api
+    depends_on:
+      postgres: { condition: service_healthy }
+    volumes: [loomdata:/app/data]
+    networks: [internal]
+  loom-scheduler:
+    <<: *restart
+    build: { context: ./services/loom-engine, dockerfile: Dockerfile }
+    env_file: [.env.flow]
+    environment:
+      DATABASE_URL: postgres://${INTEL_DB_USER:-flow_intel}:${INTEL_DB_PASSWORD}@postgres:5432/${INTEL_DB_NAME:-flow_intel}?sslmode=disable
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
+      LOOM_ROLE: scheduler
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [internal]
+networks:
+  internal: {}
+volumes:
+  pgdata: {}
+  redisdata: {}
+  objects: {}
+  platformdata: {}
+  loomdata: {}

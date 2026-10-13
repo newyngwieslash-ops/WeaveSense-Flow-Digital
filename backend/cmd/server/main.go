@@ -135,6 +135,13 @@ func run(ctx context.Context) error {
 	mcpGateway := &flow.MCPGateway{DB: db}
 	svc.ConfigureFlowMCP(mcpGateway)
 	flow.RegisterMCPRoutes(api, db, mcpGateway, flowUser)
+	var modelGW flow.ModelGateway
+	if g := flow.ModelGatewayFromEnv(); g != nil {
+		modelGW = g
+		svc.ConfigureFlowModel(g)
+	}
+	flow.RegisterP5Routes(api, db, flowCfg, flowUser, modelGW)
+	go flow.RunBillingMaintenance(context.Background(), db, 15*time.Minute)
 	r.NoRoute(handler.SystemProxyNoRouteHandler(svc))
 
 	listener, err := net.Listen("tcp", addr)

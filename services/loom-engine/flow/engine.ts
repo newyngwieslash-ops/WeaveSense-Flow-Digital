@@ -34,6 +34,8 @@ type Scope = Pick<ExecutionContext, "tenant_id" | "workspace_id">;
 
 export class Engine {
   db: Db; fetcher: Fetcher; now: () => Date; extractor: Extractor = defaultExtractor;
+  /** Platform authorization hook: false ⇒ grant revoked (schedule is disabled). Errors propagate (fail closed, retry next tick). */
+  authorize?: (sc: { tenant_id: string; workspace_id: string; grant_actor: string }, scope: string) => Promise<boolean>;
   constructor(db: Db, fetcher: Fetcher = defaultFetcher, now: () => Date = () => new Date()) {
     this.db = db; this.fetcher = fetcher; this.now = now;
   }
@@ -162,6 +164,15 @@ export class Engine {
    */
   async schedulerTick(limit = 50): Promise<number> {
     const now = this.now();
+    if (this.authorize) {
+      // Re-check the grant actor's ongoing authorization (outside the scan tx: it is a network call).
+      const due = await this.db.query(`SELECT id, tenant_id, workspace_id, grant_actor FROM flow_schedules WHERE enabled AND next_run_at <= $1 ORDER BY next_run_at LIMIT $2`, [now.toISOString(), limit]);
+      for (const sc of due.rows as any[]) {
+        if (!(await this.authorize(sc, "intel.collect"))) {
+          await this.db.query(`UPDATE flow_schedules SET enabled=false, disabled_reason='grant_revoked' WHERE id=$1 AND tenant_id=$2`, [sc.id, sc.tenant_id]);
+        }
+      }
+    }
     return this.db.tx(async (q) => {
       // Single scheduler: only the holder of this xact lock scans due windows.
       const lock = await q.query(`SELECT pg_try_advisory_xact_lock(7314001) AS ok`);

@@ -3,6 +3,7 @@ import { Button, Card, Input, List, Select, Space, Tag, Typography, message } fr
 import { EmptyState } from "@/components/ui/product/empty-state/empty-state";
 import { ReportsPanel } from "./reports-panel";
 import { SourcesPanel } from "./sources-panel";
+import { WorkspaceAdminPanel } from "./workspace-admin-panel";
 
 import {
     cachedConversations,
@@ -228,6 +229,7 @@ export default function IntelligencePage() {
             </div>
             <SourcesPanel workspaceId={workspaceId} />
             <ReportsPanel workspaceId={workspaceId} />
+            <WorkspaceAdminPanel workspaceId={workspaceId} onWorkspacesChanged={() => void listIntelWorkspaces().then(setWorkspaces)} />
         </>
     );
 }

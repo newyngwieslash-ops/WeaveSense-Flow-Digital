@@ -74,3 +74,20 @@ export const createMcpConnection = (workspaceId: string, input: { name: string; 
 export const discoverMcpTools = (workspaceId: string, id: string) => http.get<McpTool[]>(`/intelligence/mcp/connections/${encodeURIComponent(id)}/tools`, ws(workspaceId));
 export const approveMcpConnection = (workspaceId: string, id: string, allowedTools: string[]) => http.post<McpConnection>(`/intelligence/mcp/connections/${encodeURIComponent(id)}/approve`, { allowedTools }, ws(workspaceId));
 export const revokeMcpConnection = (workspaceId: string, id: string) => http.post<{ revoked: boolean }>(`/intelligence/mcp/connections/${encodeURIComponent(id)}/revoke`, {}, ws(workspaceId));
+
+export type FlowNotification = { id: string; type: string; title: string; refId: string; readAt?: string | null; createdAt: string };
+export const listNotifications = (workspaceId: string) => http.get<FlowNotification[]>("/intelligence/notifications", ws(workspaceId));
+export const markNotificationRead = (workspaceId: string, id: string | "all") => http.post<{ updated: number }>(`/intelligence/notifications/${encodeURIComponent(id)}/read`, {}, ws(workspaceId));
+
+export type SkillDef = { id: string; version: string; name: string; method: string; hash: string; pack_id: string };
+export type SkillPack = { id: string; version: string; name: string; kind?: string; skills: SkillDef[] };
+export type SkillInstall = { id: string; skillId: string; version: string; hash: string; packId: string; updatedAt: string };
+export const listSkills = (workspaceId: string) => http.get<{ packs: SkillPack[]; installed: SkillInstall[] }>("/intelligence/skills", ws(workspaceId));
+export const installSkills = (workspaceId: string, input: { packId?: string; skillId?: string; version?: string }) => http.post<SkillInstall[]>("/intelligence/skills/install", input, ws(workspaceId));
+
+export type BillingAccount = { id: string; tenantId: string; payerUserId: string; kind: "personal" | "shared"; monthlyQuotaMicro: number; maxOpenReserves: number };
+export type BudgetReservation = { id: string; purpose: string; parentId: string; reservedMicro: number; allocatedMicro: number; consumedMicro: number; status: string; createdAt: string };
+export const getBilling = (workspaceId: string) => http.get<{ account: BillingAccount; reservations: BudgetReservation[] }>("/intelligence/billing", ws(workspaceId));
+export const createOrganization = (name: string) => http.post<{ tenant: { id: string }; workspace: IntelWorkspace }>("/intelligence/orgs", { name });
+export const createInvite = (workspaceId: string, email: string, role: string) => http.post<{ invite: { id: string; email: string; role: string; expiresAt: string }; token: string }>("/intelligence/invites", { email, role }, ws(workspaceId));
+export const acceptInvite = (token: string) => http.post<{ tenantId: string; workspaceId: string; role: string }>("/intelligence/invites/accept", { token });

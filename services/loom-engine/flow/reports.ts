@@ -53,12 +53,14 @@ export function nextCron(expr: string, tz: string, after: Date): Date {
 
 export class Reports {
   e: Engine;
+  /** Platform summarization hook (Model Gateway + citation validation + billing). Throw {status:403} when the grant is revoked. */
+  summarize?: (input: any) => Promise<{ body: string; claims: any[] } | null>;
   constructor(e: Engine) { this.e = e; }
   private get db() { return this.e.db; }
 
   /** Resolves evidence ids visible to the caller with revision/chunk/truncation facts (citation validation input). */
-  async resolveEvidence(s: Scope, ids: string[]) {
-    const r = await this.db.query(`SELECT e.id AS evidence_id, e.document_id, e.revision, e.char_start, e.char_end, e.quote, d.source_id, d.current_revision, d.title,
+  async resolveEvidence(s: Scope, ids: string[], q?: Q) {
+    const r = await (q ?? this.db).query(`SELECT e.id AS evidence_id, e.document_id, e.revision, e.char_start, e.char_end, e.quote, d.source_id, d.current_revision, d.title,
           c.chunk_index, c.char_end AS chunk_end
         FROM flow_evidence e JOIN flow_documents d ON d.id=e.document_id AND d.tenant_id=e.tenant_id
         LEFT JOIN LATERAL (SELECT chunk_index, char_end FROM flow_document_chunks k WHERE k.document_id=e.document_id AND k.revision=e.revision
@@ -78,7 +80,7 @@ export class Reports {
     const claims = Array.isArray(o.claims) ? o.claims.slice(0, 100) : [];
     if (!String(o.title ?? "").trim()) throw new HttpError(400, "title required");
     const ids = claims.flatMap((c: any) => (c.citations ?? []).map((x: any) => String(x.evidence_id)));
-    const known = new Map((await this.resolveEvidence(s, ids)).map((x) => [x.evidence_id, x]));
+    const known = new Map((await this.resolveEvidence(s, ids, hooks.q)).map((x) => [x.evidence_id, x]));
     for (const c of claims) {
       if (!CLAIM_KINDS.includes(c.kind)) throw new HttpError(400, "invalid claim kind");
       for (const x of c.citations ?? []) {
@@ -256,20 +258,57 @@ export class Reports {
       const s = { tenant_id: b.tenant_id, workspace_id: b.workspace_id };
       const key = `brief:${b.id}:${scheduledAt}`;
       const exists = (await this.db.query(`SELECT 1 FROM flow_reports WHERE tenant_id=$1 AND brief_schedule_id=$2 AND scheduled_at=$3`, [b.tenant_id, b.id, scheduledAt])).rows.length;
-      if (!exists) {
-        const from = new Date(at.getTime() - b.window_hours * 3600_000).toISOString();
-        const g = await this.gather(s, null, key, { query: b.query, source_ids: b.source_ids, from, to: scheduledAt }, `brief:${b.id}`);
-        const lines = g.claims.map((c: any, i: number) => `${i + 1}. ${c.text} [${c.kind}]`);
-        const notes = [g.coverage.truncated ? "Coverage truncated by budget." : "", g.coverage.source_failures.length ? `${g.coverage.source_failures.length} source(s) failed to collect.` : "",
-          g.coverage.conflicting_evidence.length ? `${g.coverage.conflicting_evidence.length} document(s) were revised; check for conflicting statements.` : "",
-          g.claims.length ? "" : "No matching material in this window."].filter(Boolean);
-        const r = await this.saveReport(s, `schedule:${b.id}`, key, {
-          title: `${b.name} — ${scheduledAt.slice(0, 16).replace("T", " ")} UTC`, body: [...lines, ...notes].join("\n"), claims: g.claims, coverage: g.coverage,
-          skill: json(b.skill), material_scope: { source_ids: b.source_ids, from, to: scheduledAt } }, { brief: { schedule_id: b.id, scheduled_at: scheduledAt } });
-        if (r.report_id && !r.replayed) made++;
+      if (exists) {
+        await this.advanceBrief(null, b, at);
+        continue;
       }
-      await this.db.query(`UPDATE flow_brief_schedules SET next_run_at=$3 WHERE id=$1 AND next_run_at=$2`, [b.id, b.next_run_at, nextCron(b.cron, b.timezone, at).toISOString()]);
+      if (this.e.authorize && !(await this.e.authorize(b, "intel.reports.write"))) {
+        await this.db.query(`UPDATE flow_brief_schedules SET enabled=false, disabled_reason='grant_revoked' WHERE id=$1 AND tenant_id=$2`, [b.id, b.tenant_id]);
+        continue;
+      }
+      // Generate outside the transaction (may call the platform Model Gateway), then
+      // persist the report and advance the schedule atomically.
+      const from = new Date(at.getTime() - b.window_hours * 3600_000).toISOString();
+      const g = await this.gather(s, null, key, { query: b.query, source_ids: b.source_ids, from, to: scheduledAt }, `brief:${b.id}`);
+      const notes = [g.coverage.truncated ? "Coverage truncated by budget." : "", g.coverage.source_failures.length ? `${g.coverage.source_failures.length} source(s) failed to collect.` : "",
+        g.coverage.conflicting_evidence.length ? `${g.coverage.conflicting_evidence.length} document(s) were revised; check for conflicting statements.` : "",
+        g.claims.length ? "" : "No matching material in this window."].filter(Boolean);
+      let claims = g.claims;
+      let body = [...g.claims.map((c: any, i: number) => `${i + 1}. ${c.text} [${c.kind}]`), ...notes].join("\n");
+      let summarizedBy = "extractive";
+      if (this.summarize && g.evidence_ids.length) {
+        try {
+          const evidence = (await this.resolveEvidence(s, g.evidence_ids)).map(({ current_revision, char_start, char_end, ...x }: any) => x);
+          const out = await this.summarize({ grant_actor: b.grant_actor, workspace_id: b.workspace_id, tenant_id: b.tenant_id, key: key, topic: b.query,
+            scope: { source_ids: b.source_ids, from, to: scheduledAt }, evidence });
+          if (out && Array.isArray(out.claims) && out.claims.length) {
+            claims = out.claims;
+            body = [out.body, ...notes].filter(Boolean).join("\n");
+            summarizedBy = "model_gateway";
+          }
+        } catch (err: any) {
+          if (err?.status === 403) {
+            await this.db.query(`UPDATE flow_brief_schedules SET enabled=false, disabled_reason='grant_revoked' WHERE id=$1 AND tenant_id=$2`, [b.id, b.tenant_id]);
+            continue;
+          }
+          // Gateway/budget failure: fall back to the extractive brief (noted in coverage).
+          g.coverage.summarization_error = String(err?.message ?? err).slice(0, 200);
+        }
+      }
+      g.coverage.summarized_by = summarizedBy;
+      const r = await this.db.tx(async (q) => {
+        const saved = await this.saveReport(s, `schedule:${b.id}`, key, {
+          title: `${b.name} — ${scheduledAt.slice(0, 16).replace("T", " ")} UTC`, body, claims, coverage: g.coverage,
+          skill: json(b.skill), material_scope: { source_ids: b.source_ids, from, to: scheduledAt } }, { q, brief: { schedule_id: b.id, scheduled_at: scheduledAt } });
+        await this.advanceBrief(q, b, at);
+        return saved;
+      });
+      if (r.report_id && !r.replayed) made++;
     }
     return made;
+  }
+
+  private async advanceBrief(q: Q | null, b: any, at: Date) {
+    await (q ?? this.db).query(`UPDATE flow_brief_schedules SET next_run_at=$3 WHERE id=$1 AND next_run_at=$2`, [b.id, b.next_run_at, nextCron(b.cron, b.timezone, at).toISOString()]);
   }
 }

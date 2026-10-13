@@ -38,6 +38,8 @@ type ToolSpec struct {
 	prepare func(t Tools, ctx context.Context, conv model.FlowAgentConversation, ss SubjectScope, userID string, args map[string]any) (map[string]any, error)
 	// local (optional) answers without calling the Engine.
 	local func(t Tools, ctx context.Context, conv model.FlowAgentConversation, ss SubjectScope, userID string, args map[string]any) (any, error)
+	// after (optional) post-processes a successful engine output (e.g. LLM synthesis).
+	after func(t Tools, ctx context.Context, ss SubjectScope, callID string, args map[string]any, out json.RawMessage) (json.RawMessage, error)
 	// rawArgs skips catalog argument validation (MCP tools: the remote server validates).
 	rawArgs bool
 }
@@ -197,6 +199,8 @@ type Tools struct {
 	RunID string
 	// MCP is the gateway for mcp_* tools (nil = MCP disabled).
 	MCP *MCPGateway
+	// Model is the platform Model Gateway for research synthesis (nil = extractive only).
+	Model ModelGateway
 }
 
 func (t Tools) runKey(conv model.FlowAgentConversation) string {
@@ -335,6 +339,13 @@ func (t Tools) execute(ctx context.Context, row model.FlowAgentToolCall, spec To
 		}
 		if json.Unmarshal(out, &env) == nil && len(env.Data) > 0 {
 			out = env.Data
+		}
+		if spec.after != nil {
+			if post, perr := spec.after(t, ctx, ss, row.CallID, args, out); perr == nil {
+				out = post
+			} else {
+				out = appendField(out, "synthesis_error", perr.Error())
+			}
 		}
 		result.Output = capJSON(out, spec.OutputCap, &result.Truncated)
 	}
@@ -504,4 +515,14 @@ func truncRunes(s string, n int) string {
 func RecordConfirmedPlan(db *gorm.DB, convID, runID string, plan any) error {
 	entry, _ := json.Marshal([]any{map[string]any{"runId": runID, "items": plan, "confirmedAt": time.Now().UTC()}})
 	return db.Model(&model.FlowAgentConversation{}).Where("id = ?", convID).Update("confirmed_plans", string(entry)).Error
+}
+
+func appendField(raw json.RawMessage, k string, v any) json.RawMessage {
+	m := map[string]any{}
+	if json.Unmarshal(raw, &m) != nil {
+		return raw
+	}
+	m[k] = v
+	b, _ := json.Marshal(m)
+	return b
 }

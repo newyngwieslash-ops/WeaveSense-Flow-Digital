@@ -15,6 +15,8 @@ type ResolvedEvidence struct {
 	Revision   int    `json:"revision"`
 	ChunkIndex int    `json:"chunk_index"`
 	Truncated  bool   `json:"truncated"`
+	Title      string `json:"title,omitempty"`
+	Quote      string `json:"quote,omitempty"`
 }
 
 // Citation as submitted by the model.

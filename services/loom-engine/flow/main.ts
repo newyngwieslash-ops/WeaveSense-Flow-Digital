@@ -46,10 +46,33 @@ if (role === "api" || role === "all") {
     }));
   }
 }
+// Platform hooks (re-check grants, LLM brief summarization). Service token, aud = platform issuer.
+const platformBase = env("FLOW_PLATFORM_INTERNAL_URL", "");
+const platformCall = async (path: string, sc: { tenant_id: string; workspace_id: string }, body: unknown) => {
+  const tok = sign(key, { iss: "loom-engine", aud: env("FLOW_INTERNAL_JWT_ISSUER", "flow-platform"), tenant_id: sc.tenant_id, workspace_id: sc.workspace_id,
+    actor: { type: "service_principal", id: "loom-engine" }, scopes: ["flow.grants.check"], policy_version: "policy_v1" });
+  return fetch(`${platformBase}${path}`, { method: "POST", headers: { authorization: `Bearer ${tok}`, "content-type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(120_000) });
+};
+if (platformBase) {
+  engine.authorize = async (sc, scope) => {
+    const r = await platformCall("/api/internal/flow/authorize", sc, { grant_actor: sc.grant_actor, workspace_id: sc.workspace_id, scope });
+    if (r.status === 403) return false;
+    if (!r.ok) throw new Error(`authorize ${r.status}`);
+    return true;
+  };
+}
 if (role === "scheduler" || role === "all") {
   // schedulerTick takes a transaction-scoped advisory lock: one active scanner only.
   void loop("scheduler", Number(env("LOOM_SCHEDULER_TICK_MS", "15000")), () => engine.schedulerTick());
   // Periodic briefs: each (schedule, window) is idempotent, so overlapping ticks produce one report.
   const reports = new Reports(engine);
+  if (platformBase) {
+    reports.summarize = async (input) => {
+      const r = await platformCall("/api/internal/flow/summarize", input, input);
+      if (r.status === 403) throw Object.assign(new Error("grant revoked"), { status: 403 });
+      if (!r.ok) throw new Error(`summarize ${r.status}`);
+      return ((await r.json()) as any).data ?? null;
+    };
+  }
   void loop("briefs", Number(env("LOOM_SCHEDULER_TICK_MS", "15000")), () => reports.briefTick());
 }

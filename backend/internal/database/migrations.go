@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const CurrentSchemaVersion int64 = 54
+const CurrentSchemaVersion int64 = 55
 
 const baselineSchemaChecksum = "sha256:open-ai-canvas-schema-v1-20260830"
 const schemaMigrationAppliedAtIndexChecksum = "sha256:schema-migrations-applied-at-index-v2-20260830"
@@ -175,6 +175,16 @@ var schemaMigrations = []migration{
 	}},
 	{version: 54, name: "flow_mcp_gateway", checksum: "sha256:flow-mcp-gateway-v54-20261013", apply: func(tx *gorm.DB) error {
 		return tx.AutoMigrate(&model.FlowMCPConnection{}, &model.FlowMCPUsage{})
+	}},
+	{version: 55, name: "flow_billing_orgs", checksum: "sha256:flow-billing-orgs-v55-20261013", apply: func(tx *gorm.DB) error {
+		if err := tx.AutoMigrate(&model.FlowBillingAccount{}, &model.FlowBudgetReservation{}, &model.FlowInvite{}); err != nil {
+			return err
+		}
+		// Shared billing account migration: every existing tenant gets one
+		// account whose payer is the tenant owner.
+		return tx.Exec(`INSERT INTO flow_billing_accounts (id, tenant_id, payer_user_id, kind, monthly_quota_micro, max_open_reserves, created_at, updated_at)
+			SELECT 'ba_' || t.id, t.id, t.owner_user_id, CASE WHEN t.kind = 'organization' THEN 'shared' ELSE 'personal' END, 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+			FROM flow_tenants t WHERE t.owner_user_id <> '' AND NOT EXISTS (SELECT 1 FROM flow_billing_accounts b WHERE b.tenant_id = t.id)`).Error
 	}},
 }
 

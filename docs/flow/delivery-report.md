@@ -61,7 +61,7 @@
 | Item | Value |
 |---|---|
 | Branch | `p2-agent-evidence` (from main `ca239238`) |
-| PR | #2 to `main`, not merged |
+| PR | https://github.com/newyngwieslash-ops/WeaveSense-Flow/pull/7 (number 7 because Dependabot opened #2–#6), not merged; CI on c5f13443: Backend checks, Web checks, Payment plugin artifacts all pass |
 | Scope / gaps | `docs/flow/p2-implementation.md` — **Pi runtime loop not yet wired to intel tools** |
 
 ### Verification actually executed

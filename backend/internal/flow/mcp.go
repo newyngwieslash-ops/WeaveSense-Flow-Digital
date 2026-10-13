@@ -114,6 +114,9 @@ func (g MCPGateway) credential(ref string) (string, error) {
 	if g.Credentials != nil {
 		return g.Credentials(ref)
 	}
+	if strings.HasPrefix(ref, "oauth:") {
+		return OAuthClientCredentials{DB: g.DB}.Token(context.Background(), ref)
+	}
 	return EnvCredentials(ref)
 }
 
@@ -148,7 +151,7 @@ func (g MCPGateway) Create(scope Scope, userID string, in MCPConnectionInput) (m
 	if in.Transport != "streamable_http" {
 		return model.FlowMCPConnection{}, fmt.Errorf("%w: only streamable_http transport is supported", ErrMCPInvalid)
 	}
-	if in.CredentialRef != "" && !strings.HasPrefix(in.CredentialRef, "env:FLOW_MCP_CRED_") {
+	if in.CredentialRef != "" && !strings.HasPrefix(in.CredentialRef, "env:FLOW_MCP_CRED_") && !strings.HasPrefix(in.CredentialRef, "oauth:FLOW_MCP_OAUTH_") {
 		return model.FlowMCPConnection{}, fmt.Errorf("%w: credential ref must be env:FLOW_MCP_CRED_*", ErrMCPInvalid)
 	}
 	clamp := func(v, def, max int) int {

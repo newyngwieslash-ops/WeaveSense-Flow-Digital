@@ -1,17 +1,31 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button, Card, Checkbox, Input, InputNumber, List, Select, Space, Tag, Typography, message } from "antd";
 
-import { approveMcpConnection, createMcpConnection, discoverMcpTools, listIntelWorkspaces, listMcpConnections, revokeMcpConnection, type IntelWorkspace, type McpConnection, type McpTool } from "@/services/api/intelligence";
+import {
+    approveMcpConnection,
+    createMcpConnection,
+    discoverMcpTools,
+    listIntelWorkspaces,
+    listMcpCalls,
+    listMcpConnections,
+    resolveMcpCall,
+    revokeMcpConnection,
+    type IntelWorkspace,
+    type McpCall,
+    type McpConnection,
+    type McpTool,
+} from "@/services/api/intelligence";
 
 const STATUS_COLOR: Record<string, string> = { approved: "green", pending: "blue", needs_reapproval: "orange", revoked: "red" };
 
-/** P4: managed MCP connections. Credentials are referenced by name only (env:FLOW_MCP_CRED_*); values never reach the browser. */
+/** P4: managed MCP connections. Credentials are referenced by name only (env:FLOW_MCP_CRED_* or oauth:FLOW_MCP_OAUTH_*); values never reach the browser. */
 export default function McpConnectionsPage() {
     const [workspaces, setWorkspaces] = useState<IntelWorkspace[]>([]);
     const [workspaceId, setWorkspaceId] = useState<string>();
     const [rows, setRows] = useState<McpConnection[]>([]);
     const [form, setForm] = useState({ name: "", endpoint: "", credentialRef: "", maxCallsPerDay: 0, perCallCredits: 0 });
     const [review, setReview] = useState<{ id: string; tools: McpTool[]; picked: string[] }>();
+    const [unknownCalls, setUnknownCalls] = useState<McpCall[]>([]);
 
     useEffect(() => {
         void listIntelWorkspaces().then((list) => {
@@ -20,10 +34,14 @@ export default function McpConnectionsPage() {
         });
     }, []);
     const refresh = useCallback(() => {
-        if (workspaceId)
+        if (workspaceId) {
             void listMcpConnections(workspaceId)
                 .then(setRows)
                 .catch(() => setRows([]));
+            void listMcpCalls(workspaceId, "unknown")
+                .then(setUnknownCalls)
+                .catch(() => setUnknownCalls([]));
+        }
     }, [workspaceId]);
     useEffect(refresh, [refresh]);
 
@@ -112,6 +130,33 @@ export default function McpConnectionsPage() {
                                     </Card>
                                 )}
                             </div>
+                        </List.Item>
+                    )}
+                />
+            </Card>
+            <Card size="small" title={`Unknown-outcome calls (${unknownCalls.length})`} style={{ gridColumn: "1 / -1" }}>
+                <Typography.Paragraph type="secondary">
+                    Calls whose result was lost and could not be reconciled automatically. Check the remote system, then resolve: executed calls are charged once; not-executed calls may be retried under the same key.
+                </Typography.Paragraph>
+                <List
+                    size="small"
+                    dataSource={unknownCalls}
+                    locale={{ emptyText: "No unresolved calls" }}
+                    renderItem={(call) => (
+                        <List.Item>
+                            <Space wrap>
+                                <Tag color="orange">{call.status}</Tag>
+                                <span>{call.tool}</span>
+                                <Typography.Text type="secondary">
+                                    {call.idemKey} · attempts {call.attempts} · {call.updatedAt}
+                                </Typography.Text>
+                                <Button size="small" onClick={() => void guard(() => resolveMcpCall(workspaceId!, call.id, "succeeded"))}>
+                                    Mark executed
+                                </Button>
+                                <Button size="small" onClick={() => void guard(() => resolveMcpCall(workspaceId!, call.id, "not_executed"))}>
+                                    Mark not executed
+                                </Button>
+                            </Space>
                         </List.Item>
                     )}
                 />

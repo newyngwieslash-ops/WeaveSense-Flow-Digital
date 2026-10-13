@@ -9,14 +9,14 @@ const B = { tenant_id: "tn_b", workspace_id: "ws_b" };
 const clock = () => new Date("2026-10-13T00:00:00Z");
 
 // Fixture: Telethon worker /v1/history (contract of workers/telethon/server.py). Honors min_id.
-function telethonFixture(posts: { id: number; text: string; media?: string[] }[], calls: any[] = [], fail?: () => boolean): typeof fetch {
+function telethonFixture(posts: { id: number; text: string; media?: string[]; status?: string }[], calls: any[] = [], fail?: () => boolean): typeof fetch {
   return (async (url: any, init: any) => {
     const body = JSON.parse(init.body);
     calls.push({ url: String(url), body });
     if (fail?.()) return new Response(JSON.stringify({ error: "worker down" }), { status: 502 });
     const min = Number(body.min_id);
     const items = posts.filter((p) => p.id > min).map((p) => ({ external_id: `${body.channel}/${p.id}`, title: "", body: p.text, url: `https://t.me/${body.channel}/${p.id}`,
-      published_at: "2026-10-12T00:00:00Z", media_urls: p.media ?? [], media_type: p.media?.length ? "image" : "text" }));
+      published_at: "2026-10-12T00:00:00Z", media_urls: p.media ?? [], media_type: p.media?.length || p.status ? "image" : "text", ...(p.status ? { media_status: p.status } : {}) }));
     return new Response(JSON.stringify({ items, last_id: String(posts.at(-1)?.id ?? min) }), { status: 200 });
   }) as any;
 }
@@ -107,4 +107,16 @@ test("on-demand extraction: main text becomes a new revision; old revision kept"
   assert.equal((await eng.getRevision(A, doc.id, 1)).body, "short teaser");
   await assert.rejects(eng.extractDocument(B, { document_id: doc.id }), (e: any) => e.status === 404);
   assert.equal(extractMainText("<p>tiny</p>").text, "tiny");
+});
+
+test("telegram media: worker-saved media is stored, oversize media is recorded with its reason", async () => {
+  const posts = [{ id: 20, text: "photo", media: ["http://minio:9000/loom/telegram/energynews/20.jpg"], status: "saved" }, { id: 21, text: "huge video", status: "too_large" }];
+  const eng = await setup(connectorFetcher({ telegramWorkerUrl: "http://tg", fetchImpl: telethonFixture(posts), mode: "fixture" }));
+  const src = await eng.createSource(A, { kind: "telegram", config: { handle: "energynews" } });
+  await eng.requestCollection(A, "m1", { source_ids: [src.id] }); await eng.workOnce("w");
+  const rows = (await eng.db.query(`SELECT external_id, media FROM flow_documents ORDER BY external_id`)).rows;
+  assert.equal(rows[0].media[0].status, "stored"); assert.match(rows[0].media[0].url, /20\.jpg$/);
+  assert.equal(rows[1].media[0].status, "too_large");
+  const smp = (await eng.db.query(`SELECT media_unsupported FROM flow_connector_samples`)).rows[0];
+  assert.equal(smp.media_unsupported, 1);
 });

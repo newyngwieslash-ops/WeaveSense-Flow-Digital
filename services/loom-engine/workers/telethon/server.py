@@ -109,12 +109,56 @@ def media_kind(message: Message) -> str:
     return "text" if (message.raw_text or "").strip() else "link"
 
 
-async def save_media(_message: Message, _channel: str) -> tuple[list[str], str]:
-    # ponytail: inline video/photo download exceeds the app's 60s /v1/history
-    # budget, so authorized scans silently fall back to t.me/s (~20 preview
-    # items, items_new=0). History returns type/text only; binary ingest is
-    # the nodes-page 媒体落盘 path.
-    return [], ""
+MEDIA_MAX_BYTES = int(os.environ.get("TELEGRAM_MEDIA_MAX_BYTES") or str(20 * 1024 * 1024))
+MEDIA_TIMEOUT = float(os.environ.get("TELEGRAM_MEDIA_TIMEOUT_SECONDS") or "15")
+MEDIA_EXT = {"image": "jpg", "video": "mp4", "audio": "ogg", "file": "bin"}
+
+
+def media_size(message: Message) -> int:
+    doc = getattr(message, "document", None)
+    if doc is not None and getattr(doc, "size", None):
+        return int(doc.size)
+    photo = getattr(message, "photo", None)
+    sizes = getattr(photo, "sizes", None) or []
+    best = 0
+    for s in sizes:
+        best = max(best, int(getattr(s, "size", 0) or max(getattr(s, "sizes", None) or [0])))
+    return best
+
+
+async def save_media(message: Message, channel: str) -> tuple[list[str], str, str]:
+    """Downloads photo/video/audio/file media into object storage.
+
+    Returns (urls, thumbnail, status). Bounded by TELEGRAM_MEDIA_MAX_BYTES (checked
+    before download, and again on the bytes) and TELEGRAM_MEDIA_TIMEOUT_SECONDS so one
+    large file can never stall the 60s history budget. status: saved | none |
+    disabled (no object storage) | too_large | timeout | failed.
+    """
+    kind = media_kind(message)
+    if kind not in MEDIA_EXT or getattr(message, "media", None) is None:
+        return [], "", "none"
+    if not minio_client:
+        return [], "", "disabled"
+    size = media_size(message)
+    if size and size > MEDIA_MAX_BYTES:
+        return [], "", "too_large"
+    try:
+        data = await asyncio.wait_for(message.download_media(file=bytes), timeout=MEDIA_TIMEOUT)
+    except asyncio.TimeoutError:
+        return [], "", "timeout"
+    except Exception as exc:  # noqa: BLE001
+        print(f"media download failed {channel}/{message.id}: {exc}", flush=True)
+        return [], "", "failed"
+    if not data:
+        return [], "", "failed"
+    if len(data) > MEDIA_MAX_BYTES:
+        return [], "", "too_large"
+    mime = getattr(getattr(message, "document", None), "mime_type", "") or ("image/jpeg" if kind == "image" else "application/octet-stream")
+    key = f"telegram/{channel}/{message.id}.{MEDIA_EXT[kind]}"
+    url = await upload_bytes(key, data, mime)
+    if not url:
+        return [], "", "failed"
+    return [url], (url if kind == "image" else ""), "saved"
 
 
 async def normalize(message: Message, channel: str) -> dict[str, Any]:
@@ -126,7 +170,7 @@ async def normalize(message: Message, channel: str) -> dict[str, Any]:
         sender = getattr(who, "username", None) or getattr(who, "title", None) or getattr(who, "first_name", "") or ""
     except Exception:
         sender = channel
-    media_urls, thumb = await save_media(message, channel)
+    media_urls, thumb, media_status = await save_media(message, channel)
     kind = media_kind(message)
     published = message.date.isoformat() if message.date else None
     return {
@@ -137,6 +181,7 @@ async def normalize(message: Message, channel: str) -> dict[str, Any]:
         "url": f"https://t.me/{channel}/{message.id}",
         "media_type": kind,
         "media_urls": media_urls,
+        "media_status": media_status,
         "thumbnail_url": thumb,
         "views": int(message.views) if message.views is not None else None,
         "likes": int(message.forwards) if message.forwards is not None else None,

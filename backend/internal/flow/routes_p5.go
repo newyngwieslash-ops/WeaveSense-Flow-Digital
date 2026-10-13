@@ -51,21 +51,17 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 	}
 	g := api.Group("/intelligence")
 	g.POST("/notifications/:id/read", func(c *gin.Context) {
-		s, _, ok := scoped(c)
+		s, u, ok := scoped(c)
 		if !ok {
 			return
 		}
-		now := time.Now()
-		q := db.Model(&model.FlowNotification{}).Where("tenant_id = ? AND workspace_id = ? AND read_at IS NULL", s.TenantID, s.WorkspaceID)
-		if id := c.Param("id"); id != "all" {
-			q = q.Where("id = ?", id)
-		}
-		r := q.Update("read_at", now)
-		if r.Error != nil {
+		var n int64
+		err := TenantTx(db, s.TenantID, func(tx *gorm.DB) (e error) { n, e = MarkNotificationsRead(tx, s, u.ID, c.Param("id")); return })
+		if err != nil {
 			reply(c, http.StatusInternalServerError, nil, "update error")
 			return
 		}
-		reply(c, http.StatusOK, gin.H{"updated": r.RowsAffected}, "ok")
+		reply(c, http.StatusOK, gin.H{"updated": n}, "ok")
 	})
 	g.GET("/billing", func(c *gin.Context) {
 		s, _, ok := scoped(c)
@@ -214,6 +210,10 @@ func RunBillingMaintenance(ctx context.Context, db *gorm.DB, every time.Duration
 	defer t.Stop()
 	for {
 		_, _ = b.SweepStale(6 * time.Hour)
+		_, _ = b.Reconcile(10*time.Minute, func(r model.FlowBudgetReservation) (Outcome, error) {
+			return ModelStatusFromEnv().Query(ctx, r)
+		})
+		// No status endpoint / still unknown after 24h: charge conservatively.
 		_, _ = b.Reconcile(24*time.Hour, func(r model.FlowBudgetReservation) (Outcome, error) {
 			return Outcome{Known: true, Succeeded: true, Cost: r.ReservedMicro}, nil
 		})

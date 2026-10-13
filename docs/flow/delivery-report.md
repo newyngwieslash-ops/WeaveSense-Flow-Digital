@@ -131,7 +131,7 @@ Pending live acceptance and required credentials: see [pending-acceptance.md](pe
 | A05 | pass | A queued job survives an engine restart. Pi runs: DB lease (`flow_run_leases`) with takeover after expiry. |
 | A06 | pass | A crash before commit leaves no cursor advance and no documents. |
 | A07 | pass | Fencing token rejects a stale worker. Run lease: a stale owner's renew fails, which cancels its session. |
-| A08 | pass (no browser e2e) | Jobs run in the background. Agent run events are persisted and replayable. |
+| A08 | pass (P7: HTTP + browser smoke on the compose stack) | Jobs run in the background. Agent run events are persisted and replayable. |
 | A09 | pass | Multi-turn context carries prior turns and evidence scope. |
 | A10 | pass | Approve, reject and expire are handled; only an approved action executes, exactly once. |
 | A11 | pass | Briefs and reports surface truncation and source failures. LLM synthesis drops claims with invalid citations, and the engine re-validates. |
@@ -141,10 +141,10 @@ Pending live acceptance and required credentials: see [pending-acceptance.md](pe
 | A15 | pass (P6) | `RunSlots`: per-user agent-run and per-tenant research-executor limits (`FLOW_MAX_CONCURRENT_RUNS_PER_USER`, `FLOW_MAX_CONCURRENT_RESEARCH_PER_TENANT`); busy => FIFO queue, release starts the next run, cancel removes a queued run, a cancelled waiter leaves the queue; costs visible in billing (`p6_test.go`). |
 | A16 | pass (P6) | Model Gateway: unknown → reconciled. MCP: `ExecuteKeyed` per tool call key (sent to the server as `_meta.idempotency_key`); a lost response becomes `unknown`; retries reconcile first via the connection's `reconcile_tool` and re-execute only on `not_found`; with no reconcile tool, the call is never retried; credits are charged once (test: server executed once, billed once). |
 | A17 | pass | An insufficient budget or quota blocks new reservations. A revoked MCP connection or source stops new calls, and old evidence stays readable. |
-| A18 | pass for intel DB (platform DB restore uses the same scripts; object storage not tested) | `pg.test.ts` on real PG17: backup → restore into an empty DB; the manifest (row counts and checksums) matches, app reads work, and there is no re-migration. |
+| A18 | pass (P7: object storage round trip on live MinIO added) | `pg.test.ts` on real PG17: backup → restore into an empty DB; the manifest (row counts and checksums) matches, app reads work, and there is no re-migration. |
 | A19 | **pending-credentials** | Telegram and WeChat live samples: see pending-acceptance.md. Deferred to the very last step. |
 | A20 | pass | Each PR merged after green CI, and the remote `main` SHA was verified with `git ls-remote`. |
-| A21 | pass (P6) | `flow_external_waits`: `intel_collect_once` parks the run (checkpoint = run request, reservation ref) on its operation. The deduplicated inbox event marks it ready (and completion consumed before parking is picked up from the projection after a restart). The resumer claims each wait with a conditional update, re-authorizes the grant (revoked → `denied`), and creates exactly one continuation run (idempotency key `autocontinue:<wait>`). Test: 3 duplicate deliveries + 2 resumer passes → 1 resume. |
+| A21 | pass (P6; P7 generalized to every async intel tool) | `flow_external_waits`: `intel_collect_once` parks the run (checkpoint = run request, reservation ref) on its operation. The deduplicated inbox event marks it ready (and completion consumed before parking is picked up from the projection after a restart). The resumer claims each wait with a conditional update, re-authorizes the grant (revoked → `denied`), and creates exactly one continuation run (idempotency key `autocontinue:<wait>`). Test: 3 duplicate deliveries + 2 resumer passes → 1 resume. |
 
 ### Verification actually executed (P5)
 | Check | Result |
@@ -174,3 +174,47 @@ Pending live acceptance and required credentials: see [pending-acceptance.md](pe
 | Branch / PR | `p6-acceptance-gaps` → PR #13 (merged after green CI; merge SHA in the hand-off report, verified with `git ls-remote`) |
 | Schema | platform v57 `flow_acceptance_gaps` (`flow_mcp_calls`, `flow_run_slots`, `flow_external_waits`) |
 | Tests | `backend/internal/flow/p6_test.go`: A15 FIFO queue, per-owner isolation, release → next, queued cancel, cancelled waiter; A16 lost response → unknown → reconcile without re-execution, billed once, key reuse with different args rejected, no reconcile tool → never retried; A21 idempotent park, duplicate completion events, repeated resumer, completion before park, revoked grant denied. Plus `go test ./internal/flow ./internal/database ./cmd/...` all pass; `internal/app` only the 5 known Pi e2e env failures. |
+
+## P7 — Close remaining development gaps (2026-10-13, Asia/Shanghai)
+
+| Item | Value |
+|---|---|
+| Branch / PR | `p7-close-gaps` (merged after green CI; the merge SHA is recorded by the follow-up docs PR) |
+| Schema | platform v58 `flow_gaps_p7`: `flow_notification_reads`, `flow_oauth_tokens`, Postgres RLS policies on platform flow tables |
+
+### Closed gaps
+| Gap | Resolution |
+|---|---|
+| Auto-continue only for `intel_collect_once` | Every `intel_*` tool whose output carries a non-terminal `operation_id`/`operation` now parks (research, extract, brief, collect, …). `intel_get_operation` and `intel_cancel_operation` never park, and terminal outputs are not parked. |
+| MCP unknown calls need an operator path | `GET /intelligence/mcp/calls?status=unknown` and `POST /intelligence/mcp/calls/:id/resolve {outcome: succeeded\|not_executed}`. Admin only; charged once; cross-tenant access → 404. UI: "Unknown-outcome calls" on the MCP page. |
+| Model Gateway has no status path | Requests carry `Idempotency-Key`. With `FLOW_MODEL_GATEWAY_STATUS_URL` set, unknown reservations are reconciled after 10 min (`succeeded` → settle at actual tokens; `not_found`/`failed` → release; `pending` → keep). The 24 h conservative charge stays as a last resort. Operator resolve: `POST /intelligence/billing/reservations/:id/resolve`; the billing UI has "Mark executed / not executed". |
+| Platform DB has no RLS | v58 enables and forces RLS with a `tenant_isolation` policy on 11 platform tables (conversations, messages, tool calls, notifications, MCP connections/usages/calls, reservations, invites, external waits, skill installs). `flow.TenantTx` sets `app.tenant_id` per transaction; an empty value is system context. Verified on real Postgres 17 as a non-superuser (`TestFlowRLSPostgres`): foreign rows are hidden, a cross-tenant update affects 0 rows, and a cross-tenant insert is rejected. |
+| Canvas sidebar conversations are separate | A canvas document save mirrors each sidebar conversation into the shared directory (`subject=canvas`, stable id, new user/assistant messages appended idempotently). The intelligence list shows them tagged "canvas". |
+| Org UI has no member list or role editing | `GET /intelligence/members`, `PATCH /intelligence/members/:userId {role: admin\|member\|viewer}`. Owners are immutable, the last admin is protected, and only admins can edit. Workspace roles follow (viewer loses write scopes). UI: a "Members" card with a role selector. |
+| Notification read state is per workspace | Read state is now per user (`flow_notification_reads`): "mark all read" affects only the caller. |
+| No topic-specific tool sets | Topic subjects get an analysis-only set: search, read, extract, get/cancel operation, load skill, research, save report. No monitors, schedules, collection or MCP. Enforced in both the Pi tool table and `Tools.Invoke` (`ErrToolNotInSubjectSet`). |
+| Web run-end detection relied on heuristics | The SSE stream sends an explicit `run_terminal {runId,status}` event before closing. The client emits it and stops; the intelligence page finishes on it (a `run_status` fallback remains for older servers). |
+| Object storage backup/restore untested | `deploy/flow/backup/objects-{backup,restore,test}.sh`: mirror plus a sha256 manifest, and a restore that re-downloads and verifies end to end. Tested on the live compose MinIO: 3 objects across 2 buckets, bucket deletion → restore verified, and a tampered backup is refused. |
+| Telegram media not downloaded | The Telethon worker's `save_media` downloads with `message.download_media` and enforces `TELEGRAM_MEDIA_MAX_BYTES` (checked before and after download) and `TELEGRAM_MEDIA_TIMEOUT_SECONDS`. It uploads to the intel bucket (`telegram/<channel>/<id>.<ext>`) and reports `media_status` saved/none/disabled/too_large/timeout/failed. The engine maps this to stored/too_large/timeout/failed/disabled and counts only non-stored media as unsupported. Covered by 5 fixture tests (`test_media.py`) and an engine test. Compose has an optional `telethon` service (`--profile telegram`). |
+| MCP OAuth | credentialRef `oauth:FLOW_MCP_OAUTH_<NAME>` uses the client-credentials grant from server env, with the token cached server-side (`flow_oauth_tokens`) until 60 s before expiry. Never returned by the API. Tested against an httptest token server: basic auth, scope, caching, wrong secret rejected. |
+| No Docker boot / e2e | Docker 26 + compose 2.26 installed on the build box and the full stack built and booted. Upstream MinIO images are no longer pullable, so the defaults were switched to `cgr.dev/chainguard/minio` and `bitnamilegacy/minio-client` (overridable). `deploy/flow/smoke.sh` passed 16/16 over HTTP through nginx. `deploy/flow/browser-smoke.mjs` (headless Chrome) passed 6/6 and rendered the intelligence and MCP pages with no page errors. |
+| `.env.flow.example` pointed the Model Gateway at a nonexistent internal URL | Now empty by default, with documented gateway, status, OAuth, Telegram media and connector variables. |
+
+### Verification actually executed (P7)
+| Check | Result |
+|---|---|
+| `go vet ./...`, `go test ./...` | pass. The only failures are the 5 known `internal/app` Pi e2e tests (local Pi node_modules missing; green in CI). New: `p7_test.go` (7 tests). |
+| `TestFlowRLSPostgres` on real Postgres 17 (non-superuser `flow_app`) | pass |
+| Engine `node --test flow/*.test.ts` with real-PG tests enabled (PG17 + `flow_app`) | 33/33 pass |
+| Telethon worker `python3 -m unittest test_media test_history` | 10/10 pass |
+| Web `tsc --noEmit`, eslint, prettier (changed files), `bun test` | pass (2220 tests) |
+| Compose stack: build + boot + `smoke.sh` + `browser-smoke.mjs` + `objects-test.sh` | pass (16/16, 6/6, round trip + tamper) |
+
+### Remaining (honest)
+- **A19** live Telegram/WeChat (and live MCP) acceptance needs your credentials. Follow `docs/flow/local-acceptance.md`.
+- Platform RLS is defense in depth. It applies only when the platform connects as a non-superuser role (the compose `PLATFORM_DB_USER` is not a superuser) and inside `TenantTx`. Notification handlers use `TenantTx`; other handlers still run in system context and rely on application scoping, as before.
+- The Model Gateway is still a synchronous OpenAI-compatible call (now idempotency-keyed and status-reconcilable). It is not routed through the canvas async task pipeline.
+- The canvas mirror is one-way (canvas → directory). Canvas conversations are read-only in the intelligence page and continue in the canvas sidebar.
+- MCP OAuth supports the client-credentials grant only. Interactive authorization-code flows are not implemented.
+- The browser smoke checks rendering and API wiring. It does not drive an LLM agent run (no model credentials on the build box).
+- The build box needed an `iptables-legacy` FORWARD rule for the compose bridge (a host quirk; documented in local-acceptance.md).

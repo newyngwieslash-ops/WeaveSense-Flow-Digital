@@ -68,3 +68,11 @@ deploy/flow/backup/restore.sh /backups/intel/flow-<ts>.dump "$NEW_INTEL_DATABASE
   - The outbox is idempotent (`flow_consumed_events`), so engine events newer than the platform snapshot are re-delivered and applied once.
   - Open budget reservations are closed by the billing maintenance loop.
 - **Consistency test.** `services/loom-engine/flow/pg.test.ts` runs against real Postgres as a non-superuser. It populates a database, backs it up, restores it into an empty database, checks the manifest diff and app-level reads, and confirms the restored DB is not re-migrated. Run it with `FLOW_TEST_PG_ADMIN_URL=postgres://<superuser>@host/db FLOW_TEST_PG_APP_ROLE=<role>:<password> node --test flow/pg.test.ts`.
+
+## P7 additions
+- Smoke tests: `deploy/flow/smoke.sh [base]` (HTTP through nginx) and `deploy/flow/browser-smoke.mjs` (headless Chrome, `playwright-core`). Both accept `SMOKE_USER`/`SMOKE_PASSWORD`.
+- Object storage: `deploy/flow/backup/objects-backup.sh <alias> <dir> <bucket>…`, `objects-restore.sh <dir> <alias>`, and the round-trip test `objects-test.sh`.
+- MinIO images default to `cgr.dev/chainguard/minio` and `bitnamilegacy/minio-client` (`FLOW_MINIO_IMAGE` / `FLOW_MC_IMAGE`), because upstream images are no longer pullable.
+- Platform RLS (schema v58) requires the platform to connect as a non-superuser for policies to apply.
+- Optional `telethon` service: `--profile telegram`.
+- Local startup and the A19 checklist: `docs/flow/local-acceptance.md`.

@@ -50,3 +50,21 @@ type FlowExternalWait struct {
 	CreatedAt   time.Time  `json:"createdAt"`
 	ResumedAt   *time.Time `json:"resumedAt"`
 }
+
+// FlowNotificationRead is per-user read state for workspace notifications.
+type FlowNotificationRead struct {
+	UserID         string    `json:"userId" gorm:"primaryKey;size:36"`
+	NotificationID string    `json:"notificationId" gorm:"primaryKey;size:40"`
+	ReadAt         time.Time `json:"readAt"`
+}
+
+// FlowOAuthToken caches an MCP OAuth access token (client credentials) per
+// credential reference. The token never leaves the server.
+type FlowOAuthToken struct {
+	CredentialRef string    `json:"-" gorm:"primaryKey;size:120"`
+	AccessToken   string    `json:"-" gorm:"type:text"`
+	ExpiresAt     time.Time `json:"expiresAt"`
+}
+
+func (FlowNotificationRead) TableName() string { return "flow_notification_reads" }
+func (FlowOAuthToken) TableName() string       { return "flow_oauth_tokens" }

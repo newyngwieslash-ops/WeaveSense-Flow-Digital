@@ -57,6 +57,10 @@ func (g *OpenAICompatGateway) Complete(ctx context.Context, system, user string,
 	if g.Key != "" {
 		req.Header.Set("Authorization", "Bearer "+g.Key)
 	}
+	if k, _ := ctx.Value(modelIdemCtx{}).(string); k != "" {
+		// Lets the gateway dedupe retries and answer status lookups (ModelStatus).
+		req.Header.Set("Idempotency-Key", k)
+	}
 	hc := g.HTTP
 	if hc == nil {
 		hc = &http.Client{Timeout: 90 * time.Second}
@@ -146,7 +150,7 @@ func Synthesize(ctx context.Context, gw ModelGateway, b Billing, req SynthesisRe
 	for _, e := range req.Evidence {
 		fmt.Fprintf(&sb, "- id=%s revision=%d source=%s title=%q\n  quote: %s\n", e.EvidenceID, e.Revision, e.SourceID, e.Title, truncRunes(e.Quote, 600))
 	}
-	text, cost, err := gw.Complete(ctx, synthesisSystem, sb.String(), req.MaxTokens)
+	text, cost, err := gw.Complete(context.WithValue(ctx, modelIdemCtx{}, req.Key), synthesisSystem, sb.String(), req.MaxTokens)
 	if err != nil {
 		if errors.Is(err, ErrModelUnknownOutcome) {
 			_ = b.MarkUnknown(rsv, "model:"+req.Key, err.Error())

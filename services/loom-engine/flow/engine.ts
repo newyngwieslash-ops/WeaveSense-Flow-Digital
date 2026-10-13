@@ -252,7 +252,7 @@ export class Engine {
           const mid = telegramMessageId(it.external_id);
           if (Number.isFinite(mid) && (!Number.isFinite(maxMsg) || mid > maxMsg)) maxMsg = mid;
         }
-        mediaUnsupported += it.media?.length ?? 0;
+        mediaUnsupported += (it.media ?? []).filter((m) => m.status !== "stored").length;
         const ins = await q.query(`INSERT INTO flow_documents (id, tenant_id, workspace_id, source_id, external_id, url, title, published_at, media)
             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (tenant_id, source_id, external_id) DO NOTHING RETURNING id`,
           [newId("doc_"), run.tenant_id, run.workspace_id, src.id, it.external_id, it.url ?? "", it.title ?? "", it.published_at, JSON.stringify(it.media ?? [])]);

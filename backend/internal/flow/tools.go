@@ -229,6 +229,9 @@ func (t Tools) Invoke(ctx context.Context, conv model.FlowAgentConversation, ss 
 	if !ok {
 		return ToolResult{}, ErrToolUnknown
 	}
+	if !ToolAllowedForSubject(ss.Subject.Kind, name) {
+		return ToolResult{}, ErrToolNotInSubjectSet
+	}
 	if conv.TenantID != ss.Scope.TenantID || conv.WorkspaceID != ss.Scope.WorkspaceID {
 		return ToolResult{}, ErrForbidden
 	}

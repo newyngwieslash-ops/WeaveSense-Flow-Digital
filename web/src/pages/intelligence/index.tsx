@@ -75,15 +75,17 @@ export default function IntelligencePage() {
     const send = async () => {
         const prompt = text.trim();
         if (!prompt || runId) return;
-        if (active?.subjectKind === "canvas") {
-            void message.info("This conversation belongs to a canvas; continue it from the canvas sidebar.");
-            return;
-        }
         const conv = await ensureConversation();
         setText("");
         setStreaming("");
         try {
-            const { run } = await createAgentRun({ subject: { kind: conv.subjectKind as "intelligence_workspace" | "topic", id: conv.subjectId }, conversationId: conv.id, prompt, permissionMode: "request_approval", idempotencyKey: newCallId() });
+            const { run } = await createAgentRun({
+                subject: { kind: conv.subjectKind as "intelligence_workspace" | "topic" | "canvas", id: conv.subjectId },
+                conversationId: conv.id,
+                prompt,
+                permissionMode: "request_approval",
+                idempotencyKey: newCallId(),
+            });
             setRunId(run.id);
             await refreshMessages(conv);
             unsubscribe.current?.();

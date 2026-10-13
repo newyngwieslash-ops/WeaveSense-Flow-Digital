@@ -115,7 +115,7 @@ Pending live acceptance and required credentials: see [pending-acceptance.md](pe
 | Item | Value |
 |---|---|
 | Target repository | https://github.com/newyngwieslash-ops/WeaveSense-Flow |
-| Branches / PRs | `p5-billing-saas` → PR #10 (merged, merge commit `5abe97947157948e3c7a75be8103849963227e59`); `p5-hardening` → PR #11 (merged after green CI; merge SHA recorded in the hand-off report and verified with `git ls-remote origin refs/heads/main`) |
+| Branches / PRs | `p5-billing-saas` → PR #10 (merged, merge commit `5abe97947157948e3c7a75be8103849963227e59`); `p5-hardening` → PR #11 (merged after green CI, merge commit `07f49467338d671882d98b95fa1806308fffbbf2`, verified with `git ls-remote origin refs/heads/main`); this report update → PR #12 |
 | Earlier merges | PR #7 P2b `f7e29746`, PR #8 P3 `339b977c`, PR #9 P4 `937e4ac3` |
 | Scope / gaps | [p5-implementation.md](p5-implementation.md), [release-deploy.md](release-deploy.md), [pending-acceptance.md](pending-acceptance.md) |
 | Not touched | Dependabot PRs #2–#6; no force-push |

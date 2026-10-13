@@ -118,7 +118,7 @@ function WelcomeExperience({ look, brandName, onLookChange }: { look: WelcomeLoo
             </aside>
 
             <main>
-                <section ref={storyRef} id="story" className="welcome-story" aria-label="影策创作之旅">
+                <section ref={storyRef} id="story" className="welcome-story" aria-label="源铭振跃创作之旅">
                     <div className={`welcome-stage chapter-${chapter}${staticScene ? " is-static" : ""}`}>
                         <div className={`welcome-poster${ready && !staticScene ? " is-ready" : ""}`} aria-hidden="true"><img src={look.frames[staticScene ? chapter * 2 : 0]} alt="" fetchPriority="high" /></div>
                         {!staticScene && <SceneBoundary onError={() => setFailed(true)}><Suspense fallback={null}><StoryReel look={look} progress={progressRef} paused={paused} onReady={() => setReady(true)} onError={() => setFailed(true)} /></Suspense></SceneBoundary>}

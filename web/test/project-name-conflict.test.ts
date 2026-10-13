@@ -11,10 +11,15 @@ describe("project name conflict retries", () => {
         });
 
         expect(shouldRetryProjectNameConflict(projectNameConflict, 0)).toBe(true);
-        expect(shouldRetryProjectNameConflict(new ApiError("项目名称已存在", {
-            status: 409,
-            reason: "conflict",
-        }), 0)).toBe(false);
+        expect(
+            shouldRetryProjectNameConflict(
+                new ApiError("项目名称已存在", {
+                    status: 409,
+                    reason: "conflict",
+                }),
+                0,
+            ),
+        ).toBe(false);
         expect(shouldRetryProjectNameConflict(new Error("项目名称已存在"), 0)).toBe(false);
     });
 

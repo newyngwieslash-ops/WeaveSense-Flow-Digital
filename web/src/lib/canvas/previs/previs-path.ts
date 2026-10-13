@@ -70,7 +70,7 @@ export function timePrevisPath(points: readonly PrevisVec3[], start: number, dur
     }
     if (!clean.length) return [];
     if (clean.length === 1) return [{ time: start, position: clean[0] }];
-    const lengths = clean.map((point, index) => index === 0 ? 0 : pointDistance(clean[index - 1], point));
+    const lengths = clean.map((point, index) => (index === 0 ? 0 : pointDistance(clean[index - 1], point)));
     const total = lengths.reduce((sum, value) => sum + value, 0);
     if (total <= POINT_EPSILON) return [{ time: start, position: clean[0] }];
     let travelled = 0;
@@ -92,13 +92,7 @@ export function previsPathHeading(points: readonly PrevisVec3[], index: number, 
     return Math.hypot(dx, dz) > POINT_EPSILON ? Math.atan2(dx, dz) : fallback;
 }
 
-export function buildPrevisPathKeyframes(input: {
-    base: PrevisTransform;
-    points: readonly PrevisVec3[];
-    start?: number;
-    duration: number;
-    orientToPath?: boolean;
-}): PrevisKeyframe[] {
+export function buildPrevisPathKeyframes(input: { base: PrevisTransform; points: readonly PrevisVec3[]; start?: number; duration: number; orientToPath?: boolean }): PrevisKeyframe[] {
     const start = input.start ?? 0;
     const simplified = simplifyPrevisPath(input.points, 0.025);
     const waypoints = timePrevisPath(simplified, start, input.duration);
@@ -108,7 +102,17 @@ export function buildPrevisPathKeyframes(input: {
         easing: "smooth",
         transform: {
             position: waypoint.position,
-            rotation: input.orientToPath ? [input.base.rotation[0], previsPathHeading(waypoints.map((item) => item.position), index, input.base.rotation[1]), input.base.rotation[2]] : input.base.rotation,
+            rotation: input.orientToPath
+                ? [
+                      input.base.rotation[0],
+                      previsPathHeading(
+                          waypoints.map((item) => item.position),
+                          index,
+                          input.base.rotation[1],
+                      ),
+                      input.base.rotation[2],
+                  ]
+                : input.base.rotation,
             scale: input.base.scale,
         },
     }));

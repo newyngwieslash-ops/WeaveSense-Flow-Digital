@@ -111,9 +111,7 @@ export function useCanvasProjectLifecycle({
         const applyRestoredProject = (targetProject: CanvasProject) => {
             if (cancelled) return;
             const fallbackTheme = useCanvasThemeStore.getState().theme;
-            const restoredAppearance = targetProject.appearance
-                ? normalizeCanvasAppearance(targetProject.appearance, fallbackTheme)
-                : canvasAppearanceForTheme(fallbackTheme);
+            const restoredAppearance = targetProject.appearance ? normalizeCanvasAppearance(targetProject.appearance, fallbackTheme) : canvasAppearanceForTheme(fallbackTheme);
             const initialNodes = normalizeCanvasNodeTimestamps(resetInterruptedGeneration(targetProject.nodes), {
                 createdAt: targetProject.createdAt,
                 updatedAt: targetProject.updatedAt,
@@ -164,11 +162,12 @@ export function useCanvasProjectLifecycle({
             // 画布媒体由节点自己的视口观察器按需加载；打开时遍历并解析全部节点会让大画布形成 N+1 资源读取。
             void hydrateAssistantImages(project.chatSessions || [])
                 .then((hydratedSessions) => {
-                    if (!cancelled) setChatSessions((current) => {
-                        const merged = mergeHydratedSessions(current, hydratedSessions);
-                        if (observedContentRef.current?.chatSessions === current) observedContentRef.current = { ...observedContentRef.current, chatSessions: merged };
-                        return merged;
-                    });
+                    if (!cancelled)
+                        setChatSessions((current) => {
+                            const merged = mergeHydratedSessions(current, hydratedSessions);
+                            if (observedContentRef.current?.chatSessions === current) observedContentRef.current = { ...observedContentRef.current, chatSessions: merged };
+                            return merged;
+                        });
                 })
                 .catch(() => {
                     if (!cancelled) message.warning("部分助手会话素材恢复失败，已使用项目记录继续打开");
@@ -205,26 +204,30 @@ export function useCanvasProjectLifecycle({
         };
     }, [projectLoaded]);
 
-    useEffect(() => subscribeAgentCanvasRefresh((project, previous) => {
-        if (!projectLoaded || project.id !== projectId) return;
-        // Merge only server-changed fields so dragging/editing other nodes can
-        // continue while Agent media tasks complete. Same-field conflicts fail.
-        const merged = previous ? mergeAgentCanvasEditor(previous, project, nodesRef.current, connectionsRef.current) : project;
-        if (observedContentRef.current) {
-            const observed = observedContentRef.current;
-            // Advance only the observed server fields; edits in live refs still
-            // differ from this baseline and must be persisted by the effect below.
-            const baseline = previous ? mergeAgentCanvasEditor(previous, project, observed.nodes, observed.connections) : project;
-            observedContentRef.current = { ...observed, nodes: baseline.nodes, connections: baseline.connections };
-        }
-        nodesRef.current = merged.nodes;
-        connectionsRef.current = merged.connections;
-        setNodes(merged.nodes);
-        setConnections(merged.connections);
-        const previousIds = new Set(previous?.nodes.map((node) => node.id));
-        const created = project.nodes.filter((node) => !previousIds.has(node.id));
-        if (created.length) setAgentCreatedNodes({ projectId: project.id, nodes: created });
-    }), [projectId, projectLoaded, nodesRef, connectionsRef, setNodes, setConnections]);
+    useEffect(
+        () =>
+            subscribeAgentCanvasRefresh((project, previous) => {
+                if (!projectLoaded || project.id !== projectId) return;
+                // Merge only server-changed fields so dragging/editing other nodes can
+                // continue while Agent media tasks complete. Same-field conflicts fail.
+                const merged = previous ? mergeAgentCanvasEditor(previous, project, nodesRef.current, connectionsRef.current) : project;
+                if (observedContentRef.current) {
+                    const observed = observedContentRef.current;
+                    // Advance only the observed server fields; edits in live refs still
+                    // differ from this baseline and must be persisted by the effect below.
+                    const baseline = previous ? mergeAgentCanvasEditor(previous, project, observed.nodes, observed.connections) : project;
+                    observedContentRef.current = { ...observed, nodes: baseline.nodes, connections: baseline.connections };
+                }
+                nodesRef.current = merged.nodes;
+                connectionsRef.current = merged.connections;
+                setNodes(merged.nodes);
+                setConnections(merged.connections);
+                const previousIds = new Set(previous?.nodes.map((node) => node.id));
+                const created = project.nodes.filter((node) => !previousIds.has(node.id));
+                if (created.length) setAgentCreatedNodes({ projectId: project.id, nodes: created });
+            }),
+        [projectId, projectLoaded, nodesRef, connectionsRef, setNodes, setConnections],
+    );
 
     useEffect(() => {
         if (!projectLoaded || historyPausedRef.current) return;
@@ -250,11 +253,14 @@ export function useCanvasProjectLifecycle({
         };
     }, [projectId, projectLoaded, updateProject, viewport, viewportRef]);
 
-    useEffect(() => () => {
-        if (!projectLoaded) return;
-        if (viewportSaveTimerRef.current) clearTimeout(viewportSaveTimerRef.current);
-        updateProject(projectId, { viewport: viewportRef.current });
-    }, [projectId, projectLoaded, updateProject, viewportRef]);
+    useEffect(
+        () => () => {
+            if (!projectLoaded) return;
+            if (viewportSaveTimerRef.current) clearTimeout(viewportSaveTimerRef.current);
+            updateProject(projectId, { viewport: viewportRef.current });
+        },
+        [projectId, projectLoaded, updateProject, viewportRef],
+    );
 
     const createAndOpenProject = useCallback(() => {
         void createCanvasProjectWithRemoteSync(`自由画布 ${useCanvasStore.getState().projects.length + 1}`).then(({ id, syncError }) => {
@@ -264,7 +270,7 @@ export function useCanvasProjectLifecycle({
     }, [message, navigate]);
 
     const deleteCurrentProject = useCallback(async () => {
-        const drawingIds = nodesRef.current.flatMap((node) => node.type === "drawing" && node.metadata?.drawingId ? [node.metadata.drawingId] : []);
+        const drawingIds = nodesRef.current.flatMap((node) => (node.type === "drawing" && node.metadata?.drawingId ? [node.metadata.drawingId] : []));
         try {
             await deleteCanvasProjectsWithRemoteSync([projectId]);
         } catch (error) {
@@ -272,60 +278,68 @@ export function useCanvasProjectLifecycle({
             return;
         }
         if (drawingIds.length) {
-            void Promise.all(drawingIds.map((drawingId) => removeCanvasDrawing(projectId, drawingId)))
-                .catch(() => message.warning("项目已删除，但部分本地绘图缓存清理失败"));
+            void Promise.all(drawingIds.map((drawingId) => removeCanvasDrawing(projectId, drawingId))).catch(() => message.warning("项目已删除，但部分本地绘图缓存清理失败"));
         }
         cleanupAssetImages();
         navigate("/canvas");
     }, [cleanupAssetImages, message, navigate, nodesRef, projectId]);
 
-    const renameCurrentProject = useCallback((title: string) => {
-        renameProject(projectId, title);
-        // 标题是画布列表和分享入口的元数据，重命名后立即提交，避免只停留在浏览器缓存。
-        void saveRemoteUserDataNow(projectId).catch((error) => {
-            // 后台同步状态统一显示在同步面板，避免每次重试都打断编辑。
-            void error;
-        });
-    }, [message, projectId, renameProject]);
-
-    const persistLocalEdits = useCallback(async (options: { flush?: boolean } = {}) => {
-        const snapshot = { nodes: nodesRef.current, connections: connectionsRef.current, chatSessions, activeChatId, canvasAppearance, backgroundMode, showImageInfo };
-        if (observedContentRef.current && !sameCanvasHistorySnapshot(observedContentRef.current, snapshot)) {
-            updateProject(projectId, {
-                nodes: nodesRef.current,
-                connections: connectionsRef.current,
-                chatSessions,
-                activeChatId,
-                appearance: canvasAppearance,
-                backgroundMode,
-                showImageInfo,
-                viewport: viewportRef.current,
+    const renameCurrentProject = useCallback(
+        (title: string) => {
+            renameProject(projectId, title);
+            // 标题是画布列表和分享入口的元数据，重命名后立即提交，避免只停留在浏览器缓存。
+            void saveRemoteUserDataNow(projectId).catch((error) => {
+                // 后台同步状态统一显示在同步面板，避免每次重试都打断编辑。
+                void error;
             });
-            observedContentRef.current = snapshot;
-        }
-        updateProject(projectId, { viewport: viewportRef.current });
-        if (options.flush !== false) await flushCanvasStorePersistence();
-    }, [activeChatId, backgroundMode, canvasAppearance, chatSessions, connectionsRef, nodesRef, projectId, showImageInfo, updateProject, viewportRef]);
+        },
+        [message, projectId, renameProject],
+    );
 
-    const saveCanvasProject = useCallback(async (options: { requireRemote?: boolean } = {}): Promise<boolean> => {
-        try {
-            await persistLocalEdits();
-        } catch {
-            message.error("画布保存失败，请稍后重试");
-            return false;
-        }
-        try {
-            await saveRemoteUserDataNow(projectId);
-            message.success("画布已保存到云端");
-        } catch (error) {
-            const detail = error instanceof Error ? error.message : "未知错误";
-            // 本地保存已经完成，云端状态统一显示在同步面板，不弹出同步失败 toast。
-            void detail;
-            // Imports can retain their durable local result; sharing requires cloud success.
-            return options.requireRemote === false;
-        }
-        return true;
-    }, [message, persistLocalEdits, projectId]);
+    const persistLocalEdits = useCallback(
+        async (options: { flush?: boolean } = {}) => {
+            const snapshot = { nodes: nodesRef.current, connections: connectionsRef.current, chatSessions, activeChatId, canvasAppearance, backgroundMode, showImageInfo };
+            if (observedContentRef.current && !sameCanvasHistorySnapshot(observedContentRef.current, snapshot)) {
+                updateProject(projectId, {
+                    nodes: nodesRef.current,
+                    connections: connectionsRef.current,
+                    chatSessions,
+                    activeChatId,
+                    appearance: canvasAppearance,
+                    backgroundMode,
+                    showImageInfo,
+                    viewport: viewportRef.current,
+                });
+                observedContentRef.current = snapshot;
+            }
+            updateProject(projectId, { viewport: viewportRef.current });
+            if (options.flush !== false) await flushCanvasStorePersistence();
+        },
+        [activeChatId, backgroundMode, canvasAppearance, chatSessions, connectionsRef, nodesRef, projectId, showImageInfo, updateProject, viewportRef],
+    );
+
+    const saveCanvasProject = useCallback(
+        async (options: { requireRemote?: boolean } = {}): Promise<boolean> => {
+            try {
+                await persistLocalEdits();
+            } catch {
+                message.error("画布保存失败，请稍后重试");
+                return false;
+            }
+            try {
+                await saveRemoteUserDataNow(projectId);
+                message.success("画布已保存到云端");
+            } catch (error) {
+                const detail = error instanceof Error ? error.message : "未知错误";
+                // 本地保存已经完成，云端状态统一显示在同步面板，不弹出同步失败 toast。
+                void detail;
+                // Imports can retain their durable local result; sharing requires cloud success.
+                return options.requireRemote === false;
+            }
+            return true;
+        },
+        [message, persistLocalEdits, projectId],
+    );
 
     const clearCanvasFiles = useCallback(() => {
         cleanupCanvasFiles({ projectId, nodes: [], chatSessions: [] });
@@ -346,25 +360,28 @@ export function useCanvasProjectLifecycle({
     };
 }
 
-
 function sameCanvasHistorySnapshot(left: CanvasHistorySnapshot, right: CanvasHistorySnapshot) {
-    return left.nodes === right.nodes
-        && left.connections === right.connections
-        && left.chatSessions === right.chatSessions
-        && left.activeChatId === right.activeChatId
-        && left.canvasAppearance === right.canvasAppearance
-        && left.backgroundMode === right.backgroundMode
-        && left.showImageInfo === right.showImageInfo;
+    return (
+        left.nodes === right.nodes &&
+        left.connections === right.connections &&
+        left.chatSessions === right.chatSessions &&
+        left.activeChatId === right.activeChatId &&
+        left.canvasAppearance === right.canvasAppearance &&
+        left.backgroundMode === right.backgroundMode &&
+        left.showImageInfo === right.showImageInfo
+    );
 }
 
 function sameCanvasPatch(project: CanvasProject, patch: Pick<CanvasProject, "nodes" | "connections" | "chatSessions" | "activeChatId" | "backgroundMode" | "showImageInfo"> & { appearance: CanvasProject["appearance"] }) {
-    return project.nodes === patch.nodes
-        && project.connections === patch.connections
-        && project.chatSessions === patch.chatSessions
-        && project.activeChatId === patch.activeChatId
-        && project.appearance === patch.appearance
-        && project.backgroundMode === patch.backgroundMode
-        && project.showImageInfo === patch.showImageInfo;
+    return (
+        project.nodes === patch.nodes &&
+        project.connections === patch.connections &&
+        project.chatSessions === patch.chatSessions &&
+        project.activeChatId === patch.activeChatId &&
+        project.appearance === patch.appearance &&
+        project.backgroundMode === patch.backgroundMode &&
+        project.showImageInfo === patch.showImageInfo
+    );
 }
 
 function mergeHydratedSessions(currentSessions: CanvasAssistantSession[], hydratedSessions: CanvasAssistantSession[]) {

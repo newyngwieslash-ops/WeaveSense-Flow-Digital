@@ -34,9 +34,16 @@ export async function createTldrawDrawingFromImage(source: DrawingImageSource) {
         },
     });
     const shape: TLImageShape = {
-        id: createShapeId(), typeName: "shape", type: "image", parentId: page.id,
-        index: "a1" as TLImageShape["index"], x: -width / 2, y: -height / 2, rotation: 0,
-        isLocked: false, opacity: 1,
+        id: createShapeId(),
+        typeName: "shape",
+        type: "image",
+        parentId: page.id,
+        index: "a1" as TLImageShape["index"],
+        x: -width / 2,
+        y: -height / 2,
+        rotation: 0,
+        isLocked: false,
+        opacity: 1,
         props: { w: width, h: height, playing: false, url: "", assetId, crop: null, flipX: false, flipY: false, altText: source.name },
         meta: {},
     };

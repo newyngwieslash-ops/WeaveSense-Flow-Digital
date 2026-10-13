@@ -35,13 +35,7 @@ function payloadToTimelineMedia(payload: InsertAssetPayload): TimelineDirectMedi
     return null;
 }
 
-export function useCanvasTimelineAssetInsert({
-    linkedProjectId,
-    refetchLinkedProject,
-    handleAssetsInsert,
-    handleProjectAssetsInsert,
-    openAssetsAtPosition,
-}: UseCanvasTimelineAssetInsertOptions) {
+export function useCanvasTimelineAssetInsert({ linkedProjectId, refetchLinkedProject, handleAssetsInsert, handleProjectAssetsInsert, openAssetsAtPosition }: UseCanvasTimelineAssetInsertOptions) {
     const { message } = App.useApp();
     // 时间线弹窗内新增素材的回填通道：素材库/上传创建节点后由弹窗通过 ref 加入草稿。
     const timelineAddNodeRef = useRef<((node: CanvasNodeData) => void) | null>(null);

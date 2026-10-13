@@ -102,10 +102,8 @@ export function verifyCanvasOperations(before: CanvasSnapshot, after: CanvasSnap
         affectedNodeIds.add(nodeId);
         if (!afterNodeIds.has(nodeId)) missingNodeIds.add(nodeId);
     };
-    const connectionExists = (op: Extract<CanvasOperation, { type: "connect_nodes" }>) => after.connections.some((connection) => connection.fromNodeId === op.fromNodeId
-        && connection.toNodeId === op.toNodeId
-        && connection.fromHandleId === op.fromHandleId
-        && connection.toHandleId === op.toHandleId);
+    const connectionExists = (op: Extract<CanvasOperation, { type: "connect_nodes" }>) =>
+        after.connections.some((connection) => connection.fromNodeId === op.fromNodeId && connection.toNodeId === op.toNodeId && connection.fromHandleId === op.fromHandleId && connection.toHandleId === op.toHandleId);
 
     for (const op of ops) {
         if (op.type === "add_node") {
@@ -124,7 +122,7 @@ export function verifyCanvasOperations(before: CanvasSnapshot, after: CanvasSnap
                     warnings.push(`节点「${afterNode.title || op.id}」的 ${key} 未达到预期`);
                 }
                 if ((patch.metadata && typeof patch.metadata === "object" && !Array.isArray(patch.metadata)) || op.metadata) {
-                    const expectedMetadata = { ...beforeNode.metadata, ...(patch.metadata as Record<string, unknown> || {}), ...(op.metadata || {}) };
+                    const expectedMetadata = { ...beforeNode.metadata, ...((patch.metadata as Record<string, unknown>) || {}), ...(op.metadata || {}) };
                     if (JSON.stringify(afterNode.metadata || {}) !== JSON.stringify(expectedMetadata)) {
                         failedPostconditions.add(`${op.id}:metadata`);
                         warnings.push(`节点「${afterNode.title || op.id}」的 metadata 未达到预期`);
@@ -220,9 +218,7 @@ export function findCanvasNodeOverlaps(nodes: CanvasNodeData[], onlyIds?: string
 
 export function canvasOperationPostconditionMessage(result: CanvasOperationPostcondition) {
     const nodeSummary = result.createdNodeIds.length ? `已创建 ${result.createdNodeIds.length} 个节点` : result.changed ? "画布已更新" : "画布状态未变化";
-    const connectionSummary = result.expectedConnectionCount
-        ? `预期 ${result.expectedConnectionCount} 条连线，实际新增 ${result.createdConnectionIds.length} 条（当前共 ${result.connectionCount} 条）`
-        : `当前共 ${result.connectionCount} 条连线`;
+    const connectionSummary = result.expectedConnectionCount ? `预期 ${result.expectedConnectionCount} 条连线，实际新增 ${result.createdConnectionIds.length} 条（当前共 ${result.connectionCount} 条）` : `当前共 ${result.connectionCount} 条连线`;
     if (!result.ok) {
         if (result.generation.some((item) => item.outcome === "failed" || item.outcome === "cancelled")) return result.generation.map((item) => item.message).join("；");
         if (result.generation.some((item) => item.outcome === "not_started")) return "画布写入完成，但生成任务没有成功提交，请检查当前生成执行器。";
@@ -377,7 +373,15 @@ export function applyCanvasOperations(snapshot: CanvasSnapshot, ops?: CanvasOper
 
 export function hashCanvasSnapshot(snapshot: CanvasSnapshot) {
     let hash = 2166136261;
-    const text = JSON.stringify({ projectId: snapshot.projectId, domainProjectId: snapshot.domainProjectId, title: snapshot.title, nodes: snapshot.nodes, connections: snapshot.connections, selectedNodeIds: snapshot.selectedNodeIds, viewport: snapshot.viewport });
+    const text = JSON.stringify({
+        projectId: snapshot.projectId,
+        domainProjectId: snapshot.domainProjectId,
+        title: snapshot.title,
+        nodes: snapshot.nodes,
+        connections: snapshot.connections,
+        selectedNodeIds: snapshot.selectedNodeIds,
+        viewport: snapshot.viewport,
+    });
     for (let index = 0; index < text.length; index += 1) hash = Math.imul(hash ^ text.charCodeAt(index), 16777619);
     return (hash >>> 0).toString(16).padStart(8, "0");
 }

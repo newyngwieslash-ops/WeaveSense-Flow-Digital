@@ -22,9 +22,7 @@ export function searchCanvasNodes(nodes: CanvasNodeData[], query: string, limit 
 
 export function canvasNodeSearchContext(node: CanvasNodeData) {
     const location = [node.metadata?.chapterTitle, typeof node.metadata?.shotIndex === "number" ? `镜头 ${node.metadata.shotIndex + 1}` : ""].filter(Boolean).join(" · ");
-    const textContent = node.type === CanvasNodeType.Text || node.type === CanvasNodeType.Markdown || node.type === CanvasNodeType.Script || node.type === CanvasNodeType.Skill
-        ? node.metadata?.content
-        : undefined;
+    const textContent = node.type === CanvasNodeType.Text || node.type === CanvasNodeType.Markdown || node.type === CanvasNodeType.Script || node.type === CanvasNodeType.Skill ? node.metadata?.content : undefined;
     return location || nodeGenerationPrompt(node) || node.metadata?.workflowDescription || textContent || getNodeListLabel(node.type);
 }
 

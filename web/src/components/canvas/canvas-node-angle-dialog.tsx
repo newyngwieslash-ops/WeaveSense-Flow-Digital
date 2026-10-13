@@ -57,20 +57,21 @@ export function CanvasNodeAnglePanel({ dataUrl, onClose, onConfirm }: { dataUrl:
             onPointerDown={(event) => event.stopPropagation()}
         >
             <div className="flex h-11 items-center gap-2 border-b px-2.5" style={{ borderColor: theme.toolbar.border }}>
-                <span className="grid size-7 shrink-0 place-items-center rounded-[var(--r-md)]" style={{ background: theme.toolbar.itemHover }}><Camera className="size-3.5" /></span>
+                <span className="grid size-7 shrink-0 place-items-center rounded-[var(--r-md)]" style={{ background: theme.toolbar.itemHover }}>
+                    <Camera className="size-3.5" />
+                </span>
                 <span className="text-xs font-semibold">多角度编辑器</span>
                 <span className="min-w-0 flex-1" />
-                <Tooltip title="关闭"><button type="button" aria-label="关闭多角度编辑器" className="grid size-7 place-items-center rounded-full transition hover:bg-black/5 dark:hover:bg-white/10" onClick={onClose}><X className="size-3.5" /></button></Tooltip>
+                <Tooltip title="关闭">
+                    <button type="button" aria-label="关闭多角度编辑器" className="grid size-7 place-items-center rounded-full transition hover:bg-black/5 dark:hover:bg-white/10" onClick={onClose}>
+                        <X className="size-3.5" />
+                    </button>
+                </Tooltip>
             </div>
             <div className="flex h-10 items-center gap-1 overflow-x-auto border-b px-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" style={{ borderColor: theme.toolbar.border }}>
                 <AnglePresetButton active={!activePreset} label="自定义" />
                 {presets.map((preset) => (
-                    <AnglePresetButton
-                        key={preset.id}
-                        active={activePreset?.id === preset.id}
-                        label={preset.label}
-                        onClick={() => setParams((current) => ({ ...current, horizontalAngle: preset.horizontalAngle, pitchAngle: preset.pitchAngle }))}
-                    />
+                    <AnglePresetButton key={preset.id} active={activePreset?.id === preset.id} label={preset.label} onClick={() => setParams((current) => ({ ...current, horizontalAngle: preset.horizontalAngle, pitchAngle: preset.pitchAngle }))} />
                 ))}
             </div>
             <div className="canvas-angle-body">
@@ -99,7 +100,14 @@ export function CanvasNodeAnglePanel({ dataUrl, onClose, onConfirm }: { dataUrl:
                     />
                 </div>
                 <div className="flex min-w-0 flex-col justify-center gap-2 rounded-[var(--r-lg)] border px-2.5 py-2" style={{ background: theme.toolbar.itemHover, borderColor: theme.toolbar.border }}>
-                    <AngleSeg value={mode} options={[{ label: "天空盒", value: "skybox" }, { label: "摄像头", value: "camera" }]} onChange={(value) => setMode(value as "camera" | "skybox")} />
+                    <AngleSeg
+                        value={mode}
+                        options={[
+                            { label: "天空盒", value: "skybox" },
+                            { label: "摄像头", value: "camera" },
+                        ]}
+                        onChange={(value) => setMode(value as "camera" | "skybox")}
+                    />
                     <span className="text-[var(--fs-tiny)] font-medium opacity-70">常用角度</span>
                     <div className="grid grid-cols-2 gap-1.5">
                         {presets.map((preset) => (
@@ -119,24 +127,54 @@ export function CanvasNodeAnglePanel({ dataUrl, onClose, onConfirm }: { dataUrl:
                     <AngleSlider label="景别缩放" value={params.cameraDistance} min={1} max={10} step={0.1} suffix={distanceLabel(params.cameraDistance)} onChange={(value) => update("cameraDistance", value)} />
                     <div className="grid h-8 grid-cols-[62px_minmax(0,1fr)] items-center gap-2">
                         <span className="text-[var(--fs-tiny)] font-medium opacity-60">镜头</span>
-                        <AngleSeg value={params.wideAngle ? "wide" : "standard"} options={[{ label: "标准", value: "standard" }, { label: "广角", value: "wide" }]} onChange={(value) => update("wideAngle", value === "wide")} />
+                        <AngleSeg
+                            value={params.wideAngle ? "wide" : "standard"}
+                            options={[
+                                { label: "标准", value: "standard" },
+                                { label: "广角", value: "wide" },
+                            ]}
+                            onChange={(value) => update("wideAngle", value === "wide")}
+                        />
                     </div>
                 </div>
             </div>
             <div className="flex h-11 items-center gap-2 border-t px-3" style={{ borderColor: theme.toolbar.border }}>
                 <span className="text-[var(--fs-tiny)] opacity-60">当前视角</span>
                 <span className="text-xs font-semibold">{viewLabel}</span>
-                <span className="text-[var(--fs-tiny)] opacity-60">{params.horizontalAngle}° / {params.pitchAngle}° · {params.cameraDistance.toFixed(1)} {distanceLabel(params.cameraDistance)}</span>
+                <span className="text-[var(--fs-tiny)] opacity-60">
+                    {params.horizontalAngle}° / {params.pitchAngle}° · {params.cameraDistance.toFixed(1)} {distanceLabel(params.cameraDistance)}
+                </span>
                 <span className="flex-1" />
-                <button type="button" className="flex h-8 items-center gap-1.5 rounded-[var(--dock-item-radius)] px-2 text-[var(--fs-label)] font-medium transition hover:bg-black/5 dark:hover:bg-white/10" onClick={() => setParams(defaultParams)}><RotateCcw className="size-3.5" />重置</button>
-                <motion.button type="button" whileHover={reducedMotion ? undefined : { y: -1 }} whileTap={reducedMotion ? undefined : { scale: 0.97 }} className="canvas-angle-generate flex h-8 items-center gap-1.5 rounded-[var(--dock-item-radius)] px-3 text-[var(--fs-label)] font-semibold" style={{ background: theme.node.activeStroke, color: theme.node.panel }} onClick={() => onConfirm(params)}><Send className="size-3.5" />生成新角度</motion.button>
+                <button type="button" className="flex h-8 items-center gap-1.5 rounded-[var(--dock-item-radius)] px-2 text-[var(--fs-label)] font-medium transition hover:bg-black/5 dark:hover:bg-white/10" onClick={() => setParams(defaultParams)}>
+                    <RotateCcw className="size-3.5" />
+                    重置
+                </button>
+                <motion.button
+                    type="button"
+                    whileHover={reducedMotion ? undefined : { y: -1 }}
+                    whileTap={reducedMotion ? undefined : { scale: 0.97 }}
+                    className="canvas-angle-generate flex h-8 items-center gap-1.5 rounded-[var(--dock-item-radius)] px-3 text-[var(--fs-label)] font-semibold"
+                    style={{ background: theme.node.activeStroke, color: theme.node.panel }}
+                    onClick={() => onConfirm(params)}
+                >
+                    <Send className="size-3.5" />
+                    生成新角度
+                </motion.button>
             </div>
         </SpotlightSurface>
     );
 }
 
 function AngleSeg({ value, options, onChange }: { value: string; options: { label: string; value: string }[]; onChange: (value: string) => void }) {
-    return <div className="canvas-angle-seg">{options.map((option) => <button key={option.value} type="button" aria-pressed={value === option.value} onClick={() => onChange(option.value)}>{option.label}</button>)}</div>;
+    return (
+        <div className="canvas-angle-seg">
+            {options.map((option) => (
+                <button key={option.value} type="button" aria-pressed={value === option.value} onClick={() => onChange(option.value)}>
+                    {option.label}
+                </button>
+            ))}
+        </div>
+    );
 }
 
 function AngleSlider({ label, value, min, max, step = 1, suffix, onChange }: { label: string; value: number; min: number; max: number; step?: number; suffix: string; onChange: (value: number) => void }) {
@@ -144,11 +182,18 @@ function AngleSlider({ label, value, min, max, step = 1, suffix, onChange }: { l
         <div className="grid h-8 grid-cols-[62px_minmax(0,1fr)_60px] items-center gap-2">
             <span className="text-[var(--fs-tiny)] font-medium opacity-60">{label}</span>
             <Slider className="canvas-angle-slider m-0" min={min} max={max} step={step} value={value} tooltip={{ open: false }} onChange={onChange} />
-            <span className="text-right text-[var(--fs-tiny)] font-semibold">{Number.isInteger(value) ? value : value.toFixed(1)}{suffix.startsWith("°") ? suffix : ` ${suffix}`}</span>
+            <span className="text-right text-[var(--fs-tiny)] font-semibold">
+                {Number.isInteger(value) ? value : value.toFixed(1)}
+                {suffix.startsWith("°") ? suffix : ` ${suffix}`}
+            </span>
         </div>
     );
 }
 
 function AnglePresetButton({ active, label, onClick }: { active: boolean; label: string; onClick?: () => void }) {
-    return <button type="button" aria-pressed={active} className="canvas-angle-tab" onClick={onClick}>{label}</button>;
+    return (
+        <button type="button" aria-pressed={active} className="canvas-angle-tab" onClick={onClick}>
+            {label}
+        </button>
+    );
 }

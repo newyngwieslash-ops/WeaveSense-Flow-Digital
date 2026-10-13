@@ -146,7 +146,9 @@ export function batchGenerationRows(source: CanvasNodeData, nodes: CanvasNodeDat
     const table = source.metadata?.batchTable;
     if (!table) return [];
     const byId = new Map(nodes.map((node) => [node.id, node]));
-    const active = new Set((source.metadata?.generationBatches || []).filter((batch) => batch.mode === "batch_image").flatMap((batch) => batch.items.filter((item) => ["waiting", "submitting", "queued", "running"].includes(item.status)).map((item) => item.nodeId)));
+    const active = new Set(
+        (source.metadata?.generationBatches || []).filter((batch) => batch.mode === "batch_image").flatMap((batch) => batch.items.filter((item) => ["waiting", "submitting", "queued", "running"].includes(item.status)).map((item) => item.nodeId)),
+    );
     const requested = requestedRowIds ? new Set(requestedRowIds) : null;
     return table.rows.filter((row) => {
         if ((requested && !requested.has(row.id)) || !batchRowReady(row, table, byId)) return false;
@@ -160,12 +162,14 @@ export function batchInputColumns(node: CanvasNodeData, connections: CanvasConne
     const columns = batchReferenceColumns(node.metadata?.batchTable);
     const indexById = new Map(columns.map((column, index) => [column.id, index]));
     const result = columns.map(() => [] as string[]);
-    connections.filter((connection) => connection.toNodeId === node.id && connection.relation !== "batch-output" && !connection.toHandleId?.startsWith("batch-text:")).forEach((connection) => {
-        const columnId = batchReferenceColumnId(connection.toHandleId);
-        const index = columnId ? indexById.get(columnId) : 0;
-        if (index === undefined || result[index].includes(connection.fromNodeId)) return;
-        result[index].push(connection.fromNodeId);
-    });
+    connections
+        .filter((connection) => connection.toNodeId === node.id && connection.relation !== "batch-output" && !connection.toHandleId?.startsWith("batch-text:"))
+        .forEach((connection) => {
+            const columnId = batchReferenceColumnId(connection.toHandleId);
+            const index = columnId ? indexById.get(columnId) : 0;
+            if (index === undefined || result[index].includes(connection.fromNodeId)) return;
+            result[index].push(connection.fromNodeId);
+        });
     return result;
 }
 

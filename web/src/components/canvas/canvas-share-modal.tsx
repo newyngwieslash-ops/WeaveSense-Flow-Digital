@@ -14,7 +14,7 @@ export function CanvasShareModal({ projectId, open, onClose, beforeCreate }: { p
     const [expiresDays, setExpiresDays] = useState(0);
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
-    const shareUrl = useMemo(() => share.token ? `${window.location.origin}/share/canvas/${share.token}` : "", [share.token]);
+    const shareUrl = useMemo(() => (share.token ? `${window.location.origin}/share/canvas/${share.token}` : ""), [share.token]);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -54,21 +54,35 @@ export function CanvasShareModal({ projectId, open, onClose, beforeCreate }: { p
         }
     };
 
-    const revoke = () => modal.confirm({
-        title: "停止公开分享？",
-        content: "现有分享链接会立即失效，原画布内容不会被删除。",
-        okText: "停止分享",
-        okButtonProps: { danger: true },
-        cancelText: "取消",
-        onOk: async () => {
-            await deleteCanvasShare(projectId);
-            setShare({ enabled: false });
-            message.success("已停止分享");
-        },
-    });
+    const revoke = () =>
+        modal.confirm({
+            title: "停止公开分享？",
+            content: "现有分享链接会立即失效，原画布内容不会被删除。",
+            okText: "停止分享",
+            okButtonProps: { danger: true },
+            cancelText: "取消",
+            onOk: async () => {
+                await deleteCanvasShare(projectId);
+                setShare({ enabled: false });
+                message.success("已停止分享");
+            },
+        });
 
     return (
-        <Modal title={<span className="inline-flex items-center gap-2"><Share2 className="size-4" />分享画布</span>} open={open} onCancel={onClose} footer={null} centered width={520} destroyOnHidden>
+        <Modal
+            title={
+                <span className="inline-flex items-center gap-2">
+                    <Share2 className="size-4" />
+                    分享画布
+                </span>
+            }
+            open={open}
+            onCancel={onClose}
+            footer={null}
+            centered
+            width={520}
+            destroyOnHidden
+        >
             <Spin spinning={loading}>
                 <div className="border-t pt-5" style={{ borderColor: theme.node.stroke }}>
                     <p className="mb-4 text-sm leading-6" style={{ color: theme.node.muted }}>
@@ -78,17 +92,34 @@ export function CanvasShareModal({ projectId, open, onClose, beforeCreate }: { p
                         <div className="space-y-4">
                             <Input value={shareUrl} readOnly suffix={<Button type="text" className="!h-7 !w-7 !min-w-7 !p-0" icon={<Copy className="size-3.5" />} onClick={() => void copy()} aria-label="复制分享链接" />} />
                             <div className="flex flex-wrap items-center justify-between gap-3">
-                                <span className="text-xs" style={{ color: theme.node.muted }}>{share.expiresAt ? `有效至 ${new Date(share.expiresAt).toLocaleString("zh-CN")}` : "长期有效，直至手动停止分享"}</span>
+                                <span className="text-xs" style={{ color: theme.node.muted }}>
+                                    {share.expiresAt ? `有效至 ${new Date(share.expiresAt).toLocaleString("zh-CN")}` : "长期有效，直至手动停止分享"}
+                                </span>
                                 <div className="flex gap-2">
-                                    <Button icon={<RefreshCw className="size-3.5" />} loading={submitting} onClick={() => void create(true)}>重新生成链接</Button>
-                                    <Button danger icon={<Unlink className="size-3.5" />} onClick={revoke}>停止分享</Button>
+                                    <Button icon={<RefreshCw className="size-3.5" />} loading={submitting} onClick={() => void create(true)}>
+                                        重新生成链接
+                                    </Button>
+                                    <Button danger icon={<Unlink className="size-3.5" />} onClick={revoke}>
+                                        停止分享
+                                    </Button>
                                 </div>
                             </div>
                         </div>
                     ) : (
                         <div className="flex items-center gap-2">
-                            <Select value={expiresDays} onChange={setExpiresDays} className="min-w-40" options={[{ value: 0, label: "长期有效" }, { value: 7, label: "7 天有效" }, { value: 30, label: "30 天有效" }]} />
-                            <Button type="primary" icon={<Link2 className="size-4" />} loading={submitting} onClick={() => void create(false)}>创建并复制链接</Button>
+                            <Select
+                                value={expiresDays}
+                                onChange={setExpiresDays}
+                                className="min-w-40"
+                                options={[
+                                    { value: 0, label: "长期有效" },
+                                    { value: 7, label: "7 天有效" },
+                                    { value: 30, label: "30 天有效" },
+                                ]}
+                            />
+                            <Button type="primary" icon={<Link2 className="size-4" />} loading={submitting} onClick={() => void create(false)}>
+                                创建并复制链接
+                            </Button>
                         </div>
                     )}
                 </div>

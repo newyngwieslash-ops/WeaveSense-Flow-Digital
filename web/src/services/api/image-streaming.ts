@@ -111,7 +111,11 @@ export async function requestStreamingClaude(config: AiConfig, body: Record<stri
             const raw = frame.match(/^data:\s*(.+)$/m)?.[1]?.trim() || "";
             if (!raw || raw === "[DONE]") continue;
             let payload: Record<string, unknown>;
-            try { payload = JSON.parse(raw) as Record<string, unknown>; } catch { throw new Error("Claude 流式响应格式无效"); }
+            try {
+                payload = JSON.parse(raw) as Record<string, unknown>;
+            } catch {
+                throw new Error("Claude 流式响应格式无效");
+            }
             if (event === "error" || payload.type === "error") throw new Error(String((payload.error as Record<string, unknown> | undefined)?.message || "Claude 上游返回失败"));
             if (payload.type === "content_block_start") {
                 const contentBlock = payload.content_block as Record<string, unknown> | undefined;
@@ -121,7 +125,10 @@ export async function requestStreamingClaude(config: AiConfig, body: Record<stri
                 }
             } else if (payload.type === "content_block_delta") {
                 const delta = payload.delta as Record<string, unknown> | undefined;
-                if (delta?.type === "text_delta" && typeof delta.text === "string") { text += delta.text; onDelta?.(delta.text); }
+                if (delta?.type === "text_delta" && typeof delta.text === "string") {
+                    text += delta.text;
+                    onDelta?.(delta.text);
+                }
                 if (delta?.type === "input_json_delta" && blockIndex >= 0) toolCalls.get(blockIndex)!.arguments += String(delta.partial_json || "");
             }
         }
@@ -132,7 +139,12 @@ export async function requestStreamingClaude(config: AiConfig, body: Record<stri
         consume(decoder.decode(value, { stream: true }));
     }
     consume(decoder.decode(), true);
-    return { content: text, toolCalls: Array.from(toolCalls.values()).filter((call) => call.id && call.name).map((call) => ({ id: call.id, type: "function", function: { name: call.name, arguments: call.arguments || "{}" } })) };
+    return {
+        content: text,
+        toolCalls: Array.from(toolCalls.values())
+            .filter((call) => call.id && call.name)
+            .map((call) => ({ id: call.id, type: "function", function: { name: call.name, arguments: call.arguments || "{}" } })),
+    };
 }
 
 function parseClaudeResult(payload: Record<string, unknown>): ToolResponseResult {

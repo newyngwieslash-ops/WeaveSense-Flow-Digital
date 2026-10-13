@@ -7,11 +7,7 @@ import { AudioLines, Loader2 } from "lucide-react";
 import { useEditorHostContext, useEditorStoreContext } from "@/components/editor/editor-context";
 import { getSubtitleTracks } from "@/lib/timeline/timeline-tracks";
 import { waitForGenerationTask } from "@/services/api/task-center";
-import {
-    createTimelineTranscriptionTask,
-    type TimelineTranscriptionResult,
-    type TimelineTranscriptionSegment,
-} from "@/services/api/timeline-tasks";
+import { createTimelineTranscriptionTask, type TimelineTranscriptionResult, type TimelineTranscriptionSegment } from "@/services/api/timeline-tasks";
 import type { ProjectAsset } from "@/services/api/projects";
 import type { SrtEntry } from "@/types/timeline";
 
@@ -28,10 +24,7 @@ export function EditorTranscription() {
     const { assets } = useEditorHostContext();
     const { project, dispatch } = useEditorStoreContext();
     // 音频与视频素材均可转写（视频静音会由后端明确报错）。
-    const transcribableAssets = useMemo(
-        () => assets.filter((a) => a.mediaType === "audio" || a.mediaType === "video"),
-        [assets],
-    );
+    const transcribableAssets = useMemo(() => assets.filter((a) => a.mediaType === "audio" || a.mediaType === "video"), [assets]);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [running, setRunning] = useState(false);
     const [progressLabel, setProgressLabel] = useState<string | null>(null);
@@ -144,17 +137,9 @@ export function EditorTranscription() {
                             {running ? "转写中…" : "转写自动字幕"}
                         </button>
 
-                        {running && progressLabel && (
-                            <p className="mt-2 text-[11px] text-[var(--director-dock-fg)]/60">{progressLabel}</p>
-                        )}
-                        {message && (
-                            <p className={`mt-2 text-[11px] ${failed ? "text-[var(--director-danger)]" : "text-[var(--director-dock-fg)]/70"}`}>
-                                {message}
-                            </p>
-                        )}
-                        <p className="mt-2 text-[11px] leading-relaxed text-[var(--director-dock-fg)]/45">
-                            由本地 whisper.cpp 识别，音视频不出本机；识别结果写入字幕轨道，可再编辑。
-                        </p>
+                        {running && progressLabel && <p className="mt-2 text-[11px] text-[var(--director-dock-fg)]/60">{progressLabel}</p>}
+                        {message && <p className={`mt-2 text-[11px] ${failed ? "text-[var(--director-danger)]" : "text-[var(--director-dock-fg)]/70"}`}>{message}</p>}
+                        <p className="mt-2 text-[11px] leading-relaxed text-[var(--director-dock-fg)]/45">由本地 whisper.cpp 识别，音视频不出本机；识别结果写入字幕轨道，可再编辑。</p>
                     </>
                 )}
             </div>

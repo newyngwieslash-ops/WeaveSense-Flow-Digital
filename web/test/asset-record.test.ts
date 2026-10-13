@@ -24,33 +24,45 @@ describe("parseAssetRecord", () => {
     });
 
     test("rejects incomplete image data instead of filling zeros", () => {
-        expect(() => parseAssetRecord({
-            ...completeImage,
-            data: undefined,
-        })).toThrow(/data/);
-        expect(() => parseAssetRecord({
-            ...completeImage,
-            data: { dataUrl: "", width: 1, height: 1, bytes: 1, mimeType: "image/png" },
-        })).toThrow(/dataUrl 或 storageKey/);
-        expect(() => parseAssetRecord({
-            ...completeImage,
-            data: { dataUrl: "https://example.com/a.png", width: 0, height: 1, bytes: 1, mimeType: "image/png" },
-        })).toThrow(/width/);
+        expect(() =>
+            parseAssetRecord({
+                ...completeImage,
+                data: undefined,
+            }),
+        ).toThrow(/data/);
+        expect(() =>
+            parseAssetRecord({
+                ...completeImage,
+                data: { dataUrl: "", width: 1, height: 1, bytes: 1, mimeType: "image/png" },
+            }),
+        ).toThrow(/dataUrl 或 storageKey/);
+        expect(() =>
+            parseAssetRecord({
+                ...completeImage,
+                data: { dataUrl: "https://example.com/a.png", width: 0, height: 1, bytes: 1, mimeType: "image/png" },
+            }),
+        ).toThrow(/width/);
     });
 
     test("rejects wildcard and cross-kind MIME metadata", () => {
-        expect(() => parseAssetRecord({
-            ...completeImage,
-            data: { ...completeImage.data, mimeType: "image/*" },
-        })).toThrow(/具体 MIME/);
-        expect(() => parseAssetRecord({
-            ...completeImage,
-            data: { ...completeImage.data, mimeType: "audio/mpeg" },
-        })).toThrow(/不匹配/);
-        expect(parseAssetRecord({
-            ...completeImage,
-            data: { ...completeImage.data, mimeType: "application/octet-stream" },
-        }).kind).toBe("image");
+        expect(() =>
+            parseAssetRecord({
+                ...completeImage,
+                data: { ...completeImage.data, mimeType: "image/*" },
+            }),
+        ).toThrow(/具体 MIME/);
+        expect(() =>
+            parseAssetRecord({
+                ...completeImage,
+                data: { ...completeImage.data, mimeType: "audio/mpeg" },
+            }),
+        ).toThrow(/不匹配/);
+        expect(
+            parseAssetRecord({
+                ...completeImage,
+                data: { ...completeImage.data, mimeType: "application/octet-stream" },
+            }).kind,
+        ).toBe("image");
     });
 
     test("parseAssetRecordList names the failing record", () => {

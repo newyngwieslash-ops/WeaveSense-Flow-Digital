@@ -25,10 +25,19 @@ export function ChannelModelSettings({ channel, onChange }: { channel: ModelChan
 
     useEffect(() => {
         let active = true;
-        void fetchPluginProviderCatalog("user.custom-channel").then((items) => { if (active) setAvailableProtocols(items); })
-            .catch((error) => { if (active) setProtocolError(error instanceof Error ? error.message : "协议目录读取失败"); })
-            .finally(() => { if (active) setProtocolLoading(false); });
-        return () => { active = false; };
+        void fetchPluginProviderCatalog("user.custom-channel")
+            .then((items) => {
+                if (active) setAvailableProtocols(items);
+            })
+            .catch((error) => {
+                if (active) setProtocolError(error instanceof Error ? error.message : "协议目录读取失败");
+            })
+            .finally(() => {
+                if (active) setProtocolLoading(false);
+            });
+        return () => {
+            active = false;
+        };
     }, []);
 
     if (!channel.models.length) return null;
@@ -99,7 +108,16 @@ export function ChannelModelSettings({ channel, onChange }: { channel: ModelChan
                                     </span>
                                 </div>
                             </div>
-                            <Button type="text" size="small" icon={<ChevronRight className="size-4" />} iconPosition="end" onClick={() => { setEditorTab("protocol"); setActiveModel(model); }}>
+                            <Button
+                                type="text"
+                                size="small"
+                                icon={<ChevronRight className="size-4" />}
+                                iconPosition="end"
+                                onClick={() => {
+                                    setEditorTab("protocol");
+                                    setActiveModel(model);
+                                }}
+                            >
                                 配置使用
                             </Button>
                         </div>
@@ -122,72 +140,96 @@ export function ChannelModelSettings({ channel, onChange }: { channel: ModelChan
                                 icon={<FlaskConical className="size-4" />}
                                 loading={Boolean(testingModel)}
                                 disabled={!activeProtocol || protocolLoading || Boolean(protocolError)}
-                                onClick={() => { if (activeModel && activeProtocol) void testModel(activeModel, activeCapability, activeProtocol); }}
+                                onClick={() => {
+                                    if (activeModel && activeProtocol) void testModel(activeModel, activeCapability, activeProtocol);
+                                }}
                             >
                                 测试模型
                             </Button>
-                            <Button type="primary" disabled={Boolean(testingModel)} onClick={() => setActiveModel(null)}>完成</Button>
+                            <Button type="primary" disabled={Boolean(testingModel)} onClick={() => setActiveModel(null)}>
+                                完成
+                            </Button>
                         </div>
                     </div>
                 }
-                items={activeModel ? [
-                    {
-                        key: "protocol",
-                        label: "基本信息",
-                        children: <div className="space-y-4" inert={Boolean(testingModel)}>
-                            <section className="space-y-2">
-                                <div className="text-xs font-medium">模型能力</div>
-                                <Segmented<ModelCapabilityChoice>
-                                    block
-                                    options={[{ label: "文本", value: "text" }, { label: "图片", value: "image" }, { label: "视频", value: "video" }, { label: "音频", value: "audio" }]}
-                                    value={activeCapability}
-                                    onChange={(nextCapability) => {
-                                        const nextProtocol = availableProtocols.find((item) => item.value === activeProtocol && item.capability === nextCapability)?.value || availableProtocols.find((item) => item.capability === nextCapability && item.enabled !== false)?.value || defaultProtocolForCapability(nextCapability, availableProtocols);
-                                        updateCost(activeModel, {
-                                            protocol: nextProtocol,
-                                            capability: nextCapability,
-                                            billingMode: "fixed_request",
-                                            unitPriceMicrocredits: 0,
-                                            capabilityConfig: nextCapability === "text" || nextCapability === "image" || nextCapability === "video" ? defaultModelCapabilityConfig(nextProtocol, activeModel) : undefined,
-                                        });
-                                    }}
-                                />
-                            </section>
-                            <section className="space-y-2">
-                                <div className="text-xs font-medium">请求协议</div>
-                                <ModelProtocolBrowser
-                                    loading={protocolLoading}
-                                    error={protocolError}
-                                    capability={activeCapability}
-                                    value={activeProtocol}
-                                    protocols={availableProtocols}
-                                    onChange={(nextProtocol) => updateCost(activeModel, {
-                                        protocol: nextProtocol,
-                                        billingMode: "fixed_request",
-                                        unitPriceMicrocredits: 0,
-                                        capabilityConfig: activeCapability === "text" || activeCapability === "image" || activeCapability === "video" ? defaultModelCapabilityConfig(nextProtocol, activeModel) : undefined,
-                                    })}
-                                />
-                            </section>
-                        </div>,
-                    },
-                    {
-                        key: "capabilities",
-                        label: "能力与参数",
-                        children: <div inert={Boolean(testingModel)}>
-                            {activeCapability === "text" || activeCapability === "image" || activeCapability === "video" ? (
-                                <ModelCapabilityEditor
-                                    capability={activeCapability}
-                                    model={activeModel}
-                                    value={activeModelCost?.capabilityConfig || defaultModelCapabilityConfig(activeProtocol, activeModel)}
-                                    protocol={activeProtocol}
-                                    workflows={modelProtocolDefinition(activeProtocol, availableProtocols)?.workflows}
-                                    onChange={(capabilityConfig) => updateCost(activeModel, { capabilityConfig })}
-                                />
-                            ) : <p className="text-xs text-foreground/50">当前模型类型无需额外配置引用与参数。</p>}
-                        </div>,
-                    },
-                ] : []}
+                items={
+                    activeModel
+                        ? [
+                              {
+                                  key: "protocol",
+                                  label: "基本信息",
+                                  children: (
+                                      <div className="space-y-4" inert={Boolean(testingModel)}>
+                                          <section className="space-y-2">
+                                              <div className="text-xs font-medium">模型能力</div>
+                                              <Segmented<ModelCapabilityChoice>
+                                                  block
+                                                  options={[
+                                                      { label: "文本", value: "text" },
+                                                      { label: "图片", value: "image" },
+                                                      { label: "视频", value: "video" },
+                                                      { label: "音频", value: "audio" },
+                                                  ]}
+                                                  value={activeCapability}
+                                                  onChange={(nextCapability) => {
+                                                      const nextProtocol =
+                                                          availableProtocols.find((item) => item.value === activeProtocol && item.capability === nextCapability)?.value ||
+                                                          availableProtocols.find((item) => item.capability === nextCapability && item.enabled !== false)?.value ||
+                                                          defaultProtocolForCapability(nextCapability, availableProtocols);
+                                                      updateCost(activeModel, {
+                                                          protocol: nextProtocol,
+                                                          capability: nextCapability,
+                                                          billingMode: "fixed_request",
+                                                          unitPriceMicrocredits: 0,
+                                                          capabilityConfig: nextCapability === "text" || nextCapability === "image" || nextCapability === "video" ? defaultModelCapabilityConfig(nextProtocol, activeModel) : undefined,
+                                                      });
+                                                  }}
+                                              />
+                                          </section>
+                                          <section className="space-y-2">
+                                              <div className="text-xs font-medium">请求协议</div>
+                                              <ModelProtocolBrowser
+                                                  loading={protocolLoading}
+                                                  error={protocolError}
+                                                  capability={activeCapability}
+                                                  value={activeProtocol}
+                                                  protocols={availableProtocols}
+                                                  onChange={(nextProtocol) =>
+                                                      updateCost(activeModel, {
+                                                          protocol: nextProtocol,
+                                                          billingMode: "fixed_request",
+                                                          unitPriceMicrocredits: 0,
+                                                          capabilityConfig: activeCapability === "text" || activeCapability === "image" || activeCapability === "video" ? defaultModelCapabilityConfig(nextProtocol, activeModel) : undefined,
+                                                      })
+                                                  }
+                                              />
+                                          </section>
+                                      </div>
+                                  ),
+                              },
+                              {
+                                  key: "capabilities",
+                                  label: "能力与参数",
+                                  children: (
+                                      <div inert={Boolean(testingModel)}>
+                                          {activeCapability === "text" || activeCapability === "image" || activeCapability === "video" ? (
+                                              <ModelCapabilityEditor
+                                                  capability={activeCapability}
+                                                  model={activeModel}
+                                                  value={activeModelCost?.capabilityConfig || defaultModelCapabilityConfig(activeProtocol, activeModel)}
+                                                  protocol={activeProtocol}
+                                                  workflows={modelProtocolDefinition(activeProtocol, availableProtocols)?.workflows}
+                                                  onChange={(capabilityConfig) => updateCost(activeModel, { capabilityConfig })}
+                                              />
+                                          ) : (
+                                              <p className="text-xs text-foreground/50">当前模型类型无需额外配置引用与参数。</p>
+                                          )}
+                                      </div>
+                                  ),
+                              },
+                          ]
+                        : []
+                }
             />
         </div>
     );
@@ -225,14 +267,7 @@ function inferCapabilityFromModel(model: string): ModelCapabilityChoice {
     ) {
         return "video";
     }
-    if (
-        lower.includes("audio") ||
-        lower.includes("tts") ||
-        lower.includes("voice") ||
-        lower.includes("speech") ||
-        lower.includes("sound") ||
-        lower.includes("music")
-    ) {
+    if (lower.includes("audio") || lower.includes("tts") || lower.includes("voice") || lower.includes("speech") || lower.includes("sound") || lower.includes("music")) {
         return "audio";
     }
     return "text";

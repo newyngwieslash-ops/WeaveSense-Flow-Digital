@@ -17,13 +17,23 @@ export function isSeedanceConfig(config: ResolvedAiConfig) {
     return isVolcengineArkVideoProtocol(config.interfaceType) || isSeedanceVideoConfig(config);
 }
 
-export async function createSeedanceTask(deps: VideoProviderDeps, config: ResolvedAiConfig, model: string, prompt: string, references: ReferenceImage[], videoReferences: ReferenceVideo[], audioReferences: ReferenceAudio[], options?: RequestOptions): Promise<VideoGenerationTask> {
+export async function createSeedanceTask(
+    deps: VideoProviderDeps,
+    config: ResolvedAiConfig,
+    model: string,
+    prompt: string,
+    references: ReferenceImage[],
+    videoReferences: ReferenceVideo[],
+    audioReferences: ReferenceAudio[],
+    options?: RequestOptions,
+): Promise<VideoGenerationTask> {
     assertSeedanceVideoReferences(videoReferences);
     assertSeedanceAudioReferences(audioReferences);
     const isVolcengineArk = isVolcengineArkVideoProtocol(config.interfaceType);
-    const payload = isVolcengineArk || isArkPlanBaseUrl(config.baseUrl)
-        ? await buildSeedanceAgentPlanPayload(config, model, prompt, references, videoReferences, audioReferences, deps, options)
-        : await buildSeedanceVideosPayload(config, model, prompt, references, videoReferences, audioReferences, deps, options);
+    const payload =
+        isVolcengineArk || isArkPlanBaseUrl(config.baseUrl)
+            ? await buildSeedanceAgentPlanPayload(config, model, prompt, references, videoReferences, audioReferences, deps, options)
+            : await buildSeedanceVideosPayload(config, model, prompt, references, videoReferences, audioReferences, deps, options);
 
     try {
         const raw = await deps.transport.post<ApiEnvelope<SeedanceTask>>(seedanceApiUrl(config), payload, options);
@@ -141,7 +151,10 @@ async function buildSeedanceVideosPayload(config: AiConfig, model: string, promp
     if (options?.videoEditOperation === "reference_to_video") {
         if (imageUrls.length) imagePayload.reference_image_urls = imageUrls;
     } else if (hasExplicitVideoFrames(options)) {
-        imagePayload.image_urls = orderedImageUrls(imageUrls, imagePlan.map(({ role }) => role));
+        imagePayload.image_urls = orderedImageUrls(
+            imageUrls,
+            imagePlan.map(({ role }) => role),
+        );
     } else if (imageUrls.length) {
         imagePayload.image_url = imageUrls[0];
         if (imageUrls.length > 1) imagePayload.reference_image_urls = imageUrls.slice(1);

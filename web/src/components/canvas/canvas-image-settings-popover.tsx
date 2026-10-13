@@ -28,7 +28,9 @@ export function CanvasImageSettingsPopover({ config, onConfigChange, showCount =
     if (showCount && profile.maxOutputs > 1) parts.push(`${current.count} 张`);
     if (profile.transparentBackground.supported && current.transparentBackground === "true") parts.push("透明");
     if (!parts.length && !profile.transparentBackground.supported) return null;
-    return <CanvasSettingsPopover {...popover} label="图像设置" summary={parts.join(" · ") || "背景"} width={420}>
-        <ImageSettingsPanel config={config} onConfigChange={onConfigChange} theme={theme} showCount={showCount} quickCount={3} className="space-y-3" />
-    </CanvasSettingsPopover>;
+    return (
+        <CanvasSettingsPopover {...popover} label="图像设置" summary={parts.join(" · ") || "背景"} width={420}>
+            <ImageSettingsPanel config={config} onConfigChange={onConfigChange} theme={theme} showCount={showCount} quickCount={3} className="space-y-3" />
+        </CanvasSettingsPopover>
+    );
 }

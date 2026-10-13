@@ -84,9 +84,7 @@ export function cancelIncompleteImageBatch(rootId: string, childIds: string[], n
             }
             return { ...node, metadata };
         });
-    const remainingIds = new Set(
-        nextNodes.find((node) => node.id === rootId)?.metadata?.batchChildIds || [],
-    );
+    const remainingIds = new Set(nextNodes.find((node) => node.id === rootId)?.metadata?.batchChildIds || []);
     const detached = nextNodes.map((node) => {
         if (!childIdSet.has(node.id) || node.metadata?.batchRootId !== rootId || remainingIds.has(node.id)) return node;
         const metadata = { ...node.metadata };
@@ -104,9 +102,7 @@ export function failedImageBatchChildren(root: CanvasNodeData, nodes: CanvasNode
     if (root.metadata?.experimentalLayerPlan) return [];
     if (root.type !== CanvasNodeType.Image || !root.metadata?.isBatchRoot) return [];
     const nodeById = new Map(nodes.map((node) => [node.id, node]));
-    return (root.metadata.batchChildIds || [])
-        .map((id) => nodeById.get(id))
-        .filter((node): node is CanvasNodeData => Boolean(node && node.type === CanvasNodeType.Image && node.metadata?.batchRootId === root.id && node.metadata.status === "error"));
+    return (root.metadata.batchChildIds || []).map((id) => nodeById.get(id)).filter((node): node is CanvasNodeData => Boolean(node && node.type === CanvasNodeType.Image && node.metadata?.batchRootId === root.id && node.metadata.status === "error"));
 }
 
 export function markImageBatchRetrying(rootId: string, childIds: string[], nodes: CanvasNodeData[]): CanvasNodeData[] {
@@ -147,9 +143,7 @@ export function reconcileImageBatchRoot(root: CanvasNodeData, nodes: CanvasNodeD
     if (root.metadata?.imageLayerGroup || root.metadata?.experimentalLayerPlan) return root;
     if (root.type !== CanvasNodeType.Image || !root.metadata?.isBatchRoot) return root;
     const nodeById = new Map(nodes.map((node) => [node.id, node]));
-    const children = (root.metadata.batchChildIds || [])
-        .map((id) => nodeById.get(id))
-        .filter((node): node is CanvasNodeData => Boolean(node && node.type === CanvasNodeType.Image && node.metadata?.batchRootId === root.id));
+    const children = (root.metadata.batchChildIds || []).map((id) => nodeById.get(id)).filter((node): node is CanvasNodeData => Boolean(node && node.type === CanvasNodeType.Image && node.metadata?.batchRootId === root.id));
     if (!children.length) {
         const metadata: CanvasNodeMetadata = resetGenerationTaskMetadata(root.metadata, root.metadata?.status);
         delete metadata.batchChildIds;

@@ -14,7 +14,9 @@ export function TaskStatusFilterBar({ stats, value, onChange }: { stats: TaskSta
 
     return (
         <div className="task-status-filter">
-            <span className="task-status-today">今日生成 <strong>{stats.today}</strong></span>
+            <span className="task-status-today">
+                今日生成 <strong>{stats.today}</strong>
+            </span>
             <SegmentedControl<TaskStatusFilter>
                 size="sm"
                 value={value}

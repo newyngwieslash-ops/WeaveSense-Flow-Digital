@@ -14,9 +14,7 @@ function isProbeable(file: File): boolean {
 export async function probeMediaDurationMs(file: File): Promise<number | undefined> {
     if (!isProbeable(file)) return undefined;
     const url = URL.createObjectURL(file);
-    const el: HTMLVideoElement | HTMLAudioElement = /^video\//.test(file.type)
-        ? document.createElement("video")
-        : document.createElement("audio");
+    const el: HTMLVideoElement | HTMLAudioElement = /^video\//.test(file.type) ? document.createElement("video") : document.createElement("audio");
     let timeoutId: number | undefined;
     el.preload = "metadata";
     // 某些浏览器只有在静音时才允许视频元素主动加载元数据；这里只禁止声音，不触发自动播放。

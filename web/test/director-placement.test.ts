@@ -1,14 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import {
-    PREVIS_PLACEMENT_MARGIN,
-    previsObjectFootprint,
-    emptyPrevisPlacementIntent,
-    finitePrevisGroundPoint,
-    resolvePrevisPlacement,
-    resolvePrevisPlacementAnchor,
-    type PrevisGroundPoint,
-} from "../src/lib/canvas/previs/previs-placement";
+import { PREVIS_PLACEMENT_MARGIN, previsObjectFootprint, emptyPrevisPlacementIntent, finitePrevisGroundPoint, resolvePrevisPlacement, resolvePrevisPlacementAnchor, type PrevisGroundPoint } from "../src/lib/canvas/previs/previs-placement";
 import { createPrevisActor, createPrevisBillboard, createPrevisModel, createPrevisObject } from "../src/lib/canvas/previs/previs-scene";
 import type { PrevisObject, PrevisVec3 } from "../src/types/previs";
 

@@ -6,15 +6,7 @@ import { NODE_DEFAULT_SIZE, NODE_SPECS } from "../src/constant/canvas";
 import { getNodeGenerationMode, getNodeInputKind, getNodeLabel, getNodeResourceKind } from "../src/lib/canvas/node-registry";
 import { CanvasNodeType, type CanvasNodeData } from "../src/types/canvas";
 
-const EXTENSION_TYPES = [
-    CanvasNodeType.Markdown,
-    CanvasNodeType.Svg,
-    CanvasNodeType.Html,
-    CanvasNodeType.Panorama,
-    CanvasNodeType.Compare,
-    CanvasNodeType.Chart,
-    CanvasNodeType.ColorGrade,
-] as const;
+const EXTENSION_TYPES = [CanvasNodeType.Markdown, CanvasNodeType.Svg, CanvasNodeType.Html, CanvasNodeType.Panorama, CanvasNodeType.Compare, CanvasNodeType.Chart, CanvasNodeType.ColorGrade] as const;
 
 function node(type: CanvasNodeType, metadata: CanvasNodeData["metadata"] = {}): CanvasNodeData {
     return { id: `${type}-1`, type, title: "", position: { x: 0, y: 0 }, width: 100, height: 100, metadata };
@@ -73,8 +65,7 @@ describe("调色参数", () => {
     });
 
     test("预览与导出共用同一个 filter 字符串", () => {
-        expect(colorGradeCssFilter({ brightness: 110, contrast: 90, saturate: 120, hueRotate: -15 }))
-            .toBe("brightness(110%) contrast(90%) saturate(120%) hue-rotate(-15deg)");
+        expect(colorGradeCssFilter({ brightness: 110, contrast: 90, saturate: 120, hueRotate: -15 })).toBe("brightness(110%) contrast(90%) saturate(120%) hue-rotate(-15deg)");
     });
 });
 
@@ -94,7 +85,7 @@ describe("图表数据解析", () => {
     });
 
     test("全是数值列时回落行号作横轴", () => {
-        const parsed = parseChartSource("[{\"a\":1,\"b\":2},{\"a\":3,\"b\":4}]");
+        const parsed = parseChartSource('[{"a":1,"b":2},{"a":3,"b":4}]');
         expect(parsed?.xKey).toBe("__index");
         expect(parsed?.rows[0].__index).toBe(1);
     });

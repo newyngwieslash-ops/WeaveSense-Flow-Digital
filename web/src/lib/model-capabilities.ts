@@ -5,7 +5,29 @@ import { kemeiSeedreamPresets } from "./kemei-image-presets";
 import { type WorkflowVideoFieldLike, workflowImageCapabilityConfig, workflowVideoCapabilityConfig } from "./model-capabilities-workflow";
 import { resolveWorkflowVideoScreenSpec } from "./video-screen-specs";
 
-export { workflowFieldChoiceValues, workflowFieldConfigurationError, workflowFieldCurrentValue, workflowFieldHasStoredValue, workflowFieldKey, workflowFieldNumberBounds, workflowFieldPresetOptions, workflowFieldRandomKey, workflowFieldRole, workflowFieldSafeToOverride, workflowFieldSource, workflowFieldSubmissionValue, workflowFieldValueError, workflowImageCapabilityConfig, workflowOutputSizeValue, workflowParameterFields, workflowVideoCapabilityConfig, workflowVideoDefaultSize, workflowVideoFieldsFromJson, type WorkflowFieldNumberBounds, type WorkflowVideoFieldLike } from "./model-capabilities-workflow";
+export {
+    workflowFieldChoiceValues,
+    workflowFieldConfigurationError,
+    workflowFieldCurrentValue,
+    workflowFieldHasStoredValue,
+    workflowFieldKey,
+    workflowFieldNumberBounds,
+    workflowFieldPresetOptions,
+    workflowFieldRandomKey,
+    workflowFieldRole,
+    workflowFieldSafeToOverride,
+    workflowFieldSource,
+    workflowFieldSubmissionValue,
+    workflowFieldValueError,
+    workflowImageCapabilityConfig,
+    workflowOutputSizeValue,
+    workflowParameterFields,
+    workflowVideoCapabilityConfig,
+    workflowVideoDefaultSize,
+    workflowVideoFieldsFromJson,
+    type WorkflowFieldNumberBounds,
+    type WorkflowVideoFieldLike,
+} from "./model-capabilities-workflow";
 
 export type ModelCapabilityConfig = {
     version: number;
@@ -104,19 +126,7 @@ export type VideoCapabilityConfig = {
 export type VideoScreenSpecConfig = Pick<VideoCapabilityConfig, "ratios" | "defaultRatio" | "resolutions" | "defaultResolution">;
 
 // 旧版本的“允许自定义”可能只保存了 `*`，前台需要用这组标准值恢复可选项。
-export const STANDARD_IMAGE_SIZE_VALUES = [
-    "1:1",
-    "3:2",
-    "2:3",
-    "4:3",
-    "3:4",
-    "16:9",
-    "21:9",
-    "9:16",
-    "1024x1024",
-    "1536x1024",
-    "1024x1536",
-] as const;
+export const STANDARD_IMAGE_SIZE_VALUES = ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "21:9", "9:16", "1024x1024", "1536x1024", "1024x1536"] as const;
 
 export function normalizeCapabilityString(value: string) {
     const normalized = value.trim();
@@ -251,10 +261,15 @@ export function defaultImageCapabilityConfig(protocol?: ModelProtocol, model = "
     }
     if (protocol === "cangyuan-midjourney-v7" || protocol === "cangyuan-midjourney-v82") {
         const v7 = protocol === "cangyuan-midjourney-v7";
-        const tier = !v7 && model.trim().toLowerCase().replace(/^models\//, "") === "midjourney-2k" ? "2k" : "1k";
-        const ratios = v7
-            ? ["1:1", "3:2", "2:3", "4:3", "3:4", "4:5", "5:4", "16:9", "9:16", "21:9"]
-            : ["1:1", "3:2", "2:3", "4:3", "3:4", "4:5", "5:4", "16:9", "9:16", "1:2", "6:11", "5:6", "2:1", "11:6", "6:5"];
+        const tier =
+            !v7 &&
+            model
+                .trim()
+                .toLowerCase()
+                .replace(/^models\//, "") === "midjourney-2k"
+                ? "2k"
+                : "1k";
+        const ratios = v7 ? ["1:1", "3:2", "2:3", "4:3", "3:4", "4:5", "5:4", "16:9", "9:16", "21:9"] : ["1:1", "3:2", "2:3", "4:3", "3:4", "4:5", "5:4", "16:9", "9:16", "1:2", "6:11", "5:6", "2:1", "11:6", "6:5"];
         image.references = { ...image.references, promptMaxChars: v7 ? 4000 : 32000, maxImages: v7 ? 5 : 1, maskSupported: !v7 };
         image.size = { parameter: "aspect_ratio", values: ["auto", ...ratios], default: "auto", allowCustom: false, presets: ratios.map((ratio) => imagePresetForRatio(tier, ratio)) };
         image.quality = { supported: false, values: [], default: "auto" };
@@ -496,7 +511,9 @@ export function modelCapabilityConfigFor(config: { channels: Array<{ id: string;
 
 export function normalizeImageValue(profile: ImageCapabilityConfig, value: { size?: string; quality?: string; count?: string; transparentBackground?: string }) {
     const size = normalizeImageSizeSetting(profile, value.size);
-    const requestedQuality = String(value.quality || "").trim().toLowerCase();
+    const requestedQuality = String(value.quality || "")
+        .trim()
+        .toLowerCase();
     // 比例协议的固定分辨率预设没有独立 quality 字段时，UI 仍需把当前比例对应的
     // 预设档位带入请求。仅在 quality 未声明支持时启用，避免与 auto/low/medium/high
     // 这组真实图片质量语义混用。
@@ -505,11 +522,11 @@ export function normalizeImageValue(profile: ImageCapabilityConfig, value: { siz
         ? requestedQuality === "auto" || requestedQuality === "any"
             ? "auto"
             : value.quality && profile.quality.values.includes(value.quality)
-                ? value.quality
-                : profile.quality.default || "auto"
+              ? value.quality
+              : profile.quality.default || "auto"
         : requestedQuality === "1k" || requestedQuality === "1.5k" || requestedQuality === "2k" || requestedQuality === "4k"
-            ? requestedQuality
-            : presetTier || profile.quality.default || "auto";
+          ? requestedQuality
+          : presetTier || profile.quality.default || "auto";
     const count = String(Math.max(1, Math.min(profile.maxOutputs, Math.floor(Math.abs(Number(value.count)) || 1))));
     const transparentBackground = profile.transparentBackground.supported && value.transparentBackground === "true" ? "true" : "false";
     return { size, quality, count, transparentBackground };

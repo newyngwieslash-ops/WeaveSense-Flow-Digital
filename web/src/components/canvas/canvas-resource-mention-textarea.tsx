@@ -62,7 +62,26 @@ function shouldSubmitOnEnter(event: { key: string; ctrlKey: boolean; metaKey: bo
 }
 
 export const CanvasResourceMentionTextarea = forwardRef<HTMLTextAreaElement, Props>(function CanvasResourceMentionTextarea(
-    { value, references, onSelectReference, onChange, onSubmit, onKeyDown, className, containerClassName, style, highlightLabels = true, mentionMenuWidth = 320, sendOnEnter = true, onContentSizeChange, includeAssetLibrary = false, activeDropReferenceId, onReferenceFilesDrop, autoLinkEnabled = false, ...props },
+    {
+        value,
+        references,
+        onSelectReference,
+        onChange,
+        onSubmit,
+        onKeyDown,
+        className,
+        containerClassName,
+        style,
+        highlightLabels = true,
+        mentionMenuWidth = 320,
+        sendOnEnter = true,
+        onContentSizeChange,
+        includeAssetLibrary = false,
+        activeDropReferenceId,
+        onReferenceFilesDrop,
+        autoLinkEnabled = false,
+        ...props
+    },
     forwardedRef,
 ) {
     const rawTheme = useActiveTheme();
@@ -83,7 +102,7 @@ export const CanvasResourceMentionTextarea = forwardRef<HTMLTextAreaElement, Pro
     const [nativeDropReferenceId, setNativeDropReferenceId] = useState<string | null>(null);
     const [previewReference, setPreviewReference] = useState<CanvasResourceReference | null>(null);
     const canvasReferences = useResolvedCanvasResourceReferences(references);
-    const rawAssetReferences = useMemo(() => includeAssetLibrary ? buildAssetMentionReferences(assets) : [], [assets, includeAssetLibrary]);
+    const rawAssetReferences = useMemo(() => (includeAssetLibrary ? buildAssetMentionReferences(assets) : []), [assets, includeAssetLibrary]);
     const assetReferences = useResolvedCanvasResourceReferences(rawAssetReferences);
     const activeCanvasReferences = useMemo(() => canvasReferences.filter((item) => item.active), [canvasReferences]);
     // 工具标签只能经九宫格等面板入口插入，@ 引用菜单不再重复展示。
@@ -101,21 +120,27 @@ export const CanvasResourceMentionTextarea = forwardRef<HTMLTextAreaElement, Pro
         return [...activeCanvasReferences, ...assetReferences.filter((item) => value.includes(canvasResourceMentionToken(item)))];
     }, [activeCanvasReferences, assetReferences, highlightLabels, value]);
     const useRichEditor = Boolean(activeReferences.length);
-    const autoLinkMatch = useMemo<CanvasResourceAutoLinkMatch | null>(() => autoLinkEnabled && autoLinkCursor !== null ? findCanvasResourceAutoLinkMatch(value, autoLinkCursor, activeCanvasReferences) : null, [activeCanvasReferences, autoLinkCursor, autoLinkEnabled, value]);
-    const reportContentSize = useCallback((element: HTMLElement | null) => {
-        if (!element || !onContentSizeChange) return;
-        const previous = { height: element.style.height, minHeight: element.style.minHeight, maxHeight: element.style.maxHeight, overflow: element.style.overflow };
-        element.style.height = "1px";
-        element.style.minHeight = "0";
-        element.style.maxHeight = "none";
-        element.style.overflow = "hidden";
-        const height = Math.ceil(element.scrollHeight);
-        element.style.height = previous.height;
-        element.style.minHeight = previous.minHeight;
-        element.style.maxHeight = previous.maxHeight;
-        element.style.overflow = previous.overflow;
-        onContentSizeChange(height);
-    }, [onContentSizeChange]);
+    const autoLinkMatch = useMemo<CanvasResourceAutoLinkMatch | null>(
+        () => (autoLinkEnabled && autoLinkCursor !== null ? findCanvasResourceAutoLinkMatch(value, autoLinkCursor, activeCanvasReferences) : null),
+        [activeCanvasReferences, autoLinkCursor, autoLinkEnabled, value],
+    );
+    const reportContentSize = useCallback(
+        (element: HTMLElement | null) => {
+            if (!element || !onContentSizeChange) return;
+            const previous = { height: element.style.height, minHeight: element.style.minHeight, maxHeight: element.style.maxHeight, overflow: element.style.overflow };
+            element.style.height = "1px";
+            element.style.minHeight = "0";
+            element.style.maxHeight = "none";
+            element.style.overflow = "hidden";
+            const height = Math.ceil(element.scrollHeight);
+            element.style.height = previous.height;
+            element.style.minHeight = previous.minHeight;
+            element.style.maxHeight = previous.maxHeight;
+            element.style.overflow = previous.overflow;
+            onContentSizeChange(height);
+        },
+        [onContentSizeChange],
+    );
 
     useLayoutEffect(() => {
         if (!useRichEditor) pendingScrollTopRef.current = null;
@@ -132,7 +157,7 @@ export const CanvasResourceMentionTextarea = forwardRef<HTMLTextAreaElement, Pro
             pendingSelectionRef.current = null;
             return;
         }
-        const selection = pendingSelectionRef.current ?? (isFocused ? getEditableSelection(editor)?.start ?? null : null);
+        const selection = pendingSelectionRef.current ?? (isFocused ? (getEditableSelection(editor)?.start ?? null) : null);
         const scrollTop = pendingScrollTopRef.current;
         renderEditableContent(editor, value, activeReferences);
         lastRenderedValueRef.current = value;
@@ -257,9 +282,7 @@ export const CanvasResourceMentionTextarea = forwardRef<HTMLTextAreaElement, Pro
     const replaceEditableSelection = (insertText: string) => {
         const currentValue = editorRef.current ? serializeEditableValue(editorRef.current) : value;
         const textarea = textareaRef.current;
-        const selection = getEditableSelection(editorRef.current)
-            || (textarea ? { start: textarea.selectionStart, end: textarea.selectionEnd } : null)
-            || { start: currentValue.length, end: currentValue.length };
+        const selection = getEditableSelection(editorRef.current) || (textarea ? { start: textarea.selectionStart, end: textarea.selectionEnd } : null) || { start: currentValue.length, end: currentValue.length };
         const next = `${currentValue.slice(0, selection.start)}${insertText}${currentValue.slice(selection.end)}`;
         const cursor = selection.start + insertText.length;
         updateValue(next, cursor);
@@ -274,23 +297,33 @@ export const CanvasResourceMentionTextarea = forwardRef<HTMLTextAreaElement, Pro
         setAutoLinkCursor(match.start + insertText.length);
     };
 
-    const autoLinkSuggestion = autoLinkMatch ? createPortal(
-        <button
-            ref={autoLinkSuggestionRef}
-            type="button"
-            data-canvas-no-zoom
-            className="fixed z-[var(--z-tooltip)] inline-flex max-w-[min(360px,calc(100vw-24px))] items-center gap-1.5 rounded-md border border-current/15 px-2 py-1 text-[var(--fs-micro)] shadow-sm"
-            style={{ ...autoLinkPosition, visibility: autoLinkPosition ? "visible" : "hidden", background: theme.node.panel, color: theme.node.text }}
-            onPointerDown={(event) => event.stopPropagation()}
-            onMouseDown={(event) => { event.preventDefault(); event.stopPropagation(); }}
-            onClick={(event) => { event.stopPropagation(); insertAutoLink(autoLinkMatch); }}
-            aria-label={`引用${autoLinkMatch.reference.label}`}
-        >
-            <span className="truncate">引用「{autoLinkMatch.query}」→ @{autoLinkMatch.reference.label}</span>
-            <kbd className="shrink-0 rounded border border-current/20 px-1 font-mono text-[var(--fs-micro)]">Tab</kbd>
-        </button>,
-        document.body,
-    ) : null;
+    const autoLinkSuggestion = autoLinkMatch
+        ? createPortal(
+              <button
+                  ref={autoLinkSuggestionRef}
+                  type="button"
+                  data-canvas-no-zoom
+                  className="fixed z-[var(--z-tooltip)] inline-flex max-w-[min(360px,calc(100vw-24px))] items-center gap-1.5 rounded-md border border-current/15 px-2 py-1 text-[var(--fs-micro)] shadow-sm"
+                  style={{ ...autoLinkPosition, visibility: autoLinkPosition ? "visible" : "hidden", background: theme.node.panel, color: theme.node.text }}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onMouseDown={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                  }}
+                  onClick={(event) => {
+                      event.stopPropagation();
+                      insertAutoLink(autoLinkMatch);
+                  }}
+                  aria-label={`引用${autoLinkMatch.reference.label}`}
+              >
+                  <span className="truncate">
+                      引用「{autoLinkMatch.query}」→ @{autoLinkMatch.reference.label}
+                  </span>
+                  <kbd className="shrink-0 rounded border border-current/20 px-1 font-mono text-[var(--fs-micro)]">Tab</kbd>
+              </button>,
+              document.body,
+          )
+        : null;
 
     const syncEditableValue = () => {
         if (composingRef.current) return;
@@ -329,21 +362,22 @@ export const CanvasResourceMentionTextarea = forwardRef<HTMLTextAreaElement, Pro
         caretColor: style?.color || theme.node.text,
     } as CSSProperties;
     const menuAnchor = useRichEditor ? editorRef.current : textareaRef.current;
-    const menu = mention && availableReferences.length && menuAnchor ? (
-        <MentionMenu
-            anchor={menuAnchor}
-            connectedReferences={activeMentionCanvasReferences}
-            assetReferences={assetReferences}
-            filteredReferences={candidates}
-            query={mention.query}
-            cursorOffset={mention.end}
-            activeReferenceId={activeIndex >= 0 ? candidates[Math.min(activeIndex, candidates.length - 1)]?.id : undefined}
-            preferredWidth={mentionMenuWidth}
-            onQueryChange={(query) => setMention((current) => current ? { ...current, query } : current)}
-            onClose={closeMention}
-            onSelect={insertReference}
-        />
-    ) : null;
+    const menu =
+        mention && availableReferences.length && menuAnchor ? (
+            <MentionMenu
+                anchor={menuAnchor}
+                connectedReferences={activeMentionCanvasReferences}
+                assetReferences={assetReferences}
+                filteredReferences={candidates}
+                query={mention.query}
+                cursorOffset={mention.end}
+                activeReferenceId={activeIndex >= 0 ? candidates[Math.min(activeIndex, candidates.length - 1)]?.id : undefined}
+                preferredWidth={mentionMenuWidth}
+                onQueryChange={(query) => setMention((current) => (current ? { ...current, query } : current))}
+                onClose={closeMention}
+                onSelect={insertReference}
+            />
+        ) : null;
 
     if (useRichEditor) {
         return (
@@ -389,8 +423,8 @@ export const CanvasResourceMentionTextarea = forwardRef<HTMLTextAreaElement, Pro
                     }}
                     onDragOver={(event: DragEvent<HTMLDivElement>) => {
                         const reference = referenceForDropTarget(event.target);
-                        const hasImageFile = Array.from(event.dataTransfer.items).some((item) => item.kind === "file" && (!item.type || item.type.startsWith("image/")))
-                            || Array.from(event.dataTransfer.files).some((file) => file.type.startsWith("image/"));
+                        const hasImageFile =
+                            Array.from(event.dataTransfer.items).some((item) => item.kind === "file" && (!item.type || item.type.startsWith("image/"))) || Array.from(event.dataTransfer.files).some((file) => file.type.startsWith("image/"));
                         if (!onReferenceFilesDrop || reference?.kind !== "image" || !hasImageFile) {
                             setNativeDropReferenceId(null);
                             props.onDragOver?.(event as unknown as React.DragEvent<HTMLTextAreaElement>);
@@ -417,7 +451,7 @@ export const CanvasResourceMentionTextarea = forwardRef<HTMLTextAreaElement, Pro
                         props.onDrop?.(event as unknown as React.DragEvent<HTMLTextAreaElement>);
                     }}
                     onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
-if (event.key === "Enter" && (event.nativeEvent.isComposing || composingRef.current || event.keyCode === 229)) return;
+                        if (event.key === "Enter" && (event.nativeEvent.isComposing || composingRef.current || event.keyCode === 229)) return;
                         if (autoLinkMatch && event.key === "Tab" && !event.shiftKey && !event.nativeEvent.isComposing && !composingRef.current) {
                             event.preventDefault();
                             insertAutoLink(autoLinkMatch);
@@ -426,12 +460,12 @@ if (event.key === "Enter" && (event.nativeEvent.isComposing || composingRef.curr
                         if (mention && candidates.length) {
                             if (event.key === "ArrowDown") {
                                 event.preventDefault();
-                                setActiveIndex((index) => index < 0 ? 0 : (index + 1) % candidates.length);
+                                setActiveIndex((index) => (index < 0 ? 0 : (index + 1) % candidates.length));
                                 return;
                             }
                             if (event.key === "ArrowUp") {
                                 event.preventDefault();
-                                setActiveIndex((index) => index < 0 ? candidates.length - 1 : (index - 1 + candidates.length) % candidates.length);
+                                setActiveIndex((index) => (index < 0 ? candidates.length - 1 : (index - 1 + candidates.length) % candidates.length));
                                 return;
                             }
                             if (event.key === "Enter" || event.key === "Tab") {
@@ -491,8 +525,7 @@ if (event.key === "Enter" && (event.nativeEvent.isComposing || composingRef.curr
                         }, 120);
                         props.onBlur?.(event as unknown as React.FocusEvent<HTMLTextAreaElement>);
                     }}
-                >
-                </div>
+                ></div>
                 {autoLinkSuggestion}
                 {menu}
                 {previewReference ? <InlineReferencePreview reference={previewReference} onClose={() => setPreviewReference(null)} /> : null}
@@ -533,21 +566,21 @@ if (event.key === "Enter" && (event.nativeEvent.isComposing || composingRef.curr
                     props.onSelect?.(event);
                 }}
                 onKeyDown={(event) => {
-if (event.key === "Enter" && (event.nativeEvent.isComposing || composingRef.current || event.keyCode === 229)) return;
-                        if (autoLinkMatch && event.key === "Tab" && !event.shiftKey && !event.nativeEvent.isComposing && !composingRef.current) {
-                            event.preventDefault();
-                            insertAutoLink(autoLinkMatch);
-                            return;
-                        }
+                    if (event.key === "Enter" && (event.nativeEvent.isComposing || composingRef.current || event.keyCode === 229)) return;
+                    if (autoLinkMatch && event.key === "Tab" && !event.shiftKey && !event.nativeEvent.isComposing && !composingRef.current) {
+                        event.preventDefault();
+                        insertAutoLink(autoLinkMatch);
+                        return;
+                    }
                     if (mention && candidates.length) {
                         if (event.key === "ArrowDown") {
                             event.preventDefault();
-                            setActiveIndex((index) => index < 0 ? 0 : (index + 1) % candidates.length);
+                            setActiveIndex((index) => (index < 0 ? 0 : (index + 1) % candidates.length));
                             return;
                         }
                         if (event.key === "ArrowUp") {
                             event.preventDefault();
-                            setActiveIndex((index) => index < 0 ? candidates.length - 1 : (index - 1 + candidates.length) % candidates.length);
+                            setActiveIndex((index) => (index < 0 ? candidates.length - 1 : (index - 1 + candidates.length) % candidates.length));
                             return;
                         }
                         if (event.key === "Enter") {

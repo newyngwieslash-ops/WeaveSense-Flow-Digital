@@ -1,7 +1,6 @@
 import type { CanvasProject } from "@/stores/canvas/use-canvas-store";
 import { http } from "@/services/api/request";
 
-
 export type CanvasShareStatus = {
     enabled: boolean;
     token?: string;

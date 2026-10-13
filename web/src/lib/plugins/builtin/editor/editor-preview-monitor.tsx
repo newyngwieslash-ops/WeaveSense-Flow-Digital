@@ -10,25 +10,7 @@
 // - 静音跟随所在音频/视频轨道（muted），不再硬编码 muted（否则"有声音"永远不成立）。
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import {
-    AlertTriangle,
-    Captions,
-    ChevronDown,
-    Download,
-    Film,
-    Gauge,
-    Image as ImageIcon,
-    LoaderCircle,
-    Pause,
-    Play,
-    SkipBack,
-    SkipForward,
-    StepBack,
-    StepForward,
-    Type,
-    Video,
-    Volume2,
-} from "lucide-react";
+import { AlertTriangle, Captions, ChevronDown, Download, Film, Gauge, Image as ImageIcon, LoaderCircle, Pause, Play, SkipBack, SkipForward, StepBack, StepForward, Type, Video, Volume2 } from "lucide-react";
 
 import { useEditorStoreContext } from "@/components/editor/editor-context";
 import { formatTimelineTime } from "@/lib/timeline/timeline-view";
@@ -104,8 +86,7 @@ function clipDisplayTitle(clip: TimelineClip): string {
 }
 
 function ClipKindIcon({ kind, className }: { kind: TimelineClip["kind"]; className?: string }) {
-    const Icon =
-        kind === "video" ? Video : kind === "image" ? ImageIcon : kind === "audio" ? Volume2 : kind === "subtitle" ? Captions : Type;
+    const Icon = kind === "video" ? Video : kind === "image" ? ImageIcon : kind === "audio" ? Volume2 : kind === "subtitle" ? Captions : Type;
     return <Icon className={className} />;
 }
 
@@ -344,9 +325,10 @@ export function EditorPreviewMonitor() {
         if (!v || !isVideoClip) return;
         if (playing) {
             const p = v.play();
-            if (p) p.catch(() => {
-                // 浏览器 autoplay/格式限制：onError 已接管提示与回退。
-            });
+            if (p)
+                p.catch(() => {
+                    // 浏览器 autoplay/格式限制：onError 已接管提示与回退。
+                });
         } else if (!v.paused) {
             v.pause();
         }
@@ -413,37 +395,19 @@ export function EditorPreviewMonitor() {
                             <span className="truncate text-xs font-medium text-[var(--director-dock-fg-strong)]" title={clipDisplayTitle(activeClip)}>
                                 {clipDisplayTitle(activeClip)}
                             </span>
-                            <span className="hidden shrink-0 rounded-full bg-[var(--director-dock-active-surface)] px-1.5 py-0.5 text-[10px] leading-none text-[var(--director-dock-fg)]/85 sm:inline-flex">
-                                {clipKindLabel(activeClip.kind)}
-                            </span>
-                            {activeTrack && (
-                                <span className="hidden shrink-0 rounded-full border border-[var(--director-sequencer-border)] px-1.5 py-0.5 text-[10px] leading-none text-[var(--director-dock-fg)]/55 md:inline-flex">
-                                    {activeTrack.label}
-                                </span>
-                            )}
+                            <span className="hidden shrink-0 rounded-full bg-[var(--director-dock-active-surface)] px-1.5 py-0.5 text-[10px] leading-none text-[var(--director-dock-fg)]/85 sm:inline-flex">{clipKindLabel(activeClip.kind)}</span>
+                            {activeTrack && <span className="hidden shrink-0 rounded-full border border-[var(--director-sequencer-border)] px-1.5 py-0.5 text-[10px] leading-none text-[var(--director-dock-fg)]/55 md:inline-flex">{activeTrack.label}</span>}
                         </>
                     ) : (
                         <span className="truncate text-xs text-[var(--director-dock-fg)]/40">预览监视器</span>
                     )}
                 </div>
                 {mediaErrorHint && (
-                    <span
-                        title={mediaErrorHint}
-                        className="flex min-w-0 max-w-[42%] items-center gap-1.5 rounded-md bg-[var(--director-danger)]/10 px-2 py-1 text-[11px] text-[var(--director-danger)]"
-                    >
-                        {mediaErrorHint.includes("正在生成") ? (
-                            <LoaderCircle className="size-3 shrink-0 animate-spin" />
-                        ) : (
-                            <AlertTriangle className="size-3 shrink-0" />
-                        )}
+                    <span title={mediaErrorHint} className="flex min-w-0 max-w-[42%] items-center gap-1.5 rounded-md bg-[var(--director-danger)]/10 px-2 py-1 text-[11px] text-[var(--director-danger)]">
+                        {mediaErrorHint.includes("正在生成") ? <LoaderCircle className="size-3 shrink-0 animate-spin" /> : <AlertTriangle className="size-3 shrink-0" />}
                         <span className="truncate">{mediaErrorHint}</span>
                         {mediaResourceId && (
-                            <a
-                                href={resourceFileUrl(mediaResourceId)}
-                                download
-                                title="下载原片，用本地播放器观看"
-                                className="grid size-4 shrink-0 place-items-center rounded hover:bg-[var(--director-danger)]/15"
-                            >
+                            <a href={resourceFileUrl(mediaResourceId)} download title="下载原片，用本地播放器观看" className="grid size-4 shrink-0 place-items-center rounded hover:bg-[var(--director-danger)]/15">
                                 <Download className="size-3" />
                             </a>
                         )}
@@ -457,13 +421,7 @@ export function EditorPreviewMonitor() {
                         <div className="grid size-14 place-items-center rounded-xl bg-white/10">
                             <Film className="size-6 text-white/60" />
                         </div>
-                        <div className="max-w-xs text-xs leading-relaxed text-white/70">
-                            {project && project.clips.length > 0
-                                ? activeClip
-                                    ? "当前时间点没有可显示画面（字幕或音频片段）"
-                                    : "播放头位于空白处"
-                                : "时间线暂无片段，导入素材后在此预览"}
-                        </div>
+                        <div className="max-w-xs text-xs leading-relaxed text-white/70">{project && project.clips.length > 0 ? (activeClip ? "当前时间点没有可显示画面（字幕或音频片段）" : "播放头位于空白处") : "时间线暂无片段，导入素材后在此预览"}</div>
                     </div>
                 ) : isVideoClip && videoSrc ? (
                     <video
@@ -479,13 +437,7 @@ export function EditorPreviewMonitor() {
                         onEnded={handleVideoEnded}
                     />
                 ) : imageSrc ? (
-                    <img
-                        key={`i:${activeClip!.id}`}
-                        src={imageSrc}
-                        alt=""
-                        className="max-h-full max-w-full rounded-md object-contain shadow-lg"
-                        onError={handleMediaError}
-                    />
+                    <img key={`i:${activeClip!.id}`} src={imageSrc} alt="" className="max-h-full max-w-full rounded-md object-contain shadow-lg" onError={handleMediaError} />
                 ) : null}
             </div>
 
@@ -500,9 +452,7 @@ export function EditorPreviewMonitor() {
             >
                 <span className="truncate text-xs tabular-nums text-[var(--director-dock-fg)]">
                     {!compact && formatTimelineTime(playbackMs)}
-                    {!compact && !hideTotal && (
-                        <span className="opacity-60"> / {formatTimelineTime(durationMs)}</span>
-                    )}
+                    {!compact && !hideTotal && <span className="opacity-60"> / {formatTimelineTime(durationMs)}</span>}
                 </span>
                 <div className="flex shrink-0 items-center gap-0.5">
                     <button
@@ -531,9 +481,7 @@ export function EditorPreviewMonitor() {
                         onClick={toggle}
                         disabled={durationMs <= 0}
                         className={`grid size-7 place-items-center rounded-md transition-colors disabled:pointer-events-none disabled:opacity-40 ${
-                            playing
-                                ? "bg-[var(--director-dock-active-surface)] text-[var(--director-dock-fg-strong)]"
-                                : "text-[var(--director-dock-fg)] hover:bg-[var(--director-control-hover)]"
+                            playing ? "bg-[var(--director-dock-active-surface)] text-[var(--director-dock-fg-strong)]" : "text-[var(--director-dock-fg)] hover:bg-[var(--director-control-hover)]"
                         }`}
                     >
                         {playing ? <Pause className="size-4" /> : <Play className="size-4 translate-x-px" />}
@@ -569,9 +517,7 @@ export function EditorPreviewMonitor() {
                     >
                         <Gauge className="size-3.5" />
                         {!compact && <span className="tabular-nums">{speed}x</span>}
-                        {!compact && (
-                            <ChevronDown className={`size-3 transition-transform ${speedMenuOpen ? "rotate-180" : ""}`} />
-                        )}
+                        {!compact && <ChevronDown className={`size-3 transition-transform ${speedMenuOpen ? "rotate-180" : ""}`} />}
                     </button>
                     {speedMenuOpen && (
                         <>

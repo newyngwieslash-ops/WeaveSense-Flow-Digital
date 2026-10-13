@@ -316,31 +316,31 @@ export default function EmailSettingsPanel() {
 
                 {draftEnabled ? (
                     <div id="admin-email-smtp" className="admin-settings-anchor">
-                    <SettingsSectionCard
-                        className="admin-email-section admin-email-configuration-section"
-                        icon={<Server className="size-4" aria-hidden="true" />}
-                        title="2. 配置 SMTP 连接与发件身份"
-                        description="填写邮件服务器、身份验证和发件人信息。保存不会主动探测或发送测试邮件。"
-                        status={<AdminStatusBadge label={dirty ? "待保存" : smtpReady ? "已配置" : "待配置"} tone={dirty ? "warning" : smtpReady ? "success" : "neutral"} />}
-                        footer={
-                            <>
-                                <div className="admin-email-footer-note">
-                                    <BadgeCheck className="size-4" aria-hidden="true" />
-                                    <span>SMTP 密码由服务端加密保存且不回显明文</span>
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                    {dirty ? (
-                                        <Button icon={<RotateCcw className="size-4" />} disabled={saving} onClick={resetDraft}>
-                                            撤销
+                        <SettingsSectionCard
+                            className="admin-email-section admin-email-configuration-section"
+                            icon={<Server className="size-4" aria-hidden="true" />}
+                            title="2. 配置 SMTP 连接与发件身份"
+                            description="填写邮件服务器、身份验证和发件人信息。保存不会主动探测或发送测试邮件。"
+                            status={<AdminStatusBadge label={dirty ? "待保存" : smtpReady ? "已配置" : "待配置"} tone={dirty ? "warning" : smtpReady ? "success" : "neutral"} />}
+                            footer={
+                                <>
+                                    <div className="admin-email-footer-note">
+                                        <BadgeCheck className="size-4" aria-hidden="true" />
+                                        <span>SMTP 密码由服务端加密保存且不回显明文</span>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        {dirty ? (
+                                            <Button icon={<RotateCcw className="size-4" />} disabled={saving} onClick={resetDraft}>
+                                                撤销
+                                            </Button>
+                                        ) : null}
+                                        <Button type="primary" icon={<Save className="size-4" />} loading={saving} disabled={!dirty || loading || refreshing} onClick={() => void submitSave()}>
+                                            {draftEnabled ? "保存并启用" : "保存设置"}
                                         </Button>
-                                    ) : null}
-                                    <Button type="primary" icon={<Save className="size-4" />} loading={saving} disabled={!dirty || loading || refreshing} onClick={() => void submitSave()}>
-                                        {draftEnabled ? "保存并启用" : "保存设置"}
-                                    </Button>
-                                </div>
-                            </>
-                        }
-                    >
+                                    </div>
+                                </>
+                            }
+                        >
                             <div className="admin-email-form-section">
                                 <FormSectionTitle icon={<Server className="size-4" />} title="服务器连接" description="填写 SMTP 主机、端口和传输加密；STARTTLS 通常使用 587，直接 TLS 通常使用 465。" />
                                 <div className="admin-email-form-grid is-connection">
@@ -411,7 +411,7 @@ export default function EmailSettingsPanel() {
                                     </Form.Item>
                                 </div>
                             </div>
-                    </SettingsSectionCard>
+                        </SettingsSectionCard>
                     </div>
                 ) : null}
 
@@ -441,20 +441,15 @@ export default function EmailSettingsPanel() {
                             </>
                         }
                     >
-                            <div className="admin-email-form-section">
-                                <Form.Item
-                                    name="registrationAllowedDomains"
-                                    label="电子邮件域名白名单"
-                                    extra="每行一个域名。留空保存表示不限制邮箱域名。"
-                                    rules={[{ validator: (_, value: string | undefined) => validateDomainList(value) }]}
-                                >
-                                    <Input.TextArea
-                                        autoSize={{ minRows: 9, maxRows: 16 }}
-                                        placeholder="gmail.com&#10;163.com&#10;126.com&#10;qq.com"
-                                        spellCheck={false}
-                                    />
-                                </Form.Item>
-                            </div>
+                        <div className="admin-email-form-section">
+                            <Form.Item name="registrationAllowedDomains" label="电子邮件域名白名单" extra="每行一个域名。留空保存表示不限制邮箱域名。" rules={[{ validator: (_, value: string | undefined) => validateDomainList(value) }]}>
+                                <Input.TextArea
+                                    autoSize={{ minRows: 9, maxRows: 16 }}
+                                    placeholder="gmail.com&#10;163.com&#10;126.com&#10;qq.com"
+                                    spellCheck={false}
+                                />
+                            </Form.Item>
+                        </div>
                     </SettingsSectionCard>
                 </div>
             </Form>

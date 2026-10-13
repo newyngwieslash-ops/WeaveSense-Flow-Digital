@@ -104,7 +104,7 @@ describe("Volcengine Ark full-modal references", () => {
     test("显式首帧与项目角色参考图使用不同角色", async () => {
         let requestBody: unknown;
         const deps = {
-            transport: { post: async (_url: string, body: unknown) => (requestBody = body, { id: "task-1" }) },
+            transport: { post: async (_url: string, body: unknown) => ((requestBody = body), { id: "task-1" }) },
             response: videoResponseTools,
         } as unknown as VideoProviderDeps;
         const images = [
@@ -134,7 +134,7 @@ describe("Seedance /videos image roles", () => {
     test("reference_to_video does not promote the first character image to image_url", async () => {
         let requestBody: Record<string, unknown> = {};
         const deps = {
-            transport: { post: async (_url: string, body: unknown) => (requestBody = body as Record<string, unknown>, { id: "task-1" }) },
+            transport: { post: async (_url: string, body: unknown) => ((requestBody = body as Record<string, unknown>), { id: "task-1" }) },
             response: videoResponseTools,
         } as unknown as VideoProviderDeps;
         const config = { ...defaultConfig, baseUrl: "https://video.example.com/v1", model: "seedance-2.0", videoModel: "seedance-2.0" };

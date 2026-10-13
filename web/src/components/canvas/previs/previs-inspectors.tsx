@@ -31,7 +31,12 @@ const PREVIS_HEX_COLOR_PATTERN = /^#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
 function normalizePrevisHexColor(value: string, fallback = "#ffffff") {
     const trimmed = value.trim().toLowerCase();
     if (!PREVIS_HEX_COLOR_PATTERN.test(trimmed)) return fallback;
-    if (trimmed.length === 4) return `#${trimmed.slice(1).split("").map((part) => part + part).join("")}`;
+    if (trimmed.length === 4)
+        return `#${trimmed
+            .slice(1)
+            .split("")
+            .map((part) => part + part)
+            .join("")}`;
     return trimmed;
 }
 
@@ -148,12 +153,27 @@ export function ObjectInspector({
             {isActor ? (
                 <>
                     <Field label="角色原型">
-                        <Select className="w-full" size="small" value={object.archetype || "adult"} options={PREVIS_ACTOR_ARCHETYPES.map((item) => ({ label: item.label, value: item.value }))} onChange={(archetype: PrevisActorArchetype) => onUpdate({ archetype, actorProfile: previsActorProfileForArchetype(archetype) })} />
+                        <Select
+                            className="w-full"
+                            size="small"
+                            value={object.archetype || "adult"}
+                            options={PREVIS_ACTOR_ARCHETYPES.map((item) => ({ label: item.label, value: item.value }))}
+                            onChange={(archetype: PrevisActorArchetype) => onUpdate({ archetype, actorProfile: previsActorProfileForArchetype(archetype) })}
+                        />
                         <div className="mt-1 text-[10px] opacity-50">{previsActorArchetypeLabel(object.archetype)}会影响体型、头身比和配件轮廓。</div>
                     </Field>
                     <Field label="角色颜色">
                         <div className="previs-actor-colors">
-                            {PREVIS_ACTOR_COLORS.map((color) => <button key={color} type="button" className={`previs-actor-color ${object.color.toLowerCase() === color ? "is-active" : ""}`} style={{ background: color }} aria-label={`设置颜色 ${color}`} onClick={() => onUpdate({ color })} />)}
+                            {PREVIS_ACTOR_COLORS.map((color) => (
+                                <button
+                                    key={color}
+                                    type="button"
+                                    className={`previs-actor-color ${object.color.toLowerCase() === color ? "is-active" : ""}`}
+                                    style={{ background: color }}
+                                    aria-label={`设置颜色 ${color}`}
+                                    onClick={() => onUpdate({ color })}
+                                />
+                            ))}
                             <ColorPicker value={normalizePrevisHexColor(object.color)} size="small" onChange={(color) => onUpdate({ color: color.toHexString() })} />
                         </div>
                         <div className="mt-1">
@@ -455,10 +475,12 @@ export function Vec3Field({ label, value, step = 0.1, axisLabels, onChange }: { 
     return (
         <Field label={label}>
             <div className="grid grid-cols-3 gap-1">
-                {value.map((item, index) => <div key={index} className="relative">
-                    <InputNumber className="w-full" size="small" step={step} value={Number(item.toFixed(2))} onChange={(next) => onChange(value.map((entry, itemIndex) => (itemIndex === index ? next || 0 : entry)) as PrevisVec3)} />
-                    {axisLabels ? <span className="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 text-[9px] opacity-45">{axisLabels[index]}</span> : null}
-                </div>)}
+                {value.map((item, index) => (
+                    <div key={index} className="relative">
+                        <InputNumber className="w-full" size="small" step={step} value={Number(item.toFixed(2))} onChange={(next) => onChange(value.map((entry, itemIndex) => (itemIndex === index ? next || 0 : entry)) as PrevisVec3)} />
+                        {axisLabels ? <span className="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 text-[9px] opacity-45">{axisLabels[index]}</span> : null}
+                    </div>
+                ))}
             </div>
         </Field>
     );

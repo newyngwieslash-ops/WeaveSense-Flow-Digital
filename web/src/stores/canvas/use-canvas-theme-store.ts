@@ -10,7 +10,13 @@ type CanvasThemeStore = { theme: ThemeName; active: boolean; setTheme: (theme: T
 /** 画布外观是编辑器状态，不能写入用户工作台的全局主题。 */
 export const useCanvasThemeStore = create<CanvasThemeStore>()(
     persist(
-        (set) => ({ theme: DEFAULT_CANVAS_COLOR_THEME, active: false, setTheme: (theme) => { if (theme === "light" || theme === "dark") set({ theme }); } }),
+        (set) => ({
+            theme: DEFAULT_CANVAS_COLOR_THEME,
+            active: false,
+            setTheme: (theme) => {
+                if (theme === "light" || theme === "dark") set({ theme });
+            },
+        }),
         {
             name: "yingce:canvas-theme",
             partialize: ({ theme }) => ({ theme }),
@@ -26,7 +32,9 @@ export const useCanvasThemeStore = create<CanvasThemeStore>()(
 export function useCanvasThemeScope() {
     useLayoutEffect(() => {
         useCanvasThemeStore.setState({ active: true });
-        return () => { useCanvasThemeStore.setState({ active: false }); };
+        return () => {
+            useCanvasThemeStore.setState({ active: false });
+        };
     }, []);
 }
 

@@ -23,40 +23,52 @@ export type CanvasShortDramaProgress = {
 };
 
 export function createShortDramaPipeline(center: Position) {
-    const styleNode = createCanvasNode(CanvasNodeType.Text, { x: center.x - 760, y: center.y - 170 }, {
-        content: "",
-        status: "idle",
-        workflowKind: "styleboard",
-        workflowTitle: "项目画风",
-        workflowDescription: "待选择",
-        fontSize: 14,
-    });
+    const styleNode = createCanvasNode(
+        CanvasNodeType.Text,
+        { x: center.x - 760, y: center.y - 170 },
+        {
+            content: "",
+            status: "idle",
+            workflowKind: "styleboard",
+            workflowTitle: "项目画风",
+            workflowDescription: "待选择",
+            fontSize: 14,
+        },
+    );
     styleNode.title = "项目画风 · 待选择";
     styleNode.width = 360;
     styleNode.height = 220;
 
-    const storyNode = createCanvasNode(CanvasNodeType.Text, { x: center.x - 760, y: center.y + 170 }, {
-        content: "",
-        status: "idle",
-        workflowKind: "story_input",
-        workflowTitle: "故事输入",
-        workflowDescription: "题材、角色、冲突和结局方向",
-        fontSize: 14,
-    });
+    const storyNode = createCanvasNode(
+        CanvasNodeType.Text,
+        { x: center.x - 760, y: center.y + 170 },
+        {
+            content: "",
+            status: "idle",
+            workflowKind: "story_input",
+            workflowTitle: "故事输入",
+            workflowDescription: "题材、角色、冲突和结局方向",
+            fontSize: 14,
+        },
+    );
     storyNode.title = "故事梗概";
     storyNode.width = 420;
     storyNode.height = 260;
 
-    const scriptNode = createCanvasNode(CanvasNodeType.Script, { x: center.x + 180, y: center.y }, {
-        status: "idle",
-        workflowKind: "storyboard",
-        workflowTitle: "分镜脚本",
-        storyboard: {
-            rows: [],
-            visibleColumns: ["shotNumber", "durationSeconds", "videoMotionPrompt", "dialogue", "assets"],
-            referenceNodeIds: [],
+    const scriptNode = createCanvasNode(
+        CanvasNodeType.Script,
+        { x: center.x + 180, y: center.y },
+        {
+            status: "idle",
+            workflowKind: "storyboard",
+            workflowTitle: "分镜脚本",
+            storyboard: {
+                rows: [],
+                visibleColumns: ["shotNumber", "durationSeconds", "videoMotionPrompt", "dialogue", "assets"],
+                referenceNodeIds: [],
+            },
         },
-    });
+    );
     scriptNode.title = "分镜脚本 · 待生成";
 
     const connections: CanvasConnection[] = [
@@ -83,7 +95,9 @@ export function deriveShortDramaProgress(nodes: CanvasNodeData[], connections: C
     const meaningfulRows = scriptNode ? meaningfulStoryboardRows(scriptNode) : [];
     const nodeById = new Map(nodes.map((node) => [node.id, node]));
     const successfulVideoNodeIds = new Set(nodes.filter(isSuccessfulVideoNode).map((node) => node.id));
-    const completedShotVideos = nodes.filter((node) => isSuccessfulVideoNode(node) && (node.metadata?.workflowKind === "shot" || connections.some((connection) => shotNodes.some((shot) => shot.id === connection.fromNodeId) && connection.toNodeId === node.id)));
+    const completedShotVideos = nodes.filter(
+        (node) => isSuccessfulVideoNode(node) && (node.metadata?.workflowKind === "shot" || connections.some((connection) => shotNodes.some((shot) => shot.id === connection.fromNodeId) && connection.toNodeId === node.id)),
+    );
     const finalNode = finalNodes.find((node) => node.metadata?.status === "success" && Boolean(node.metadata.content));
 
     const storyText = (storyNode?.metadata?.content || "").trim();
@@ -92,12 +106,14 @@ export function deriveShortDramaProgress(nodes: CanvasNodeData[], connections: C
     const storyDone = Boolean(storyText && storyNode && (storyNode === agentScriptNode || !scriptNode || isConnectedToStoryboard(storyNode.id)));
     const storyboardDone = meaningfulRows.length > 0 || shotNodes.length > 0;
     const rowsWithVideo = meaningfulRows.filter((row) => row.videoNodeId && nodeById.get(row.videoNodeId)?.type === CanvasNodeType.Video);
-    const videoDone = meaningfulRows.length > 0
-        ? rowsWithVideo.length === meaningfulRows.length && rowsWithVideo.every((row) => {
-              const videoNode = nodeById.get(row.videoNodeId!);
-              return videoNode?.metadata?.status === "success" && Boolean(videoNode.metadata.content);
-          })
-        : shotNodes.length > 0 && shotNodes.every((shot) => connections.some((connection) => connection.fromNodeId === shot.id && successfulVideoNodeIds.has(connection.toNodeId)));
+    const videoDone =
+        meaningfulRows.length > 0
+            ? rowsWithVideo.length === meaningfulRows.length &&
+              rowsWithVideo.every((row) => {
+                  const videoNode = nodeById.get(row.videoNodeId!);
+                  return videoNode?.metadata?.status === "success" && Boolean(videoNode.metadata.content);
+              })
+            : shotNodes.length > 0 && shotNodes.every((shot) => connections.some((connection) => connection.fromNodeId === shot.id && successfulVideoNodeIds.has(connection.toNodeId)));
     const done = [styleDone, storyDone, storyboardDone, videoDone, Boolean(finalNode)];
     const firstIncomplete = done.findIndex((value) => !value);
     const firstShotNode = shotNodes[0];

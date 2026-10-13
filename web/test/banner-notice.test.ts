@@ -80,11 +80,7 @@ describe("emoji 图标素材库", () => {
     test("emoji 是普通文本：标题纯文本拼接函数必须原样保留它", async () => {
         // 防止未来有人给 run.text 做字符过滤，把 emoji 丢掉。
         const { bannerTitlePlainText } = await import("@/lib/announcements/banner-title");
-        const runs = [
-            { text: "🔥", fontSize: 20 },
-            { text: "限时", color: "#FFE58F" },
-            { text: "大促" },
-        ];
+        const runs = [{ text: "🔥", fontSize: 20 }, { text: "限时", color: "#FFE58F" }, { text: "大促" }];
         expect(bannerTitlePlainText(runs as never)).toBe("🔥限时大促");
     });
 });
@@ -101,11 +97,7 @@ describe("与后端白名单保持一致", () => {
     });
 
     test("后端不保存独立图标字段：emoji 必须内嵌在标题分段里", async () => {
-        const [goModel, goApp, goRepo] = await Promise.all([
-            readSource("../../backend/internal/model/models_project.go"),
-            readSource("../../backend/internal/app/announcement.go"),
-            readSource("../../backend/internal/repository/announcement.go"),
-        ]);
+        const [goModel, goApp, goRepo] = await Promise.all([readSource("../../backend/internal/model/models_project.go"), readSource("../../backend/internal/app/announcement.go"), readSource("../../backend/internal/repository/announcement.go")]);
         // 防止 icon 字段被加回来却没人维护白名单：图标的存储形态就是 TitleRuns 的文本。
         expect(goModel).not.toMatch(/\bIcon\s+string/);
         expect(goApp).not.toContain("normalizeBannerIcon");

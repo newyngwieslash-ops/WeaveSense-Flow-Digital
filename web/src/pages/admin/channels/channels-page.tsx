@@ -397,11 +397,7 @@ export default function ChannelsPage() {
                             <ChannelHeadersEditor />
                         </Form.Item>
                     </div>
-                    <Form.Item
-                        name="proxyUrl"
-                        label="代理地址"
-                        extra="为该渠道单独配置出站代理，支持 socks5://、socks5h://、http://、https://。留空则使用全局环境变量代理。"
-                    >
+                    <Form.Item name="proxyUrl" label="代理地址" extra="为该渠道单独配置出站代理，支持 socks5://、socks5h://、http://、https://。留空则使用全局环境变量代理。">
                         <Input placeholder="例如：socks5://127.0.0.1:1080 或 http://127.0.0.1:7890" />
                     </Form.Item>
                     <Form.Item name="useGlobalConcurrency" label="跟随系统并发配置" valuePropName="checked">

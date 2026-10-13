@@ -5,9 +5,7 @@ import { join } from "node:path";
 import { formatMs, summarizeTimeline } from "@/lib/timeline/timeline-summary";
 import type { TimelineProject } from "@/types/timeline";
 
-const commandsGolden = JSON.parse(
-    readFileSync(join(import.meta.dir, "fixtures/commands.golden.json"), "utf8"),
-) as { base: TimelineProject };
+const commandsGolden = JSON.parse(readFileSync(join(import.meta.dir, "fixtures/commands.golden.json"), "utf8")) as { base: TimelineProject };
 
 describe("formatMs", () => {
     test("毫秒转 m:ss", () => {

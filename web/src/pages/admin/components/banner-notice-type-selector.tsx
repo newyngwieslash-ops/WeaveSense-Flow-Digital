@@ -14,15 +14,7 @@ export function BannerNoticeTypeSelector({ value, onChange }: { value: string; o
             {BANNER_NOTICE_TYPES.map((type) => {
                 const selected = active === type.key;
                 return (
-                    <button
-                        key={type.key}
-                        type="button"
-                        role="radio"
-                        aria-checked={selected}
-                        data-banner-type={type.key}
-                        className={`admin-banner-type-card${selected ? " is-active" : ""}`}
-                        onClick={() => onChange(type.key)}
-                    >
+                    <button key={type.key} type="button" role="radio" aria-checked={selected} data-banner-type={type.key} className={`admin-banner-type-card${selected ? " is-active" : ""}`} onClick={() => onChange(type.key)}>
                         <span className="admin-banner-type-card-name">
                             {type.label}
                             {selected ? <Check className="admin-banner-type-card-check size-3.5" aria-hidden="true" /> : null}

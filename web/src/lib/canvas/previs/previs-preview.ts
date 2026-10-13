@@ -64,14 +64,7 @@ export type PrevisPreviewRequest = {
 export function previsPreviewRequestKey(request: PrevisPreviewRequest) {
     const requestId = request.previewRequestId?.trim();
     if (requestId) return `id:${requestId}`;
-    return [
-        "fallback",
-        request.canvasId?.trim() || "",
-        request.sceneId?.trim() || "",
-        request.shotId?.trim() || "",
-        Number.isFinite(request.duration) ? String(request.duration) : "",
-        Number.isFinite(request.fps) ? String(request.fps) : "",
-    ].join(":");
+    return ["fallback", request.canvasId?.trim() || "", request.sceneId?.trim() || "", request.shotId?.trim() || "", Number.isFinite(request.duration) ? String(request.duration) : "", Number.isFinite(request.fps) ? String(request.fps) : ""].join(":");
 }
 
 /** Agent 事件只有命中当前画布、场景和活动镜头时才允许触发浏览器录制。 */

@@ -66,7 +66,9 @@ export function CanvasUploadStatusToast({ status, theme }: { status: CanvasUploa
                     />
                 ))}
             </div>
-            <span className="sr-only">处理步骤 {status.step}/{status.total}</span>
+            <span className="sr-only">
+                处理步骤 {status.step}/{status.total}
+            </span>
         </motion.div>
     );
 }

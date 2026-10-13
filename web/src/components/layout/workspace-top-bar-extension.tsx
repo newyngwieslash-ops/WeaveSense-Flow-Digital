@@ -8,9 +8,7 @@ export function WorkspaceTopBarExtensionProvider({ children }: { children: React
 
     return (
         <WorkspaceTopBarMountSetterContext.Provider value={setMount}>
-            <WorkspaceTopBarMountContext.Provider value={mount}>
-                {children}
-            </WorkspaceTopBarMountContext.Provider>
+            <WorkspaceTopBarMountContext.Provider value={mount}>{children}</WorkspaceTopBarMountContext.Provider>
         </WorkspaceTopBarMountSetterContext.Provider>
     );
 }

@@ -10,7 +10,11 @@ async function renderWelcome() {
             window.location.replace("/");
             return;
         }
-        createRoot(document.getElementById("root")!).render(<StrictMode><WelcomePage /></StrictMode>);
+        createRoot(document.getElementById("root")!).render(
+            <StrictMode>
+                <WelcomePage />
+            </StrictMode>,
+        );
     } catch (error) {
         console.error("Welcome page initialization failed", error);
         createRoot(document.getElementById("root")!).render(

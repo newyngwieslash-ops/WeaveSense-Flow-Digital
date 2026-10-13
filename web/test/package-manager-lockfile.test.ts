@@ -3,11 +3,7 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
 test("web does not keep a second package manager lockfile", () => {
-    const leftover = [
-        resolve(import.meta.dir, "../pnpm-lock.yaml"),
-        resolve(import.meta.dir, "../package-lock.json"),
-        resolve(import.meta.dir, "../yarn.lock"),
-    ].filter((path) => existsSync(path));
+    const leftover = [resolve(import.meta.dir, "../pnpm-lock.yaml"), resolve(import.meta.dir, "../package-lock.json"), resolve(import.meta.dir, "../yarn.lock")].filter((path) => existsSync(path));
     expect(leftover).toEqual([]);
 });
 

@@ -26,13 +26,8 @@ function estimatedTokens(text: string) {
 
 // Live tool exchanges remain intact. Refuse an oversized exchange instead of
 // dropping a tool result or silently changing its execution/approval facts.
-export function assertAgentExchangeBudget(
-    messages: ResponseInputMessage[],
-    tools: ResponseFunctionTool[],
-    systemPrompt: string,
-    capability?: AgentContextCapability,
-) {
-    const text = JSON.stringify({ messages, tools, systemPrompt }, (_key, value) => typeof value === "string" && value.startsWith("data:") ? "[media payload counted separately]" : value);
+export function assertAgentExchangeBudget(messages: ResponseInputMessage[], tools: ResponseFunctionTool[], systemPrompt: string, capability?: AgentContextCapability) {
+    const text = JSON.stringify({ messages, tools, systemPrompt }, (_key, value) => (typeof value === "string" && value.startsWith("data:") ? "[media payload counted separately]" : value));
     const tokens = estimatedTokens(text);
     if (encoder.encode(text).byteLength > MAX_DIAGNOSTIC_BYTES || tokens > inputBudget(capability)) {
         const budget = inputBudget(capability);
@@ -41,9 +36,10 @@ export function assertAgentExchangeBudget(
 }
 
 function textCost(messages: AiTextMessage[]) {
-    let bytes = 0, tokens = 0;
+    let bytes = 0,
+        tokens = 0;
     for (const message of messages) {
-        const text = typeof message.content === "string" ? message.content : message.content.flatMap((part) => part.type === "text" ? [part.text] : []).join("\n");
+        const text = typeof message.content === "string" ? message.content : message.content.flatMap((part) => (part.type === "text" ? [part.text] : [])).join("\n");
         bytes += encoder.encode(text).byteLength + 64;
         tokens += estimatedTokens(text) + 16;
     }
@@ -51,12 +47,7 @@ function textCost(messages: AiTextMessage[]) {
 }
 
 /** Applies only to persisted conversational history, never a live tool-call/result sequence. */
-export function budgetAgentHistory(
-    system: AiTextMessage,
-    history: AiTextMessage[],
-    current: AiTextMessage,
-    capability?: AgentContextCapability,
-): AiTextMessage[] {
+export function budgetAgentHistory(system: AiTextMessage, history: AiTextMessage[], current: AiTextMessage, capability?: AgentContextCapability): AiTextMessage[] {
     const protectedMessages = [system, ...history.filter((message) => message.role === "system")];
     const groups: AiTextMessage[][] = [];
     for (const message of history) {

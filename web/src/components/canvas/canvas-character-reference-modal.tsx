@@ -15,24 +15,33 @@ type FieldKey = "role" | "aliases" | "appearance" | "physique" | "clothing" | "p
 type Drafts = Record<FieldKey | "name", string>;
 
 const FIELD_GROUPS: Array<{ title: string; fields: Array<{ key: FieldKey; label: string; placeholder: string; wide?: boolean }> }> = [
-    { title: "身份", fields: [
-        { key: "role", label: "剧情身份", placeholder: "例如：落魄剑客，主角的师兄" },
-        { key: "aliases", label: "别名", placeholder: "多个别名用逗号分隔" },
-        { key: "personality", label: "性格气质", placeholder: "冷静、克制、偶尔自嘲", wide: true },
-    ] },
-    { title: "外观", fields: [
-        { key: "appearance", label: "外貌特征", placeholder: "脸型、五官、发型、年龄感", wide: true },
-        { key: "physique", label: "体型姿态", placeholder: "身高、体态、习惯动作" },
-        { key: "clothing", label: "服装造型", placeholder: "主服装与配色" },
-        { key: "props", label: "标志道具", placeholder: "随身物品或武器", wide: true },
-        { key: "consistencyPrompt", label: "一致性要求", placeholder: "生成时必须保持不变的特征", wide: true },
-        { key: "multiViewPrompt", label: "多视图要求", placeholder: "三视图 / 多角度生成补充说明", wide: true },
-    ] },
-    { title: "声音画像", fields: [
-        { key: "voiceLanguage", label: "语言口音", placeholder: "普通话，略带川音" },
-        { key: "voiceAge", label: "年龄感", placeholder: "青年" },
-        { key: "voiceTimbre", label: "音色气质", placeholder: "低沉、沙哑、语速偏慢", wide: true },
-    ] },
+    {
+        title: "身份",
+        fields: [
+            { key: "role", label: "剧情身份", placeholder: "例如：落魄剑客，主角的师兄" },
+            { key: "aliases", label: "别名", placeholder: "多个别名用逗号分隔" },
+            { key: "personality", label: "性格气质", placeholder: "冷静、克制、偶尔自嘲", wide: true },
+        ],
+    },
+    {
+        title: "外观",
+        fields: [
+            { key: "appearance", label: "外貌特征", placeholder: "脸型、五官、发型、年龄感", wide: true },
+            { key: "physique", label: "体型姿态", placeholder: "身高、体态、习惯动作" },
+            { key: "clothing", label: "服装造型", placeholder: "主服装与配色" },
+            { key: "props", label: "标志道具", placeholder: "随身物品或武器", wide: true },
+            { key: "consistencyPrompt", label: "一致性要求", placeholder: "生成时必须保持不变的特征", wide: true },
+            { key: "multiViewPrompt", label: "多视图要求", placeholder: "三视图 / 多角度生成补充说明", wide: true },
+        ],
+    },
+    {
+        title: "声音画像",
+        fields: [
+            { key: "voiceLanguage", label: "语言口音", placeholder: "普通话，略带川音" },
+            { key: "voiceAge", label: "年龄感", placeholder: "青年" },
+            { key: "voiceTimbre", label: "音色气质", placeholder: "低沉、沙哑、语速偏慢", wide: true },
+        ],
+    },
 ];
 const FIELD_KEYS = FIELD_GROUPS.flatMap((group) => group.fields.map((field) => field.key));
 
@@ -107,14 +116,31 @@ function CharacterStudio({ node, assetId, canvasTitles, onUpdated }: { node: Can
             setBusyKey("");
         }
     };
-    const bindImage = (resourceId: string) => commit(resourceId, () => replaceCharacterRepresentations(assetId, [{ role: "turnaround_sheet", resourceId }, { role: "primary", resourceId }]), "形象已更新");
+    const bindImage = (resourceId: string) =>
+        commit(
+            resourceId,
+            () =>
+                replaceCharacterRepresentations(assetId, [
+                    { role: "turnaround_sheet", resourceId },
+                    { role: "primary", resourceId },
+                ]),
+            "形象已更新",
+        );
     const bindVoice = (resourceId: string, title: string) => commit(resourceId, () => bindCharacterVoice(assetId, { sampleResourceId: resourceId, voiceName: title }), "声音已绑定");
-    const upload = (file: File, kind: "image" | "audio") => commit("upload", async () => {
-        const resource = await uploadResourceFile(file, kind, { fileName: file.name });
-        return kind === "image"
-            ? replaceCharacterRepresentations(assetId, [{ role: "turnaround_sheet", resourceId: resource.id }, { role: "primary", resourceId: resource.id }])
-            : bindCharacterVoice(assetId, { sampleResourceId: resource.id, voiceName: file.name.replace(/\.[^.]+$/, "") });
-    }, kind === "image" ? "形象已更新" : "声音已绑定");
+    const upload = (file: File, kind: "image" | "audio") =>
+        commit(
+            "upload",
+            async () => {
+                const resource = await uploadResourceFile(file, kind, { fileName: file.name });
+                return kind === "image"
+                    ? replaceCharacterRepresentations(assetId, [
+                          { role: "turnaround_sheet", resourceId: resource.id },
+                          { role: "primary", resourceId: resource.id },
+                      ])
+                    : bindCharacterVoice(assetId, { sampleResourceId: resource.id, voiceName: file.name.replace(/\.[^.]+$/, "") });
+            },
+            kind === "image" ? "形象已更新" : "声音已绑定",
+        );
     const saveProfile = () => {
         if (!drafts.name.trim()) {
             message.error("角色名称不能为空");
@@ -122,7 +148,13 @@ function CharacterStudio({ node, assetId, canvasTitles, onUpdated }: { node: Can
         }
         const nextDefinition: Record<string, unknown> = { ...definition };
         FIELD_KEYS.forEach((key) => {
-            nextDefinition[key] = key === "aliases" ? drafts.aliases.split(/[，,、]/).map((item) => item.trim()).filter(Boolean) : drafts[key].trim();
+            nextDefinition[key] =
+                key === "aliases"
+                    ? drafts.aliases
+                          .split(/[，,、]/)
+                          .map((item) => item.trim())
+                          .filter(Boolean)
+                    : drafts[key].trim();
         });
         void commit("profile", () => updateCharacter(assetId, { name: drafts.name.trim(), definition: nextDefinition }), "角色资料已保存");
     };
@@ -143,7 +175,12 @@ function CharacterStudio({ node, assetId, canvasTitles, onUpdated }: { node: Can
                                         <span className="block text-[11px] text-foreground/45">当前声音</span>
                                         <span className="block truncate text-sm font-medium">{voiceName}</span>
                                     </span>
-                                    <button type="button" disabled={Boolean(busyKey)} onClick={() => void commit("unbind", () => unbindCharacterVoice(assetId), "声音绑定已解除")} className="shrink-0 rounded text-xs text-foreground/45 underline-offset-4 outline-none hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-[var(--workspace-accent)] disabled:cursor-wait">
+                                    <button
+                                        type="button"
+                                        disabled={Boolean(busyKey)}
+                                        onClick={() => void commit("unbind", () => unbindCharacterVoice(assetId), "声音绑定已解除")}
+                                        className="shrink-0 rounded text-xs text-foreground/45 underline-offset-4 outline-none hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-[var(--workspace-accent)] disabled:cursor-wait"
+                                    >
                                         解除绑定
                                     </button>
                                 </div>
@@ -157,8 +194,12 @@ function CharacterStudio({ node, assetId, canvasTitles, onUpdated }: { node: Can
                         <div className="flex items-center justify-between gap-3 border-t border-border px-7 py-3.5">
                             <span className="text-xs text-foreground/45">资料有改动，保存后生成新版本</span>
                             <span className="flex gap-2">
-                                <Button type="text" size="small" tabIndex={dirty ? 0 : -1} onClick={() => setDrafts(baseline)}>还原</Button>
-                                <Button type="primary" size="small" tabIndex={dirty ? 0 : -1} loading={busyKey === "profile"} onClick={saveProfile}>保存资料</Button>
+                                <Button type="text" size="small" tabIndex={dirty ? 0 : -1} onClick={() => setDrafts(baseline)}>
+                                    还原
+                                </Button>
+                                <Button type="primary" size="small" tabIndex={dirty ? 0 : -1} loading={busyKey === "profile"} onClick={saveProfile}>
+                                    保存资料
+                                </Button>
                             </span>
                         </div>
                     </div>
@@ -252,7 +293,13 @@ function VoiceChip({ name, sampleId }: { name: string; sampleId: string }) {
         audioRef.current?.pause();
         setPlaying(false);
     }, [sampleId]);
-    if (!name) return <p className="mt-4 inline-flex items-center gap-1.5 text-xs text-white/35"><Mic className="size-3.5" />未绑定声音</p>;
+    if (!name)
+        return (
+            <p className="mt-4 inline-flex items-center gap-1.5 text-xs text-white/35">
+                <Mic className="size-3.5" />
+                未绑定声音
+            </p>
+        );
     const toggle = async () => {
         if (!sampleId) return;
         const audio = audioRef.current || (audioRef.current = new Audio());
@@ -271,7 +318,13 @@ function VoiceChip({ name, sampleId }: { name: string; sampleId: string }) {
         }
     };
     return (
-        <button type="button" disabled={!sampleId} onClick={() => void toggle()} aria-label={sampleId ? `${playing ? "暂停" : "试听"}声音 ${name}` : `声音 ${name}`} className="mt-4 inline-flex max-w-full items-center gap-2 rounded-full border border-white/15 bg-white/10 py-1 pl-1 pr-3.5 text-xs text-white/85 outline-none backdrop-blur transition-colors hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-white/60 disabled:cursor-default">
+        <button
+            type="button"
+            disabled={!sampleId}
+            onClick={() => void toggle()}
+            aria-label={sampleId ? `${playing ? "暂停" : "试听"}声音 ${name}` : `声音 ${name}`}
+            className="mt-4 inline-flex max-w-full items-center gap-2 rounded-full border border-white/15 bg-white/10 py-1 pl-1 pr-3.5 text-xs text-white/85 outline-none backdrop-blur transition-colors hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-white/60 disabled:cursor-default"
+        >
             <span className="grid size-6 place-items-center rounded-full bg-white text-black">{playing ? <Pause className="size-3" /> : sampleId ? <Play className="size-3 translate-x-px" /> : <Mic className="size-3" />}</span>
             <span className="truncate">{name}</span>
         </button>

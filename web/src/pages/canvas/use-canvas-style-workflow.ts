@@ -28,7 +28,12 @@ export function useCanvasStyleWorkflow({ canvasId, domainProjectId, nodesRef, se
     const liveContext = useRef({ canvasId, domainProjectId, mounted: true });
     liveContext.current = { canvasId, domainProjectId, mounted: liveContext.current.mounted };
     const applyingRef = useRef(false);
-    useEffect(() => { liveContext.current.mounted = true; return () => { liveContext.current.mounted = false; }; }, []);
+    useEffect(() => {
+        liveContext.current.mounted = true;
+        return () => {
+            liveContext.current.mounted = false;
+        };
+    }, []);
 
     const applyCanvasStyle = useCallback(
         (preset: CanvasStylePreset, profileJson: string) => {
@@ -74,20 +79,26 @@ export function useCanvasStyleWorkflow({ canvasId, domainProjectId, nodesRef, se
         },
     });
 
-    const applyCanvasStyleAsync = useCallback(async (preset: CanvasStylePreset) => {
-        if (applyingRef.current) throw new Error("画风正在保存，请稍后重试");
-        const scope = getActiveUserScope();
-        applyingRef.current = true;
-        try {
-            const profileJson = serializeStyleProfile(preset.profile || createStyleProfileSnapshot(preset));
-            if (domainProjectId) {
-                await persistStyleMutation.mutateAsync({ preset, profileJson });
-                void queryClient.invalidateQueries({ queryKey: ["project", domainProjectId] });
+    const applyCanvasStyleAsync = useCallback(
+        async (preset: CanvasStylePreset) => {
+            if (applyingRef.current) throw new Error("画风正在保存，请稍后重试");
+            const scope = getActiveUserScope();
+            applyingRef.current = true;
+            try {
+                const profileJson = serializeStyleProfile(preset.profile || createStyleProfileSnapshot(preset));
+                if (domainProjectId) {
+                    await persistStyleMutation.mutateAsync({ preset, profileJson });
+                    void queryClient.invalidateQueries({ queryKey: ["project", domainProjectId] });
+                }
+                if (!liveContext.current.mounted || liveContext.current.canvasId !== canvasId || liveContext.current.domainProjectId !== domainProjectId || getActiveUserScope() !== scope)
+                    throw new Error("页面或账号已变化，未向当前画布应用画风；如项目保存已完成，请回原项目查看");
+                applyCanvasStyle(preset, profileJson);
+            } finally {
+                applyingRef.current = false;
             }
-            if (!liveContext.current.mounted || liveContext.current.canvasId !== canvasId || liveContext.current.domainProjectId !== domainProjectId || getActiveUserScope() !== scope) throw new Error("页面或账号已变化，未向当前画布应用画风；如项目保存已完成，请回原项目查看");
-            applyCanvasStyle(preset, profileJson);
-        } finally { applyingRef.current = false; }
-    }, [canvasId, domainProjectId, persistStyleMutation.mutateAsync, queryClient, applyCanvasStyle]);
+        },
+        [canvasId, domainProjectId, persistStyleMutation.mutateAsync, queryClient, applyCanvasStyle],
+    );
 
     const selectCanvasStyle = useCallback(
         (preset: CanvasStylePreset) => {

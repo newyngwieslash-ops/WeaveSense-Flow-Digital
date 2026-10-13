@@ -34,12 +34,7 @@ export function MarkdownNodeContent({ node, theme }: MarkdownNodeContentProps) {
     }
 
     return (
-        <div
-            className="h-full w-full overflow-y-auto overflow-x-hidden px-4 py-3"
-            data-canvas-no-zoom
-            style={{ color: theme.node.text }}
-            onWheel={(event) => event.stopPropagation()}
-        >
+        <div className="h-full w-full overflow-y-auto overflow-x-hidden px-4 py-3" data-canvas-no-zoom style={{ color: theme.node.text }} onWheel={(event) => event.stopPropagation()}>
             <AIMessageMarkdown>{source}</AIMessageMarkdown>
         </div>
     );

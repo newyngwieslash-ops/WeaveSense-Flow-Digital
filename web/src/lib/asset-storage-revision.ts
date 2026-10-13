@@ -35,7 +35,6 @@ export function parseAssetStorageDocument(value: string | null, fallback: Asset[
     };
 }
 
-
 export type InvalidAssetRecord = {
     index: number;
     id?: string;

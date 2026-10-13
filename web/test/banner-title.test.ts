@@ -87,12 +87,7 @@ describe("通知标题对比度检查", () => {
     });
 
     test("挑出对比度不足的颜色并去重，默认无色不参与检查", () => {
-        const runs = [
-            { text: "低", color: "#808BF5" },
-            { text: "也低", color: "#808BF5" },
-            { text: "足够", color: "#FFFFFF" },
-            { text: "没设颜色" },
-        ];
+        const runs = [{ text: "低", color: "#808BF5" }, { text: "也低", color: "#808BF5" }, { text: "足够", color: "#FFFFFF" }, { text: "没设颜色" }];
         expect(lowContrastBannerTitleColors(runs, "#5C67E2")).toEqual(["#808BF5"]);
         expect(lowContrastBannerTitleColors(runs, "#3F4590")).toEqual(["#808BF5"]);
         expect(lowContrastBannerTitleColors([{ text: "足够", color: "#FFFFFF" }], "#5C67E2")).toEqual([]);

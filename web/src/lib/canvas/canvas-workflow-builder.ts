@@ -8,17 +8,7 @@ import type { CanvasOperation, CanvasSnapshot } from "./canvas-operation-contrac
 import { createShortDramaPipeline } from "./canvas-short-drama";
 import { createStoryboardRow } from "./canvas-project-domain";
 
-export type CanvasWorkflowNodeKind =
-    | "text"
-    | "script"
-    | "styleboard"
-    | "story_input"
-    | "image"
-    | "video"
-    | "audio"
-    | "character_cards"
-    | "character_three_view"
-    | "storyboard_video";
+export type CanvasWorkflowNodeKind = "text" | "script" | "styleboard" | "story_input" | "image" | "video" | "audio" | "character_cards" | "character_three_view" | "storyboard_video";
 
 export type CanvasWorkflowNodeInput = {
     ref: string;
@@ -47,11 +37,7 @@ export type CanvasWorkflowInput = {
     autoRun?: boolean;
 };
 
-const WORKFLOW_KINDS = new Set<CanvasWorkflowNodeKind>([
-    "character_cards",
-    "character_three_view",
-    "storyboard_video",
-]);
+const WORKFLOW_KINDS = new Set<CanvasWorkflowNodeKind>(["character_cards", "character_three_view", "storyboard_video"]);
 
 const DEFAULT_GAP = 120;
 const WORKFLOW_PREFIX = "agent-workflow";
@@ -101,12 +87,11 @@ export function buildCanvasWorkflowOps(input: CanvasWorkflowInput, snapshot: Can
             generationMode: generationModeForNode(type),
             model: generationModelForNode(type, config),
             ...(node.kind === "character_three_view" ? { characterView: "multi" } : {}),
-            ...(node.referenceRefs?.length || node.referenceNodeIds?.length ? {
-                referenceNodeIds: [
-                    ...(node.referenceRefs || []).map((ref) => ids.get(ref)).filter((id): id is string => Boolean(id)),
-                    ...(node.referenceNodeIds || []),
-                ],
-            } : {}),
+            ...(node.referenceRefs?.length || node.referenceNodeIds?.length
+                ? {
+                      referenceNodeIds: [...(node.referenceRefs || []).map((ref) => ids.get(ref)).filter((id): id is string => Boolean(id)), ...(node.referenceNodeIds || [])],
+                  }
+                : {}),
         };
         if (["styleboard", "story_input", "script"].includes(node.kind)) {
             const template = createShortDramaPipeline({ x: 0, y: 0 });
@@ -115,10 +100,13 @@ export function buildCanvasWorkflowOps(input: CanvasWorkflowInput, snapshot: Can
             if (node.kind === "script") {
                 if (!node.shots?.length) throw new Error("创建分镜工作流必须提供非空 shots，请把镜头逐行填写 durationSeconds、videoMotionPrompt、dialogue，不能仅写正文");
                 if (node.shots && (!Array.isArray(node.shots) || node.shots.length > 100)) throw new Error("分镜最多 100 行");
-                metadata.storyboard = { ...source.metadata!.storyboard!, rows: (node.shots || []).map((shot, rowIndex) => {
-                    if (!Number.isFinite(shot.durationSeconds) || shot.durationSeconds <= 0 || typeof shot.videoMotionPrompt !== "string" || !shot.videoMotionPrompt.trim()) throw new Error("每条分镜需要有效时长和视频提示词");
-                    return createStoryboardRow(rowIndex + 1, { id: `${id}:shot:${rowIndex + 1}`, durationSeconds: shot.durationSeconds, videoMotionPrompt: shot.videoMotionPrompt, dialogue: typeof shot.dialogue === "string" ? shot.dialogue : "" });
-                }) };
+                metadata.storyboard = {
+                    ...source.metadata!.storyboard!,
+                    rows: (node.shots || []).map((shot, rowIndex) => {
+                        if (!Number.isFinite(shot.durationSeconds) || shot.durationSeconds <= 0 || typeof shot.videoMotionPrompt !== "string" || !shot.videoMotionPrompt.trim()) throw new Error("每条分镜需要有效时长和视频提示词");
+                        return createStoryboardRow(rowIndex + 1, { id: `${id}:shot:${rowIndex + 1}`, durationSeconds: shot.durationSeconds, videoMotionPrompt: shot.videoMotionPrompt, dialogue: typeof shot.dialogue === "string" ? shot.dialogue : "" });
+                    }),
+                };
             }
         }
         ops.push({ type: "add_node", id, nodeType: type, title: node.title, position, width: size.width, height: size.height, metadata });
@@ -154,10 +142,11 @@ export function buildCanvasWorkflowOps(input: CanvasWorkflowInput, snapshot: Can
         input.nodes.forEach((node) => {
             const type = nodeTypeForWorkflowKind(node.kind);
             const shouldRun = input.autoRun === true || node.runGeneration === true;
-            if (shouldRun && generationModeForNode(type)) ops.push({ type: "run_generation", nodeId: ids.get(node.ref)!, mode: generationModeForNode(type)!, prompt: node.prompt || node.content || workflowPrompt(node.kind, node.title, input) || undefined });
+            if (shouldRun && generationModeForNode(type))
+                ops.push({ type: "run_generation", nodeId: ids.get(node.ref)!, mode: generationModeForNode(type)!, prompt: node.prompt || node.content || workflowPrompt(node.kind, node.title, input) || undefined });
         });
     }
-    return identityPrefix ? ops.map((op) => op.type === "connect_nodes" ? { ...op, id: `${identityPrefix}:edge:${encodeURIComponent(op.fromNodeId)}:${encodeURIComponent(op.toNodeId)}` } : op) : ops;
+    return identityPrefix ? ops.map((op) => (op.type === "connect_nodes" ? { ...op, id: `${identityPrefix}:edge:${encodeURIComponent(op.fromNodeId)}:${encodeURIComponent(op.toNodeId)}` } : op)) : ops;
 }
 
 function workflowPrompt(kind: CanvasWorkflowNodeKind, title: string, input: CanvasWorkflowInput) {
@@ -202,11 +191,7 @@ function nodeTypeForWorkflowKind(kind: CanvasWorkflowNodeKind) {
 
 function nodeSize(type: CanvasNodeType, kind: CanvasWorkflowNodeKind, width?: number, height?: number) {
     const defaults = NODE_DEFAULT_SIZE[type];
-    const preferred = kind === "character_cards" || kind === "character_three_view"
-        ? { width: 560, height: 380 }
-        : kind === "storyboard_video"
-            ? { width: 640, height: 360 }
-            : defaults;
+    const preferred = kind === "character_cards" || kind === "character_three_view" ? { width: 560, height: 380 } : kind === "storyboard_video" ? { width: 640, height: 360 } : defaults;
     return { width: width || (kind === "styleboard" ? 360 : kind === "story_input" ? 420 : preferred.width), height: height || (kind === "styleboard" ? 220 : kind === "story_input" ? 260 : preferred.height) };
 }
 
@@ -232,7 +217,13 @@ function generationModelForNode(type: CanvasNodeType, config: AiConfig) {
 }
 
 function slug(value: string) {
-    return value.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "node";
+    return (
+        value
+            .toLowerCase()
+            .replace(/[^a-z0-9\u4e00-\u9fff]+/g, "-")
+            .replace(/^-+|-+$/g, "")
+            .slice(0, 40) || "node"
+    );
 }
 
 export function workflowNodeIdsFromOps(ops: CanvasOperation[]) {

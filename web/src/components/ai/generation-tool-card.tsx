@@ -10,13 +10,21 @@ export function GenerationToolCard({ status, heading, children }: { status: Gene
         if (status !== "completed") setOpen(true);
     }, [status]);
 
-    return <>
-        <div className="creation-message-heading">
-            {heading}
-            <button type="button" className="ml-auto grid size-7 shrink-0 place-items-center rounded-md text-foreground/45 transition-colors hover:bg-surface-hover hover:text-foreground" aria-label={open ? "收起生成详情" : "展开生成详情"} aria-expanded={open} onClick={() => setOpen((value) => !value)}>
-                <ChevronDown className={`size-4 transition-transform${open ? " rotate-180" : ""}`} />
-            </button>
-        </div>
-        {open ? children : null}
-    </>;
+    return (
+        <>
+            <div className="creation-message-heading">
+                {heading}
+                <button
+                    type="button"
+                    className="ml-auto grid size-7 shrink-0 place-items-center rounded-md text-foreground/45 transition-colors hover:bg-surface-hover hover:text-foreground"
+                    aria-label={open ? "收起生成详情" : "展开生成详情"}
+                    aria-expanded={open}
+                    onClick={() => setOpen((value) => !value)}
+                >
+                    <ChevronDown className={`size-4 transition-transform${open ? " rotate-180" : ""}`} />
+                </button>
+            </div>
+            {open ? children : null}
+        </>
+    );
 }

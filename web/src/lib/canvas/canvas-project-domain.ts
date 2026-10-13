@@ -36,9 +36,14 @@ export function createCanvasNode(type: CanvasNodeTypeId, position: Position, met
         },
         width: spec.width,
         height: spec.height,
-        metadata: type === CanvasNodeType.Script
-            ? { ...spec.metadata, ...metadata, storyboard: metadata?.storyboard || { rows: [1, 2, 3].map((shotNumber) => createStoryboardRow(shotNumber)), visibleColumns: ["shotNumber", "durationSeconds", "videoMotionPrompt", "dialogue", "assets"], referenceNodeIds: [] } }
-            : { ...spec.metadata, ...metadata, ...(type === CanvasNodeType.Drawing ? { drawingId: metadata?.drawingId || `${id}-document` } : {}) },
+        metadata:
+            type === CanvasNodeType.Script
+                ? {
+                      ...spec.metadata,
+                      ...metadata,
+                      storyboard: metadata?.storyboard || { rows: [1, 2, 3].map((shotNumber) => createStoryboardRow(shotNumber)), visibleColumns: ["shotNumber", "durationSeconds", "videoMotionPrompt", "dialogue", "assets"], referenceNodeIds: [] },
+                  }
+                : { ...spec.metadata, ...metadata, ...(type === CanvasNodeType.Drawing ? { drawingId: metadata?.drawingId || `${id}-document` } : {}) },
     };
 }
 
@@ -81,24 +86,26 @@ export function storyboardPromptTemplateMetadata(row: StoryboardRow, kind: "imag
 }
 
 export function cinematicStoryboardColumns(columns?: StoryboardColumn[]): StoryboardColumn[] {
-    return Array.from(new Set([
-        "shotNumber",
-        "durationSeconds",
-        "videoMotionPrompt",
-        "dialogue",
-        "assets",
-        ...(columns || []),
-        "shotSize",
-        "narrativeIntent",
-        "viewerPOV",
-        "performanceBlocking",
-        "camera",
-        "motion",
-        "timeBeats",
-        "lightingAndAtmosphere",
-        "continuityOut",
-        "negativePrompt",
-    ])) as StoryboardColumn[];
+    return Array.from(
+        new Set([
+            "shotNumber",
+            "durationSeconds",
+            "videoMotionPrompt",
+            "dialogue",
+            "assets",
+            ...(columns || []),
+            "shotSize",
+            "narrativeIntent",
+            "viewerPOV",
+            "performanceBlocking",
+            "camera",
+            "motion",
+            "timeBeats",
+            "lightingAndAtmosphere",
+            "continuityOut",
+            "negativePrompt",
+        ]),
+    ) as StoryboardColumn[];
 }
 
 // 分镜文本任务的模型侧输出契约，字段与 storyboardRowsFromTask 的解析结构一一对应。
@@ -135,11 +142,7 @@ export function stripProjectStyleExecutionBlocks(prompt: string): string {
 export function withStoryboardOutputContract(prompt: string, options: { shotCount?: number; shotDurationSeconds?: number } = {}) {
     const shotCount = Math.trunc(Number(options.shotCount) || 0);
     const shotDurationSeconds = Math.trunc(Number(options.shotDurationSeconds) || 0);
-    const requirement = [
-        shotCount > 0 ? `全片共 ${shotCount} 个镜头` : "",
-        shotDurationSeconds > 0 ? `每镜约 ${shotDurationSeconds} 秒，durationSeconds 填写该值` : "",
-        "每个镜头必须能独立用于生成首帧图片和镜头视频。",
-    ].filter(Boolean).join("；");
+    const requirement = [shotCount > 0 ? `全片共 ${shotCount} 个镜头` : "", shotDurationSeconds > 0 ? `每镜约 ${shotDurationSeconds} 秒，durationSeconds 填写该值` : "", "每个镜头必须能独立用于生成首帧图片和镜头视频。"].filter(Boolean).join("；");
     return [prompt, storyboardRowsOutputContract(requirement)].join("\n\n");
 }
 
@@ -150,7 +153,10 @@ function parseStoryboardRowsPayload(raw: string): { title?: string; rows?: Array
     const parsed = JSON.parse(raw) as { title?: string; rows?: Array<Partial<StoryboardRow>>; text?: unknown };
     if (Array.isArray(parsed.rows)) return parsed;
     if (typeof parsed.text === "string" && parsed.text.trim()) {
-        const inner = parsed.text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "");
+        const inner = parsed.text
+            .trim()
+            .replace(/^```(?:json)?\s*/i, "")
+            .replace(/```\s*$/, "");
         const start = inner.indexOf("{");
         const end = inner.lastIndexOf("}");
         if (start >= 0 && end > start) {
@@ -232,7 +238,6 @@ export function storyboardRowsFromTask(task: GenerationTask) {
         }),
     };
 }
-
 
 // 模型切换时必须清理的节点级生成参数：这些参数属于旧模型的能力档位（分辨率/宽高比/质量等），
 // 新模型不支持时若残留，会在 buildNodeConfig 的「节点优先、全局兜底」合并中反复叠加（issue #254）。
@@ -339,7 +344,22 @@ export function attachNodeToStoryboardRow(nodes: CanvasNodeData[], connection: P
 
     return nodes.map((node) => {
         if (row && node.id === linkedNode.id && scriptNodeId === connection.fromNodeId && node.type === CanvasNodeType.Video) {
-            return { ...node, title: `镜头 ${row.shotNumber} · 视频`, metadata: { ...node.metadata, prompt: videoPrompt, composerContent: videoComposerContent, ...storyboardPromptTemplateMetadata(row, "video"), workflowKind: "shot" as const, workflowTitle: `镜头 ${row.shotNumber} 视频`, shotIndex: row.shotNumber, generationMode: "video" as const, videoEditOperation: node.metadata?.videoEditOperation || "text_to_video", seconds: String(row.durationSeconds) } };
+            return {
+                ...node,
+                title: `镜头 ${row.shotNumber} · 视频`,
+                metadata: {
+                    ...node.metadata,
+                    prompt: videoPrompt,
+                    composerContent: videoComposerContent,
+                    ...storyboardPromptTemplateMetadata(row, "video"),
+                    workflowKind: "shot" as const,
+                    workflowTitle: `镜头 ${row.shotNumber} 视频`,
+                    shotIndex: row.shotNumber,
+                    generationMode: "video" as const,
+                    videoEditOperation: node.metadata?.videoEditOperation || "text_to_video",
+                    seconds: String(row.durationSeconds),
+                },
+            };
         }
         if (node.id !== scriptNodeId || node.type !== CanvasNodeType.Script) return node;
         const storyboard = node.metadata?.storyboard;
@@ -349,11 +369,15 @@ export function attachNodeToStoryboardRow(nodes: CanvasNodeData[], connection: P
             metadata: {
                 ...node.metadata,
                 storyboard: {
-                    rows: (storyboard?.rows || []).map((item) => item.id !== rowId ? item : scriptNodeId === connection.fromNodeId
-                        ? { ...item, imageNodeId: linkedNode.type === CanvasNodeType.Image ? linkedNode.id : item.imageNodeId, videoNodeId: linkedNode.type === CanvasNodeType.Video ? linkedNode.id : item.videoNodeId }
-                        : binding && !(item.assetBindings || []).some((candidate) => candidate.nodeId === linkedNode.id)
-                          ? { ...item, assetBindings: [...(item.assetBindings || []), binding] }
-                          : item),
+                    rows: (storyboard?.rows || []).map((item) =>
+                        item.id !== rowId
+                            ? item
+                            : scriptNodeId === connection.fromNodeId
+                              ? { ...item, imageNodeId: linkedNode.type === CanvasNodeType.Image ? linkedNode.id : item.imageNodeId, videoNodeId: linkedNode.type === CanvasNodeType.Video ? linkedNode.id : item.videoNodeId }
+                              : binding && !(item.assetBindings || []).some((candidate) => candidate.nodeId === linkedNode.id)
+                                ? { ...item, assetBindings: [...(item.assetBindings || []), binding] }
+                                : item,
+                    ),
                     visibleColumns: storyboard?.visibleColumns || ["shotNumber", "durationSeconds", "videoMotionPrompt", "dialogue", "assets"],
                     referenceNodeIds: handleId === "storyboard:context" ? Array.from(new Set([...(storyboard?.referenceNodeIds || []), linkedNode.id])) : storyboard?.referenceNodeIds || [],
                 },
@@ -369,13 +393,15 @@ export function storyboardRowFromHandle(nodes: CanvasNodeData[], nodeId: string,
 
 export function expandStoryboardTextMentions(prompt: string, references: CanvasResourceReference[]) {
     let expanded = prompt;
-    references.filter((reference) => reference.active && reference.kind === "text" && reference.text?.trim()).forEach((reference) => {
-        const replacement = `【项目设定：${reference.title}】\n${reference.text!.trim()}`;
-        for (const token of [canvasResourceMentionToken(reference), `@${reference.label}`, reference.nodeId ? canvasNodeMentionToken(reference.nodeId) : ""]) {
-            if (!token) continue;
-            if (expanded.includes(token)) expanded = expanded.split(token).join(replacement);
-        }
-    });
+    references
+        .filter((reference) => reference.active && reference.kind === "text" && reference.text?.trim())
+        .forEach((reference) => {
+            const replacement = `【项目设定：${reference.title}】\n${reference.text!.trim()}`;
+            for (const token of [canvasResourceMentionToken(reference), `@${reference.label}`, reference.nodeId ? canvasNodeMentionToken(reference.nodeId) : ""]) {
+                if (!token) continue;
+                if (expanded.includes(token)) expanded = expanded.split(token).join(replacement);
+            }
+        });
     return expanded;
 }
 
@@ -414,10 +440,12 @@ export function createNodeAlignmentContext(nodes: CanvasNodeData[], initialPosit
         if (batchRoot && !batchRoot.metadata?.imageBatchExpanded) return [];
         const parent = node.parentId ? nodeById.get(node.parentId) : null;
         if (parent && isFrameNode(parent) && parent.metadata?.frame?.collapsed) return [];
-        return [{
-            x: [node.position.x, node.position.x + node.width / 2, node.position.x + node.width],
-            y: [node.position.y, node.position.y + node.height / 2, node.position.y + node.height],
-        }];
+        return [
+            {
+                x: [node.position.x, node.position.x + node.width / 2, node.position.x + node.width],
+                y: [node.position.y, node.position.y + node.height / 2, node.position.y + node.height],
+            },
+        ];
     });
     return { movingBounds: { left, top, right, bottom }, targets };
 }
@@ -454,7 +482,6 @@ export function calculateNodeAlignment(context: NodeAlignmentContext | null, raw
         guides: { vertical: bestXGuide, horizontal: bestYGuide },
     };
 }
-
 
 export function isHiddenBatchChild(node: CanvasNodeData, nodes: CanvasNodeData[], collapsingBatchIds?: Set<string>) {
     const rootId = node.metadata?.batchRootId;
@@ -534,7 +561,10 @@ export function removeCanvasNodes(nodes: CanvasNodeData[], requestedIds: Set<str
         const primaryNode = remainingNodes.find((item) => item.id === primaryImageId);
         const plan = cleaned.metadata.experimentalLayerPlan;
         const requests = plan?.requests.filter((request) => !removedIds.has(request.nodeId));
-        const batchRoot = { ...cleaned, metadata: { ...cleaned.metadata, batchChildIds: childIds, primaryImageId, ...(plan ? { experimentalLayerPlan: requests?.length ? { ...plan, requests, composedSignature: undefined, errorSignature: undefined } : undefined } : {}) } };
+        const batchRoot = {
+            ...cleaned,
+            metadata: { ...cleaned.metadata, batchChildIds: childIds, primaryImageId, ...(plan ? { experimentalLayerPlan: requests?.length ? { ...plan, requests, composedSignature: undefined, errorSignature: undefined } : undefined } : {}) },
+        };
         if (cleaned.metadata.imageLayerGroup)
             return {
                 ...batchRoot,

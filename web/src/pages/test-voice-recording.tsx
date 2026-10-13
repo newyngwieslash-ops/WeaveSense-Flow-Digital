@@ -34,7 +34,6 @@ export default function TestVoiceRecording() {
         }
     };
 
-
     return (
         <div className="min-h-screen p-8" style={{ background: theme.spatial.surface }}>
             <div className="mx-auto max-w-2xl">

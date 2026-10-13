@@ -83,7 +83,9 @@ export function CanvasAngleScene({
             if (w > 0 && h > 0) setNaturalSize({ w, h });
         };
         image.src = imageSrc;
-        return () => { cancelled = true; };
+        return () => {
+            cancelled = true;
+        };
     }, [imageSrc]);
 
     const subjectSize = useMemo(() => {
@@ -91,12 +93,15 @@ export function CanvasAngleScene({
         return subjectBoxSize(naturalSize.w, naturalSize.h);
     }, [naturalSize]);
 
-    const screenBg = useMemo<CSSProperties>(() => ({
-        backgroundImage: `url("${imageSrc}")`,
-        backgroundSize: "contain",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-    }), [imageSrc]);
+    const screenBg = useMemo<CSSProperties>(
+        () => ({
+            backgroundImage: `url("${imageSrc}")`,
+            backgroundSize: "contain",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+        }),
+        [imageSrc],
+    );
 
     useEffect(() => {
         if (!dragging) return;
@@ -123,7 +128,11 @@ export function CanvasAngleScene({
             setDragging(false);
             const el = sceneRef.current;
             if (el?.hasPointerCapture?.(event.pointerId)) {
-                try { el.releasePointerCapture(event.pointerId); } catch { /* ignore */ }
+                try {
+                    el.releasePointerCapture(event.pointerId);
+                } catch {
+                    /* ignore */
+                }
             }
         };
         window.addEventListener("pointermove", onMove);
@@ -143,7 +152,11 @@ export function CanvasAngleScene({
         dragPointer.current = event.pointerId;
         dragStart.current = { x: event.clientX, y: event.clientY, rotate, tilt };
         setDragging(true);
-        try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* ignore */ }
+        try {
+            event.currentTarget.setPointerCapture(event.pointerId);
+        } catch {
+            /* ignore */
+        }
     };
 
     const bumpRotate = (delta: number) => onRotateChange(snapInt(rotate + delta, rotateMin, rotateMax));
@@ -151,10 +164,18 @@ export function CanvasAngleScene({
     const cubeStyle = { width: cubeSize, height: cubeSize, ["--angle-cube-half" as string]: `${cubeSize / 2}px` } as CSSProperties;
     const dirButtons = (
         <>
-            <button type="button" className="canvas-angle-dir is-up" aria-label={dirLabels.up} onClick={() => bumpTilt(tiltStep)}><ChevronUp className="size-3.5" strokeWidth={2} /></button>
-            <button type="button" className="canvas-angle-dir is-down" aria-label={dirLabels.down} onClick={() => bumpTilt(-tiltStep)}><ChevronDown className="size-3.5" strokeWidth={2} /></button>
-            <button type="button" className="canvas-angle-dir is-left" aria-label={dirLabels.left} onClick={() => bumpRotate(-rotateStep)}><ChevronLeft className="size-3.5" strokeWidth={2} /></button>
-            <button type="button" className="canvas-angle-dir is-right" aria-label={dirLabels.right} onClick={() => bumpRotate(rotateStep)}><ChevronRight className="size-3.5" strokeWidth={2} /></button>
+            <button type="button" className="canvas-angle-dir is-up" aria-label={dirLabels.up} onClick={() => bumpTilt(tiltStep)}>
+                <ChevronUp className="size-3.5" strokeWidth={2} />
+            </button>
+            <button type="button" className="canvas-angle-dir is-down" aria-label={dirLabels.down} onClick={() => bumpTilt(-tiltStep)}>
+                <ChevronDown className="size-3.5" strokeWidth={2} />
+            </button>
+            <button type="button" className="canvas-angle-dir is-left" aria-label={dirLabels.left} onClick={() => bumpRotate(-rotateStep)}>
+                <ChevronLeft className="size-3.5" strokeWidth={2} />
+            </button>
+            <button type="button" className="canvas-angle-dir is-right" aria-label={dirLabels.right} onClick={() => bumpRotate(rotateStep)}>
+                <ChevronRight className="size-3.5" strokeWidth={2} />
+            </button>
         </>
     );
 
@@ -166,12 +187,24 @@ export function CanvasAngleScene({
                         <div className="canvas-angle-skybox-space" style={{ perspective: 900 }}>
                             <div className="canvas-angle-cube-wrap" style={{ transition: dragging ? "none" : undefined, transform: `scale(${scale}) rotateX(${-tilt}deg) rotateY(${rotate}deg)` }}>
                                 <div className="canvas-angle-cube" style={cubeStyle}>
-                                    <div className="canvas-angle-cube-face is-front has-image"><img src={imageSrc} alt="" draggable={false} /></div>
-                                    <div className="canvas-angle-cube-face is-back"><span>{faceLabels.back}</span></div>
-                                    <div className="canvas-angle-cube-face is-right"><span>{faceLabels.right}</span></div>
-                                    <div className="canvas-angle-cube-face is-left"><span>{faceLabels.left}</span></div>
-                                    <div className="canvas-angle-cube-face is-top"><span>{faceLabels.top}</span></div>
-                                    <div className="canvas-angle-cube-face is-bottom"><span>{faceLabels.bottom}</span></div>
+                                    <div className="canvas-angle-cube-face is-front has-image">
+                                        <img src={imageSrc} alt="" draggable={false} />
+                                    </div>
+                                    <div className="canvas-angle-cube-face is-back">
+                                        <span>{faceLabels.back}</span>
+                                    </div>
+                                    <div className="canvas-angle-cube-face is-right">
+                                        <span>{faceLabels.right}</span>
+                                    </div>
+                                    <div className="canvas-angle-cube-face is-left">
+                                        <span>{faceLabels.left}</span>
+                                    </div>
+                                    <div className="canvas-angle-cube-face is-top">
+                                        <span>{faceLabels.top}</span>
+                                    </div>
+                                    <div className="canvas-angle-cube-face is-bottom">
+                                        <span>{faceLabels.bottom}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -191,8 +224,12 @@ export function CanvasAngleScene({
                 </div>
                 <div className="canvas-angle-orbit" aria-hidden>
                     <div className="canvas-angle-orbit-core" style={{ transform: `rotateY(${rotate}deg) rotateX(${tilt}deg)`, transition: dragging ? "none" : "transform 120ms ease-out" }}>
-                        {orbitRingY.map((deg) => <div key={`y-${deg}`} className="canvas-angle-orbit-ring" style={{ transform: `rotateY(${deg}deg)` }} />)}
-                        {orbitRingX.map((deg) => <div key={`x-${deg}`} className="canvas-angle-orbit-ring" style={{ transform: `rotateX(${deg}deg)` }} />)}
+                        {orbitRingY.map((deg) => (
+                            <div key={`y-${deg}`} className="canvas-angle-orbit-ring" style={{ transform: `rotateY(${deg}deg)` }} />
+                        ))}
+                        {orbitRingX.map((deg) => (
+                            <div key={`x-${deg}`} className="canvas-angle-orbit-ring" style={{ transform: `rotateX(${deg}deg)` }} />
+                        ))}
                     </div>
                     <div className="canvas-angle-orbit-axis" />
                 </div>
@@ -200,7 +237,9 @@ export function CanvasAngleScene({
                     <div className="canvas-angle-cam-pivot" style={{ transform: `rotateX(${tilt}deg) rotateY(${rotate}deg)` }}>
                         <div className="canvas-angle-cam-pos" style={{ transform: `translateZ(${cameraOrbitRadius}px) scale(1) rotateZ(0deg)` }}>
                             <div className="canvas-angle-cam-body is-front" style={{ transform: "translate(-50%, -50%) translateZ(-8px)" }}>
-                                <div className="canvas-angle-cam-lens"><span /></div>
+                                <div className="canvas-angle-cam-lens">
+                                    <span />
+                                </div>
                             </div>
                             <div className="canvas-angle-cam-body is-back" style={{ transform: "translate(-50%, -50%) translateZ(8px)" }}>
                                 <div className="canvas-angle-cam-screen" style={screenBg} />
@@ -212,7 +251,9 @@ export function CanvasAngleScene({
                             <div className="canvas-angle-cam-body is-side" style={{ transform: "translate(-50%, -50%) rotateY(-90deg) translateZ(11px)" }} />
                             <div className="canvas-angle-cam-body is-side" style={{ transform: "translate(-50%, -50%) rotateY(90deg) translateZ(11px)" }} />
                             <div className="canvas-angle-cam-hotshoe" style={{ transform: "translate(-50%, -50%) translateY(-12px)" }}>
-                                <div className="canvas-angle-cam-hotshoe-body" style={{ transform: "translateZ(2px)" }}><span /></div>
+                                <div className="canvas-angle-cam-hotshoe-body" style={{ transform: "translateZ(2px)" }}>
+                                    <span />
+                                </div>
                             </div>
                             <div className="canvas-angle-cam-line" style={{ height: cameraSightLine, transform: "translate(-50%, 0) translateZ(-8px) rotateX(-90deg)" }} />
                         </div>

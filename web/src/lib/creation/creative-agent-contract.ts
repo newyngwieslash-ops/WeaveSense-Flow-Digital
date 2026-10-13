@@ -12,17 +12,59 @@ export type CreativeAnswers = Record<string, CreativeAnswer>;
 export type CreativeInteractionIdentity = { interactionId: string; revision: number; status: "pending" | "submitted" | "superseded" };
 export type CreativeQuestionRequest = CreativeInteractionIdentity & { kind: "question_request"; questions: CreativeQuestion[] };
 export type CreativeGenerationItem = { ref: string; mode: "image" | "video"; model: string; size?: string; seconds?: number; quality?: string; referenceRefs?: string[] };
-export type CreativeProposal<T = unknown> = { id: string; version: number; title: string; summary: string; markdown: string; deliverables: string[]; workflow: CanvasWorkflowInput & { autoRun: false }; generationItems: CreativeGenerationItem[]; extra?: T };
+export type CreativeProposal<T = unknown> = {
+    id: string;
+    version: number;
+    title: string;
+    summary: string;
+    markdown: string;
+    deliverables: string[];
+    workflow: CanvasWorkflowInput & { autoRun: false };
+    generationItems: CreativeGenerationItem[];
+    extra?: T;
+};
 export type CreativePlanStep = { id: string; title: string; status: "pending" | "running" | "waiting" | "completed" | "failed" | "cancelled"; detail?: string; nodeIds?: string[] };
 export type CreativePlan = { id: string; steps: CreativePlanStep[] };
-export type CreativeQuote = { id: string; title: string; items: { id: string; label: string; model: string; quantity: number; specification: string }[]; amountLabel: string; basis: string; expiresAt?: string; approvedQuantity?: number; externalBilling?: boolean };
+export type CreativeQuote = {
+    id: string;
+    title: string;
+    items: { id: string; label: string; model: string; quantity: number; specification: string }[];
+    amountLabel: string;
+    basis: string;
+    expiresAt?: string;
+    approvedQuantity?: number;
+    externalBilling?: boolean;
+};
 export type CreativePendingInteraction = CreativeQuestionRequest | (CreativeInteractionIdentity & { kind: "proposal_request"; proposalId: string; proposalVersion: number }) | (CreativeInteractionIdentity & { kind: "payment_request"; quoteId: string });
 
-function object(value: unknown): Record<string, unknown> { return value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {}; }
+function object(value: unknown): Record<string, unknown> {
+    return value !== null && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
 const reservedCreativeFields = new Set([
-    "proto", "prototype", "constructor", "authorization", "authorized", "approval", "approved", "permissions", "permission",
-    "autorun", "status", "runid", "taskid", "quoteid", "submissionid", "revision", "lease", "ownerepoch",
-    "proposalapproved", "approvedproposalversion", "paymentapproved", "quoteapproved", "paid", "executed",
+    "proto",
+    "prototype",
+    "constructor",
+    "authorization",
+    "authorized",
+    "approval",
+    "approved",
+    "permissions",
+    "permission",
+    "autorun",
+    "status",
+    "runid",
+    "taskid",
+    "quoteid",
+    "submissionid",
+    "revision",
+    "lease",
+    "ownerepoch",
+    "proposalapproved",
+    "approvedproposalversion",
+    "paymentapproved",
+    "quoteapproved",
+    "paid",
+    "executed",
 ]);
 
 /** Brief fields hold requirements only; they never grant tool, proposal or payment approval. */
@@ -34,7 +76,9 @@ export function normalizeCreativeField(value: unknown): string | null {
     return segments.some((segment) => reservedCreativeFields.has(segment)) ? null : field;
 }
 
-function hasValue(value: CreativeBriefValue) { return Array.isArray(value) ? value.some((item) => item.trim()) : typeof value === "number" ? Number.isFinite(value) : Boolean(value.trim()); }
+function hasValue(value: CreativeBriefValue) {
+    return Array.isArray(value) ? value.some((item) => item.trim()) : typeof value === "number" ? Number.isFinite(value) : Boolean(value.trim());
+}
 export function isCreativeFieldKnown(brief: CreativeBrief, field: string): boolean {
     if (!normalizeCreativeField(field) || !Object.hasOwn(brief, field)) return false;
     const entry = brief[field];
@@ -55,10 +99,13 @@ export function normalizeCreativeQuestions(raw: unknown, scenario: CreativeScena
         if (!["single", "multiple", "text", "asset"].includes(String(q.type))) continue;
         const type = q.type as CreativeQuestion["type"];
         const id = `${identity.interactionId}:${identity.revision}:${questions.length + 1}`;
-        const options = type === "asset" ? assets.map((asset) => ({ ...asset })) : (type !== "text" && Array.isArray(q.options) ? q.options : []).flatMap((value, index) => {
-            const option = object(value);
-            return typeof option.label === "string" && option.label.trim() ? [{ id: `${id}:option:${index + 1}`, label: option.label.trim(), description: typeof option.description === "string" ? option.description : undefined }] : [];
-        });
+        const options =
+            type === "asset"
+                ? assets.map((asset) => ({ ...asset }))
+                : (type !== "text" && Array.isArray(q.options) ? q.options : []).flatMap((value, index) => {
+                      const option = object(value);
+                      return typeof option.label === "string" && option.label.trim() ? [{ id: `${id}:option:${index + 1}`, label: option.label.trim(), description: typeof option.description === "string" ? option.description : undefined }] : [];
+                  });
         questions.push({ id, field, type, title: q.title.trim(), description: typeof q.description === "string" ? q.description : undefined, required: q.required === true, allowCustom: type !== "asset" || q.allowCustom === true, options });
         used.add(field);
         // 每轮最多三题，保证用户可以逐步确认；后续缺失信息由下一轮基于已确认 brief 再补问。
@@ -98,7 +145,7 @@ export function applyCreativeAnswers(request: CreativeQuestionRequest, submitted
         const answer = answers[question.id];
         if (!answer) continue;
         const options = question.type === "asset" ? assets : question.options;
-        const values = answer.selected.map((id) => question.type === "asset" ? id : options.find((option) => option.id === id)!.label);
+        const values = answer.selected.map((id) => (question.type === "asset" ? id : options.find((option) => option.id === id)!.label));
         if (answer.custom.trim()) values.push(answer.custom.trim());
         if (values.length) next[field] = { value: values.length === 1 ? values[0] : values, source: "user", status: "confirmed" };
     }

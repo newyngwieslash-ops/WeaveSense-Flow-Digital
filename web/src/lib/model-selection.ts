@@ -152,8 +152,8 @@ export function modelCompatibilityError(config: AiConfig, model: string, require
 
     if (capability === "text") {
         const text = modelCapabilityConfigFor(config, model).text;
-        if (input.imageCount > (text?.references.maxImages ?? 0)) return `最多支持 ${(text?.references.maxImages ?? 0)} 张参考图`;
-        if (input.videoCount > (text?.references.maxVideos ?? 0)) return `最多支持 ${(text?.references.maxVideos ?? 0)} 个参考视频`;
+        if (input.imageCount > (text?.references.maxImages ?? 0)) return `最多支持 ${text?.references.maxImages ?? 0} 张参考图`;
+        if (input.videoCount > (text?.references.maxVideos ?? 0)) return `最多支持 ${text?.references.maxVideos ?? 0} 个参考视频`;
         if (input.audioCount > 0) return "文本模型不支持参考音频";
         return "";
     }
@@ -188,7 +188,21 @@ export function modelRequestOptions(config: AiConfig, capability: ModelCapabilit
         case "video":
             return { size: config.size, videoSeconds: Number(config.videoSeconds), vquality: config.vquality, videoGenerateAudio: config.videoGenerateAudio === "true", videoWatermark: config.videoWatermark === "true" };
         case "audio":
-            return { audioVoice: config.audioVoice, audioFormat: config.audioFormat, audioSpeed: Number(config.audioSpeed), audioEmotionControlMethod: config.audioEmotionControlMethod, audioEmotionRandom: config.audioEmotionRandom === "true", audioEmotionHappy: Number(config.audioEmotionHappy), audioEmotionAngry: Number(config.audioEmotionAngry), audioEmotionSad: Number(config.audioEmotionSad), audioEmotionAfraid: Number(config.audioEmotionAfraid), audioEmotionDisgusted: Number(config.audioEmotionDisgusted), audioEmotionMelancholic: Number(config.audioEmotionMelancholic), audioEmotionSurprised: Number(config.audioEmotionSurprised), audioEmotionCalm: Number(config.audioEmotionCalm) };
+            return {
+                audioVoice: config.audioVoice,
+                audioFormat: config.audioFormat,
+                audioSpeed: Number(config.audioSpeed),
+                audioEmotionControlMethod: config.audioEmotionControlMethod,
+                audioEmotionRandom: config.audioEmotionRandom === "true",
+                audioEmotionHappy: Number(config.audioEmotionHappy),
+                audioEmotionAngry: Number(config.audioEmotionAngry),
+                audioEmotionSad: Number(config.audioEmotionSad),
+                audioEmotionAfraid: Number(config.audioEmotionAfraid),
+                audioEmotionDisgusted: Number(config.audioEmotionDisgusted),
+                audioEmotionMelancholic: Number(config.audioEmotionMelancholic),
+                audioEmotionSurprised: Number(config.audioEmotionSurprised),
+                audioEmotionCalm: Number(config.audioEmotionCalm),
+            };
         default:
             return {};
     }
@@ -313,7 +327,6 @@ export function defaultImageParamsForModel(config: AiConfig, model: string): Pic
     };
 }
 
-
 export type ModelGenerationDefaults = Pick<AiConfig, "size" | "quality" | "transparentBackground" | "count" | "videoSeconds" | "vquality" | "videoGenerateAudio" | "videoWatermark">;
 
 type ModelVideoBooleanOptions = Pick<AiConfig, "videoGenerateAudio" | "videoWatermark">;
@@ -364,17 +377,12 @@ export function resolveModelGenerationDefaults(
     return {};
 }
 
-export function resolveModelVideoBooleanOptions(
-    config: AiConfig,
-    model: string,
-    explicit: Partial<ModelVideoBooleanOptions> = {},
-    fallback: Partial<ModelVideoBooleanOptions> = {},
-): ModelVideoBooleanOptions {
+export function resolveModelVideoBooleanOptions(config: AiConfig, model: string, explicit: Partial<ModelVideoBooleanOptions> = {}, fallback: Partial<ModelVideoBooleanOptions> = {}): ModelVideoBooleanOptions {
     const profile = modelCapabilityConfigFor(config, model).video!;
     const defaults = resolveModelGenerationDefaults(config, model, "video", explicit, fallback);
     return {
-        videoGenerateAudio: profile.generateAudio.supported ? defaults.videoGenerateAudio ?? String(profile.generateAudio.default) : "false",
-        videoWatermark: profile.watermark.supported ? defaults.videoWatermark ?? String(profile.watermark.default) : "false",
+        videoGenerateAudio: profile.generateAudio.supported ? (defaults.videoGenerateAudio ?? String(profile.generateAudio.default)) : "false",
+        videoWatermark: profile.watermark.supported ? (defaults.videoWatermark ?? String(profile.watermark.default)) : "false",
     };
 }
 

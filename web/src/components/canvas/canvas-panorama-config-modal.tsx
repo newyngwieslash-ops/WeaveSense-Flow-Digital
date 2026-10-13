@@ -298,11 +298,7 @@ const PanoramaSetupForm = memo(
                                         type="button"
                                         aria-pressed={sourceMode === "ai"}
                                         onClick={() => setSourceMode("ai")}
-                                        className={`flex items-center gap-2 rounded-[var(--r-md)] px-2.5 py-2 text-left transition-all ${
-                                            sourceMode === "ai"
-                                                ? "bg-accent text-white"
-                                                : "bg-foreground/5 text-foreground hover:bg-foreground/10"
-                                        }`}
+                                        className={`flex items-center gap-2 rounded-[var(--r-md)] px-2.5 py-2 text-left transition-all ${sourceMode === "ai" ? "bg-accent text-white" : "bg-foreground/5 text-foreground hover:bg-foreground/10"}`}
                                     >
                                         <Sparkles className="size-4 shrink-0" />
                                         <div className="min-w-0">
@@ -314,11 +310,7 @@ const PanoramaSetupForm = memo(
                                         type="button"
                                         aria-pressed={sourceMode === "image"}
                                         onClick={() => setSourceMode("image")}
-                                        className={`flex items-center gap-2 rounded-[var(--r-md)] px-2.5 py-2 text-left transition-all ${
-                                            sourceMode === "image"
-                                                ? "bg-accent text-white"
-                                                : "bg-foreground/5 text-foreground hover:bg-foreground/10"
-                                        }`}
+                                        className={`flex items-center gap-2 rounded-[var(--r-md)] px-2.5 py-2 text-left transition-all ${sourceMode === "image" ? "bg-accent text-white" : "bg-foreground/5 text-foreground hover:bg-foreground/10"}`}
                                     >
                                         <ImageIcon className="size-4 shrink-0" />
                                         <div className="min-w-0">
@@ -348,12 +340,7 @@ const PanoramaSetupForm = memo(
                             {sourceMode === "ai" && (
                                 <div>
                                     <div className="mb-1.5 text-[11px] font-semibold text-foreground">场景描述</div>
-                                    <Input.TextArea
-                                        value={prompt}
-                                        onChange={(event) => setPrompt(event.target.value)}
-                                        placeholder="例如：黄昏的海边木屋，能看到天空、地面和四周环境"
-                                        autoSize={{ minRows: 2, maxRows: 4 }}
-                                    />
+                                    <Input.TextArea value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder="例如：黄昏的海边木屋，能看到天空、地面和四周环境" autoSize={{ minRows: 2, maxRows: 4 }} />
                                 </div>
                             )}
 
@@ -375,11 +362,7 @@ const PanoramaSetupForm = memo(
                                                 type="button"
                                                 aria-pressed={selected}
                                                 onClick={() => setProjection(option.value)}
-                                                className={`flex items-center gap-2 rounded-[var(--r-md)] px-2.5 py-2 text-left transition-all ${
-                                                    selected
-                                                        ? "bg-accent text-white"
-                                                        : "bg-foreground/5 text-foreground hover:bg-foreground/10"
-                                                }`}
+                                                className={`flex items-center gap-2 rounded-[var(--r-md)] px-2.5 py-2 text-left transition-all ${selected ? "bg-accent text-white" : "bg-foreground/5 text-foreground hover:bg-foreground/10"}`}
                                             >
                                                 <Icon className="size-4 shrink-0" />
                                                 <div className="min-w-0 flex-1">
@@ -438,9 +421,7 @@ const PanoramaSetupForm = memo(
                             <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-3">
                                 <div className="min-w-0">
                                     <div className="text-sm font-semibold text-foreground">{sourceMode === "image" ? "选择源图" : "选择参考图"}</div>
-                                    <div className="mt-0.5 text-[11px] text-foreground/45">
-                                        {sourceMode === "image" ? "只选一张作为全景源" : `已选 ${draftSelectedIds.length} 张`}
-                                    </div>
+                                    <div className="mt-0.5 text-[11px] text-foreground/45">{sourceMode === "image" ? "只选一张作为全景源" : `已选 ${draftSelectedIds.length} 张`}</div>
                                 </div>
                                 <button
                                     type="button"

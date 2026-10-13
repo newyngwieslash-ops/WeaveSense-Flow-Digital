@@ -19,12 +19,20 @@ describe("本地转换节点注册", () => {
         expect(getNodeAcceptedInputKinds(CanvasNodeType.MediaConversion)).toEqual(["image", "video"]);
         expect(getNodeMaxInputCount(CanvasNodeType.MediaConversion)).toBe(1);
         expect(getNodeResourceKind(node(CanvasNodeType.MediaConversion, "conversion"))).toBeNull();
-        expect(getNodeResourceKind(node(CanvasNodeType.MediaConversion, "conversion", {
-            mediaConversion: { schemaVersion: 1, operation: "grayscale", status: "completed", resultStorageKey: "image:scope:result" },
-        }))).toBe("image");
-        expect(getNodeResourceKind(node(CanvasNodeType.MediaConversion, "conversion", {
-            mediaConversion: { schemaVersion: 1, operation: "pose", status: "skipped", detectedPeople: 0 },
-        }))).toBeNull();
+        expect(
+            getNodeResourceKind(
+                node(CanvasNodeType.MediaConversion, "conversion", {
+                    mediaConversion: { schemaVersion: 1, operation: "grayscale", status: "completed", resultStorageKey: "image:scope:result" },
+                }),
+            ),
+        ).toBe("image");
+        expect(
+            getNodeResourceKind(
+                node(CanvasNodeType.MediaConversion, "conversion", {
+                    mediaConversion: { schemaVersion: 1, operation: "pose", status: "skipped", detectedPeople: 0 },
+                }),
+            ),
+        ).toBeNull();
     });
 
     test("连接规则接受图片和视频，拒绝没有可读媒体的节点及第二个输入", () => {
@@ -60,23 +68,31 @@ describe("本地转换节点注册", () => {
 
     test("完成后的转换结果可作为生成参考图", async () => {
         const { nodeReferenceImage } = await import("../src/lib/canvas/canvas-project-generation");
-        expect(nodeReferenceImage(node(CanvasNodeType.MediaConversion, "conversion", {
-            storageKey: "image:scope:result",
-            mimeType: "image/png",
-            mediaConversion: {
-                schemaVersion: 1,
-                operation: "grayscale",
-                status: "completed",
-                resultStorageKey: "image:scope:result",
-            },
-        }))).toMatchObject({
+        expect(
+            nodeReferenceImage(
+                node(CanvasNodeType.MediaConversion, "conversion", {
+                    storageKey: "image:scope:result",
+                    mimeType: "image/png",
+                    mediaConversion: {
+                        schemaVersion: 1,
+                        operation: "grayscale",
+                        status: "completed",
+                        resultStorageKey: "image:scope:result",
+                    },
+                }),
+            ),
+        ).toMatchObject({
             id: "conversion",
             storageKey: "image:scope:result",
             type: "image/png",
         });
-        expect(nodeReferenceImage(node(CanvasNodeType.MediaConversion, "conversion", {
-            mediaConversion: { schemaVersion: 1, operation: "grayscale", status: "processing" },
-        }))).toBeNull();
+        expect(
+            nodeReferenceImage(
+                node(CanvasNodeType.MediaConversion, "conversion", {
+                    mediaConversion: { schemaVersion: 1, operation: "grayscale", status: "processing" },
+                }),
+            ),
+        ).toBeNull();
     });
 });
 
@@ -88,11 +104,7 @@ describe("图片本地转换算法", () => {
     });
 
     test("Canny 转换输出黑白边缘图并保留 alpha", () => {
-        const pixels = new Uint8ClampedArray([
-            0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 255, 255,
-            0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 255, 255,
-            0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 255, 255,
-        ]);
+        const pixels = new Uint8ClampedArray([0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 255, 255]);
         const output = transformPixels(pixels, 3, 3, "edge-canny");
         for (let index = 0; index < output.length; index += 4) {
             expect([0, 255]).toContain(output[index]);

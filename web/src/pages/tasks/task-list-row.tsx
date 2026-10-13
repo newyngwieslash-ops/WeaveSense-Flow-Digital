@@ -62,7 +62,9 @@ export function TaskListRow({
                         {context.projectName ? ` · ${context.projectName}` : ""}
                     </span>
                 </div>
-                {isActive && !showsProgress ? <p>{stageLabel}</p> : isActive ? (
+                {isActive && !showsProgress ? (
+                    <p>{stageLabel}</p>
+                ) : isActive ? (
                     <div className="task-record-progress" role="progressbar" aria-label={stageLabel} aria-valuemin={0} aria-valuemax={100} aria-valuenow={task.progress || 0}>
                         <span>{stageLabel}</span>
                         <span>{task.progress || 0}%</span>
@@ -87,15 +89,7 @@ export function TaskListRow({
                 </Tooltip>
                 {isFailed ? (
                     <Tooltip title={retryDisabled ? "内容审核失败，无法自动重试" : task.canRecoverMedia ? "重试保存，不重新生成" : "重试任务"}>
-                        <Button
-                            type="text"
-                            size="small"
-                            icon={<RotateCcw className="size-3.5" />}
-                            aria-label={task.canRecoverMedia ? "重试保存" : "重试任务"}
-                            loading={actingId === task.id}
-                            disabled={retryDisabled}
-                            onClick={onRetry}
-                        />
+                        <Button type="text" size="small" icon={<RotateCcw className="size-3.5" />} aria-label={task.canRecoverMedia ? "重试保存" : "重试任务"} loading={actingId === task.id} disabled={retryDisabled} onClick={onRetry} />
                     </Tooltip>
                 ) : null}
             </div>
@@ -126,7 +120,13 @@ function TaskPreviewThumbnail({ task, onOpen }: { task: GenerationTask; onOpen: 
             aria-label={previewUnavailable ? "预览不可用，素材可能已删除" : isVideo ? "放大预览生成视频" : "放大预览生成图片"}
             title={previewUnavailable ? "预览不可用，素材可能已删除" : undefined}
         >
-            {thumbnailUrl ? <MediaPreview src={thumbnailUrl} kind="image" width={68} height={48} loading="lazy" className="h-full w-full object-cover" fallbackLabel="预览不可用" onUnavailable={() => setUnavailableUrl(thumbnailUrl)} /> : isVideo ? <TaskVideoThumbnail src={task.previewUrl} /> : <ImageIcon className="size-4" />}
+            {thumbnailUrl ? (
+                <MediaPreview src={thumbnailUrl} kind="image" width={68} height={48} loading="lazy" className="h-full w-full object-cover" fallbackLabel="预览不可用" onUnavailable={() => setUnavailableUrl(thumbnailUrl)} />
+            ) : isVideo ? (
+                <TaskVideoThumbnail src={task.previewUrl} />
+            ) : (
+                <ImageIcon className="size-4" />
+            )}
             {!previewUnavailable ? (
                 <span className="absolute inset-0 grid place-items-center bg-black/0 text-white opacity-0 transition-[background-color,opacity] duration-150 group-hover:bg-black/30 group-hover:opacity-100 group-focus-visible:bg-black/30 group-focus-visible:opacity-100">
                     {isVideo ? <Play className="size-4 fill-current" /> : <Eye className="size-4" />}

@@ -55,10 +55,12 @@ export function agentImageApproval(detail: Record<string, unknown>): AgentImageA
 }
 
 export function agentApprovalModel(config: AiConfig, settings: AgentMediaSettings, capability: "image" | "video" = "image"): string {
-    return selectableModelsByCapability(config, capability).find((model) => {
-        if (settings.logicalModelId) return logicalModelIDForConfig({ ...config, model }) === settings.logicalModelId;
-        return resolveModelChannel(config, model).id === settings.channelId && modelOptionName(model) === settings.channelModelKey;
-    }) || "";
+    return (
+        selectableModelsByCapability(config, capability).find((model) => {
+            if (settings.logicalModelId) return logicalModelIDForConfig({ ...config, model }) === settings.logicalModelId;
+            return resolveModelChannel(config, model).id === settings.channelId && modelOptionName(model) === settings.channelModelKey;
+        }) || ""
+    );
 }
 
 export function agentApprovalMatchesSettings(argumentsValue: unknown, settings: AgentMediaSettings): boolean {

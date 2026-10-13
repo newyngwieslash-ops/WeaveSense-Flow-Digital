@@ -25,8 +25,10 @@ describe("project asset batch linking", () => {
     });
 
     test("surfaces the failure when no asset can be linked", async () => {
-        await expect(linkSelectedProjectAssets(["asset-1"], async () => {
-            throw new Error("素材已失效");
-        })).rejects.toThrow("素材已失效");
+        await expect(
+            linkSelectedProjectAssets(["asset-1"], async () => {
+                throw new Error("素材已失效");
+            }),
+        ).rejects.toThrow("素材已失效");
     });
 });

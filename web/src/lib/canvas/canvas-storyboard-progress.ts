@@ -43,17 +43,23 @@ export function deriveStoryboardPipelineProgress(scriptNode: CanvasNodeData, nod
             videoState: nodePipelineState(videoNode, CanvasNodeType.Video),
         };
     });
-    const imageNodes = pipelineRows.flatMap((item) => item.imageNode ? [item.imageNode] : []);
-    const videoNodes = pipelineRows.flatMap((item) => item.videoNode ? [item.videoNode] : []);
+    const imageNodes = pipelineRows.flatMap((item) => (item.imageNode ? [item.imageNode] : []));
+    const videoNodes = pipelineRows.flatMap((item) => (item.videoNode ? [item.videoNode] : []));
     const videoNodeIds = new Set(videoNodes.map((node) => node.id));
-    const linkedFinalNodes = nodes.filter((node) => node.type === CanvasNodeType.Video
-        && node.metadata?.workflowKind === "final"
-        && connections.some((connection) => connection.toNodeId === node.id && (connection.fromNodeId === scriptNode.id || videoNodeIds.has(connection.fromNodeId))));
-    const successfulVideoNodeIds = pipelineRows.flatMap((item) => item.videoState === "success" && item.videoNode ? [item.videoNode.id] : []);
+    const linkedFinalNodes = nodes.filter(
+        (node) => node.type === CanvasNodeType.Video && node.metadata?.workflowKind === "final" && connections.some((connection) => connection.toNodeId === node.id && (connection.fromNodeId === scriptNode.id || videoNodeIds.has(connection.fromNodeId))),
+    );
+    const successfulVideoNodeIds = pipelineRows.flatMap((item) => (item.videoState === "success" && item.videoNode ? [item.videoNode.id] : []));
     return {
         rows: pipelineRows,
-        images: summarizeStage(pipelineRows.map((item) => ({ state: item.imageState, node: item.imageNode })), rows.length),
-        videos: summarizeStage(pipelineRows.map((item) => ({ state: item.videoState, node: item.videoNode })), rows.length),
+        images: summarizeStage(
+            pipelineRows.map((item) => ({ state: item.imageState, node: item.imageNode })),
+            rows.length,
+        ),
+        videos: summarizeStage(
+            pipelineRows.map((item) => ({ state: item.videoState, node: item.videoNode })),
+            rows.length,
+        ),
         final: summarizeFinalStage(linkedFinalNodes, rows.length > 0 || linkedFinalNodes.length > 0),
         successfulVideoNodeIds,
         finalNodeIds: linkedFinalNodes.map((node) => node.id),
@@ -80,7 +86,7 @@ function summarizeStage(items: Array<{ state: StoryboardPipelineItemState; node?
         failed,
         loading,
         incomplete: Math.max(0, total - success),
-        nodeIds: items.flatMap((item) => item.node ? [item.node.id] : []),
+        nodeIds: items.flatMap((item) => (item.node ? [item.node.id] : [])),
     };
 }
 

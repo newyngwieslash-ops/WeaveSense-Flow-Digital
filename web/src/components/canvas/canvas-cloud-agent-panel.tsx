@@ -120,7 +120,9 @@ export function CanvasCloudAgentPanel({ canvasId, domainProjectId, nodeCount, se
     const skillBrowseKey = JSON.stringify([userId, skillTag, debouncedSkillSearch, platformCategory, curationState.curation?.revision, curationState.curation?.enabled]);
     const skillBrowseKeyRef = useRef(skillBrowseKey);
     skillBrowseKeyRef.current = skillBrowseKey;
-    useEffect(() => { if (curationState.curation?.enabled) setSkillTag("all"); }, [curationState.curation?.enabled]);
+    useEffect(() => {
+        if (curationState.curation?.enabled) setSkillTag("all");
+    }, [curationState.curation?.enabled]);
     const [busy, setBusy] = useState(false);
     const [approvalSubmitting, setApprovalSubmitting] = useState(false);
     const [exporting, setExporting] = useState(false);
@@ -492,9 +494,7 @@ export function CanvasCloudAgentPanel({ canvasId, domainProjectId, nodeCount, se
                         const defaults = await ensureDefaultCanvasAgentSkill();
                         if (!active) return;
                         setSkills(defaults.skills);
-                        initialSkillIds = defaults.skills.some((skill) => skill.skillId === DEFAULT_CANVAS_AGENT_SKILL_ID && skill.isAdded)
-                            ? [DEFAULT_CANVAS_AGENT_SKILL_ID]
-                            : [];
+                        initialSkillIds = defaults.skills.some((skill) => skill.skillId === DEFAULT_CANVAS_AGENT_SKILL_ID && skill.isAdded) ? [DEFAULT_CANVAS_AGENT_SKILL_ID] : [];
                     } catch (cause) {
                         if (active) setMessages((currentMessages) => appendAgentError(currentMessages, "default-skill-error", cause, "默认短剧技能未能安装，已保留空技能选择"));
                     }
@@ -554,7 +554,7 @@ export function CanvasCloudAgentPanel({ canvasId, domainProjectId, nodeCount, se
                 const existing = current.find((conversation) => conversation.id === activeConversationId);
                 if (!existing || existing.skillIds?.join("\0") === selectedSkillIds.join("\0")) return current;
                 const now = new Date().toISOString();
-                return current.map((conversation) => conversation.id === activeConversationId ? { ...conversation, skillIds: selectedSkillIds, updatedAt: now } : conversation);
+                return current.map((conversation) => (conversation.id === activeConversationId ? { ...conversation, skillIds: selectedSkillIds, updatedAt: now } : conversation));
             });
             return;
         }
@@ -597,7 +597,7 @@ export function CanvasCloudAgentPanel({ canvasId, domainProjectId, nodeCount, se
                     if (event.seq > lastSeqRef.current + 1) canvasSyncRef.current?.reconcile();
                     lastSeqRef.current = event.seq;
                 }
-                setMessages((current) => current.some((item) => item.id === `stream-error-${run.id}`) ? current.filter((item) => item.id !== `stream-error-${run.id}`) : current);
+                setMessages((current) => (current.some((item) => item.id === `stream-error-${run.id}`) ? current.filter((item) => item.id !== `stream-error-${run.id}`) : current));
                 setContextUsage((current) => reduceAgentContextUsage(current, event));
                 applyAgentEvent(event, setMessages, setRun, setApproval, setPrompt);
                 canvasSyncRef.current?.receive(event);
@@ -1136,7 +1136,10 @@ export function CanvasCloudAgentPanel({ canvasId, domainProjectId, nodeCount, se
             <CanvasAgentSkillLibraryModal
                 curationState={curationState}
                 platformCategory={platformCategory}
-                onPlatformCategoryChange={(value) => { setPlatformCategory(value); setSkillTag("all"); }}
+                onPlatformCategoryChange={(value) => {
+                    setPlatformCategory(value);
+                    setSkillTag("all");
+                }}
                 open={skillsOpen}
                 theme={theme}
                 installedSkills={installedSkills}

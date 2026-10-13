@@ -203,7 +203,7 @@ export function CanvasNodeToolbar({
                 toolbarRef.current.style.transform = `translate3d(${left}px, ${top}px, 0)`;
                 return;
             }
-            setAnchor((current) => current?.left === left && current.top === top ? current : { left, top });
+            setAnchor((current) => (current?.left === left && current.top === top ? current : { left, top }));
         };
         const scheduleUpdate = (nextViewport?: ViewportTransform) => {
             if (nextViewport) liveViewport = nextViewport;
@@ -255,16 +255,63 @@ export function CanvasNodeToolbar({
         }
         copyText(prompt, "提示词已复制");
     };
-    const imageTools = buildImageToolbarTools(node, { onUpload, onToggleFreeResize, onAnnotate, onAnnotationEdit, onTextEdit, onMaskEdit, onRemoveBackground, onLayerDecomposition, onEmotion, onPortraitTexture, onCrop, onUpscale, onSuperResolve, onAngle, onLighting, onPanorama, onPrevis, onViewImage, onCopyPrompt: copyImagePrompt, onReversePrompt, onNineGrid });
+    const imageTools = buildImageToolbarTools(node, {
+        onUpload,
+        onToggleFreeResize,
+        onAnnotate,
+        onAnnotationEdit,
+        onTextEdit,
+        onMaskEdit,
+        onRemoveBackground,
+        onLayerDecomposition,
+        onEmotion,
+        onPortraitTexture,
+        onCrop,
+        onUpscale,
+        onSuperResolve,
+        onAngle,
+        onLighting,
+        onPanorama,
+        onPrevis,
+        onViewImage,
+        onCopyPrompt: copyImagePrompt,
+        onReversePrompt,
+        onNineGrid,
+    });
 
     // 构建 ToolContext——供注册表解析工具
     const nodeHoverHandlers = {
-        onNodeInfo: onInfo, onNodeDelete: onDelete, onNodeRetry: onRetry, onNodeEditText: onEditText, onNodeDecreaseFont: onDecreaseFont, onNodeIncreaseFont: onIncreaseFont,
-        onNodeToggleDialog: onToggleDialog, onNodeAnnotate: onAnnotate, onNodeGenerateImage: onGenerateImage, onNodeUpload: onUpload, onNodeDownload: onDownload,
-        onNodeSaveAsset: onSaveAsset, onNodeMaskEdit: onMaskEdit, onNodeRemoveBackground: onRemoveBackground, onNodeEmotion: onEmotion, onNodePortraitTexture: onPortraitTexture, onNodeCrop: onCrop,
-        onNodeSplit: (target) => onSplit(target, { rows: 2, columns: 2 }), onNodeUpscale: onUpscale, onNodeSuperResolve: onSuperResolve, onNodeAngle: onAngle, onNodeViewImage: onViewImage,
-        onNodeExtractVideoFrames: onExtractVideoFrames, onNodeExtractAudioFromVideo: onExtractAudioFromVideo, onNodeTrimVideoSegments: onTrimVideoSegments, onNodeReversePrompt: onReversePrompt, onNodeToggleFreeResize: onToggleFreeResize,
-        onNodeSubtitles: onSubtitles, onNodeTimeline: onTimeline, onNodeToggleLocked: onToggleLocked, onNodeCopyPrompt: copyImagePrompt,
+        onNodeInfo: onInfo,
+        onNodeDelete: onDelete,
+        onNodeRetry: onRetry,
+        onNodeEditText: onEditText,
+        onNodeDecreaseFont: onDecreaseFont,
+        onNodeIncreaseFont: onIncreaseFont,
+        onNodeToggleDialog: onToggleDialog,
+        onNodeAnnotate: onAnnotate,
+        onNodeGenerateImage: onGenerateImage,
+        onNodeUpload: onUpload,
+        onNodeDownload: onDownload,
+        onNodeSaveAsset: onSaveAsset,
+        onNodeMaskEdit: onMaskEdit,
+        onNodeRemoveBackground: onRemoveBackground,
+        onNodeEmotion: onEmotion,
+        onNodePortraitTexture: onPortraitTexture,
+        onNodeCrop: onCrop,
+        onNodeSplit: (target) => onSplit(target, { rows: 2, columns: 2 }),
+        onNodeUpscale: onUpscale,
+        onNodeSuperResolve: onSuperResolve,
+        onNodeAngle: onAngle,
+        onNodeViewImage: onViewImage,
+        onNodeExtractVideoFrames: onExtractVideoFrames,
+        onNodeExtractAudioFromVideo: onExtractAudioFromVideo,
+        onNodeTrimVideoSegments: onTrimVideoSegments,
+        onNodeReversePrompt: onReversePrompt,
+        onNodeToggleFreeResize: onToggleFreeResize,
+        onNodeSubtitles: onSubtitles,
+        onNodeTimeline: onTimeline,
+        onNodeToggleLocked: onToggleLocked,
+        onNodeCopyPrompt: copyImagePrompt,
     } as Partial<ToolbarHandlers> as ToolbarHandlers;
 
     const nodeHoverCtx: ToolContext = {
@@ -294,7 +341,7 @@ export function CanvasNodeToolbar({
         const placement = resolveNodeToolbarPlacement(tool, nodeHoverCtx);
         return {
             id: tool.id,
-            label: tool.displayLabel ? (typeof tool.displayLabel === "function" ? tool.displayLabel(nodeHoverCtx) : tool.displayLabel) : (typeof tool.label === "function" ? tool.label(nodeHoverCtx) : tool.label),
+            label: tool.displayLabel ? (typeof tool.displayLabel === "function" ? tool.displayLabel(nodeHoverCtx) : tool.displayLabel) : typeof tool.label === "function" ? tool.label(nodeHoverCtx) : tool.label,
             icon: typeof tool.icon === "function" ? tool.icon(nodeHoverCtx) : tool.icon,
             group: placement.group,
             order: placement.order,
@@ -306,9 +353,7 @@ export function CanvasNodeToolbar({
             onClick: () => tool.run(nodeHoverCtx),
         };
     });
-    const allTools: ToolbarTool[] = hasImage && !simpleMode
-        ? [...registryToolbarTools, ...imageTools]
-        : registryToolbarTools;
+    const allTools: ToolbarTool[] = hasImage && !simpleMode ? [...registryToolbarTools, ...imageTools] : registryToolbarTools;
     const compact = containerWidth < 640;
     const narrow = containerWidth < 420;
     const inGroup = (group: NodeToolbarGroup) => allTools.filter((tool) => tool.group === group).sort(compareToolbarTools);
@@ -324,7 +369,7 @@ export function CanvasNodeToolbar({
     const moreTools = [...(narrow ? [...primary.slice(1), ...inGroup("workspace")] : []), ...inGroup("more")];
     const processMenuLabel = compact ? "工具" : isVideo ? "提取素材" : isImage ? "图片工具" : isAudio ? "音频处理" : "文本调整";
     const handleMenuOpenChange = (menuId: string, open: boolean) => {
-        setOpenMenuId((current) => open ? menuId : current === menuId ? null : current);
+        setOpenMenuId((current) => (open ? menuId : current === menuId ? null : current));
         if (open) onKeep(node.id);
         else if (!toolbarRef.current?.contains(document.activeElement)) onLeave();
     };
@@ -336,33 +381,48 @@ export function CanvasNodeToolbar({
             className="canvas-node-toolbar absolute z-[var(--z-node-toolbar)] -translate-x-1/2 -translate-y-full"
             style={{ left: 0, top: 0, transform: `translate3d(${anchor.left}px, ${anchor.top}px, 0)`, width: "max-content", maxWidth: "calc(100% - 20px)", color: theme.node.text }}
             onMouseEnter={() => onKeep(node.id)}
-            onMouseLeave={() => { if (!openMenuId) onLeave(); }}
+            onMouseLeave={() => {
+                if (!openMenuId) onLeave();
+            }}
             onMouseDown={(event) => event.stopPropagation()}
             onPointerDown={(event) => event.stopPropagation()}
             data-canvas-no-zoom
             onKeyDown={(event) => event.stopPropagation()}
             onFocus={() => onKeep(node.id)}
-            onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget) && !openMenuId) onLeave(); }}
+            onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget) && !openMenuId) onLeave();
+            }}
         >
-            <div
-                role="toolbar"
-                aria-label="节点快捷工具"
-                className="flex h-11 max-w-full items-center gap-0.5 overflow-visible rounded-[var(--dock-radius-tight)] px-2 backdrop-blur-2xl"
-                style={{ ...dockStyle, border: 0 }}
-            >
-                {primaryTools.map((tool) => <NodeDockToolButton key={tool.id} tool={tool} />)}
+            <div role="toolbar" aria-label="节点快捷工具" className="flex h-11 max-w-full items-center gap-0.5 overflow-visible rounded-[var(--dock-radius-tight)] px-2 backdrop-blur-2xl" style={{ ...dockStyle, border: 0 }}>
+                {primaryTools.map((tool) => (
+                    <NodeDockToolButton key={tool.id} tool={tool} />
+                ))}
                 {nineGridTools.length ? <NodeDockMenuButton menuId="nine-grid" label="九宫格" icon={<Grid3x3 className="size-3.5" />} tools={nineGridTools} openMenuId={openMenuId} onOpenChange={handleMenuOpenChange} /> : null}
-                {panoramaTools.map((tool) => <NodeDockToolButton key={tool.id} tool={tool} />)}
+                {panoramaTools.map((tool) => (
+                    <NodeDockToolButton key={tool.id} tool={tool} />
+                ))}
                 {portraitTools.length ? <NodeDockMenuButton menuId="portrait" label="人像调整" icon={<UserRound className="size-3.5" />} tools={portraitTools} openMenuId={openMenuId} onOpenChange={handleMenuOpenChange} /> : null}
                 {viewpointLightingTools.length ? <NodeDockMenuButton menuId="viewpoint-lighting" label="视角" icon={<Camera className="size-3.5" />} tools={viewpointLightingTools} openMenuId={openMenuId} onOpenChange={handleMenuOpenChange} /> : null}
-                {processTools.length ? <NodeDockMenuButton menuId="process" label={processMenuLabel} icon={isVideo ? <Images className="size-3.5" /> : <SlidersHorizontal className="size-3.5" />} tools={processTools} openMenuId={openMenuId} onOpenChange={handleMenuOpenChange} split={hasImage && !simpleMode ? { node, onSplit } : undefined} /> : null}
-                {workspaceTools.length ? <span aria-hidden className="aceternity-dock-separator mx-1 h-5 w-px shrink-0" /> : null}
-                {workspaceTools.map((tool) => <NodeDockToolButton key={tool.id} tool={tool} />)}
-                {utilityTools.length || moreTools.length ? <span aria-hidden className="aceternity-dock-separator mx-1 h-5 w-px shrink-0" /> : null}
-                {utilityTools.map((tool) => <NodeDockToolButton key={tool.id} tool={tool} iconOnly />)}
-                {moreTools.length ? (
-                    <NodeDockMenuButton menuId="more" label="更多" icon={<Ellipsis className="size-3.5" />} tools={moreTools} openMenuId={openMenuId} onOpenChange={handleMenuOpenChange} placement="topRight" iconOnly />
+                {processTools.length ? (
+                    <NodeDockMenuButton
+                        menuId="process"
+                        label={processMenuLabel}
+                        icon={isVideo ? <Images className="size-3.5" /> : <SlidersHorizontal className="size-3.5" />}
+                        tools={processTools}
+                        openMenuId={openMenuId}
+                        onOpenChange={handleMenuOpenChange}
+                        split={hasImage && !simpleMode ? { node, onSplit } : undefined}
+                    />
                 ) : null}
+                {workspaceTools.length ? <span aria-hidden className="aceternity-dock-separator mx-1 h-5 w-px shrink-0" /> : null}
+                {workspaceTools.map((tool) => (
+                    <NodeDockToolButton key={tool.id} tool={tool} />
+                ))}
+                {utilityTools.length || moreTools.length ? <span aria-hidden className="aceternity-dock-separator mx-1 h-5 w-px shrink-0" /> : null}
+                {utilityTools.map((tool) => (
+                    <NodeDockToolButton key={tool.id} tool={tool} iconOnly />
+                ))}
+                {moreTools.length ? <NodeDockMenuButton menuId="more" label="更多" icon={<Ellipsis className="size-3.5" />} tools={moreTools} openMenuId={openMenuId} onOpenChange={handleMenuOpenChange} placement="topRight" iconOnly /> : null}
             </div>
         </div>
     );
@@ -371,17 +431,17 @@ export function CanvasNodeToolbar({
 function NodeDockToolButton({ tool, iconOnly = false }: { tool: ToolbarTool; iconOnly?: boolean }) {
     return (
         <Tooltip title={tool.description ? `${tool.label}：${tool.description}` : tool.label}>
-        <button
-            type="button"
-            className={`aceternity-dock-command is-labeled pointer-events-auto inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-[var(--dock-item-radius)] px-2.5 outline-none ${tool.active ? "is-active" : ""} ${tool.danger ? "is-danger" : ""}`}
-            aria-label={tool.label}
-            aria-pressed={tool.active}
-            disabled={tool.disabled}
-            onClick={tool.onClick}
-        >
-            <span className="grid size-3.5 shrink-0 place-items-center">{tool.icon}</span>
-            {!iconOnly ? <span className="inline-flex h-4 items-center whitespace-nowrap text-[var(--fs-label)] font-medium leading-none">{tool.label}</span> : null}
-        </button>
+            <button
+                type="button"
+                className={`aceternity-dock-command is-labeled pointer-events-auto inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-[var(--dock-item-radius)] px-2.5 outline-none ${tool.active ? "is-active" : ""} ${tool.danger ? "is-danger" : ""}`}
+                aria-label={tool.label}
+                aria-pressed={tool.active}
+                disabled={tool.disabled}
+                onClick={tool.onClick}
+            >
+                <span className="grid size-3.5 shrink-0 place-items-center">{tool.icon}</span>
+                {!iconOnly ? <span className="inline-flex h-4 items-center whitespace-nowrap text-[var(--fs-label)] font-medium leading-none">{tool.label}</span> : null}
+            </button>
         </Tooltip>
     );
 }
@@ -391,7 +451,27 @@ function compareToolbarTools(left: ToolbarTool, right: ToolbarTool) {
     return left.order - right.order;
 }
 
-function NodeDockMenuButton({ menuId, label, icon, tools, openMenuId, onOpenChange, placement = "top", iconOnly = false, split }: { menuId: string; label: string; icon: ReactNode; tools: ToolbarTool[]; openMenuId: string | null; onOpenChange: (menuId: string, open: boolean) => void; placement?: "top" | "topRight"; iconOnly?: boolean; split?: { node: CanvasNodeData; onSplit: (node: CanvasNodeData, params: ImageSplitParams) => void } }) {
+function NodeDockMenuButton({
+    menuId,
+    label,
+    icon,
+    tools,
+    openMenuId,
+    onOpenChange,
+    placement = "top",
+    iconOnly = false,
+    split,
+}: {
+    menuId: string;
+    label: string;
+    icon: ReactNode;
+    tools: ToolbarTool[];
+    openMenuId: string | null;
+    onOpenChange: (menuId: string, open: boolean) => void;
+    placement?: "top" | "topRight";
+    iconOnly?: boolean;
+    split?: { node: CanvasNodeData; onSplit: (node: CanvasNodeData, params: ImageSplitParams) => void };
+}) {
     const open = openMenuId === menuId;
     const triggerRef = useRef<HTMLButtonElement>(null);
     const [splitPanelOpen, setSplitPanelOpen] = useState(false);
@@ -410,42 +490,55 @@ function NodeDockMenuButton({ menuId, label, icon, tools, openMenuId, onOpenChan
         const section = tool.danger ? "危险操作" : tool.section || "常用操作";
         sections.set(section, [...(sections.get(section) || []), tool]);
     }
-    const items: MenuProps["items"] = [...sections].sort(([left], [right]) => Number(left === "危险操作") - Number(right === "危险操作")).map(([section, entries]) => ({
-        type: "group", key: section, label: section,
-        children: entries.map((tool) => {
-            const isSplit = Boolean(splitEntry && split && tool.id === "split");
-            return {
-                key: tool.id,
-                icon: tool.icon,
-                className: isSplit ? `canvas-grid-split-menu-item${splitPanelOpen ? " is-open" : ""}` : undefined,
-                label: (
-                    <div
-                        className={isSplit ? "canvas-grid-split-menu-label" : undefined}
-                        onMouseDown={isSplit ? () => { keepSplitMenuOpenRef.current = true; } : undefined}
-                    >
-                        <div>
-                            <span className="inline-flex items-center gap-2">{tool.label}{tool.active ? <Check className="size-3.5" /> : null}</span>
-                            {tool.description ? <div className="text-[var(--fs-tiny)] opacity-60">{tool.description}</div> : null}
+    const items: MenuProps["items"] = [...sections]
+        .sort(([left], [right]) => Number(left === "危险操作") - Number(right === "危险操作"))
+        .map(([section, entries]) => ({
+            type: "group",
+            key: section,
+            label: section,
+            children: entries.map((tool) => {
+                const isSplit = Boolean(splitEntry && split && tool.id === "split");
+                return {
+                    key: tool.id,
+                    icon: tool.icon,
+                    className: isSplit ? `canvas-grid-split-menu-item${splitPanelOpen ? " is-open" : ""}` : undefined,
+                    label: (
+                        <div
+                            className={isSplit ? "canvas-grid-split-menu-label" : undefined}
+                            onMouseDown={
+                                isSplit
+                                    ? () => {
+                                          keepSplitMenuOpenRef.current = true;
+                                      }
+                                    : undefined
+                            }
+                        >
+                            <div>
+                                <span className="inline-flex items-center gap-2">
+                                    {tool.label}
+                                    {tool.active ? <Check className="size-3.5" /> : null}
+                                </span>
+                                {tool.description ? <div className="text-[var(--fs-tiny)] opacity-60">{tool.description}</div> : null}
+                            </div>
+                            {isSplit ? <ChevronRight className="canvas-grid-split-chevron" strokeWidth={2} /> : null}
                         </div>
-                        {isSplit ? <ChevronRight className="canvas-grid-split-chevron" strokeWidth={2} /> : null}
-                    </div>
-                ),
-                disabled: tool.disabled,
-                danger: tool.danger,
-                onClick: (info) => {
-                    if (isSplit) {
-                        info.domEvent.preventDefault();
-                        info.domEvent.stopPropagation();
-                        keepSplitMenuOpenRef.current = true;
-                        setSplitPanelOpen((current) => !current);
-                        return;
-                    }
-                    onOpenChange(menuId, false);
-                    tool.onClick();
-                },
-            };
-        }),
-    }));
+                    ),
+                    disabled: tool.disabled,
+                    danger: tool.danger,
+                    onClick: (info) => {
+                        if (isSplit) {
+                            info.domEvent.preventDefault();
+                            info.domEvent.stopPropagation();
+                            keepSplitMenuOpenRef.current = true;
+                            setSplitPanelOpen((current) => !current);
+                            return;
+                        }
+                        onOpenChange(menuId, false);
+                        tool.onClick();
+                    },
+                };
+            }),
+        }));
     return (
         <Dropdown
             open={open}
@@ -479,9 +572,7 @@ function NodeDockMenuButton({ menuId, label, icon, tools, openMenuId, onOpenChan
                     }}
                     onKeyDown={(event) => event.stopPropagation()}
                 >
-                    <div className="canvas-node-toolbar-menu-stack">
-                        {menu}
-                    </div>
+                    <div className="canvas-node-toolbar-menu-stack">{menu}</div>
                     {splitPanelOpen && split ? (
                         <CanvasGridSplitPicker
                             onPick={(params) => {
@@ -515,13 +606,32 @@ function NodeDockMenuButton({ menuId, label, icon, tools, openMenuId, onOpenChan
                 }}
             >
                 <span className="grid size-3.5 shrink-0 place-items-center">{icon}</span>
-                {!iconOnly ? <><span className="inline-flex h-4 items-center whitespace-nowrap text-[var(--fs-label)] font-medium leading-none">{label}</span><ChevronDown className="size-3 shrink-0 opacity-55" /></> : null}
+                {!iconOnly ? (
+                    <>
+                        <span className="inline-flex h-4 items-center whitespace-nowrap text-[var(--fs-label)] font-medium leading-none">{label}</span>
+                        <ChevronDown className="size-3 shrink-0 opacity-55" />
+                    </>
+                ) : null}
             </button>
         </Dropdown>
     );
 }
 
-export function CanvasNodeInfoModal({ node, open, onClose, onMetadataChange, readOnly = false, onUnauthorized }: { node: CanvasNodeData | null; open: boolean; onClose: () => void; onMetadataChange?: (nodeId: string, metadata: Partial<CanvasNodeMetadata>) => void; readOnly?: boolean; onUnauthorized?: () => void }) {
+export function CanvasNodeInfoModal({
+    node,
+    open,
+    onClose,
+    onMetadataChange,
+    readOnly = false,
+    onUnauthorized,
+}: {
+    node: CanvasNodeData | null;
+    open: boolean;
+    onClose: () => void;
+    onMetadataChange?: (nodeId: string, metadata: Partial<CanvasNodeMetadata>) => void;
+    readOnly?: boolean;
+    onUnauthorized?: () => void;
+}) {
     const theme = canvasThemes[useActiveTheme()];
     const config = useEffectiveConfig();
     const [assetTags, setAssetTags] = useState<string[]>([]);
@@ -529,7 +639,24 @@ export function CanvasNodeInfoModal({ node, open, onClose, onMetadataChange, rea
     const [assetCategory, setAssetCategory] = useState<CanvasAssetCategory>("other");
     const imageBytes = node?.type === CanvasNodeType.Image && node.metadata?.content ? getDataUrlByteSize(node.metadata.content) : 0;
     const batchCount = node?.type === CanvasNodeType.Image ? node.metadata?.batchChildIds?.length || 0 : 0;
-    const nodeTypeLabel = node?.type === CanvasNodeType.Text ? "文本" : node?.type === CanvasNodeType.Script ? "分镜脚本" : node?.type === CanvasNodeType.Skill ? "技能" : node?.type === CanvasNodeType.Image ? "图片" : node?.type === CanvasNodeType.Video ? "视频" : node?.type === CanvasNodeType.Audio ? "音频" : node?.type === CanvasNodeType.Drawing ? "绘图" : node?.type === CanvasNodeType.Frame ? "背板" : "生成配置";
+    const nodeTypeLabel =
+        node?.type === CanvasNodeType.Text
+            ? "文本"
+            : node?.type === CanvasNodeType.Script
+              ? "分镜脚本"
+              : node?.type === CanvasNodeType.Skill
+                ? "技能"
+                : node?.type === CanvasNodeType.Image
+                  ? "图片"
+                  : node?.type === CanvasNodeType.Video
+                    ? "视频"
+                    : node?.type === CanvasNodeType.Audio
+                      ? "音频"
+                      : node?.type === CanvasNodeType.Drawing
+                        ? "绘图"
+                        : node?.type === CanvasNodeType.Frame
+                          ? "背板"
+                          : "生成配置";
     useEffect(() => {
         setAssetTags(node?.metadata?.assetTags || []);
         setAssetTagInput("");
@@ -573,111 +700,115 @@ export function CanvasNodeInfoModal({ node, open, onClose, onMetadataChange, rea
     );
 
     return (
-        <Modal
-            className="workspace-modal canvas-node-info-modal"
-            title={title}
-            open={open && Boolean(node)}
-            centered
-            footer={null}
-            onCancel={onClose}
-            width="min(920px, calc(100vw - 32px))"
-            styles={{ body: { paddingTop: 4 } }}
-        >
+        <Modal className="workspace-modal canvas-node-info-modal" title={title} open={open && Boolean(node)} centered footer={null} onCancel={onClose} width="min(920px, calc(100vw - 32px))" styles={{ body: { paddingTop: 4 } }}>
             {node ? (
                 <div className="canvas-node-inspector" style={{ color: theme.node.text }}>
-                        <div className="thin-scrollbar canvas-node-inspector-scroll">
+                    <div className="thin-scrollbar canvas-node-inspector-scroll">
+                        <section className="canvas-node-inspector-section">
+                            <div className="canvas-node-inspector-section-heading">
+                                <span>基础信息</span>
+                                <em>{node.metadata?.status || "idle"}</em>
+                            </div>
+                            <div className="canvas-node-inspector-facts">
+                                <InfoRow label="类型" value={nodeTypeLabel} />
+                                <InfoRow label="尺寸" value={`${Math.round(node.width)} x ${Math.round(node.height)}`} />
+                                <InfoRow label="位置" value={`${Math.round(node.position.x)}, ${Math.round(node.position.y)}`} />
+                                {batchCount > 1 ? <InfoRow label="图片组" value={`${batchCount} 张`} /> : null}
+                                {imageBytes ? <InfoRow label="图片大小" value={formatBytes(imageBytes)} /> : null}
+                            </div>
+                        </section>
+
+                        {node.type === CanvasNodeType.Image ? (
                             <section className="canvas-node-inspector-section">
-                                <div className="canvas-node-inspector-section-heading"><span>基础信息</span><em>{node.metadata?.status || "idle"}</em></div>
+                                <div className="canvas-node-inspector-section-heading">
+                                    <span>项目资产分类</span>
+                                </div>
+                                <div className="canvas-node-inspector-options">
+                                    {assetCategoryOptions.map((option) => {
+                                        const active = assetCategory === option.value;
+                                        return (
+                                            <button key={option.value} type="button" disabled={readOnly} aria-pressed={active} onClick={() => saveAssetCategory(option.value)} className={active ? "is-active" : ""}>
+                                                {option.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <p className="canvas-node-inspector-help">生成后会按此分类进入项目资产；角色、场景和画风工作流会自动预填。</p>
+                            </section>
+                        ) : null}
+
+                        {nodeGenerationPrompt(node) ? (
+                            <section className="canvas-node-inspector-section">
+                                <div className="canvas-node-inspector-section-heading">
+                                    <span>提示词</span>
+                                </div>
+                                <div className="canvas-node-inspector-copy canvas-node-inspector-prompt">{nodeGenerationPrompt(node)}</div>
+                            </section>
+                        ) : null}
+
+                        {nodeGenerationRows(node, producedModelLabel(config, node.metadata?.producedModel)).length ? (
+                            <section className="canvas-node-inspector-section">
+                                <div className="canvas-node-inspector-section-heading">
+                                    <span>生成信息</span>
+                                </div>
                                 <div className="canvas-node-inspector-facts">
-                                    <InfoRow label="类型" value={nodeTypeLabel} />
-                                    <InfoRow label="尺寸" value={`${Math.round(node.width)} x ${Math.round(node.height)}`} />
-                                    <InfoRow label="位置" value={`${Math.round(node.position.x)}, ${Math.round(node.position.y)}`} />
-                                    {batchCount > 1 ? <InfoRow label="图片组" value={`${batchCount} 张`} /> : null}
-                                    {imageBytes ? <InfoRow label="图片大小" value={formatBytes(imageBytes)} /> : null}
+                                    {nodeGenerationRows(node, producedModelLabel(config, node.metadata?.producedModel)).map((item) => (
+                                        <InfoRow key={item.label} label={item.label} value={item.value} />
+                                    ))}
                                 </div>
                             </section>
+                        ) : null}
 
-                            {node.type === CanvasNodeType.Image ? (
-                                <section className="canvas-node-inspector-section">
-                                    <div className="canvas-node-inspector-section-heading"><span>项目资产分类</span></div>
-                                    <div className="canvas-node-inspector-options">
-                                        {assetCategoryOptions.map((option) => {
-                                            const active = assetCategory === option.value;
-                                            return <button key={option.value} type="button" disabled={readOnly} aria-pressed={active} onClick={() => saveAssetCategory(option.value)} className={active ? "is-active" : ""}>{option.label}</button>;
-                                        })}
+                        {node.type === CanvasNodeType.Skill && node.metadata?.skillSnapshot ? (
+                            <section className="canvas-node-inspector-section">
+                                <div className="canvas-node-inspector-section-heading">
+                                    <span>技能模板</span>
+                                </div>
+                                <div className="canvas-node-inspector-copy">{node.metadata.skillSnapshot.template}</div>
+                                {node.metadata.skillSnapshot.outputContract ? (
+                                    <>
+                                        <div className="canvas-node-inspector-subheading">输出约束</div>
+                                        <div className="canvas-node-inspector-copy">{node.metadata.skillSnapshot.outputContract}</div>
+                                    </>
+                                ) : null}
+                            </section>
+                        ) : null}
+
+                        {node.type === CanvasNodeType.Image ? (
+                            <section className="canvas-node-inspector-section">
+                                <div className="canvas-node-inspector-section-heading">
+                                    <div>
+                                        <span>资产标签</span>
+                                        <p>一条标签描述一个角色、环境、道具或镜头用途。</p>
                                     </div>
-                                    <p className="canvas-node-inspector-help">生成后会按此分类进入项目资产；角色、场景和画风工作流会自动预填。</p>
-                                </section>
-                            ) : null}
-
-                            {nodeGenerationPrompt(node) ? (
-                                <section className="canvas-node-inspector-section">
-                                    <div className="canvas-node-inspector-section-heading"><span>提示词</span></div>
-                                    <div className="canvas-node-inspector-copy canvas-node-inspector-prompt">{nodeGenerationPrompt(node)}</div>
-                                </section>
-                            ) : null}
-
-                            {nodeGenerationRows(node, producedModelLabel(config, node.metadata?.producedModel)).length ? (
-                                <section className="canvas-node-inspector-section">
-                                    <div className="canvas-node-inspector-section-heading"><span>生成信息</span></div>
-                                    <div className="canvas-node-inspector-facts">
-                                        {nodeGenerationRows(node, producedModelLabel(config, node.metadata?.producedModel)).map((item) => <InfoRow key={item.label} label={item.label} value={item.value} />)}
+                                    <em>{assetTags.length} 条</em>
+                                </div>
+                                {readOnly ? (
+                                    <div className="canvas-node-inspector-notice">分享画布为只读，标签无法编辑。</div>
+                                ) : (
+                                    <div className="canvas-node-inspector-tag-editor">
+                                        <Input value={assetTagInput} placeholder="例如：角色: 张三" onChange={(event) => setAssetTagInput(event.target.value)} onPressEnter={addAssetTag} />
+                                        <Button type="primary" icon={<Plus className="size-4" />} disabled={!assetTagInput.trim()} onClick={addAssetTag}>
+                                            加入
+                                        </Button>
                                     </div>
-                                </section>
-                            ) : null}
-
-                            {node.type === CanvasNodeType.Skill && node.metadata?.skillSnapshot ? (
-                                <section className="canvas-node-inspector-section">
-                                    <div className="canvas-node-inspector-section-heading"><span>技能模板</span></div>
-                                    <div className="canvas-node-inspector-copy">{node.metadata.skillSnapshot.template}</div>
-                                    {node.metadata.skillSnapshot.outputContract ? <><div className="canvas-node-inspector-subheading">输出约束</div><div className="canvas-node-inspector-copy">{node.metadata.skillSnapshot.outputContract}</div></> : null}
-                                </section>
-                            ) : null}
-
-                            {node.type === CanvasNodeType.Image ? (
-                                <section className="canvas-node-inspector-section">
-                                    <div className="canvas-node-inspector-section-heading">
-                                        <div>
-                                            <span>资产标签</span>
-                                            <p>一条标签描述一个角色、环境、道具或镜头用途。</p>
-                                        </div>
-                                        <em>{assetTags.length} 条</em>
-                                    </div>
-                                    {readOnly ? (
-                                        <div className="canvas-node-inspector-notice">分享画布为只读，标签无法编辑。</div>
+                                )}
+                                <div className="canvas-node-inspector-tags">
+                                    {assetTags.length ? (
+                                        assetTags.map((tag) => (
+                                            <Tag key={tag} closable={!readOnly} onClose={() => (readOnly ? onUnauthorized?.() : removeAssetTag(tag))} className="!m-0 !rounded-lg !px-2 !py-1 !text-sm">
+                                                {tag}
+                                            </Tag>
+                                        ))
                                     ) : (
-                                        <div className="canvas-node-inspector-tag-editor">
-                                            <Input
-                                                value={assetTagInput}
-                                                placeholder="例如：角色: 张三"
-                                                onChange={(event) => setAssetTagInput(event.target.value)}
-                                                onPressEnter={addAssetTag}
-                                            />
-                                            <Button type="primary" icon={<Plus className="size-4" />} disabled={!assetTagInput.trim()} onClick={addAssetTag}>
-                                                加入
-                                            </Button>
-                                        </div>
+                                        <span className="canvas-node-inspector-empty-label">{readOnly ? "暂无标签" : "还没有标签，输入后点击“加入”或按 Enter。"}</span>
                                     )}
-                                    <div className="canvas-node-inspector-tags">
-                                        {assetTags.length ? (
-                                            assetTags.map((tag) => (
-                                                <Tag key={tag} closable={!readOnly} onClose={() => (readOnly ? onUnauthorized?.() : removeAssetTag(tag))} className="!m-0 !rounded-lg !px-2 !py-1 !text-sm">
-                                                    {tag}
-                                                </Tag>
-                                            ))
-                                        ) : (
-                                            <span className="canvas-node-inspector-empty-label">{readOnly ? "暂无标签" : "还没有标签，输入后点击“加入”或按 Enter。"}</span>
-                                        )}
-                                    </div>
-                                </section>
-                            ) : null}
+                                </div>
+                            </section>
+                        ) : null}
 
-                            {node.metadata?.errorDetails ? (
-                                <section className="canvas-node-inspector-error">
-                                    {generationErrorMessage(node.metadata.errorDetails)}
-                                </section>
-                            ) : null}
-                        </div>
+                        {node.metadata?.errorDetails ? <section className="canvas-node-inspector-error">{generationErrorMessage(node.metadata.errorDetails)}</section> : null}
+                    </div>
                 </div>
             ) : null}
         </Modal>
@@ -721,7 +852,10 @@ function nodeGenerationRows(node: CanvasNodeData, producedModelText: string) {
     add("生成声音", metadata.generateAudio === undefined ? undefined : metadata.generateAudio === "true" ? "开启" : "关闭");
     add("水印", metadata.watermark === undefined ? undefined : metadata.watermark === "true" ? "开启" : "关闭");
     if (metadata.references?.length) {
-        const referenceNames = metadata.references.slice(0, 3).map((reference) => reference.split("/").pop() || reference).join("、");
+        const referenceNames = metadata.references
+            .slice(0, 3)
+            .map((reference) => reference.split("/").pop() || reference)
+            .join("、");
         add("引用素材", `${metadata.references.length} 个${referenceNames ? `（${referenceNames}${metadata.references.length > 3 ? "…" : ""}）` : ""}`);
     }
     addTime("创建时间", metadata.taskCreatedAt);

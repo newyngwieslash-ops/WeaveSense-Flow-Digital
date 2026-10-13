@@ -10,14 +10,18 @@ const snapshot: CanvasSnapshot = { projectId: "p", title: "空画布", nodes: []
 
 describe("cloud canvas agent workflow builder", () => {
     it("creates semantic media nodes, non-overlapping layout and real edges", () => {
-        const ops = buildCanvasWorkflowOps({
-            title: "搞笑修仙小说流水线",
-            nodes: [
-                { ref: "characters", kind: "character_cards", title: "角色拆分图片卡片", prompt: "拆分搞笑修仙小说中的主要角色，并生成角色图片卡片" },
-                { ref: "views", kind: "character_three_view", title: "角色三视图", prompt: "基于角色卡片生成正面、侧面、背面三视图", referenceRefs: ["characters"] },
-                { ref: "video", kind: "storyboard_video", title: "分镜剧情视频", prompt: "基于角色三视图制作分镜剧情视频", referenceRefs: ["views"] },
-            ],
-        }, snapshot, config);
+        const ops = buildCanvasWorkflowOps(
+            {
+                title: "搞笑修仙小说流水线",
+                nodes: [
+                    { ref: "characters", kind: "character_cards", title: "角色拆分图片卡片", prompt: "拆分搞笑修仙小说中的主要角色，并生成角色图片卡片" },
+                    { ref: "views", kind: "character_three_view", title: "角色三视图", prompt: "基于角色卡片生成正面、侧面、背面三视图", referenceRefs: ["characters"] },
+                    { ref: "video", kind: "storyboard_video", title: "分镜剧情视频", prompt: "基于角色三视图制作分镜剧情视频", referenceRefs: ["views"] },
+                ],
+            },
+            snapshot,
+            config,
+        );
         const after = applyCanvasOperations(snapshot, ops);
         const added = after.nodes.filter((node) => node.id.startsWith("agent-workflow-"));
         expect(added.map((node) => node.type)).toEqual([CanvasNodeType.Image, CanvasNodeType.Image, CanvasNodeType.Video]);
@@ -47,22 +51,30 @@ describe("cloud canvas agent workflow builder", () => {
     });
 
     it("infers useful prompts for semantic media stages when the model omits them", () => {
-        const ops = buildCanvasWorkflowOps({
-            title: "搞笑修仙小说流水线",
-            nodes: [{ ref: "cards", kind: "character_cards", title: "角色拆分图片卡片" }],
-        }, snapshot, config);
+        const ops = buildCanvasWorkflowOps(
+            {
+                title: "搞笑修仙小说流水线",
+                nodes: [{ ref: "cards", kind: "character_cards", title: "角色拆分图片卡片" }],
+            },
+            snapshot,
+            config,
+        );
         const node = ops.find((op) => op.type === "add_node");
         expect(node?.metadata?.prompt).toContain("拆分主要角色");
     });
 
     it("supports per-node generation without running every media node", () => {
-        const ops = buildCanvasWorkflowOps({
-            nodes: [
-                { ref: "cards", kind: "character_cards", title: "角色卡片", prompt: "生成角色卡片" },
-                { ref: "views", kind: "character_three_view", title: "角色三视图", prompt: "生成三视图", runGeneration: true },
-                { ref: "video", kind: "storyboard_video", title: "分镜视频", prompt: "生成分镜视频" },
-            ],
-        }, snapshot, config);
+        const ops = buildCanvasWorkflowOps(
+            {
+                nodes: [
+                    { ref: "cards", kind: "character_cards", title: "角色卡片", prompt: "生成角色卡片" },
+                    { ref: "views", kind: "character_three_view", title: "角色三视图", prompt: "生成三视图", runGeneration: true },
+                    { ref: "video", kind: "storyboard_video", title: "分镜视频", prompt: "生成分镜视频" },
+                ],
+            },
+            snapshot,
+            config,
+        );
         expect(ops.filter((op) => op.type === "run_generation")).toHaveLength(1);
         expect(ops.find((op) => op.type === "run_generation")?.nodeId).toBe(ops[1].id);
     });
@@ -72,9 +84,13 @@ describe("cloud canvas agent workflow builder", () => {
             ...snapshot,
             nodes: [{ id: "asset-1", type: CanvasNodeType.Image, title: "角色原画", position: { x: 0, y: 0 }, width: 560, height: 380, metadata: { status: "success", storageKey: "resource:character-1" } }],
         };
-        const ops = buildCanvasWorkflowOps({
-            nodes: [{ ref: "views", kind: "character_three_view", title: "角色三视图", prompt: "基于已有角色原画生成正面、侧面、背面三视图", referenceNodeIds: ["asset-1"] }],
-        }, existing, config);
+        const ops = buildCanvasWorkflowOps(
+            {
+                nodes: [{ ref: "views", kind: "character_three_view", title: "角色三视图", prompt: "基于已有角色原画生成正面、侧面、背面三视图", referenceNodeIds: ["asset-1"] }],
+            },
+            existing,
+            config,
+        );
         const after = applyCanvasOperations(existing, ops);
         expect(after.connections).toHaveLength(1);
         expect(after.connections[0]).toMatchObject({ fromNodeId: "asset-1", toNodeId: ops[0].id });

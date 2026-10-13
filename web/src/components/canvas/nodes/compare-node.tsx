@@ -55,7 +55,9 @@ export function CompareNodeContent({ node, theme }: CompareNodeContentProps) {
                 event.currentTarget.setPointerCapture(event.pointerId);
                 moveTo(event.clientX);
             }}
-            onPointerMove={(event) => { if (draggingRef.current) moveTo(event.clientX); }}
+            onPointerMove={(event) => {
+                if (draggingRef.current) moveTo(event.clientX);
+            }}
             onPointerUp={(event) => {
                 draggingRef.current = false;
                 if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
@@ -65,8 +67,12 @@ export function CompareNodeContent({ node, theme }: CompareNodeContentProps) {
             {/* 上层按分割位置裁切，露出下层的 B */}
             <img src={before} alt="A" className="absolute inset-0 h-full w-full object-contain" draggable={false} style={{ clipPath: `inset(0 ${100 - split}% 0 0)` }} />
             <div className="pointer-events-none absolute inset-y-0 w-px bg-white/90 shadow-[0_0_0_1px_rgba(0,0,0,.35)]" style={{ left: `${split}%` }} />
-            <span className="pointer-events-none absolute left-2 top-2 rounded bg-black/55 px-1.5 py-0.5 text-white" style={{ fontSize: "var(--fs-tiny)" }}>A</span>
-            <span className="pointer-events-none absolute right-2 top-2 rounded bg-black/55 px-1.5 py-0.5 text-white" style={{ fontSize: "var(--fs-tiny)" }}>B</span>
+            <span className="pointer-events-none absolute left-2 top-2 rounded bg-black/55 px-1.5 py-0.5 text-white" style={{ fontSize: "var(--fs-tiny)" }}>
+                A
+            </span>
+            <span className="pointer-events-none absolute right-2 top-2 rounded bg-black/55 px-1.5 py-0.5 text-white" style={{ fontSize: "var(--fs-tiny)" }}>
+                B
+            </span>
         </div>
     );
 }

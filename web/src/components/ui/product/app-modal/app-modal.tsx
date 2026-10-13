@@ -24,10 +24,7 @@ export function AppModal({ flush = false, destroyOnHidden = true, styles, ...pro
             body: { ...body, ...FLUSH_STYLES.body },
         };
     };
-    const mergedStyles =
-        typeof styles === "function"
-            ? (info: { props: ModalProps }) => mergeResolvedStyles(styles(info))
-            : mergeResolvedStyles(styles);
+    const mergedStyles = typeof styles === "function" ? (info: { props: ModalProps }) => mergeResolvedStyles(styles(info)) : mergeResolvedStyles(styles);
 
     return <Modal destroyOnHidden={destroyOnHidden} {...props} styles={mergedStyles as ModalProps["styles"]} />;
 }

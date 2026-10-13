@@ -1,7 +1,26 @@
 import { LocalRuntimeClientError } from "@/services/local-runtime-session";
 
 export type LocalRuntimeModuleId = "canvas-agent" | "dreamina" | "portrait-clearance" | "depth-estimation" | "lineart-estimation" | "pose-estimation";
-export type LocalRuntimeScope = "runtime:status" | "runtime:revoke" | "canvas:connect" | "dreamina:status" | "dreamina:login" | "dreamina:logout" | "dreamina:run" | "dreamina:models" | "dreamina:generate" | "portrait:status" | "portrait:model" | "portrait:run" | "portrait:read" | "depth:status" | "depth:run" | "lineart:status" | "lineart:run" | "pose:status" | "pose:run";
+export type LocalRuntimeScope =
+    | "runtime:status"
+    | "runtime:revoke"
+    | "canvas:connect"
+    | "dreamina:status"
+    | "dreamina:login"
+    | "dreamina:logout"
+    | "dreamina:run"
+    | "dreamina:models"
+    | "dreamina:generate"
+    | "portrait:status"
+    | "portrait:model"
+    | "portrait:run"
+    | "portrait:read"
+    | "depth:status"
+    | "depth:run"
+    | "lineart:status"
+    | "lineart:run"
+    | "pose:status"
+    | "pose:run";
 
 export type LocalRuntimeModuleDescriptor = {
     id: LocalRuntimeModuleId;

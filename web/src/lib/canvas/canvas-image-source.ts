@@ -3,13 +3,9 @@ import { CanvasNodeType, type CanvasNodeData } from "@/types/canvas";
 /** 已有媒体但没有生成配置的图片是输入素材，不提供原地生成入口。 */
 export function isCanvasImageSourceNode(node: CanvasNodeData | null | undefined): boolean {
     if (node?.type === CanvasNodeType.Image && node.metadata?.fileUpload) return true;
-    return node?.type === CanvasNodeType.Image
-        && Boolean(node.metadata?.content)
-        && !node.metadata?.generationType
-        && !node.metadata?.taskId
-        && !node.metadata?.generationResultPlacement
-        && !node.metadata?.copiedFromNodeId
-        && !node.metadata?.versionOfNodeId;
+    return (
+        node?.type === CanvasNodeType.Image && Boolean(node.metadata?.content) && !node.metadata?.generationType && !node.metadata?.taskId && !node.metadata?.generationResultPlacement && !node.metadata?.copiedFromNodeId && !node.metadata?.versionOfNodeId
+    );
 }
 
 export function createPortraitTextureNode(source: CanvasNodeData, id: string): CanvasNodeData {

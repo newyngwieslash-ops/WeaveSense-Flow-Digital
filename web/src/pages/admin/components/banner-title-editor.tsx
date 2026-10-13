@@ -4,11 +4,7 @@ import { Button, ColorPicker, Tooltip } from "antd";
 import { Eraser, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-import {
-    BannerAnnouncementLinkHint,
-    BannerAnnouncementTitle,
-    bannerAnnouncementBarStyle,
-} from "@/components/layout/banner-announcement-content";
+import { BannerAnnouncementLinkHint, BannerAnnouncementTitle, bannerAnnouncementBarStyle } from "@/components/layout/banner-announcement-content";
 import { readBannerNoticeSurface, bannerNoticeTypeLabel } from "@/lib/announcements/banner-notice";
 import { BannerNoticeEmojiPopover } from "./banner-notice-emoji-picker";
 import { Select } from "@/components/ui/base/select";
@@ -90,10 +86,7 @@ export function BannerTitleEditor({ value, onChange }: { value: BannerTitleRun[]
                     aria-label="标题字号"
                     value={selectionStyle.fontSize ?? DEFAULT_OPTION}
                     onChange={(next) => applyStyle({ fontSize: next === DEFAULT_OPTION ? null : Number(next) })}
-                    options={[
-                        { value: DEFAULT_OPTION, label: `默认（${BANNER_TITLE_DEFAULT_FONT_SIZE}px）` },
-                        ...BANNER_TITLE_FONT_SIZES.map((size) => ({ value: size, label: `${size}px` })),
-                    ]}
+                    options={[{ value: DEFAULT_OPTION, label: `默认（${BANNER_TITLE_DEFAULT_FONT_SIZE}px）` }, ...BANNER_TITLE_FONT_SIZES.map((size) => ({ value: size, label: `${size}px` }))]}
                 />
                 <Select
                     size="small"
@@ -101,10 +94,7 @@ export function BannerTitleEditor({ value, onChange }: { value: BannerTitleRun[]
                     aria-label="标题字重"
                     value={selectionStyle.fontWeight ?? DEFAULT_OPTION}
                     onChange={(next) => applyStyle({ fontWeight: next === DEFAULT_OPTION ? null : Number(next) })}
-                    options={[
-                        { value: DEFAULT_OPTION, label: "默认字重" },
-                        ...BANNER_TITLE_FONT_WEIGHTS.map((item) => ({ value: item.value, label: `${item.label} ${item.value}` })),
-                    ]}
+                    options={[{ value: DEFAULT_OPTION, label: "默认字重" }, ...BANNER_TITLE_FONT_WEIGHTS.map((item) => ({ value: item.value, label: `${item.label} ${item.value}` }))]}
                 />
                 <Select
                     size="small"
@@ -189,11 +179,7 @@ export function BannerNoticePreview({ runs, hasLink, noticeType }: { runs: Banne
                 const lowContrast = lowContrastBannerTitleColors(runs, theme.background);
                 return (
                     <div key={theme.key} className="space-y-1">
-                        <div
-                            ref={theme.ref}
-                            className={`relative flex min-h-10 w-full items-center justify-center px-4 py-2 text-white ${theme.className}`}
-                            style={bannerAnnouncementBarStyle(noticeType)}
-                        >
+                        <div ref={theme.ref} className={`relative flex min-h-10 w-full items-center justify-center px-4 py-2 text-white ${theme.className}`} style={bannerAnnouncementBarStyle(noticeType)}>
                             <span className="flex w-full min-w-0 items-center justify-center gap-2.5 px-8">
                                 <span className="min-w-0 truncate font-semibold">
                                     <BannerAnnouncementTitle runs={runs} fallbackText="通知标题预览" />

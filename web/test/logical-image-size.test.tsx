@@ -10,7 +10,10 @@ import type { ChannelModel } from "../src/services/api/wallet";
 function channelModelWithPresets(): ChannelModel {
     const profile = defaultImageCapabilityConfig("gemini-image", "test");
     profile.quality = { supported: false, values: [], default: "auto" };
-    profile.size = imageSizeConfigWithPresets(profile, IMAGE_RATIOS.flatMap((ratio) => [imagePresetForRatio("1k", ratio), imagePresetForRatio("4k", ratio)]));
+    profile.size = imageSizeConfigWithPresets(
+        profile,
+        IMAGE_RATIOS.flatMap((ratio) => [imagePresetForRatio("1k", ratio), imagePresetForRatio("4k", ratio)]),
+    );
     return {
         id: "cm-1",
         channelId: "ch-1",

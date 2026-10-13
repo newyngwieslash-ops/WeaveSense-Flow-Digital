@@ -105,21 +105,29 @@ test("shot generation submits historical character image, current voice and asse
         createdAt: "2026-08-30T00:00:00.000Z",
         updatedAt: "2026-08-30T00:00:00.000Z",
     } satisfies GenerationTask;
-    await submitBackendGenerationTask({
-        projectId: "project-1",
-        mode: "video",
-        prompt,
-        config: videoTaskConfig(),
-        referenceImages: context.referenceImages,
-        referenceAudios: context.referenceAudios,
-        metadata: { shotId: "shot-1", videoEditOperation: "reference_to_video" },
-    }, {
-        createTask: async (input) => { createdInput = input; return task; },
-        waitTask: async () => { throw new Error("should not wait"); },
-        runLocal: async () => ({ mode: "video" }),
-        createId: () => "id-1",
-        now: () => "2026-08-30T00:00:00.000Z",
-    });
+    await submitBackendGenerationTask(
+        {
+            projectId: "project-1",
+            mode: "video",
+            prompt,
+            config: videoTaskConfig(),
+            referenceImages: context.referenceImages,
+            referenceAudios: context.referenceAudios,
+            metadata: { shotId: "shot-1", videoEditOperation: "reference_to_video" },
+        },
+        {
+            createTask: async (input) => {
+                createdInput = input;
+                return task;
+            },
+            waitTask: async () => {
+                throw new Error("should not wait");
+            },
+            runLocal: async () => ({ mode: "video" }),
+            createId: () => "id-1",
+            now: () => "2026-08-30T00:00:00.000Z",
+        },
+    );
 
     expect(createdInput?.prompt).toContain("【资产参考】");
     expect(createdInput?.input.referenceImages.map((reference) => reference.storageKey)).toEqual(["resource:character-image-1", "resource:scene-image-1"]);
@@ -148,13 +156,16 @@ test("background generation submission returns after task creation without waiti
         now: () => "2026-08-30T00:00:00.000Z",
     };
 
-    const submitted = await submitBackendGenerationTask({
-        projectId: "project-1",
-        mode: "video",
-        prompt: "角色表演",
-        config: videoTaskConfig(),
-        metadata: { shotId: "shot-1", videoEditOperation: "reference_to_video" },
-    }, dependencies);
+    const submitted = await submitBackendGenerationTask(
+        {
+            projectId: "project-1",
+            mode: "video",
+            prompt: "角色表演",
+            config: videoTaskConfig(),
+            metadata: { shotId: "shot-1", videoEditOperation: "reference_to_video" },
+        },
+        dependencies,
+    );
 
     expect(submitted).toBe(task);
     expect(waitCalls).toBe(0);

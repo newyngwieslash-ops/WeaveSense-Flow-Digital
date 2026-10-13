@@ -50,7 +50,7 @@ export function ImageSizePresetsEditor({ profile, disabled, onChange }: { profil
         const height = field === "height" ? value : selected.height;
         try {
             validateImageSize(width, height);
-            const next = presets.map((preset) => preset === selected ? { ...preset, width, height, size: `${width}x${height}` } : preset);
+            const next = presets.map((preset) => (preset === selected ? { ...preset, width, height, size: `${width}x${height}` } : preset));
             onChange(imageSizeConfigWithPresets(profile, next));
             setErrors((current) => ({ ...current, [tier]: "" }));
         } catch (reason) {
@@ -111,12 +111,26 @@ export function ImageSizePresetsEditor({ profile, disabled, onChange }: { profil
                                                 <div className="image-size-preset-dimensions" aria-label={`${tier.toUpperCase()} ${ratio} 精确像素`}>
                                                     <label>
                                                         <span>宽</span>
-                                                        <InputNumber min={1} precision={0} value={selected.width} disabled={disabled} aria-label={`${tier.toUpperCase()} ${ratio} 宽度像素`} onChange={(value) => editDimensions(tier, ratio, "width", value)} />
+                                                        <InputNumber
+                                                            min={1}
+                                                            precision={0}
+                                                            value={selected.width}
+                                                            disabled={disabled}
+                                                            aria-label={`${tier.toUpperCase()} ${ratio} 宽度像素`}
+                                                            onChange={(value) => editDimensions(tier, ratio, "width", value)}
+                                                        />
                                                     </label>
                                                     <span aria-hidden="true">×</span>
                                                     <label>
                                                         <span>高</span>
-                                                        <InputNumber min={1} precision={0} value={selected.height} disabled={disabled} aria-label={`${tier.toUpperCase()} ${ratio} 高度像素`} onChange={(value) => editDimensions(tier, ratio, "height", value)} />
+                                                        <InputNumber
+                                                            min={1}
+                                                            precision={0}
+                                                            value={selected.height}
+                                                            disabled={disabled}
+                                                            aria-label={`${tier.toUpperCase()} ${ratio} 高度像素`}
+                                                            onChange={(value) => editDimensions(tier, ratio, "height", value)}
+                                                        />
                                                     </label>
                                                 </div>
                                             ) : null}

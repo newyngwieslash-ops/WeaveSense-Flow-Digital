@@ -49,9 +49,7 @@ export type CanvasEmotionEditPlan = {
 };
 
 export function resolveEmotionEditPlan(maskSupported: boolean): CanvasEmotionEditPlan {
-    return maskSupported
-        ? { mode: "provider-mask", includeMask: true }
-        : { mode: "local-composite", includeMask: false, notice: "当前渠道不支持蒙版，使用脸部裁切与本地羽化融合" };
+    return maskSupported ? { mode: "provider-mask", includeMask: true } : { mode: "local-composite", includeMask: false, notice: "当前渠道不支持蒙版，使用脸部裁切与本地羽化融合" };
 }
 
 export function emotionProviderMask<T>(plan: CanvasEmotionEditPlan, mask: T) {

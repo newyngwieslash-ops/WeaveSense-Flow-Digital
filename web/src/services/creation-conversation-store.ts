@@ -37,9 +37,7 @@ function isRecoverableCreationMessage(message: PendingCreationMessage) {
 }
 
 export function pendingCreationTaskKey(conversations: StoredCreationConversation[]) {
-    return conversations
-        .flatMap((conversation) => conversation.messages.flatMap((message) => (isRecoverableCreationMessage(message) ? [`${conversation.id}:${message.id}:${(message.taskIds || []).join(",")}`] : [])))
-        .join("|");
+    return conversations.flatMap((conversation) => conversation.messages.flatMap((message) => (isRecoverableCreationMessage(message) ? [`${conversation.id}:${message.id}:${(message.taskIds || []).join(",")}`] : []))).join("|");
 }
 
 export function pendingCreationTaskIds(conversations: StoredCreationConversation[]) {

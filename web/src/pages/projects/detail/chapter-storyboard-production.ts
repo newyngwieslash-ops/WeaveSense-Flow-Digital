@@ -57,31 +57,40 @@ export function chapterStoryboardCharacters(detail: ProjectDetail, unitId?: stri
 }
 
 export function chapterStoryboardAssets(detail: ProjectDetail): ChapterStoryboardAsset[] {
-    return detail.assets.flatMap((asset): ChapterStoryboardAsset[] => {
-        const type = storyboardAssetType(asset.mediaType, asset.category);
-        if (!type || (type !== "character" && !asset.primaryVersionId)) return [];
-        const characterVersionId = asset.character?.versionId;
-        if (type === "character" && !characterVersionId) return [];
-        return [{
-            id: asset.id,
-            title: asset.title,
-            type,
-            category: asset.category || undefined,
-            tags: [],
-            prompt: assetPrompt(asset.previewText, asset.character?.definition, asset.title),
-            ...(type === "character" ? { characterAssetId: asset.id, characterVersionId } : {}),
-        }];
-    }).slice(0, 60);
+    return detail.assets
+        .flatMap((asset): ChapterStoryboardAsset[] => {
+            const type = storyboardAssetType(asset.mediaType, asset.category);
+            if (!type || (type !== "character" && !asset.primaryVersionId)) return [];
+            const characterVersionId = asset.character?.versionId;
+            if (type === "character" && !characterVersionId) return [];
+            return [
+                {
+                    id: asset.id,
+                    title: asset.title,
+                    type,
+                    category: asset.category || undefined,
+                    tags: [],
+                    prompt: assetPrompt(asset.previewText, asset.character?.definition, asset.title),
+                    ...(type === "character" ? { characterAssetId: asset.id, characterVersionId } : {}),
+                },
+            ];
+        })
+        .slice(0, 60);
 }
 
 export function storyboardRowsToProjectShots(rows: StoryboardRow[], detail?: ProjectDetail): ProjectShotReplacementInput[] {
-    const versionByAssetId = new Map((detail?.assets || []).flatMap((asset) => asset.primaryVersionId ? [[asset.id, asset.primaryVersionId] as const] : []));
-    const mentionReferenceByAssetId = new Map((detail?.assets || []).map((asset) => [asset.id, {
-        assetId: asset.id,
-        kind: asset.category === "character" ? "character" as const : "image" as const,
-        label: asset.title,
-        title: asset.title,
-    }]));
+    const versionByAssetId = new Map((detail?.assets || []).flatMap((asset) => (asset.primaryVersionId ? [[asset.id, asset.primaryVersionId] as const] : [])));
+    const mentionReferenceByAssetId = new Map(
+        (detail?.assets || []).map((asset) => [
+            asset.id,
+            {
+                assetId: asset.id,
+                kind: asset.category === "character" ? ("character" as const) : ("image" as const),
+                label: asset.title,
+                title: asset.title,
+            },
+        ]),
+    );
     return rows.map((row, index) => {
         const shotNumber = index + 1;
         const description = row.plotDescription.trim() || `镜头 ${shotNumber}`;
@@ -126,17 +135,16 @@ export function chapterStoryboardReplaceImpact(detail: ProjectDetail, unitId: st
 }
 
 function storyboardRowAssetVersionIds(row: StoryboardRow, versionByAssetId: Map<string, string>) {
-    return storyboardRowAssetIds(row).flatMap((assetId) => {
-        const versionId = versionByAssetId.get(assetId);
-        return versionId ? [versionId] : [];
-    }).slice(0, 6);
+    return storyboardRowAssetIds(row)
+        .flatMap((assetId) => {
+            const versionId = versionByAssetId.get(assetId);
+            return versionId ? [versionId] : [];
+        })
+        .slice(0, 6);
 }
 
 function storyboardRowAssetIds(row: StoryboardRow) {
-    return Array.from(new Set([
-        ...row.assetBindings.map((binding) => binding.nodeId),
-        ...row.characters.flatMap((character) => character.characterAssetId ? [character.characterAssetId] : []),
-    ])).slice(0, 6);
+    return Array.from(new Set([...row.assetBindings.map((binding) => binding.nodeId), ...row.characters.flatMap((character) => (character.characterAssetId ? [character.characterAssetId] : []))])).slice(0, 6);
 }
 
 function storyboardAssetType(mediaType: string, category: string): ChapterStoryboardAsset["type"] | null {
@@ -155,7 +163,7 @@ function assetPrompt(previewText: string | undefined, definition: Record<string,
 function candidateDefinition(value: string): Record<string, unknown> {
     try {
         const parsed: unknown = JSON.parse(value || "{}");
-        return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
+        return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : {};
     } catch {
         return {};
     }
@@ -173,7 +181,9 @@ function joinStoryboardAction(row: StoryboardRow) {
         labeledText("情绪", row.emotion),
         labeledText("光线与氛围", row.lightingAndAtmosphere),
         labeledText("声音", row.audioEffects),
-    ].filter(Boolean).join("\n");
+    ]
+        .filter(Boolean)
+        .join("\n");
 }
 
 function labeledText(label: string, value: string) {

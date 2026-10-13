@@ -183,9 +183,7 @@ export function useCanvasGenerationBatches({ projectId, projectLoaded, nodes, no
             for (const sourceNode of currentNodes) {
                 for (const batch of sourceNode.metadata?.generationBatches || []) {
                     if (batch.projectId !== projectId || batch.status === "completed" || batch.status === "cancelled") continue;
-                    let batchAvailableSlots = batch.concurrency
-                        ? Math.max(0, batch.concurrency - batch.items.filter((item) => ["submitting", "queued", "running"].includes(item.status)).length)
-                        : Number.POSITIVE_INFINITY;
+                    let batchAvailableSlots = batch.concurrency ? Math.max(0, batch.concurrency - batch.items.filter((item) => ["submitting", "queued", "running"].includes(item.status)).length) : Number.POSITIVE_INFINITY;
                     for (const item of batch.items) {
                         if (item.status !== "waiting" || availableSlots <= 0 || batchAvailableSlots <= 0) continue;
                         const node = nodeById.get(item.nodeId);
@@ -324,9 +322,7 @@ export function useCanvasGenerationBatches({ projectId, projectLoaded, nodes, no
                 onOk: () => {
                     const latestNodeById = new Map(nodesRef.current.map((node) => [node.id, node]));
                     const latestBatch = findBatch(nodesRef.current, sourceNodeId, batchId);
-                    const latestStoppableItems = latestBatch
-                        ? latestBatch.items.filter((item) => item.status === "waiting" && stoppableItems.some((candidate) => candidate.id === item.id) && !latestNodeById.get(item.nodeId)?.metadata?.taskId)
-                        : [];
+                    const latestStoppableItems = latestBatch ? latestBatch.items.filter((item) => item.status === "waiting" && stoppableItems.some((candidate) => candidate.id === item.id) && !latestNodeById.get(item.nodeId)?.metadata?.taskId) : [];
                     const stoppableIds = new Set(latestStoppableItems.map((item) => item.id));
                     updateBatch(sourceNodeId, batchId, (current) => {
                         const items = current.items.map((item) => (stoppableIds.has(item.id) ? { ...item, status: "cancelled" as const, errorDetails: undefined } : item));

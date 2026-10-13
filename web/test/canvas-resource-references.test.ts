@@ -1,6 +1,21 @@
 import { describe, expect, test } from "bun:test";
 
-import { autoMentionCanvasResourceReferences, findCanvasResourceAutoLinkMatch, type CanvasResourceReference, applyCanvasConnectionPromptSync, buildAssetMentionReferences, buildCanvasNodeMentionReferenceMap, buildNodeMentionReferences, buildOrderedCanvasResourceReferences, canvasResourceMentionToken, collectUpstreamVideoNodes, imageGenerationReferenceConnections, reorderCanvasResourceConnections, replaceCanvasMentionToken, replaceCanvasReferenceMentions } from "../src/lib/canvas/canvas-resource-references";
+import {
+    autoMentionCanvasResourceReferences,
+    findCanvasResourceAutoLinkMatch,
+    type CanvasResourceReference,
+    applyCanvasConnectionPromptSync,
+    buildAssetMentionReferences,
+    buildCanvasNodeMentionReferenceMap,
+    buildNodeMentionReferences,
+    buildOrderedCanvasResourceReferences,
+    canvasResourceMentionToken,
+    collectUpstreamVideoNodes,
+    imageGenerationReferenceConnections,
+    reorderCanvasResourceConnections,
+    replaceCanvasMentionToken,
+    replaceCanvasReferenceMentions,
+} from "../src/lib/canvas/canvas-resource-references";
 import { canvasNodeToAsset } from "../src/lib/canvas/canvas-node-asset";
 import { buildNodeGenerationInputs } from "../src/components/canvas/canvas-node-generation";
 import { CanvasNodeType, type CanvasConnection, type CanvasNodeData } from "../src/types/canvas";
@@ -12,8 +27,7 @@ const smartReferences: CanvasResourceReference[] = [
 
 describe("canvas smart references", () => {
     test("converts repeated names and aliases without rewriting existing mentions", () => {
-        expect(autoMentionCanvasResourceReferences("图片6在前景，图6退后；宫门全景可见。唐妙菱看向图片60。", smartReferences))
-            .toBe("@图片6 在前景，@图片6 退后；@图片6 可见。@角色1 看向图片60。");
+        expect(autoMentionCanvasResourceReferences("图片6在前景，图6退后；宫门全景可见。唐妙菱看向图片60。", smartReferences)).toBe("@图片6 在前景，@图片6 退后；@图片6 可见。@角色1 看向图片60。");
         const existing = "已有 @图片6 和 @[node:image-6]、@[asset:宫门全景]。";
         expect(autoMentionCanvasResourceReferences(existing, smartReferences)).toBe(existing);
         expect(autoMentionCanvasResourceReferences("请使用 2。不要改约2秒。", smartReferences)).toBe("请使用 @角色1。不要改约2秒。");
@@ -22,8 +36,7 @@ describe("canvas smart references", () => {
     test("returns exact replacement offsets for names and shelf orders", () => {
         for (const alias of ["唐妙菱", "角色1", "2", "image2", "image 2"]) {
             const prompt = `请使用 ${alias}，然后继续`;
-            expect(findCanvasResourceAutoLinkMatch(prompt, 4 + alias.length, smartReferences))
-                .toEqual({ reference: smartReferences[1], start: 4, end: 4 + alias.length, query: alias });
+            expect(findCanvasResourceAutoLinkMatch(prompt, 4 + alias.length, smartReferences)).toEqual({ reference: smartReferences[1], start: 4, end: 4 + alias.length, query: alias });
         }
     });
 
@@ -42,9 +55,16 @@ describe("canvas smart references", () => {
 
     test("does not complete partial identifiers, existing tokens or ordinary numbers", () => {
         for (const [prompt, cursor] of [
-            ["@图片6", 4], ["@[node:宫门全景", 10], ["@前缀宫门全景", 7],
-            ["myimage2", 8], ["图片60", 3], ["2秒", 1], ["约2", 2], ["20", 1],
-            ["", 0], ["2", 5],
+            ["@图片6", 4],
+            ["@[node:宫门全景", 10],
+            ["@前缀宫门全景", 7],
+            ["myimage2", 8],
+            ["图片60", 3],
+            ["2秒", 1],
+            ["约2", 2],
+            ["20", 1],
+            ["", 0],
+            ["2", 5],
         ] as const) {
             expect(findCanvasResourceAutoLinkMatch(prompt, cursor, smartReferences)).toBeNull();
         }
@@ -131,29 +151,33 @@ describe("collectUpstreamVideoNodes", () => {
 
 describe("canvas resource mention slots", () => {
     test("素材库视频优先使用封面，没有封面时保留首帧视频回退源", () => {
-        const poster = buildAssetMentionReferences([{
-            id: "video-with-poster",
-            kind: "video",
-            title: "带封面视频",
-            coverUrl: "https://cdn.example.com/poster.jpg",
-            tags: [],
-            createdAt: "2026-08-31T00:00:00.000Z",
-            updatedAt: "2026-08-31T00:00:00.000Z",
-            data: { url: "https://cdn.example.com/video.mp4", storageKey: "resource:video", width: 1280, height: 720, bytes: 1, mimeType: "video/mp4" },
-        }])[0];
+        const poster = buildAssetMentionReferences([
+            {
+                id: "video-with-poster",
+                kind: "video",
+                title: "带封面视频",
+                coverUrl: "https://cdn.example.com/poster.jpg",
+                tags: [],
+                createdAt: "2026-08-31T00:00:00.000Z",
+                updatedAt: "2026-08-31T00:00:00.000Z",
+                data: { url: "https://cdn.example.com/video.mp4", storageKey: "resource:video", width: 1280, height: 720, bytes: 1, mimeType: "video/mp4" },
+            },
+        ])[0];
         expect(poster?.previewUrl).toBe("https://cdn.example.com/poster.jpg");
         expect(poster?.mediaUrl).toBeUndefined();
 
-        const legacy = buildAssetMentionReferences([{
-            id: "legacy-video",
-            kind: "video",
-            title: "旧视频",
-            coverUrl: "https://cdn.example.com/video.mp4",
-            tags: [],
-            createdAt: "2026-08-31T00:00:00.000Z",
-            updatedAt: "2026-08-31T00:00:00.000Z",
-            data: { url: "https://cdn.example.com/video.mp4", storageKey: "resource:legacy-video", width: 1280, height: 720, bytes: 1, mimeType: "video/mp4" },
-        }])[0];
+        const legacy = buildAssetMentionReferences([
+            {
+                id: "legacy-video",
+                kind: "video",
+                title: "旧视频",
+                coverUrl: "https://cdn.example.com/video.mp4",
+                tags: [],
+                createdAt: "2026-08-31T00:00:00.000Z",
+                updatedAt: "2026-08-31T00:00:00.000Z",
+                data: { url: "https://cdn.example.com/video.mp4", storageKey: "resource:legacy-video", width: 1280, height: 720, bytes: 1, mimeType: "video/mp4" },
+            },
+        ])[0];
         expect(legacy?.previewUrl).toBe("");
         expect(legacy?.mediaUrl).toBe("https://cdn.example.com/video.mp4");
     });
@@ -276,15 +300,17 @@ describe("canvas resource mention slots", () => {
     });
 
     test("素材库身份 token 保持稳定", () => {
-        expect(canvasResourceMentionToken({
-            id: "asset:asset-a",
-            nodeId: "",
-            assetId: "asset-a",
-            kind: "image",
-            label: "场景图",
-            title: "场景图",
-            active: false,
-        })).toBe("@[asset:asset-a]");
+        expect(
+            canvasResourceMentionToken({
+                id: "asset:asset-a",
+                nodeId: "",
+                assetId: "asset-a",
+                kind: "image",
+                label: "场景图",
+                title: "场景图",
+                active: false,
+            }),
+        ).toBe("@[asset:asset-a]");
     });
 });
 
@@ -298,8 +324,7 @@ describe("remove canvas resource mention tokens", () => {
         const nodes = [...images, target];
         const connections = images.map((image) => connection(image.id, target.id));
         const result = applyCanvasConnectionPromptSync(nodes, connections, nodes, connections.slice(1));
-        expect(result.find((node) => node.id === target.id)?.metadata?.composerContent)
-            .toBe("@图片1的人物参考@图片9，@图片1保持一致");
+        expect(result.find((node) => node.id === target.id)?.metadata?.composerContent).toBe("@图片1的人物参考@图片9，@图片1保持一致");
     });
 
     test("取消引用后会清掉对应的 @图片N", () => {

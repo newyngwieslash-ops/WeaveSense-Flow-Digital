@@ -32,9 +32,7 @@ export function buildCanvasMediaDownloadFileName(canvasTitle: string, node: Canv
 }
 
 export function canvasMediaFileExtension(node: CanvasNodeData) {
-    return extensionFromMimeType(node.metadata?.mimeType)
-        || extensionFromContent(node.metadata?.content)
-        || defaultExtension(node.type);
+    return extensionFromMimeType(node.metadata?.mimeType) || extensionFromContent(node.metadata?.content) || defaultExtension(node.type);
 }
 
 function extensionFromMimeType(mimeType?: string) {

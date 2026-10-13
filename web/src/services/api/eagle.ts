@@ -28,7 +28,7 @@ export type EagleItem = {
 };
 
 export type EagleAddItemInput = {
-	url: string;
+    url: string;
     name: string;
     folderId?: string;
     tags?: string[];
@@ -66,7 +66,7 @@ export async function downloadEagleItem(itemId: string, baseUrl: string, signal?
     if (!response.ok) {
         let message = "读取 Eagle 素材失败";
         try {
-            const body = await response.json() as { msg?: string };
+            const body = (await response.json()) as { msg?: string };
             message = body.msg || message;
         } catch {
             // 保留通用错误，避免把 HTML 或服务器内部信息展示给用户。

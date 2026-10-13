@@ -8,31 +8,16 @@ import type { AiTextMessage } from "@/services/api/image-contracts";
 import { useConfigStore, useEffectiveConfig, modelOptionLabel } from "@/stores/use-config-store";
 import { useEditorStoreContext } from "@/components/editor/editor-context";
 import { summarizeTimeline } from "@/lib/timeline/timeline-summary";
-import {
-    buildAiEditingSystemPrompt,
-    parseAiCommandPlan,
-    validateAiCommandBatch,
-    type AiCommandPlan,
-    type AiCommandBatchVerdict,
-} from "@/lib/timeline/ai-command-schema";
+import { buildAiEditingSystemPrompt, parseAiCommandPlan, validateAiCommandBatch, type AiCommandPlan, type AiCommandBatchVerdict } from "@/lib/timeline/ai-command-schema";
 
-type UiEntry =
-    | { kind: "user"; id: string; text: string }
-    | { kind: "assistant"; id: string; text: string }
-    | { kind: "error"; id: string; text: string; retry: string }
-    | { kind: "preview"; id: string; plan: AiCommandPlan };
+type UiEntry = { kind: "user"; id: string; text: string } | { kind: "assistant"; id: string; text: string } | { kind: "error"; id: string; text: string; retry: string } | { kind: "preview"; id: string; plan: AiCommandPlan };
 
 const FAILED_MARK = "（上一轮指令被宿主拒绝）";
 const RETRY_MODIFY_PREFIX = "宿主拒绝了上一轮输出，错误：";
 const MAX_VISIBLE_RAW = 240;
 const PREVIEW_HEAD = "以下指令将直接修改时间线，请确认后执行：";
 // 空态建议指令：点击直接发送（对应参考图的 suggestion chips）。
-const SUGGESTED_PROMPTS = [
-    "把第二段素材换成封面图",
-    "删掉所有片段之间的空隙",
-    "给全部字幕加上黑色描边",
-    "当前时间线一共有多少片段？",
-];
+const SUGGESTED_PROMPTS = ["把第二段素材换成封面图", "删掉所有片段之间的空隙", "给全部字幕加上黑色描边", "当前时间线一共有多少片段？"];
 
 /** 指令行人类可读摘要（op + payload 截断），用于执行汇报与预览清单。 */
 function commandLine(cmd: { op: string; payload?: unknown }, index: number): string {
@@ -43,19 +28,15 @@ function commandLine(cmd: { op: string; payload?: unknown }, index: number): str
 
 function describePlan(plan: AiCommandPlan): string {
     const lines = plan.commands.map((c, i) => commandLine(c, i));
-    return [plan.reasoning?.trim(), `已提交 ${plan.commands.length} 条指令：`, ...lines]
-        .filter((line): line is string => Boolean(line))
-        .join("\n");
+    return [plan.reasoning?.trim(), `已提交 ${plan.commands.length} 条指令：`, ...lines].filter((line): line is string => Boolean(line)).join("\n");
 }
-
 
 export function EditorAiAssistant() {
     const { project, dispatch } = useEditorStoreContext();
     const updateConfig = useConfigStore((s) => s.updateConfig);
     const effective = useEffectiveConfig();
     const textModels = effective.textModels ?? [];
-    const defaultModel =
-        effective.textModel && textModels.includes(effective.textModel) ? effective.textModel : textModels[0] ?? "";
+    const defaultModel = effective.textModel && textModels.includes(effective.textModel) ? effective.textModel : (textModels[0] ?? "");
     // 用户在本面板显式选择过的模型优先；未选择时跟随全局 textModel / 首个文本模型。
     const [model, setModel] = useState("");
     const modelValue = model || defaultModel || "";
@@ -104,9 +85,7 @@ export function EditorAiAssistant() {
     function applyPlan(targetId: string, plan: AiCommandPlan): void {
         for (const cmd of plan.commands) dispatch(cmd);
         const report = describePlan(plan);
-        setEntries((prev) =>
-            prev.map((e) => (e.id === targetId ? { kind: "assistant", id: targetId, text: report } : e)),
-        );
+        setEntries((prev) => prev.map((e) => (e.id === targetId ? { kind: "assistant", id: targetId, text: report } : e)));
         pushHistory({
             role: "assistant",
             content: `已提交 ${plan.commands.length} 条指令：${plan.commands.map((c) => c.op).join("、")}`,
@@ -123,10 +102,7 @@ export function EditorAiAssistant() {
     }
 
     function failTurn(assistantId: string, reason: string, userText: string, fixable: boolean): void {
-        patchEntry(
-            assistantId,
-            `指令未应用：${reason.slice(0, MAX_VISIBLE_RAW)}${reason.length > MAX_VISIBLE_RAW ? "…" : ""}`,
-        );
+        patchEntry(assistantId, `指令未应用：${reason.slice(0, MAX_VISIBLE_RAW)}${reason.length > MAX_VISIBLE_RAW ? "…" : ""}`);
         pushHistory({ role: "assistant", content: FAILED_MARK });
         const retry = fixable ? `${RETRY_MODIFY_PREFIX}${reason}。请只输出修正后的命令 JSON。` : userText;
         const errId = nextId();
@@ -191,12 +167,7 @@ export function EditorAiAssistant() {
         }
         const verdict: AiCommandBatchVerdict = validateAiCommandBatch(project, plan);
         if (!verdict.ok) {
-            failTurn(
-                assistantId,
-                `命令校验失败：${verdict.op}（第 ${verdict.index + 1} 条）：${verdict.error}`,
-                userText,
-                true,
-            );
+            failTurn(assistantId, `命令校验失败：${verdict.op}（第 ${verdict.index + 1} 条）：${verdict.error}`, userText, true);
             return;
         }
         if (plan.commands.length <= 3) {
@@ -214,9 +185,7 @@ export function EditorAiAssistant() {
     }
 
     function confirmPreview(entryId: string): void {
-        const entry = entries.find(
-            (e): e is Extract<UiEntry, { kind: "preview" }> => e.id === entryId && e.kind === "preview",
-        );
+        const entry = entries.find((e): e is Extract<UiEntry, { kind: "preview" }> => e.id === entryId && e.kind === "preview");
         if (!entry || busy) return;
         // applyPlan 会把预览卡整卡替换为汇报气泡：按钮卸载，重复点击不会二次提交同一批指令。
         applyPlan(entryId, entry.plan);
@@ -227,9 +196,7 @@ export function EditorAiAssistant() {
     }
 
     function retry(entryId: string): void {
-        const entry = entries.find(
-            (e): e is Extract<UiEntry, { kind: "error" }> => e.id === entryId && e.kind === "error",
-        );
+        const entry = entries.find((e): e is Extract<UiEntry, { kind: "error" }> => e.id === entryId && e.kind === "error");
         if (!entry || busy) return;
         void send(entry.retry);
     }
@@ -237,18 +204,12 @@ export function EditorAiAssistant() {
     const hasProject = Boolean(project);
     const ready = hasProject && Boolean(modelValue);
     const canSend = ready && !busy && input.trim().length > 0;
-    const placeholder = !hasProject
-        ? "编辑器尚未就绪"
-        : !modelValue
-          ? "未检测到文本模型，请先在「AI 设置」启用文本渠道"
-          : "描述编辑意图，或提问当前时间线…";
+    const placeholder = !hasProject ? "编辑器尚未就绪" : !modelValue ? "未检测到文本模型，请先在「AI 设置」启用文本渠道" : "描述编辑意图，或提问当前时间线…";
 
     return (
         <div className="flex h-full min-h-0 flex-col bg-[var(--director-sequencer-surface)]">
             <div className="flex shrink-0 items-center gap-2 border-b border-[var(--director-sequencer-border)] px-3 py-2">
-                <span className="shrink-0 text-[10px] uppercase tracking-wider text-[var(--director-dock-fg)]/50">
-                    对话模型
-                </span>
+                <span className="shrink-0 text-[10px] uppercase tracking-wider text-[var(--director-dock-fg)]/50">对话模型</span>
                 {textModels.length > 0 ? (
                     <select
                         value={modelValue}
@@ -265,25 +226,17 @@ export function EditorAiAssistant() {
                         ))}
                     </select>
                 ) : (
-                    <span className="text-[11px] text-[var(--director-warning)]">
-                        未检测到可用文本模型，请先配置渠道
-                    </span>
+                    <span className="text-[11px] text-[var(--director-warning)]">未检测到可用文本模型，请先配置渠道</span>
                 )}
             </div>
-            <div
-                ref={scrollRef}
-                className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3"
-            >
+            <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3">
                 {entries.length === 0 && (
                     <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-4 text-center">
                         <div className="grid size-10 place-items-center rounded-full bg-[var(--director-dock-active-surface)]">
                             <Bot className="size-4 text-[var(--director-dock-fg)]/80" />
                         </div>
                         <p className="text-xs text-[var(--director-dock-fg)]/70">AI 剪辑助手</p>
-                        <p className="max-w-[240px] text-[11px] leading-relaxed text-[var(--director-dock-fg)]/50">
-                            基于当前时间线提问，或描述编辑意图（如"把第二段素材换成封面图"）。
-                            修改指令会先在宿主侧校验，数量超过 3 条时需你确认后才执行。
-                        </p>
+                        <p className="max-w-[240px] text-[11px] leading-relaxed text-[var(--director-dock-fg)]/50">基于当前时间线提问，或描述编辑意图（如"把第二段素材换成封面图"）。 修改指令会先在宿主侧校验，数量超过 3 条时需你确认后才执行。</p>
                         <div className="flex max-w-[260px] flex-wrap items-center justify-center gap-1.5">
                             {SUGGESTED_PROMPTS.map((s) => (
                                 <button
@@ -302,10 +255,7 @@ export function EditorAiAssistant() {
                 {entries.map((entry) => {
                     if (entry.kind === "user") {
                         return (
-                            <div
-                                key={entry.id}
-                                className="max-w-[86%] self-end whitespace-pre-wrap break-words rounded-xl rounded-br-sm bg-[var(--director-accent)] px-2.5 py-1.5 text-xs leading-relaxed text-[var(--director-on-accent)]"
-                            >
+                            <div key={entry.id} className="max-w-[86%] self-end whitespace-pre-wrap break-words rounded-xl rounded-br-sm bg-[var(--director-accent)] px-2.5 py-1.5 text-xs leading-relaxed text-[var(--director-on-accent)]">
                                 {entry.text}
                             </div>
                         );
@@ -327,16 +277,11 @@ export function EditorAiAssistant() {
                     }
                     if (entry.kind === "error") {
                         return (
-                            <div
-                                key={entry.id}
-                                className="max-w-[92%] self-start overflow-hidden rounded-xl rounded-bl-sm border border-[var(--director-danger)]/40 bg-[var(--director-danger)]/10 px-2.5 py-1.5"
-                            >
+                            <div key={entry.id} className="max-w-[92%] self-start overflow-hidden rounded-xl rounded-bl-sm border border-[var(--director-danger)]/40 bg-[var(--director-danger)]/10 px-2.5 py-1.5">
                                 <div className="flex items-start gap-1.5">
                                     <ShieldAlert className="mt-0.5 size-3 shrink-0 text-[var(--director-danger)]" />
                                     <div className="min-w-0">
-                                        <p className="text-[11px] leading-relaxed text-[var(--director-danger)]">
-                                            {entry.text}
-                                        </p>
+                                        <p className="text-[11px] leading-relaxed text-[var(--director-danger)]">{entry.text}</p>
                                         {entry.retry && (
                                             <button
                                                 type="button"
@@ -354,19 +299,11 @@ export function EditorAiAssistant() {
                         );
                     }
                     return (
-                        <div
-                            key={entry.id}
-                            className="max-w-[92%] self-start overflow-hidden rounded-xl rounded-bl-sm border border-[var(--director-warning)]/40 bg-[var(--director-warning)]/10"
-                        >
-                            <p className="border-b border-[var(--director-warning)]/25 px-2.5 py-1.5 text-[11px] font-medium text-[var(--director-dock-fg)]">
-                                {PREVIEW_HEAD}
-                            </p>
+                        <div key={entry.id} className="max-w-[92%] self-start overflow-hidden rounded-xl rounded-bl-sm border border-[var(--director-warning)]/40 bg-[var(--director-warning)]/10">
+                            <p className="border-b border-[var(--director-warning)]/25 px-2.5 py-1.5 text-[11px] font-medium text-[var(--director-dock-fg)]">{PREVIEW_HEAD}</p>
                             <div className="max-h-44 overflow-y-auto px-2.5 py-1.5">
                                 {entry.plan.commands.map((cmd, i) => (
-                                    <p
-                                        key={i}
-                                        className="py-0.5 font-mono text-[10px] leading-relaxed text-[var(--director-dock-fg)]/80"
-                                    >
+                                    <p key={i} className="py-0.5 font-mono text-[10px] leading-relaxed text-[var(--director-dock-fg)]/80">
                                         {commandLine(cmd, i)}
                                     </p>
                                 ))}

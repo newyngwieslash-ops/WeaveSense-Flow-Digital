@@ -34,7 +34,7 @@ export function toResponseTool(tool: ResponseFunctionTool): ResponseApiToolDefin
 }
 
 export function toClaudeBody(config: AiConfig, messages: ResponseInputMessage[], tools: ResponseFunctionTool[] = []) {
-    const system = [config.systemPrompt.trim(), ...messages.flatMap((message) => !(("type" in message)) && message.role === "system" ? [String(message.content || "")] : [])].filter(Boolean).join("\n\n");
+    const system = [config.systemPrompt.trim(), ...messages.flatMap((message) => (!("type" in message) && message.role === "system" ? [String(message.content || "")] : []))].filter(Boolean).join("\n\n");
     const bodyMessages: Array<Record<string, unknown>> = [];
     for (const message of messages) {
         if ("type" in message) {

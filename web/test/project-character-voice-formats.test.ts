@@ -13,7 +13,8 @@ describe("角色声音格式", () => {
             ["voice.ogg", "audio/ogg"],
             ["voice.opus", "audio/opus"],
             ["voice.weba", "audio/webm"],
-        ]) expect(isSupportedCharacterVoiceFile({ name, type })).toBe(true);
+        ])
+            expect(isSupportedCharacterVoiceFile({ name, type })).toBe(true);
     });
 
     test("仅在 MIME 未知时使用扩展名兜底", () => {

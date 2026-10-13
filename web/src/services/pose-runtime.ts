@@ -132,7 +132,11 @@ async function reconnectTransport() {
 
 async function parseJsonResponse(response: Response) {
     const text = await boundedText(response, MAX_RESPONSE_BYTES);
-    try { return text ? JSON.parse(text) as unknown : {}; } catch { throw new LocalRuntimeClientError("runtime_response_invalid", "本机姿态响应无效", response.status); }
+    try {
+        return text ? (JSON.parse(text) as unknown) : {};
+    } catch {
+        throw new LocalRuntimeClientError("runtime_response_invalid", "本机姿态响应无效", response.status);
+    }
 }
 
 async function boundedText(response: Response, limit: number) {
@@ -144,7 +148,16 @@ async function boundedText(response: Response, limit: number) {
 }
 
 function parseResult(value: Record<string, unknown>): LocalPoseResult {
-    if (value.mimeType !== "image/png" || !isPositiveInteger(value.width) || !isPositiveInteger(value.height) || typeof value.modelId !== "string" || value.device !== "cpu" || value.backend !== "openpose-body" || !isNonNegativeInteger(value.personCount) || typeof value.pngBase64 !== "string") {
+    if (
+        value.mimeType !== "image/png" ||
+        !isPositiveInteger(value.width) ||
+        !isPositiveInteger(value.height) ||
+        typeof value.modelId !== "string" ||
+        value.device !== "cpu" ||
+        value.backend !== "openpose-body" ||
+        !isNonNegativeInteger(value.personCount) ||
+        typeof value.pngBase64 !== "string"
+    ) {
         throw new LocalRuntimeClientError("runtime_response_invalid", "本机姿态结果无效");
     }
     const bytes = bytesFromBase64(value.pngBase64, "runtime_response_invalid", "本机姿态结果无效");
@@ -162,7 +175,20 @@ function parseResult(value: Record<string, unknown>): LocalPoseResult {
 }
 
 function parseStatus(value: unknown): LocalPoseRuntimeStatus {
-    if (!isRecord(value) || value.ok !== true || value.module !== "pose-estimation" || value.apiVersion !== 1 || typeof value.ready !== "boolean" || typeof value.configured !== "boolean" || typeof value.modelCached !== "boolean" || typeof value.loaded !== "boolean" || value.device !== "cpu" || typeof value.modelId !== "string" || value.backend !== "openpose-body" || (value.reason !== undefined && typeof value.reason !== "string")) {
+    if (
+        !isRecord(value) ||
+        value.ok !== true ||
+        value.module !== "pose-estimation" ||
+        value.apiVersion !== 1 ||
+        typeof value.ready !== "boolean" ||
+        typeof value.configured !== "boolean" ||
+        typeof value.modelCached !== "boolean" ||
+        typeof value.loaded !== "boolean" ||
+        value.device !== "cpu" ||
+        typeof value.modelId !== "string" ||
+        value.backend !== "openpose-body" ||
+        (value.reason !== undefined && typeof value.reason !== "string")
+    ) {
         throw new LocalRuntimeClientError("runtime_response_invalid", "本机姿态状态无效");
     }
     return value as LocalPoseRuntimeStatus;
@@ -186,7 +212,11 @@ function bytesToBase64(bytes: Uint8Array) {
 
 function bytesFromBase64(value: string, code = "pose_input_invalid", message = "姿态转换输入图片无效") {
     let binary: string;
-    try { binary = atob(value.replaceAll("-", "+").replaceAll("_", "/")); } catch { throw new LocalRuntimeClientError(code, message, code === "pose_input_invalid" ? 400 : 0); }
+    try {
+        binary = atob(value.replaceAll("-", "+").replaceAll("_", "/"));
+    } catch {
+        throw new LocalRuntimeClientError(code, message, code === "pose_input_invalid" ? 400 : 0);
+    }
     const bytes = new Uint8Array(binary.length);
     for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
     return bytes;

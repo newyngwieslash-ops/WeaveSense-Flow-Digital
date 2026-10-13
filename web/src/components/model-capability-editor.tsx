@@ -156,42 +156,46 @@ export function ModelCapabilityEditor({ value, onChange, protocol, capability = 
                         )}
                     </ProtocolParameterCard>
                     <ProtocolParameterCard step="03" title="画面规格" description="控制比例、分辨率及默认输出">
-                        {autoDL ? autoDLSpecFields : <div className="admin-capability-spec-grid">
-                            <Field label="支持比例">
-                                <Select
-                                    mode="multiple"
-                                    className="w-full"
-                                    disabled={disabled}
-                                    value={profile.ratios}
-                                    options={ratioOptions.map((item) => ({ label: item, value: item }))}
-                                    onChange={(ratios) => update({ ratios, defaultRatio: ratios.includes(profile.defaultRatio) ? profile.defaultRatio : ratios[0] || "16:9" })}
-                                />
-                            </Field>
-                            <Field label="默认比例">
-                                <Select className="w-full" disabled={disabled} value={profile.defaultRatio} options={profile.ratios.map((item) => ({ label: item, value: item }))} onChange={(defaultRatio) => update({ defaultRatio })} />
-                            </Field>
-                            <Field label="输出分辨率">
-                                <Select
-                                    mode="tags"
-                                    className="admin-capability-tags w-full"
-                                    disabled={disabled}
-                                    value={profile.resolutions}
-                                    tokenSeparators={[","]}
-                                    placeholder="选择或输入模型档位"
-                                    options={resolutionOptions.map((item) => ({ label: item.toUpperCase(), value: item }))}
-                                    onChange={(resolutions) => update({ resolutions, defaultResolution: resolutions.includes(profile.defaultResolution) ? profile.defaultResolution : resolutions[0] || "" })}
-                                />
-                            </Field>
-                            <Field label="默认分辨率">
-                                <Select
-                                    className="w-full"
-                                    disabled={disabled}
-                                    value={profile.defaultResolution}
-                                    options={profile.resolutions.map((item) => ({ label: item.toUpperCase(), value: item }))}
-                                    onChange={(defaultResolution) => update({ defaultResolution })}
-                                />
-                            </Field>
-                        </div>}
+                        {autoDL ? (
+                            autoDLSpecFields
+                        ) : (
+                            <div className="admin-capability-spec-grid">
+                                <Field label="支持比例">
+                                    <Select
+                                        mode="multiple"
+                                        className="w-full"
+                                        disabled={disabled}
+                                        value={profile.ratios}
+                                        options={ratioOptions.map((item) => ({ label: item, value: item }))}
+                                        onChange={(ratios) => update({ ratios, defaultRatio: ratios.includes(profile.defaultRatio) ? profile.defaultRatio : ratios[0] || "16:9" })}
+                                    />
+                                </Field>
+                                <Field label="默认比例">
+                                    <Select className="w-full" disabled={disabled} value={profile.defaultRatio} options={profile.ratios.map((item) => ({ label: item, value: item }))} onChange={(defaultRatio) => update({ defaultRatio })} />
+                                </Field>
+                                <Field label="输出分辨率">
+                                    <Select
+                                        mode="tags"
+                                        className="admin-capability-tags w-full"
+                                        disabled={disabled}
+                                        value={profile.resolutions}
+                                        tokenSeparators={[","]}
+                                        placeholder="选择或输入模型档位"
+                                        options={resolutionOptions.map((item) => ({ label: item.toUpperCase(), value: item }))}
+                                        onChange={(resolutions) => update({ resolutions, defaultResolution: resolutions.includes(profile.defaultResolution) ? profile.defaultResolution : resolutions[0] || "" })}
+                                    />
+                                </Field>
+                                <Field label="默认分辨率">
+                                    <Select
+                                        className="w-full"
+                                        disabled={disabled}
+                                        value={profile.defaultResolution}
+                                        options={profile.resolutions.map((item) => ({ label: item.toUpperCase(), value: item }))}
+                                        onChange={(defaultResolution) => update({ defaultResolution })}
+                                    />
+                                </Field>
+                            </div>
+                        )}
                     </ProtocolParameterCard>
                 </div>
             </div>
@@ -268,42 +272,46 @@ export function ModelCapabilityEditor({ value, onChange, protocol, capability = 
                     )}
                 </CapabilityBlock>
                 <CapabilityBlock title="画面规格">
-                    {autoDL ? autoDLSpecFields : <div className="grid gap-3 sm:grid-cols-2">
-                        <Field label="画面比例">
-                            <Select
-                                mode="multiple"
-                                className="w-full"
-                                disabled={disabled}
-                                value={profile.ratios}
-                                options={ratioOptions.map((item) => ({ label: item, value: item }))}
-                                onChange={(ratios) => update({ ratios, defaultRatio: ratios.includes(profile.defaultRatio) ? profile.defaultRatio : ratios[0] || "16:9" })}
-                            />
-                        </Field>
-                        <Field label="默认比例">
-                            <Select className="w-full" disabled={disabled} value={profile.defaultRatio} options={profile.ratios.map((item) => ({ label: item, value: item }))} onChange={(defaultRatio) => update({ defaultRatio })} />
-                        </Field>
-                        <Field label="输出分辨率">
-                            <Select
-                                mode="tags"
-                                className="admin-capability-tags w-full"
-                                disabled={disabled}
-                                value={profile.resolutions}
-                                tokenSeparators={[","]}
-                                placeholder="选择标准档位或输入 768p 等模型专属值"
-                                options={resolutionOptions.map((item) => ({ label: item.toUpperCase(), value: item }))}
-                                onChange={(resolutions) => update({ resolutions, defaultResolution: resolutions.includes(profile.defaultResolution) ? profile.defaultResolution : resolutions[0] || "" })}
-                            />
-                        </Field>
-                        <Field label="默认分辨率">
-                            <Select
-                                className="w-full"
-                                disabled={disabled}
-                                value={profile.defaultResolution}
-                                options={profile.resolutions.map((item) => ({ label: item.toUpperCase(), value: item }))}
-                                onChange={(defaultResolution) => update({ defaultResolution })}
-                            />
-                        </Field>
-                    </div>}
+                    {autoDL ? (
+                        autoDLSpecFields
+                    ) : (
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <Field label="画面比例">
+                                <Select
+                                    mode="multiple"
+                                    className="w-full"
+                                    disabled={disabled}
+                                    value={profile.ratios}
+                                    options={ratioOptions.map((item) => ({ label: item, value: item }))}
+                                    onChange={(ratios) => update({ ratios, defaultRatio: ratios.includes(profile.defaultRatio) ? profile.defaultRatio : ratios[0] || "16:9" })}
+                                />
+                            </Field>
+                            <Field label="默认比例">
+                                <Select className="w-full" disabled={disabled} value={profile.defaultRatio} options={profile.ratios.map((item) => ({ label: item, value: item }))} onChange={(defaultRatio) => update({ defaultRatio })} />
+                            </Field>
+                            <Field label="输出分辨率">
+                                <Select
+                                    mode="tags"
+                                    className="admin-capability-tags w-full"
+                                    disabled={disabled}
+                                    value={profile.resolutions}
+                                    tokenSeparators={[","]}
+                                    placeholder="选择标准档位或输入 768p 等模型专属值"
+                                    options={resolutionOptions.map((item) => ({ label: item.toUpperCase(), value: item }))}
+                                    onChange={(resolutions) => update({ resolutions, defaultResolution: resolutions.includes(profile.defaultResolution) ? profile.defaultResolution : resolutions[0] || "" })}
+                                />
+                            </Field>
+                            <Field label="默认分辨率">
+                                <Select
+                                    className="w-full"
+                                    disabled={disabled}
+                                    value={profile.defaultResolution}
+                                    options={profile.resolutions.map((item) => ({ label: item.toUpperCase(), value: item }))}
+                                    onChange={(defaultResolution) => update({ defaultResolution })}
+                                />
+                            </Field>
+                        </div>
+                    )}
                 </CapabilityBlock>
                 {section === "all" ? (
                     <CapabilityBlock title="视频引用">
@@ -369,7 +377,13 @@ function TextCapabilityEditor({ value, onChange, protocol, disabled, section }: 
         return (
             <div className="admin-capability-editor space-y-3 rounded-md bg-muted/20 p-3">
                 <CapabilityGroup title="输出方式" description="控制向上游文本模型请求的响应方式。">
-                    <ParameterField label="SSE 流式输出" description="启用后发送 stream=true，并实时推送文本增量；关闭时等待完整 JSON 响应。" supported={profile.streaming !== false} disabled={Boolean(disabled)} onChange={(streaming) => update({ streaming })} />
+                    <ParameterField
+                        label="SSE 流式输出"
+                        description="启用后发送 stream=true，并实时推送文本增量；关闭时等待完整 JSON 响应。"
+                        supported={profile.streaming !== false}
+                        disabled={Boolean(disabled)}
+                        onChange={(streaming) => update({ streaming })}
+                    />
                 </CapabilityGroup>
             </div>
         );
@@ -675,14 +689,30 @@ function AutoDLScreenSpecFields({ profile, workflow, disabled, onChange }: { pro
     return (
         <div className="admin-capability-spec-grid">
             <Field label="输出分辨率">
-                <Select ariaLabel="输出分辨率" mode="multiple" className="admin-capability-tags w-full" disabled={disabled} value={profile.resolutions} placeholder="选择分辨率" options={options.map((item) => ({ label: item, value: item }))} onChange={(values: string[]) => {
-                    const resolutions = cleanVideoScreenSpecValues(values);
-                    const defaultResolution = resolutions.includes(profile.defaultResolution) ? profile.defaultResolution : resolutions[0] || "";
-                    onChange(updateWorkflowVideoScreenSpec(profile, workflow, { resolutions, defaultResolution }));
-                }} />
+                <Select
+                    ariaLabel="输出分辨率"
+                    mode="multiple"
+                    className="admin-capability-tags w-full"
+                    disabled={disabled}
+                    value={profile.resolutions}
+                    placeholder="选择分辨率"
+                    options={options.map((item) => ({ label: item, value: item }))}
+                    onChange={(values: string[]) => {
+                        const resolutions = cleanVideoScreenSpecValues(values);
+                        const defaultResolution = resolutions.includes(profile.defaultResolution) ? profile.defaultResolution : resolutions[0] || "";
+                        onChange(updateWorkflowVideoScreenSpec(profile, workflow, { resolutions, defaultResolution }));
+                    }}
+                />
             </Field>
             <Field label="默认分辨率">
-                <Select ariaLabel="默认分辨率" className="w-full" disabled={disabled} value={profile.defaultResolution || undefined} options={profile.resolutions.map((item) => ({ label: item, value: item }))} onChange={(defaultResolution: string) => onChange(updateWorkflowVideoScreenSpec(profile, workflow, { defaultResolution }))} />
+                <Select
+                    ariaLabel="默认分辨率"
+                    className="w-full"
+                    disabled={disabled}
+                    value={profile.defaultResolution || undefined}
+                    options={profile.resolutions.map((item) => ({ label: item, value: item }))}
+                    onChange={(defaultResolution: string) => onChange(updateWorkflowVideoScreenSpec(profile, workflow, { defaultResolution }))}
+                />
             </Field>
         </div>
     );

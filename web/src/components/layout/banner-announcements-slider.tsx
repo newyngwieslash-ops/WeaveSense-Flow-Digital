@@ -5,11 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 
 import { getActiveBanners, type BannerAnnouncement } from "@/services/api/announcements";
-import {
-    BannerAnnouncementLinkHint,
-    BannerAnnouncementTitle,
-    bannerAnnouncementBarStyle,
-} from "@/components/layout/banner-announcement-content";
+import { BannerAnnouncementLinkHint, BannerAnnouncementTitle, bannerAnnouncementBarStyle } from "@/components/layout/banner-announcement-content";
 import { useUserStore } from "@/stores/use-user-store";
 
 const BANNER_AUTO_SLIDE_MS = 4000;
@@ -73,10 +69,7 @@ export function BannerAnnouncementsSlider() {
 
     // 底色随每条通知的类型切换：加过渡让不同风格的条目轮播时平滑换色，与标题动画节奏一致。
     return (
-        <div
-            className="relative flex min-h-10 w-full shrink-0 items-center justify-center px-4 py-2 text-white transition-colors duration-300 ease-out"
-            style={bannerAnnouncementBarStyle(currentBanner.noticeType)}
-        >
+        <div className="relative flex min-h-10 w-full shrink-0 items-center justify-center px-4 py-2 text-white transition-colors duration-300 ease-out" style={bannerAnnouncementBarStyle(currentBanner.noticeType)}>
             <button
                 type="button"
                 onClick={handleClick}
@@ -103,13 +96,7 @@ export function BannerAnnouncementsSlider() {
                     {hasLink ? <BannerAnnouncementLinkHint chevronClassName="size-3.5 transition-transform group-hover:translate-x-0.5" /> : null}
                 </span>
             </button>
-            <button
-                type="button"
-                onClick={handleDismiss}
-                aria-label="关闭通知"
-                title="关闭"
-                className="absolute right-3 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded-full text-white transition-colors hover:bg-white/20"
-            >
+            <button type="button" onClick={handleDismiss} aria-label="关闭通知" title="关闭" className="absolute right-3 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded-full text-white transition-colors hover:bg-white/20">
                 <X className="size-3.5" aria-hidden="true" />
             </button>
         </div>

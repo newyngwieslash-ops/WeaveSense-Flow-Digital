@@ -58,9 +58,7 @@ export function enterCustomCanvasAppearance(current: CanvasAppearance, currentTh
 
 export function canvasAppearanceBaseTheme(appearance: CanvasAppearance | undefined, fallback: CanvasColorTheme): CanvasColorTheme {
     if (appearance?.mode === "light" || appearance?.mode === "dark") return appearance.mode;
-    return appearance?.custom?.baseTheme === "light" || appearance?.custom?.baseTheme === "dark"
-        ? appearance.custom.baseTheme
-        : fallback;
+    return appearance?.custom?.baseTheme === "light" || appearance?.custom?.baseTheme === "dark" ? appearance.custom.baseTheme : fallback;
 }
 
 export function normalizeCanvasAppearance(value: unknown, fallback: CanvasColorTheme): CanvasAppearance {
@@ -102,9 +100,13 @@ export function resolveCanvasGridColor(appearance: CanvasAppearance | undefined,
 export function normalizeHexColor(value: string) {
     const match = value.trim().match(HEX_COLOR_PATTERN);
     if (!match) return null;
-    const hex = match[1].length === 3
-        ? match[1].split("").map((channel) => channel.repeat(2)).join("")
-        : match[1];
+    const hex =
+        match[1].length === 3
+            ? match[1]
+                  .split("")
+                  .map((channel) => channel.repeat(2))
+                  .join("")
+            : match[1];
     return `#${hex.toUpperCase()}`;
 }
 
@@ -126,10 +128,13 @@ export function readCanvasAppearanceDefault(): CanvasAppearanceDefault | null {
 
 export function writeCanvasAppearanceDefault(value: CanvasAppearanceDefault) {
     const fallback = canvasAppearanceBaseTheme(value.appearance, "dark");
-    scopedLocalStorage.setItem(CANVAS_APPEARANCE_DEFAULT_KEY, JSON.stringify({
-        appearance: normalizeCanvasAppearance(value.appearance, fallback),
-        backgroundMode: value.backgroundMode,
-    }));
+    scopedLocalStorage.setItem(
+        CANVAS_APPEARANCE_DEFAULT_KEY,
+        JSON.stringify({
+            appearance: normalizeCanvasAppearance(value.appearance, fallback),
+            backgroundMode: value.backgroundMode,
+        }),
+    );
 }
 
 function normalizeCustomAppearance(value: unknown): CanvasCustomAppearance | undefined {
@@ -160,9 +165,7 @@ function rgbaFromHex(value: string, opacity: number) {
 function adjustHexLightnessOklch(value: string, amount: number) {
     const normalized = normalizeHexColor(value) || "#808080";
     if (!amount) return normalized;
-    const [red, green, blue] = [1, 3, 5]
-        .map((offset) => Number.parseInt(normalized.slice(offset, offset + 2), 16) / 255)
-        .map((channel) => channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4);
+    const [red, green, blue] = [1, 3, 5].map((offset) => Number.parseInt(normalized.slice(offset, offset + 2), 16) / 255).map((channel) => (channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4));
     const l = Math.cbrt(0.4122214708 * red + 0.5363325363 * green + 0.0514459929 * blue);
     const m = Math.cbrt(0.2119034982 * red + 0.6806995451 * green + 0.1073969566 * blue);
     const s = Math.cbrt(0.0883024619 * red + 0.2817188376 * green + 0.6299787005 * blue);
@@ -170,7 +173,7 @@ function adjustHexLightnessOklch(value: string, amount: number) {
     const a = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s;
     const b = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s;
     const chroma = Math.sqrt(a * a + b * b);
-    const hue = chroma < 0.0001 ? 0 : (Math.atan2(b, a) * 180 / Math.PI + 360) % 360;
+    const hue = chroma < 0.0001 ? 0 : ((Math.atan2(b, a) * 180) / Math.PI + 360) % 360;
     const adjustedLightness = Math.min(1, Math.max(0, lightness + amount / 100));
     return `oklch(${(adjustedLightness * 100).toFixed(2)}% ${chroma.toFixed(4)} ${hue.toFixed(2)})`;
 }

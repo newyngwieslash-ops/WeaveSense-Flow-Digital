@@ -50,7 +50,10 @@ describe("统一图片分辨率与宽高比", () => {
 
     test("默认 Gemini 质量枚举不能把未启用的 1K 显示出来", () => {
         const profile = defaultImageCapabilityConfig("gemini-image", "nano-banana-pro-4k");
-        profile.size = imageSizeConfigWithPresets(profile, IMAGE_RATIOS.map((ratio) => imagePresetForRatio("4k", ratio)));
+        profile.size = imageSizeConfigWithPresets(
+            profile,
+            IMAGE_RATIOS.map((ratio) => imagePresetForRatio("4k", ratio)),
+        );
         expect(profile.quality.supported).toBe(true);
         expect(imageTierAvailable(profile, "4k")).toBe(true);
         expect(imageTierAvailable(profile, "1k")).toBe(false);
@@ -62,7 +65,10 @@ describe("统一图片分辨率与宽高比", () => {
     test("无质量参数的固定 4K 模型保留管理员档位，重开及自定义比例不回退 1K", () => {
         const profile = defaultImageCapabilityConfig("gemini-image", "nano-banana-pro-4k");
         profile.quality = { supported: false, values: [], default: "auto" };
-        profile.size = imageSizeConfigWithPresets(profile, IMAGE_RATIOS.map((ratio) => imagePresetForRatio("4k", ratio)));
+        profile.size = imageSizeConfigWithPresets(
+            profile,
+            IMAGE_RATIOS.map((ratio) => imagePresetForRatio("4k", ratio)),
+        );
         expect(imageTierAvailable(profile, "4k")).toBe(true);
         expect(imageTierAvailable(profile, "1k")).toBe(false);
         expect(imageQualityForTier(profile, "4k")).toBeUndefined();
@@ -112,7 +118,10 @@ describe("统一图片分辨率与宽高比", () => {
     test("比例协议切换 4K 时同时提交尺寸和真实质量档位", () => {
         const changes: Array<[string, string]> = [];
         applyImageSizeSelection((key, value) => changes.push([key, value]), "16:9", "high");
-        expect(changes).toEqual([["size", "16:9"], ["quality", "high"]]);
+        expect(changes).toEqual([
+            ["size", "16:9"],
+            ["quality", "high"],
+        ]);
     });
 
     test("像素协议从旧比例配置切换 4K 后发送真实像素，不回退到 1K", () => {

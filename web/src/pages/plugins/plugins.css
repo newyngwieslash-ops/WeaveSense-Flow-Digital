@@ -1044,7 +1044,9 @@
 }
 
 @media (max-width: 640px) {
-    .plugins-page-layout { width: calc(100% - 24px); }
+    .plugins-page-layout {
+        width: calc(100% - 24px);
+    }
     .plugins-page-content {
         padding-inline: 0;
     }

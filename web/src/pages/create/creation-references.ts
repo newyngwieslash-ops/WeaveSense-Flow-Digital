@@ -74,11 +74,7 @@ export function replaceCreationAttachmentReference(prompt: string, attachments: 
 
     const remainingAttachments = attachments.filter((attachment) => attachment.id !== targetAttachmentId && attachment.id !== replacement.id);
     const insertionIndex = Math.min(targetIndex, remainingAttachments.length);
-    const nextAttachments = [
-        ...remainingAttachments.slice(0, insertionIndex),
-        replacement,
-        ...remainingAttachments.slice(insertionIndex),
-    ];
+    const nextAttachments = [...remainingAttachments.slice(0, insertionIndex), replacement, ...remainingAttachments.slice(insertionIndex)];
     const replacementReference = buildCreationMentionReferences([], nextAttachments).find((reference) => reference.attachmentId === replacement.id);
     if (!replacementReference) throw new Error("替换后的提示词引用无效");
 

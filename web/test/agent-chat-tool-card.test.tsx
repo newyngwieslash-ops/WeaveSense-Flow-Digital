@@ -6,7 +6,14 @@ import { canvasThemes } from "@/lib/canvas-theme";
 test("automatic correction is neutral and collapsed, with recovery and exhaustion history", () => {
     for (const theme of [canvasThemes.dark, canvasThemes.light]) {
         for (const status of ["retrying", "recovered", "exhausted"]) {
-            const html = renderToStaticMarkup(<AgentToolCard title="canvas_apply_ops" text="缺少操作类型" detail={{ eventType: "tool_failed", retry: { groupId: "run:repair:call", attempt: 1, maxAttempts: 3, status }, retryAttempts: [{ id: "call", text: "缺少操作类型" }] }} theme={theme} />);
+            const html = renderToStaticMarkup(
+                <AgentToolCard
+                    title="canvas_apply_ops"
+                    text="缺少操作类型"
+                    detail={{ eventType: "tool_failed", retry: { groupId: "run:repair:call", attempt: 1, maxAttempts: 3, status }, retryAttempts: [{ id: "call", text: "缺少操作类型" }] }}
+                    theme={theme}
+                />,
+            );
             expect(html).toContain("data-agent-tool-retry");
             expect(html).toContain("<summary");
             expect(html).not.toContain("open=");
@@ -33,11 +40,24 @@ test("empty read and operation events stay flat instead of rendering empty cards
 });
 
 test("canvas reads show one node by default and expose the collapsed count", () => {
-    const html = renderToStaticMarkup(<AgentToolCard title="canvas_get_state" text="工具执行成功" detail={{ eventType: "tool_completed", result: { nodes: [
-        { id: "node-1", title: "第一个节点", type: "image" },
-        { id: "node-2", title: "第二个节点", type: "text" },
-        { id: "node-3", title: "第三个节点", type: "video" },
-    ] } }} theme={canvasThemes.dark} onFocusNode={() => {}} />);
+    const html = renderToStaticMarkup(
+        <AgentToolCard
+            title="canvas_get_state"
+            text="工具执行成功"
+            detail={{
+                eventType: "tool_completed",
+                result: {
+                    nodes: [
+                        { id: "node-1", title: "第一个节点", type: "image" },
+                        { id: "node-2", title: "第二个节点", type: "text" },
+                        { id: "node-3", title: "第三个节点", type: "video" },
+                    ],
+                },
+            }}
+            theme={canvasThemes.dark}
+            onFocusNode={() => {}}
+        />,
+    );
     // 清单档的 chip 必须是"存在式"：它只说明画布上有这个节点，没看过它的画面
     expect(html).toContain("画布上有图片节点《第一个节点》");
     expect(html).not.toContain("读取了图片节点《第一个节点》");
@@ -47,7 +67,25 @@ test("canvas reads show one node by default and expose the collapsed count", () 
 });
 
 test("the vision card points at the image it actually sent", () => {
-    const html = renderToStaticMarkup(<AgentToolCard title="canvas_inspect_image" text="工具执行成功" detail={{ eventType: "tool_completed", result: { nodeId: "node-9", title: "封面.png", batchImages: [{ nodeId: "node-8", title: "剧照.png" }, { nodeId: "node-9", title: "封面.png" }] } }} theme={canvasThemes.dark} onFocusNode={() => {}} />);
+    const html = renderToStaticMarkup(
+        <AgentToolCard
+            title="canvas_inspect_image"
+            text="工具执行成功"
+            detail={{
+                eventType: "tool_completed",
+                result: {
+                    nodeId: "node-9",
+                    title: "封面.png",
+                    batchImages: [
+                        { nodeId: "node-8", title: "剧照.png" },
+                        { nodeId: "node-9", title: "封面.png" },
+                    ],
+                },
+            }}
+            theme={canvasThemes.dark}
+            onFocusNode={() => {}}
+        />,
+    );
     expect(html).toContain("查看画面");
     expect(html).toContain("agent-tool-row--vision");
     expect(html).toContain("已附上 2 张画面");
@@ -58,7 +96,9 @@ test("the vision card points at the image it actually sent", () => {
 });
 
 test("a reused observation is not reported as a fresh look at the picture", () => {
-    const html = renderToStaticMarkup(<AgentToolCard title="canvas_inspect_image" text="工具执行成功" detail={{ eventType: "tool_completed", result: { nodeId: "node-9", title: "封面.png", repeat: true, reuseObservation: true } }} theme={canvasThemes.dark} onFocusNode={() => {}} />);
+    const html = renderToStaticMarkup(
+        <AgentToolCard title="canvas_inspect_image" text="工具执行成功" detail={{ eventType: "tool_completed", result: { nodeId: "node-9", title: "封面.png", repeat: true, reuseObservation: true } }} theme={canvasThemes.dark} onFocusNode={() => {}} />,
+    );
     expect(html).toContain("复用已记录的观察，未重复看图");
     expect(html).toContain("复用观察：图片节点《封面.png》");
     expect(html).not.toContain("查看了");
@@ -83,9 +123,22 @@ test("failed media shows its error and task identifier without hovering", () => 
     expect(html).toContain("任务 ID：task-123");
 });
 
-
 test("canvas action trace is accessible and links to persisted node identities", () => {
-    const html = renderToStaticMarkup(<AgentToolCard title="canvas_apply_ops" text="画布操作已完成" detail={{ eventType: "canvas_updated", actions: [{ action: "created", nodeId: "video-1", title: "满月动画", nodeType: "video" }, { action: "referenced", nodeId: "image-1", title: "满月照片", nodeType: "image" }] }} theme={canvasThemes.light} onFocusNode={() => {}} />);
+    const html = renderToStaticMarkup(
+        <AgentToolCard
+            title="canvas_apply_ops"
+            text="画布操作已完成"
+            detail={{
+                eventType: "canvas_updated",
+                actions: [
+                    { action: "created", nodeId: "video-1", title: "满月动画", nodeType: "video" },
+                    { action: "referenced", nodeId: "image-1", title: "满月照片", nodeType: "image" },
+                ],
+            }}
+            theme={canvasThemes.light}
+            onFocusNode={() => {}}
+        />,
+    );
     expect(html).toContain('data-agent-node-id="video-1"');
     expect(html).toContain('aria-label="在画布中定位满月动画"');
     expect(html).toContain("创建了视频节点《满月动画》");
@@ -95,7 +148,15 @@ test("canvas action trace is accessible and links to persisted node identities",
 
 test("failed media trace retains node title and collapsible upstream details", () => {
     const text = "上游拒绝规格：" + "错误详情".repeat(80);
-    const html = renderToStaticMarkup(<AgentToolCard title="generate_media" text={text} detail={{ eventType: "tool_failed", arguments: JSON.stringify({ nodeId: "video-1", title: "满月动画", mode: "video" }), result: { taskId: "task-failed", taskSubmitted: true } }} theme={canvasThemes.light} onFocusNode={() => {}} />);
+    const html = renderToStaticMarkup(
+        <AgentToolCard
+            title="generate_media"
+            text={text}
+            detail={{ eventType: "tool_failed", arguments: JSON.stringify({ nodeId: "video-1", title: "满月动画", mode: "video" }), result: { taskId: "task-failed", taskSubmitted: true } }}
+            theme={canvasThemes.light}
+            onFocusNode={() => {}}
+        />,
+    );
     expect(html).toContain("生成未完成：视频节点《满月动画》");
     expect(html).toContain("查看完整错误详情");
     expect(html).toContain("任务 ID：task-failed");

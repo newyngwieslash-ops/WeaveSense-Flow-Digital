@@ -12,12 +12,7 @@ export function createTaskTextStreamParser(): TaskTextStreamParser {
     return { buffer: "" };
 }
 
-export function consumeTaskTextStream(
-    parser: TaskTextStreamParser,
-    chunk: string,
-    onEvent: (event: TaskTextStreamEvent) => void,
-    flush = false,
-) {
+export function consumeTaskTextStream(parser: TaskTextStreamParser, chunk: string, onEvent: (event: TaskTextStreamEvent) => void, flush = false) {
     parser.buffer += chunk;
     for (;;) {
         const boundary = parser.buffer.match(/\r?\n\r?\n/);

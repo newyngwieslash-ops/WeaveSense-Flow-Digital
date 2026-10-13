@@ -49,9 +49,7 @@ export const ratioOptions = [
     { value: "3:4", label: "标准竖屏" },
     { value: "21:9", label: "宽银幕" },
 ];
-export const qualityOptions = [
-    ...["auto", "low", "medium", "high", "xhigh", "max", "1k", "2k", "4k"].map((value) => ({ value, label: imageQualityLabel(value), description: imageQualityDescription(value) })),
-];
+export const qualityOptions = [...["auto", "low", "medium", "high", "xhigh", "max", "1k", "2k", "4k"].map((value) => ({ value, label: imageQualityLabel(value), description: imageQualityDescription(value) }))];
 export const resolutionOptions = VIDEO_RESOLUTION_OPTIONS.map((value) => ({ value: String(value), label: videoResolutionLabel(value) }));
 export const countOptions = ["1", "2", "3", "4"];
 export const conversationTimeFormatter = new Intl.DateTimeFormat("zh-CN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });

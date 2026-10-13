@@ -1,14 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import {
-    canRedo,
-    canUndo,
-    createEditorHistory,
-    HISTORY_LIMIT,
-    pushEditorHistory,
-    redoEditorHistory,
-    undoEditorHistory,
-} from "../src/lib/timeline/editor-history";
+import { canRedo, canUndo, createEditorHistory, HISTORY_LIMIT, pushEditorHistory, redoEditorHistory, undoEditorHistory } from "../src/lib/timeline/editor-history";
 import type { TimelineProject } from "../src/types/timeline";
 
 function project(version: number): TimelineProject {

@@ -46,7 +46,13 @@ export default function LogsPage() {
     const updateUrl = (patch: Record<string, string | number>, replace = false) => {
         const next = new URLSearchParams(searchParams);
         Object.entries(patch).forEach(([key, value]) => {
-            const isDefault = (key === "filter" && value === "") || (key === "status" && value === "all") || (key === "recordType" && value === "request") || (key === "capability" && value === "all") || (key === "page" && value === 1) || (key === "pageSize" && value === 20);
+            const isDefault =
+                (key === "filter" && value === "") ||
+                (key === "status" && value === "all") ||
+                (key === "recordType" && value === "request") ||
+                (key === "capability" && value === "all") ||
+                (key === "page" && value === 1) ||
+                (key === "pageSize" && value === 20);
             if (isDefault) next.delete(key);
             else next.set(key, String(value));
         });
@@ -75,11 +81,21 @@ export default function LogsPage() {
                 message.error(text);
             })
             .finally(() => sequence === requestSequence.current && setLoading(false));
-        return () => { requestSequence.current += 1; };
+        return () => {
+            requestSequence.current += 1;
+        };
     }, [debouncedKeyword, status, recordType, capability, page, pageSize, retry]);
 
     const fullColumns: ColumnsType<ApiCallLog> = [
-        { title: "时间", width: 168, render: (_, log) => <button type="button" className="admin-log-detail-link" aria-label={`查看请求 ${log.id} 详情`} onClick={() => setDetailLogId(log.id)}>{formatTime(log.startedAt || log.createdAt)}</button> },
+        {
+            title: "时间",
+            width: 168,
+            render: (_, log) => (
+                <button type="button" className="admin-log-detail-link" aria-label={`查看请求 ${log.id} 详情`} onClick={() => setDetailLogId(log.id)}>
+                    {formatTime(log.startedAt || log.createdAt)}
+                </button>
+            ),
+        },
         {
             title: "用户",
             width: 180,
@@ -145,41 +161,100 @@ export default function LogsPage() {
     ];
 
     const identityColumns: ColumnsType<ApiCallLog> = [
-        { title: "时间 / 详情", key: "time", width: 142, render: (_, log) => <button type="button" className="admin-log-detail-link" title={formatTime(log.startedAt || log.createdAt)} aria-label={`查看请求 ${log.id} 详情`} onClick={() => setDetailLogId(log.id)}>{formatCompactTime(log.startedAt || log.createdAt)}</button> },
+        {
+            title: "时间 / 详情",
+            key: "time",
+            width: 142,
+            render: (_, log) => (
+                <button type="button" className="admin-log-detail-link" title={formatTime(log.startedAt || log.createdAt)} aria-label={`查看请求 ${log.id} 详情`} onClick={() => setDetailLogId(log.id)}>
+                    {formatCompactTime(log.startedAt || log.createdAt)}
+                </button>
+            ),
+        },
         { title: "状态", key: "status", width: 88, render: (_, log) => <AdminStatusBadge {...logStatus(log)} /> },
         { title: "模型", dataIndex: "model", width: 170, ellipsis: true, render: (value) => value || "未识别模型" },
         { title: "渠道", dataIndex: "channelName", width: 116, ellipsis: true, render: (value) => value || "未记录渠道" },
         { title: "用户", key: "user", width: 110, ellipsis: true, render: (_, log) => <span title={[log.userDisplayName, log.userAccount].filter(Boolean).join(" · ")}>{log.userDisplayName || log.userAccount || "未知用户"}</span> },
     ];
-    const compactColumns: ColumnsType<ApiCallLog> = view === "billing" ? [
-        ...identityColumns,
-        { title: "销售积分", key: "revenue", align: "right", width: 108, render: (_, log) => log.billable && log.billingAvailable ? formatCredits(log.billingAmountMicrocredits) : "—" },
-        { title: "成本积分", key: "cost", align: "right", width: 108, render: (_, log) => log.creditCostMicrocredits !== undefined ? formatCredits(log.creditCostMicrocredits) : log.creditCostConfigured ? "待核算" : "未配置" },
-        { title: "账务状态", key: "billingStatus", width: 100, render: (_, log) => logBillingLabel(log) },
-        { title: "Tokens 入 / 出", key: "usage", width: 142, render: (_, log) => log.usageAvailable ? `${log.inputTokens.toLocaleString()} / ${log.outputTokens.toLocaleString()}` : "未返回" },
-    ] : [
-        ...identityColumns,
-        { title: "阶段", key: "kind", width: 90, render: (_, log) => requestKindText(log.requestKind) },
-        { title: "耗时", dataIndex: "durationMs", align: "right", width: 90, render: formatDuration },
-        { title: "错误摘要", key: "error", ellipsis: true, render: (_, log) => <span className={logStatus(log).tone === "error" ? "admin-log-error" : undefined} title={[log.errorCode, log.error].filter(Boolean).join(" · ")}>{[log.errorCode, log.error].filter(Boolean).join(" · ") || (logStatus(log).tone === "error" ? `HTTP ${log.statusCode || "失败"} · 未返回详情` : "—")}</span> },
-    ];
+    const compactColumns: ColumnsType<ApiCallLog> =
+        view === "billing"
+            ? [
+                  ...identityColumns,
+                  { title: "销售积分", key: "revenue", align: "right", width: 108, render: (_, log) => (log.billable && log.billingAvailable ? formatCredits(log.billingAmountMicrocredits) : "—") },
+                  { title: "成本积分", key: "cost", align: "right", width: 108, render: (_, log) => (log.creditCostMicrocredits !== undefined ? formatCredits(log.creditCostMicrocredits) : log.creditCostConfigured ? "待核算" : "未配置") },
+                  { title: "账务状态", key: "billingStatus", width: 100, render: (_, log) => logBillingLabel(log) },
+                  { title: "Tokens 入 / 出", key: "usage", width: 142, render: (_, log) => (log.usageAvailable ? `${log.inputTokens.toLocaleString()} / ${log.outputTokens.toLocaleString()}` : "未返回") },
+              ]
+            : [
+                  ...identityColumns,
+                  { title: "阶段", key: "kind", width: 90, render: (_, log) => requestKindText(log.requestKind) },
+                  { title: "耗时", dataIndex: "durationMs", align: "right", width: 90, render: formatDuration },
+                  {
+                      title: "错误摘要",
+                      key: "error",
+                      ellipsis: true,
+                      render: (_, log) => (
+                          <span className={logStatus(log).tone === "error" ? "admin-log-error" : undefined} title={[log.errorCode, log.error].filter(Boolean).join(" · ")}>
+                              {[log.errorCode, log.error].filter(Boolean).join(" · ") || (logStatus(log).tone === "error" ? `HTTP ${log.statusCode || "失败"} · 未返回详情` : "—")}
+                          </span>
+                      ),
+                  },
+              ];
     const baseColumns = view === "all" ? fullColumns : compactColumns;
-    const columns: ColumnsType<ApiCallLog> = [...baseColumns, { title: "操作", key: "actions", width: 126, fixed: "right", render: (_, log) => log.capability === "video" ? <Button type="link" size="small" icon={<RefreshCw className="size-3.5" />} onClick={() => setDetailLogId(log.id)}>恢复任务</Button> : <span className="text-foreground/30">--</span> }];
+    const columns: ColumnsType<ApiCallLog> = [
+        ...baseColumns,
+        {
+            title: "操作",
+            key: "actions",
+            width: 126,
+            fixed: "right",
+            render: (_, log) =>
+                log.capability === "video" ? (
+                    <Button type="link" size="small" icon={<RefreshCw className="size-3.5" />} onClick={() => setDetailLogId(log.id)}>
+                        恢复任务
+                    </Button>
+                ) : (
+                    <span className="text-foreground/30">--</span>
+                ),
+        },
+    ];
 
     const runBatchRecovery = async () => {
         const selectedLogs = logs.filter((log) => selectedIds.includes(log.id));
         const videoIds = selectedLogs.filter((log) => log.capability === "video").map((log) => log.id);
         const skipped = selectedIds.length - videoIds.length;
-        if (videoIds.length === 0) { message.info("所选记录中没有视频任务可恢复"); return; }
+        if (videoIds.length === 0) {
+            message.info("所选记录中没有视频任务可恢复");
+            return;
+        }
         setBatchRecovering(true);
         try {
             const result = await batchRecoverAdminApiLogs(videoIds);
             const totalSkipped = skipped + result.skipped;
-            Modal.info({ title: "批量恢复处理结果", width: 560, content: <div className="max-h-[50vh] space-y-2 overflow-auto"><div className="mb-3">成功 {result.success} 条，失败 {result.failed} 条，跳过 {totalSkipped} 条</div>{result.items.map((item) => <div key={item.logId} className="rounded border border-border/70 px-3 py-2 text-xs"><div className="font-mono">{item.logId}</div><div>{item.recovered ? "成功" : item.error?.startsWith("跳过") ? item.error : item.providerStatus ? `仍在生成中（${item.providerStatus}）` : `失败：${item.error || "未恢复"}`}</div></div>)}</div> });
+            Modal.info({
+                title: "批量恢复处理结果",
+                width: 560,
+                content: (
+                    <div className="max-h-[50vh] space-y-2 overflow-auto">
+                        <div className="mb-3">
+                            成功 {result.success} 条，失败 {result.failed} 条，跳过 {totalSkipped} 条
+                        </div>
+                        {result.items.map((item) => (
+                            <div key={item.logId} className="rounded border border-border/70 px-3 py-2 text-xs">
+                                <div className="font-mono">{item.logId}</div>
+                                <div>{item.recovered ? "成功" : item.error?.startsWith("跳过") ? item.error : item.providerStatus ? `仍在生成中（${item.providerStatus}）` : `失败：${item.error || "未恢复"}`}</div>
+                            </div>
+                        ))}
+                    </div>
+                ),
+            });
             if (result.success > 0) window.dispatchEvent(new CustomEvent("wallet:updated"));
             setRetry((value) => value + 1);
-        } catch (error) { message.error(error instanceof Error ? error.message : "批量恢复失败"); }
-        finally { setBatchRecovering(false); }
+        } catch (error) {
+            message.error(error instanceof Error ? error.message : "批量恢复失败");
+        } finally {
+            setBatchRecovering(false);
+        }
     };
 
     return (
@@ -188,21 +263,53 @@ export default function LogsPage() {
             description="模型生成与结果下载记录；仅计费调用扣除积分"
             actions={
                 <>
-                <Button icon={<RefreshCw className="size-4" />} loading={loading} onClick={() => { setLoading(true); setRetry((value) => value + 1); }}>刷新列表</Button>
-                <AdminExportButton
-                    exportFile={() => exportAdminApiLogs({ recordType, capability: capability === "all" ? undefined : capability, keyword: debouncedKeyword || undefined, status: status === "all" ? undefined : status })}
-                    fileName={() => `请求明细-${new Date().toISOString().slice(0, 10)}.csv`}
-                    label="导出当前筛选"
-                    successMessage="已按当前筛选导出请求明细"
-                    errorMessage="导出请求明细失败"
-                />
+                    <Button
+                        icon={<RefreshCw className="size-4" />}
+                        loading={loading}
+                        onClick={() => {
+                            setLoading(true);
+                            setRetry((value) => value + 1);
+                        }}
+                    >
+                        刷新列表
+                    </Button>
+                    <AdminExportButton
+                        exportFile={() => exportAdminApiLogs({ recordType, capability: capability === "all" ? undefined : capability, keyword: debouncedKeyword || undefined, status: status === "all" ? undefined : status })}
+                        fileName={() => `请求明细-${new Date().toISOString().slice(0, 10)}.csv`}
+                        label="导出当前筛选"
+                        successMessage="已按当前筛选导出请求明细"
+                        errorMessage="导出请求明细失败"
+                    />
                 </>
             }
         >
-            {loadError ? <Alert type="error" showIcon title="请求明细读取失败" description={loadError} action={<Button size="small" onClick={() => setRetry((value) => value + 1)}>重试</Button>} /> : null}
+            {loadError ? (
+                <Alert
+                    type="error"
+                    showIcon
+                    title="请求明细读取失败"
+                    description={loadError}
+                    action={
+                        <Button size="small" onClick={() => setRetry((value) => value + 1)}>
+                            重试
+                        </Button>
+                    }
+                />
+            ) : null}
             <AdminDataTable
                 className={view === "all" ? "admin-logs-full" : "admin-logs-compact"}
-                trailing={<Segmented aria-label="请求明细视图" value={view} onChange={(value) => updateUrl({ view: value })} options={[{ label: "排障", value: "troubleshoot" }, { label: "计费", value: "billing" }, { label: "全部字段", value: "all" }]} />}
+                trailing={
+                    <Segmented
+                        aria-label="请求明细视图"
+                        value={view}
+                        onChange={(value) => updateUrl({ view: value })}
+                        options={[
+                            { label: "排障", value: "troubleshoot" },
+                            { label: "计费", value: "billing" },
+                            { label: "全部字段", value: "all" },
+                        ]}
+                    />
+                }
                 toolbar={
                     <AdminSearchInput
                         allowClear
@@ -222,26 +329,50 @@ export default function LogsPage() {
                 }
                 toolbarFilters={
                     <>
-                    <Select aria-label="明细类型" className="w-32" value={recordType} onChange={(value) => updateUrl({ recordType: value, page: 1 })} options={[{ label: "仅请求", value: "request" }, { label: "仅下载", value: "download" }, { label: "全部明细", value: "all" }]} />
-                    <Select aria-label="能力类型" className="w-28" value={capability} onChange={(value) => updateUrl({ capability: value, page: 1 })} options={[{ label: "全部能力", value: "all" }, { label: "文本", value: "text" }, { label: "图片", value: "image" }, { label: "视频", value: "video" }, { label: "音频", value: "audio" }]} />
-                    <Select
-                        aria-label="请求结果"
-                        className="w-32"
-                        value={status}
-                        onChange={(value) => updateUrl({ status: value, page: 1 })}
-                        options={[
-                            { label: "全部结果", value: "all" },
-                            { label: "成功", value: "succeeded" },
-                            { label: "失败", value: "failed" },
-                        ]}
-                    />
+                        <Select
+                            aria-label="明细类型"
+                            className="w-32"
+                            value={recordType}
+                            onChange={(value) => updateUrl({ recordType: value, page: 1 })}
+                            options={[
+                                { label: "仅请求", value: "request" },
+                                { label: "仅下载", value: "download" },
+                                { label: "全部明细", value: "all" },
+                            ]}
+                        />
+                        <Select
+                            aria-label="能力类型"
+                            className="w-28"
+                            value={capability}
+                            onChange={(value) => updateUrl({ capability: value, page: 1 })}
+                            options={[
+                                { label: "全部能力", value: "all" },
+                                { label: "文本", value: "text" },
+                                { label: "图片", value: "image" },
+                                { label: "视频", value: "video" },
+                                { label: "音频", value: "audio" },
+                            ]}
+                        />
+                        <Select
+                            aria-label="请求结果"
+                            className="w-32"
+                            value={status}
+                            onChange={(value) => updateUrl({ status: value, page: 1 })}
+                            options={[
+                                { label: "全部结果", value: "all" },
+                                { label: "成功", value: "succeeded" },
+                                { label: "失败", value: "failed" },
+                            ]}
+                        />
                     </>
                 }
                 toolbarActive={hasFilters}
                 onReset={() => updateUrl({ filter: "", status: "all", recordType: "request", capability: "all", page: 1 })}
                 batchActions={
                     <AdminBatchBar count={selectedIds.length} onClear={() => setSelectedIds([])}>
-                        <Button size="small" icon={<RefreshCw className="size-3.5" />} loading={batchRecovering} onClick={() => void runBatchRecovery()}>批量恢复</Button>
+                        <Button size="small" icon={<RefreshCw className="size-3.5" />} loading={batchRecovering} onClick={() => void runBatchRecovery()}>
+                            批量恢复
+                        </Button>
                         <AdminExportButton
                             type="primary"
                             size="small"
@@ -314,7 +445,9 @@ function normalizePageSize(value: string | null) {
     const parsed = positiveInt(value, 20);
     return [20, 50, 100].includes(parsed) ? parsed : 20;
 }
-function normalizeCapability(value: string | null): "all" | "text" | "image" | "video" | "audio" { return value === "text" || value === "image" || value === "video" || value === "audio" ? value : "all"; }
+function normalizeCapability(value: string | null): "all" | "text" | "image" | "video" | "audio" {
+    return value === "text" || value === "image" || value === "video" || value === "audio" ? value : "all";
+}
 function normalizeStatus(value: string | null): "all" | "succeeded" | "failed" {
     return value === "succeeded" || value === "failed" ? value : "all";
 }

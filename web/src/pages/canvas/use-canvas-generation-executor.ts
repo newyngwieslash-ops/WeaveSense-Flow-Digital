@@ -176,14 +176,7 @@ export function useCanvasGenerationExecutor({
                     // 普通视频协议只保留输入框文本（显式 @文本 引用仍会展开为真实内容）；声明式工作流还要保留连接媒体。
                     const promptOnly = mode === "video" && !usesWorkflowProvider;
                     try {
-                        const baseContext = buildNodeGenerationContext(
-                            nodeId,
-                            nodesRef.current,
-                            connectionsRef.current,
-                            editingTextNode ? buildTextRewritePrompt(sourceTextContent, prompt) : generationPrompt,
-                            assets,
-                            promptOnly,
-                        );
+                        const baseContext = buildNodeGenerationContext(nodeId, nodesRef.current, connectionsRef.current, editingTextNode ? buildTextRewritePrompt(sourceTextContent, prompt) : generationPrompt, assets, promptOnly);
                         const requirements = generationModelRequirements(mode, baseContext, sourceNode, generationConfig, true);
                         generationConfig = buildGenerationConfig(effectiveConfig, sourceNode, mode, requirements);
                         const compatibilityError = usesWorkflowProvider ? "" : modelCompatibilityError(generationConfig, generationConfig.model, requirements);
@@ -335,7 +328,15 @@ export function useCanvasGenerationExecutor({
                                 node.id === nodeId
                                     ? {
                                           ...node,
-                                          metadata: { ...node.metadata, ...canvasGenerationPromptMetadata(prompt, statusPrompt), status: NODE_STATUS_LOADING, errorDetails: undefined, generationErrorCode: undefined, resourceReloadAvailable: undefined, failedPromptFingerprint: undefined },
+                                          metadata: {
+                                              ...node.metadata,
+                                              ...canvasGenerationPromptMetadata(prompt, statusPrompt),
+                                              status: NODE_STATUS_LOADING,
+                                              errorDetails: undefined,
+                                              generationErrorCode: undefined,
+                                              resourceReloadAvailable: undefined,
+                                              failedPromptFingerprint: undefined,
+                                          },
                                       }
                                     : node,
                             ),
@@ -442,7 +443,6 @@ export function useCanvasGenerationExecutor({
         ],
     );
 }
-
 
 function generationModelRequirements(
     mode: CanvasNodeGenerationMode,

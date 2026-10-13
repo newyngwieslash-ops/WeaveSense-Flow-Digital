@@ -36,6 +36,6 @@ describe("canvas theme ownership", () => {
     });
     test("persistence source contract excludes transient route state", async () => {
         const source = await Bun.file(new URL("../src/stores/canvas/use-canvas-theme-store.ts", import.meta.url)).text();
-        expect(source).toContain('partialize: ({ theme }) => ({ theme })');
+        expect(source).toContain("partialize: ({ theme }) => ({ theme })");
     });
 });

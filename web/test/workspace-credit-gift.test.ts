@@ -11,7 +11,7 @@ describe("workspace credit gift mark", () => {
 
         expect(topBar).toContain("<WorkspaceCreditGiftMark />");
         expect(topBar).not.toContain("Coins");
-        expect(canvas).toContain("<WorkspaceCreditGiftMark className=\"is-compact\" />");
+        expect(canvas).toContain('<WorkspaceCreditGiftMark className="is-compact" />');
         expect(canvas).not.toContain("Coins");
         expect(mark).toContain("#FFB34A");
         expect(mark).toContain("#12B8A8");

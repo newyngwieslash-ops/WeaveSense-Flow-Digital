@@ -35,14 +35,30 @@ export function creationShotRail(messages: CreationMessage[]): CreationShotRailE
 }
 
 export function creationVideoShotOrdinal(shots: CreationShotRailEntry[], item: CreationMessage): number {
-    const own = shots.find((entry) => item.role === "user" ? entry.user.id === item.id : entry.result?.id === item.id);
+    const own = shots.find((entry) => (item.role === "user" ? entry.user.id === item.id : entry.result?.id === item.id));
     return own?.ordinal || 0;
 }
 
-export function completedCreationGenerationTask(runtime: CreationRuntime, input: { taskId: string; task?: GenerationTask; mode: "image" | "video"; prompt: string; result: BackendGenerationResult; conversationId: string; messageId: string; batchIndex?: number; batchCount?: number }): GenerationTask {
+export function completedCreationGenerationTask(
+    runtime: CreationRuntime,
+    input: { taskId: string; task?: GenerationTask; mode: "image" | "video"; prompt: string; result: BackendGenerationResult; conversationId: string; messageId: string; batchIndex?: number; batchCount?: number },
+): GenerationTask {
     const now = new Date().toISOString();
     const task = input.task ?? { id: input.taskId, type: input.mode, status: "succeeded" as const, prompt: input.prompt, attempts: 1, createdAt: now, updatedAt: now };
-    return runtime.projectGenerationTaskResult({ ...task, status: "succeeded", prompt: input.prompt, clientContext: { conversationId: input.conversationId, messageId: input.messageId, ...(typeof input.batchIndex === "number" ? { batchIndex: input.batchIndex } : {}), ...(typeof input.batchCount === "number" ? { batchCount: input.batchCount } : {}) } }, input.result);
+    return runtime.projectGenerationTaskResult(
+        {
+            ...task,
+            status: "succeeded",
+            prompt: input.prompt,
+            clientContext: {
+                conversationId: input.conversationId,
+                messageId: input.messageId,
+                ...(typeof input.batchIndex === "number" ? { batchIndex: input.batchIndex } : {}),
+                ...(typeof input.batchCount === "number" ? { batchCount: input.batchCount } : {}),
+            },
+        },
+        input.result,
+    );
 }
 
 export function isVideoAttachment(attachment: CreationAttachment): attachment is CreationAttachment & { url: string } {
@@ -52,7 +68,6 @@ export function isVideoAttachment(attachment: CreationAttachment): attachment is
 export function isImageAttachment(attachment: CreationAttachment): attachment is CreationAttachment & { dataUrl: string; width?: number; height?: number } {
     return creationAttachmentKind(attachment) === "image";
 }
-
 
 export function attachCreationTaskContexts(tasks: GenerationTask[], conversations: CreationConversation[]) {
     const contexts = new Map<string, { prompt: string; clientContext: NonNullable<GenerationTask["clientContext"]> }>();
@@ -70,18 +85,22 @@ export function attachCreationTaskContexts(tasks: GenerationTask[], conversation
 }
 
 export async function materializeCreationTaskResults(runtime: CreationRuntime, tasks: GenerationTask[], signal?: AbortSignal): Promise<PersistedCreationTask[]> {
-    return Promise.all(tasks.map(async (task): Promise<PersistedCreationTask> => {
-        // 文本正文保存在 resultJson，不进入媒体资源化链路。
-        if (task.status !== "succeeded" || !task.clientContext || task.type === "canvas_text") return task;
-        try {
-            const materialized = await runtime.runGenerationConsumer(signal, (managedSignal: AbortSignal) => runtime.materializeGenerationTaskAssets(task, managedSignal));
-            const creationResultUrls = runtime.generationTaskMaterializedUrls(materialized);
-            const creationResultStorageKeys = runtime.generationTaskMaterializedStorageKeys(materialized);
-            return creationResultUrls.length || creationResultStorageKeys.length ? { ...materialized, ...(creationResultUrls.length ? { creationResultUrls } : {}), ...(creationResultStorageKeys.length ? { creationResultStorageKeys } : {}) } : materialized;
-        } catch (error) {
-            return { ...task, creationError: error instanceof Error ? error.message : "生成结果资源化失败" };
-        }
-    }));
+    return Promise.all(
+        tasks.map(async (task): Promise<PersistedCreationTask> => {
+            // 文本正文保存在 resultJson，不进入媒体资源化链路。
+            if (task.status !== "succeeded" || !task.clientContext || task.type === "canvas_text") return task;
+            try {
+                const materialized = await runtime.runGenerationConsumer(signal, (managedSignal: AbortSignal) => runtime.materializeGenerationTaskAssets(task, managedSignal));
+                const creationResultUrls = runtime.generationTaskMaterializedUrls(materialized);
+                const creationResultStorageKeys = runtime.generationTaskMaterializedStorageKeys(materialized);
+                return creationResultUrls.length || creationResultStorageKeys.length
+                    ? { ...materialized, ...(creationResultUrls.length ? { creationResultUrls } : {}), ...(creationResultStorageKeys.length ? { creationResultStorageKeys } : {}) }
+                    : materialized;
+            } catch (error) {
+                return { ...task, creationError: error instanceof Error ? error.message : "生成结果资源化失败" };
+            }
+        }),
+    );
 }
 
 export function reconcileCreationTaskMessages(runtime: CreationRuntime, conversations: CreationConversation[], tasks: PersistedCreationTask[]) {
@@ -97,7 +116,7 @@ export function reconcileCreationTaskMessages(runtime: CreationRuntime, conversa
             if (message.role === "assistant" && message.mode === "text") {
                 const recovery = runtime.recoverCreationTextTask(message, matches);
                 if (!recovery) return message;
-                completedAt = matches.reduce((latest, task) => conversationTimestamp(task.updatedAt) > conversationTimestamp(latest) ? task.updatedAt : latest, completedAt);
+                completedAt = matches.reduce((latest, task) => (conversationTimestamp(task.updatedAt) > conversationTimestamp(latest) ? task.updatedAt : latest), completedAt);
                 conversationChanged = true;
                 changed = true;
                 return { ...message, ...recovery };
@@ -111,7 +130,7 @@ export function reconcileCreationTaskMessages(runtime: CreationRuntime, conversa
             const resultStorageKeys = Array.from(new Set(succeeded.flatMap(creationTaskResultStorageKeys)));
             const failedCount = matches.filter((task) => task.status !== "succeeded" || Boolean(task.creationError)).length;
             const nextTaskIds = Array.from(new Set([...(message.taskIds || []), ...matches.map((task) => task.id)]));
-            completedAt = matches.reduce((latest, task) => conversationTimestamp(task.updatedAt) > conversationTimestamp(latest) ? task.updatedAt : latest, completedAt);
+            completedAt = matches.reduce((latest, task) => (conversationTimestamp(task.updatedAt) > conversationTimestamp(latest) ? task.updatedAt : latest), completedAt);
             conversationChanged = true;
             changed = true;
 

@@ -50,15 +50,7 @@ export async function loadCanvasDrawing(projectId: string, drawingId: string) {
     return normalizeCanvasDrawingSnapshot(saved);
 }
 
-export async function saveCanvasDrawing(
-    projectId: string,
-    drawingId: string,
-    engine: CanvasDrawingEngine,
-    snapshot: unknown,
-    previous?: CanvasDrawingSnapshot | null,
-    preview?: Blob | null,
-    render?: CanvasDrawingRenderDraft | null,
-) {
+export async function saveCanvasDrawing(projectId: string, drawingId: string, engine: CanvasDrawingEngine, snapshot: unknown, previous?: CanvasDrawingSnapshot | null, preview?: Blob | null, render?: CanvasDrawingRenderDraft | null) {
     const summary = summarizeCanvasDrawing(engine, snapshot);
     const revision = (previous?.revision || 0) + 1;
     const updatedAt = new Date().toISOString();
@@ -85,20 +77,14 @@ export async function saveCanvasDrawing(
     return next;
 }
 
-export async function createCanvasDrawingFromImage(
-    projectId: string,
-    drawingId: string,
-    engine: CanvasDrawingEngine,
-    image: { url: string; storageKey?: string; name: string; mimeType?: string },
-) {
+export async function createCanvasDrawingFromImage(projectId: string, drawingId: string, engine: CanvasDrawingEngine, image: { url: string; storageKey?: string; name: string; mimeType?: string }) {
     const dataUrl = await imageToDataUrl({ url: image.url, storageKey: image.storageKey, name: image.name, mimeType: image.mimeType });
     if (!dataUrl?.startsWith("data:image/")) throw new Error("无法读取来源图片");
 
     const { width, height, mimeType } = await readImageMeta(dataUrl);
     const source = { dataUrl, width, height, mimeType: mimeType || image.mimeType || "image/png", name: image.name || "来源图片" };
-    const document = engine === "excalidraw"
-        ? (await import("@/lib/canvas/canvas-drawing-excalidraw-document")).createExcalidrawDrawingFromImage(source)
-        : await (await import("@/lib/canvas/canvas-drawing-tldraw-document")).createTldrawDrawingFromImage(source);
+    const document =
+        engine === "excalidraw" ? (await import("@/lib/canvas/canvas-drawing-excalidraw-document")).createExcalidrawDrawingFromImage(source) : await (await import("@/lib/canvas/canvas-drawing-tldraw-document")).createTldrawDrawingFromImage(source);
 
     // 来源图必须进入绘图快照本身，不能继续依赖可能被替换或清理的原节点 URL。
     try {
@@ -130,22 +116,14 @@ export async function saveCanvasDrawingRenderPublication(projectId: string, draw
 
 export async function removeCanvasDrawing(projectId: string, drawingId: string) {
     if (!projectId || !drawingId) return;
-    await Promise.all([
-        drawingStore.removeItem(drawingKey(projectId, drawingId)),
-        drawingPreviewStore.removeItem(drawingKey(projectId, drawingId)),
-        drawingRenderStore.removeItem(drawingKey(projectId, drawingId)),
-    ]);
+    await Promise.all([drawingStore.removeItem(drawingKey(projectId, drawingId)), drawingPreviewStore.removeItem(drawingKey(projectId, drawingId)), drawingRenderStore.removeItem(drawingKey(projectId, drawingId))]);
 }
 
 export async function cloneCanvasDrawing(projectId: string, sourceDrawingId: string, targetDrawingId: string) {
-    const [source, preview, render] = await Promise.all([
-        loadCanvasDrawing(projectId, sourceDrawingId),
-        loadCanvasDrawingPreview(projectId, sourceDrawingId),
-        loadCanvasDrawingRender(projectId, sourceDrawingId),
-    ]);
+    const [source, preview, render] = await Promise.all([loadCanvasDrawing(projectId, sourceDrawingId), loadCanvasDrawingPreview(projectId, sourceDrawingId), loadCanvasDrawingRender(projectId, sourceDrawingId)]);
     if (!source) return null;
     const renderDraft = render
-        ? {
+        ? ({
               blob: render.blob,
               pageId: render.pageId,
               width: render.width,
@@ -154,19 +132,19 @@ export async function cloneCanvasDrawing(projectId: string, sourceDrawingId: str
               background: render.background,
               storageKey: render.storageKey,
               url: render.url,
-          } satisfies CanvasDrawingRenderDraft
+          } satisfies CanvasDrawingRenderDraft)
         : undefined;
     return saveCanvasDrawing(projectId, targetDrawingId, source.engine, source.snapshot, null, preview || undefined, renderDraft);
 }
 
 export function summarizeCanvasDrawing(engine: CanvasDrawingEngine, snapshot: unknown) {
     if (engine === "excalidraw") {
-        const root = snapshot && typeof snapshot === "object" ? snapshot as Record<string, unknown> : {};
+        const root = snapshot && typeof snapshot === "object" ? (snapshot as Record<string, unknown>) : {};
         const elements = Array.isArray(root.elements) ? root.elements : [];
         return { shapeCount: elements.filter((element) => Boolean(element) && typeof element === "object" && !(element as { isDeleted?: boolean }).isDeleted).length, pageCount: 1 };
     }
-    const root = snapshot && typeof snapshot === "object" ? snapshot as Record<string, unknown> : {};
-    const document = root.document && typeof root.document === "object" ? root.document as Record<string, unknown> : root;
+    const root = snapshot && typeof snapshot === "object" ? (snapshot as Record<string, unknown>) : {};
+    const document = root.document && typeof root.document === "object" ? (root.document as Record<string, unknown>) : root;
     const pages = pagesFromSnapshot(document);
     const store = document.store;
     const shapeCount = countRecords(document.shapes, "shape:") || countRecords(store, "shape:");
@@ -203,13 +181,7 @@ async function createInitialDrawingRender(dataUrl: string, width: number, height
     if (!context) throw new Error("浏览器无法创建绘图预览");
     context.fillStyle = "#ffffff";
     context.fillRect(0, 0, canvas.width, canvas.height);
-    context.drawImage(
-        source,
-        Math.round(INITIAL_DRAWING_RENDER_PADDING * scale),
-        Math.round(INITIAL_DRAWING_RENDER_PADDING * scale),
-        Math.max(1, Math.round(width * scale)),
-        Math.max(1, Math.round(height * scale)),
-    );
+    context.drawImage(source, Math.round(INITIAL_DRAWING_RENDER_PADDING * scale), Math.round(INITIAL_DRAWING_RENDER_PADDING * scale), Math.max(1, Math.round(width * scale)), Math.max(1, Math.round(height * scale)));
     const blob = await canvasToPngBlob(canvas);
     return {
         blob,
@@ -232,6 +204,6 @@ function loadDrawingImage(dataUrl: string) {
 
 function canvasToPngBlob(canvas: HTMLCanvasElement) {
     return new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("无法生成绘图预览")), "image/png");
+        canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("无法生成绘图预览"))), "image/png");
     });
 }

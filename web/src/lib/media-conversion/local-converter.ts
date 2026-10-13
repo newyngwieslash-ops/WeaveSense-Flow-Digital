@@ -7,7 +7,10 @@ export type LocalImageConversionResult = {
 };
 
 export class LocalImageConversionError extends Error {
-    constructor(readonly code: "model_missing" | "source_unreadable" | "browser_unsupported" | "aborted", message: string) {
+    constructor(
+        readonly code: "model_missing" | "source_unreadable" | "browser_unsupported" | "aborted",
+        message: string,
+    ) {
         super(message);
         this.name = "LocalImageConversionError";
     }

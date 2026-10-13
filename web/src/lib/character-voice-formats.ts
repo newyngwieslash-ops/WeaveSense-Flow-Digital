@@ -1,18 +1,52 @@
 export const CHARACTER_VOICE_FORMAT_LABEL = "MP3、WAV、M4A/AAC、FLAC、OGG/Opus、WebM";
 
 export const CHARACTER_VOICE_UPLOAD_ACCEPT = [
-    "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/wave", "audio/vnd.wave",
-    "audio/mp4", "audio/x-m4a", "audio/aac", "audio/flac", "audio/x-flac",
-    "audio/ogg", "audio/opus", "audio/webm",
-    ".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg", ".oga", ".opus", ".webm", ".weba",
+    "audio/mpeg",
+    "audio/mp3",
+    "audio/wav",
+    "audio/x-wav",
+    "audio/wave",
+    "audio/vnd.wave",
+    "audio/mp4",
+    "audio/x-m4a",
+    "audio/aac",
+    "audio/flac",
+    "audio/x-flac",
+    "audio/ogg",
+    "audio/opus",
+    "audio/webm",
+    ".mp3",
+    ".wav",
+    ".m4a",
+    ".aac",
+    ".flac",
+    ".ogg",
+    ".oga",
+    ".opus",
+    ".webm",
+    ".weba",
 ].join(",");
 
 const supportedMimeTypes = new Set([
-    "audio/mpeg", "audio/mp3", "audio/x-mpeg",
-    "audio/wav", "audio/x-wav", "audio/wave", "audio/vnd.wave", "audio/x-pn-wav",
-    "audio/mp4", "audio/x-m4a", "audio/m4a", "audio/aac", "audio/aacp",
-    "audio/flac", "audio/x-flac",
-    "audio/ogg", "application/ogg", "audio/opus", "audio/webm",
+    "audio/mpeg",
+    "audio/mp3",
+    "audio/x-mpeg",
+    "audio/wav",
+    "audio/x-wav",
+    "audio/wave",
+    "audio/vnd.wave",
+    "audio/x-pn-wav",
+    "audio/mp4",
+    "audio/x-m4a",
+    "audio/m4a",
+    "audio/aac",
+    "audio/aacp",
+    "audio/flac",
+    "audio/x-flac",
+    "audio/ogg",
+    "application/ogg",
+    "audio/opus",
+    "audio/webm",
 ]);
 
 const supportedExtensions = new Set(["mp3", "wav", "m4a", "aac", "flac", "ogg", "oga", "opus", "webm", "weba"]);
@@ -49,6 +83,9 @@ export function audioFileExtension(mimeType?: string, fileName = "") {
 }
 
 function fileExtension(fileName: string) {
-    const match = fileName.trim().toLowerCase().match(/\.([a-z0-9]+)$/);
+    const match = fileName
+        .trim()
+        .toLowerCase()
+        .match(/\.([a-z0-9]+)$/);
     return match?.[1] || "";
 }

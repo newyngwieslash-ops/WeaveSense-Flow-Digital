@@ -28,7 +28,21 @@ type CanvasProjectStatusDialogsProps = {
     onConfirmClear: () => void;
 };
 
-export function CanvasProjectStatusDialogs({ theme, task, taskLogs, taskLoading, superResolveNode, previewNode, clearConfirmOpen, onCloseTask, onCancelTask, onCloseSuperResolve, onClosePreview, onCancelClear, onConfirmClear }: CanvasProjectStatusDialogsProps) {
+export function CanvasProjectStatusDialogs({
+    theme,
+    task,
+    taskLogs,
+    taskLoading,
+    superResolveNode,
+    previewNode,
+    clearConfirmOpen,
+    onCloseTask,
+    onCancelTask,
+    onCloseSuperResolve,
+    onClosePreview,
+    onCancelClear,
+    onConfirmClear,
+}: CanvasProjectStatusDialogsProps) {
     const config = useEffectiveConfig();
     return (
         <>
@@ -87,18 +101,11 @@ export function CanvasProjectStatusDialogs({ theme, task, taskLogs, taskLoading,
                 flush
                 styles={{ body: { display: "flex", justifyContent: "center", alignItems: "center", maxHeight: "84vh", overflow: "hidden", background: "var(--workspace-canvas-deep)" } }}
             >
-                {previewNode?.type === CanvasNodeType.Video && (previewNode.metadata?.content || previewNode.metadata?.storageKey) ? (
-                    <ResolvedCanvasVideoPreview node={previewNode} />
-                ) : null}
+                {previewNode?.type === CanvasNodeType.Video && (previewNode.metadata?.content || previewNode.metadata?.storageKey) ? <ResolvedCanvasVideoPreview node={previewNode} /> : null}
             </AppModal>
 
             {previewNode?.type === CanvasNodeType.Image && (previewNode.metadata?.content || previewNode.metadata?.storageKey) ? (
-                <CanvasImagePreview
-                    src={previewNode.metadata.content}
-                    storageKey={previewNode.metadata.storageKey}
-                    alt={previewNode.title || "图片"}
-                    onClose={onClosePreview}
-                />
+                <CanvasImagePreview src={previewNode.metadata.content} storageKey={previewNode.metadata.storageKey} alt={previewNode.title || "图片"} onClose={onClosePreview} />
             ) : null}
 
             <Modal
@@ -153,13 +160,19 @@ function TaskGenerationParameters({ inputJson, theme }: { inputJson?: string; th
     const fields = taskParameterRows(inputJson);
     return (
         <div>
-            <div className="mb-2 text-xs font-semibold" style={{ color: theme.node.muted }}>生成参数</div>
+            <div className="mb-2 text-xs font-semibold" style={{ color: theme.node.muted }}>
+                生成参数
+            </div>
             {fields.length ? (
                 <div className="grid grid-cols-2 gap-x-5 gap-y-1 rounded-lg border p-3 sm:grid-cols-3" style={{ borderColor: theme.node.stroke, background: theme.node.panel }}>
-                    {fields.map((field) => <TaskDetailItem key={field.label} label={field.label} value={field.value} />)}
+                    {fields.map((field) => (
+                        <TaskDetailItem key={field.label} label={field.label} value={field.value} />
+                    ))}
                 </div>
             ) : (
-                <div className="rounded-lg p-3 text-xs" style={{ background: theme.node.fill, color: theme.node.muted }}>暂无参数记录</div>
+                <div className="rounded-lg p-3 text-xs" style={{ background: theme.node.fill, color: theme.node.muted }}>
+                    暂无参数记录
+                </div>
             )}
         </div>
     );
@@ -196,16 +209,14 @@ function taskParameterRows(inputJson?: string) {
 
     function addReference(label: string, value: unknown, kind: string) {
         if (!Array.isArray(value) || !value.length) return;
-        const names = value
-            .map((item) => (typeof item === "object" && item !== null && "name" in item ? String((item as { name?: unknown }).name || "") : ""))
-            .filter(Boolean);
+        const names = value.map((item) => (typeof item === "object" && item !== null && "name" in item ? String((item as { name?: unknown }).name || "") : "")).filter(Boolean);
         const suffix = names.length ? `（${names.slice(0, 3).join("、")}${names.length > 3 ? "…" : ""}）` : "";
         rows.push({ label, value: `${value.length} 个${kind}${suffix}` });
     }
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
-    return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+    return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 }
 
 function booleanLabel(value: unknown) {

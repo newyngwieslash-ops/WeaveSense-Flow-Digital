@@ -66,7 +66,9 @@ function AssetThumbnail({ node }: { node: CanvasNodeData }) {
         return (
             <>
                 <CanvasVideoPreviewImage node={node} alt="" loading="lazy" decoding="async" draggable={false} className="size-full object-cover" fallback={<Play className="size-4" />} />
-                <span className="absolute inset-0 grid place-items-center bg-black/15"><Play className="size-3.5 fill-white text-white" /></span>
+                <span className="absolute inset-0 grid place-items-center bg-black/15">
+                    <Play className="size-3.5 fill-white text-white" />
+                </span>
             </>
         );
     }
@@ -79,10 +81,15 @@ function AssetPreviewModal({ node, onClose }: { node: CanvasNodeData | null; onC
         <Modal title={node?.title || "资产预览"} open={Boolean(node)} onCancel={onClose} footer={null} width={880} centered destroyOnHidden>
             {node ? (
                 <div className="grid min-h-56 place-items-center overflow-hidden rounded-lg bg-black/[0.035] p-3 dark:bg-white/[0.035]" data-canvas-no-zoom>
-                    {node.type === CanvasNodeType.Video && source ? <video src={source} controls autoPlay playsInline className="max-h-[68vh] max-w-full rounded-md" />
-                        : node.type === CanvasNodeType.Audio && source ? <audio src={source} controls autoPlay className="w-full max-w-xl" />
-                            : source ? <img src={source} alt={node.title || "资产预览"} className="max-h-[68vh] max-w-full object-contain" />
-                                : <span className="text-sm text-foreground/45">当前资产没有可预览的媒体内容</span>}
+                    {node.type === CanvasNodeType.Video && source ? (
+                        <video src={source} controls autoPlay playsInline className="max-h-[68vh] max-w-full rounded-md" />
+                    ) : node.type === CanvasNodeType.Audio && source ? (
+                        <audio src={source} controls autoPlay className="w-full max-w-xl" />
+                    ) : source ? (
+                        <img src={source} alt={node.title || "资产预览"} className="max-h-[68vh] max-w-full object-contain" />
+                    ) : (
+                        <span className="text-sm text-foreground/45">当前资产没有可预览的媒体内容</span>
+                    )}
                 </div>
             ) : null}
         </Modal>
@@ -90,22 +97,29 @@ function AssetPreviewModal({ node, onClose }: { node: CanvasNodeData | null; onC
 }
 
 function useNodeMediaSource(node: CanvasNodeData | null) {
-    const fallback = node ? node.metadata?.workflowKind === "character"
-        ? node.metadata.characterCoverUrl || ""
-        : node.type === CanvasNodeType.Drawing
-            ? node.metadata?.drawingPreviewUrl || node.metadata?.content || ""
-            : node.metadata?.content || "" : "";
+    const fallback = node
+        ? node.metadata?.workflowKind === "character"
+            ? node.metadata.characterCoverUrl || ""
+            : node.type === CanvasNodeType.Drawing
+              ? node.metadata?.drawingPreviewUrl || node.metadata?.content || ""
+              : node.metadata?.content || ""
+        : "";
     const storageKey = node?.metadata?.storageKey;
     const [source, setSource] = useState(fallback);
     useEffect(() => {
         let cancelled = false;
         setSource(fallback);
-        if (storageKey) void resolveMediaUrl(storageKey, fallback).then((url) => {
-            if (!cancelled) setSource(url || fallback);
-        }).catch(() => {
-            if (!cancelled) setSource(fallback);
-        });
-        return () => { cancelled = true; };
+        if (storageKey)
+            void resolveMediaUrl(storageKey, fallback)
+                .then((url) => {
+                    if (!cancelled) setSource(url || fallback);
+                })
+                .catch(() => {
+                    if (!cancelled) setSource(fallback);
+                });
+        return () => {
+            cancelled = true;
+        };
     }, [fallback, storageKey]);
     return source;
 }

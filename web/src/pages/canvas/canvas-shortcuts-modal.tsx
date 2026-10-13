@@ -3,13 +3,7 @@ import { AppModal } from "@/components/ui/product/app-modal";
 import { Command, Search } from "lucide-react";
 import { Kbd } from "@/components/ui/base/kbd";
 
-import {
-    CANVAS_SHORTCUT_CATEGORIES,
-    CANVAS_SHORTCUTS,
-    filterCanvasShortcuts,
-    type CanvasShortcutCategoryId,
-    type CanvasShortcutItem,
-} from "@/lib/canvas/canvas-shortcuts";
+import { CANVAS_SHORTCUT_CATEGORIES, CANVAS_SHORTCUTS, filterCanvasShortcuts, type CanvasShortcutCategoryId, type CanvasShortcutItem } from "@/lib/canvas/canvas-shortcuts";
 
 type ShortcutCategoryFilter = CanvasShortcutCategoryId | "all";
 
@@ -25,10 +19,7 @@ export function CanvasShortcutsModal({ open, onClose }: { open: boolean; onClose
     }, [open]);
 
     const results = useMemo(() => filterCanvasShortcuts(query, category), [category, query]);
-    const categoryCounts = useMemo(
-        () => new Map(CANVAS_SHORTCUT_CATEGORIES.map((entry) => [entry.id, CANVAS_SHORTCUTS.filter((shortcut) => shortcut.category === entry.id).length])),
-        [],
-    );
+    const categoryCounts = useMemo(() => new Map(CANVAS_SHORTCUT_CATEGORIES.map((entry) => [entry.id, CANVAS_SHORTCUTS.filter((shortcut) => shortcut.category === entry.id).length])), []);
 
     return (
         <AppModal
@@ -58,13 +49,7 @@ export function CanvasShortcutsModal({ open, onClose }: { open: boolean; onClose
                     </div>
                     <label className="canvas-shortcuts-search">
                         <Search aria-hidden />
-                        <input
-                            ref={inputRef}
-                            value={query}
-                            onChange={(event) => setQuery(event.target.value)}
-                            placeholder="搜索按键或操作…"
-                            aria-label="搜索画布快捷键"
-                        />
+                        <input ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索按键或操作…" aria-label="搜索画布快捷键" />
                         {query ? (
                             <button type="button" onClick={() => setQuery("")} aria-label="清空搜索">
                                 清除
@@ -77,13 +62,7 @@ export function CanvasShortcutsModal({ open, onClose }: { open: boolean; onClose
                     <nav className="canvas-shortcuts-categories" aria-label="快捷键分类">
                         <CategoryButton label="全部" count={CANVAS_SHORTCUTS.length} active={category === "all"} onClick={() => setCategory("all")} />
                         {CANVAS_SHORTCUT_CATEGORIES.map((entry) => (
-                            <CategoryButton
-                                key={entry.id}
-                                label={entry.label}
-                                count={categoryCounts.get(entry.id) || 0}
-                                active={category === entry.id}
-                                onClick={() => setCategory(entry.id)}
-                            />
+                            <CategoryButton key={entry.id} label={entry.label} count={categoryCounts.get(entry.id) || 0} active={category === entry.id} onClick={() => setCategory(entry.id)} />
                         ))}
                     </nav>
 
@@ -106,7 +85,9 @@ export function CanvasShortcutsModal({ open, onClose }: { open: boolean; onClose
 
                 <footer className="canvas-shortcuts-footer">
                     <span>共 {results.length} 个快捷键</span>
-                    <span className="canvas-shortcuts-close-hint"><Kbd>Esc</Kbd> 关闭</span>
+                    <span className="canvas-shortcuts-close-hint">
+                        <Kbd>Esc</Kbd> 关闭
+                    </span>
                 </footer>
             </div>
         </AppModal>

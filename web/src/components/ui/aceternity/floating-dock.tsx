@@ -301,7 +301,10 @@ function DockSwitch({ entry, compact, showLabel, motionEnabled, metrics }: { ent
     const reducedMotion = useReducedMotion();
     const [hoveredId, setHoveredId] = useState<string | null>(null);
     const [focusedId, setFocusedId] = useState<string | null>(null);
-    const selectedIndex = Math.max(0, entry.options.findIndex((option) => option.value === entry.value));
+    const selectedIndex = Math.max(
+        0,
+        entry.options.findIndex((option) => option.value === entry.value),
+    );
     const touch = metrics.base >= 40;
     const labeled = showLabel || entry.options.some((option) => option.displayLabel);
     const slot = labeled ? (touch ? 68 : compact ? 58 : 64) : touch ? 32 : compact ? 24 : 26;
@@ -322,10 +325,7 @@ function DockSwitch({ entry, compact, showLabel, motionEnabled, metrics }: { ent
                 if (next) entry.onChange(next.value);
             }}
         >
-            <span
-                className="aceternity-dock-switch-track relative inline-flex items-center"
-                style={{ gap, padding: `${touch ? 4 : 3}px ${padX}px` }}
-            >
+            <span className="aceternity-dock-switch-track relative inline-flex items-center" style={{ gap, padding: `${touch ? 4 : 3}px ${padX}px` }}>
                 <motion.span
                     aria-hidden
                     className={cn("aceternity-dock-switch-thumb pointer-events-none absolute top-1/2", labeled ? "rounded-[var(--dock-item-radius)]" : "rounded-full")}
@@ -348,11 +348,11 @@ function DockSwitch({ entry, compact, showLabel, motionEnabled, metrics }: { ent
                                 className={cn("aceternity-dock-switch-option relative z-[1] inline-flex items-center justify-center border-0 outline-none", labeled ? "gap-1 rounded-[var(--dock-item-radius)] px-2" : "rounded-full")}
                                 style={{ width: slot, height: slotHeight }}
                                 onMouseEnter={() => setHoveredId(option.id)}
-                                onMouseLeave={() => setHoveredId((current) => current === option.id ? null : current)}
+                                onMouseLeave={() => setHoveredId((current) => (current === option.id ? null : current))}
                                 onFocus={(event) => {
                                     if (event.currentTarget.matches(":focus-visible")) setFocusedId(option.id);
                                 }}
-                                onBlur={() => setFocusedId((current) => current === option.id ? null : current)}
+                                onBlur={() => setFocusedId((current) => (current === option.id ? null : current))}
                                 onMouseDown={() => setFocusedId(null)}
                                 onClick={() => {
                                     if (!checked) entry.onChange(option.value);

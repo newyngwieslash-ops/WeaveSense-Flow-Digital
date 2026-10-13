@@ -18,9 +18,7 @@ export const EDITOR_SLOT_REQUIRED_PERMISSION: Record<EditorSlotKind, EditorPlugi
     "ai-assistant": "timeline.read",
 };
 
-export type EditorSlotPermissionVerdict =
-    | { allowed: true }
-    | { allowed: false; reason: "plugin-not-registered" | "missing-permission"; missing: EditorPluginPermission | null };
+export type EditorSlotPermissionVerdict = { allowed: true } | { allowed: false; reason: "plugin-not-registered" | "missing-permission"; missing: EditorPluginPermission | null };
 
 /** fail-closed 权限判定：权限集缺失或未包含 required 一律拒绝。 */
 export function checkEditorPermission(permissions: ReadonlySet<string> | null, required: EditorPluginPermission): boolean {

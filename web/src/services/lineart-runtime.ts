@@ -131,7 +131,7 @@ async function reconnectTransport() {
 async function parseJsonResponse(response: Response) {
     const text = await boundedText(response, MAX_RESPONSE_BYTES);
     try {
-        return text ? JSON.parse(text) as unknown : {};
+        return text ? (JSON.parse(text) as unknown) : {};
     } catch {
         throw new LocalRuntimeClientError("runtime_response_invalid", "本机 AI 线稿响应无效", response.status);
     }
@@ -155,7 +155,19 @@ function parseResult(value: Record<string, unknown>): LocalLineartResult {
 }
 
 function parseStatus(value: unknown): LocalLineartRuntimeStatus {
-    if (!isRecord(value) || value.ok !== true || value.module !== "lineart-estimation" || value.apiVersion !== 1 || typeof value.ready !== "boolean" || typeof value.configured !== "boolean" || typeof value.modelCached !== "boolean" || typeof value.loaded !== "boolean" || value.device !== "cpu" || typeof value.modelId !== "string" || (value.reason !== undefined && typeof value.reason !== "string")) {
+    if (
+        !isRecord(value) ||
+        value.ok !== true ||
+        value.module !== "lineart-estimation" ||
+        value.apiVersion !== 1 ||
+        typeof value.ready !== "boolean" ||
+        typeof value.configured !== "boolean" ||
+        typeof value.modelCached !== "boolean" ||
+        typeof value.loaded !== "boolean" ||
+        value.device !== "cpu" ||
+        typeof value.modelId !== "string" ||
+        (value.reason !== undefined && typeof value.reason !== "string")
+    ) {
         throw new LocalRuntimeClientError("runtime_response_invalid", "本机 AI 线稿状态无效");
     }
     return value as LocalLineartRuntimeStatus;
@@ -179,7 +191,11 @@ function bytesToBase64(bytes: Uint8Array) {
 
 function bytesFromBase64(value: string, code = "lineart_input_invalid", message = "AI 线稿输入图片无效") {
     let binary: string;
-    try { binary = atob(value.replaceAll("-", "+").replaceAll("_", "/")); } catch { throw new LocalRuntimeClientError(code, message, code === "lineart_input_invalid" ? 400 : 0); }
+    try {
+        binary = atob(value.replaceAll("-", "+").replaceAll("_", "/"));
+    } catch {
+        throw new LocalRuntimeClientError(code, message, code === "lineart_input_invalid" ? 400 : 0);
+    }
     const bytes = new Uint8Array(binary.length);
     for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
     return bytes;

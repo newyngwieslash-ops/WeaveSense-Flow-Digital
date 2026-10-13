@@ -26,14 +26,7 @@ export function canvasNodeHasCommittedContent(node: CanvasNodeData) {
 export function writeCanvasNodePrompt(node: CanvasNodeData, prompt: string, options: WriteCanvasNodePromptOptions = {}) {
     const metadata = options.metadata ?? node.metadata;
     const clearPromptTemplate = options.clearPromptTemplate ?? Boolean(metadata?.promptTemplateOperation);
-    const promptTemplateMetadata = clearPromptTemplate
-        ? { promptTemplateOperation: undefined, promptTemplateVariables: undefined }
-        : {};
+    const promptTemplateMetadata = clearPromptTemplate ? { promptTemplateOperation: undefined, promptTemplateVariables: undefined } : {};
     // 显式提交草稿补丁，否则已有 generationSpec 会把旧提示词投影回编辑框。
-    return synchronizeGenerationSpec(
-        { ...node, metadata },
-        canvasNodeHasCommittedContent(node)
-            ? { ...promptTemplateMetadata, composerContent: prompt }
-            : { ...promptTemplateMetadata, prompt, composerContent: prompt },
-    );
+    return synchronizeGenerationSpec({ ...node, metadata }, canvasNodeHasCommittedContent(node) ? { ...promptTemplateMetadata, composerContent: prompt } : { ...promptTemplateMetadata, prompt, composerContent: prompt });
 }

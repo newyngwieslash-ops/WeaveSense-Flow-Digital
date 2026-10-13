@@ -5,25 +5,33 @@ import type { GenerationTask } from "@/services/api/task-center";
 
 describe("章节生成任务刷新恢复", () => {
     test("优先从任务列表的安全客户端上下文识别章节与操作", () => {
-        expect(chapterTaskIdentity(task({
-            clientContext: {
-                domainProjectId: "project-1",
-                chapterId: "chapter-1",
-                chapterOperation: "characters",
-            },
-        }))).toEqual({ chapterId: "chapter-1", kind: "characters" });
+        expect(
+            chapterTaskIdentity(
+                task({
+                    clientContext: {
+                        domainProjectId: "project-1",
+                        chapterId: "chapter-1",
+                        chapterOperation: "characters",
+                    },
+                }),
+            ),
+        ).toEqual({ chapterId: "chapter-1", kind: "characters" });
     });
 
     test("任务详情可从脱敏输入 metadata 恢复分镜操作", () => {
-        expect(chapterTaskIdentity(task({
-            inputJson: JSON.stringify({
-                metadata: {
-                    domainProjectId: "project-1",
-                    chapterId: "chapter-2",
-                    source: "short-drama-chapter-storyboard",
-                },
-            }),
-        }))).toEqual({ chapterId: "chapter-2", kind: "storyboard" });
+        expect(
+            chapterTaskIdentity(
+                task({
+                    inputJson: JSON.stringify({
+                        metadata: {
+                            domainProjectId: "project-1",
+                            chapterId: "chapter-2",
+                            source: "short-drama-chapter-storyboard",
+                        },
+                    }),
+                }),
+            ),
+        ).toEqual({ chapterId: "chapter-2", kind: "storyboard" });
     });
 
     test("无关、缺少章节或损坏的任务输入不会关联章节按钮", () => {

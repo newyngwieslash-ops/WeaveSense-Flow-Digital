@@ -7,7 +7,7 @@ test("markdownPlainText 剥离标题、加粗和列表记号", () => {
 });
 
 test("markdownPlainText 围栏代码块替换为占位词，包括未闭合的围栏", () => {
-    assert.equal(markdownPlainText("看这段：\n```json\n{\"a\":1}\n```"), "看这段： 代码块");
+    assert.equal(markdownPlainText('看这段：\n```json\n{"a":1}\n```'), "看这段： 代码块");
     assert.equal(markdownPlainText("开头 ```js\nconst a = 1;"), "开头 代码块");
 });
 

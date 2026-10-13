@@ -107,3 +107,5 @@ The Pi agent loop now drives the intel tools for intelligence subjects; approval
   - MCP calls aren't idempotent against the remote (A16 reconciliation not done).
   - No media download.
   - The MCP tool snapshot is fixed per run (approval changes apply to new runs; execution still re-checks).
+
+Pending live acceptance and required credentials: see [pending-acceptance.md](pending-acceptance.md).

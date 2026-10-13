@@ -1,0 +1,22 @@
+# Pending real-sample acceptance (deferred to the very last step)
+
+Live, real-account acceptance for the connectors below is **deferred to the very last step** of delivery. Until the user provides these credentials, A19 (and the live part of A14) stays **pending-credentials**. All current connector tests run on fixtures (`mode=fixture`), and no RSS test is counted as Telegram/WeChat acceptance.
+
+## Telegram
+- `TELEGRAM_API_ID` and `TELEGRAM_API_HASH` from https://my.telegram.org
+- A logged-in Telethon session: either a phone number + login code (run `services/loom-engine/workers/telethon/login.py`), or an existing session string (`TELEGRAM_SESSION`) or session file path (`TELEGRAM_SESSION_PATH`)
+- A deployed Telethon worker, with its URL set as `TELEGRAM_WORKER_URL` for Loom Engine
+- One public channel handle to sample
+
+## WeChat Official Accounts
+- A running WeaveSense auth gateway with a logged-in WeChat session: `WECHAT_GATEWAY_URL` and `WECHAT_GATEWAY_TOKEN`
+- One official-account feed ID (the gateway `source_id`)
+- Optional backup provider: `DAJIALA_KEY` (plus `DAJIALA_VERIFYCODE` if that account requires it)
+
+## MCP
+- One real remote MCP endpoint (HTTPS, streamable HTTP) and its token, provided to the platform as `FLOW_MCP_CRED_<NAME>` and referenced by the connection as `env:FLOW_MCP_CRED_<NAME>`
+
+## Procedure (when credentials arrive)
+1. Configure the env vars above and create one source/connection per connector.
+2. Run one collection (or one MCP tool call) with a small budget.
+3. Record the `flow_connector_samples` row (`mode=live`) or the `flow_mcp_usage` row, with time (Asia/Shanghai), environment, and receipts, in `delivery-report.md`.

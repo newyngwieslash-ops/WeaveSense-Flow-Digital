@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"gorm.io/gorm"
 	"log/slog"
 	"os"
 	"strconv"
@@ -38,14 +39,14 @@ func (s *Service) releasePiRunSlot(runID string) {
 
 // parkFlowOperation records waiting_external for an async engine operation
 // returned by an intel tool, with the run request as resume checkpoint (A21).
-func (s *Service) parkFlowOperation(userID, runID string, req CloudAgentRequest, ss flow.SubjectScope, callID string, r flow.ToolResult) {
+func (s *Service) parkFlowOperation(db *gorm.DB, userID, runID string, req CloudAgentRequest, ss flow.SubjectScope, callID string, r flow.ToolResult) {
 	opID, ok := asyncOperationID(r.Output)
 	if !ok {
 		return
 	}
 	out := struct{ OperationID string }{opID}
 	cp, _ := json.Marshal(req)
-	if _, err := (flow.Waits{DB: s.repo.DB()}).Park(model.FlowExternalWait{TenantID: ss.Scope.TenantID, WorkspaceID: ss.Scope.WorkspaceID, UserID: userID,
+	if _, err := (flow.Waits{DB: db}).Park(model.FlowExternalWait{TenantID: ss.Scope.TenantID, WorkspaceID: ss.Scope.WorkspaceID, UserID: userID,
 		RunID: runID, ToolCallID: callID, OperationID: out.OperationID, Reservation: "run:" + runID, Checkpoint: string(cp)}); err != nil {
 		slog.Warn("flow: park operation", "run", runID, "error", err)
 	}

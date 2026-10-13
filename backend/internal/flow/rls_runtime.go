@@ -30,14 +30,12 @@ func TenantMiddleware(db *gorm.DB, user UserFunc) gin.HandlerFunc {
 			c.Next()
 			return
 		}
-		var tenants []string
-		if err := db.Model(&model.Membership{}).Where("user_id = ? AND status = ?", u.ID, "active").Pluck("tenant_id", &tenants).Error; err != nil {
+		tenants, err := UserTenantIDs(db, u.ID)
+		if err != nil {
 			reply(c, http.StatusInternalServerError, nil, "tenant resolution failed")
 			c.Abort()
 			return
 		}
-		// A user's personal tenant exists implicitly before first use.
-		tenants = append(tenants, model.PersonalTenantID(u.ID))
 		tx := db.Begin()
 		if tx.Error != nil {
 			reply(c, http.StatusServiceUnavailable, nil, "database unavailable")
@@ -93,3 +91,30 @@ func (g *MCPGateway) withDB(db *gorm.DB) *MCPGateway {
 	c.DB = db
 	return &c
 }
+
+// UserTenantIDs are the tenants a user may touch: active memberships plus the
+// personal tenant (which exists implicitly before first use).
+func UserTenantIDs(db *gorm.DB, userID string) ([]string, error) {
+	var tenants []string
+	if err := db.Model(&model.Membership{}).Where("user_id = ? AND status = ?", userID, "active").Pluck("tenant_id", &tenants).Error; err != nil {
+		return nil, err
+	}
+	return append(tenants, model.PersonalTenantID(userID)), nil
+}
+
+// UserTx runs fn in a transaction scoped (RLS app.tenant_ids) to the user's
+// tenants — the background equivalent of TenantMiddleware, used by agent tool
+// execution, conversation recording and auto-continue outside HTTP requests.
+func UserTx(db *gorm.DB, userID string, fn func(tx *gorm.DB) error) error {
+	if userID == "" {
+		return ErrForbidden
+	}
+	tenants, err := UserTenantIDs(db, userID)
+	if err != nil {
+		return err
+	}
+	return TenantTx(db, strings.Join(tenants, ","), fn)
+}
+
+// WithDB rebinds the tool registry (and its MCP gateway) to a scoped handle.
+func (t Tools) WithDB(db *gorm.DB) Tools { return t.withDB(db) }

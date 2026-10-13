@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"gorm.io/gorm"
 	"net/http"
 	"time"
 
@@ -62,7 +63,8 @@ var p3Tools = []ToolSpec{
 			}
 			return map[string]any{"parent_run_id": t.runKey(conv), "question": a["question"], "evidence_scope": scope, "skill": skill}, nil
 		},
-		route: func(a map[string]any) (string, string, any) { return http.MethodPost, "/v1/research-runs", a }},
+		route: func(a map[string]any) (string, string, any) { return http.MethodPost, "/v1/research-runs", a },
+		after: researchSynthesis},
 	{Name: "intel_save_report", Description: "Save a report with claims and citations. Every non-inference claim must cite evidence (evidence_id + revision) inside material_scope. Claim kinds: source_statement | cross_source_verified (≥2 sources) | model_inference.",
 		Class: "write", Scope: "intel.reports.write", Timeout: 20 * time.Second, OutputCap: 8000,
 		Parameters: obj([]string{"title", "claims", "material_scope"}, map[string]any{"title": tStr, "body": tStr, "skill_id": tStr, "research_run_id": tStr,
@@ -139,4 +141,60 @@ func (t Tools) resolveEvidence(ctx context.Context, ss SubjectScope, userID stri
 		return nil, err
 	}
 	return env.Data, nil
+}
+
+// RunBudgetMicro is the per-agent-run root reservation that research children draw from.
+const RunBudgetMicro = 2_000_000
+
+// researchSynthesis turns the extractive research output into an LLM synthesis
+// through the Model Gateway: budget is allocated from the run's reservation and
+// every citation is validated against evidence resolved in the caller's scope.
+func researchSynthesis(t Tools, ctx context.Context, ss SubjectScope, callID string, args map[string]any, out json.RawMessage) (json.RawMessage, error) {
+	if t.Model == nil {
+		return out, nil
+	}
+	var r struct {
+		Status string `json:"status"`
+		Output struct {
+			EvidenceIDs []string `json:"evidence_ids"`
+		} `json:"output"`
+	}
+	if json.Unmarshal(out, &r) != nil || r.Status != "succeeded" || len(r.Output.EvidenceIDs) == 0 {
+		return out, nil
+	}
+	ev, err := t.resolveEvidence(ctx, ss, "", r.Output.EvidenceIDs)
+	if err != nil {
+		return nil, err
+	}
+	scope := MaterialScope{}
+	if es, ok := args["evidence_scope"].(map[string]any); ok {
+		_ = decodeInto(es, &scope)
+	}
+	if len(scope.SourceIDs) == 0 && len(scope.DocumentIDs) == 0 {
+		for _, e := range ev {
+			scope.DocumentIDs = append(scope.DocumentIDs, e.DocumentID)
+		}
+	}
+	b := Billing{DB: t.DB}
+	parentKey := fmt.Sprint(args["parent_run_id"])
+	parent, err := b.Reserve(ss.Scope.TenantID, "run:"+parentKey, "agent_run", parentKey, RunBudgetMicro)
+	if err != nil {
+		return nil, err
+	}
+	syn, err := Synthesize(ctx, t.Model, b, SynthesisRequest{TenantID: ss.Scope.TenantID, ParentResID: parent.ID, Key: "research:" + parentKey + ":" + callID,
+		Purpose: "research", Question: fmt.Sprint(args["question"]), Evidence: ev, Scope: scope})
+	if err != nil {
+		return nil, err
+	}
+	return appendField(out, "synthesis", syn), nil
+}
+
+// SettleRunBudget closes an agent run's root reservation (children already rolled up).
+func SettleRunBudget(db *gorm.DB, tenantID, runID string) error {
+	var r model.FlowBudgetReservation
+	if err := db.First(&r, "tenant_id = ? AND idempotency_key = ?", tenantID, "run:"+runID).Error; err != nil {
+		return nil
+	}
+	_, err := Billing{DB: db}.Settle(r.ID, 0)
+	return err
 }

@@ -22,6 +22,9 @@ import (
 // ConfigureFlowEngine wires the Loom Engine client used by intel tools.
 func (s *Service) ConfigureFlowEngine(engine flow.EngineCaller) { s.flowEngine = engine }
 
+// ConfigureFlowModel enables LLM synthesis for research via the platform Model Gateway.
+func (s *Service) ConfigureFlowModel(g flow.ModelGateway) { s.flowModel = g }
+
 // ConfigureFlowMCP enables the MCP gateway for intelligence agent runs.
 func (s *Service) ConfigureFlowMCP(g *flow.MCPGateway) { s.flowMCP = g }
 
@@ -127,6 +130,9 @@ func (s *Service) recordFlowAssistantReply(userID, runID string) {
 	if err != nil || !cloudAgentIntelSubject(state.Request) {
 		return
 	}
+	if _, ss, cerr := s.cloudAgentFlowConversation(userID, state.Request); cerr == nil {
+		_ = flow.SettleRunBudget(s.repo.DB(), ss.Scope.TenantID, runID)
+	}
 	run, err := s.CloudAgentRun(userID, runID, CloudAgentRunViewOptions{EventLimit: cloudAgentContinuationEventLimit})
 	if err != nil {
 		return
@@ -214,7 +220,7 @@ func (s *Service) executeIntelTool(userID, runID string, req CloudAgentRequest, 
 			return nil, BadAuthRequest("工具参数不是合法 JSON")
 		}
 	}
-	tools := flow.Tools{DB: s.repo.DB(), Engine: s.flowEngine, RunID: runID, MCP: s.flowMCP}
+	tools := flow.Tools{DB: s.repo.DB(), Engine: s.flowEngine, RunID: runID, MCP: s.flowMCP, Model: s.flowModel}
 	r, err := tools.Invoke(context.Background(), conv, ss, userID, call.ID, call.Function.Name, args, approvalID)
 	if err != nil {
 		if errors.Is(err, flow.ErrForbidden) || errors.Is(err, flow.ErrNotFound) {

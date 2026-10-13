@@ -29,6 +29,7 @@ type Service struct {
 	repo                     *repository.Repository
 	flowEngine               flow.EngineCaller
 	flowMCP                  *flow.MCPGateway
+	flowModel                flow.ModelGateway
 	dataDir                  string
 	cancelMu                 sync.Mutex
 	registrationMu           sync.Mutex

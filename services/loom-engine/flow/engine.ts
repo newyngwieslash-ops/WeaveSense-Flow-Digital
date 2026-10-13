@@ -18,6 +18,14 @@ export const connectorFetcher = (env: ConnectorEnv): Fetcher => async (url, sour
   const { fetchRss } = await import("../src/lib/server/rss.ts");
   return fetchRss(url, sourceId, "rss");
 };
+/** A13 failure classes: auth ⇒ pause; rate_limited/transient ⇒ backoff; permanent ⇒ record only. */
+export function classifyFailure(error: string): "auth" | "rate_limited" | "transient" | "permanent" {
+  if (/\b(401|403)\b|unauthori[sz]ed|forbidden|credential|auth_key|session (expired|revoked)/i.test(error)) return "auth";
+  if (/\b429\b|rate.?limit|too many requests|flood/i.test(error)) return "rate_limited";
+  if (/\b5\d\d\b|timeout|timed out|ECONN|ENOTFOUND|EAI_AGAIN|socket/i.test(error)) return "transient";
+  return "permanent";
+}
+
 export const defaultFetcher: Fetcher = (url, sourceId, src) => connectorFetcher(connectorEnvFromProcess())(url, sourceId, src);
 export type Extractor = (url: string) => Promise<string>;
 const defaultExtractor: Extractor = async (url) => (await import("../src/lib/server/http.ts")).fetchText(url, 15000);
@@ -189,8 +197,8 @@ export class Engine {
         const op = newId("op_");
         for (const sid of sc.source_ids as string[]) {
           const r = await q.query(`INSERT INTO flow_collection_runs (id, operation_id, tenant_id, workspace_id, source_id, idempotency_key, request_hash, schedule_id, scheduled_at)
-             SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9 WHERE EXISTS (SELECT 1 FROM flow_sources WHERE id=$5 AND tenant_id=$3 AND status='active')
-             ON CONFLICT DO NOTHING`, [newId("job_"), op, sc.tenant_id, sc.workspace_id, sid, key, sha(key), sc.id, scheduledAt]);
+             SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9 WHERE EXISTS (SELECT 1 FROM flow_sources WHERE id=$5 AND tenant_id=$3 AND status='active' AND (backoff_until IS NULL OR backoff_until <= $10))
+             ON CONFLICT DO NOTHING`, [newId("job_"), op, sc.tenant_id, sc.workspace_id, sid, key, sha(key), sc.id, scheduledAt, now.toISOString()]);
           created += affected(r);
         }
         await q.query(`UPDATE flow_schedules SET next_run_at=$2 WHERE id=$1`, [sc.id, new Date(at + step).toISOString()]);
@@ -277,7 +285,7 @@ export class Engine {
           [newId("smp_"), run.tenant_id, run.workspace_id, src.kind, src.id, run.id, meta.collector, meta.provider ?? null, meta.mode, items.length, mediaUnsupported,
            JSON.stringify(items.slice(0, 3).map((i) => ({ external_id: i.external_id, title: i.title.slice(0, 120), published_at: i.published_at })))]);
       }
-      await q.query(`UPDATE flow_sources SET consecutive_failures=0, last_error=NULL WHERE id=$1`, [src.id]);
+      await q.query(`UPDATE flow_sources SET consecutive_failures=0, last_error=NULL, backoff_until=NULL WHERE id=$1`, [src.id]);
       await this.emit(q, run, run.operation_id, run.id, "collection.completed", { source_id: src.id, items_new: created, items_revised: revised });
       if (hooks.beforeCommit) await hooks.beforeCommit();
       return { status: "succeeded", items_new: created, items_revised: revised };
@@ -290,7 +298,17 @@ export class Engine {
           WHERE id=$1 AND fencing_token=$2 AND status='running'`, [run.id, run.fencing_token, error.slice(0, 500)]);
       if (!affected(r)) return { status: "stale" };
       await q.query(`UPDATE flow_sources SET consecutive_failures=consecutive_failures+1, last_error=$2 WHERE id=$1`, [run.source_id, error.slice(0, 500)]);
-      await this.emit(q, run, run.operation_id, run.id, "operation.failed", { error: error.slice(0, 500) });
+      const cls = classifyFailure(error);
+      if (cls === "auth") {
+        // Credential invalid/revoked: pause until an operator fixes it (resume = re-activate source).
+        await q.query(`UPDATE flow_sources SET status='paused', paused_reason='credential_invalid' WHERE id=$1 AND status='active'`, [run.source_id]);
+      } else if (cls === "rate_limited" || cls === "transient") {
+        // Exponential backoff: 1m·2^(n-1), capped at 6h; after 8 consecutive failures, pause.
+        await q.query(`UPDATE flow_sources SET backoff_until = now() + LEAST(interval '6 hours', interval '1 minute' * power(2, LEAST(consecutive_failures, 12) - 1)),
+            status = CASE WHEN consecutive_failures >= 8 THEN 'paused' ELSE status END,
+            paused_reason = CASE WHEN consecutive_failures >= 8 THEN 'too_many_failures' ELSE paused_reason END WHERE id=$1`, [run.source_id]);
+      }
+      await this.emit(q, run, run.operation_id, run.id, "operation.failed", { error: error.slice(0, 500), class: cls });
       return { status: "failed", error };
     });
   }

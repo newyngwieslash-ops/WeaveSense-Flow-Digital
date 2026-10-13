@@ -5,7 +5,7 @@ import { usePluginStore } from "@/stores/use-plugin-store";
 export type GenerationWorkflowMode = "text" | "image" | "video" | "audio";
 
 export type GenerationWorkflowExecution = {
-	provider: "runninghub";
+    provider: "runninghub";
     kind: RunningHubWorkflowKind;
     capability: RunningHubCapability;
     interfaceType: string;
@@ -51,11 +51,10 @@ export function resolveGenerationWorkflowExecution(config: AiConfig, mode: Gener
             webappId,
             workflowJson: workflow.workflowJson || {},
             workflowFields: workflow.fields || [],
+        };
+    }
 
-		};
-	}
-
-	throw new Error("未知工作流提供方");
+    throw new Error("未知工作流提供方");
 }
 
 function assertWorkflowCapability(providerName: string, capability: RunningHubCapability, mode: GenerationWorkflowMode) {

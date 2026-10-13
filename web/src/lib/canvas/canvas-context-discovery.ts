@@ -43,10 +43,27 @@ export function buildCanvasContext(snapshot: CanvasSnapshot, options: { stateHas
         // for the server hash in a write precondition.
         stateHash: options.stateHash || hashCanvasSnapshot(snapshot),
         hashSource: options.hashSource || "browser-local",
-        canvas: { projectId: snapshot.projectId, domainProjectId: snapshot.domainProjectId, title: snapshot.title, viewport: snapshot.viewport, nodeCount: nodes.length, connectionCount: snapshot.connections.length, selectedNodeCount: selectedIds.size, nodeTypeCounts },
+        canvas: {
+            projectId: snapshot.projectId,
+            domainProjectId: snapshot.domainProjectId,
+            title: snapshot.title,
+            viewport: snapshot.viewport,
+            nodeCount: nodes.length,
+            connectionCount: snapshot.connections.length,
+            selectedNodeCount: selectedIds.size,
+            nodeTypeCounts,
+        },
         selection: nodes.filter((node) => selectedIds.has(node.id)).map(compactNode),
         nodes: nodes.map(compactNode),
-        connections: snapshot.connections.map((connection) => ({ id: connection.id, fromNodeId: connection.fromNodeId, fromTitle: nodeById.get(connection.fromNodeId)?.title || "未知节点", toNodeId: connection.toNodeId, toTitle: nodeById.get(connection.toNodeId)?.title || "未知节点", fromHandleId: connection.fromHandleId, toHandleId: connection.toHandleId })),
+        connections: snapshot.connections.map((connection) => ({
+            id: connection.id,
+            fromNodeId: connection.fromNodeId,
+            fromTitle: nodeById.get(connection.fromNodeId)?.title || "未知节点",
+            toNodeId: connection.toNodeId,
+            toTitle: nodeById.get(connection.toNodeId)?.title || "未知节点",
+            fromHandleId: connection.fromHandleId,
+            toHandleId: connection.toHandleId,
+        })),
         resources,
         storyboardReadiness: inspectStoryboardReadiness(snapshot.nodes),
         warnings: [
@@ -69,8 +86,12 @@ export function findCanvasNodes(snapshot: CanvasSnapshot, input: { query?: strin
         if (statuses && !statuses.has(String(metadata.status || "idle"))) return false;
         if (input.resourceOnly && !resourceFromNode(node)) return false;
         if (!query) return true;
-        return [node.id, node.title, metadata.content, nodeGenerationPrompt(node), metadata.assetId, Array.isArray(metadata.assetTags) ? metadata.assetTags.join(" ") : "", metadata.workflowKind, metadata.workflowTitle, metadata.characterName]
-            .some((value) => String(value || "").toLocaleLowerCase().includes(query));
+        return [node.id, node.title, metadata.content, nodeGenerationPrompt(node), metadata.assetId, Array.isArray(metadata.assetTags) ? metadata.assetTags.join(" ") : "", metadata.workflowKind, metadata.workflowTitle, metadata.characterName].some(
+            (value) =>
+                String(value || "")
+                    .toLocaleLowerCase()
+                    .includes(query),
+        );
     });
     return { query: input.query || "", total: nodes.length, truncated: nodes.length > limit, nodes: nodes.slice(0, limit).map(compactNode) };
 }
@@ -79,9 +100,7 @@ export function getCanvasNode(snapshot: CanvasSnapshot, input: { id: string }) {
     const node = snapshot.nodes.find((candidate) => candidate.id === input.id);
     if (!node) return { found: false, id: input.id, node: null, connections: [] };
     const nodeById = new Map(snapshot.nodes.map((candidate) => [candidate.id, candidate]));
-    const connections = snapshot.connections
-        .filter((connection) => connection.fromNodeId === node.id || connection.toNodeId === node.id)
-        .map((connection) => connectionSummary(connection, nodeById));
+    const connections = snapshot.connections.filter((connection) => connection.fromNodeId === node.id || connection.toNodeId === node.id).map((connection) => connectionSummary(connection, nodeById));
     return { found: true, id: node.id, node: compactNode(node), resource: resourceFromNode(node), connections };
 }
 
@@ -107,20 +126,22 @@ export function getCanvasGenerationTasks(snapshot: CanvasSnapshot, input: { stat
         const status = stringValue(metadata.taskStatus) || stringValue(metadata.status) || "unknown";
         if (input.status && status !== input.status) return [];
         const resource = resourceFromNode(node);
-        return [{
-            taskId,
-            nodeId: node.id,
-            nodeTitle: node.title || "未命名节点",
-            mode: stringValue(metadata.generationMode),
-            nodeStatus: stringValue(metadata.status) || "idle",
-            status,
-            progress: numberValue(metadata.taskProgress ?? metadata.progress),
-            stage: stringValue(metadata.taskStage),
-            provider: stringValue(metadata.taskProvider),
-            errorCode: stringValue(metadata.taskErrorCode || metadata.generationErrorCode),
-            officialStatus: stringValue(metadata.taskOfficialStatus),
-            resourceReady: Boolean(resource?.ready),
-        }];
+        return [
+            {
+                taskId,
+                nodeId: node.id,
+                nodeTitle: node.title || "未命名节点",
+                mode: stringValue(metadata.generationMode),
+                nodeStatus: stringValue(metadata.status) || "idle",
+                status,
+                progress: numberValue(metadata.taskProgress ?? metadata.progress),
+                stage: stringValue(metadata.taskStage),
+                provider: stringValue(metadata.taskProvider),
+                errorCode: stringValue(metadata.taskErrorCode || metadata.generationErrorCode),
+                officialStatus: stringValue(metadata.taskOfficialStatus),
+                resourceReady: Boolean(resource?.ready),
+            },
+        ];
     });
     const limit = Math.min(Math.max(input.limit || 100, 1), 200);
     return { total: tasks.length, truncated: tasks.length > limit, tasks: tasks.slice(0, limit) };
@@ -166,8 +187,8 @@ export function validateCanvasOperations(snapshot: CanvasSnapshot, ops: CanvasOp
             if (patch && ("id" in patch || "type" in patch)) issues.push({ index, severity: "error", message: "不能通过 update_node 修改节点 id 或类型" });
             if (patch) validateNodeNumbers(issues, index, patch);
             const node = snapshot.nodes.find((item) => item.id === op.id);
-            const metadata = op.metadata && typeof op.metadata === "object" && !Array.isArray(op.metadata) ? op.metadata as Record<string, unknown> : undefined;
-            const patchMetadata = patch?.metadata && typeof patch.metadata === "object" && !Array.isArray(patch.metadata) ? patch.metadata as Record<string, unknown> : undefined;
+            const metadata = op.metadata && typeof op.metadata === "object" && !Array.isArray(op.metadata) ? (op.metadata as Record<string, unknown>) : undefined;
+            const patchMetadata = patch?.metadata && typeof patch.metadata === "object" && !Array.isArray(patch.metadata) ? (patch.metadata as Record<string, unknown>) : undefined;
             if (isMediaNodeType(node?.type) && ((metadata && "status" in metadata) || (patchMetadata && "status" in patchMetadata))) issues.push({ index, severity: "error", message: "不能直接修改媒体节点 status；生成状态必须由任务结果回写" });
         } else if (op.type === "run_generation") {
             requireNode(index, op.nodeId, "生成目标");
@@ -250,10 +271,29 @@ function compactNode(node: CanvasNodeData) {
         status: String(metadata.status || "idle"),
         content: preview(metadata.content, 240),
         prompt: preview(nodeGenerationPrompt(node), 300),
-        generation: metadata.generationMode || metadata.workflowKind || metadata.taskId ? { mode: metadata.generationMode, model: metadata.model, workflowKind: metadata.workflowKind, workflowTitle: metadata.workflowTitle, taskId: metadata.taskId, status: metadata.taskStatus || metadata.status, progress: numberValue(metadata.taskProgress ?? metadata.progress), stage: metadata.taskStage, provider: metadata.taskProvider, errorCode: metadata.taskErrorCode || metadata.generationErrorCode } : undefined,
+        generation:
+            metadata.generationMode || metadata.workflowKind || metadata.taskId
+                ? {
+                      mode: metadata.generationMode,
+                      model: metadata.model,
+                      workflowKind: metadata.workflowKind,
+                      workflowTitle: metadata.workflowTitle,
+                      taskId: metadata.taskId,
+                      status: metadata.taskStatus || metadata.status,
+                      progress: numberValue(metadata.taskProgress ?? metadata.progress),
+                      stage: metadata.taskStage,
+                      provider: metadata.taskProvider,
+                      errorCode: metadata.taskErrorCode || metadata.generationErrorCode,
+                  }
+                : undefined,
         error: metadata.status === "error" ? preview(metadata.errorDetails || metadata.generationErrorCode, 360) : undefined,
-        asset: metadata.assetId || metadata.characterAssetId ? { assetId: metadata.assetId || metadata.characterAssetId, versionId: metadata.characterVersionId, category: metadata.assetCategory, tags: metadata.assetTags, characterName: metadata.characterName } : undefined,
-        resource: resource ? { resourceId: resource.resourceId, storageKey: resource.storageKey, mimeType: resource.mimeType, bytes: resource.bytes, width: resource.width, height: resource.height, durationMs: resource.durationMs, ready: resource.ready } : undefined,
+        asset:
+            metadata.assetId || metadata.characterAssetId
+                ? { assetId: metadata.assetId || metadata.characterAssetId, versionId: metadata.characterVersionId, category: metadata.assetCategory, tags: metadata.assetTags, characterName: metadata.characterName }
+                : undefined,
+        resource: resource
+            ? { resourceId: resource.resourceId, storageKey: resource.storageKey, mimeType: resource.mimeType, bytes: resource.bytes, width: resource.width, height: resource.height, durationMs: resource.durationMs, ready: resource.ready }
+            : undefined,
     };
 }
 
@@ -264,7 +304,22 @@ function resourceFromNode(node: CanvasNodeData): CanvasResourceInsight | null {
     const hasSignal = Boolean(storageKey || resourceId || metadata.assetId || metadata.primaryImageId || metadata.mimeType || ["image", "video", "audio"].includes(node.type));
     if (!hasSignal) return null;
     const status = String(metadata.status || "idle");
-    return { nodeId: node.id, nodeTitle: node.title || "未命名节点", nodeType: node.type, status, resourceId, storageKey, assetId: stringValue(metadata.assetId || metadata.characterAssetId), assetCategory: stringValue(metadata.assetCategory), mimeType: stringValue(metadata.mimeType), bytes: numberValue(metadata.bytes), width: numberValue(metadata.naturalWidth), height: numberValue(metadata.naturalHeight), durationMs: numberValue(metadata.durationMs), ready: status === "success" && Boolean(storageKey || resourceId || metadata.primaryImageId) };
+    return {
+        nodeId: node.id,
+        nodeTitle: node.title || "未命名节点",
+        nodeType: node.type,
+        status,
+        resourceId,
+        storageKey,
+        assetId: stringValue(metadata.assetId || metadata.characterAssetId),
+        assetCategory: stringValue(metadata.assetCategory),
+        mimeType: stringValue(metadata.mimeType),
+        bytes: numberValue(metadata.bytes),
+        width: numberValue(metadata.naturalWidth),
+        height: numberValue(metadata.naturalHeight),
+        durationMs: numberValue(metadata.durationMs),
+        ready: status === "success" && Boolean(storageKey || resourceId || metadata.primaryImageId),
+    };
 }
 
 function preview(value: unknown, limit: number) {
@@ -272,5 +327,9 @@ function preview(value: unknown, limit: number) {
     const text = value.trim();
     return text.length > limit ? `${text.slice(0, limit)}…` : text;
 }
-function stringValue(value: unknown) { return typeof value === "string" && value.trim() ? value.trim() : undefined; }
-function numberValue(value: unknown) { return typeof value === "number" && Number.isFinite(value) ? value : undefined; }
+function stringValue(value: unknown) {
+    return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+function numberValue(value: unknown) {
+    return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}

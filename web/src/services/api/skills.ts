@@ -1,7 +1,6 @@
 import { ApiError, http, apiBaseURL, compactApiParams, serializeApiParams, type ApiParams } from "@/services/api/request";
 import { getActiveUserScope } from "@/lib/user-scope";
 
-
 let addedSkillsRequest: { scope: string; promise: Promise<{ skills: Skill[] }> } | null = null;
 let addedSkillsCache: { scope: string; value: { skills: Skill[] }; expiresAt: number } | null = null;
 let addedSkillsCacheVersion = 0;
@@ -62,7 +61,6 @@ export type Skill = {
 export type AddedSkillReference = Pick<Skill, "skillId" | "skillName" | "description" | "versionId" | "version" | "tag" | "isLike" | "isAdded" | "isOwner" | "libraryCategoryId">;
 
 export type SkillCategory = { value: string; label: string; count?: number };
-
 
 export type SkillLibraryCategory = {
     id: string;
@@ -177,12 +175,10 @@ export type InstallGitHubSkillInput = {
     autoUpdate?: boolean;
 };
 
-
 export function listSkills(input: ListSkillsInput = {}) {
     const params = serializeApiParams(compactApiParams(input as ApiParams));
     return http.get<SkillList>(`/skills?${params.toString()}`);
 }
-
 
 export function listSkillLibraryCategories(scope: "mine" | "created" = "mine") {
     return http.get<SkillLibraryCategoryList>("/skills/library-categories", { params: { scope } });

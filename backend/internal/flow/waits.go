@@ -42,6 +42,9 @@ func markWaitsReady(tx *gorm.DB, tenantID, operationID, outcome string) error {
 func (w Waits) ResumeReady(resume func(model.FlowExternalWait) (string, error)) (int, error) {
 	w.DB.Exec(`UPDATE flow_external_waits SET status = 'ready', outcome = (SELECT p.status FROM flow_operation_projections p WHERE p.operation_id = flow_external_waits.operation_id)
 		WHERE status = 'waiting' AND EXISTS (SELECT 1 FROM flow_operation_projections p WHERE p.operation_id = flow_external_waits.operation_id AND p.tenant_id = flow_external_waits.tenant_id AND p.status IN ('succeeded','failed','cancelled'))`)
+	// Fallback for the push path (ModelTasks.NotifyDone): waits on finished model tasks.
+	w.DB.Exec(`UPDATE flow_external_waits SET status = 'ready', outcome = (SELECT t.status FROM flow_model_tasks t WHERE t.id = flow_external_waits.operation_id)
+		WHERE status = 'waiting' AND EXISTS (SELECT 1 FROM flow_model_tasks t WHERE t.id = flow_external_waits.operation_id AND t.tenant_id = flow_external_waits.tenant_id AND t.status IN ('succeeded','failed'))`)
 	var rows []model.FlowExternalWait
 	if err := w.DB.Where("status = 'ready'").Order("created_at").Limit(50).Find(&rows).Error; err != nil {
 		return 0, err

@@ -50,7 +50,20 @@ type ImageSettingsPanelProps = {
     bypassPriceGuard?: boolean;
 };
 
-export function ImageSettingsPanel({ config, onConfigChange, theme, showTitle = true, showQuality = true, showTransparent = true, showSize = true, showCount = true, className = "w-[304px] space-y-3 rounded-2xl px-1 py-0.5", maxCount = 15, quickCount = 3, bypassPriceGuard = false }: ImageSettingsPanelProps) {
+export function ImageSettingsPanel({
+    config,
+    onConfigChange,
+    theme,
+    showTitle = true,
+    showQuality = true,
+    showTransparent = true,
+    showSize = true,
+    showCount = true,
+    className = "w-[304px] space-y-3 rounded-2xl px-1 py-0.5",
+    maxCount = 15,
+    quickCount = 3,
+    bypassPriceGuard = false,
+}: ImageSettingsPanelProps) {
     const profile = mergedImageCapabilityConfig(config, config.model || config.imageModel);
     const normalized = normalizeImageValue(profile, config);
     const quality = normalized.quality;
@@ -73,31 +86,37 @@ export function ImageSettingsPanel({ config, onConfigChange, theme, showTitle = 
                 }}
             >
                 {showTitle ? <div className="text-base font-semibold">图像设置</div> : null}
-                {showQuality && profile.quality.supported && !imageResolutionUsesQuality(profile) ? <div className="space-y-2">
-                    <SettingTitle color={theme.node.muted}>{isGrokResolutionQuality(profile) ? "分辨率" : "质量"}</SettingTitle>
-                    <div className={`grid gap-1.5 ${activeQualityOptions.length <= 2 ? "grid-cols-2" : "grid-cols-4"}`}>
-						{activeQualityOptions.map((item) => (
-                            <OptionPill key={item.value} selected={quality === item.value} disabled={!bypassPriceGuard && !hasPriceTierForImageSelection(priceTiers, item.value, activeSize)} theme={theme} onClick={() => onConfigChange("quality", item.value)}>
-                                {item.label}
-                            </OptionPill>
-                        ))}
-                    </div>
-                </div> : null}
-                {showTransparent && profile.transparentBackground.supported ? <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                        <SettingTitle color={theme.node.muted}>透明背景</SettingTitle>
-                        <div className="mt-1 text-[var(--fs-label)]" style={{ color: theme.node.muted }}>
-                            请求模型输出保留 Alpha 通道的 PNG
+                {showQuality && profile.quality.supported && !imageResolutionUsesQuality(profile) ? (
+                    <div className="space-y-2">
+                        <SettingTitle color={theme.node.muted}>{isGrokResolutionQuality(profile) ? "分辨率" : "质量"}</SettingTitle>
+                        <div className={`grid gap-1.5 ${activeQualityOptions.length <= 2 ? "grid-cols-2" : "grid-cols-4"}`}>
+                            {activeQualityOptions.map((item) => (
+                                <OptionPill
+                                    key={item.value}
+                                    selected={quality === item.value}
+                                    disabled={!bypassPriceGuard && !hasPriceTierForImageSelection(priceTiers, item.value, activeSize)}
+                                    theme={theme}
+                                    onClick={() => onConfigChange("quality", item.value)}
+                                >
+                                    {item.label}
+                                </OptionPill>
+                            ))}
                         </div>
                     </div>
-                    <span title="是否支持透明背景由当前模型接口决定" onMouseDown={(event) => event.stopPropagation()}>
-                        <Switch
-                            size="sm"
-                            checked={transparentBackground}
-                            onChange={(checked) => onConfigChange("transparentBackground", checked ? "true" : "false")}
-                        />
-                    </span>
-                </div> : null}
+                ) : null}
+                {showTransparent && profile.transparentBackground.supported ? (
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                            <SettingTitle color={theme.node.muted}>透明背景</SettingTitle>
+                            <div className="mt-1 text-[var(--fs-label)]" style={{ color: theme.node.muted }}>
+                                请求模型输出保留 Alpha 通道的 PNG
+                            </div>
+                        </div>
+                        <span title="是否支持透明背景由当前模型接口决定" onMouseDown={(event) => event.stopPropagation()}>
+                            <Switch size="sm" checked={transparentBackground} onChange={(checked) => onConfigChange("transparentBackground", checked ? "true" : "false")} />
+                        </span>
+                    </div>
+                ) : null}
                 {showSize ? <ImageSizePicker profile={profile} size={activeSize} quality={quality} onChange={(size, nextQuality) => applyImageSizeSelection(onConfigChange, size, nextQuality)} /> : null}
                 {showCount && effectiveMaxCount > 1 ? (
                     <div className="space-y-2">
@@ -146,9 +165,9 @@ export function imageSizeLabel(size: string) {
 }
 
 function imageModelPriceTiers(config: AiConfig) {
-	const channel = resolveModelChannel(config, config.model || config.imageModel);
-	const cost = channel.modelCosts?.find((item) => item.model === modelOptionName(config.model || config.imageModel));
-	return cost?.logicalPriceTiers || [];
+    const channel = resolveModelChannel(config, config.model || config.imageModel);
+    const cost = channel.modelCosts?.find((item) => item.model === modelOptionName(config.model || config.imageModel));
+    return cost?.logicalPriceTiers || [];
 }
 
 function hasPriceTierForImageSelection(tiers: ReturnType<typeof imageModelPriceTiers>, quality: string, size: string) {
@@ -164,9 +183,9 @@ function OptionPill({ selected, disabled = false, theme, onClick, children }: { 
     return (
         <button
             type="button"
-			className="h-8 cursor-pointer rounded-full px-2 text-xs transition-colors hover:brightness-110 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-40"
-			style={{ background: selected ? theme.toolbar.activeBg : "transparent", color: theme.node.text, outlineColor: theme.node.muted }}
-			disabled={disabled}
+            className="h-8 cursor-pointer rounded-full px-2 text-xs transition-colors hover:brightness-110 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-1 disabled:cursor-not-allowed disabled:opacity-40"
+            style={{ background: selected ? theme.toolbar.activeBg : "transparent", color: theme.node.text, outlineColor: theme.node.muted }}
+            disabled={disabled}
             onMouseDown={(event) => event.stopPropagation()}
             onClick={onClick}
         >

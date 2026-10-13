@@ -4,27 +4,76 @@ const string = { type: "string" };
 const strings = { type: "array", items: string };
 const object = (properties: Record<string, unknown>, required: string[] = []) => ({ type: "object", properties, required, additionalProperties: false });
 const option = object({ id: string, label: string, description: string }, ["id", "label"]);
-const question = object({ id: string, field: string, type: { type: "string", enum: ["single", "multiple", "text", "asset"] }, title: string, description: string, required: { type: "boolean" }, allowCustom: { type: "boolean" }, options: { type: "array", items: option } }, ["id", "field", "type", "title", "required", "allowCustom", "options"]);
-const workflowNode = object({ ref: string, kind: { type: "string", enum: ["text", "image", "video", "styleboard", "story_input", "script"] }, title: string, content: string, prompt: string, assetId: string, referenceRefs: strings, referenceNodeIds: strings, shots: { type: "array", maxItems: 100, items: object({ durationSeconds: { type: "number" }, videoMotionPrompt: string, dialogue: string }, ["durationSeconds", "videoMotionPrompt"]) } }, ["ref", "kind", "title"]);
+const question = object(
+    { id: string, field: string, type: { type: "string", enum: ["single", "multiple", "text", "asset"] }, title: string, description: string, required: { type: "boolean" }, allowCustom: { type: "boolean" }, options: { type: "array", items: option } },
+    ["id", "field", "type", "title", "required", "allowCustom", "options"],
+);
+const workflowNode = object(
+    {
+        ref: string,
+        kind: { type: "string", enum: ["text", "image", "video", "styleboard", "story_input", "script"] },
+        title: string,
+        content: string,
+        prompt: string,
+        assetId: string,
+        referenceRefs: strings,
+        referenceNodeIds: strings,
+        shots: { type: "array", maxItems: 100, items: object({ durationSeconds: { type: "number" }, videoMotionPrompt: string, dialogue: string }, ["durationSeconds", "videoMotionPrompt"]) },
+    },
+    ["ref", "kind", "title"],
+);
 const generation = object({ ref: string, mode: { type: "string", enum: ["image", "video"] }, model: string, size: string, seconds: string, quality: string, referenceRefs: strings }, ["ref", "mode", "model"]);
 
 // 模型只描述内容；批准、费用提交、任务状态和页面跳转不作为模型工具暴露。
-export const CREATIVE_AGENT_TOOLS: ResponseFunctionTool[] = [{
-    type: "function",
-    function: {
-        name: "creative_respond",
-        description: "结合上下文更新需求并选择补問、提出创作方案或建议局部节点调整。提问形成等待屏障，不会执行节点或生成任务。已知字段不得重复提问。",
-        parameters: object({
-            scenario: { type: "string", enum: ["general", "short-film", "marketing", "ecommerce"] },
-            message: string,
-            brief: { type: "array", items: object({ field: string, value: { anyOf: [string, strings, { type: "number" }] }, evidence: string, source: { type: "string", enum: ["user", "inferred", "asset", "default"] }, status: { type: "string", enum: ["confirmed", "inferred", "unparsed", "conflict"] } }, ["field", "value", "source", "status"]) },
-            questions: { type: "array", maxItems: 6, items: question },
-            plan: object({ reason: string, steps: { type: "array", maxItems: 12, items: object({ ref: string, title: string, phase: { type: "string", enum: ["questions", "proposal", "canvas", "media"] }, mediaRefs: strings }, ["ref", "title", "phase"]) } }, ["steps"]),
-            proposal: object({ title: string, summary: string, markdown: string, deliverables: strings, workflow: object({ title: string, nodes: { type: "array", maxItems: 20, items: workflowNode }, edges: { type: "array", items: object({ from: string, to: string }, ["from", "to"]) } }, ["nodes", "edges"]), generationItems: { type: "array", maxItems: 20, items: generation } }, ["title", "summary", "markdown", "deliverables", "workflow", "generationItems"]),
-            edits: { type: "array", maxItems: 10, items: object({ nodeId: string, title: string, prompt: string, content: string }, ["nodeId"]) },
-        }, ["message", "brief"]),
+export const CREATIVE_AGENT_TOOLS: ResponseFunctionTool[] = [
+    {
+        type: "function",
+        function: {
+            name: "creative_respond",
+            description: "结合上下文更新需求并选择补問、提出创作方案或建议局部节点调整。提问形成等待屏障，不会执行节点或生成任务。已知字段不得重复提问。",
+            parameters: object(
+                {
+                    scenario: { type: "string", enum: ["general", "short-film", "marketing", "ecommerce"] },
+                    message: string,
+                    brief: {
+                        type: "array",
+                        items: object(
+                            {
+                                field: string,
+                                value: { anyOf: [string, strings, { type: "number" }] },
+                                evidence: string,
+                                source: { type: "string", enum: ["user", "inferred", "asset", "default"] },
+                                status: { type: "string", enum: ["confirmed", "inferred", "unparsed", "conflict"] },
+                            },
+                            ["field", "value", "source", "status"],
+                        ),
+                    },
+                    questions: { type: "array", maxItems: 6, items: question },
+                    plan: object(
+                        {
+                            reason: string,
+                            steps: { type: "array", maxItems: 12, items: object({ ref: string, title: string, phase: { type: "string", enum: ["questions", "proposal", "canvas", "media"] }, mediaRefs: strings }, ["ref", "title", "phase"]) },
+                        },
+                        ["steps"],
+                    ),
+                    proposal: object(
+                        {
+                            title: string,
+                            summary: string,
+                            markdown: string,
+                            deliverables: strings,
+                            workflow: object({ title: string, nodes: { type: "array", maxItems: 20, items: workflowNode }, edges: { type: "array", items: object({ from: string, to: string }, ["from", "to"]) } }, ["nodes", "edges"]),
+                            generationItems: { type: "array", maxItems: 20, items: generation },
+                        },
+                        ["title", "summary", "markdown", "deliverables", "workflow", "generationItems"],
+                    ),
+                    edits: { type: "array", maxItems: 10, items: object({ nodeId: string, title: string, prompt: string, content: string }, ["nodeId"]) },
+                },
+                ["message", "brief"],
+            ),
+        },
     },
-}];
+];
 
 export const CREATIVE_AGENT_SYSTEM_PROMPT = `你是影策的通用创作助手，支持短片、营销、电商与一般创作。普通咨询直接回答，不强制问卷、方案或任务计划。
 用户授权在当前任务范围内持续有效，直到用户撤回、修改目标或出现范围外操作。“可以”“好的”“按你说的做”应结合紧邻的明确建议理解为同意该建议；“你决定”“自主处理”允许你决定该任务内的常规创意和操作细节。不要把模糊同意扩大到未提及的删除、额外费用或新任务。用户已授权的读取、素材挑选、文本编辑、布局和技术纠错应直接推进，不为每个子步骤重新征求同意。常规可调整的创意选择自行决定并简短说明，只对真正阻塞执行、无法从现有素材查明的信息提问。

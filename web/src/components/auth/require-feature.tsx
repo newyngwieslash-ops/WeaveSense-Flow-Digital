@@ -39,8 +39,18 @@ export function RequireFeature({ feature, children }: { feature: FeatureKey; chi
         };
     }, [feature, user?.id]);
 
-    if (checking) return <WorkspacePage><WorkspaceLoadingState label="正在确认功能状态" detail={featureNames[feature]} rows={3} /></WorkspacePage>;
-    if (error) return <WorkspacePage><WorkspaceErrorState title="无法确认功能状态" description={error} actionLabel="返回创作台" onRetry={() => navigate("/", { replace: true })} /></WorkspacePage>;
+    if (checking)
+        return (
+            <WorkspacePage>
+                <WorkspaceLoadingState label="正在确认功能状态" detail={featureNames[feature]} rows={3} />
+            </WorkspacePage>
+        );
+    if (error)
+        return (
+            <WorkspacePage>
+                <WorkspaceErrorState title="无法确认功能状态" description={error} actionLabel="返回创作台" onRetry={() => navigate("/", { replace: true })} />
+            </WorkspacePage>
+        );
     if (!features[feature]) {
         // 管理员页面返回到管理后台首页，用户页面返回到创作台
         const isAdminFeature = feature === "frontendModelsEnabled";
@@ -49,7 +59,16 @@ export function RequireFeature({ feature, children }: { feature: FeatureKey; chi
 
         return (
             <WorkspacePage>
-                <WorkspaceState icon="empty" title={`${featureNames[feature]}暂未开放`} description="当前功能已由平台管理员关闭。" action={<Button type="primary" onClick={() => navigate(backPath, { replace: true })}>{backLabel}</Button>} />
+                <WorkspaceState
+                    icon="empty"
+                    title={`${featureNames[feature]}暂未开放`}
+                    description="当前功能已由平台管理员关闭。"
+                    action={
+                        <Button type="primary" onClick={() => navigate(backPath, { replace: true })}>
+                            {backLabel}
+                        </Button>
+                    }
+                />
             </WorkspacePage>
         );
     }

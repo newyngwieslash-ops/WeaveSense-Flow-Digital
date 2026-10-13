@@ -10,11 +10,7 @@ describe("canvas shortcuts", () => {
 
     test("documents default region selection and trackpad-friendly panning", () => {
         expect(CANVAS_SHORTCUTS.find((shortcut) => shortcut.id === "box-select")?.keys[0]).toEqual(["空白处左键拖动"]);
-        expect(CANVAS_SHORTCUTS.find((shortcut) => shortcut.id === "pan")?.keys).toEqual([
-            ["触控板双指"],
-            ["Space", "左键拖动"],
-            ["中键拖动"],
-        ]);
+        expect(CANVAS_SHORTCUTS.find((shortcut) => shortcut.id === "pan")?.keys).toEqual([["触控板双指"], ["Space", "左键拖动"], ["中键拖动"]]);
     });
 
     test("searches titles, descriptions, keys and keywords", () => {

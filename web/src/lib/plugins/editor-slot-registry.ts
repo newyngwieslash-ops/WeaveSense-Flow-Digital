@@ -87,7 +87,5 @@ export function unregisterPluginSlots(pluginId: string): void {
 
 /** 取某插槽的全部贡献，按 priority 降序、注册序升序稳定排列。 */
 export function getEditorSlots(slot: EditorSlotKind): EditorSlotRegistration[] {
-    return registrations
-        .filter((r) => r.slot === slot)
-        .sort((a, b) => b.priority - a.priority || a.order - b.order);
+    return registrations.filter((r) => r.slot === slot).sort((a, b) => b.priority - a.priority || a.order - b.order);
 }

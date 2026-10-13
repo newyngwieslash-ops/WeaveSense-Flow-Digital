@@ -12,3 +12,41 @@ bun.lock
 *.gif
 *.webp
 *.svg
+# third-party / static assets (minified vendor bundles, generated pages)
+public/
+# Source-text contract tests (test/*.test.ts) assert exact source snippets in these files;
+# keep their hand formatting until those tests are rewritten against behaviour.
+src/components/canvas/canvas-folder-card.tsx
+src/components/canvas/previs/previs-canvas-dock.tsx
+src/components/canvas/previs/previs-sequencer.tsx
+src/components/canvas/previs/previs-viewport-dock.tsx
+src/components/layout/system-announcement-center.tsx
+src/components/layout/workspace-command-palette.tsx
+src/components/layout/workspace-sidebar-nav.tsx
+src/components/layout/workspace-top-bar.tsx
+src/components/skills/skill-runtime-picker.tsx
+src/components/ui/aceternity/full-screen-loader.tsx
+src/pages/canvas/index.tsx
+src/pages/canvas/project.tsx
+src/pages/canvas/use-canvas-previs.ts
+src/pages/canvas/use-canvas-render-model.ts
+src/pages/canvas/use-canvas-storyboard.ts
+src/pages/create/creation-product.css
+src/pages/create/index.tsx
+src/pages/projects/detail.tsx
+src/pages/projects/detail/chapters.tsx
+src/pages/projects/detail/editor.tsx
+src/pages/projects/detail/workflow-production-workbench.tsx
+src/pages/settings/index.tsx
+src/pages/welcome/index.tsx
+src/router.tsx
+src/services/api/projects.ts
+src/styles/globals.css
+src/styles/workspace-product.css
+src/types/previs.ts
+src/components/canvas/canvas-node-mask-edit-dialog.tsx
+src/components/canvas/canvas-node-prompt-panel.tsx
+src/components/canvas/canvas-toolbar.tsx
+src/lib/canvas/tool-registry/definitions/node-hover-tools.tsx
+src/pages/canvas/use-canvas-media-tools.ts
+src/pages/create/creation-workspace.tsx

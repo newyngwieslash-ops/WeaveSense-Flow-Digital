@@ -87,10 +87,12 @@ describe("backend API request error semantics", () => {
     });
 
     test("quota exceeded is not retryable", async () => {
-        const thrown = await request(Promise.resolve({
-            data: { code: 40301, data: null, msg: "账号素材数量已达到 100 个上限", reason: "quota_exceeded" },
-            status: 403,
-        })).catch((error) => error);
+        const thrown = await request(
+            Promise.resolve({
+                data: { code: 40301, data: null, msg: "账号素材数量已达到 100 个上限", reason: "quota_exceeded" },
+                status: 403,
+            }),
+        ).catch((error) => error);
 
         expect(thrown).toBeInstanceOf(ApiError);
         expect(thrown).toMatchObject({ status: 403, code: 40301, reason: "quota_exceeded", retryable: false });
@@ -105,15 +107,17 @@ describe("backend API request error semantics", () => {
 
 describe("backend API list query params", () => {
     test("serializes pagination filters as camelCase pageSize keys", () => {
-        const query = serializeApiParams(compactApiParams({
-            page: 2,
-            pageSize: 40,
-            projectId: "project-1",
-            folderId: "folder-1",
-            mediaType: "image",
-            unitId: "unit-1",
-            q: "夜戏",
-        }));
+        const query = serializeApiParams(
+            compactApiParams({
+                page: 2,
+                pageSize: 40,
+                projectId: "project-1",
+                folderId: "folder-1",
+                mediaType: "image",
+                unitId: "unit-1",
+                q: "夜戏",
+            }),
+        );
 
         expect(query.get("page")).toBe("2");
         expect(query.get("pageSize")).toBe("40");

@@ -14,7 +14,7 @@ export type FeatureAvailability = {
     taskCenterEnabled: boolean;
     creditsEnabled: boolean;
     customChannelsEnabled: boolean;
-    frontendModelsEnabled: boolean;  // 新增
+    frontendModelsEnabled: boolean; // 新增
     desktopLocalChannelsEnabled: boolean;
     configured?: boolean;
     updatedBy?: string;
@@ -30,7 +30,7 @@ export const defaultFeatureAvailability: FeatureAvailability = {
     taskCenterEnabled: true,
     creditsEnabled: true,
     customChannelsEnabled: true,
-    frontendModelsEnabled: true,  // 新增
+    frontendModelsEnabled: true, // 新增
     desktopLocalChannelsEnabled: false,
 };
 ```
@@ -40,29 +40,33 @@ export const defaultFeatureAvailability: FeatureAvailability = {
 **文件**: `web/src/pages/admin/components/feature-availability-panel.tsx`
 
 #### 添加图标导入
+
 ```typescript
 import { Sparkles } from "lucide-react";
 ```
 
 #### 扩展 FeatureKey 类型
+
 ```typescript
 type FeatureKey = "shortDramaEnabled" | "taskCenterEnabled" | "creditsEnabled" | "customChannelsEnabled" | "frontendModelsEnabled";
 ```
 
 #### 添加功能配置项
+
 在 `featureRows` 数组中添加了新的配置项：
 
 ```typescript
-{ 
-    key: "frontendModelsEnabled", 
-    title: "前台模型目录", 
-    menu: "/admin/models", 
-    description: "开启时使用前台模型虚拟渠道（需配置路由），关闭时使用脱敏的系统渠道模型。管理员的模型配置入口始终保留。", 
-    icon: <Sparkles className="size-4" /> 
+{
+    key: "frontendModelsEnabled",
+    title: "前台模型目录",
+    menu: "/admin/models",
+    description: "开启时使用前台模型虚拟渠道（需配置路由），关闭时使用脱敏的系统渠道模型。管理员的模型配置入口始终保留。",
+    icon: <Sparkles className="size-4" />
 }
 ```
 
 #### 更新保存函数
+
 在 `save` 函数中添加了对新字段的支持：
 
 ```typescript
@@ -71,11 +75,12 @@ const result = await updateAdminFeatureAvailability({
     taskCenterEnabled: next.taskCenterEnabled,
     creditsEnabled: next.creditsEnabled,
     customChannelsEnabled: next.customChannelsEnabled,
-    frontendModelsEnabled: next.frontendModelsEnabled,  // 新增
+    frontendModelsEnabled: next.frontendModelsEnabled, // 新增
 });
 ```
 
 #### 添加切换确认逻辑
+
 在 `toggle` 函数中添加了关闭前台模型时的二次确认：
 
 ```typescript
@@ -108,19 +113,19 @@ if (key === "frontendModelsEnabled" && !enabled) {
 ### 交互流程
 
 1. **开启前台模型**
-   - 点击开关即可开启
-   - 用户侧将使用前台模型虚拟渠道
-   - 任务创建必须提供 `logicalModelId`
+    - 点击开关即可开启
+    - 用户侧将使用前台模型虚拟渠道
+    - 任务创建必须提供 `logicalModelId`
 
 2. **关闭前台模型**
-   - 点击开关会弹出确认对话框
-   - 确认后切换到系统渠道模型模式
-   - 用户侧将使用脱敏的系统渠道模型目录
-   - 任务创建禁止 `logicalModelId`
+    - 点击开关会弹出确认对话框
+    - 确认后切换到系统渠道模型模式
+    - 用户侧将使用脱敏的系统渠道模型目录
+    - 任务创建禁止 `logicalModelId`
 
 3. **管理员权限**
-   - 无论开关状态如何，管理员的 `/admin/models` 入口始终保留
-   - 管理员可以随时查看和配置前台模型
+    - 无论开关状态如何，管理员的 `/admin/models` 入口始终保留
+    - 管理员可以随时查看和配置前台模型
 
 ## 视觉设计
 
@@ -156,22 +161,22 @@ if (key === "frontendModelsEnabled" && !enabled) {
 ## 测试建议
 
 1. **开关切换测试**
-   - 测试开启/关闭前台模型开关
-   - 验证二次确认对话框是否正常显示
-   - 验证保存后状态是否正确更新
+    - 测试开启/关闭前台模型开关
+    - 验证二次确认对话框是否正常显示
+    - 验证保存后状态是否正确更新
 
 2. **权限测试**
-   - 验证只有管理员可以访问此页面
-   - 验证非管理员无法修改此配置
+    - 验证只有管理员可以访问此页面
+    - 验证非管理员无法修改此配置
 
 3. **联动测试**
-   - 开启前台模型后，验证用户侧模型选择器是否使用前台模型
-   - 关闭前台模型后，验证用户侧模型选择器是否使用系统渠道模型
-   - 验证管理员的 `/admin/models` 入口在两种模式下都可访问
+    - 开启前台模型后，验证用户侧模型选择器是否使用前台模型
+    - 关闭前台模型后，验证用户侧模型选择器是否使用系统渠道模型
+    - 验证管理员的 `/admin/models` 入口在两种模式下都可访问
 
 4. **数据持久化测试**
-   - 修改配置后刷新页面，验证配置是否保存
-   - 验证配置在用户登录时正确加载
+    - 修改配置后刷新页面，验证配置是否保存
+    - 验证配置在用户登录时正确加载
 
 ## 注意事项
 
@@ -183,10 +188,12 @@ if (key === "frontendModelsEnabled" && !enabled) {
 ## 文件清单
 
 ### 修改的文件
+
 - `web/src/stores/use-user-store.ts` - 添加类型定义和默认值
 - `web/src/pages/admin/components/feature-availability-panel.tsx` - 添加UI和交互逻辑
 
 ### 依赖的后端文件
+
 - `internal/service/feature_availability.go` - 后端功能开关服务
 
 ---

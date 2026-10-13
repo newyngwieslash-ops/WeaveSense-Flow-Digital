@@ -100,10 +100,7 @@ export function planBatchConnections({ sourceNodeIds, targetNodeId, targetHandle
 
         const fromHandleId = normalized.fromNodeId === source.id ? undefined : targetHandleId;
         const toHandleId = normalized.toNodeId === targetNodeId ? targetHandleId : undefined;
-        const duplicate = workingConnections.some((connection) => connection.fromNodeId === normalized.fromNodeId
-            && connection.toNodeId === normalized.toNodeId
-            && connection.fromHandleId === fromHandleId
-            && connection.toHandleId === toHandleId);
+        const duplicate = workingConnections.some((connection) => connection.fromNodeId === normalized.fromNodeId && connection.toNodeId === normalized.toNodeId && connection.fromHandleId === fromHandleId && connection.toHandleId === toHandleId);
         if (duplicate) {
             duplicates.push(source.id);
             return;

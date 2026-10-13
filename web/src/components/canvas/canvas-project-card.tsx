@@ -167,7 +167,16 @@ export function ProjectPreview({ project, preferLatestImage = false }: { project
                     <Video className="size-8" aria-label={media.node.title || "项目视频"} />
                 </div>
             ) : (
-                <CachedResourceImage storageKey={media.storageKey} src={media.url} alt={media.node.title || "项目图片"} loading="lazy" decoding="async" className="size-full min-h-0 object-cover" fallback={<MediaPlaceholder failed />} loadingFallback={<MediaPlaceholder label="正在读取封面" />} />
+                <CachedResourceImage
+                    storageKey={media.storageKey}
+                    src={media.url}
+                    alt={media.node.title || "项目图片"}
+                    loading="lazy"
+                    decoding="async"
+                    className="size-full min-h-0 object-cover"
+                    fallback={<MediaPlaceholder failed />}
+                    loadingFallback={<MediaPlaceholder label="正在读取封面" />}
+                />
             )}
         </div>
     ) : !project.nodes.length ? (

@@ -34,6 +34,10 @@ type ModelTasks struct {
 	Now     func() time.Time
 	Lease   time.Duration
 	Backoff time.Duration
+	// Notify is called once per finished task (succeeded/failed) by the worker:
+	// the push half of completion (engine brief wake-up). Parked agent runs are
+	// released by NotifyDone itself.
+	Notify func(model.FlowModelTask) error
 }
 
 type ModelTaskInput struct {
@@ -42,6 +46,7 @@ type ModelTaskInput struct {
 	MaxTokens                                  int
 	BudgetMicro                                int64
 	MaxAttempts                                int
+	Context                                    string
 }
 
 func (m ModelTasks) now() time.Time {
@@ -79,7 +84,7 @@ func (m ModelTasks) Enqueue(in ModelTaskInput) (model.FlowModelTask, error) {
 	req, _ := json.Marshal(map[string]any{"system": in.System, "user": in.User, "max_tokens": in.MaxTokens})
 	now := m.now()
 	t = model.FlowModelTask{ID: NewID("mt_"), TenantID: in.TenantID, IdemKey: in.Key, ReservationID: rsv.ID, Purpose: in.Purpose,
-		Request: string(req), Status: "queued", MaxAttempts: in.MaxAttempts, NextAttemptAt: now, CreatedAt: now, UpdatedAt: now}
+		Request: string(req), Context: in.Context, Status: "queued", MaxAttempts: in.MaxAttempts, NextAttemptAt: now, CreatedAt: now, UpdatedAt: now}
 	if err := m.DB.Clauses(clause.OnConflict{DoNothing: true}).Create(&t).Error; err != nil {
 		return t, err
 	}
@@ -256,6 +261,7 @@ func RunModelTaskWorker(ctx context.Context, m ModelTasks, every time.Duration) 
 			slog.Warn("flow: model tasks", "error", err)
 		}
 		_, _ = m.Reconcile(ctx, time.Minute)
+		m.NotifyDone(ctx)
 		select {
 		case <-ctx.Done():
 			return
@@ -288,3 +294,89 @@ func RegisterModelTaskRoutes(api gin.IRouter, db *gorm.DB, user UserFunc) {
 }
 
 var _ = strings.TrimSpace
+
+// NotifyDone pushes completion of finished tasks exactly once (notified_at
+// claim): agent runs parked on the task (waiting_external with operation_id =
+// task id) become ready for auto-continue immediately, and the Notify hook
+// wakes other consumers (the engine's brief scheduler). A failed hook leaves
+// the task un-notified so the next worker pass retries; consumers also keep
+// their own polling fallback.
+func (m ModelTasks) NotifyDone(ctx context.Context) int {
+	var rows []model.FlowModelTask
+	m.DB.Where("status IN ? AND notified_at IS NULL", []string{"succeeded", "failed"}).Order("updated_at").Limit(50).Find(&rows)
+	n := 0
+	for _, t := range rows {
+		m.DB.Model(&model.FlowExternalWait{}).Where("operation_id = ? AND tenant_id = ? AND status = ?", t.ID, t.TenantID, "waiting").
+			Updates(map[string]any{"status": "ready", "outcome": t.Status})
+		if m.Notify != nil {
+			if err := m.Notify(t); err != nil {
+				slog.Warn("flow: model task notify", "task", t.ID, "error", err)
+				continue
+			}
+		}
+		now := m.now()
+		if m.DB.Model(&model.FlowModelTask{}).Where("id = ? AND notified_at IS NULL", t.ID).Update("notified_at", now).RowsAffected == 1 {
+			n++
+		}
+	}
+	return n
+}
+
+// SynthesisContext is stored on synthesis tasks for asynchronous completion.
+type SynthesisContext struct {
+	WorkspaceID string             `json:"workspace_id,omitempty"`
+	Question    string             `json:"question"`
+	Evidence    []ResolvedEvidence `json:"evidence"`
+	Scope       MaterialScope      `json:"scope"`
+}
+
+// ModelTaskOperation renders a model task as an operation for agent tools
+// (intel_get_operation on an "mt_" id): status, and the citation-validated
+// synthesis once it succeeded.
+func ModelTaskOperation(db *gorm.DB, tenantID, id string) (map[string]any, error) {
+	var t model.FlowModelTask
+	if err := db.First(&t, "id = ? AND tenant_id = ?", id, tenantID).Error; err != nil {
+		return nil, ErrNotFound
+	}
+	op := map[string]any{"id": t.ID, "kind": "model_task", "purpose": t.Purpose, "status": t.Status, "attempts": t.Attempts}
+	switch t.Status {
+	case "succeeded":
+		var sc SynthesisContext
+		_ = json.Unmarshal([]byte(t.Context), &sc)
+		syn, err := FinishSynthesis(t, SynthesisRequest{Question: sc.Question, Evidence: sc.Evidence, Scope: sc.Scope})
+		if err != nil {
+			op["error"] = err.Error()
+		} else {
+			op["synthesis"] = syn
+		}
+	case "failed":
+		op["error"] = t.LastError
+	}
+	return op, nil
+}
+
+// BriefWakeNotifier pushes a finished brief summarization task to the engine
+// (POST /v1/briefs/wake with the window key) so the parked brief window is
+// completed immediately instead of on the next scheduler tick.
+func BriefWakeNotifier(engine EngineCaller) func(model.FlowModelTask) error {
+	return func(t model.FlowModelTask) error {
+		key, ok := strings.CutPrefix(t.IdemKey, "brief:")
+		if t.Purpose != "brief" || !ok {
+			return nil
+		}
+		var sc SynthesisContext
+		_ = json.Unmarshal([]byte(t.Context), &sc)
+		body, _ := json.Marshal(map[string]any{"key": key, "task_id": t.ID, "status": t.Status})
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		status, _, err := engine.Do(ctx, Scope{TenantID: t.TenantID, WorkspaceID: sc.WorkspaceID, Role: "editor"},
+			Actor{Type: "service_principal", ID: "flow-platform"}, http.MethodPost, "/v1/briefs/wake", "", body)
+		if err != nil {
+			return err
+		}
+		if status >= 500 {
+			return fmt.Errorf("engine wake returned %d", status)
+		}
+		return nil // 4xx (e.g. schedule gone): nothing to wake, do not retry
+	}
+}

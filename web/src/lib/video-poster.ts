@@ -22,7 +22,10 @@ let captureQueue: Promise<void> = Promise.resolve();
 /** Serializes browser video decoding so batch uploads and poster hydration never fan out decoders. */
 export function captureVideoPoster(source: string, options: CaptureVideoPosterOptions = {}) {
     const capture = captureQueue.then(() => captureVideoPosterNow(source, options));
-    captureQueue = capture.then(() => undefined, () => undefined);
+    captureQueue = capture.then(
+        () => undefined,
+        () => undefined,
+    );
     return capture;
 }
 
@@ -87,7 +90,7 @@ function captureVideoPosterNow(source: string, options: CaptureVideoPosterOption
             }
             const maxWidth = Math.max(1, options.maxWidth ?? 400);
             const width = Math.max(1, Math.min(metadata.width, maxWidth));
-            const height = Math.max(1, Math.round(width * metadata.height / Math.max(1, metadata.width)));
+            const height = Math.max(1, Math.round((width * metadata.height) / Math.max(1, metadata.width)));
             const canvas = document.createElement("canvas");
             canvas.width = width;
             canvas.height = height;
@@ -215,7 +218,7 @@ async function fetchVideoRange(source: string, start: number, end: number, signa
     const response = await fetch(source, { headers: { Range: `bytes=${start}-${end}` }, signal, cache: "force-cache" });
     if (!response.ok) return undefined;
     const declaredLength = Number(response.headers.get("content-length"));
-    if (Number.isFinite(declaredLength) && (response.status === 200 && declaredLength > MAX_MP4_AUDIO_PROBE_BYTES || response.status === 206 && declaredLength > MP4_AUDIO_PROBE_RANGE_BYTES)) return undefined;
+    if (Number.isFinite(declaredLength) && ((response.status === 200 && declaredLength > MAX_MP4_AUDIO_PROBE_BYTES) || (response.status === 206 && declaredLength > MP4_AUDIO_PROBE_RANGE_BYTES))) return undefined;
     const bytes = new Uint8Array(await response.arrayBuffer());
     const contentRange = response.headers.get("content-range") || "";
     const rangeMatch = /bytes\s+\d+-\d+\/(\d+)/i.exec(contentRange);
@@ -282,7 +285,7 @@ function parseIsoBmffAudioTrackFromOffset(bytes: Uint8Array, startOffset: number
             if (isMoov) foundMoov = true;
             if (insideMoov && type === "hdlr" && offset + 16 <= boxEnd && readFourcc(bytes, offset + 16) === "soun") foundAudio = true;
 
-            if (isMoov || insideMoov && (type === "trak" || type === "mdia")) {
+            if (isMoov || (insideMoov && (type === "trak" || type === "mdia"))) {
                 visit(offset + headerSize, boxEnd, insideMoov || isMoov);
             }
             if (foundAudio) return;
@@ -295,7 +298,7 @@ function parseIsoBmffAudioTrackFromOffset(bytes: Uint8Array, startOffset: number
 }
 
 function readUint32(bytes: Uint8Array, offset: number) {
-    return ((bytes[offset] || 0) * 0x1000000) + ((bytes[offset + 1] || 0) << 16) + ((bytes[offset + 2] || 0) << 8) + (bytes[offset + 3] || 0);
+    return (bytes[offset] || 0) * 0x1000000 + ((bytes[offset + 1] || 0) << 16) + ((bytes[offset + 2] || 0) << 8) + (bytes[offset + 3] || 0);
 }
 
 function readFourcc(bytes: Uint8Array, offset: number) {

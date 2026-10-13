@@ -89,31 +89,28 @@ export const CanvasFrameNode = React.memo(function CanvasFrameNode({
         return { left, top, right, bottom };
     }, [childNodes]);
 
-    const handleResizeMove = useCallback(
-        (event: MouseEvent) => {
-            const state = resizeRef.current;
-            if (!state.active) return;
-            const dx = (event.clientX - state.startX) / state.scale;
-            const dy = (event.clientY - state.startY) / state.scale;
-            const fromLeft = state.corner.includes("left");
-            const fromTop = state.corner.includes("top");
-            const startRight = state.startLeft + state.startWidth;
-            const startBottom = state.startTop + state.startHeight;
-            let left = fromLeft ? Math.min(state.startLeft + dx, startRight - 360) : state.startLeft;
-            let top = fromTop ? Math.min(state.startTop + dy, startBottom - 240) : state.startTop;
-            let right = fromLeft ? startRight : Math.max(state.startLeft + 360, startRight + dx);
-            let bottom = fromTop ? startBottom : Math.max(state.startTop + 240, startBottom + dy);
+    const handleResizeMove = useCallback((event: MouseEvent) => {
+        const state = resizeRef.current;
+        if (!state.active) return;
+        const dx = (event.clientX - state.startX) / state.scale;
+        const dy = (event.clientY - state.startY) / state.scale;
+        const fromLeft = state.corner.includes("left");
+        const fromTop = state.corner.includes("top");
+        const startRight = state.startLeft + state.startWidth;
+        const startBottom = state.startTop + state.startHeight;
+        let left = fromLeft ? Math.min(state.startLeft + dx, startRight - 360) : state.startLeft;
+        let top = fromTop ? Math.min(state.startTop + dy, startBottom - 240) : state.startTop;
+        let right = fromLeft ? startRight : Math.max(state.startLeft + 360, startRight + dx);
+        let bottom = fromTop ? startBottom : Math.max(state.startTop + 240, startBottom + dy);
 
-            if (state.childBounds) {
-                if (fromLeft) left = Math.min(left, state.childBounds.left - FRAME_PADDING);
-                else right = Math.max(right, state.childBounds.right + FRAME_PADDING);
-                if (fromTop) top = Math.min(top, state.childBounds.top - FRAME_HEADER_HEIGHT - FRAME_PADDING);
-                else bottom = Math.max(bottom, state.childBounds.bottom + FRAME_PADDING);
-            }
-            state.onResize(state.nodeId, right - left, bottom - top, { x: left, y: top });
-        },
-        [],
-    );
+        if (state.childBounds) {
+            if (fromLeft) left = Math.min(left, state.childBounds.left - FRAME_PADDING);
+            else right = Math.max(right, state.childBounds.right + FRAME_PADDING);
+            if (fromTop) top = Math.min(top, state.childBounds.top - FRAME_HEADER_HEIGHT - FRAME_PADDING);
+            else bottom = Math.max(bottom, state.childBounds.bottom + FRAME_PADDING);
+        }
+        state.onResize(state.nodeId, right - left, bottom - top, { x: left, y: top });
+    }, []);
 
     const handleResizeUp = useCallback(() => {
         resizeRef.current.active = false;
@@ -176,8 +173,14 @@ export const CanvasFrameNode = React.memo(function CanvasFrameNode({
                 event.preventDefault();
                 onToggleCollapsed(data.id);
             }}
-            onMouseEnter={() => { setHovered(true); onHoverStart?.(data.id); }}
-            onMouseLeave={() => { setHovered(false); onHoverEnd?.(data.id); }}
+            onMouseEnter={() => {
+                setHovered(true);
+                onHoverStart?.(data.id);
+            }}
+            onMouseLeave={() => {
+                setHovered(false);
+                onHoverEnd?.(data.id);
+            }}
         >
             {/* 帧节点同样禁用指针跟随 3D 位移，hover 使用 CSS 静态抬升 */}
             <CometCard
@@ -211,57 +214,57 @@ export const CanvasFrameNode = React.memo(function CanvasFrameNode({
                     />
                 ) : (
                     <>
-                <div className="pointer-events-auto absolute inset-x-0 top-0 z-10 flex items-center gap-1.5 px-1.5" style={{ height: FRAME_HEADER_HEIGHT, color: theme.node.text }}>
-                    <button
-                        type="button"
-                        className="grid size-8 shrink-0 place-items-center rounded-md transition-colors hover:bg-black/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 dark:hover:bg-white/10"
-                        style={{ outlineColor: theme.frame.activeStroke }}
-                        aria-label={collapsed ? "展开背板" : "折叠背板"}
-                        onMouseDown={(event) => event.stopPropagation()}
-                        onClick={(event) => {
-                            event.stopPropagation();
-                            onToggleCollapsed(data.id);
-                        }}
-                    >
-                        {collapsed ? <ChevronRight className="size-4" /> : <ChevronDown className="size-4" />}
-                    </button>
-                    {editing ? (
-                        <input
-                            autoFocus
-                            className="h-7 min-w-0 flex-1 rounded border bg-transparent px-1.5 text-sm font-semibold outline-none"
-                            style={{ borderColor: theme.frame.activeStroke, color: theme.node.text }}
-                            value={title}
-                            onChange={(event) => setTitle(event.target.value)}
-                            onBlur={commitTitle}
-                            onMouseDown={(event) => event.stopPropagation()}
-                            onKeyDown={(event) => {
-                                if (event.key === "Enter") commitTitle();
-                                if (event.key === "Escape") {
-                                    setTitle(data.title);
-                                    setEditing(false);
-                                }
-                            }}
-                        />
-                    ) : (
-                        <button
-                            type="button"
-                            className="min-w-0 truncate text-left text-sm font-semibold"
-                            title={data.title}
-                            onDoubleClick={(event) => {
-                                event.stopPropagation();
-                                if (readOnly) return;
-                                setEditing(true);
-                            }}
-                        >
-                            {data.title}
-                        </button>
-                    )}
-                    <span className="ml-auto shrink-0 pr-1 text-[var(--fs-label)] tabular-nums" style={{ color: theme.node.muted }}>
-                        {childNodes.length}
-                    </span>
-                </div>
+                        <div className="pointer-events-auto absolute inset-x-0 top-0 z-10 flex items-center gap-1.5 px-1.5" style={{ height: FRAME_HEADER_HEIGHT, color: theme.node.text }}>
+                            <button
+                                type="button"
+                                className="grid size-8 shrink-0 place-items-center rounded-md transition-colors hover:bg-black/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 dark:hover:bg-white/10"
+                                style={{ outlineColor: theme.frame.activeStroke }}
+                                aria-label={collapsed ? "展开背板" : "折叠背板"}
+                                onMouseDown={(event) => event.stopPropagation()}
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    onToggleCollapsed(data.id);
+                                }}
+                            >
+                                {collapsed ? <ChevronRight className="size-4" /> : <ChevronDown className="size-4" />}
+                            </button>
+                            {editing ? (
+                                <input
+                                    autoFocus
+                                    className="h-7 min-w-0 flex-1 rounded border bg-transparent px-1.5 text-sm font-semibold outline-none"
+                                    style={{ borderColor: theme.frame.activeStroke, color: theme.node.text }}
+                                    value={title}
+                                    onChange={(event) => setTitle(event.target.value)}
+                                    onBlur={commitTitle}
+                                    onMouseDown={(event) => event.stopPropagation()}
+                                    onKeyDown={(event) => {
+                                        if (event.key === "Enter") commitTitle();
+                                        if (event.key === "Escape") {
+                                            setTitle(data.title);
+                                            setEditing(false);
+                                        }
+                                    }}
+                                />
+                            ) : (
+                                <button
+                                    type="button"
+                                    className="min-w-0 truncate text-left text-sm font-semibold"
+                                    title={data.title}
+                                    onDoubleClick={(event) => {
+                                        event.stopPropagation();
+                                        if (readOnly) return;
+                                        setEditing(true);
+                                    }}
+                                >
+                                    {data.title}
+                                </button>
+                            )}
+                            <span className="ml-auto shrink-0 pr-1 text-[var(--fs-label)] tabular-nums" style={{ color: theme.node.muted }}>
+                                {childNodes.length}
+                            </span>
+                        </div>
 
-                {collapsed ? <FramePreview nodes={childNodes} frame={data} theme={theme} /> : null}
+                        {collapsed ? <FramePreview nodes={childNodes} frame={data} theme={theme} /> : null}
                     </>
                 )}
             </CometCard>
@@ -305,15 +308,29 @@ function FramePreview({ nodes, frame, theme }: { nodes: CanvasNodeData[]; frame:
         <div className="pointer-events-none absolute inset-x-2 bottom-2 overflow-hidden rounded-md" style={{ top: FRAME_HEADER_HEIGHT, background: theme.frame.preview }}>
             {layout.length ? (
                 layout.map(({ node, ...style }) => {
-                    return <div key={node.id} className="absolute overflow-hidden rounded-[var(--r-xs)] border" style={{ ...style, background: theme.node.fill, borderColor: theme.node.stroke }}>
-                        {node.type === CanvasNodeType.Image && node.metadata?.content ? <img src={node.metadata.content} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" draggable={false} /> : null}
-                        {node.type === CanvasNodeType.Video ? <CanvasVideoPreviewImage node={node} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" draggable={false} fallback={<Video className="m-auto size-4 h-full opacity-40" />} /> : null}
-                        {node.type === CanvasNodeType.Text ? <div className="line-clamp-3 p-1 text-[var(--fs-nano)] leading-[9px]" style={{ color: theme.node.text }}>{node.metadata?.content || node.title}</div> : null}
-                        {node.type === CanvasNodeType.Script ? <div className="p-1 text-[var(--fs-nano)] leading-[9px]" style={{ color: theme.node.text }}>分镜脚本 · {node.metadata?.storyboard?.rows.length || 0} 镜</div> : null}
-                    </div>;
+                    return (
+                        <div key={node.id} className="absolute overflow-hidden rounded-[var(--r-xs)] border" style={{ ...style, background: theme.node.fill, borderColor: theme.node.stroke }}>
+                            {node.type === CanvasNodeType.Image && node.metadata?.content ? <img src={node.metadata.content} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" draggable={false} /> : null}
+                            {node.type === CanvasNodeType.Video ? (
+                                <CanvasVideoPreviewImage node={node} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" draggable={false} fallback={<Video className="m-auto size-4 h-full opacity-40" />} />
+                            ) : null}
+                            {node.type === CanvasNodeType.Text ? (
+                                <div className="line-clamp-3 p-1 text-[var(--fs-nano)] leading-[9px]" style={{ color: theme.node.text }}>
+                                    {node.metadata?.content || node.title}
+                                </div>
+                            ) : null}
+                            {node.type === CanvasNodeType.Script ? (
+                                <div className="p-1 text-[var(--fs-nano)] leading-[9px]" style={{ color: theme.node.text }}>
+                                    分镜脚本 · {node.metadata?.storyboard?.rows.length || 0} 镜
+                                </div>
+                            ) : null}
+                        </div>
+                    );
                 })
             ) : (
-                <div className="grid h-full place-items-center text-[var(--fs-label)]" style={{ color: theme.node.faint }}>空背板</div>
+                <div className="grid h-full place-items-center text-[var(--fs-label)]" style={{ color: theme.node.faint }}>
+                    空背板
+                </div>
             )}
         </div>
     );

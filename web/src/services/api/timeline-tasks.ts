@@ -23,10 +23,7 @@ export type TimelineTranscriptionSegment = {
     text: string;
 };
 
-export async function createTimelineTranscriptionTask(
-    payload: TimelineTranscriptionCreateRequest,
-    signal?: AbortSignal,
-): Promise<GenerationTask> {
+export async function createTimelineTranscriptionTask(payload: TimelineTranscriptionCreateRequest, signal?: AbortSignal): Promise<GenerationTask> {
     return http.post<GenerationTask>("/timeline/transcriptions", payload, { signal });
 }
 
@@ -47,9 +44,6 @@ export type TimelineRenderResult = {
     subtitleSrt?: string;
 };
 
-export async function createTimelineRenderTask(
-    payload: TimelineRenderCreateRequest,
-    signal?: AbortSignal,
-): Promise<GenerationTask> {
+export async function createTimelineRenderTask(payload: TimelineRenderCreateRequest, signal?: AbortSignal): Promise<GenerationTask> {
     return http.post<GenerationTask>("/timeline/renders", payload, { signal });
 }

@@ -3,11 +3,7 @@ import { expect, test } from "bun:test";
 import { bannerDocToRuns, bannerTitleRunsToDoc } from "@/lib/announcements/banner-title-rich-text";
 
 test("样式分段与编辑文档互转保持幂等", () => {
-    const runs = [
-        { text: "限时活动", fontSize: 16, fontWeight: 700, color: "#FF0000" },
-        { text: "已上线", fontFamily: "mono" as const },
-        { text: "，欢迎体验" },
-    ];
+    const runs = [{ text: "限时活动", fontSize: 16, fontWeight: 700, color: "#FF0000" }, { text: "已上线", fontFamily: "mono" as const }, { text: "，欢迎体验" }];
     const doc = bannerTitleRunsToDoc(runs);
     expect(doc.content?.[0]?.type).toBe("paragraph");
     expect(bannerDocToRuns(doc)).toEqual(runs);

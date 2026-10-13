@@ -85,7 +85,6 @@ test("task state covers Agent, manual submissions and historical terminal tasks"
     expect(isCanvasNodeGenerating({ ...node, metadata: { status: "idle" } }, node.id)).toBe(true);
 });
 
-
 test("task progress ahead of the server checkpoint still accepts terminal state", () => {
     const queued = { ...node, metadata: { ...node.metadata, taskStatus: "queued", taskProgress: 0 } };
     const running = { ...node, metadata: { ...node.metadata, taskProgress: 67 } };

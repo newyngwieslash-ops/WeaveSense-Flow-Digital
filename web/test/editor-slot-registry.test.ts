@@ -1,10 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import {
-    getEditorSlots,
-    registerEditorSlot,
-    unregisterEditorSlot,
-} from "../src/lib/plugins/editor-slot-registry";
+import { getEditorSlots, registerEditorSlot, unregisterEditorSlot } from "../src/lib/plugins/editor-slot-registry";
 
 const render = () => null;
 
@@ -45,10 +41,7 @@ describe("editor slot registry", () => {
     });
 
     test("different plugins coexist in the same slot", () => {
-        const unregs = [
-            registerEditorSlot({ pluginId: "p1", slot: "subtitle-tool", render }),
-            registerEditorSlot({ pluginId: "p2", slot: "subtitle-tool", render }),
-        ];
+        const unregs = [registerEditorSlot({ pluginId: "p1", slot: "subtitle-tool", render }), registerEditorSlot({ pluginId: "p2", slot: "subtitle-tool", render })];
         expect(ownSlots("subtitle-tool")).toEqual(["p1", "p2"]);
         unregisterEditorSlot("p1", "subtitle-tool");
         expect(ownSlots("subtitle-tool")).toEqual(["p2"]);

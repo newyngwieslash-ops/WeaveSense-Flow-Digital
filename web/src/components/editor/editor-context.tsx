@@ -22,15 +22,7 @@ export type EditorHostContextValue = {
 const EditorStoreContext = createContext<EditorStoreHook | null>(null);
 const EditorHostContext = createContext<EditorHostContextValue | null>(null);
 
-export function EditorStoreProvider({
-    store,
-    host,
-    children,
-}: {
-    store: EditorStoreHook;
-    host: EditorHostContextValue;
-    children: React.ReactNode;
-}) {
+export function EditorStoreProvider({ store, host, children }: { store: EditorStoreHook; host: EditorHostContextValue; children: React.ReactNode }) {
     return (
         <EditorStoreContext.Provider value={store}>
             <EditorHostContext.Provider value={host}>{children}</EditorHostContext.Provider>

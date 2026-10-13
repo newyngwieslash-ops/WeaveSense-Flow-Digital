@@ -52,29 +52,18 @@ export function ColorGradeNodeContent({ node, theme }: ColorGradeNodeContentProp
             <div className="relative min-h-0 flex-1">
                 <img src={url} alt={node.title || "调色"} className="h-full w-full object-contain" draggable={false} style={{ filter: colorGradeCssFilter(grade) }} />
                 {isNeutralColorGrade(grade) ? (
-                    <span className="pointer-events-none absolute left-2 top-2 rounded bg-black/55 px-1.5 py-0.5 text-white" style={{ fontSize: "var(--fs-tiny)" }}>未调色</span>
+                    <span className="pointer-events-none absolute left-2 top-2 rounded bg-black/55 px-1.5 py-0.5 text-white" style={{ fontSize: "var(--fs-tiny)" }}>
+                        未调色
+                    </span>
                 ) : null}
             </div>
 
             {editable ? (
-                <div
-                    className="shrink-0 border-t px-2 py-1.5"
-                    data-canvas-no-zoom
-                    style={{ borderColor: theme.node.stroke }}
-                    onWheel={(event) => event.stopPropagation()}
-                    onMouseDown={(event) => event.stopPropagation()}
-                >
+                <div className="shrink-0 border-t px-2 py-1.5" data-canvas-no-zoom style={{ borderColor: theme.node.stroke }} onWheel={(event) => event.stopPropagation()} onMouseDown={(event) => event.stopPropagation()}>
                     {SLIDERS.map((slider) => (
                         <label key={slider.key} className="flex items-center gap-2" style={{ fontSize: "var(--fs-tiny)", color: theme.node.muted }}>
                             <span className="w-6 shrink-0">{slider.label}</span>
-                            <input
-                                type="range"
-                                className="min-w-0 flex-1"
-                                min={slider.min}
-                                max={slider.max}
-                                value={grade[slider.key]}
-                                onChange={(event) => update(slider.key, Number(event.target.value))}
-                            />
+                            <input type="range" className="min-w-0 flex-1" min={slider.min} max={slider.max} value={grade[slider.key]} onChange={(event) => update(slider.key, Number(event.target.value))} />
                             <span className="w-8 shrink-0 text-right tabular-nums">{grade[slider.key]}</span>
                         </label>
                     ))}
@@ -84,7 +73,8 @@ export function ColorGradeNodeContent({ node, theme }: ColorGradeNodeContentProp
                         style={{ fontSize: "var(--fs-tiny)", color: theme.node.muted }}
                         onClick={() => updateMetadata?.(node.id, { colorGrade: DEFAULT_COLOR_GRADE })}
                     >
-                        <RotateCcw className="size-3" />复位
+                        <RotateCcw className="size-3" />
+                        复位
                     </button>
                 </div>
             ) : null}

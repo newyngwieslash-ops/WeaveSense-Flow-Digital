@@ -5,19 +5,8 @@ import dayjs, { type Dayjs } from "dayjs";
 import { useCallback, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
-import {
-    createAdminBanner,
-    deleteAdminBanner,
-    listAdminBanners,
-    updateAdminBanner,
-    type BannerAnnouncement,
-} from "@/services/api/announcements";
-import {
-    BANNER_NOTICE_DEFAULT_TYPE,
-    bannerNoticeTypeLabel,
-    normalizeBannerNoticeType,
-    type BannerNoticeType,
-} from "@/lib/announcements/banner-notice";
+import { createAdminBanner, deleteAdminBanner, listAdminBanners, updateAdminBanner, type BannerAnnouncement } from "@/services/api/announcements";
+import { BANNER_NOTICE_DEFAULT_TYPE, bannerNoticeTypeLabel, normalizeBannerNoticeType, type BannerNoticeType } from "@/lib/announcements/banner-notice";
 import { bannerAnnouncementBarStyle } from "@/components/layout/banner-announcement-content";
 import { BANNER_TITLE_MAX_CHARS, bannerTitleCharCount, bannerTitlePlainText, normalizeBannerTitleRuns, type BannerTitleRun } from "@/lib/announcements/banner-title";
 import { AdminDataTable } from "./admin-ui";
@@ -35,13 +24,7 @@ type FormValues = {
 
 type BannerDialog = { mode: "create" } | { mode: "edit"; banner: BannerAnnouncement };
 
-export default function AdminBannerAnnouncementsPanel({
-    createOpen,
-    onCreateOpenChange,
-}: {
-    createOpen: boolean;
-    onCreateOpenChange: (open: boolean) => void;
-}) {
+export default function AdminBannerAnnouncementsPanel({ createOpen, onCreateOpenChange }: { createOpen: boolean; onCreateOpenChange: (open: boolean) => void }) {
     const { message, modal } = App.useApp();
     const queryClient = useQueryClient();
     const [form] = Form.useForm<FormValues>();
@@ -235,10 +218,7 @@ export default function AdminBannerAnnouncementsPanel({
             width: 92,
             // 用真实底色渲染类型，和前台/预览看到的是同一个 token。
             render: (_, record) => (
-                <span
-                    className="inline-flex items-center rounded-full px-2 py-0.5 text-[var(--fs-micro)] font-semibold text-white"
-                    style={bannerAnnouncementBarStyle(record.noticeType)}
-                >
+                <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[var(--fs-micro)] font-semibold text-white" style={bannerAnnouncementBarStyle(record.noticeType)}>
                     {bannerNoticeTypeLabel(record.noticeType)}
                 </span>
             ),
@@ -248,13 +228,7 @@ export default function AdminBannerAnnouncementsPanel({
             dataIndex: "status",
             key: "status",
             width: 110,
-            render: (value: string, record) => (
-                <Switch
-                    size="small"
-                    checked={value === "active"}
-                    onChange={(checked) => void handleToggleStatus(record, checked)}
-                />
-            ),
+            render: (value: string, record) => <Switch size="small" checked={value === "active"} onChange={(checked) => void handleToggleStatus(record, checked)} />,
         },
         {
             title: "有效期",
@@ -396,13 +370,7 @@ export default function AdminBannerAnnouncementsPanel({
                         label="通知标题"
                         required
                         validateStatus={titleMissing || titleTooLong ? "error" : undefined}
-                        help={
-                            titleMissing
-                                ? "请输入常驻通知标题"
-                                : titleTooLong
-                                  ? `已超出 ${BANNER_TITLE_MAX_CHARS} 个字符上限`
-                                  : "支持按选区设置字号、字重、字体与颜色，用「图标」插入 emoji 素材；标题在通知条内固定单行展示"
-                        }
+                        help={titleMissing ? "请输入常驻通知标题" : titleTooLong ? `已超出 ${BANNER_TITLE_MAX_CHARS} 个字符上限` : "支持按选区设置字号、字重、字体与颜色，用「图标」插入 emoji 素材；标题在通知条内固定单行展示"}
                     >
                         <BannerTitleEditor
                             key={dialog?.mode === "edit" ? dialog.banner.id : "create"}
@@ -420,12 +388,7 @@ export default function AdminBannerAnnouncementsPanel({
                         <BannerNoticePreview runs={titleRuns} hasLink={Boolean(linkValue?.trim())} noticeType={noticeType} />
                     </div>
 
-                    <Form.Item
-                        name="link"
-                        label="跳转链接（可选）"
-                        extra="支持 https:// 外链或以 / 开头的站内路径（如 /projects）；留空表示不可点击"
-                        rules={[{ max: 500, message: "链接最多 500 字符" }]}
-                    >
+                    <Form.Item name="link" label="跳转链接（可选）" extra="支持 https:// 外链或以 / 开头的站内路径（如 /projects）；留空表示不可点击" rules={[{ max: 500, message: "链接最多 500 字符" }]}>
                         <Input maxLength={500} placeholder="https://… 或 /projects" />
                     </Form.Item>
 

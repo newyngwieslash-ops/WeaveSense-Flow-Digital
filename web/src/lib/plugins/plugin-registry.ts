@@ -4,16 +4,7 @@ import { registerPluginCanvasNodes, unregisterNodeDefinitions } from "@/lib/canv
 
 const registeredPlugins = new Map<string, RegisteredPlugin>();
 
-const EDITOR_SLOT_KINDS: EditorSlotKind[] = [
-    "timeline-panel",
-    "preview-renderer",
-    "inspector",
-    "asset-ingest",
-    "subtitle-tool",
-    "transcription-provider",
-    "export-renderer",
-    "ai-assistant",
-];
+const EDITOR_SLOT_KINDS: EditorSlotKind[] = ["timeline-panel", "preview-renderer", "inspector", "asset-ingest", "subtitle-tool", "transcription-provider", "export-renderer", "ai-assistant"];
 
 function assertManifest(manifest: PluginManifest | PluginManifestV2) {
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(manifest.id)) throw new Error("插件 ID 必须使用 kebab-case");

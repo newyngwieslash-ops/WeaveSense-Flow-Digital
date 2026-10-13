@@ -92,11 +92,29 @@ export function ApiLogDetailDrawer({ logId, onClose, onLogUpdated }: { logId: st
                 </div>
             </div>
         </div>
-    ) : "请求日志详情";
+    ) : (
+        "请求日志详情"
+    );
 
     return (
         <Drawer title={title} open={Boolean(logId)} onClose={onClose} size="min(1120px, 66vw)" destroyOnHidden className="api-log-detail-drawer-panel" rootClassName="admin-drawer api-log-detail-drawer">
-            {loading ? <Skeleton active paragraph={{ rows: 10 }} /> : log ? <LogDetail log={log} providerRequestId={providerRequestId} videoURL={videoURL} resultText={resultText} querying={querying} onProviderRequestIdChange={setProviderRequestId} onVideoURLChange={setVideoURL} onQuery={runQuery} onRecoverURL={runURLRecovery} /> : <AdminEmpty size="compact" title="没有请求详情" />}
+            {loading ? (
+                <Skeleton active paragraph={{ rows: 10 }} />
+            ) : log ? (
+                <LogDetail
+                    log={log}
+                    providerRequestId={providerRequestId}
+                    videoURL={videoURL}
+                    resultText={resultText}
+                    querying={querying}
+                    onProviderRequestIdChange={setProviderRequestId}
+                    onVideoURLChange={setVideoURL}
+                    onQuery={runQuery}
+                    onRecoverURL={runURLRecovery}
+                />
+            ) : (
+                <AdminEmpty size="compact" title="没有请求详情" />
+            )}
         </Drawer>
     );
 }
@@ -141,7 +159,14 @@ function LogDetail({ log, providerRequestId, videoURL, resultText, querying, onP
                     <InfoItem label="供应商任务 ID" value={log.providerRequestId ? <CopyValue value={log.providerRequestId} /> : "未记录"} />
                     <InfoItem label="耗时" value={<span className="tabular-nums">{formatDuration(log.durationMs)}</span>} />
                     <InfoItem label="HTTP 状态" value={log.statusCode || "未记录"} />
-                    <InfoItem label="请求地址" value={<span className="break-all font-mono text-xs">{log.method} {log.path || "未记录"}</span>} />
+                    <InfoItem
+                        label="请求地址"
+                        value={
+                            <span className="break-all font-mono text-xs">
+                                {log.method} {log.path || "未记录"}
+                            </span>
+                        }
+                    />
                     <InfoItem label="上游渠道 URL" value={<span className="break-all font-mono text-xs">{log.upstreamUrl || "未记录"}</span>} />
                 </div>
                 {log.error || log.errorCode ? (
@@ -173,8 +198,12 @@ function LogDetail({ log, providerRequestId, videoURL, resultText, querying, onP
                                 <small>默认使用当前记录，可手动覆盖</small>
                             </div>
                             <Input className="api-log-recovery-input" value={providerRequestId} onChange={(event) => onProviderRequestIdChange(event.target.value)} placeholder="输入供应商任务 ID" />
-                            <Button icon={<RefreshCw className="size-3.5" />} loading={querying} onClick={onQuery}>自动查询</Button>
-                            <Button type="primary" icon={<Save className="size-3.5" />} loading={querying} onClick={onQuery}>保存并查询</Button>
+                            <Button icon={<RefreshCw className="size-3.5" />} loading={querying} onClick={onQuery}>
+                                自动查询
+                            </Button>
+                            <Button type="primary" icon={<Save className="size-3.5" />} loading={querying} onClick={onQuery}>
+                                保存并查询
+                            </Button>
                         </div>
                         <div className="api-log-recovery-row">
                             <div className="api-log-recovery-label">
@@ -182,7 +211,9 @@ function LogDetail({ log, providerRequestId, videoURL, resultText, querying, onP
                                 <small>仅支持公网 HTTP / HTTPS 视频地址</small>
                             </div>
                             <Input className="api-log-recovery-input" prefix={<Link2 className="size-4 text-foreground/35" />} value={videoURL} onChange={(event) => onVideoURLChange(event.target.value)} placeholder="https://example.com/video.mp4" />
-                            <Button icon={<Save className="size-3.5" />} loading={querying} disabled={!videoURL.trim()} onClick={onRecoverURL}>转存并回写</Button>
+                            <Button icon={<Save className="size-3.5" />} loading={querying} disabled={!videoURL.trim()} onClick={onRecoverURL}>
+                                转存并回写
+                            </Button>
                         </div>
                         {resultText ? <Alert className="api-log-recovery-result" type={resultText.includes("失败") || resultText.includes("错误") ? "error" : resultText.includes("生成中") ? "warning" : "success"} showIcon message={resultText} /> : null}
                     </div>
@@ -197,7 +228,12 @@ function LogDetail({ log, providerRequestId, videoURL, resultText, querying, onP
                     </div>
                     <span className="text-xs text-foreground/45">{log.requestBody || log.responseBody ? "可复制原始内容" : "暂无报文"}</span>
                 </div>
-                <Tabs items={[{ key: "request", label: "请求", children: <PayloadPanel value={log.requestBody} empty="该请求未记录请求报文" /> }, { key: "response", label: "响应", children: <PayloadPanel value={log.responseBody} empty="该请求未记录响应报文" /> }]} />
+                <Tabs
+                    items={[
+                        { key: "request", label: "请求", children: <PayloadPanel value={log.requestBody} empty="该请求未记录请求报文" /> },
+                        { key: "response", label: "响应", children: <PayloadPanel value={log.responseBody} empty="该请求未记录响应报文" /> },
+                    ]}
+                />
             </section>
         </div>
     );
@@ -227,7 +263,8 @@ function PayloadPanel({ value, empty }: { value?: string; empty: string }) {
         <div className="api-log-payload-wrap">
             <div className="api-log-payload-actions">
                 <Typography.Text copyable={{ text: value, tooltips: ["复制报文", "已复制"] }}>
-                    <Clipboard className="mr-1 inline size-3.5" />复制报文
+                    <Clipboard className="mr-1 inline size-3.5" />
+                    复制报文
                 </Typography.Text>
             </div>
             <pre className="api-log-payload">{value}</pre>

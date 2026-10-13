@@ -11,13 +11,15 @@ function agentPlanImageConfig() {
         apiKey: "test-key",
         interfaceType: "volcengine-ark-agent-plan-image",
         models: ["doubao-seedream-4-0-250828"],
-        modelCosts: [{
-            model: "doubao-seedream-4-0-250828",
-            capability: "image",
-            protocol: "volcengine-ark-agent-plan-image",
-            billingMode: "fixed_request",
-            unitPriceMicrocredits: 1,
-        }],
+        modelCosts: [
+            {
+                model: "doubao-seedream-4-0-250828",
+                capability: "image",
+                protocol: "volcengine-ark-agent-plan-image",
+                billingMode: "fixed_request",
+                unitPriceMicrocredits: 1,
+            },
+        ],
     });
     const model = encodeChannelModel(channel.id, "doubao-seedream-4-0-250828");
     return { ...defaultConfig, channels: [channel], model, baseUrl: channel.baseUrl, interfaceType: channel.interfaceType };
@@ -31,14 +33,16 @@ function agentPlanVideoConfig() {
         apiKey: "test-key",
         interfaceType: "volcengine-ark-agent-plan-video",
         models: ["doubao-seedance-1-5-pro-251215"],
-        modelCosts: [{
-            model: "doubao-seedance-1-5-pro-251215",
-            capability: "video",
-            protocol: "volcengine-ark-agent-plan-video",
-            billingMode: "token",
-            inputPricePerMillion: 1,
-            outputPricePerMillion: 1,
-        }],
+        modelCosts: [
+            {
+                model: "doubao-seedance-1-5-pro-251215",
+                capability: "video",
+                protocol: "volcengine-ark-agent-plan-video",
+                billingMode: "token",
+                inputPricePerMillion: 1,
+                outputPricePerMillion: 1,
+            },
+        ],
     });
     const model = encodeChannelModel(channel.id, "doubao-seedance-1-5-pro-251215");
     return { ...defaultConfig, channels: [channel], model, videoModel: model, baseUrl: channel.baseUrl, interfaceType: channel.interfaceType };
@@ -50,14 +54,16 @@ describe("generation-task ark asset references", () => {
             mode: "image",
             prompt: "edit this",
             config: agentPlanImageConfig(),
-            referenceImages: [{
-                id: "ref-1",
-                name: "ref.png",
-                type: "image/png",
-                url: "https://cdn.example.com/ref.png",
-                storageKey: "resource:res-1",
-                arkAssetId: "asset-already-synced",
-            }],
+            referenceImages: [
+                {
+                    id: "ref-1",
+                    name: "ref.png",
+                    type: "image/png",
+                    url: "https://cdn.example.com/ref.png",
+                    storageKey: "resource:res-1",
+                    arkAssetId: "asset-already-synced",
+                },
+            ],
         });
         const images = (input.input as { referenceImages?: Array<{ url?: string; storageKey?: string }> }).referenceImages || [];
         expect(images).toHaveLength(1);
@@ -70,14 +76,16 @@ describe("generation-task ark asset references", () => {
             mode: "video",
             prompt: "animate this",
             config: agentPlanVideoConfig(),
-            referenceImages: [{
-                id: "ref-1",
-                name: "ref.png",
-                type: "image/png",
-                url: "https://cdn.example.com/ref.png",
-                storageKey: "resource:res-1",
-                arkAssetId: "asset-already-synced",
-            }],
+            referenceImages: [
+                {
+                    id: "ref-1",
+                    name: "ref.png",
+                    type: "image/png",
+                    url: "https://cdn.example.com/ref.png",
+                    storageKey: "resource:res-1",
+                    arkAssetId: "asset-already-synced",
+                },
+            ],
         });
         const images = (input.input as { referenceImages?: Array<{ url?: string }> }).referenceImages || [];
         expect(images).toHaveLength(1);

@@ -101,7 +101,7 @@ export function resolveNodeToolbarPlacement(tool: ToolDefinition, ctx: ToolConte
     const placement = tool.nodeToolbar;
     return {
         group: typeof placement?.group === "function" ? placement.group(ctx) : placement?.group || "more",
-        order: typeof placement?.order === "function" ? placement.order(ctx) : placement?.order ?? tool.defaultOrder,
+        order: typeof placement?.order === "function" ? placement.order(ctx) : (placement?.order ?? tool.defaultOrder),
     };
 }
 

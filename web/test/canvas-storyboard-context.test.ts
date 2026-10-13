@@ -39,14 +39,16 @@ describe("storyboard generation context", () => {
     });
 
     it("keeps the version check for linked character cards", () => {
-        expect(() => resolveStoryboardGenerationContext([
-            styleNode,
-            node("character-card", CanvasNodeType.Text, {
-                workflowKind: "character",
-                characterAssetId: "asset-1",
-                characterName: "李当歌",
-            }),
-        ])).toThrow("角色卡“李当歌”版本未同步");
+        expect(() =>
+            resolveStoryboardGenerationContext([
+                styleNode,
+                node("character-card", CanvasNodeType.Text, {
+                    workflowKind: "character",
+                    characterAssetId: "asset-1",
+                    characterName: "李当歌",
+                }),
+            ]),
+        ).toThrow("角色卡“李当歌”版本未同步");
     });
 
     it("passes linked character cards with a current version", () => {
@@ -61,11 +63,13 @@ describe("storyboard generation context", () => {
             }),
         ]);
 
-        expect(context.characters).toEqual([{
-            assetId: "asset-1",
-            versionId: "version-1",
-            name: "李当歌",
-            definition: { role: "镇国公世子" },
-        }]);
+        expect(context.characters).toEqual([
+            {
+                assetId: "asset-1",
+                versionId: "version-1",
+                name: "李当歌",
+                definition: { role: "镇国公世子" },
+            },
+        ]);
     });
 });

@@ -146,7 +146,7 @@ export const LENS_PROFILES: LensProfile[] = [
         label: "Cooke S7/i",
         zhName: "库克 S7/i",
         shortTag: "Cooke S7/i",
-        profilePrompt: "Cooke S7/i lens, legendary \"Cooke Look\", warm color bias, gentle contrast, soft rounded bokeh, classic flattering skin rendering",
+        profilePrompt: 'Cooke S7/i lens, legendary "Cooke Look", warm color bias, gentle contrast, soft rounded bokeh, classic flattering skin rendering',
         lensColor: "#26231d",
         ringColor: "#d0a060",
         description: "传奇「Cooke Look」，暖调偏红，讨喜肤色。",
@@ -280,7 +280,8 @@ export function describeAperture(f: number): string {
 }
 
 function applyTemplate(template: string, values: Record<string, string>): string {
-    return template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => values[key] ?? "")
+    return template
+        .replace(/\{\{(\w+)\}\}/g, (_, key: string) => values[key] ?? "")
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean)

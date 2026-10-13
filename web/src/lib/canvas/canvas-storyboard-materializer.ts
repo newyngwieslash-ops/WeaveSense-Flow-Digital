@@ -4,18 +4,9 @@ import { storyboardAssetRoleForNode } from "@/lib/canvas/canvas-storyboard-asset
 import { buildOrderedCanvasResourceReferences, canvasResourceMentionToken } from "@/lib/canvas/canvas-resource-references";
 import { CanvasNodeType, type CanvasConnection, type CanvasNodeData, type StoryboardAssetBinding, type StoryboardRow } from "@/types/canvas";
 
-export function storyboardRowReferenceNodeIds(
-    scriptNode: CanvasNodeData,
-    row: StoryboardRow,
-    nodes: CanvasNodeData[],
-    connections: CanvasConnection[],
-    includeFirstFrame: boolean,
-    targetNodeId?: string,
-) {
+export function storyboardRowReferenceNodeIds(scriptNode: CanvasNodeData, row: StoryboardRow, nodes: CanvasNodeData[], connections: CanvasConnection[], includeFirstFrame: boolean, targetNodeId?: string) {
     const characterAssetIds = new Set((row.characters || []).map((character) => character.characterAssetId).filter((assetId): assetId is string => Boolean(assetId)));
-    const characterNodeIds = nodes
-        .filter((node) => node.metadata?.workflowKind === "character" && Boolean(node.metadata.characterAssetId) && characterAssetIds.has(node.metadata.characterAssetId!))
-        .map((node) => node.id);
+    const characterNodeIds = nodes.filter((node) => node.metadata?.workflowKind === "character" && Boolean(node.metadata.characterAssetId) && characterAssetIds.has(node.metadata.characterAssetId!)).map((node) => node.id);
     const referenceIds = new Set([
         ...(scriptNode.metadata?.storyboard?.referenceNodeIds || []),
         ...(row.assetBindings || []).map((binding) => binding.nodeId),
@@ -39,13 +30,7 @@ export function storyboardComposerContent(prompt: string, referenceNodeIds: stri
     return mentions.length ? [`参考资产：${mentions.join(" ")}`, prompt.trim()].filter(Boolean).join("\n") : prompt.trim();
 }
 
-export function reconcileStoryboardTargetConnections(
-    connections: CanvasConnection[],
-    scriptNode: CanvasNodeData,
-    row: StoryboardRow,
-    targetNodeId: string,
-    referenceNodeIds: string[],
-) {
+export function reconcileStoryboardTargetConnections(connections: CanvasConnection[], scriptNode: CanvasNodeData, row: StoryboardRow, targetNodeId: string, referenceNodeIds: string[]) {
     const desired = new Set(referenceNodeIds.filter((nodeId) => nodeId !== targetNodeId && nodeId !== scriptNode.id));
     const next = connections.filter((connection) => {
         if (connection.storyboardRowId !== row.id || connection.toNodeId !== targetNodeId) return true;

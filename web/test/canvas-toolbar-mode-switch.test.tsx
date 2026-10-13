@@ -100,13 +100,7 @@ describe("canvas toolbar mode switch", () => {
 
     test("hides rarely used arrange tools from the selection toolbar by default", () => {
         const prefs = defaultToolbarPrefs("selection");
-        expect(prefs.hidden).toEqual(expect.arrayContaining([
-            "selection-arrange-row",
-            "selection-arrange-column",
-            "selection-arrange-grid",
-            "selection-arrange-flow",
-            "selection-create-reference-group",
-        ]));
+        expect(prefs.hidden).toEqual(expect.arrayContaining(["selection-arrange-row", "selection-arrange-column", "selection-arrange-grid", "selection-arrange-flow", "selection-create-reference-group"]));
 
         const entries = resolveToolbarEntries("selection", createMainContext(), null);
         expect(entries.some((entry) => entry.id === "selection-align-left")).toBe(true);
@@ -119,17 +113,19 @@ describe("canvas toolbar mode switch", () => {
     test("renders the pill switch with an active circular thumb", () => {
         const html = renderToStaticMarkup(
             <FloatingDock
-                items={[{
-                    kind: "switch",
-                    id: CANVAS_MODE_TOOL_ID,
-                    label: "抓手 / 框选",
-                    value: "box-select",
-                    options: [
-                        { id: "box-select", label: "区域选择", icon: <MousePointer2 />, value: "box-select" },
-                        { id: "move", label: "抓手工具", icon: <Hand />, value: "move" },
-                    ],
-                    onChange: () => {},
-                }]}
+                items={[
+                    {
+                        kind: "switch",
+                        id: CANVAS_MODE_TOOL_ID,
+                        label: "抓手 / 框选",
+                        value: "box-select",
+                        options: [
+                            { id: "box-select", label: "区域选择", icon: <MousePointer2 />, value: "box-select" },
+                            { id: "move", label: "抓手工具", icon: <Hand />, value: "move" },
+                        ],
+                        onChange: () => {},
+                    },
+                ]}
             />,
         );
 

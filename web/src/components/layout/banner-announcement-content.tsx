@@ -39,11 +39,7 @@ export function BannerAnnouncementTitle({ runs, fallbackText }: { runs?: BannerT
             {runs.map((run, index) => {
                 const style = bannerTitleRunStyle(run);
                 return (
-                    <span
-                        key={`${index}:${run.text}`}
-                        style={style}
-                        className={!run.color ? "text-white" : undefined}
-                    >
+                    <span key={`${index}:${run.text}`} style={style} className={!run.color ? "text-white" : undefined}>
                         {run.text}
                     </span>
                 );

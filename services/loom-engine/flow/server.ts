@@ -5,7 +5,12 @@ import { Engine, HttpError } from "./engine.ts";
 import { Reports } from "./reports.ts";
 import { withTenant } from "./db.ts";
 
-export interface ServerConfig { signingKey: string; audience: string }
+export interface ServerConfig {
+  signingKey: string;
+  audience: string;
+  /** Platform Model Gateway hook so a pushed brief wake-up can complete the window here. */
+  summarize?: Reports["summarize"];
+}
 
 async function readJson(req: IncomingMessage): Promise<any> {
   let size = 0; const chunks: Buffer[] = [];
@@ -21,6 +26,7 @@ function send(res: ServerResponse, status: number, data: unknown, msg = "ok") {
 
 export function handler(engine: Engine, cfg: ServerConfig) {
   const rp = new Reports(engine);
+  rp.summarize = cfg.summarize;
   return async (req: IncomingMessage, res: ServerResponse) => {
     try {
       const url = new URL(req.url ?? "/", "http://engine");
@@ -81,6 +87,15 @@ export function handler(engine: Engine, cfg: ServerConfig) {
       if (m === "GET" && (mm = p.match(/^\/v1\/reports\/([\w-]+)$/))) { requireScope(ctx, "intel.documents.read"); return send(res, 200, await rp.getReport(ctx, mm[1])); }
       if (m === "POST" && p === "/v1/reports") { requireScope(ctx, "intel.reports.write"); return send(res, 201, await rp.saveReport(ctx, actor, idem(), await readJson(req))); }
       if (m === "POST" && p === "/v1/research-runs") { requireScope(ctx, "intel.research"); return send(res, 201, await rp.startResearch(ctx, idem(), await readJson(req))); }
+      if (m === "POST" && p === "/v1/briefs/wake") {
+        // Push from the platform: the model task of a parked brief window finished.
+        // Completes just that schedule's due window now (idempotent with the scheduler tick).
+        requireScope(ctx, "intel.reports.write");
+        const key = String((await readJson(req)).key ?? "");
+        const scheduleId = /^brief:([\w-]+):/.exec(key)?.[1];
+        if (!scheduleId) throw new HttpError(400, "invalid brief key");
+        return send(res, 200, { key, made: await rp.briefTick(5, { tenant_id: ctx.tenant_id, schedule_id: scheduleId }) });
+      }
       if (m === "GET" && p === "/v1/brief-schedules") { requireScope(ctx, "intel.sources.read"); return send(res, 200, await rp.listBriefSchedules(ctx)); }
       if (m === "POST" && p === "/v1/brief-schedules/preview") { requireScope(ctx, "intel.sources.read"); return send(res, 200, await rp.previewBrief(ctx, await readJson(req))); }
       if (m === "POST" && p === "/v1/brief-schedules") {

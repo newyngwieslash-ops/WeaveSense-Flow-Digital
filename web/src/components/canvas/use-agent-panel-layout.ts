@@ -71,6 +71,14 @@ export function useAgentPanelLayout() {
         style: compact ? { left: 0, top: 8, width: "100%", height: "calc(100dvh - 8px)" } : layout,
         reset: () => setLayout(defaultAgentPanelLayout(viewport())),
         onResizeKeyDown,
-        pointerHandlers: { onPointerDown, onPointerMove, onPointerUp, onPointerCancel: onPointerUp, onLostPointerCapture: () => { gestureRef.current = null; } },
+        pointerHandlers: {
+            onPointerDown,
+            onPointerMove,
+            onPointerUp,
+            onPointerCancel: onPointerUp,
+            onLostPointerCapture: () => {
+                gestureRef.current = null;
+            },
+        },
     };
 }

@@ -48,7 +48,11 @@ export async function runProjectAgentTool(name: ProjectAgentToolName, rawInput: 
     }
     if (name === "project_extract_asset_candidates") {
         const candidates = Array.isArray(rawInput.candidates) ? rawInput.candidates : [];
-        return createProjectAssetCandidates(projectId, candidates.map(normalizeAgentCandidateInput).filter((candidate): candidate is NonNullable<typeof candidate> => Boolean(candidate)), "agent");
+        return createProjectAssetCandidates(
+            projectId,
+            candidates.map(normalizeAgentCandidateInput).filter((candidate): candidate is NonNullable<typeof candidate> => Boolean(candidate)),
+            "agent",
+        );
     }
     if (name === "project_confirm_asset_candidate") {
         return confirmProjectAssetCandidate(projectId, String(rawInput.candidateId || ""), String(rawInput.assetId || "") || undefined);
@@ -72,10 +76,22 @@ export async function runProjectAgentTool(name: ProjectAgentToolName, rawInput: 
         return linkProjectAsset(projectId, { assetId: String(rawInput.assetId || ""), category: normalizeAssetCategory(rawInput.category) });
     }
     if (name === "project_upsert_asset_version") {
-        return createProjectAssetVersion(projectId, String(rawInput.assetId || ""), { prompt: String(rawInput.prompt || ""), definitionJson: typeof rawInput.definitionJson === "string" ? rawInput.definitionJson : undefined, note: String(rawInput.note || "") });
+        return createProjectAssetVersion(projectId, String(rawInput.assetId || ""), {
+            prompt: String(rawInput.prompt || ""),
+            definitionJson: typeof rawInput.definitionJson === "string" ? rawInput.definitionJson : undefined,
+            note: String(rawInput.note || ""),
+        });
     }
     if (name === "project_register_task_output") {
-        return registerProjectTaskOutput(projectId, String(rawInput.stepId || ""), { taskId: String(rawInput.taskId || ""), assetVersionId: String(rawInput.assetVersionId || "") || undefined, resourceId: String(rawInput.resourceId || "") || undefined, mediaType: String(rawInput.mediaType || "") || undefined, role: String(rawInput.role || "output"), metadataJson: typeof rawInput.metadataJson === "string" ? rawInput.metadataJson : undefined, outputJson: typeof rawInput.outputJson === "string" ? rawInput.outputJson : undefined });
+        return registerProjectTaskOutput(projectId, String(rawInput.stepId || ""), {
+            taskId: String(rawInput.taskId || ""),
+            assetVersionId: String(rawInput.assetVersionId || "") || undefined,
+            resourceId: String(rawInput.resourceId || "") || undefined,
+            mediaType: String(rawInput.mediaType || "") || undefined,
+            role: String(rawInput.role || "output"),
+            metadataJson: typeof rawInput.metadataJson === "string" ? rawInput.metadataJson : undefined,
+            outputJson: typeof rawInput.outputJson === "string" ? rawInput.outputJson : undefined,
+        });
     }
     throw new Error(`未知项目工具：${name}`);
 }

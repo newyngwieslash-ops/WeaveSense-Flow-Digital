@@ -1,7 +1,6 @@
 import { http } from "@/services/api/request";
 import type { ModelTag } from "@/lib/model-tags";
 
-
 export type CreditAccount = {
     userId: string;
     availableMicrocredits: number;

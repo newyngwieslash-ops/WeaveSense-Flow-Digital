@@ -2,13 +2,7 @@ import { expect, test } from "bun:test";
 
 import { deselectVisibleModels, filterImportModels, selectVisibleModels } from "../src/pages/admin/components/channel-model-import-selection";
 
-const MODELS = [
-    "MiniMax-H3",
-    "004系列/MiniMax-H3(933/10-15秒768P)",
-    "004系列/sd2.5(30--0-10卡脸4-30秒/720P)",
-    "gpt-image-1",
-    "doubao-seedream-4",
-];
+const MODELS = ["MiniMax-H3", "004系列/MiniMax-H3(933/10-15秒768P)", "004系列/sd2.5(30--0-10卡脸4-30秒/720P)", "gpt-image-1", "doubao-seedream-4"];
 
 test("关键字为空时返回全部模型", () => {
     expect(filterImportModels(MODELS, "")).toEqual(MODELS);

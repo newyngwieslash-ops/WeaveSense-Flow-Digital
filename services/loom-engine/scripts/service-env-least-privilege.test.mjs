@@ -107,15 +107,19 @@ test("no credential appears in the repository tree", () => {
 test("optional OpenCode runtime has only task credentials and an isolated network", () => {
   const blocks = serviceBlocks(compose);
   const runtime = blocks["opencode-runtime"].join("\n");
-  for (const text of ['profiles: ["opencode"]', 'networks: ["opencode-runtime"]', 'user: "1000:1000"', "read_only: true", 'cap_drop: ["ALL"]', 'security_opt: ["no-new-privileges:true"]', "pids_limit: 64", "mem_limit: 768m"]) {
+  for (const text of ['profiles: ["opencode"]', 'networks: ["opencode-runtime"]', 'user: "1000:1000"', "read_only: true", 'cap_drop: ["ALL"]', 'security_opt: ["no-new-privileges:true"]', "mem_limit: 768m"]) {
     assert.ok(runtime.includes(text), `runtime requires ${text}`);
   }
+  // A pid cap is required. 64 aborts the bun child during boot (documented in
+  // docker-compose.yml), so the bound is "present and at most 1024".
+  const pids = Number(/^\s+pids_limit:\s*(\d+)\s*$/m.exec(runtime)?.[1]);
+  assert.ok(pids > 0 && pids <= 1024, `runtime requires a pids_limit in (0, 1024], got ${pids}`);
   assert.ok(!/^\s+(?:ports|volumes|env_file|extra_hosts):/m.test(runtime));
   for (const secret of ["AGENT_MODEL_API_KEY", "XAI_API_KEY", "AGENT_DATA_TOKEN", "AGENT_SERVICE_TOKEN", "OPENCODE_WORKER_TOKEN", "OPENCODE_BRIDGE_CONTROL_TOKEN", "DATABASE_URL"]) {
     assert.ok(!runtime.includes(secret), `runtime must not receive ${secret}`);
   }
   const names = [...runtime.matchAll(/^ {6}([A-Z_]+):/gm)].map(match => match[1]);
-  assert.deepEqual(names.sort(), ["OPENCODE_RUNTIME_TOKEN", "OPENCODE_BRIDGE_URL", "OPENCODE_MODEL_NAME"].sort());
+  assert.deepEqual(names.sort(), ["OPENCODE_RUNTIME_TOKEN", "OPENCODE_BRIDGE_URL", "OPENCODE_MODEL_NAME", "OPENCODE_MAX_OUTPUT_TOKENS"].sort()); // output cap is a non-secret tuning value
   assert.match(compose, /networks:\s*\n {2}opencode-runtime:\s*\n {4}internal: true\s*\n {4}driver_opts:\s*\n {6}com\.docker\.network\.bridge\.gateway_mode_ipv4: isolated/);
 });
 

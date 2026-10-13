@@ -7,15 +7,7 @@ import { ChannelHeadersEditor, validateChannelHeaders } from "@/components/chann
 import { WorkspaceState } from "@/components/layout/workspace-state";
 import { mergeFetchedChannelModelCosts } from "@/lib/channel-model-catalog";
 import { fetchChannelModels } from "@/services/api/image";
-import {
-    createModelChannel,
-    defaultBaseUrlForApiFormat,
-    filterModelsByCapability,
-    modelOptionsFromChannels,
-    useConfigStore,
-    type AiConfig,
-    type ModelChannel,
-} from "@/stores/use-config-store";
+import { createModelChannel, defaultBaseUrlForApiFormat, filterModelsByCapability, modelOptionsFromChannels, useConfigStore, type AiConfig, type ModelChannel } from "@/stores/use-config-store";
 import { ChannelModelSettings } from "./channel-video-pricing";
 import { Select } from "@/components/ui/base/select";
 
@@ -40,16 +32,18 @@ export function ChannelSettingsPane({ onOpenModels, onOpenRunningHub }: ChannelS
     };
 
     const updateChannel = (id: string, patch: Partial<ModelChannel>) => {
-        updateChannels(config.channels.map((channel) => {
-            if (channel.id !== id) return channel;
-            const models = patch.models ? uniqueModels(patch.models) : channel.models;
-            return {
-                ...channel,
-                ...patch,
-                models,
-                modelCosts: patch.modelCosts !== undefined ? patch.modelCosts : (patch.models ? channel.modelCosts?.filter((item) => models.includes(item.model)) : channel.modelCosts),
-            };
-        }));
+        updateChannels(
+            config.channels.map((channel) => {
+                if (channel.id !== id) return channel;
+                const models = patch.models ? uniqueModels(patch.models) : channel.models;
+                return {
+                    ...channel,
+                    ...patch,
+                    models,
+                    modelCosts: patch.modelCosts !== undefined ? patch.modelCosts : patch.models ? channel.modelCosts?.filter((item) => models.includes(item.model)) : channel.modelCosts,
+                };
+            }),
+        );
     };
 
     const updateChannelConnection = (channel: ModelChannel, connection: UserChannelConnection) => {
@@ -176,31 +170,42 @@ export function ChannelSettingsPane({ onOpenModels, onOpenRunningHub }: ChannelS
             <div className="settings-pane-header">
                 <div className="min-w-0">
                     <h2>个人渠道</h2>
-                    <p>管理个人模型服务和工作流渠道。普通渠道只保存连接类型；模型能力在“模型与能力”中配置。<Button type="link" size="small" className="h-auto p-0 text-xs font-semibold" onClick={onOpenModels}>打开模型选择</Button></p>
+                    <p>
+                        管理个人模型服务和工作流渠道。普通渠道只保存连接类型；模型能力在“模型与能力”中配置。
+                        <Button type="link" size="small" className="h-auto p-0 text-xs font-semibold" onClick={onOpenModels}>
+                            打开模型选择
+                        </Button>
+                    </p>
                 </div>
                 <div className="flex w-full gap-2 sm:w-auto sm:shrink-0">
-                    <Button className="h-10 flex-1 sm:h-8 sm:flex-none" icon={<RefreshCw className="size-4" />} loading={loadingChannelIds.includes("all")} disabled={loadingChannelIds.some((id) => id !== "all")} onClick={() => void refreshAllModels()}>拉取全部</Button>
-                    <Button className="h-10 flex-1 sm:h-8 sm:flex-none" type="primary" icon={<Plus className="size-4" />} onClick={addChannel}>新增渠道</Button>
+                    <Button className="h-10 flex-1 sm:h-8 sm:flex-none" icon={<RefreshCw className="size-4" />} loading={loadingChannelIds.includes("all")} disabled={loadingChannelIds.some((id) => id !== "all")} onClick={() => void refreshAllModels()}>
+                        拉取全部
+                    </Button>
+                    <Button className="h-10 flex-1 sm:h-8 sm:flex-none" type="primary" icon={<Plus className="size-4" />} onClick={addChannel}>
+                        新增渠道
+                    </Button>
                 </div>
             </div>
-            {onOpenRunningHub ? <section className="settings-section mb-3">
-                <div className="mb-3">
-                    <h3 className="text-sm font-semibold">个人工作流渠道</h3>
-                    <p className="mt-1 text-xs text-foreground/55">RunningHub 使用独立的云端工作流参数与执行通道。</p>
-                </div>
-                <div className="grid gap-2 lg:grid-cols-2">
-                    {onOpenRunningHub ? (
-                        <WorkflowChannelEntry
-                            icon={<Workflow className="size-4" />}
-                            title="RunningHub"
-                            description="云端工作流和 RunningHub App"
-                            status={runningHubReady ? `${config.runningHub.workflows.length} 个工作流已配置` : config.runningHub.enabled ? "待完成连接和工作流配置" : "未启用"}
-                            ready={runningHubReady}
-                            onOpen={onOpenRunningHub}
-                        />
-                    ) : null}
-                </div>
-            </section> : null}
+            {onOpenRunningHub ? (
+                <section className="settings-section mb-3">
+                    <div className="mb-3">
+                        <h3 className="text-sm font-semibold">个人工作流渠道</h3>
+                        <p className="mt-1 text-xs text-foreground/55">RunningHub 使用独立的云端工作流参数与执行通道。</p>
+                    </div>
+                    <div className="grid gap-2 lg:grid-cols-2">
+                        {onOpenRunningHub ? (
+                            <WorkflowChannelEntry
+                                icon={<Workflow className="size-4" />}
+                                title="RunningHub"
+                                description="云端工作流和 RunningHub App"
+                                status={runningHubReady ? `${config.runningHub.workflows.length} 个工作流已配置` : config.runningHub.enabled ? "待完成连接和工作流配置" : "未启用"}
+                                ready={runningHubReady}
+                                onOpen={onOpenRunningHub}
+                            />
+                        ) : null}
+                    </div>
+                </section>
+            ) : null}
             {userChannels.length ? (
                 <div className="settings-channel-list space-y-2">
                     {userChannels.map((channel) => {
@@ -209,17 +214,47 @@ export function ChannelSettingsPane({ onOpenModels, onOpenRunningHub }: ChannelS
                             <section key={channel.id} aria-labelledby={`channel-${channel.id}-title`} className="settings-channel p-2.5 sm:p-3">
                                 <div className="mb-2.5 flex flex-wrap items-start justify-between gap-2.5">
                                     <div className="min-w-0 flex-1 basis-52">
-                                        <h3 id={`channel-${channel.id}-title`} className="truncate text-sm font-semibold">{channel.name || "未命名渠道"}</h3>
+                                        <h3 id={`channel-${channel.id}-title`} className="truncate text-sm font-semibold">
+                                            {channel.name || "未命名渠道"}
+                                        </h3>
                                         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-foreground/55">
                                             {channelProtocolLabel(channel)} · 已保存 {channel.models.length} 个模型
                                             <ChannelStatus channel={channel} />
                                         </div>
                                     </div>
                                     <div className="flex w-full justify-end gap-2 sm:w-auto sm:shrink-0">
-                                        <Button className="h-10 sm:h-8" size="small" icon={<RefreshCw className="size-3.5" />} loading={loadingChannelIds.includes(channel.id)} disabled={loadingChannelIds.includes("all")} onClick={() => void refreshChannelModels(channel)}>拉取模型</Button>
-                                        <Button size="small" icon={<Pencil className="size-3.5" />} onClick={() => { setNewChannelId(null); setEditingChannelId(channel.id); }}>编辑</Button>
+                                        <Button
+                                            className="h-10 sm:h-8"
+                                            size="small"
+                                            icon={<RefreshCw className="size-3.5" />}
+                                            loading={loadingChannelIds.includes(channel.id)}
+                                            disabled={loadingChannelIds.includes("all")}
+                                            onClick={() => void refreshChannelModels(channel)}
+                                        >
+                                            拉取模型
+                                        </Button>
+                                        <Button
+                                            size="small"
+                                            icon={<Pencil className="size-3.5" />}
+                                            onClick={() => {
+                                                setNewChannelId(null);
+                                                setEditingChannelId(channel.id);
+                                            }}
+                                        >
+                                            编辑
+                                        </Button>
                                         <Popconfirm title="删除个人模型渠道？" description="该渠道关联的模型选择会同时移除。" okText="删除" cancelText="取消" okButtonProps={{ danger: true }} onConfirm={() => deleteChannel(channel.id)}>
-                                            <Tooltip title="删除渠道"><Button className="size-10 p-0 sm:size-8" aria-label={`删除渠道 ${channel.name || "未命名渠道"}`} size="small" type="text" danger disabled={loadingChannelIds.includes(channel.id) || loadingChannelIds.includes("all")} icon={<Trash2 className="size-3.5" />} /></Tooltip>
+                                            <Tooltip title="删除渠道">
+                                                <Button
+                                                    className="size-10 p-0 sm:size-8"
+                                                    aria-label={`删除渠道 ${channel.name || "未命名渠道"}`}
+                                                    size="small"
+                                                    type="text"
+                                                    danger
+                                                    disabled={loadingChannelIds.includes(channel.id) || loadingChannelIds.includes("all")}
+                                                    icon={<Trash2 className="size-3.5" />}
+                                                />
+                                            </Tooltip>
                                         </Popconfirm>
                                     </div>
                                 </div>
@@ -229,13 +264,19 @@ export function ChannelSettingsPane({ onOpenModels, onOpenRunningHub }: ChannelS
                                         title={channel.id === newChannelId ? "新增自定义渠道" : "编辑自定义渠道"}
                                         subtitle={channel.name}
                                         onClose={closeChannelEditor}
-                                        footer={<div className="model-editor-footer">
-                                            <span className="text-xs text-foreground/50">更改实时保存到云端渠道配置</span>
-                                            <div className="model-editor-footer-actions">
-                                                <Button loading={loadingChannelIds.includes(channel.id)} onClick={() => void refreshChannelModels(channel)}>拉取模型</Button>
-                                                <Button type="primary" onClick={closeChannelEditor}>完成</Button>
+                                        footer={
+                                            <div className="model-editor-footer">
+                                                <span className="text-xs text-foreground/50">更改实时保存到云端渠道配置</span>
+                                                <div className="model-editor-footer-actions">
+                                                    <Button loading={loadingChannelIds.includes(channel.id)} onClick={() => void refreshChannelModels(channel)}>
+                                                        拉取模型
+                                                    </Button>
+                                                    <Button type="primary" onClick={closeChannelEditor}>
+                                                        完成
+                                                    </Button>
+                                                </div>
                                             </div>
-                                        </div>}
+                                        }
                                     >
                                         <div className="model-editor-panel">
                                             <section className="model-editor-section">
@@ -244,12 +285,59 @@ export function ChannelSettingsPane({ onOpenModels, onOpenRunningHub }: ChannelS
                                                     <p className="mt-1 text-xs text-foreground/50">用于拉取模型目录并向当前渠道发起请求。</p>
                                                 </div>
                                                 <div className="model-editor-connection-fields grid gap-3 sm:grid-cols-2">
-                                                    <Form.Item label="渠道名称" htmlFor={`channel-${channel.id}-name`} className="mb-0 sm:col-span-1"><Input id={`channel-${channel.id}-name`} value={channel.name} placeholder="例如：我的 NewAPI" onChange={(event) => updateChannel(channel.id, { name: event.target.value })} onBlur={(event) => updateChannel(channel.id, { name: event.target.value.trim() || "未命名渠道" })} /></Form.Item>
-                                                    <Form.Item label="目录连接类型" className="mb-0 sm:col-span-1" extra="仅影响模型目录拉取。"><Segmented<UserChannelConnection> block value={channelConnectionMode(channel)} options={[{ label: "OpenAI", value: "openai" }, { label: "Gemini", value: "gemini" }]} onChange={(value) => updateChannelConnection(channel, value)} /></Form.Item>
-                                                    <Form.Item label="Base URL" htmlFor={`channel-${channel.id}-base-url`} className="mb-0 sm:col-span-1"><Input id={`channel-${channel.id}-base-url`} inputMode="url" value={channel.baseUrl} placeholder="填写云端渠道 Base URL" onChange={(event) => updateChannel(channel.id, { baseUrl: event.target.value })} onBlur={(event) => updateChannel(channel.id, { baseUrl: event.target.value.trim().replace(/\/+$/u, "") })} /></Form.Item>
-                                                    <Form.Item label="API Key" htmlFor={`channel-${channel.id}-api-key`} className="mb-0 sm:col-span-1"><Input.Password id={`channel-${channel.id}-api-key`} autoComplete="new-password" value={channel.apiKey} placeholder={channel.apiFormat === "gemini" ? "填写 Gemini API Key" : "填写当前渠道 API Key"} onChange={(event) => updateChannel(channel.id, { apiKey: event.target.value })} onBlur={(event) => updateChannel(channel.id, { apiKey: event.target.value.trim() })} /></Form.Item>
-                                                    <Form.Item label="Secret Key（可选）" htmlFor={`channel-${channel.id}-secret-key`} className="mb-0 sm:col-span-1" extra="即梦等 AK/SK 协议需要；其他协议留空。"><Input.Password id={`channel-${channel.id}-secret-key`} autoComplete="new-password" value={channel.secretKey || ""} placeholder="填写 Secret Key" onChange={(event) => updateChannel(channel.id, { secretKey: event.target.value })} onBlur={(event) => updateChannel(channel.id, { secretKey: event.target.value.trim() })} /></Form.Item>
-                                                    <div className="sm:col-span-2"><ChannelHeadersEditor value={channel.headers} onChange={(headers) => updateChannel(channel.id, { headers })} /></div>
+                                                    <Form.Item label="渠道名称" htmlFor={`channel-${channel.id}-name`} className="mb-0 sm:col-span-1">
+                                                        <Input
+                                                            id={`channel-${channel.id}-name`}
+                                                            value={channel.name}
+                                                            placeholder="例如：我的 NewAPI"
+                                                            onChange={(event) => updateChannel(channel.id, { name: event.target.value })}
+                                                            onBlur={(event) => updateChannel(channel.id, { name: event.target.value.trim() || "未命名渠道" })}
+                                                        />
+                                                    </Form.Item>
+                                                    <Form.Item label="目录连接类型" className="mb-0 sm:col-span-1" extra="仅影响模型目录拉取。">
+                                                        <Segmented<UserChannelConnection>
+                                                            block
+                                                            value={channelConnectionMode(channel)}
+                                                            options={[
+                                                                { label: "OpenAI", value: "openai" },
+                                                                { label: "Gemini", value: "gemini" },
+                                                            ]}
+                                                            onChange={(value) => updateChannelConnection(channel, value)}
+                                                        />
+                                                    </Form.Item>
+                                                    <Form.Item label="Base URL" htmlFor={`channel-${channel.id}-base-url`} className="mb-0 sm:col-span-1">
+                                                        <Input
+                                                            id={`channel-${channel.id}-base-url`}
+                                                            inputMode="url"
+                                                            value={channel.baseUrl}
+                                                            placeholder="填写云端渠道 Base URL"
+                                                            onChange={(event) => updateChannel(channel.id, { baseUrl: event.target.value })}
+                                                            onBlur={(event) => updateChannel(channel.id, { baseUrl: event.target.value.trim().replace(/\/+$/u, "") })}
+                                                        />
+                                                    </Form.Item>
+                                                    <Form.Item label="API Key" htmlFor={`channel-${channel.id}-api-key`} className="mb-0 sm:col-span-1">
+                                                        <Input.Password
+                                                            id={`channel-${channel.id}-api-key`}
+                                                            autoComplete="new-password"
+                                                            value={channel.apiKey}
+                                                            placeholder={channel.apiFormat === "gemini" ? "填写 Gemini API Key" : "填写当前渠道 API Key"}
+                                                            onChange={(event) => updateChannel(channel.id, { apiKey: event.target.value })}
+                                                            onBlur={(event) => updateChannel(channel.id, { apiKey: event.target.value.trim() })}
+                                                        />
+                                                    </Form.Item>
+                                                    <Form.Item label="Secret Key（可选）" htmlFor={`channel-${channel.id}-secret-key`} className="mb-0 sm:col-span-1" extra="即梦等 AK/SK 协议需要；其他协议留空。">
+                                                        <Input.Password
+                                                            id={`channel-${channel.id}-secret-key`}
+                                                            autoComplete="new-password"
+                                                            value={channel.secretKey || ""}
+                                                            placeholder="填写 Secret Key"
+                                                            onChange={(event) => updateChannel(channel.id, { secretKey: event.target.value })}
+                                                            onBlur={(event) => updateChannel(channel.id, { secretKey: event.target.value.trim() })}
+                                                        />
+                                                    </Form.Item>
+                                                    <div className="sm:col-span-2">
+                                                        <ChannelHeadersEditor value={channel.headers} onChange={(headers) => updateChannel(channel.id, { headers })} />
+                                                    </div>
                                                 </div>
                                             </section>
                                             <section className="model-editor-section">
@@ -257,7 +345,19 @@ export function ChannelSettingsPane({ onOpenModels, onOpenRunningHub }: ChannelS
                                                     <h2>模型与能力</h2>
                                                     <p className="mt-1 text-xs text-foreground/50">维护渠道模型，并在单个模型中配置调用协议、能力和定价。</p>
                                                 </div>
-                                                <Form.Item label="模型列表" htmlFor={`channel-${channel.id}-models`} className="mb-0"><Select id={`channel-${channel.id}-models`} mode="tags" showSearch allowClear maxTagCount="responsive" tokenSeparators={[",", "\n"]} placeholder="输入模型名，或点击拉取模型" value={channel.models} onChange={(models) => updateChannel(channel.id, { models: uniqueModels(models) })} /></Form.Item>
+                                                <Form.Item label="模型列表" htmlFor={`channel-${channel.id}-models`} className="mb-0">
+                                                    <Select
+                                                        id={`channel-${channel.id}-models`}
+                                                        mode="tags"
+                                                        showSearch
+                                                        allowClear
+                                                        maxTagCount="responsive"
+                                                        tokenSeparators={[",", "\n"]}
+                                                        placeholder="输入模型名，或点击拉取模型"
+                                                        value={channel.models}
+                                                        onChange={(models) => updateChannel(channel.id, { models: uniqueModels(models) })}
+                                                    />
+                                                </Form.Item>
                                                 <ChannelModelSettings channel={channel} onChange={(modelCosts) => updateChannel(channel.id, { modelCosts })} />
                                             </section>
                                         </div>
@@ -267,7 +367,19 @@ export function ChannelSettingsPane({ onOpenModels, onOpenRunningHub }: ChannelS
                         );
                     })}
                 </div>
-            ) : <WorkspaceState icon="settings" compact title="当前没有个人模型渠道" description="管理员配置的系统渠道会出现在模型选择中；也可以添加自己的模型服务。" action={<Button icon={<Plus className="size-4" />} onClick={addChannel}>新增个人模型渠道</Button>} />}
+            ) : (
+                <WorkspaceState
+                    icon="settings"
+                    compact
+                    title="当前没有个人模型渠道"
+                    description="管理员配置的系统渠道会出现在模型选择中；也可以添加自己的模型服务。"
+                    action={
+                        <Button icon={<Plus className="size-4" />} onClick={addChannel}>
+                            新增个人模型渠道
+                        </Button>
+                    }
+                />
+            )}
         </Form>
     );
 }
@@ -276,14 +388,21 @@ function WorkflowChannelEntry({ icon, title, description, status, ready, onOpen 
     return (
         <div className="settings-channel flex min-w-0 items-center justify-between gap-3 p-3">
             <div className="flex min-w-0 items-start gap-2.5">
-                <span className="mt-0.5 shrink-0 text-[var(--workspace-accent)]" aria-hidden="true">{icon}</span>
+                <span className="mt-0.5 shrink-0 text-[var(--workspace-accent)]" aria-hidden="true">
+                    {icon}
+                </span>
                 <div className="min-w-0">
                     <h4 className="text-sm font-semibold">{title}</h4>
                     <p className="mt-0.5 truncate text-xs text-foreground/55">{description}</p>
-                    <span className={`settings-channel-status mt-1.5 ${ready ? "is-ready" : "is-warning"}`}><i aria-hidden="true" />{status}</span>
+                    <span className={`settings-channel-status mt-1.5 ${ready ? "is-ready" : "is-warning"}`}>
+                        <i aria-hidden="true" />
+                        {status}
+                    </span>
                 </div>
             </div>
-            <Button size="small" onClick={onOpen} disabled={!onOpen}>配置</Button>
+            <Button size="small" onClick={onOpen} disabled={!onOpen}>
+                配置
+            </Button>
         </div>
     );
 }
@@ -322,7 +441,22 @@ function withChannels(config: AiConfig, channels: ModelChannel[]): AiConfig {
     const videoModels = filterModelsByCapability(models, "video", channels);
     const textModels = filterModelsByCapability(models, "text", channels);
     const audioModels = filterModelsByCapability(models, "audio", channels);
-    return { ...config, channels, models, baseUrl: channels[0]?.baseUrl || config.baseUrl, apiKey: channels[0]?.apiKey || config.apiKey, apiFormat: channels[0]?.apiFormat || config.apiFormat, imageModels, videoModels, textModels, audioModels, imageModel: normalizeDefaultModel(config.imageModel, imageModels), videoModel: normalizeDefaultModel(config.videoModel, videoModels), textModel: normalizeDefaultModel(config.textModel, textModels), audioModel: normalizeDefaultModel(config.audioModel, audioModels) };
+    return {
+        ...config,
+        channels,
+        models,
+        baseUrl: channels[0]?.baseUrl || config.baseUrl,
+        apiKey: channels[0]?.apiKey || config.apiKey,
+        apiFormat: channels[0]?.apiFormat || config.apiFormat,
+        imageModels,
+        videoModels,
+        textModels,
+        audioModels,
+        imageModel: normalizeDefaultModel(config.imageModel, imageModels),
+        videoModel: normalizeDefaultModel(config.videoModel, videoModels),
+        textModel: normalizeDefaultModel(config.textModel, textModels),
+        audioModel: normalizeDefaultModel(config.audioModel, audioModels),
+    };
 }
 
 function normalizeDefaultModel(value: string, options: string[]) {

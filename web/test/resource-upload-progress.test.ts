@@ -14,7 +14,10 @@ test("普通 multipart 将传输进度换算为文件字节，总量未知不伪
             return { config, status: 200, statusText: "OK", headers: {}, data: { code: 0, data: { resource: { id: "upload-test" } } } };
         };
         await uploadResourceFile(new Blob([new Uint8Array(400)]), "file", undefined, (loaded, total) => progress.push([loaded, total]));
-        expect(progress).toEqual([[100, 400], [400, 400]]);
+        expect(progress).toEqual([
+            [100, 400],
+            [400, 400],
+        ]);
     } finally {
         apiClient.defaults.adapter = adapter;
     }
@@ -43,7 +46,12 @@ test("分片上传累加片内真实进度，传输 100% 后仍须等待合并�
             return { config, status: 200, statusText: "OK", headers: {}, data: { code: 0, data } };
         };
         await uploadResourceFile(new Blob([new Uint8Array(size)]), "video", undefined, (loaded, total) => progress.push([loaded, total]));
-        expect(progress).toEqual([[chunkSize / 2, size], [chunkSize, size], [chunkSize + (size - chunkSize) / 2, size], [size, size]]);
+        expect(progress).toEqual([
+            [chunkSize / 2, size],
+            [chunkSize, size],
+            [chunkSize + (size - chunkSize) / 2, size],
+            [size, size],
+        ]);
         expect(merged).toBe(true);
     } finally {
         apiClient.defaults.adapter = adapter;

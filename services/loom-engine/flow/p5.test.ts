@@ -72,6 +72,40 @@ test("brief summarization is non-blocking: pending model task parks the window, 
   assert.match(rep.body, /Async LLM summary/);
 });
 
+test("pushed wake-up completes the parked brief window via the API (no scheduler tick)", async () => {
+  const { createServer } = await import("node:http");
+  const { handler } = await import("./server.ts");
+  const { sign } = await import("./auth.ts");
+  const { eng, sched } = await setup();
+  let done = false;
+  const summarize = async (input: any) => {
+    if (!done) return { pending: true as const, task_id: "mt_9" };
+    const ev = input.evidence[0];
+    return { body: "Pushed summary", claims: [{ text: "Tariff announced", kind: "source_statement", citations: [{ evidence_id: ev.evidence_id, revision: ev.revision }] }] };
+  };
+  const rp = new Reports(eng); rp.summarize = summarize;
+  assert.equal(await rp.briefTick(), 0); // parked
+  const KEY = "k".repeat(32);
+  const srv = createServer(handler(eng, { signingKey: KEY, audience: "loom-engine", summarize }));
+  await new Promise<void>((r) => srv.listen(0, r));
+  const port = (srv.address() as any).port;
+  const wake = (scopes: string[], key: string) => fetch(`http://127.0.0.1:${port}/v1/briefs/wake`, { method: "POST",
+    headers: { authorization: `Bearer ${sign(KEY, { iss: "flow-platform", aud: "loom-engine", ...A, actor: { type: "service_principal", id: "flow-platform" }, scopes, policy_version: "policy_v1" })}`, "content-type": "application/json" },
+    body: JSON.stringify({ key }) });
+  try {
+    const key = [...rp.pendingSummaries.keys()][0];
+    assert.equal((await wake(["intel.documents.read"], key)).status, 403);
+    assert.equal((await wake(["intel.reports.write"], "nonsense")).status, 400);
+    done = true; // platform model task finished → push
+    const r = await wake(["intel.reports.write"], key);
+    assert.equal(r.status, 200); assert.equal(((await r.json()) as any).data.made, 1);
+    const [rep] = await rp.listReports(A);
+    assert.match((await rp.getReport(A, rep.id)).body, /Pushed summary/);
+    assert.equal((await (await wake(["intel.reports.write"], key)).json() as any).data.made, 0); // idempotent
+    assert.ok(sched.id);
+  } finally { srv.close(); }
+});
+
 test("brief generation is transactional: failed save leaves the window due and no report", async () => {
   const { rp, eng, sched } = await setup();
   rp.summarize = async () => ({ body: "x", claims: [{ text: "bogus", kind: "source_statement", citations: [{ evidence_id: "ev_fake", revision: 1 }] }] });

@@ -28,18 +28,8 @@ export function EditorInspector() {
                 <SectionTitle>片段</SectionTitle>
                 <ClipSummary clip={clip} />
                 <SectionTitle>基本</SectionTitle>
-                <PropertyField
-                    label="名称"
-                    value={clip.title ?? clip.nodeId ?? clip.id}
-                    onChange={(value) => dispatch({ op: "setClipProperty", payload: { id: clip.id, patch: { title: value } } })}
-                />
-                {clip.kind === "subtitle" && (
-                    <PropertyField
-                        label="字幕文本"
-                        value={clip.text ?? ""}
-                        onChange={(value) => dispatch({ op: "setClipProperty", payload: { id: clip.id, patch: { text: value } } })}
-                    />
-                )}
+                <PropertyField label="名称" value={clip.title ?? clip.nodeId ?? clip.id} onChange={(value) => dispatch({ op: "setClipProperty", payload: { id: clip.id, patch: { title: value } } })} />
+                {clip.kind === "subtitle" && <PropertyField label="字幕文本" value={clip.text ?? ""} onChange={(value) => dispatch({ op: "setClipProperty", payload: { id: clip.id, patch: { text: value } } })} />}
                 {clip.kind === "audio" && (
                     <PropertyField
                         label="音量"
@@ -79,11 +69,7 @@ export function EditorInspector() {
                 )}
             </div>
             <div className="shrink-0 border-t border-[var(--director-sequencer-border)] p-2">
-                <button
-                    type="button"
-                    onClick={() => selectClip(null)}
-                    className="w-full rounded-md border border-[var(--director-sequencer-border)] py-1.5 text-xs text-[var(--director-dock-fg)] hover:bg-[var(--director-control-hover)]"
-                >
+                <button type="button" onClick={() => selectClip(null)} className="w-full rounded-md border border-[var(--director-sequencer-border)] py-1.5 text-xs text-[var(--director-dock-fg)] hover:bg-[var(--director-control-hover)]">
                     清除选中
                 </button>
             </div>
@@ -92,11 +78,7 @@ export function EditorInspector() {
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
-    return (
-        <h3 className="mb-2 mt-4 text-[10px] font-medium uppercase tracking-wider text-[var(--director-dock-fg)]/45 first:mt-0">
-            {children}
-        </h3>
-    );
+    return <h3 className="mb-2 mt-4 text-[10px] font-medium uppercase tracking-wider text-[var(--director-dock-fg)]/45 first:mt-0">{children}</h3>;
 }
 
 function ClipSummary({ clip }: { clip: TimelineClip }) {
@@ -163,9 +145,7 @@ function PropertyField({
         <div className="mb-3">
             <div className="mb-1.5 flex items-center justify-between">
                 <span className="text-[11px] text-[var(--director-dock-fg)]/70">{label}</span>
-                {type === "range" && (
-                    <span className="tabular-nums text-[10px] text-[var(--director-dock-fg)]/50">{displayValue}</span>
-                )}
+                {type === "range" && <span className="tabular-nums text-[10px] text-[var(--director-dock-fg)]/50">{displayValue}</span>}
             </div>
             {type === "range" ? (
                 <input

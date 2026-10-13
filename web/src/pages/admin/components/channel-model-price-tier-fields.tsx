@@ -118,15 +118,17 @@ export function PriceTierFields({
                                 {isImage ? (
                                     <>
                                         <Form.Item className="mb-0" name={[index, "quality"]} label="画质" rules={[{ required: true, message: "请选择画质" }]}>
-                                            <Select
-                                                options={[
-                                                    { label: "任意画质", value: "*" },
-                                                    ...imagePriceQualityOptions(),
-                                                ]}
-                                            />
+                                            <Select options={[{ label: "任意画质", value: "*" }, ...imagePriceQualityOptions()]} />
                                         </Form.Item>
                                         <Form.Item className="mb-0" name={[index, "resolution"]} label="分辨率">
-                                            <Select options={[{ label: "任意分辨率", value: "*" }, { label: "1K", value: "1k" }, { label: "2K", value: "2k" }, { label: "4K", value: "4k" }]} />
+                                            <Select
+                                                options={[
+                                                    { label: "任意分辨率", value: "*" },
+                                                    { label: "1K", value: "1k" },
+                                                    { label: "2K", value: "2k" },
+                                                    { label: "4K", value: "4k" },
+                                                ]}
+                                            />
                                         </Form.Item>
                                     </>
                                 ) : null}

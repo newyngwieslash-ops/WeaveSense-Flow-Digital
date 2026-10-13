@@ -1,6 +1,30 @@
 import { AnimatePresence } from "motion/react";
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
-import { ArrowLeft, AtSign, Check, ChevronRight, Clipboard, CloudUpload, Copy, FolderOpen, FolderPlus, Image as ImageIcon, Layers3, LayoutTemplate, Link2, Maximize2, PanelTop, Pencil, Plus, Redo2, Tags, Trash2, Undo2, Upload, UserRound } from "lucide-react";
+import {
+    ArrowLeft,
+    AtSign,
+    Check,
+    ChevronRight,
+    Clipboard,
+    CloudUpload,
+    Copy,
+    FolderOpen,
+    FolderPlus,
+    Image as ImageIcon,
+    Layers3,
+    LayoutTemplate,
+    Link2,
+    Maximize2,
+    PanelTop,
+    Pencil,
+    Plus,
+    Redo2,
+    Tags,
+    Trash2,
+    Undo2,
+    Upload,
+    UserRound,
+} from "lucide-react";
 
 import { CanvasCreateMenu, type CanvasCreateCommand } from "@/components/canvas/canvas-create-menu";
 import { ASSET_CATEGORY_OPTIONS } from "@/lib/asset-category";
@@ -168,13 +192,7 @@ export function CanvasNodeContextMenu({
                             <MenuHeader title="设置资产分类" description={node?.title || nodeTypeLabel(node)} onBack={() => setCategoryOpen(false)} />
                             <MenuSection label="项目用途" />
                             {assetCategoryOptions.map((option) => (
-                                <MenuButton
-                                    key={option.value}
-                                    icon={assetCategory === option.value ? <Check /> : <Tags />}
-                                    label={option.label}
-                                    active={assetCategory === option.value}
-                                    onClick={() => runAction(() => onSetAssetCategory(option.value))}
-                                />
+                                <MenuButton key={option.value} icon={assetCategory === option.value ? <Check /> : <Tags />} label={option.label} active={assetCategory === option.value} onClick={() => runAction(() => onSetAssetCategory(option.value))} />
                             ))}
                         </>
                     ) : menu.type === "canvas" ? (
@@ -240,7 +258,15 @@ export function CanvasNodeContextMenu({
                                 <>
                                     <MenuHeader title={node?.title || nodeTypeLabel(node)} />
                                     <MenuSection label="节点操作" />
-                                    {isFrame ? <MenuButton icon={isFolder ? <FolderOpen /> : <PanelTop />} label={node?.metadata?.frame?.collapsed ? `展开${isFolder ? "文件夹" : "背板"}` : `折叠${isFolder ? "文件夹" : "背板"}`} onClick={() => runAction(onToggleFrame)} /> : <MenuButton icon={<FolderPlus />} label="保存到我的素材" disabled={!canSaveAsset} onClick={() => runAction(onSaveAsset)} />}
+                                    {isFrame ? (
+                                        <MenuButton
+                                            icon={isFolder ? <FolderOpen /> : <PanelTop />}
+                                            label={node?.metadata?.frame?.collapsed ? `展开${isFolder ? "文件夹" : "背板"}` : `折叠${isFolder ? "文件夹" : "背板"}`}
+                                            onClick={() => runAction(onToggleFrame)}
+                                        />
+                                    ) : (
+                                        <MenuButton icon={<FolderPlus />} label="保存到我的素材" disabled={!canSaveAsset} onClick={() => runAction(onSaveAsset)} />
+                                    )}
                                     {isText ? <MenuButton icon={<Maximize2 />} label="放大编辑" onClick={() => runAction(onEditText)} /> : null}
                                     {isDrawing ? <MenuButton icon={<Pencil />} label="打开绘图" onClick={() => runAction(onOpenDrawing)} /> : null}
                                     {isText ? <MenuButton icon={<ImageIcon />} label="用文本生图" disabled={!canGenerateFromText} onClick={() => runAction(onGenerateImage)} /> : null}
@@ -284,7 +310,29 @@ export function CanvasNodeContextMenu({
     );
 }
 
-function AddNodeContextMenu({ parentPosition, workspaceMode, isProjectLinked, onAddNode, onAddFolder, onChooseStyle, onOpenPrevis, onUpload, onOpenAssets, onOpenProjectCharacters }: { parentPosition: { left: number; top: number }; workspaceMode: CanvasWorkspaceMode; isProjectLinked: boolean; onAddNode: (type: CanvasNodeTypeId) => void; onAddFolder: () => void; onChooseStyle: () => void; onOpenPrevis: () => void; onUpload: () => void; onOpenAssets: () => void; onOpenProjectCharacters: () => void }) {
+function AddNodeContextMenu({
+    parentPosition,
+    workspaceMode,
+    isProjectLinked,
+    onAddNode,
+    onAddFolder,
+    onChooseStyle,
+    onOpenPrevis,
+    onUpload,
+    onOpenAssets,
+    onOpenProjectCharacters,
+}: {
+    parentPosition: { left: number; top: number };
+    workspaceMode: CanvasWorkspaceMode;
+    isProjectLinked: boolean;
+    onAddNode: (type: CanvasNodeTypeId) => void;
+    onAddFolder: () => void;
+    onChooseStyle: () => void;
+    onOpenPrevis: () => void;
+    onUpload: () => void;
+    onOpenAssets: () => void;
+    onOpenProjectCharacters: () => void;
+}) {
     const theme = canvasThemes[useActiveTheme()];
     const installations = usePluginStore((state) => state.installations);
     const pluginStates = usePluginStore((state) => state.pluginStates);
@@ -341,8 +389,19 @@ function MenuHeader({ title, description, onBack }: { title: string; description
     const theme = canvasThemes[useActiveTheme()];
     return (
         <div className="mb-0.5 flex items-start gap-1 px-1.5 py-1.5">
-            {onBack ? <button type="button" onClick={onBack} className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-md outline-none hover:bg-black/5 focus-visible:ring-2 dark:hover:bg-white/8" aria-label="返回媒体操作"><ArrowLeft className="size-3.5" /></button> : null}
-            <span className="min-w-0"><span className="block truncate text-xs font-semibold">{title}</span>{description && description !== title ? <span className="mt-0.5 block truncate text-[var(--fs-micro)]" style={{ color: theme.node.muted }}>{description}</span> : null}</span>
+            {onBack ? (
+                <button type="button" onClick={onBack} className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-md outline-none hover:bg-black/5 focus-visible:ring-2 dark:hover:bg-white/8" aria-label="返回媒体操作">
+                    <ArrowLeft className="size-3.5" />
+                </button>
+            ) : null}
+            <span className="min-w-0">
+                <span className="block truncate text-xs font-semibold">{title}</span>
+                {description && description !== title ? (
+                    <span className="mt-0.5 block truncate text-[var(--fs-micro)]" style={{ color: theme.node.muted }}>
+                        {description}
+                    </span>
+                ) : null}
+            </span>
         </div>
     );
 }
@@ -351,7 +410,29 @@ function MenuSection({ label }: { label: string }) {
     return <div className="px-2 pb-1 pt-1.5 text-[var(--fs-micro)] font-medium opacity-45">{label}</div>;
 }
 
-function MenuButton({ icon, label, detail, shortcut, badge, chevron = false, active = false, disabled = false, danger = false, onClick }: { icon: ReactNode; label: string; detail?: string; shortcut?: string; badge?: string; chevron?: boolean; active?: boolean; disabled?: boolean; danger?: boolean; onClick?: () => void }) {
+function MenuButton({
+    icon,
+    label,
+    detail,
+    shortcut,
+    badge,
+    chevron = false,
+    active = false,
+    disabled = false,
+    danger = false,
+    onClick,
+}: {
+    icon: ReactNode;
+    label: string;
+    detail?: string;
+    shortcut?: string;
+    badge?: string;
+    chevron?: boolean;
+    active?: boolean;
+    disabled?: boolean;
+    danger?: boolean;
+    onClick?: () => void;
+}) {
     const theme = canvasThemes[useActiveTheme()];
     const color = danger ? theme.accent.danger : theme.node.text;
     return (
@@ -362,8 +443,27 @@ function MenuButton({ icon, label, detail, shortcut, badge, chevron = false, act
             disabled={disabled}
             onClick={onClick}
         >
-            <span className="canvas-menu-item-icon grid size-7 shrink-0 place-items-center rounded-md border opacity-75 group-hover:opacity-100 [&_svg]:size-3.5" style={{ background: danger ? `${theme.accent.danger}12` : theme.spatial.surface, borderColor: danger ? `${theme.accent.danger}33` : theme.toolbar.border, color: danger ? theme.accent.danger : theme.node.text }}>{icon}</span>
-            <span className="min-w-0 flex-1"><span className="flex items-center gap-1 text-xs font-medium"><span className="truncate">{label}</span>{badge ? <span className="rounded-full border px-1 py-0.5 text-[var(--fs-nano)] font-bold" style={{ background: theme.toolbar.activeBg, borderColor: theme.toolbar.border, color: theme.node.muted }}>{badge}</span> : null}</span>{detail ? <span className="mt-0.5 block truncate text-[var(--fs-micro)]" style={{ color: theme.node.muted }}>{detail}</span> : null}</span>
+            <span
+                className="canvas-menu-item-icon grid size-7 shrink-0 place-items-center rounded-md border opacity-75 group-hover:opacity-100 [&_svg]:size-3.5"
+                style={{ background: danger ? `${theme.accent.danger}12` : theme.spatial.surface, borderColor: danger ? `${theme.accent.danger}33` : theme.toolbar.border, color: danger ? theme.accent.danger : theme.node.text }}
+            >
+                {icon}
+            </span>
+            <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-1 text-xs font-medium">
+                    <span className="truncate">{label}</span>
+                    {badge ? (
+                        <span className="rounded-full border px-1 py-0.5 text-[var(--fs-nano)] font-bold" style={{ background: theme.toolbar.activeBg, borderColor: theme.toolbar.border, color: theme.node.muted }}>
+                            {badge}
+                        </span>
+                    ) : null}
+                </span>
+                {detail ? (
+                    <span className="mt-0.5 block truncate text-[var(--fs-micro)]" style={{ color: theme.node.muted }}>
+                        {detail}
+                    </span>
+                ) : null}
+            </span>
             {shortcut ? <span className="shrink-0 text-[var(--fs-micro)] opacity-38">{shortcut}</span> : null}
             {chevron ? <ChevronRight className="size-3 shrink-0 opacity-45" /> : null}
         </button>

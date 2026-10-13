@@ -32,7 +32,12 @@ describe("canvas node toolbar model", () => {
         const ctx = createNodeContext({ id: "video", type: CanvasNodeType.Video, title: "视频", position: { x: 0, y: 0 }, width: 320, height: 180, metadata: {} });
         const emptyTools = resolveToolbarTools("node-hover", ctx, null);
         expect(emptyTools.some((tool) => tool.id === "extractAudio")).toBe(false);
-        expect(resolveNodeToolbarPlacement(emptyTools.find((tool) => tool.id === "uploadVideo")!, ctx).group).toBe("primary");
+        expect(
+            resolveNodeToolbarPlacement(
+                emptyTools.find((tool) => tool.id === "uploadVideo")!,
+                ctx,
+            ).group,
+        ).toBe("primary");
         ctx.nodeMetadata = { content: "video.mp4" };
         ctx.extractingAudio = true;
         const audio = resolveToolbarTools("node-hover", ctx, null).find((tool) => tool.id === "extractAudio")!;

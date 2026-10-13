@@ -36,13 +36,7 @@ export function VoiceRecordingInline({ onTranscribed, onCancel }: VoiceRecording
     } = useVoiceRecording({
         maxDuration: 60,
     });
-    const {
-        supported: speechSupported,
-        error: speechError,
-        start: startSpeech,
-        stop: stopSpeech,
-        cancel: cancelSpeech,
-    } = useSpeechRecognition();
+    const { supported: speechSupported, error: speechError, start: startSpeech, stop: stopSpeech, cancel: cancelSpeech } = useSpeechRecognition();
     const [transcribeState, setTranscribeState] = useState<TranscribeState>("idle");
     const [transcribeError, setTranscribeError] = useState("");
     const stopRequestedRef = useRef(false);
@@ -109,10 +103,7 @@ export function VoiceRecordingInline({ onTranscribed, onCancel }: VoiceRecording
     const displayError = recorderError || (speechError ? speechError.message : "") || (transcribeState === "error" ? transcribeError : "");
 
     return (
-        <div
-            className="voice-recording-inline flex min-w-0 flex-1 items-center gap-2 rounded-lg border px-2 py-1.5"
-            style={{ background: theme.toolbar.panel, borderColor: theme.toolbar.border }}
-        >
+        <div className="voice-recording-inline flex min-w-0 flex-1 items-center gap-2 rounded-lg border px-2 py-1.5" style={{ background: theme.toolbar.panel, borderColor: theme.toolbar.border }}>
             {displayError ? (
                 <div className="flex min-w-0 flex-1 items-center gap-2">
                     <span className="truncate text-xs" style={{ color: "#dc2626" }}>
@@ -120,23 +111,11 @@ export function VoiceRecordingInline({ onTranscribed, onCancel }: VoiceRecording
                     </span>
                     {speechSupported ? (
                         <Tooltip title="重试">
-                            <Button
-                                type="text"
-                                size="small"
-                                icon={<Mic className="size-3.5" />}
-                                onClick={handleRetry}
-                                style={{ color: theme.node.muted }}
-                            />
+                            <Button type="text" size="small" icon={<Mic className="size-3.5" />} onClick={handleRetry} style={{ color: theme.node.muted }} />
                         </Tooltip>
                     ) : null}
                     <Tooltip title="取消">
-                        <Button
-                            type="text"
-                            size="small"
-                            icon={<X className="size-3.5" />}
-                            onClick={onCancel}
-                            style={{ color: theme.node.muted }}
-                        />
+                        <Button type="text" size="small" icon={<X className="size-3.5" />} onClick={onCancel} style={{ color: theme.node.muted }} />
                     </Tooltip>
                 </div>
             ) : transcribeState === "transcribing" ? (
@@ -151,13 +130,7 @@ export function VoiceRecordingInline({ onTranscribed, onCancel }: VoiceRecording
                 </div>
             ) : (
                 <>
-                    <AudioWaveform
-                        waveform={waveform}
-                        color={theme.accent.primary}
-                        height={32}
-                        width={160}
-                        animated={state === "recording"}
-                    />
+                    <AudioWaveform waveform={waveform} color={theme.accent.primary} height={32} width={160} animated={state === "recording"} />
                     {state === "recording" ? (
                         <span className="font-mono text-xs tabular-nums" style={{ color: theme.node.text }}>
                             {formatDuration(duration)}
@@ -177,14 +150,7 @@ export function VoiceRecordingInline({ onTranscribed, onCancel }: VoiceRecording
                         />
                     </Tooltip>
                     <Tooltip title="停止并转写">
-                        <Button
-                            type="text"
-                            size="small"
-                            icon={<Square className="size-3.5" />}
-                            onClick={handleStop}
-                            disabled={state !== "recording" || transcribeState !== "idle"}
-                            style={{ color: theme.accent.primary }}
-                        />
+                        <Button type="text" size="small" icon={<Square className="size-3.5" />} onClick={handleStop} disabled={state !== "recording" || transcribeState !== "idle"} style={{ color: theme.accent.primary }} />
                     </Tooltip>
                 </>
             )}

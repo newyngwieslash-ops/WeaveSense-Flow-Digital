@@ -14,9 +14,7 @@ export function createGalleryWheelGesture() {
         const direction = delta > 0 ? 1 : -1;
         const idle = now - lastAt >= 160;
         const reversed = direction !== lastDirection;
-        const renewed = stepped && now - steppedAt >= 180
-            && lastMagnitude < peak * 0.6
-            && magnitude >= Math.max(8, lastMagnitude * 1.8);
+        const renewed = stepped && now - steppedAt >= 180 && lastMagnitude < peak * 0.6 && magnitude >= Math.max(8, lastMagnitude * 1.8);
         if (idle || reversed || renewed) {
             total = 0;
             peak = 0;

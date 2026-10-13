@@ -132,12 +132,24 @@
     pointer-events: none;
 }
 
-.canvas-angle-scene .canvas-angle-cube-face.is-front { transform: translateZ(var(--angle-cube-half, 50px)); }
-.canvas-angle-scene .canvas-angle-cube-face.is-back { transform: rotateY(180deg) translateZ(var(--angle-cube-half, 50px)); }
-.canvas-angle-scene .canvas-angle-cube-face.is-right { transform: rotateY(90deg) translateZ(var(--angle-cube-half, 50px)); }
-.canvas-angle-scene .canvas-angle-cube-face.is-left { transform: rotateY(-90deg) translateZ(var(--angle-cube-half, 50px)); }
-.canvas-angle-scene .canvas-angle-cube-face.is-top { transform: rotateX(90deg) translateZ(var(--angle-cube-half, 50px)); }
-.canvas-angle-scene .canvas-angle-cube-face.is-bottom { transform: rotateX(-90deg) translateZ(var(--angle-cube-half, 50px)); }
+.canvas-angle-scene .canvas-angle-cube-face.is-front {
+    transform: translateZ(var(--angle-cube-half, 50px));
+}
+.canvas-angle-scene .canvas-angle-cube-face.is-back {
+    transform: rotateY(180deg) translateZ(var(--angle-cube-half, 50px));
+}
+.canvas-angle-scene .canvas-angle-cube-face.is-right {
+    transform: rotateY(90deg) translateZ(var(--angle-cube-half, 50px));
+}
+.canvas-angle-scene .canvas-angle-cube-face.is-left {
+    transform: rotateY(-90deg) translateZ(var(--angle-cube-half, 50px));
+}
+.canvas-angle-scene .canvas-angle-cube-face.is-top {
+    transform: rotateX(90deg) translateZ(var(--angle-cube-half, 50px));
+}
+.canvas-angle-scene .canvas-angle-cube-face.is-bottom {
+    transform: rotateX(-90deg) translateZ(var(--angle-cube-half, 50px));
+}
 
 .canvas-angle-scene .canvas-angle-orbit {
     position: absolute;

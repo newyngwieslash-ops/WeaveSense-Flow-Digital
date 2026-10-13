@@ -47,25 +47,30 @@ export function refreshCanvasCharacterReferenceNodes(nodes: CanvasNodeData[], as
             characterVisualStatus: card.visualStatus,
             characterVoiceStatus: card.voiceStatus,
             characterVoiceName: card.voice?.profile.name,
-            characterVoiceProfile: card.voice ? {
-                name: card.voice.profile.name,
-                provider: card.voice.profile.provider,
-                language: card.voice.profile.language,
-                timbre: card.voice.profile.timbre,
-            } : undefined,
+            characterVoiceProfile: card.voice
+                ? {
+                      name: card.voice.profile.name,
+                      provider: card.voice.profile.provider,
+                      language: card.voice.profile.language,
+                      timbre: card.voice.profile.timbre,
+                  }
+                : undefined,
             characterVoiceInstructions: card.voice?.instructions,
         };
-        if (node.title === asset.title
-            && metadata.characterVersionId === patch.characterVersionId
-            && metadata.characterPrompt === patch.characterPrompt
-            && metadata.characterCoverUrl === patch.characterCoverUrl
-            && metadata.characterVisualStatus === patch.characterVisualStatus
-            && metadata.characterVoiceStatus === patch.characterVoiceStatus
-            && metadata.characterVoiceName === patch.characterVoiceName
-            && JSON.stringify(metadata.characterDefinition) === JSON.stringify(patch.characterDefinition)
-            && JSON.stringify(metadata.characterVoiceProfile) === JSON.stringify(patch.characterVoiceProfile)
-            && metadata.characterVoiceInstructions === patch.characterVoiceInstructions
-            && (metadata.characterAliases || []).join("\u0000") === aliases.join("\u0000")) return node;
+        if (
+            node.title === asset.title &&
+            metadata.characterVersionId === patch.characterVersionId &&
+            metadata.characterPrompt === patch.characterPrompt &&
+            metadata.characterCoverUrl === patch.characterCoverUrl &&
+            metadata.characterVisualStatus === patch.characterVisualStatus &&
+            metadata.characterVoiceStatus === patch.characterVoiceStatus &&
+            metadata.characterVoiceName === patch.characterVoiceName &&
+            JSON.stringify(metadata.characterDefinition) === JSON.stringify(patch.characterDefinition) &&
+            JSON.stringify(metadata.characterVoiceProfile) === JSON.stringify(patch.characterVoiceProfile) &&
+            metadata.characterVoiceInstructions === patch.characterVoiceInstructions &&
+            (metadata.characterAliases || []).join("\u0000") === aliases.join("\u0000")
+        )
+            return node;
         changed = true;
         return { ...node, title: asset.title, metadata: { ...metadata, ...patch } };
     });
@@ -73,14 +78,16 @@ export function refreshCanvasCharacterReferenceNodes(nodes: CanvasNodeData[], as
 }
 
 export function compileCharacterReferencePrompt(name: string, definition: Record<string, unknown>) {
-    const parts = [definition.role, definition.appearance, definition.physique, definition.clothing, definition.personality, definition.props, definition.consistencyPrompt]
-        .map((value) => typeof value === "string" ? value.trim() : "")
-        .filter(Boolean);
+    const parts = [definition.role, definition.appearance, definition.physique, definition.clothing, definition.personality, definition.props, definition.consistencyPrompt].map((value) => (typeof value === "string" ? value.trim() : "")).filter(Boolean);
     return [`【角色卡：${name}】`, ...parts].join("\n");
 }
 
 export function normalizeCharacterName(value?: string) {
-    return (value || "").toLocaleLowerCase("zh-CN").replace(/^角色[：:]\s*/, "").replace(/[\s·•・._-]+/g, "").trim();
+    return (value || "")
+        .toLocaleLowerCase("zh-CN")
+        .replace(/^角色[：:]\s*/, "")
+        .replace(/[\s·•・._-]+/g, "")
+        .trim();
 }
 
 function findJsonValueEnd(source: string, start: number) {
@@ -153,8 +160,7 @@ export function extractCharacterBreakdownJson(raw: string, allowEmptyCharacters 
             const candidates = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? flattenCharacterCandidates((parsed as { characters?: unknown }).characters) : undefined;
             if (Array.isArray(candidates) && candidates.length) return parsed;
             // 章节资产允许无人场景；仍交由章节解析器校验三个必填数组。
-            if (allowEmptyCharacters && parsed && typeof parsed === "object" && !Array.isArray(parsed)
-                && Array.isArray((parsed as { characters?: unknown }).characters)) return parsed;
+            if (allowEmptyCharacters && parsed && typeof parsed === "object" && !Array.isArray(parsed) && Array.isArray((parsed as { characters?: unknown }).characters)) return parsed;
         } catch {
             // Ignore unrelated braces in model prose and continue to the next complete JSON value.
         }
@@ -163,7 +169,10 @@ export function extractCharacterBreakdownJson(raw: string, allowEmptyCharacters 
 }
 
 export function parseCharacterBreakdown(raw: string): CharacterBreakdown[] {
-    const unfenced = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
+    const unfenced = raw
+        .trim()
+        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/\s*```$/i, "");
     const parsed = extractCharacterBreakdownJson(unfenced);
     const candidates = Array.isArray(parsed) ? flattenCharacterCandidates(parsed) : flattenCharacterCandidates((parsed as { characters?: unknown }).characters);
     if (!Array.isArray(candidates)) throw new Error("角色拆解结果缺少 characters 数组");
@@ -179,9 +188,7 @@ export function parseCharacterBreakdown(raw: string): CharacterBreakdown[] {
         const identityKeys = [key, ...aliases.map(normalizeCharacterName)].filter(Boolean);
         if (!name || !key || identityKeys.some((identityKey) => seen.has(identityKey))) return;
         const role = String(value.role || "").trim();
-        const descriptiveFields = [value.appearance, value.clothing, value.physique, value.personality, value.consistencyPrompt, value.multiViewPrompt]
-            .map((field) => String(field || "").trim())
-            .filter(Boolean);
+        const descriptiveFields = [value.appearance, value.clothing, value.physique, value.personality, value.consistencyPrompt, value.multiViewPrompt].map((field) => String(field || "").trim()).filter(Boolean);
         const voiceLanguage = String(value.voiceLanguage || "").trim();
         const voiceAge = String(value.voiceAge || "").trim();
         const voiceTimbre = String(value.voiceTimbre || "").trim();

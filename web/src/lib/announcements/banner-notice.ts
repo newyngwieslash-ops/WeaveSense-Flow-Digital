@@ -153,9 +153,7 @@ export const BANNER_NOTICE_EMOJI_GROUPS: { key: string; label: string; emoji: { 
 ];
 
 /** 扁平化的 emoji 清单，顺序与分组一致。 */
-export const BANNER_NOTICE_EMOJIS = BANNER_NOTICE_EMOJI_GROUPS.flatMap((group) =>
-    group.emoji.map((item) => ({ ...item, group: group.key, groupLabel: group.label })),
-);
+export const BANNER_NOTICE_EMOJIS = BANNER_NOTICE_EMOJI_GROUPS.flatMap((group) => group.emoji.map((item) => ({ ...item, group: group.key, groupLabel: group.label })));
 
 /** 按关键字过滤（匹配中文名、分组名或字符本身），空关键字返回全量。 */
 export function searchBannerNoticeEmojis(keyword: string) {

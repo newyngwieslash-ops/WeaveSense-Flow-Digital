@@ -5,13 +5,7 @@ import type { ReferenceImage } from "@/types/image";
 
 import type { ResolvedAiConfig } from "./video-contracts";
 
-export function assertVideoCapability(
-    profile: NonNullable<ReturnType<typeof modelCapabilityConfigFor>["video"]>,
-    references: ReferenceImage[],
-    videoReferences: ReferenceVideo[],
-    audioReferences: ReferenceAudio[],
-    seconds: string,
-) {
+export function assertVideoCapability(profile: NonNullable<ReturnType<typeof modelCapabilityConfigFor>["video"]>, references: ReferenceImage[], videoReferences: ReferenceVideo[], audioReferences: ReferenceAudio[], seconds: string) {
     if (references.length > profile.references.maxImages || videoReferences.length > profile.references.maxVideos || audioReferences.length > profile.references.maxAudios) throw new Error("参考素材数量超过当前模型限制");
     if (references.length < profile.references.minImages) throw new Error(`当前视频模型至少需要 ${profile.references.minImages} 张参考图`);
     if (!videoDurationAllowed(profile, Number(seconds))) throw new Error("视频时长不在当前模型支持范围内");
@@ -49,7 +43,7 @@ export function normalizeVideoSize(value: string) {
     if (!Number.isFinite(widthRatio) || !Number.isFinite(heightRatio) || widthRatio <= 0 || heightRatio <= 0) return "1280x720";
     const aspect = widthRatio / heightRatio;
     const width = aspect >= 1 ? 1280 : Math.max(256, Math.round((720 * aspect) / 2) * 2);
-    const height = aspect >= 1 ? Math.max(256, Math.round((1280 / aspect) / 2) * 2) : 720;
+    const height = aspect >= 1 ? Math.max(256, Math.round(1280 / aspect / 2) * 2) : 720;
     return `${width}x${height}`;
 }
 

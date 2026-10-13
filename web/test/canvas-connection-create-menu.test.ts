@@ -22,7 +22,7 @@ test("add-node submenu uses a four-column medium-size grid", () => {
     const styles = readFileSync(new URL("../src/styles/globals.css", import.meta.url), "utf8");
     expect(menu).toContain('variant === "node" ? "grid-cols-4"');
     expect(menu).toContain("size-6 shrink-0");
-    expect(context).toContain('w-[360px]');
+    expect(context).toContain("w-[360px]");
     expect(styles).toContain("--canvas-create-node-height: var(--space-16)");
 });
 
@@ -36,7 +36,7 @@ test("only the active option expands; stationary pointer retargeting cannot swit
     expect(component).toContain("previous?.x === event.clientX && previous.y === event.clientY");
     expect(component).not.toContain("SpotlightSurface");
     expect(css).toContain('.canvas-connection-create-option[data-motion="reduced"]');
-    expect(component).toContain('aria-disabled={Boolean(disabledReason)}');
+    expect(component).toContain("aria-disabled={Boolean(disabledReason)}");
     expect(component).toContain("if (!disabledReason) onClick()");
     expect(component).toContain('event.key === "Escape"');
 });

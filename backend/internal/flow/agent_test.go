@@ -54,6 +54,12 @@ func newFakeEngine(t *testing.T) (*fakeEngine, EngineClient) {
 			data = map[string]any{"created": 1}
 		case "GET /v1/monitors":
 			data = f.monitors[ctx.TenantID]
+		case "POST /v1/research-runs":
+			data = map[string]any{"status": "succeeded", "output": map[string]any{"evidence_ids": []string{"ev1"}}}
+		case "POST /v1/evidence/resolve":
+			data = []map[string]any{{"evidence_id": "ev1", "document_id": "d1", "source_id": "s1", "revision": 1, "quote": "Acme signed a lithium deal"}}
+		case "POST /v1/briefs/wake":
+			data = map[string]any{"key": in["key"], "made": 1}
 		case "POST /v1/collection-runs":
 			data = map[string]any{"operation_id": "op_" + r.Header.Get("X-Idempotency-Key")}
 		default:

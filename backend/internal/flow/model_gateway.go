@@ -103,6 +103,7 @@ type EvidenceForModel = ResolvedEvidence
 
 type SynthesisRequest struct {
 	TenantID    string
+	WorkspaceID string // carried to completion consumers (engine brief wake-up)
 	ParentResID string // allocate from this reservation (child); "" = root reservation
 	Key         string // idempotency key for the reservation
 	Purpose     string // research | brief
@@ -157,8 +158,9 @@ func StartSynthesis(gw ModelGateway, b Billing, req SynthesisRequest) (ModelTask
 	for _, e := range req.Evidence {
 		fmt.Fprintf(&sb, "- id=%s revision=%d source=%s title=%q\n  quote: %s\n", e.EvidenceID, e.Revision, e.SourceID, e.Title, truncRunes(e.Quote, 600))
 	}
+	cx, _ := json.Marshal(SynthesisContext{WorkspaceID: req.WorkspaceID, Question: req.Question, Evidence: req.Evidence, Scope: req.Scope})
 	task, err := tasks.Enqueue(ModelTaskInput{TenantID: req.TenantID, ParentResID: req.ParentResID, Key: req.Key, Purpose: req.Purpose, RefID: req.Question,
-		System: synthesisSystem, User: sb.String(), MaxTokens: req.MaxTokens, BudgetMicro: req.BudgetMicro})
+		System: synthesisSystem, User: sb.String(), MaxTokens: req.MaxTokens, BudgetMicro: req.BudgetMicro, Context: string(cx)})
 	return tasks, task, err
 }
 

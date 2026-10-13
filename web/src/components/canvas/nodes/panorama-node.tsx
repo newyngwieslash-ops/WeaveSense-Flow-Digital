@@ -148,7 +148,10 @@ export function PanoramaNodeContent({ node, theme, disableMediaEffects }: Panora
                         className="shrink-0 rounded-[var(--r-md)] px-2 py-1 font-medium text-white outline-none transition-colors"
                         style={{ fontSize: "var(--fs-label)", background: "rgba(0,0,0,.78)", boxShadow: "0 1px 4px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.32)" }}
                         onMouseDown={(event) => event.stopPropagation()}
-                        onClick={() => { setFailed(false); setActive(true); }}
+                        onClick={() => {
+                            setFailed(false);
+                            setActive(true);
+                        }}
                     >
                         进入环视
                     </button>
@@ -170,20 +173,28 @@ export function PanoramaNodeContent({ node, theme, disableMediaEffects }: Panora
                         // click 被重定向到 body，覆盖层内所有按钮（含关闭）都收不到点击。
                         data-canvas-no-zoom
                         onMouseDown={(event) => event.stopPropagation()}
-                        onClick={() => { rememberView(); setExpanded(false); }}
+                        onClick={() => {
+                            rememberView();
+                            setExpanded(false);
+                        }}
                     >
                         <div className="flex h-[min(88vh,920px)] w-[min(94vw,1440px)] flex-col overflow-hidden rounded-[var(--r-2xl)] border border-white/15 bg-black shadow-2xl" onClick={(event) => event.stopPropagation()}>
                             <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
                                 <div className="min-w-0">
                                     <div className="truncate text-sm font-semibold text-white">{node.title || "全景环视"}</div>
-                                    <div className="mt-0.5 text-white/45" style={{ fontSize: "var(--fs-tiny)" }}>{projectionLabel} · 拖拽环视 · 方向键旋转 · 滚轮缩放</div>
+                                    <div className="mt-0.5 text-white/45" style={{ fontSize: "var(--fs-tiny)" }}>
+                                        {projectionLabel} · 拖拽环视 · 方向键旋转 · 滚轮缩放
+                                    </div>
                                 </div>
                                 <button
                                     type="button"
                                     aria-label="退出全屏"
                                     className="grid size-8 shrink-0 place-items-center rounded-[var(--r-md)] text-white/60 transition-colors hover:bg-white/10 hover:text-white"
                                     onMouseDown={(event) => event.stopPropagation()}
-                                    onClick={() => { rememberView(); setExpanded(false); }}
+                                    onClick={() => {
+                                        rememberView();
+                                        setExpanded(false);
+                                    }}
                                 >
                                     <X className="size-4" />
                                 </button>
@@ -195,7 +206,10 @@ export function PanoramaNodeContent({ node, theme, disableMediaEffects }: Panora
                                     onScreenshot={handleScreenshot}
                                     onQuadExport={handleQuadExport}
                                     onResetView={() => controllerRef.current?.setView(0, 0)}
-                                    onClose={() => { rememberView(); setExpanded(false); }}
+                                    onClose={() => {
+                                        rememberView();
+                                        setExpanded(false);
+                                    }}
                                     closeLabel="退出全屏"
                                 />
                             </div>
@@ -219,18 +233,27 @@ export function PanoramaNodeContent({ node, theme, disableMediaEffects }: Panora
                 onScreenshot={handleScreenshot}
                 onQuadExport={handleQuadExport}
                 onResetView={() => controllerRef.current?.setView(0, 0)}
-                onExpand={() => { rememberView(); setExpanded(true); }}
+                onExpand={() => {
+                    rememberView();
+                    setExpanded(true);
+                }}
                 onClose={() => setActive(false)}
                 closeLabel="退出环视"
             />
-            <div className="pointer-events-none absolute bottom-2 left-2 rounded bg-black/55 px-2 py-0.5 text-[10px] text-white/70 backdrop-blur-sm">
-                {projectionLabel} · 拖拽环视 · 方向键旋转
-            </div>
+            <div className="pointer-events-none absolute bottom-2 left-2 rounded bg-black/55 px-2 py-0.5 text-[10px] text-white/70 backdrop-blur-sm">{projectionLabel} · 拖拽环视 · 方向键旋转</div>
         </div>
     );
 }
 
-function PanoramaViewerToolbar({ canCapture, onScreenshot, onQuadExport, onResetView, onExpand, onClose, closeLabel }: {
+function PanoramaViewerToolbar({
+    canCapture,
+    onScreenshot,
+    onQuadExport,
+    onResetView,
+    onExpand,
+    onClose,
+    closeLabel,
+}: {
     canCapture: boolean;
     onScreenshot: () => void | Promise<void>;
     onQuadExport: () => void | Promise<void>;
@@ -242,16 +265,26 @@ function PanoramaViewerToolbar({ canCapture, onScreenshot, onQuadExport, onReset
     return (
         <div className="absolute right-2.5 top-2.5 flex gap-1.5" onMouseDown={(event) => event.stopPropagation()}>
             {onExpand ? (
-                <ViewerToolbarButton title="全屏环视" onClick={onExpand}><Maximize2 className="size-4" /></ViewerToolbarButton>
+                <ViewerToolbarButton title="全屏环视" onClick={onExpand}>
+                    <Maximize2 className="size-4" />
+                </ViewerToolbarButton>
             ) : null}
             {canCapture ? (
                 <>
-                    <ViewerToolbarButton title="截图当前视角" onClick={() => void onScreenshot()}><Camera className="size-4" /></ViewerToolbarButton>
-                    <ViewerToolbarButton title="导出四向视图" onClick={() => void onQuadExport()}><Grid3x3 className="size-4" /></ViewerToolbarButton>
+                    <ViewerToolbarButton title="截图当前视角" onClick={() => void onScreenshot()}>
+                        <Camera className="size-4" />
+                    </ViewerToolbarButton>
+                    <ViewerToolbarButton title="导出四向视图" onClick={() => void onQuadExport()}>
+                        <Grid3x3 className="size-4" />
+                    </ViewerToolbarButton>
                 </>
             ) : null}
-            <ViewerToolbarButton title="重置视角" onClick={onResetView}><RotateCcw className="size-4" /></ViewerToolbarButton>
-            <ViewerToolbarButton title={closeLabel} danger onClick={onClose}><X className="size-4" /></ViewerToolbarButton>
+            <ViewerToolbarButton title="重置视角" onClick={onResetView}>
+                <RotateCcw className="size-4" />
+            </ViewerToolbarButton>
+            <ViewerToolbarButton title={closeLabel} danger onClick={onClose}>
+                <X className="size-4" />
+            </ViewerToolbarButton>
         </div>
     );
 }
@@ -265,14 +298,24 @@ function ViewerToolbarButton({ title, danger, onClick, children }: { title: stri
             className={`grid size-8 place-items-center rounded-[var(--r-md)] text-white outline-none transition-colors focus-visible:ring-2 focus-visible:ring-white/40 ${danger ? "bg-black/70 hover:bg-red-500/90" : "bg-black/70 hover:bg-black/90"}`}
             style={{ boxShadow: "0 1px 4px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.22)" }}
             onMouseDown={(event) => event.stopPropagation()}
-            onClick={(event) => { event.stopPropagation(); onClick(); }}
+            onClick={(event) => {
+                event.stopPropagation();
+                onClick();
+            }}
         >
             {children}
         </button>
     );
 }
 
-function PanoramaViewport({ url, controllerRef, initialView, allowWheelZoom, autoFocus, onError }: {
+function PanoramaViewport({
+    url,
+    controllerRef,
+    initialView,
+    allowWheelZoom,
+    autoFocus,
+    onError,
+}: {
     url: string;
     controllerRef: { current: PanoramaViewportController | null };
     initialView?: PanoramaView | null;
@@ -318,8 +361,15 @@ function PanoramaViewport({ url, controllerRef, initialView, allowWheelZoom, aut
             const texture = await new Promise<InstanceType<typeof THREE.Texture> | null>((resolve) => {
                 loader.load(url, resolve, undefined, () => resolve(null));
             });
-            if (disposed) { renderer.dispose(); return; }
-            if (!texture) { renderer.dispose(); onErrorRef.current(); return; }
+            if (disposed) {
+                renderer.dispose();
+                return;
+            }
+            if (!texture) {
+                renderer.dispose();
+                onErrorRef.current();
+                return;
+            }
 
             texture.colorSpace = THREE.SRGBColorSpace;
             const geometry = new THREE.SphereGeometry(500, 60, 40);

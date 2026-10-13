@@ -32,12 +32,7 @@ function clipLine(clip: TimelineClip): string {
 }
 
 function trackLine(track: TimelineTrack): string {
-    const flags = [
-        track.visible === false ? "隐藏" : null,
-        track.muted ? "静音" : null,
-    ]
-        .filter(Boolean)
-        .join("/");
+    const flags = [track.visible === false ? "隐藏" : null, track.muted ? "静音" : null].filter(Boolean).join("/");
     return `  - ${track.id} | ${KIND_LABELS[track.kind] ?? track.kind}轨 | ${track.label}${flags ? ` | ${flags}` : ""}`;
 }
 

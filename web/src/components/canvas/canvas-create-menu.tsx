@@ -25,7 +25,9 @@ export function CanvasCreateMenu({ commands }: { commands: CanvasCreateCommand[]
     return (
         <div>
             <header className="flex min-h-7 items-center justify-between gap-2 border-b pb-2" style={{ borderColor: theme.toolbar.border }}>
-                <h2 className="font-semibold leading-none" style={{ fontSize: "var(--fs-caption)" }}>添加节点</h2>
+                <h2 className="font-semibold leading-none" style={{ fontSize: "var(--fs-caption)" }}>
+                    添加节点
+                </h2>
                 {projectCommands.map((command) => (
                     <button
                         key={command.id}
@@ -76,8 +78,8 @@ function CanvasCreateCommandGrid({ commands, variant }: { commands: CanvasCreate
                         variant === "node"
                             ? "flex h-[var(--canvas-create-node-height)] flex-col items-start justify-between rounded-[var(--dock-item-radius)] px-2 py-2 text-left"
                             : variant === "workflow"
-                                ? "flex h-[var(--canvas-create-resource-height)] items-center justify-start gap-2 rounded-[var(--dock-item-radius)] px-2 text-left"
-                                : "flex h-[var(--canvas-create-resource-height)] items-center justify-center gap-1.5 rounded-[var(--dock-item-radius)] px-2 text-center",
+                              ? "flex h-[var(--canvas-create-resource-height)] items-center justify-start gap-2 rounded-[var(--dock-item-radius)] px-2 text-left"
+                              : "flex h-[var(--canvas-create-resource-height)] items-center justify-center gap-1.5 rounded-[var(--dock-item-radius)] px-2 text-center",
                     )}
                     style={{ color: theme.node.text, "--tw-ring-color": theme.node.muted } as CSSProperties}
                     title={command.label}
@@ -88,14 +90,22 @@ function CanvasCreateCommandGrid({ commands, variant }: { commands: CanvasCreate
                         <>
                             <span className="flex w-full min-w-0 items-center justify-between gap-1">
                                 <span className="grid size-6 shrink-0 place-items-center opacity-65 transition-opacity group-hover:opacity-100 [&_svg]:size-5">{command.icon}</span>
-                                {command.badge ? <span className="shrink-0 font-medium leading-none" style={{ color: theme.node.muted, fontSize: "var(--fs-tiny)" }}>{command.badge}</span> : null}
+                                {command.badge ? (
+                                    <span className="shrink-0 font-medium leading-none" style={{ color: theme.node.muted, fontSize: "var(--fs-tiny)" }}>
+                                        {command.badge}
+                                    </span>
+                                ) : null}
                             </span>
-                            <span className="block w-full overflow-hidden text-ellipsis whitespace-nowrap font-medium leading-none" style={{ fontSize: "var(--fs-label)" }}>{command.label}</span>
+                            <span className="block w-full overflow-hidden text-ellipsis whitespace-nowrap font-medium leading-none" style={{ fontSize: "var(--fs-label)" }}>
+                                {command.label}
+                            </span>
                         </>
                     ) : (
                         <>
                             <span className="grid size-4 shrink-0 place-items-center opacity-65 transition-opacity group-hover:opacity-100 [&_svg]:size-3.5">{command.icon}</span>
-                            <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-medium leading-none" style={{ fontSize: "var(--fs-label)" }}>{command.label}</span>
+                            <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-medium leading-none" style={{ fontSize: "var(--fs-label)" }}>
+                                {command.label}
+                            </span>
                         </>
                     )}
                 </motion.button>
@@ -105,5 +115,9 @@ function CanvasCreateCommandGrid({ commands, variant }: { commands: CanvasCreate
 }
 
 function MenuSection({ title, color, spaced = false }: { title: string; color: string; spaced?: boolean }) {
-    return <h3 className="mb-1 mt-2 px-1 font-medium leading-none" style={{ color, fontSize: "var(--fs-tiny)", marginTop: spaced ? "var(--space-4)" : "var(--space-2)" }}>{title}</h3>;
+    return (
+        <h3 className="mb-1 mt-2 px-1 font-medium leading-none" style={{ color, fontSize: "var(--fs-tiny)", marginTop: spaced ? "var(--space-4)" : "var(--space-2)" }}>
+            {title}
+        </h3>
+    );
 }

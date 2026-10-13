@@ -12,7 +12,12 @@ describe("创作交互合同", () => {
         expect(request.questions[0].options[0].id).not.toBe("model-option");
     });
     test("未解析和冲突不是已知事实，营销不询问短片字段", () => {
-        const request = normalizeCreativeQuestions([question("assets"), question("style"), question("episodes")], "marketing", { assets: { value: "文件", source: "asset", status: "unparsed" }, style: { value: "写实", source: "user", status: "conflict" } }, identity);
+        const request = normalizeCreativeQuestions(
+            [question("assets"), question("style"), question("episodes")],
+            "marketing",
+            { assets: { value: "文件", source: "asset", status: "unparsed" }, style: { value: "写实", source: "user", status: "conflict" } },
+            identity,
+        );
         expect(request.questions.map((q) => q.field)).toEqual(["assets", "style"]);
     });
     test("必填答案与素材归属校验，成功才合并 brief", () => {

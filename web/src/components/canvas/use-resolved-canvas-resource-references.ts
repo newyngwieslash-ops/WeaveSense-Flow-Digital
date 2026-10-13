@@ -14,10 +14,11 @@ const previewPromiseCache = new Map<string, Promise<string>>();
 export function useResolvedCanvasResourceReferences(references: CanvasResourceReference[], options?: { projectId?: string }) {
     const projectId = options?.projectId;
     const requests = useMemo(
-        () => references.flatMap((reference) => {
-            const identity = previewIdentity(reference, projectId);
-            return identity ? [{ reference, identity }] : [];
-        }),
+        () =>
+            references.flatMap((reference) => {
+                const identity = previewIdentity(reference, projectId);
+                return identity ? [{ reference, identity }] : [];
+            }),
         [projectId, references],
     );
     const [resolvedById, setResolvedById] = useState<Record<string, ResolvedPreview>>({});
@@ -50,11 +51,12 @@ export function useResolvedCanvasResourceReferences(references: CanvasResourceRe
     }, [projectId, requests]);
 
     return useMemo(
-        () => references.map((reference) => {
-            const identity = previewIdentity(reference, projectId);
-            const resolved = identity ? resolvedById[reference.id] : undefined;
-            return resolved?.identity === identity && resolved.url !== reference.previewUrl ? { ...reference, previewUrl: resolved.url } : reference;
-        }),
+        () =>
+            references.map((reference) => {
+                const identity = previewIdentity(reference, projectId);
+                const resolved = identity ? resolvedById[reference.id] : undefined;
+                return resolved?.identity === identity && resolved.url !== reference.previewUrl ? { ...reference, previewUrl: resolved.url } : reference;
+            }),
         [projectId, references, resolvedById],
     );
 }
@@ -75,7 +77,7 @@ function resolveReferencePreview(reference: CanvasResourceReference, identity: s
     if (cached) return cached;
     if (reference.drawingId && projectId) {
         const pending = loadCanvasDrawingPreview(projectId, reference.drawingId)
-            .then((preview) => preview ? blobToDataUrl(preview) : reference.previewUrl || "")
+            .then((preview) => (preview ? blobToDataUrl(preview) : reference.previewUrl || ""))
             .catch(() => reference.previewUrl || "")
             .then((url) => {
                 if (!url) previewPromiseCache.delete(identity);

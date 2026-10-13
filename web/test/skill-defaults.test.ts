@@ -10,8 +10,13 @@ describe("ensureDefaultCanvasAgentSkill", () => {
         let added = 0;
         const result = await ensureDefaultCanvasAgentSkill({
             listAdded: async () => ({ skills: [skill(DEFAULT_CANVAS_AGENT_SKILL_ID)] }),
-            get: async () => { throw new Error("must not read catalog"); },
-            add: async () => { added += 1; return { skill: skill(DEFAULT_CANVAS_AGENT_SKILL_ID) }; },
+            get: async () => {
+                throw new Error("must not read catalog");
+            },
+            add: async () => {
+                added += 1;
+                return { skill: skill(DEFAULT_CANVAS_AGENT_SKILL_ID) };
+            },
         });
         expect(result.skills[0].skillId).toBe(DEFAULT_CANVAS_AGENT_SKILL_ID);
         expect(added).toBe(0);
@@ -23,7 +28,10 @@ describe("ensureDefaultCanvasAgentSkill", () => {
         const result = await ensureDefaultCanvasAgentSkill({
             listAdded: async () => ({ skills: listCalls++ === 0 ? [] : [skill(DEFAULT_CANVAS_AGENT_SKILL_ID)] }),
             get: async () => ({ skill: skill(DEFAULT_CANVAS_AGENT_SKILL_ID, false) }),
-            add: async () => { added += 1; return { skill: skill(DEFAULT_CANVAS_AGENT_SKILL_ID) }; },
+            add: async () => {
+                added += 1;
+                return { skill: skill(DEFAULT_CANVAS_AGENT_SKILL_ID) };
+            },
         });
         expect(result.skills[0].skillId).toBe(DEFAULT_CANVAS_AGENT_SKILL_ID);
         expect(added).toBe(1);

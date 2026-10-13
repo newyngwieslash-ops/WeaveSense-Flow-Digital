@@ -10,14 +10,21 @@ describe("canvas drawing engines", () => {
     });
 
     it("summarizes Excalidraw elements without deleted records", () => {
-        expect(summarizeCanvasDrawing("excalidraw", {
-            elements: [{ id: "visible", isDeleted: false }, { id: "deleted", isDeleted: true }],
-        })).toEqual({ shapeCount: 1, pageCount: 1 });
+        expect(
+            summarizeCanvasDrawing("excalidraw", {
+                elements: [
+                    { id: "visible", isDeleted: false },
+                    { id: "deleted", isDeleted: true },
+                ],
+            }),
+        ).toEqual({ shapeCount: 1, pageCount: 1 });
     });
 
     it("keeps the legacy tldraw snapshot summary", () => {
-        expect(summarizeCanvasDrawing("tldraw", {
-            store: { "page:1": { typeName: "page" }, "shape:1": { typeName: "shape" } },
-        })).toEqual({ shapeCount: 1, pageCount: 1 });
+        expect(
+            summarizeCanvasDrawing("tldraw", {
+                store: { "page:1": { typeName: "page" }, "shape:1": { typeName: "shape" } },
+            }),
+        ).toEqual({ shapeCount: 1, pageCount: 1 });
     });
 });

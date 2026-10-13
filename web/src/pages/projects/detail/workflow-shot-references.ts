@@ -82,7 +82,7 @@ export function buildShotAssetReferenceContext(detail: ProjectDetail, shotId: st
         referenceImages: entries.map(({ image }) => image),
         referenceAudios,
         assetReferences,
-        resolvedCharacterVersions: entries.flatMap(({ asset, reference }) => asset.character ? [{ assetId: asset.id, versionId: reference.referencedVersion?.id || reference.assetVersionId || asset.character.versionId }] : []),
+        resolvedCharacterVersions: entries.flatMap(({ asset, reference }) => (asset.character ? [{ assetId: asset.id, versionId: reference.referencedVersion?.id || reference.assetVersionId || asset.character.versionId }] : [])),
     };
 }
 
@@ -110,9 +110,7 @@ export function ensureShotAssetMentionPrompt(prompt: string, references: Array<P
     const mentionedAssetIds = new Set(Array.from(value.matchAll(/@\[asset:([^\]]+)\]/g), (match) => match[1]));
     const missing = references.filter((reference): reference is typeof reference & { assetId: string } => Boolean(reference.assetId && !mentionedAssetIds.has(reference.assetId)));
     if (!missing.length) return value;
-    const block = (title: string, items: typeof missing) => items.length
-        ? [title, ...items.map((reference) => `${reference.title || reference.label}：@[asset:${reference.assetId}]`)].join("\n")
-        : "";
+    const block = (title: string, items: typeof missing) => (items.length ? [title, ...items.map((reference) => `${reference.title || reference.label}：@[asset:${reference.assetId}]`)].join("\n") : "");
     const characters = missing.filter((reference) => reference.kind === "character");
     const otherAssets = missing.filter((reference) => reference.kind !== "character");
     return [value, block("【角色参考】", characters), block("【场景与道具参考】", otherAssets)].filter(Boolean).join("\n\n");
@@ -123,19 +121,14 @@ export function compileShotAssetReferencePrompt(references: ShotPromptAssetRefer
     const lines = references.flatMap((reference) => {
         const visualLabel = reference.category === "character" ? "人物参考" : `${projectAssetCategoryLabel(reference.category)}参考`;
         const media = [`${visualLabel}：图片${reference.imageIndex}`, reference.audioIndex ? `声音参考：音频${reference.audioIndex}` : ""].filter(Boolean).join("；");
-        return [
-            `- ${reference.title}：${media}`,
-            reference.voiceDescription ? `  声音画像：${reference.voiceDescription}` : "",
-            reference.dialogue ? `  镜头台词：${reference.dialogue}` : "",
-        ].filter(Boolean);
+        return [`- ${reference.title}：${media}`, reference.voiceDescription ? `  声音画像：${reference.voiceDescription}` : "", reference.dialogue ? `  镜头台词：${reference.dialogue}` : ""].filter(Boolean);
     });
     return ["【资产参考】", "", ...lines].join("\n");
 }
 
 function projectAssetReferenceImage(asset: ProjectAsset, reference?: ShotAssetReference): ReferenceImage | undefined {
     const boundRepresentations = reference?.referencedVersion?.representations || [];
-    const representation = preferredVisualRepresentation(boundRepresentations)
-        || (asset.character ? preferredVisualRepresentation(asset.character.representations) : undefined);
+    const representation = preferredVisualRepresentation(boundRepresentations) || (asset.character ? preferredVisualRepresentation(asset.character.representations) : undefined);
     if (representation) {
         return {
             id: asset.id,
@@ -159,10 +152,12 @@ function projectAssetReferenceImage(asset: ProjectAsset, reference?: ShotAssetRe
 }
 
 function preferredVisualRepresentation(representations: CharacterRepresentation[]) {
-    return representations.find((item) => item.role === "turnaround_sheet")
-        || representations.find((item) => item.role === "primary")
-        || representations.find((item) => item.role === "front")
-        || representations.find((item) => item.mediaType.startsWith("image"));
+    return (
+        representations.find((item) => item.role === "turnaround_sheet") ||
+        representations.find((item) => item.role === "primary") ||
+        representations.find((item) => item.role === "front") ||
+        representations.find((item) => item.mediaType.startsWith("image"))
+    );
 }
 
 function withShotDialogue(references: ShotPromptAssetReference[], dialogue?: string) {
@@ -171,7 +166,7 @@ function withShotDialogue(references: ShotPromptAssetReference[], dialogue?: str
     const characters = references.filter((reference) => reference.category === "character");
     if (characters.length === 1) {
         return {
-            references: references.map((reference) => reference.assetId === characters[0]?.assetId ? { ...reference, dialogue: value } : reference),
+            references: references.map((reference) => (reference.assetId === characters[0]?.assetId ? { ...reference, dialogue: value } : reference)),
             unassignedDialogue: "",
         };
     }
@@ -189,7 +184,9 @@ function withShotDialogue(references: ShotPromptAssetReference[], dialogue?: str
 function dialogueForCharacter(dialogue: string, characterName: string) {
     const escaped = characterName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const pattern = new RegExp(`(?:^|\\n)\\s*${escaped}\\s*[：:]\\s*([^\\n]+)`, "g");
-    return Array.from(dialogue.matchAll(pattern), (match) => match[1]?.trim()).filter(Boolean).join("；");
+    return Array.from(dialogue.matchAll(pattern), (match) => match[1]?.trim())
+        .filter(Boolean)
+        .join("；");
 }
 
 function projectAssetCategory(value: string): AssetCategory {
@@ -203,12 +200,9 @@ function projectAssetCategoryLabel(value: string) {
 function characterVoiceDescription(asset: ProjectAsset) {
     const definition = asset.character?.definition || {};
     const voice = asset.character?.voice;
-    return [
-        stringValue(definition.voiceLanguage) || stringValue(voice?.profile.language),
-        stringValue(definition.voiceAge),
-        stringValue(definition.voiceTimbre) || stringValue(voice?.profile.timbre),
-        stringValue(voice?.instructions),
-    ].filter(Boolean).join("；");
+    return [stringValue(definition.voiceLanguage) || stringValue(voice?.profile.language), stringValue(definition.voiceAge), stringValue(definition.voiceTimbre) || stringValue(voice?.profile.timbre), stringValue(voice?.instructions)]
+        .filter(Boolean)
+        .join("；");
 }
 
 function stringValue(value: unknown) {

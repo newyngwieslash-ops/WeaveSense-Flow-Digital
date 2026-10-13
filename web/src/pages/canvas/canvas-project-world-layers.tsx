@@ -88,17 +88,32 @@ export const CanvasProjectWorldLayers = memo(function CanvasProjectWorldLayers(p
     useEffect(() => {
         if (activeMediaNodeId && !props.nodeById.has(activeMediaNodeId)) setActiveMediaNodeId(null);
     }, [activeMediaNodeId, props.nodeById]);
-    const orderedVisibleNodes = useMemo(() => [
-        ...props.visibleNodes.filter(isFrameNode),
-        ...sortCanvasNodesByStackOrder(props.visibleNodes.filter((node) => !isFrameNode(node)), props.nodeStackOrder),
-    ], [props.nodeStackOrder, props.visibleNodes]);
-    const batchPreviews = useMemo(() => new Map(props.visibleNodes.filter((node) => node.metadata?.isBatchRoot).map((node) => [
-        node.id,
-        (node.metadata?.batchChildIds || []).filter((id) => id !== node.metadata?.primaryImageId)
-            .map((id) => props.nodeById.get(id))
-            .filter((child): child is CanvasNodeData => Boolean(child && child.metadata?.batchRootId === node.id))
-            .slice(0, 5),
-    ])), [props.visibleNodes, props.nodeById]);
+    const orderedVisibleNodes = useMemo(
+        () => [
+            ...props.visibleNodes.filter(isFrameNode),
+            ...sortCanvasNodesByStackOrder(
+                props.visibleNodes.filter((node) => !isFrameNode(node)),
+                props.nodeStackOrder,
+            ),
+        ],
+        [props.nodeStackOrder, props.visibleNodes],
+    );
+    const batchPreviews = useMemo(
+        () =>
+            new Map(
+                props.visibleNodes
+                    .filter((node) => node.metadata?.isBatchRoot)
+                    .map((node) => [
+                        node.id,
+                        (node.metadata?.batchChildIds || [])
+                            .filter((id) => id !== node.metadata?.primaryImageId)
+                            .map((id) => props.nodeById.get(id))
+                            .filter((child): child is CanvasNodeData => Boolean(child && child.metadata?.batchRootId === node.id))
+                            .slice(0, 5),
+                    ]),
+            ),
+        [props.visibleNodes, props.nodeById],
+    );
     const framePreviewNodes = (node: CanvasNodeData) => {
         const assetFolderId = node.metadata?.folder?.assetFolderId;
         if (assetFolderId) return props.linkedFolderPreviewNodesById.get(assetFolderId) || EMPTY_CANVAS_NODES;
@@ -214,12 +229,7 @@ export const CanvasProjectWorldLayers = memo(function CanvasProjectWorldLayers(p
                     }}
                 >
                     {props.batchSourceNodeIds.length > 0 ? (
-                        <BatchConnectionHandle
-                            scale={viewportScale}
-                            count={props.batchSourceNodeIds.length}
-                            active={Boolean(props.batchConnectionPreview)}
-                            onPointerDown={(event) => props.onStartBatchConnection(event, props.batchSourceNodeIds)}
-                        />
+                        <BatchConnectionHandle scale={viewportScale} count={props.batchSourceNodeIds.length} active={Boolean(props.batchConnectionPreview)} onPointerDown={(event) => props.onStartBatchConnection(event, props.batchSourceNodeIds)} />
                     ) : null}
                 </div>
             ) : null}

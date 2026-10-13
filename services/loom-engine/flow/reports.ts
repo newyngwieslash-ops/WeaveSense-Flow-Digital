@@ -249,9 +249,11 @@ export class Reports {
    * Generates due briefs. Each window is idempotent by (tenant, schedule, scheduled_at):
    * duplicate ticks / concurrent schedulers produce one report. Missed windows collapse to the latest.
    */
-  async briefTick(limit = 20): Promise<number> {
+  async briefTick(limit = 20, only?: { tenant_id: string; schedule_id: string }): Promise<number> {
     const now = this.e.now();
-    const due = (await this.db.query(`SELECT * FROM flow_brief_schedules WHERE enabled AND next_run_at <= $1 ORDER BY next_run_at LIMIT $2`, [now.toISOString(), limit])).rows as any[];
+    const due = (only
+      ? await this.db.query(`SELECT * FROM flow_brief_schedules WHERE enabled AND next_run_at <= $1 AND tenant_id=$3 AND id=$4 ORDER BY next_run_at LIMIT $2`, [now.toISOString(), limit, only.tenant_id, only.schedule_id])
+      : await this.db.query(`SELECT * FROM flow_brief_schedules WHERE enabled AND next_run_at <= $1 ORDER BY next_run_at LIMIT $2`, [now.toISOString(), limit])).rows as any[];
     let made = 0;
     for (const b of due) {
       // Collapse missed windows: the brief covers the latest due fire time.

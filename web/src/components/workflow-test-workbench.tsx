@@ -192,9 +192,7 @@ export function WorkflowTestWorkbench({ provider, workflowId, workflowKind = "wo
             <div className="workflow-test-toolbar">
                 <div className="min-w-0">
                     <strong>{title || workflowId || "未选择工作流"}</strong>
-                    <span>
-                        RunningHub · {capabilityName(capability)}工作流 · 测试值不会覆盖保存配置
-                    </span>
+                    <span>RunningHub · {capabilityName(capability)}工作流 · 测试值不会覆盖保存配置</span>
                 </div>
                 <div className="workflow-test-toolbar-actions">
                     <Button icon={<RotateCcw className="size-4" />} disabled={running} onClick={resetTest}>

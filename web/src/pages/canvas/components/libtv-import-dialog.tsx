@@ -145,7 +145,9 @@ export function LibTVImportDialog({ open, projectId, viewport, viewportSize, onC
                             <div className="flex flex-wrap items-start justify-between gap-3">
                                 <div>
                                     <div className="text-sm font-semibold">{result.projectName || "LibTV 画布"}</div>
-                                    <div className="mt-1 text-sm text-foreground/60">可导入 {result.importedNodeCount} 个节点 · {result.importedConnectionCount} 条连线</div>
+                                    <div className="mt-1 text-sm text-foreground/60">
+                                        可导入 {result.importedNodeCount} 个节点 · {result.importedConnectionCount} 条连线
+                                    </div>
                                 </div>
                                 <Tag color="blue">批次：{formatLibTVBatchTime(result.batchCreatedAt)}</Tag>
                             </div>

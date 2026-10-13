@@ -18,10 +18,7 @@ export function EditorSubtitleTools() {
     const [srtText, setSrtText] = useState("");
     const [message, setMessage] = useState<string | null>(null);
 
-    const subtitleClips = useMemo(
-        () => (project?.clips ?? []).filter((c) => c.kind === "subtitle").sort((a, b) => a.startMs - b.startMs),
-        [project],
-    );
+    const subtitleClips = useMemo(() => (project?.clips ?? []).filter((c) => c.kind === "subtitle").sort((a, b) => a.startMs - b.startMs), [project]);
     const subtitleTracks = useMemo(() => (project ? getSubtitleTracks(project.tracks) : []), [project]);
 
     // SRT 导入：解析文本 → rebuildSubtitleClips 以 DEFAULT_SRT_NODE_ID 为权威节点重建
@@ -77,9 +74,7 @@ export function EditorSubtitleTools() {
                             {subtitleClips.slice(0, 6).map((clip) => (
                                 <SubtitleRow key={clip.id} clip={clip} />
                             ))}
-                            {subtitleClips.length > 6 && (
-                                <li className="pt-1 text-[10px] text-[var(--director-dock-fg)]/50">…共 {subtitleClips.length} 条</li>
-                            )}
+                            {subtitleClips.length > 6 && <li className="pt-1 text-[10px] text-[var(--director-dock-fg)]/50">…共 {subtitleClips.length} 条</li>}
                         </ul>
                     )}
                 </div>
@@ -120,8 +115,7 @@ export function EditorSubtitleTools() {
                         <span className="rounded-full bg-[var(--director-dock-active-surface)] px-1.5 py-0.5 text-[10px] text-[var(--director-dock-fg)]/80">可用</span>
                     </div>
                     <p className="mt-1.5 text-[11px] leading-relaxed text-[var(--director-dock-fg)]/55">
-                        AI 字幕高亮与关键词标注已实现，入口在画布「字幕」弹窗（点击字幕 → AI 高亮，走 ai.text 权限）。
-                        时间线字幕片段由该字幕快照重建而来；待编辑器预览支持字幕文本渲染后，高亮会随快照同步到这里。
+                        AI 字幕高亮与关键词标注已实现，入口在画布「字幕」弹窗（点击字幕 → AI 高亮，走 ai.text 权限）。 时间线字幕片段由该字幕快照重建而来；待编辑器预览支持字幕文本渲染后，高亮会随快照同步到这里。
                     </p>
                 </div>
 
@@ -130,7 +124,6 @@ export function EditorSubtitleTools() {
         </div>
     );
 }
-
 
 function SubtitleRow({ clip }: { clip: TimelineClip }) {
     return (

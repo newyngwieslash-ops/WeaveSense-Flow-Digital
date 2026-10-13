@@ -176,7 +176,10 @@ export function FluidOrb({ size = 56, color = "#6d5dfc", className }: FluidOrbPr
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
                 if (!motionPreference.matches) frame = window.requestAnimationFrame(render);
             };
-            const updateMotion = () => { window.cancelAnimationFrame(frame); frame = window.requestAnimationFrame(render); };
+            const updateMotion = () => {
+                window.cancelAnimationFrame(frame);
+                frame = window.requestAnimationFrame(render);
+            };
             motionPreference.addEventListener("change", updateMotion);
             removeMotionListener = () => motionPreference.removeEventListener("change", updateMotion);
             frame = window.requestAnimationFrame(render);
@@ -195,15 +198,23 @@ export function FluidOrb({ size = 56, color = "#6d5dfc", className }: FluidOrbPr
         };
     }, [color]);
 
-    return <span className={cn("fluid-orb", fallback && "is-fallback", className)} style={{ width: size, height: size, "--fluid-orb-color": color } as CSSProperties} aria-hidden="true">
-        <canvas ref={canvasRef} />
-        {fallback ? <span className="fluid-orb-fallback" /> : null}
-    </span>;
+    return (
+        <span className={cn("fluid-orb", fallback && "is-fallback", className)} style={{ width: size, height: size, "--fluid-orb-color": color } as CSSProperties} aria-hidden="true">
+            <canvas ref={canvasRef} />
+            {fallback ? <span className="fluid-orb-fallback" /> : null}
+        </span>
+    );
 }
 
 function hexToRgb(value: string): [number, number, number] {
     const normalized = value.trim().replace(/^#/, "");
-    const expanded = normalized.length === 3 ? normalized.split("").map((item) => item + item).join("") : normalized;
+    const expanded =
+        normalized.length === 3
+            ? normalized
+                  .split("")
+                  .map((item) => item + item)
+                  .join("")
+            : normalized;
     const parsed = Number.parseInt(expanded, 16);
     if (!Number.isFinite(parsed) || expanded.length !== 6) return [109, 93, 252];
     return [(parsed >> 16) & 255, (parsed >> 8) & 255, parsed & 255];

@@ -10,7 +10,16 @@ import type { VideoProviderDeps } from "./video-provider-deps";
 
 type NovitaVideoResult = { task?: { status?: string; reason?: string }; videos?: Array<{ video_url?: string }> };
 
-export async function createNovitaVideoTask(deps: VideoProviderDeps, config: ResolvedAiConfig, model: string, prompt: string, references: ReferenceImage[], videoReferences: ReferenceVideo[], audioReferences: ReferenceAudio[], options?: RequestOptions): Promise<VideoGenerationTask> {
+export async function createNovitaVideoTask(
+    deps: VideoProviderDeps,
+    config: ResolvedAiConfig,
+    model: string,
+    prompt: string,
+    references: ReferenceImage[],
+    videoReferences: ReferenceVideo[],
+    audioReferences: ReferenceAudio[],
+    options?: RequestOptions,
+): Promise<VideoGenerationTask> {
     if (references.length > 1 || videoReferences.length || audioReferences.length) throw new Error("Novita 视频当前只支持 1 张起始图，不支持参考视频或音频");
     if (references.length && options?.videoEditOperation === "reference_to_video") throw new Error("Novita 视频当前不支持角色或风格参考图生视频，请改用支持 reference_to_video 的模型");
     const payload: Record<string, unknown> = {

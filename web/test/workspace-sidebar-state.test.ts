@@ -1,10 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import {
-    readWorkspaceSidebarCollapsed,
-    WORKSPACE_SIDEBAR_STORAGE_KEY,
-    writeWorkspaceSidebarCollapsed,
-} from "../src/components/layout/workspace-sidebar-state";
+import { readWorkspaceSidebarCollapsed, WORKSPACE_SIDEBAR_STORAGE_KEY, writeWorkspaceSidebarCollapsed } from "../src/components/layout/workspace-sidebar-state";
 
 function memoryStorage(initial?: string) {
     const values = new Map<string, string>();

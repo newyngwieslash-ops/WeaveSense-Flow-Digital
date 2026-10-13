@@ -18,8 +18,12 @@ export default function RouteErrorPage() {
                 <h1 className="mt-3 text-2xl font-semibold">当前页面没有正常加载</h1>
                 <p className="mt-3 break-words text-sm leading-6 text-muted-foreground">{message}</p>
                 <div className="mt-6 flex justify-center gap-3">
-                    <Button icon={<RefreshCw className="size-4" />} onClick={reloadAfterChunkFailure}>重新加载</Button>
-                    <Button type="primary" icon={<Home className="size-4" />} onClick={() => navigate("/")}>返回主页</Button>
+                    <Button icon={<RefreshCw className="size-4" />} onClick={reloadAfterChunkFailure}>
+                        重新加载
+                    </Button>
+                    <Button type="primary" icon={<Home className="size-4" />} onClick={() => navigate("/")}>
+                        返回主页
+                    </Button>
                 </div>
             </section>
         </main>

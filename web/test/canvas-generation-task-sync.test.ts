@@ -50,15 +50,19 @@ describe("applyGeneratedMediaResultMetadata", () => {
     });
     test("clears the previous asset binding when a regenerated media result lands", () => {
         const node = videoNode("asset-old", "video:old");
-        const next = applyGeneratedMediaResultMetadata(node, videoMetadata({
-            url: "https://example.test/new.mp4",
-            storageKey: "video:new",
-            width: 1280,
-            height: 720,
-            bytes: 12,
-            mimeType: "video/mp4",
-            durationMs: 4000,
-        }), { prompt: "新提示词" });
+        const next = applyGeneratedMediaResultMetadata(
+            node,
+            videoMetadata({
+                url: "https://example.test/new.mp4",
+                storageKey: "video:new",
+                width: 1280,
+                height: 720,
+                bytes: 12,
+                mimeType: "video/mp4",
+                durationMs: 4000,
+            }),
+            { prompt: "新提示词" },
+        );
 
         expect(next.assetId).toBeUndefined();
         expect(next.storageKey).toBe("video:new");

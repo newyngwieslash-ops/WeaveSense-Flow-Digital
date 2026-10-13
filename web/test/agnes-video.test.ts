@@ -75,11 +75,7 @@ describe("Agnes Video 2.5 request contract", () => {
             return { data: { id: "task-1", video_id: "video-1", status: "queued" } };
         }) as typeof axios.request;
 
-        const task = await createVideoGenerationTask(
-            configForAgnes("agnes-video-2.5", { size: "1280x720" }),
-            "自我介绍图片1",
-            [{ id: "image-1", name: "reference.png", type: "image/png", dataUrl: "", url: "https://cdn.example.com/reference.png" }],
-        );
+        const task = await createVideoGenerationTask(configForAgnes("agnes-video-2.5", { size: "1280x720" }), "自我介绍图片1", [{ id: "image-1", name: "reference.png", type: "image/png", dataUrl: "", url: "https://cdn.example.com/reference.png" }]);
 
         expect(task).toEqual({ id: "video-1", provider: "agnes", model: "agnes::agnes-video-2.5" });
         expect(requestBody).not.toBeInstanceOf(FormData);
@@ -127,16 +123,9 @@ describe("Agnes Video 2.5 request contract", () => {
     test("treats a single storyboard character image as a reference asset", async () => {
         const config = resolveModelRequestConfig(configForAgnes(), "agnes::agnes-video-2.5");
         const { calls, deps } = providerDeps(config);
-        await createAgnesVideoTask(
-            deps,
-            config,
-            "agnes::agnes-video-2.5",
-            "保持角色一致",
-            [{ id: "character-1", name: "character.png", type: "image/png", dataUrl: "", url: "https://cdn.example.com/character.png" }],
-            [],
-            [],
-            { videoEditOperation: "reference_to_video" },
-        );
+        await createAgnesVideoTask(deps, config, "agnes::agnes-video-2.5", "保持角色一致", [{ id: "character-1", name: "character.png", type: "image/png", dataUrl: "", url: "https://cdn.example.com/character.png" }], [], [], {
+            videoEditOperation: "reference_to_video",
+        });
 
         expect(calls[0]?.body).toMatchObject({
             mode: "reference",

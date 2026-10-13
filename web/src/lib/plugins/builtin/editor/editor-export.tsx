@@ -63,9 +63,7 @@ export function EditorExport() {
                         phase: "running",
                         mode: "remote",
                         percent: task.progress ?? 0,
-                        detail: task.stage
-                            ? `${task.stage}${task.progress ? ` · ${task.progress}%` : ""}`
-                            : "渲染中…",
+                        detail: task.stage ? `${task.stage}${task.progress ? ` · ${task.progress}%` : ""}` : "渲染中…",
                         result: null,
                     }),
             });
@@ -95,8 +93,7 @@ export function EditorExport() {
         setState({ phase: "running", mode: "local", percent: 0, detail: "准备导出", result: null });
         try {
             const blob = await exportTimelineToMp4(project, sources, {
-                onProgress: (p: TimelineExportProgress) =>
-                    setState({ phase: "running", mode: "local", percent: p.percent, detail: p.detail, result: null }),
+                onProgress: (p: TimelineExportProgress) => setState({ phase: "running", mode: "local", percent: p.percent, detail: p.detail, result: null }),
             });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
@@ -130,15 +127,11 @@ export function EditorExport() {
                         <ul className="mt-2 space-y-1">
                             {plan.steps.slice(0, 8).map((step, index) => (
                                 <li key={index} className="flex items-center gap-2 text-[11px] text-[var(--director-dock-fg)]/70">
-                                    <span className="shrink-0 rounded bg-[var(--director-dock-active-surface)] px-1 py-0.5 font-mono text-[9px] uppercase text-[var(--director-dock-fg)]/80">
-                                        {step.kind}
-                                    </span>
+                                    <span className="shrink-0 rounded bg-[var(--director-dock-active-surface)] px-1 py-0.5 font-mono text-[9px] uppercase text-[var(--director-dock-fg)]/80">{step.kind}</span>
                                     <span className="truncate">{step.description}</span>
                                 </li>
                             ))}
-                            {plan.steps.length > 8 && (
-                                <li className="pt-0.5 text-[10px] text-[var(--director-dock-fg)]/50">…共 {plan.steps.length} 步</li>
-                            )}
+                            {plan.steps.length > 8 && <li className="pt-0.5 text-[10px] text-[var(--director-dock-fg)]/50">…共 {plan.steps.length} 步</li>}
                         </ul>
                     ) : (
                         <p className="mt-2 text-[11px] text-[var(--director-dock-fg)]/55">时间线没有可渲染的视频片段。</p>
@@ -159,11 +152,7 @@ export function EditorExport() {
                     disabled={sources.length === 0 || state.phase === "running"}
                     className="flex w-full items-center justify-center gap-2 rounded-md bg-[var(--director-accent)] px-2 py-1.5 text-xs font-medium text-[var(--director-on-accent)] hover:bg-[var(--director-accent-hover)] disabled:opacity-40"
                 >
-                    {state.phase === "running" && state.mode === "remote" ? (
-                        <Loader2 className="size-3.5 animate-spin" />
-                    ) : (
-                        <Server className="size-3.5" />
-                    )}
+                    {state.phase === "running" && state.mode === "remote" ? <Loader2 className="size-3.5 animate-spin" /> : <Server className="size-3.5" />}
                     {state.phase === "running" && state.mode === "remote" ? "渲染中…" : "渲染成片（服务端）"}
                 </button>
 
@@ -173,11 +162,7 @@ export function EditorExport() {
                     disabled={sources.length === 0 || state.phase === "running"}
                     className="mt-1.5 flex w-full items-center justify-center gap-2 rounded-md border border-[var(--director-sequencer-border)] px-2 py-1.5 text-xs text-[var(--director-dock-fg)]/80 hover:bg-[var(--director-control-hover)] disabled:opacity-40"
                 >
-                    {state.phase === "running" && state.mode === "local" ? (
-                        <Loader2 className="size-3.5 animate-spin" />
-                    ) : (
-                        <Download className="size-3.5" />
-                    )}
+                    {state.phase === "running" && state.mode === "local" ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
                     {state.phase === "running" && state.mode === "local" ? "导出中…" : "本地导出（ffmpeg.wasm）"}
                 </button>
 
@@ -188,10 +173,7 @@ export function EditorExport() {
                             <span className="tabular-nums">{state.percent}%</span>
                         </div>
                         <div className="h-1.5 overflow-hidden rounded-full bg-[var(--director-control-hover)]">
-                            <div
-                                className="h-full rounded-full bg-[var(--director-accent)] transition-all"
-                                style={{ width: `${state.percent}%` }}
-                            />
+                            <div className="h-full rounded-full bg-[var(--director-accent)] transition-all" style={{ width: `${state.percent}%` }} />
                         </div>
                     </div>
                 )}
@@ -201,28 +183,18 @@ export function EditorExport() {
                         <video src={resourceFileUrl(state.result.resourceId)} controls className="aspect-video w-full bg-black" />
                         <div className="flex items-center justify-between gap-2 px-2 py-1.5 text-[11px] text-[var(--director-dock-fg)]/80">
                             <span className="truncate">{state.result.fileName ?? "timeline.mp4"}</span>
-                            <a
-                                href={resourceFileUrl(state.result.resourceId)}
-                                download={state.result.fileName ?? "timeline.mp4"}
-                                className="flex shrink-0 items-center gap-1 text-[var(--director-accent)] hover:underline"
-                            >
+                            <a href={resourceFileUrl(state.result.resourceId)} download={state.result.fileName ?? "timeline.mp4"} className="flex shrink-0 items-center gap-1 text-[var(--director-accent)] hover:underline">
                                 <Download className="size-3" />
                                 下载
                             </a>
                         </div>
                     </div>
                 )}
-                {state.phase === "done" && (!state.result || state.mode !== "remote") && (
-                    <p className="mt-2 text-[11px] text-[var(--director-success)]">{state.detail}</p>
-                )}
+                {state.phase === "done" && (!state.result || state.mode !== "remote") && <p className="mt-2 text-[11px] text-[var(--director-success)]">{state.detail}</p>}
                 {state.phase === "error" && <p className="mt-2 text-[11px] text-[var(--director-danger)]">{state.detail}</p>}
 
-                <p className="mt-3 text-[11px] leading-relaxed text-[var(--director-dock-fg)]/55">
-                    默认提交服务端渲染任务（异步，产物可直接预览/下载）；本地 ffmpeg.wasm 导出保留为离线兜底。
-                </p>
-                {sources.length === 0 && (
-                    <p className="mt-1 text-[11px] text-[var(--director-dock-fg)]/55">悬空引用片段（节点已删除）按计划跳过，不影响其余片段导出。</p>
-                )}
+                <p className="mt-3 text-[11px] leading-relaxed text-[var(--director-dock-fg)]/55">默认提交服务端渲染任务（异步，产物可直接预览/下载）；本地 ffmpeg.wasm 导出保留为离线兜底。</p>
+                {sources.length === 0 && <p className="mt-1 text-[11px] text-[var(--director-dock-fg)]/55">悬空引用片段（节点已删除）按计划跳过，不影响其余片段导出。</p>}
             </div>
         </div>
     );

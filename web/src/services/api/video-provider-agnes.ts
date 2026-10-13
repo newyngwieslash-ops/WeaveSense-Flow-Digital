@@ -46,9 +46,10 @@ export async function createAgnesVideoTask(
         Promise.all(audioReferences.map((item) => resolveAgnesMediaUrl(item.url, item.storageKey))),
     ]);
     const imageRoles = resolveVideoImageReferences(references, options, { videoCount: videoUrls.length, audioCount: audioUrls.length }).map(({ role }) => role);
-    const payload = modelName === "agnes-video-v2.0"
-        ? buildAgnesV20Payload(config, modelName, normalizedPrompt, imageUrls, imageRoles, videoUrls, audioUrls, options)
-        : buildAgnesV25Payload(config, modelName, normalizedPrompt, imageUrls, imageRoles, videoUrls, audioUrls);
+    const payload =
+        modelName === "agnes-video-v2.0"
+            ? buildAgnesV20Payload(config, modelName, normalizedPrompt, imageUrls, imageRoles, videoUrls, audioUrls, options)
+            : buildAgnesV25Payload(config, modelName, normalizedPrompt, imageUrls, imageRoles, videoUrls, audioUrls);
 
     try {
         const raw = await deps.transport.post<ApiEnvelope<AgnesTaskResponse>>(deps.transport.apiUrl("/videos"), payload, options);
@@ -65,7 +66,9 @@ export async function pollAgnesVideoTask(deps: VideoProviderDeps, config: Resolv
     try {
         const raw = await deps.transport.get<ApiEnvelope<AgnesTaskResponse>>(agnesPollUrl(config, task.id, modelOptionName(task.model)), options);
         const state = deps.response.unwrapEnvelope(raw, "Agnes 接口没有返回任务状态");
-        const status = String(state.status || "").trim().toLowerCase();
+        const status = String(state.status || "")
+            .trim()
+            .toLowerCase();
         if (status === "completed" || status === "succeeded" || status === "success" || status === "done") {
             const url = String(state.metadata?.url || state.url || "").trim();
             if (!url) return { status: "failed", error: "Agnes 任务已完成但没有返回视频 URL" };
@@ -159,7 +162,9 @@ function agnesSeconds(value: string) {
 }
 
 function agnesResolution(value: string) {
-    const normalized = String(value || "720").trim().toLowerCase();
+    const normalized = String(value || "720")
+        .trim()
+        .toLowerCase();
     if (normalized === "auto" || normalized === "720" || normalized === "720p") return "720P";
     if (normalized === "960" || normalized === "960p") return "960P";
     if (normalized === "2k" || normalized === "1440" || normalized === "1440p") return "2K";
@@ -167,7 +172,10 @@ function agnesResolution(value: string) {
 }
 
 function agnesAspectRatio(value: string) {
-    const normalized = String(value || "16:9").trim().toLowerCase().replace("×", "x");
+    const normalized = String(value || "16:9")
+        .trim()
+        .toLowerCase()
+        .replace("×", "x");
     if (normalized === "auto" || !normalized) return "16:9";
     const direct = AGNES_ASPECT_RATIOS.find((ratio) => ratio === normalized);
     if (direct) return direct;

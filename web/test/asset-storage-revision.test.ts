@@ -17,12 +17,14 @@ const completeAsset = {
 
 describe("asset storage revision", () => {
     test("parses complete persisted assets without rewriting tags", () => {
-        const document = parseAssetStorageDocument(JSON.stringify({
-            state: { assets: [completeAsset] },
-            version: 1,
-            storageRevision: 3,
-            tombstones: { assets: {} },
-        }));
+        const document = parseAssetStorageDocument(
+            JSON.stringify({
+                state: { assets: [completeAsset] },
+                version: 1,
+                storageRevision: 3,
+                tombstones: { assets: {} },
+            }),
+        );
 
         expect(document.state.assets[0]?.tags).toEqual([]);
         expect(document.state.assets[0]?.tags.join(" ")).toBe("");
@@ -31,23 +33,28 @@ describe("asset storage revision", () => {
 
     test("rejects persisted assets that are missing tags", () => {
         const { tags: _tags, ...legacyAsset } = completeAsset;
-        expect(() => parseAssetStorageDocument(JSON.stringify({
-            state: { assets: [legacyAsset] },
-            version: 1,
-            storageRevision: 3,
-            tombstones: { assets: {} },
-        }))).toThrow(/tags/);
+        expect(() =>
+            parseAssetStorageDocument(
+                JSON.stringify({
+                    state: { assets: [legacyAsset] },
+                    version: 1,
+                    storageRevision: 3,
+                    tombstones: { assets: {} },
+                }),
+            ),
+        ).toThrow(/tags/);
     });
-
 
     test("isolates malformed historical records while preserving valid assets", () => {
         const { tags: _tags, ...legacyAsset } = completeAsset;
-        const recovery = parseAssetStorageDocumentRecovering(JSON.stringify({
-            state: { assets: [legacyAsset, completeAsset] },
-            version: 1,
-            storageRevision: 3,
-            tombstones: { assets: {} },
-        }));
+        const recovery = parseAssetStorageDocumentRecovering(
+            JSON.stringify({
+                state: { assets: [legacyAsset, completeAsset] },
+                version: 1,
+                storageRevision: 3,
+                tombstones: { assets: {} },
+            }),
+        );
 
         expect(recovery.document.state.assets.map((asset) => asset.id)).toEqual(["library-image"]);
         expect(recovery.invalid).toEqual([{ index: 0, id: "library-image", error: expect.stringMatching(/tags/) }]);

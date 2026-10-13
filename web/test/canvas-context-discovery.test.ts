@@ -10,7 +10,15 @@ const snapshot: CanvasSnapshot = {
     title: "测试画布",
     nodes: [
         { id: "prompt-1", type: CanvasNodeType.Text, title: "提示词", position: { x: 0, y: 0 }, width: 320, height: 240 },
-        { id: "ref-1", type: CanvasNodeType.Image, title: "参考图", position: { x: 420, y: 0 }, width: 320, height: 320, metadata: { status: "success", storageKey: "resource:ref-1", taskId: "task-1", taskStatus: "succeeded", taskProgress: 100, taskStage: "completed" } },
+        {
+            id: "ref-1",
+            type: CanvasNodeType.Image,
+            title: "参考图",
+            position: { x: 420, y: 0 },
+            width: 320,
+            height: 320,
+            metadata: { status: "success", storageKey: "resource:ref-1", taskId: "task-1", taskStatus: "succeeded", taskProgress: 100, taskStage: "completed" },
+        },
     ],
     connections: [{ id: "connection-1", fromNodeId: "prompt-1", toNodeId: "ref-1" }],
     selectedNodeIds: [],
@@ -27,9 +35,7 @@ describe("validateCanvasOperations", () => {
     });
 
     it("rejects direct media status forgery", () => {
-        const result = validateCanvasOperations(snapshot, [
-            { type: "update_node", id: "ref-1", patch: { metadata: { status: "success" } } },
-        ]);
+        const result = validateCanvasOperations(snapshot, [{ type: "update_node", id: "ref-1", patch: { metadata: { status: "success" } } }]);
         expect(result.ok).toBe(false);
         expect(result.issues[0]?.severity).toBe("error");
     });

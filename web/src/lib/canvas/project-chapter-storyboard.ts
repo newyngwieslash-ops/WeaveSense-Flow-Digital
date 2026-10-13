@@ -7,11 +7,7 @@ type ProjectChapterStoryboardInput = {
     shots: ProjectShot[];
 };
 
-export function upsertProjectChapterStoryboard(
-    nodes: CanvasNodeData[],
-    connections: CanvasConnection[],
-    { unit, shots }: ProjectChapterStoryboardInput,
-) {
+export function upsertProjectChapterStoryboard(nodes: CanvasNodeData[], connections: CanvasConnection[], { unit, shots }: ProjectChapterStoryboardInput) {
     const existing = nodes.find((node) => node.type === CanvasNodeType.Script && node.metadata?.chapterId === unit.id);
     const currentRows = new Map((existing?.metadata?.storyboard?.rows || []).map((row) => [row.id, row]));
     const rows = shots
@@ -41,7 +37,7 @@ export function upsertProjectChapterStoryboard(
               },
           }
         : createChapterStoryboardNode(nodes, unit, rows);
-    const nextNodes = existing ? nodes.map((node) => node.id === existing.id ? scriptNode : node) : [...nodes, scriptNode];
+    const nextNodes = existing ? nodes.map((node) => (node.id === existing.id ? scriptNode : node)) : [...nodes, scriptNode];
     const validRowHandles = new Set(rows.map((row) => `row:${row.id}`));
     const nextConnections = existing
         ? connections
@@ -66,19 +62,23 @@ function projectShotRow(shot: ProjectShot, index: number, currentRows: Map<strin
 
 function createChapterStoryboardNode(nodes: CanvasNodeData[], unit: Pick<ProjectUnit, "id" | "title">, rows: StoryboardRow[]) {
     const rightEdge = nodes.reduce((value, node) => Math.max(value, node.position.x + node.width), 0);
-    const node = createCanvasNode(CanvasNodeType.Script, { x: rightEdge + 540, y: 340 }, {
-        status: "idle",
-        workflowKind: "storyboard",
-        workflowTitle: "章节分镜",
-        workflowDescription: `已导入 ${rows.length} 个镜头`,
-        chapterId: unit.id,
-        chapterTitle: unit.title,
-        storyboard: {
-            rows,
-            visibleColumns: ["shotNumber", "durationSeconds", "videoMotionPrompt", "dialogue", "assets"],
-            referenceNodeIds: [],
+    const node = createCanvasNode(
+        CanvasNodeType.Script,
+        { x: rightEdge + 540, y: 340 },
+        {
+            status: "idle",
+            workflowKind: "storyboard",
+            workflowTitle: "章节分镜",
+            workflowDescription: `已导入 ${rows.length} 个镜头`,
+            chapterId: unit.id,
+            chapterTitle: unit.title,
+            storyboard: {
+                rows,
+                visibleColumns: ["shotNumber", "durationSeconds", "videoMotionPrompt", "dialogue", "assets"],
+                referenceNodeIds: [],
+            },
         },
-    });
+    );
     node.title = `分镜脚本 · ${unit.title}`;
     return node;
 }

@@ -18,7 +18,15 @@ describe("platform curation", () => {
         expect(matchesCuration({ ...skill, skillId: "two" }, enabled, "__uncategorized__")).toBe(true);
     });
     test("dynamic roots use overrides, default bucket, icons and disabled gate", () => {
-        const enabled: SkillCuration = { ...data, enabled: true, roots: [{ id: "custom", name: "Custom", iconKey: "landmark", enabled: true, sortOrder: 0 }, { id: "__unassigned__", name: "未归入启用分类", iconKey: "shapes", enabled: true, sortOrder: 1 }], rootAssignments: [{ skillId: skill.skillId, rootId: "custom" }] };
+        const enabled: SkillCuration = {
+            ...data,
+            enabled: true,
+            roots: [
+                { id: "custom", name: "Custom", iconKey: "landmark", enabled: true, sortOrder: 0 },
+                { id: "__unassigned__", name: "未归入启用分类", iconKey: "shapes", enabled: true, sortOrder: 1 },
+            ],
+            rootAssignments: [{ skillId: skill.skillId, rootId: "custom" }],
+        };
         expect(effectiveCurationRoot(skill, enabled)).toBe("custom");
         expect(curationQuery(enabled, "root:custom")).toEqual({ platformRootId: "custom" });
         expect(curationQuery({ ...enabled, enabled: false }, "root:custom")).toEqual({});

@@ -75,7 +75,17 @@ export function CanvasZoomControls({ scale, onScaleChange, onFitContent, onAutoA
         { id: "zoom-minimap", label: isMiniMapOpen ? "关闭小地图" : "打开小地图", icon: <Compass />, active: isMiniMapOpen, onClick: onToggleMiniMap },
         { id: "zoom-fit", label: "适应画布", icon: <Focus />, onClick: onFitContent },
         ...(onAutoArrange ? [{ id: "zoom-auto-arrange", label: "自动整理节点", icon: <LayoutTemplate />, onClick: onAutoArrange }] : []),
-        ...(onHideNodeConnectionsChange ? [{ id: "zoom-hide-node-connections", label: hideNodeConnections ? "显示全部连线" : "设置隐藏节点连线", icon: hideNodeConnections ? <Eye /> : <EyeOff />, active: hideNodeConnections, onClick: () => onHideNodeConnectionsChange(!hideNodeConnections) }] : []),
+        ...(onHideNodeConnectionsChange
+            ? [
+                  {
+                      id: "zoom-hide-node-connections",
+                      label: hideNodeConnections ? "显示全部连线" : "设置隐藏节点连线",
+                      icon: hideNodeConnections ? <Eye /> : <EyeOff />,
+                      active: hideNodeConnections,
+                      onClick: () => onHideNodeConnectionsChange(!hideNodeConnections),
+                  },
+              ]
+            : []),
         { kind: "separator", id: "zoom-separator" },
         { id: "zoom-out", label: "缩小画布", icon: <Minus />, onClick: () => commitScale(liveScaleRef.current - 0.1) },
         {
@@ -83,7 +93,12 @@ export function CanvasZoomControls({ scale, onScaleChange, onFitContent, onAutoA
             label: "精确缩放",
             wide: true,
             quiet: true,
-            icon: <span className="inline-flex h-full items-center justify-center whitespace-nowrap text-[var(--fs-caption)] font-semibold leading-none tabular-nums"><span ref={dockLabelRef}>{Math.round(scale * 100)}</span><span className="ml-px text-[var(--fs-micro)] font-medium leading-none opacity-50">%</span></span>,
+            icon: (
+                <span className="inline-flex h-full items-center justify-center whitespace-nowrap text-[var(--fs-caption)] font-semibold leading-none tabular-nums">
+                    <span ref={dockLabelRef}>{Math.round(scale * 100)}</span>
+                    <span className="ml-px text-[var(--fs-micro)] font-medium leading-none opacity-50">%</span>
+                </span>
+            ),
             active: precisionOpen,
             onClick: () => setPrecisionOpen((value) => !value),
         },
@@ -108,9 +123,15 @@ export function CanvasZoomControls({ scale, onScaleChange, onFitContent, onAutoA
                         <div className="flex items-center justify-between gap-3">
                             <span>
                                 <span className="block text-[var(--fs-tiny)] font-semibold">画布尺度</span>
-                                <span className="mt-0.5 block text-[var(--fs-micro)]" style={{ color: theme.node.muted }}>精确控制视野密度</span>
+                                <span className="mt-0.5 block text-[var(--fs-micro)]" style={{ color: theme.node.muted }}>
+                                    精确控制视野密度
+                                </span>
                             </span>
-                            <span ref={panelLabelRef} className="rounded-full border px-2 py-0.5 text-[var(--fs-tiny)] font-semibold tabular-nums" style={{ background: theme.spatial.surface, borderColor: theme.toolbar.border, color: theme.accent.primary }}>
+                            <span
+                                ref={panelLabelRef}
+                                className="rounded-full border px-2 py-0.5 text-[var(--fs-tiny)] font-semibold tabular-nums"
+                                style={{ background: theme.spatial.surface, borderColor: theme.toolbar.border, color: theme.accent.primary }}
+                            >
                                 {Math.round(scale * 100)}%
                             </span>
                         </div>

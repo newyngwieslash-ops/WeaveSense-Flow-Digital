@@ -301,10 +301,13 @@ export function parseCanvasStyleSelection(id?: string): ProjectStyleSelection | 
     const parts = id.slice(3).split("--");
     if (parts.length !== 4) return null;
     const selection = { world: parts[0], tone: parts[1], medium: parts[2], character: parts[3] } as ProjectStyleSelection;
-    if (!projectStyleWorlds.some((item) => item.id === selection.world)
-        || !projectStyleTones.some((item) => item.id === selection.tone)
-        || !projectStyleMedia.some((item) => item.id === selection.medium)
-        || !projectStyleCharacters.some((item) => item.id === selection.character)) return null;
+    if (
+        !projectStyleWorlds.some((item) => item.id === selection.world) ||
+        !projectStyleTones.some((item) => item.id === selection.tone) ||
+        !projectStyleMedia.some((item) => item.id === selection.medium) ||
+        !projectStyleCharacters.some((item) => item.id === selection.character)
+    )
+        return null;
     return selection;
 }
 

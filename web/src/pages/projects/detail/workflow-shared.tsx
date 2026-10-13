@@ -23,9 +23,7 @@ export function WorkflowStageLink({ href, active, step, index, label, shortLabel
     const failed = step?.status === "failed";
     return (
         <Link to={href} className={`workflow-stage-link ${active ? "is-active" : ""}`} aria-current={active ? "step" : undefined}>
-            <span className={`workflow-stage-index ${completed ? "is-completed" : failed ? "is-failed" : ""}`}>
-                {completed ? <Check className="size-3" /> : failed ? <CircleAlert className="size-3" /> : index + 1}
-            </span>
+            <span className={`workflow-stage-index ${completed ? "is-completed" : failed ? "is-failed" : ""}`}>{completed ? <Check className="size-3" /> : failed ? <CircleAlert className="size-3" /> : index + 1}</span>
             <span className="sm:hidden">{shortLabel}</span>
             <span className="hidden sm:inline">{label}</span>
         </Link>
@@ -33,11 +31,23 @@ export function WorkflowStageLink({ href, active, step, index, label, shortLabel
 }
 
 export function StageHeading({ eyebrow, title, description }: { eyebrow: string; title: string; description: string }) {
-    return <div><div className="text-[var(--fs-micro)] font-medium uppercase tracking-[.18em] text-[var(--workspace-accent)]">{eyebrow}</div><h2 className="mt-2 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{title}</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-foreground/50">{description}</p></div>;
+    return (
+        <div>
+            <div className="text-[var(--fs-micro)] font-medium uppercase tracking-[.18em] text-[var(--workspace-accent)]">{eyebrow}</div>
+            <h2 className="mt-2 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{title}</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-foreground/50">{description}</p>
+        </div>
+    );
 }
 
 export function MetricCard({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
-    return <div className="rounded-xl border border-border/70 bg-surface p-5"><div className="text-foreground/35">{icon}</div><div className="mt-4 text-2xl font-semibold">{value}</div><div className="mt-1 text-xs text-foreground/45">{label}</div></div>;
+    return (
+        <div className="rounded-xl border border-border/70 bg-surface p-5">
+            <div className="text-foreground/35">{icon}</div>
+            <div className="mt-4 text-2xl font-semibold">{value}</div>
+            <div className="mt-1 text-xs text-foreground/45">{label}</div>
+        </div>
+    );
 }
 
 export function ArtifactStatus({ artifact, taskStatus }: { artifact?: ShotArtifact; taskStatus?: TaskStatus; compact?: boolean }) {
@@ -54,12 +64,20 @@ export function ArtifactStatus({ artifact, taskStatus }: { artifact?: ShotArtifa
 export function currentRevision(detail: ProjectDetail, shot?: ProjectShot): ShotRevision | undefined {
     if (!shot) return undefined;
     const revisions = detail.shotRevisions || [];
-    return revisions.find((item) => item.id === shot.currentRevisionId)
-        || revisions.filter((item) => item.shotId === shot.id).slice().sort((left, right) => right.version - left.version)[0];
+    return (
+        revisions.find((item) => item.id === shot.currentRevisionId) ||
+        revisions
+            .filter((item) => item.shotId === shot.id)
+            .slice()
+            .sort((left, right) => right.version - left.version)[0]
+    );
 }
 
 export function currentArtifact(detail: ProjectDetail, shotId: string, type: string) {
-    const artifacts = (detail.shotArtifacts || []).filter((item) => item.shotId === shotId && item.type === type).slice().sort((left, right) => right.version - left.version);
+    const artifacts = (detail.shotArtifacts || [])
+        .filter((item) => item.shotId === shotId && item.type === type)
+        .slice()
+        .sort((left, right) => right.version - left.version);
     return artifacts.find((item) => item.selected) || artifacts[0];
 }
 

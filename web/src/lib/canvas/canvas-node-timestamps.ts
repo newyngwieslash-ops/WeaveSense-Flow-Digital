@@ -5,18 +5,7 @@ type CanvasNodeTimestampFallback = {
     updatedAt?: string;
 };
 
-const HYDRATED_MEDIA_KEYS = new Set<keyof CanvasNodeMetadata>([
-    "content",
-    "storageKey",
-    "naturalWidth",
-    "naturalHeight",
-    "bytes",
-    "mimeType",
-    "durationMs",
-    "hasAudio",
-    "videoPreview",
-    "drawingPreviewUrl",
-]);
+const HYDRATED_MEDIA_KEYS = new Set<keyof CanvasNodeMetadata>(["content", "storageKey", "naturalWidth", "naturalHeight", "bytes", "mimeType", "durationMs", "hasAudio", "videoPreview", "drawingPreviewUrl"]);
 
 const MEDIA_NODE_TYPES = new Set<string>([CanvasNodeType.Image, CanvasNodeType.Video, CanvasNodeType.Audio, CanvasNodeType.Drawing]);
 
@@ -25,15 +14,7 @@ export function canvasNodeCreatedAt(node: CanvasNodeData, fallback?: string) {
 }
 
 export function canvasNodeUpdatedAt(node: CanvasNodeData, fallback?: string) {
-    return firstValidDate(
-        node.updatedAt,
-        node.metadata?.taskUpdatedAt,
-        node.metadata?.drawingUpdatedAt,
-        node.metadata?.subtitleUpdatedAt,
-        node.metadata?.taskCompletedAt,
-        canvasNodeCreatedAt(node),
-        fallback,
-    );
+    return firstValidDate(node.updatedAt, node.metadata?.taskUpdatedAt, node.metadata?.drawingUpdatedAt, node.metadata?.subtitleUpdatedAt, node.metadata?.taskCompletedAt, canvasNodeCreatedAt(node), fallback);
 }
 
 export function normalizeCanvasNodeTimestamps(nodes: CanvasNodeData[], fallback: CanvasNodeTimestampFallback = {}) {
@@ -61,11 +42,7 @@ export function stampCanvasNodeChanges(previousNodes: CanvasNodeData[], nextNode
         if (previous === node) return node;
         const createdAt = canvasNodeCreatedAt(node, canvasNodeCreatedAt(previous || node, now)) || now;
         const meaningfulChange = previous ? canvasNodeMeaningfullyChanged(previous, node) : false;
-        const updatedAt = previous
-            ? meaningfulChange
-                ? now
-                : canvasNodeUpdatedAt(node, canvasNodeUpdatedAt(previous, createdAt)) || createdAt
-            : canvasNodeUpdatedAt(node, createdAt) || createdAt;
+        const updatedAt = previous ? (meaningfulChange ? now : canvasNodeUpdatedAt(node, canvasNodeUpdatedAt(previous, createdAt)) || createdAt) : canvasNodeUpdatedAt(node, createdAt) || createdAt;
         if (node.createdAt === createdAt && node.updatedAt === updatedAt) return node;
         changed = true;
         return { ...node, createdAt, updatedAt };
@@ -92,9 +69,7 @@ export function updateCanvasNodes(nodes: CanvasNodeData[], updates: ReadonlyMap<
         if (updated === current) return current;
         changed = true;
         const createdAt = canvasNodeCreatedAt(updated, canvasNodeCreatedAt(current, now)) || now;
-        const updatedAt = canvasNodeMeaningfullyChanged(current, updated)
-            ? now
-            : canvasNodeUpdatedAt(updated, canvasNodeUpdatedAt(current, createdAt)) || createdAt;
+        const updatedAt = canvasNodeMeaningfullyChanged(current, updated) ? now : canvasNodeUpdatedAt(updated, canvasNodeUpdatedAt(current, createdAt)) || createdAt;
         return updated.createdAt === createdAt && updated.updatedAt === updatedAt ? updated : { ...updated, createdAt, updatedAt };
     });
     return changed ? next : nodes;
@@ -102,14 +77,15 @@ export function updateCanvasNodes(nodes: CanvasNodeData[], updates: ReadonlyMap<
 
 function canvasNodeMeaningfullyChanged(previous: CanvasNodeData, next: CanvasNodeData) {
     if (
-        previous.type !== next.type
-        || previous.title !== next.title
-        || previous.parentId !== next.parentId
-        || previous.width !== next.width
-        || previous.height !== next.height
-        || previous.position.x !== next.position.x
-        || previous.position.y !== next.position.y
-    ) return true;
+        previous.type !== next.type ||
+        previous.title !== next.title ||
+        previous.parentId !== next.parentId ||
+        previous.width !== next.width ||
+        previous.height !== next.height ||
+        previous.position.x !== next.position.x ||
+        previous.position.y !== next.position.y
+    )
+        return true;
     if (previous.metadata === next.metadata) return false;
 
     const previousMetadata = previous.metadata || {};

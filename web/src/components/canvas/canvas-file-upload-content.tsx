@@ -21,7 +21,20 @@ export function CanvasFileUploadContent({ node, theme, reduceMotion = false }: {
                 <span className="canvas-file-upload-label">{failed ? `${label}上传未完成` : `正在上传${label}`}</span>
                 <span className="canvas-file-upload-detail">{failed ? node.metadata?.errorDetails || "请重新选择文件上传" : percent === 100 ? "文件已传输，正在保存与处理" : percent !== undefined ? `已上传 ${percent}%` : "正在准备文件"}</span>
                 {!failed && <span role="progressbar" aria-label={`${label}上传进度`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} className="sr-only" />}
-                {failed && upload ? <button type="button" data-canvas-no-zoom className="canvas-file-upload-retry" onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); upload(node); }}>重新选择文件</button> : null}
+                {failed && upload ? (
+                    <button
+                        type="button"
+                        data-canvas-no-zoom
+                        className="canvas-file-upload-retry"
+                        onPointerDown={(event) => event.stopPropagation()}
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            upload(node);
+                        }}
+                    >
+                        重新选择文件
+                    </button>
+                ) : null}
             </div>
         </div>
     );

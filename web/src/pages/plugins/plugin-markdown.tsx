@@ -12,7 +12,11 @@ export function PluginMarkdown({ source, className = "" }: PluginMarkdownProps) 
             <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
-                    a: ({ children, href }) => <a href={href} target="_blank" rel="noreferrer">{children}</a>,
+                    a: ({ children, href }) => (
+                        <a href={href} target="_blank" rel="noreferrer">
+                            {children}
+                        </a>
+                    ),
                     table: ({ children }) => (
                         <div className="plugin-markdown-table-wrap">
                             <table>{children}</table>

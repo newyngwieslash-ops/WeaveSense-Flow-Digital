@@ -29,8 +29,14 @@ export function normalizeVideoResolutionValue(value: string | number | undefined
 }
 
 export function isVideoResolutionMatch(selected: string | undefined, target: string | undefined) {
-    const s = String(selected || "").trim().toLowerCase().replace(/p$/i, "");
-    const t = String(target || "").trim().toLowerCase().replace(/p$/i, "");
+    const s = String(selected || "")
+        .trim()
+        .toLowerCase()
+        .replace(/p$/i, "");
+    const t = String(target || "")
+        .trim()
+        .toLowerCase()
+        .replace(/p$/i, "");
     if (!s && !t) return true;
     if (s === t) return true;
     if ((s === "2k" || s === "1440") && (t === "2k" || t === "1440")) return true;

@@ -35,8 +35,16 @@ describe("batch creation table", () => {
         expect(batchGenerationRows(source, nodes, [])).toEqual([]);
         expect(batchGenerationRows(source, [source, output], [row.id])).toEqual([]);
         expect(batchRowReady({ ...row, enabled: false }, table, new Map(nodes.map((node) => [node.id, node])))).toBe(false);
-        expect(batchGenerationRows(source, nodes.map((node) => node.id === input.id ? { ...node, type: CanvasNodeType.Video } : node), [row.id])).toEqual([]);
-        source.metadata!.generationBatches = [{ id: "batch", projectId: "project", sourceNodeId: source.id, mode: "batch_image", status: "running", createdAt: "", updatedAt: "", items: [{ id: "item", rowId: row.id, nodeId: output.id, retryCount: 0, status: "running" }] }];
+        expect(
+            batchGenerationRows(
+                source,
+                nodes.map((node) => (node.id === input.id ? { ...node, type: CanvasNodeType.Video } : node)),
+                [row.id],
+            ),
+        ).toEqual([]);
+        source.metadata!.generationBatches = [
+            { id: "batch", projectId: "project", sourceNodeId: source.id, mode: "batch_image", status: "running", createdAt: "", updatedAt: "", items: [{ id: "item", rowId: row.id, nodeId: output.id, retryCount: 0, status: "running" }] },
+        ];
         expect(batchGenerationRows(source, nodes, [row.id])).toEqual([]);
     });
 
@@ -105,7 +113,16 @@ describe("batch creation table", () => {
         expect(node.title).toBe("批量创作表");
         expect(node.width).toBe(1280);
         expect(node.height).toBe(560);
-        expect(node.metadata?.batchTable).toEqual({ operation: "try_on", concurrency: 10, referenceColumns: [{ id: "reference-1", label: "参考图 1" }, { id: "reference-2", label: "参考图 2" }, { id: "reference-3", label: "参考图 3" }], rows: [] });
+        expect(node.metadata?.batchTable).toEqual({
+            operation: "try_on",
+            concurrency: 10,
+            referenceColumns: [
+                { id: "reference-1", label: "参考图 1" },
+                { id: "reference-2", label: "参考图 2" },
+                { id: "reference-3", label: "参考图 3" },
+            ],
+            rows: [],
+        });
     });
 
     test("promotes the previous 900-wide default without touching resized tables", () => {

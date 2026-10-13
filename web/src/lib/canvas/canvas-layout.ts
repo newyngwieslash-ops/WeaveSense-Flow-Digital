@@ -99,10 +99,12 @@ export function layoutCanvasFlow(nodes: CanvasNodeData[], connections: CanvasCon
         });
         stacks.forEach((stack, layer) => {
             let y = laneTop;
-            stack.sort((a, b) => a.position.y - b.position.y || a.position.x - b.position.x).forEach((node) => {
-                result.set(node.id, { x: layerX.get(layer) || left, y });
-                y += node.height + LANE_NODE_GAP;
-            });
+            stack
+                .sort((a, b) => a.position.y - b.position.y || a.position.x - b.position.x)
+                .forEach((node) => {
+                    result.set(node.id, { x: layerX.get(layer) || left, y });
+                    y += node.height + LANE_NODE_GAP;
+                });
         });
         laneTop += laneHeight + LANE_GAP;
     });

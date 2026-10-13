@@ -19,11 +19,14 @@ export function PrevisMiniViewport({ scene }: { scene: PrevisScene }) {
                 <directionalLight position={[4, 8, 4]} intensity={1.1} />
                 <Suspense fallback={null}>
                     <gridHelper args={[20, 20, "#65738a", "#2b3544"]} />
-                    {visibleObjects.map((object) => <MiniObject key={object.id} object={object} />)}
+                    {visibleObjects.map((object) => (
+                        <MiniObject key={object.id} object={object} />
+                    ))}
                 </Suspense>
             </Canvas>
             <div className="pointer-events-none absolute inset-x-3 top-3 flex items-center justify-between text-[9px] font-semibold uppercase tracking-[0.16em] text-white/55">
-                <span>Top view</span><span>{activeShot?.name || "未设置镜头"}</span>
+                <span>Top view</span>
+                <span>{activeShot?.name || "未设置镜头"}</span>
             </div>
             <div className="pointer-events-none absolute inset-x-3 bottom-3 flex items-center justify-between gap-2 rounded-lg border border-white/12 bg-[#0d1118cc] px-3 py-2 text-[10px] font-medium text-white/80 backdrop-blur-md">
                 <Stat value={visibleObjects.length} label="对象" />
@@ -92,5 +95,10 @@ function MiniObject({ object }: { object: PrevisObject }) {
 }
 
 function Stat({ value, label }: { value: number | string; label: string }) {
-    return <span className="inline-flex min-w-0 items-center gap-1"><b className="text-white">{value}</b><span>{label}</span></span>;
+    return (
+        <span className="inline-flex min-w-0 items-center gap-1">
+            <b className="text-white">{value}</b>
+            <span>{label}</span>
+        </span>
+    );
 }

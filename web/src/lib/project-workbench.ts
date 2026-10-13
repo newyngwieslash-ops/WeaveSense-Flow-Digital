@@ -97,14 +97,16 @@ export function projectNextActions(detail: ProjectDetail, limit = 4): ProjectWor
     const actions: ProjectWorkbenchAction[] = [];
     const projectRoot = `/projects/${detail.project.id}`;
     if (detail.project.status === "archived") {
-        return [{
-            id: "restore-project",
-            title: "项目已归档",
-            description: "恢复后才能创建画布和提交生成任务。",
-            href: `${projectRoot}/settings`,
-            actionLabel: "前往恢复",
-            tone: "attention",
-        }];
+        return [
+            {
+                id: "restore-project",
+                title: "项目已归档",
+                description: "恢复后才能创建画布和提交生成任务。",
+                href: `${projectRoot}/settings`,
+                actionLabel: "前往恢复",
+                tone: "attention",
+            },
+        ];
     }
 
     const failedSteps = detail.workflows.flatMap((workflow) => workflow.steps).filter((step) => step.status === "failed");
@@ -204,17 +206,9 @@ export function projectUnitStages(detail: ProjectDetail, limit = 8): ProjectUnit
         return {
             unit,
             content: contentStage(unit),
-            assets: pendingCandidates
-                ? { label: `${pendingCandidates} 待确认`, state: "attention" }
-                : confirmedCandidates
-                  ? { label: `${confirmedCandidates} 已确认`, state: "completed" }
-                  : { label: "未识别", state: "idle" },
-            storyboard: shots.length
-                ? { label: `${shots.length} 镜头`, state: shots.every((shot) => shot.status === "completed") ? "completed" : "active" }
-                : { label: "未开始", state: "idle" },
-            canvas: canvasCount
-                ? { label: `${canvasCount} 张`, state: "active" }
-                : { label: "未关联", state: "idle" },
+            assets: pendingCandidates ? { label: `${pendingCandidates} 待确认`, state: "attention" } : confirmedCandidates ? { label: `${confirmedCandidates} 已确认`, state: "completed" } : { label: "未识别", state: "idle" },
+            storyboard: shots.length ? { label: `${shots.length} 镜头`, state: shots.every((shot) => shot.status === "completed") ? "completed" : "active" } : { label: "未开始", state: "idle" },
+            canvas: canvasCount ? { label: `${canvasCount} 张`, state: "active" } : { label: "未关联", state: "idle" },
         };
     });
 }

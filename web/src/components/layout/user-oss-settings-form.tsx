@@ -148,9 +148,28 @@ export function UserOSSSettingsForm() {
                 </Form.Item>
                 <Form.Item name="provider" label="存储服务" rules={[{ required: true, message: "请选择存储服务" }]} className="mb-3">
                     <Select
-                        options={[{ label: "阿里云 OSS", value: "aliyun" }, { label: "腾讯云 COS", value: "tencent" }, { label: "七牛云 Kodo", value: "qiniu" }, { label: "S3 兼容存储", value: "s3", disabled: setting?.allowUserS3 === false }]}
+                        options={[
+                            { label: "阿里云 OSS", value: "aliyun" },
+                            { label: "腾讯云 COS", value: "tencent" },
+                            { label: "七牛云 Kodo", value: "qiniu" },
+                            { label: "S3 兼容存储", value: "s3", disabled: setting?.allowUserS3 === false },
+                        ]}
                         onChange={(nextProvider: OSSFormValues["provider"]) => {
-                            if (nextProvider !== provider) form.setFieldsValue({ s3Preset: "custom", region: "", endpoint: "", cdnBaseUrl: "", cdnAuthMode: "", requireCDN: false, allowPrivateProxy: false, bucket: "", accessKeyId: "", accessKeySecret: "", sessionToken: "", pathStyle: false });
+                            if (nextProvider !== provider)
+                                form.setFieldsValue({
+                                    s3Preset: "custom",
+                                    region: "",
+                                    endpoint: "",
+                                    cdnBaseUrl: "",
+                                    cdnAuthMode: "",
+                                    requireCDN: false,
+                                    allowPrivateProxy: false,
+                                    bucket: "",
+                                    accessKeyId: "",
+                                    accessKeySecret: "",
+                                    sessionToken: "",
+                                    pathStyle: false,
+                                });
                         }}
                     />
                 </Form.Item>
@@ -163,16 +182,22 @@ export function UserOSSSettingsForm() {
                     <Input spellCheck={false} placeholder={isS3 ? getS3PresetHints(s3Preset).region : isTencentCOS ? "ap-guangzhou" : isQiniuKodo ? "z0 / cn-east-1" : "oss-cn-hangzhou"} />
                 </Form.Item>
                 <Form.Item name="endpoint" label={isQiniuKodo ? "上传 Endpoint" : "Endpoint"} extra={isS3 ? getS3PresetHints(s3Preset).help : isTencentCOS ? "可留空，系统会根据 Region 生成标准 COS Endpoint。" : undefined} className="mb-3">
-                    <Input inputMode="url" spellCheck={false} placeholder={isS3 ? getS3PresetHints(s3Preset).endpoint : isTencentCOS ? "https://cos.ap-guangzhou.myqcloud.com" : isQiniuKodo ? "https://up-z0.qiniup.com" : "https://oss-cn-hangzhou.aliyuncs.com"} />
+                    <Input
+                        inputMode="url"
+                        spellCheck={false}
+                        placeholder={isS3 ? getS3PresetHints(s3Preset).endpoint : isTencentCOS ? "https://cos.ap-guangzhou.myqcloud.com" : isQiniuKodo ? "https://up-z0.qiniup.com" : "https://oss-cn-hangzhou.aliyuncs.com"}
+                    />
                 </Form.Item>
                 <Form.Item
                     name="cdnBaseUrl"
                     label={isQiniuKodo ? "绑定域名（可选）" : isS3 ? "公开 CDN（可选）" : "CDN 加速域名"}
-                    extra={isTencentCOS
-                        ? "选填。上传仍走 Endpoint，下载与预览改走 CDN；私有桶需开启 CDN 私有存储桶访问。CDN URL 不附带 COS 签名，未配置 CDN URL 鉴权时链接将长期可访问。"
-                        : isQiniuKodo
-                            ? "选填。配置可访问的绑定域名后，浏览器直接从七牛下载与预览；不配置时也必须保证对象源站可由用户浏览器访问，不会由平台中转媒体正文。"
-                            : "选填。上传仍走 Endpoint，下载与预览改走 CDN；阿里云私有 Bucket 需开启 CDN 私有 Bucket 回源。CDN URL 不附带 OSS 签名，未配置 CDN URL 鉴权时链接将长期可访问。"}
+                    extra={
+                        isTencentCOS
+                            ? "选填。上传仍走 Endpoint，下载与预览改走 CDN；私有桶需开启 CDN 私有存储桶访问。CDN URL 不附带 COS 签名，未配置 CDN URL 鉴权时链接将长期可访问。"
+                            : isQiniuKodo
+                              ? "选填。配置可访问的绑定域名后，浏览器直接从七牛下载与预览；不配置时也必须保证对象源站可由用户浏览器访问，不会由平台中转媒体正文。"
+                              : "选填。上传仍走 Endpoint，下载与预览改走 CDN；阿里云私有 Bucket 需开启 CDN 私有 Bucket 回源。CDN URL 不附带 OSS 签名，未配置 CDN URL 鉴权时链接将长期可访问。"
+                    }
                     rules={[{ type: "url", message: "请填写完整的 http/https CDN 加速域名" }]}
                     className="mb-3"
                 >
@@ -184,7 +209,13 @@ export function UserOSSSettingsForm() {
                     extra={isQiniuKodo ? "七牛私有 CDN 可选择七牛签名；公开绑定域名选择公开 CDN。阿里云/腾讯云私有 CDN 暂不自动签名。" : "公开 CDN 适合 CDN 自行鉴权；平台目前不会自动签发阿里云/腾讯云私有 CDN URL。"}
                     className="mb-3"
                 >
-                    <Select options={[{ label: "未配置", value: "" }, { label: "公开 CDN", value: "public" }, { label: "七牛私有下载签名", value: "qiniu", disabled: !isQiniuKodo }]} />
+                    <Select
+                        options={[
+                            { label: "未配置", value: "" },
+                            { label: "公开 CDN", value: "public" },
+                            { label: "七牛私有下载签名", value: "qiniu", disabled: !isQiniuKodo },
+                        ]}
+                    />
                 </Form.Item>
                 <Form.Item name="requireCDN" label="必须走 CDN" valuePropName="checked" extra="开启后 CDN 鉴权未配置或不支持时直接失败，不会静默回源。" className="mb-3">
                     <Switch checkedChildren="必须" unCheckedChildren="允许回源" />
@@ -217,8 +248,18 @@ export function UserOSSSettingsForm() {
             </div>
 
             <div className="mt-2 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
-                <div className="flex flex-wrap items-center gap-2"><span className="text-xs text-foreground/50">{savedAt ? `上次保存：${savedAt}` : "尚未保存个人对象存储配置"}</span><ConnectionTestStatus result={testResult} stale={testStale} /></div>
-                <div className="flex flex-wrap gap-2"><Button loading={testing} onClick={() => void testConnection()}>测试连接</Button><Button type="primary" loading={saving} onClick={() => void save()}>保存个人对象存储</Button></div>
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-foreground/50">{savedAt ? `上次保存：${savedAt}` : "尚未保存个人对象存储配置"}</span>
+                    <ConnectionTestStatus result={testResult} stale={testStale} />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    <Button loading={testing} onClick={() => void testConnection()}>
+                        测试连接
+                    </Button>
+                    <Button type="primary" loading={saving} onClick={() => void save()}>
+                        保存个人对象存储
+                    </Button>
+                </div>
             </div>
         </Form>
     );

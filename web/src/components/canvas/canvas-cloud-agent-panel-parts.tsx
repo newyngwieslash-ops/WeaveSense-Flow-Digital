@@ -7,6 +7,7 @@ import type { CanvasTheme } from "@/lib/canvas-theme";
 import { useAppearanceStore } from "@/stores/use-appearance-store";
 import { agentCopy, DEFAULT_CANVAS_APPEARANCE } from "@/lib/canvas/agent-appearance";
 import { type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { AgentMessageEditControls } from "./canvas-agent-message-edit-controls";
 import { useAgentLauncherPosition } from "./use-agent-launcher-position";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -366,6 +367,8 @@ export function AgentConversation({
     onApprovalReasonChange,
     onApprove,
     onReject,
+    onEditMessage,
+    onDeleteMessage,
 }: {
     theme: CanvasTheme;
     messages: CloudAgentChatMessage[];
@@ -381,6 +384,9 @@ export function AgentConversation({
     onApprovalReasonChange: (reason: string) => void;
     onApprove: (settings?: AgentMediaSettings) => void;
     onReject: () => void;
+    /** Edit / delete a user or assistant message (synced to the intelligence directory). */
+    onEditMessage?: (messageId: string, text: string) => void;
+    onDeleteMessage?: (messageId: string) => void;
 }) {
     const appearance = useAppearanceStore((state) => state.appearance.canvas) || DEFAULT_CANVAS_APPEARANCE;
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -430,7 +436,12 @@ export function AgentConversation({
                     ) : segment.kind === "reasoning" ? (
                         <AgentReasoningFeed key={segment.key} items={segment.items} theme={theme} />
                     ) : (
-                        <AgentChatMessage key={segment.key} item={segment.item} theme={theme} references={references} onFocusNode={onFocusNode} isStreaming={busy && !approval && segment.item.streaming === true && segment.item === lastMessage} />
+                        <div key={segment.key} className="agent-chat-message-wrap group relative">
+                            <AgentChatMessage item={segment.item} theme={theme} references={references} onFocusNode={onFocusNode} isStreaming={busy && !approval && segment.item.streaming === true && segment.item === lastMessage} />
+                            {!busy && (segment.item.role === "user" || segment.item.role === "assistant") && !segment.item.streaming && (onEditMessage || onDeleteMessage) ? (
+                                <AgentMessageEditControls item={segment.item} onEdit={onEditMessage} onDelete={onDeleteMessage} />
+                            ) : null}
+                        </div>
                     ),
                 )}
                 {approval ? (

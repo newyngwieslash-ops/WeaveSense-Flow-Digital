@@ -11,9 +11,7 @@ export type AiCommandPlan = {
     commands: EditCommand[];
 };
 
-export type AiCommandBatchVerdict =
-    | { ok: true }
-    | { ok: false; index: number; op: string; error: string };
+export type AiCommandBatchVerdict = { ok: true } | { ok: false; index: number; op: string; error: string };
 
 export class AiCommandPlanError extends Error {
     constructor(message: string) {
@@ -204,9 +202,7 @@ const AI_EDITING_OUTPUT_EXAMPLE = `示例：
 
 /** 组装 AI 编辑系统提示词：时间线摘要、可用 op 契约和输出约束必须来自同一份注册表。 */
 export function buildAiEditingSystemPrompt(timelineSummary: string): string {
-    const catalogLines = AI_EDITING_OP_CATALOG.map(
-        (entry) => `- ${entry.op}：${entry.desc}。payload：${entry.payload}`,
-    ).join("\n");
+    const catalogLines = AI_EDITING_OP_CATALOG.map((entry) => `- ${entry.op}：${entry.desc}。payload：${entry.payload}`).join("\n");
     return [
         "你是影策视频剪辑工作台的 AI 剪辑助手。根据用户指令对时间线输出受约束的编辑命令 JSON。",
         "时间线当前状态：",

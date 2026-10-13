@@ -32,17 +32,30 @@ export function resolveStoryboardGenerationContext(nodes: CanvasNodeData[]): Sto
 export function inspectStoryboardReadiness(nodes: CanvasNodeData[]) {
     let generationContext: StoryboardGenerationContext | undefined;
     let blockingReason: string | undefined;
-    try { generationContext = resolveStoryboardGenerationContext(nodes); }
-    catch (error) { blockingReason = error instanceof Error ? error.message : "分镜上下文未就绪"; }
+    try {
+        generationContext = resolveStoryboardGenerationContext(nodes);
+    } catch (error) {
+        blockingReason = error instanceof Error ? error.message : "分镜上下文未就绪";
+    }
     const styleNode = nodes.find((node) => node.metadata?.workflowKind === "styleboard");
     const styleReady = Boolean(styleNode?.metadata?.stylePresetId?.trim() && String(styleNode.metadata.content || styleNode.metadata.prompt || "").trim());
-    const storyboards = nodes.filter((node) => node.type === "script").map((node) => {
-        const rows = node.metadata?.storyboard?.rows || [];
-        const incompleteRowIds = rows.filter((row) => !Number.isFinite(row.durationSeconds) || row.durationSeconds <= 0 || !row.videoMotionPrompt?.trim()).map((row) => row.id);
-        return { nodeId: node.id, title: node.title, rowCount: rows.length, populated: rows.length > 0 && incompleteRowIds.length === 0, incompleteRowIds, totalDurationSeconds: rows.reduce((total, row) => total + (Number.isFinite(row.durationSeconds) && row.durationSeconds > 0 ? row.durationSeconds : 0), 0) };
-    });
+    const storyboards = nodes
+        .filter((node) => node.type === "script")
+        .map((node) => {
+            const rows = node.metadata?.storyboard?.rows || [];
+            const incompleteRowIds = rows.filter((row) => !Number.isFinite(row.durationSeconds) || row.durationSeconds <= 0 || !row.videoMotionPrompt?.trim()).map((row) => row.id);
+            return {
+                nodeId: node.id,
+                title: node.title,
+                rowCount: rows.length,
+                populated: rows.length > 0 && incompleteRowIds.length === 0,
+                incompleteRowIds,
+                totalDurationSeconds: rows.reduce((total, row) => total + (Number.isFinite(row.durationSeconds) && row.durationSeconds > 0 ? row.durationSeconds : 0), 0),
+            };
+        });
     return {
-        canGenerateStoryboard: Boolean(generationContext), blockingReason,
+        canGenerateStoryboard: Boolean(generationContext),
+        blockingReason,
         style: { ready: styleReady, nodeId: styleNode?.id, presetId: styleNode?.metadata?.stylePresetId, title: styleNode?.title },
         storyboards,
         nextActions: [

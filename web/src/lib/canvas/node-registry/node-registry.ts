@@ -27,7 +27,10 @@ export function registerNodeDefinitions(defs: CanvasNodeDefinition[], ownerId = 
 
 /** Registers schema-driven canvas nodes from the unified plugin manifest. */
 export function registerPluginCanvasNodes(pluginId: string, nodes: PluginCanvasNodeContribution[]) {
-    registerNodeDefinitions(nodes.map((node) => canvasNodeDefinitionFromPlugin(pluginId, node)), pluginId);
+    registerNodeDefinitions(
+        nodes.map((node) => canvasNodeDefinitionFromPlugin(pluginId, node)),
+        pluginId,
+    );
 }
 
 /**

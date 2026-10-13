@@ -9,7 +9,7 @@ const canvasModeOptions = [
 ];
 
 export const mainToolbarTools: ToolDefinition[] = [
-    { id: "tool-workspace", toolbar: "main", category: "navigation", label: "工作区", icon: <PanelsTopLeft />, defaultVisible: true, defaultOrder: 65, run: ctx => ctx.handlers.onOpenWorkspace?.() },
+    { id: "tool-workspace", toolbar: "main", category: "navigation", label: "工作区", icon: <PanelsTopLeft />, defaultVisible: true, defaultOrder: 65, run: (ctx) => ctx.handlers.onOpenWorkspace?.() },
     {
         id: "tool-canvas-mode",
         toolbar: "main",
@@ -98,7 +98,7 @@ export const mainToolbarTools: ToolDefinition[] = [
         id: "tool-delete",
         toolbar: "main",
         category: "danger",
-        label: (ctx) => ctx.selectedCount > 1 ? `删除 ${ctx.selectedCount} 个节点` : "删除选中节点",
+        label: (ctx) => (ctx.selectedCount > 1 ? `删除 ${ctx.selectedCount} 个节点` : "删除选中节点"),
         icon: <Trash2 />,
         defaultVisible: true,
         defaultOrder: 90,

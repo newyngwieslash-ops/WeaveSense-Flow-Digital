@@ -24,10 +24,17 @@ export function WorkspaceLoadingState({ label = "正在加载内容", detail, ro
         <section className={cn("workspace-loading-state py-8", className)} aria-busy="true" aria-live="polite">
             <div className="mb-5 flex items-center gap-3">
                 <WorkspaceSignalIcon variant="loading" size="sm" />
-                <div><div className="text-sm font-medium">{label}</div>{detail ? <div className="mt-0.5 text-xs text-foreground/50">{detail}</div> : null}</div>
+                <div>
+                    <div className="text-sm font-medium">{label}</div>
+                    {detail ? <div className="mt-0.5 text-xs text-foreground/50">{detail}</div> : null}
+                </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {Array.from({ length: rows }, (_, index) => <div key={index} className="rounded-md bg-surface-active p-4"><Skeleton active title={{ width: `${48 + index * 8}%` }} paragraph={{ rows: 3 }} /></div>)}
+                {Array.from({ length: rows }, (_, index) => (
+                    <div key={index} className="rounded-md bg-surface-active p-4">
+                        <Skeleton active title={{ width: `${48 + index * 8}%` }} paragraph={{ rows: 3 }} />
+                    </div>
+                ))}
             </div>
         </section>
     );

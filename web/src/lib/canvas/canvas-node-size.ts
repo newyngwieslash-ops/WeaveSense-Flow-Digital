@@ -71,11 +71,7 @@ export function ensureMediaNodeMinimumSize(node: CanvasNodeData) {
         width = targetSize.width;
         height = targetSize.height;
     } else {
-        const shouldPromoteEmptyStage = !node.metadata?.content
-            && !node.metadata?.freeResize
-            && !node.metadata?.locked
-            && emptyStage !== undefined
-            && (width <= 0 || height <= 0);
+        const shouldPromoteEmptyStage = !node.metadata?.content && !node.metadata?.freeResize && !node.metadata?.locked && emptyStage !== undefined && (width <= 0 || height <= 0);
         if (shouldPromoteEmptyStage) {
             width = emptyStage.width;
             height = emptyStage.height;
@@ -83,9 +79,7 @@ export function ensureMediaNodeMinimumSize(node: CanvasNodeData) {
     }
     const naturalWidth = node.metadata?.naturalWidth || 0;
     const naturalHeight = node.metadata?.naturalHeight || 0;
-    const requestedSize = node.type === CanvasNodeType.Image && node.metadata?.generationType === "edit"
-        ? nodeSizeFromRatio(node.metadata.size || "auto", node.width, node.height)
-        : null;
+    const requestedSize = node.type === CanvasNodeType.Image && node.metadata?.generationType === "edit" ? nodeSizeFromRatio(node.metadata.size || "auto", node.width, node.height) : null;
     const naturalRatio = naturalWidth / Math.max(1, naturalHeight);
     const nodeRatio = node.width / Math.max(1, node.height);
     // 修复旧版图生图无条件继承参考节点尺寸造成的比例错误，不覆盖自由拉伸或锁定布局。

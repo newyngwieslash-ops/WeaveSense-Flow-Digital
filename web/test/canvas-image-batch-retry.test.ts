@@ -40,9 +40,12 @@ describe("canvas image batch retry", () => {
     });
 
     test("刷新后五张图两成三败，根节点保留成功资源及准确失败数", () => {
-        const children = Array.from({ length: 5 }, (_, i) => imageNode(`child-${i}`, i < 2 ? "success" : "error", {
-            batchRootId: "root", ...(i < 2 ? { storageKey: `resource:${i}`, assetId: `asset-${i}` } : { errorDetails: "上游失败" }),
-        }));
+        const children = Array.from({ length: 5 }, (_, i) =>
+            imageNode(`child-${i}`, i < 2 ? "success" : "error", {
+                batchRootId: "root",
+                ...(i < 2 ? { storageKey: `resource:${i}`, assetId: `asset-${i}` } : { errorDetails: "上游失败" }),
+            }),
+        );
         const root = imageNode("root", "error", { isBatchRoot: true, batchChildIds: children.map((node) => node.id), taskId: "old-task", taskStatus: "failed" });
         const next = reconcileImageBatchRoot(root, [root, ...children]);
         expect(next.metadata).toMatchObject({ status: "success", storageKey: "resource:0", batchFailedCount: 3 });
@@ -123,7 +126,14 @@ describe("canvas image batch retry", () => {
         const root = imageNode("root", "loading", { isBatchRoot: true, batchChildIds: ["done", "pending"], imageBatchExpanded: false });
         const done = imageNode("done", "success", { batchRootId: root.id, content: "image:done" });
         const pending = imageNode("pending", "loading", { batchRootId: root.id });
-        const retired = retireImageBatchChildren(root, [root, done, pending], [{ id: "c1", fromNodeId: root.id, toNodeId: done.id }, { id: "c2", fromNodeId: root.id, toNodeId: pending.id }]);
+        const retired = retireImageBatchChildren(
+            root,
+            [root, done, pending],
+            [
+                { id: "c1", fromNodeId: root.id, toNodeId: done.id },
+                { id: "c2", fromNodeId: root.id, toNodeId: pending.id },
+            ],
+        );
         expect(retired.removedIds).toEqual(["pending"]);
         expect(retired.nodes.map((node) => node.id)).toEqual(["root", "done"]);
         expect(retired.nodes.find((node) => node.id === "done")?.metadata?.batchRootId).toBeUndefined();

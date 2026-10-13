@@ -17,15 +17,21 @@ export function useWorkspaceButtonFeedback(enabled: boolean) {
             }
             const icon = button.querySelector<SVGElement>("svg:not(.animate-spin)");
             if (!icon || typeof icon.animate !== "function" || getComputedStyle(icon).animationName !== "none") return;
-            const animation = icon.animate([
-                { translate: "0 0", scale: "1" },
-                { translate: "0 -2px", scale: ".88", offset: .35 },
-                { translate: "0 0", scale: "1" },
-            ], { duration: 360, easing: "cubic-bezier(.16,1,.3,1)" });
+            const animation = icon.animate(
+                [
+                    { translate: "0 0", scale: "1" },
+                    { translate: "0 -2px", scale: ".88", offset: 0.35 },
+                    { translate: "0 0", scale: "1" },
+                ],
+                { duration: 360, easing: "cubic-bezier(.16,1,.3,1)" },
+            );
             animations.add(animation);
             animation.onfinish = animation.oncancel = () => animations.delete(animation);
         };
         document.addEventListener("click", clicked, true);
-        return () => { document.removeEventListener("click", clicked, true); animations.forEach((animation) => animation.cancel()); };
+        return () => {
+            document.removeEventListener("click", clicked, true);
+            animations.forEach((animation) => animation.cancel());
+        };
     }, [enabled]);
 }

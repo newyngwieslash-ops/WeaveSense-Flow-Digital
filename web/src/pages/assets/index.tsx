@@ -138,17 +138,18 @@ export default function AssetsPage() {
 
     const assetPageQuery = useQuery({
         queryKey: [...ASSET_LIBRARY_QUERY_KEY, page, pageSize, viewMode, kindFilter, categoryFilter, folderFilter, debouncedKeyword],
-        queryFn: ({ signal }) => loadAssetLibraryPage({
-            page,
-            pageSize,
-            status: viewMode === "trash" ? "archived" : "active",
-            kind: kindFilter === "all" ? undefined : kindFilter,
-            category: categoryFilter === "all" ? undefined : categoryFilter,
-            folderId: folderFilter !== "all" && folderFilter !== "uncategorized" ? folderFilter : undefined,
-            uncategorized: folderFilter === "uncategorized",
-            query: debouncedKeyword || undefined,
-            signal,
-        }),
+        queryFn: ({ signal }) =>
+            loadAssetLibraryPage({
+                page,
+                pageSize,
+                status: viewMode === "trash" ? "archived" : "active",
+                kind: kindFilter === "all" ? undefined : kindFilter,
+                category: categoryFilter === "all" ? undefined : categoryFilter,
+                folderId: folderFilter !== "all" && folderFilter !== "uncategorized" ? folderFilter : undefined,
+                uncategorized: folderFilter === "uncategorized",
+                query: debouncedKeyword || undefined,
+                signal,
+            }),
         enabled: Boolean(userId),
         placeholderData: keepPreviousData,
     });
@@ -165,12 +166,18 @@ export default function AssetsPage() {
     const preferLocalUnsynced = remoteReady && remoteTotal === 0 && localVisibleAssets.length > 0;
     const remoteEntityOnlyPage = remoteReady && remotePageAssets.length === 0 && remoteTotal > 0;
     const useRemotePage = remoteReady && !preferLocalUnsynced && !remoteEntityOnlyPage && (remotePageAssets.length > 0 || remoteTotal === 0);
-    const visibleAssets = useMemo(() => useRemotePage ? remotePageAssets : localVisibleAssets, [useRemotePage, remotePageAssets, localVisibleAssets]);
+    const visibleAssets = useMemo(() => (useRemotePage ? remotePageAssets : localVisibleAssets), [useRemotePage, remotePageAssets, localVisibleAssets]);
     const visibleAssetIds = useMemo(() => visibleAssets.map((asset) => asset.id), [visibleAssets]);
     const allFilteredSelected = visibleAssetIds.length > 0 && visibleAssetIds.every((id) => selectedIds.includes(id));
     const totalAssets = useRemotePage ? remoteTotal : filteredAssets.length;
-    const kindCounts = useMemo(() => assetCountMap(kindOptions, useRemotePage ? assetPageQuery.data?.kindCounts : undefined, viewMode === "trash" ? trashAssets : activeAssets, (asset) => asset.kind), [activeAssets, assetPageQuery.data?.kindCounts, trashAssets, useRemotePage, viewMode]);
-    const categoryCounts = useMemo(() => assetCountMap(categoryOptions, useRemotePage ? assetPageQuery.data?.categoryCounts : undefined, viewMode === "trash" ? trashAssets : activeAssets, (asset) => asset.category || "other"), [activeAssets, assetPageQuery.data?.categoryCounts, trashAssets, useRemotePage, viewMode]);
+    const kindCounts = useMemo(
+        () => assetCountMap(kindOptions, useRemotePage ? assetPageQuery.data?.kindCounts : undefined, viewMode === "trash" ? trashAssets : activeAssets, (asset) => asset.kind),
+        [activeAssets, assetPageQuery.data?.kindCounts, trashAssets, useRemotePage, viewMode],
+    );
+    const categoryCounts = useMemo(
+        () => assetCountMap(categoryOptions, useRemotePage ? assetPageQuery.data?.categoryCounts : undefined, viewMode === "trash" ? trashAssets : activeAssets, (asset) => asset.category || "other"),
+        [activeAssets, assetPageQuery.data?.categoryCounts, trashAssets, useRemotePage, viewMode],
+    );
     const folderCounts = assetPageQuery.data?.folderCounts || {};
 
     useEffect(() => {
@@ -187,16 +194,10 @@ export default function AssetsPage() {
         setSelectedIds((current) => current.filter((id) => existingIds.has(id)));
     }, [validAssets]);
 
-    const folderSelectOptions = useMemo(() => [
-        { label: "未分类", value: "" },
-        ...folders.map((folder) => ({ label: folder.name, value: folder.id })),
-    ], [folders]);
+    const folderSelectOptions = useMemo(() => [{ label: "未分类", value: "" }, ...folders.map((folder) => ({ label: folder.name, value: folder.id }))], [folders]);
 
     const invalidateAssetLibrary = async () => {
-        await Promise.all([
-            queryClient.invalidateQueries({ queryKey: ASSET_LIBRARY_QUERY_KEY }),
-            queryClient.invalidateQueries({ queryKey: ASSET_FOLDER_QUERY_KEY }),
-        ]);
+        await Promise.all([queryClient.invalidateQueries({ queryKey: ASSET_LIBRARY_QUERY_KEY }), queryClient.invalidateQueries({ queryKey: ASSET_FOLDER_QUERY_KEY })]);
     };
 
     const saveFolder = async () => {
@@ -255,7 +256,19 @@ export default function AssetsPage() {
         setImageUploading(false);
         setImageUploadProgress(null);
         setFormKind("text");
-        form.setFieldsValue({ kind: "text", category: "other", folderId: folderFilter !== "all" && folderFilter !== "uncategorized" ? folderFilter : "", title: "", coverUrl: "", tags: [], source: "手动添加", note: "", content: "", arkAssetId: "", portraitCertified: false });
+        form.setFieldsValue({
+            kind: "text",
+            category: "other",
+            folderId: folderFilter !== "all" && folderFilter !== "uncategorized" ? folderFilter : "",
+            title: "",
+            coverUrl: "",
+            tags: [],
+            source: "手动添加",
+            note: "",
+            content: "",
+            arkAssetId: "",
+            portraitCertified: false,
+        });
         setIsAssetOpen(true);
     };
 
@@ -578,14 +591,23 @@ export default function AssetsPage() {
                                         </>
                                     ) : (
                                         <>
-                                            <Button type="primary" icon={<Plus />} onClick={openCreate}>新增素材</Button>
-                                            <Button icon={<Images />} onClick={() => setBatchUploadOpen(true)}>上传图片</Button>
-                                            <Dropdown trigger={["click"]} menu={{ items: [
-                                                { key: "eagle", icon: <FolderOpen />, label: "Eagle 素材库", onClick: () => navigate("/plugins/eagle") },
-                                                { key: "package", icon: <FileUp />, label: "导入素材包", onClick: () => assetInputRef.current?.click() },
-                                                { key: "model", icon: <Upload />, label: "上传 3D 模型", onClick: () => modelInputRef.current?.click() },
-                                                { key: "export", icon: <Download />, label: "导出全部素材", onClick: () => void exportAllAssets() },
-                                            ] }}>
+                                            <Button type="primary" icon={<Plus />} onClick={openCreate}>
+                                                新增素材
+                                            </Button>
+                                            <Button icon={<Images />} onClick={() => setBatchUploadOpen(true)}>
+                                                上传图片
+                                            </Button>
+                                            <Dropdown
+                                                trigger={["click"]}
+                                                menu={{
+                                                    items: [
+                                                        { key: "eagle", icon: <FolderOpen />, label: "Eagle 素材库", onClick: () => navigate("/plugins/eagle") },
+                                                        { key: "package", icon: <FileUp />, label: "导入素材包", onClick: () => assetInputRef.current?.click() },
+                                                        { key: "model", icon: <Upload />, label: "上传 3D 模型", onClick: () => modelInputRef.current?.click() },
+                                                        { key: "export", icon: <Download />, label: "导出全部素材", onClick: () => void exportAllAssets() },
+                                                    ],
+                                                }}
+                                            >
                                                 <Button type="text" aria-label="更多素材操作" icon={<MoreHorizontal />} />
                                             </Dropdown>
                                         </>
@@ -615,67 +637,115 @@ export default function AssetsPage() {
                                 setPage(1);
                                 setKeyword(event.target.value);
                             }}
-                            />
-                            <Select
-                                aria-label="素材显示密度"
-                                value={gridDensity}
-                                className="w-full sm:w-32"
-                                prefix={<LayoutGrid aria-hidden className="size-3.5" />}
-                                options={assetGridDensityOptions}
-                                onChange={(value) => setGridDensity(parseAssetGridDensity(value))}
-                            />
-                        </CollectionToolbar>
+                        />
+                        <Select
+                            aria-label="素材显示密度"
+                            value={gridDensity}
+                            className="w-full sm:w-32"
+                            prefix={<LayoutGrid aria-hidden className="size-3.5" />}
+                            options={assetGridDensityOptions}
+                            onChange={(value) => setGridDensity(parseAssetGridDensity(value))}
+                        />
+                    </CollectionToolbar>
                 </div>
 
                 <div className="collection-content assets-collection-content">
                     <div className="assets-collection-layout">
                         <aside className="assets-collection-filters" aria-label="素材分类">
                             <div className="assets-collection-filter-scroll">
-                            <AssetFilterGroup
-                                title="素材类型"
-                                options={kindOptions}
-                                value={viewMode === "library" ? kindFilter : ""}
-                                counts={kindCounts}
-                                onChange={(value) => {
-                                    setViewMode("library");
-                                    setKindFilter(value as AssetKind | "all");
-                                    setPage(1);
-                                }}
-                            />
-                            <AssetFilterGroup
-                                title="业务分类"
-                                options={categoryOptions}
-                                value={viewMode === "library" ? categoryFilter : ""}
-                                counts={categoryCounts}
-                                onChange={(value) => {
-                                    setViewMode("library");
-                                    setCategoryFilter(value as AssetCategory | "all");
-                                    setPage(1);
-                                }}
-                            />
-                            <section className="collection-filter-group assets-folder-filter">
-                                <div className="collection-folder-heading">
-                                    <span className="collection-filter-label">我的分类</span>
-                                    <button type="button" className="assets-folder-add" title="新建分类" aria-label="新建分类" onClick={() => { setFolderName(""); setFolderEditor("new"); }}><FolderPlus className="size-3.5" /></button>
-                                </div>
-                                <div className="collection-folder-list">
-                                    <button type="button" aria-pressed={folderFilter === "all"} className={`assets-filter-item ${folderFilter === "all" ? "is-active" : ""}`} onClick={() => { setFolderFilter("all"); setPage(1); }}>
-                                        <span className="assets-filter-item-label">全部</span><span className="assets-filter-count">{activeAssets.length}</span>
-                                    </button>
-                                    <button type="button" aria-pressed={folderFilter === "uncategorized"} className={`assets-filter-item ${folderFilter === "uncategorized" ? "is-active" : ""}`} onClick={() => { setFolderFilter("uncategorized"); setPage(1); }}>
-                                        <span className="assets-filter-item-label">未分类</span><span className="assets-filter-count">{folderCounts[""] ?? activeAssets.filter((asset) => !asset.folderId).length}</span>
-                                    </button>
-                                    {folders.map((folder) => (
-                                        <div key={folder.id} className="assets-folder-row">
-                                            <button type="button" aria-pressed={folderFilter === folder.id} className={`assets-filter-item min-w-0 flex-1 ${folderFilter === folder.id ? "is-active" : ""}`} onClick={() => { setFolderFilter(folder.id); setPage(1); }}>
-                                                <span className="assets-filter-item-label min-w-0 truncate">{folder.name}</span><span className="assets-filter-count">{folderCounts[folder.id] ?? activeAssets.filter((asset) => asset.folderId === folder.id).length}</span>
-                                            </button>
-                                            <button type="button" className="product-icon-button" aria-label={`重命名分类 ${folder.name}`} onClick={() => { setFolderName(folder.name); setFolderEditor(folder); }}><PencilLine /></button>
-                                            <DeleteButton label={`删除分类 ${folder.name}`} description="分类删除后，其中的素材会移至未分类，素材文件会保留。" onConfirm={() => removeFolder(folder)} />
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
+                                <AssetFilterGroup
+                                    title="素材类型"
+                                    options={kindOptions}
+                                    value={viewMode === "library" ? kindFilter : ""}
+                                    counts={kindCounts}
+                                    onChange={(value) => {
+                                        setViewMode("library");
+                                        setKindFilter(value as AssetKind | "all");
+                                        setPage(1);
+                                    }}
+                                />
+                                <AssetFilterGroup
+                                    title="业务分类"
+                                    options={categoryOptions}
+                                    value={viewMode === "library" ? categoryFilter : ""}
+                                    counts={categoryCounts}
+                                    onChange={(value) => {
+                                        setViewMode("library");
+                                        setCategoryFilter(value as AssetCategory | "all");
+                                        setPage(1);
+                                    }}
+                                />
+                                <section className="collection-filter-group assets-folder-filter">
+                                    <div className="collection-folder-heading">
+                                        <span className="collection-filter-label">我的分类</span>
+                                        <button
+                                            type="button"
+                                            className="assets-folder-add"
+                                            title="新建分类"
+                                            aria-label="新建分类"
+                                            onClick={() => {
+                                                setFolderName("");
+                                                setFolderEditor("new");
+                                            }}
+                                        >
+                                            <FolderPlus className="size-3.5" />
+                                        </button>
+                                    </div>
+                                    <div className="collection-folder-list">
+                                        <button
+                                            type="button"
+                                            aria-pressed={folderFilter === "all"}
+                                            className={`assets-filter-item ${folderFilter === "all" ? "is-active" : ""}`}
+                                            onClick={() => {
+                                                setFolderFilter("all");
+                                                setPage(1);
+                                            }}
+                                        >
+                                            <span className="assets-filter-item-label">全部</span>
+                                            <span className="assets-filter-count">{activeAssets.length}</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            aria-pressed={folderFilter === "uncategorized"}
+                                            className={`assets-filter-item ${folderFilter === "uncategorized" ? "is-active" : ""}`}
+                                            onClick={() => {
+                                                setFolderFilter("uncategorized");
+                                                setPage(1);
+                                            }}
+                                        >
+                                            <span className="assets-filter-item-label">未分类</span>
+                                            <span className="assets-filter-count">{folderCounts[""] ?? activeAssets.filter((asset) => !asset.folderId).length}</span>
+                                        </button>
+                                        {folders.map((folder) => (
+                                            <div key={folder.id} className="assets-folder-row">
+                                                <button
+                                                    type="button"
+                                                    aria-pressed={folderFilter === folder.id}
+                                                    className={`assets-filter-item min-w-0 flex-1 ${folderFilter === folder.id ? "is-active" : ""}`}
+                                                    onClick={() => {
+                                                        setFolderFilter(folder.id);
+                                                        setPage(1);
+                                                    }}
+                                                >
+                                                    <span className="assets-filter-item-label min-w-0 truncate">{folder.name}</span>
+                                                    <span className="assets-filter-count">{folderCounts[folder.id] ?? activeAssets.filter((asset) => asset.folderId === folder.id).length}</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="product-icon-button"
+                                                    aria-label={`重命名分类 ${folder.name}`}
+                                                    onClick={() => {
+                                                        setFolderName(folder.name);
+                                                        setFolderEditor(folder);
+                                                    }}
+                                                >
+                                                    <PencilLine />
+                                                </button>
+                                                <DeleteButton label={`删除分类 ${folder.name}`} description="分类删除后，其中的素材会移至未分类，素材文件会保留。" onConfirm={() => removeFolder(folder)} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
                             </div>
                             <div className="collection-trash-entry">
                                 <button
@@ -928,14 +998,25 @@ export default function AssetsPage() {
 
             <AssetDrawer asset={previewAsset} onClose={() => setPreviewAsset(null)} onCopy={copyAssetText} onDownload={downloadImage} />
 
-            <AssetBatchUploadModal open={batchUploadOpen} defaultFolderId={folderFilter !== "all" && folderFilter !== "uncategorized" ? folderFilter : ""} folders={folders} onClose={() => setBatchUploadOpen(false)} onComplete={async () => { setBatchUploadOpen(false); await invalidateAssetLibrary(); }} />
+            <AssetBatchUploadModal
+                open={batchUploadOpen}
+                defaultFolderId={folderFilter !== "all" && folderFilter !== "uncategorized" ? folderFilter : ""}
+                folders={folders}
+                onClose={() => setBatchUploadOpen(false)}
+                onComplete={async () => {
+                    setBatchUploadOpen(false);
+                    await invalidateAssetLibrary();
+                }}
+            />
 
             <Modal
                 className="library-modal library-confirm-modal"
                 title={folderEditor === "new" ? "新建分类" : "重命名分类"}
                 open={Boolean(folderEditor)}
                 confirmLoading={folderSaving}
-                onCancel={() => { if (!folderSaving) setFolderEditor(null); }}
+                onCancel={() => {
+                    if (!folderSaving) setFolderEditor(null);
+                }}
                 onOk={() => void saveFolder()}
                 okText="保存"
                 cancelText="取消"

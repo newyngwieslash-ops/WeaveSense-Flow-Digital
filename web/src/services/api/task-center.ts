@@ -68,11 +68,11 @@ export type GenerationTask = {
         batchCount?: number;
         domainProjectId?: string;
         chapterId?: string;
-		chapterOperation?: "characters" | "storyboard";
-		shotId?: string;
-		workflowStepId?: string;
-		artifactType?: string;
-	};
+        chapterOperation?: "characters" | "storyboard";
+        shotId?: string;
+        workflowStepId?: string;
+        artifactType?: string;
+    };
     created_at?: string;
     updated_at?: string;
 };
@@ -123,7 +123,7 @@ export type CreateTaskInput = {
     prompt: string;
     provider?: string;
     model?: string;
-	logicalModelId?: string;
+    logicalModelId?: string;
     input?: Record<string, unknown>;
 };
 export function createGenerationTask(input: CreateTaskInput) {
@@ -153,9 +153,9 @@ type GenerationTaskListDependencies = {
 const defaultGenerationTaskListDependencies: GenerationTaskListDependencies = {
     listBackendPage: async (page, signal) => ({
         tasks: await http.get<GenerationTask[]>("/tasks", {
-                params: { pageSize: Math.min(page.limit, 100), projectId: page.projectId, activeOnly: page.activeOnly || undefined },
-                signal,
-            }),
+            params: { pageSize: Math.min(page.limit, 100), projectId: page.projectId, activeOnly: page.activeOnly || undefined },
+            signal,
+        }),
     }),
 };
 
@@ -351,7 +351,7 @@ function safeTaskLogErrorCode(value: unknown) {
 }
 
 export type WaitForGenerationTaskOptions = {
-	textEventsSource?: "task" | "agent";
+    textEventsSource?: "task" | "agent";
     signal?: AbortSignal;
     intervalMs?: number;
     timeoutMs?: number;
@@ -507,7 +507,7 @@ async function waitForGenerationTaskTextEvents(id: string, options: WaitForGener
 }
 
 function asTaskTextStreamRecord(value: unknown): Record<string, unknown> {
-    return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+    return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 }
 
 function numberValue(value: unknown) {
@@ -527,7 +527,7 @@ class TaskTextStreamFatalError extends Error {
 
 async function taskTextStreamHTTPError(response: Response) {
     try {
-        const payload = await response.json() as { msg?: unknown };
+        const payload = (await response.json()) as { msg?: unknown };
         if (typeof payload.msg === "string" && payload.msg.trim()) return payload.msg;
     } catch {
         // SSE 错误响应可能是空正文或网关 HTML，只返回状态码，避免泄露正文。

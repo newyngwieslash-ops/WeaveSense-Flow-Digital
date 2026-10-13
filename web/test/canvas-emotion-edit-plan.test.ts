@@ -21,10 +21,7 @@ describe("emotion edit provider plan", () => {
     });
 
     test("does not promise a provider mask in the shared emotion prompt", () => {
-        const prompt = buildEmotionPrompt(
-            { presetId: "emotion-0-0", intimacy: 0, arousal: 0, characterName: "角色1", faceBox },
-            editRegion,
-        );
+        const prompt = buildEmotionPrompt({ presetId: "emotion-0-0", intimacy: 0, arousal: 0, characterName: "角色1", faceBox }, editRegion);
 
         expect(prompt).not.toContain("透明蒙版");
         expect(prompt).not.toContain("白色蒙版");
@@ -32,10 +29,7 @@ describe("emotion edit provider plan", () => {
     });
 
     test("removes legacy mask promises before retrying an existing emotion node", () => {
-        const legacyPrompt = [
-            "只允许修改目标框及其透明蒙版对应的这一张脸。",
-            "输入图已裁切到目标人物头部区域；透明蒙版内允许编辑，白色蒙版区域必须保持不变，蒙版外绝对不要生成或修改任何内容。",
-        ].join("\n");
+        const legacyPrompt = ["只允许修改目标框及其透明蒙版对应的这一张脸。", "输入图已裁切到目标人物头部区域；透明蒙版内允许编辑，白色蒙版区域必须保持不变，蒙版外绝对不要生成或修改任何内容。"].join("\n");
 
         const prompt = normalizeEmotionPromptForProvider(legacyPrompt);
         expect(prompt).not.toContain("透明蒙版");

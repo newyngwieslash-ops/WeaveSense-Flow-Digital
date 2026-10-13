@@ -23,8 +23,12 @@ export function parseSkillDraft(text: string): Partial<SkillDraft> {
             const raw = JSON.parse(trimmed.slice(start, end + 1)) as Record<string, unknown>;
             if (raw && typeof raw === "object") {
                 return {
-                    skillName: String(raw.skillName ?? raw.skill_name ?? "").trim().slice(0, MAX_NAME_LENGTH),
-                    description: String(raw.description ?? "").trim().slice(0, MAX_DESCRIPTION_LENGTH),
+                    skillName: String(raw.skillName ?? raw.skill_name ?? "")
+                        .trim()
+                        .slice(0, MAX_NAME_LENGTH),
+                    description: String(raw.description ?? "")
+                        .trim()
+                        .slice(0, MAX_DESCRIPTION_LENGTH),
                     instruction: String(raw.instruction ?? raw.instructions ?? "").trim(),
                     tag: typeof raw.tag === "string" && raw.tag.trim() ? raw.tag.trim() : undefined,
                 };

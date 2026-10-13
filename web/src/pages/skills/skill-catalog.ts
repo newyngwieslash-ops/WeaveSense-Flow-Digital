@@ -14,9 +14,7 @@ export function skillCategoryLabel(value: string, categories: SkillCategory[] = 
 
 export function groupSkills(skills: Skill[], categories: SkillCategory[]) {
     const ordered = categories.length ? categories : fallbackSkillCategories;
-    return ordered
-        .map((category) => ({ ...category, skills: skills.filter((skill) => skill.tag === category.value) }))
-        .filter((group) => group.skills.length > 0);
+    return ordered.map((category) => ({ ...category, skills: skills.filter((skill) => skill.tag === category.value) })).filter((group) => group.skills.length > 0);
 }
 
 export function formatSkillCount(value: number) {

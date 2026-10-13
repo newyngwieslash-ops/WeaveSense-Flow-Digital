@@ -9,11 +9,13 @@ export type AddedSkillsResult = { skills: Skill[] };
  * 确保默认技能既存在于用户技能库，也能作为本轮 Agent 的已选技能使用。
  * 先读已安装列表，只有首次需要时才写入用户技能状态。
  */
-export async function ensureDefaultCanvasAgentSkill(dependencies: {
-    listAdded?: typeof listAddedSkills;
-    get?: typeof getSkill;
-    add?: typeof addSkill;
-} = {}): Promise<AddedSkillsResult> {
+export async function ensureDefaultCanvasAgentSkill(
+    dependencies: {
+        listAdded?: typeof listAddedSkills;
+        get?: typeof getSkill;
+        add?: typeof addSkill;
+    } = {},
+): Promise<AddedSkillsResult> {
     const list = dependencies.listAdded || listAddedSkills;
     const get = dependencies.get || getSkill;
     const add = dependencies.add || addSkill;

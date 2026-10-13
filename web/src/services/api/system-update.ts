@@ -1,22 +1,6 @@
 import { http } from "./request";
 
-export type UpdatePhase =
-    | "idle"
-    | "checking"
-    | "ready"
-    | "no_update"
-    | "preflight"
-    | "backing_up"
-    | "pulling"
-    | "draining"
-    | "migrating"
-    | "switching"
-    | "verifying"
-    | "succeeded"
-    | "rolling_back"
-    | "rolled_back"
-    | "failed"
-    | "manual_intervention";
+export type UpdatePhase = "idle" | "checking" | "ready" | "no_update" | "preflight" | "backing_up" | "pulling" | "draining" | "migrating" | "switching" | "verifying" | "succeeded" | "rolling_back" | "rolled_back" | "failed" | "manual_intervention";
 
 export type SystemUpdateRelease = {
     version: string;

@@ -73,6 +73,22 @@ func asyncOperationID(raw json.RawMessage) (string, bool) {
 	if json.Unmarshal(raw, &out) != nil {
 		return "", false
 	}
+	// Research whose LLM synthesis is still a queued model task parks on the task.
+	var syn struct {
+		Synthesis *struct {
+			Operation *struct {
+				ID     string `json:"id"`
+				Status string `json:"status"`
+			} `json:"operation"`
+		} `json:"synthesis"`
+	}
+	if json.Unmarshal(raw, &syn) == nil && syn.Synthesis != nil && syn.Synthesis.Operation != nil && syn.Synthesis.Operation.ID != "" {
+		switch syn.Synthesis.Operation.Status {
+		case "succeeded", "failed":
+		default:
+			return syn.Synthesis.Operation.ID, true
+		}
+	}
 	id, st := out.OperationID, out.Status
 	if id == "" && out.Operation != nil {
 		id, st = out.Operation.ID, out.Operation.Status

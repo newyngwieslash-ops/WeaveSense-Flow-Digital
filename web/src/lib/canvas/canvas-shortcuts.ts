@@ -86,7 +86,10 @@ export const CANVAS_SHORTCUTS: CanvasShortcutItem[] = [
         category: "navigation",
         title: "步进缩放画布",
         description: "按固定步长放大或缩小画布",
-        keys: [[CANVAS_MODIFIER_KEY, "+"], [CANVAS_MODIFIER_KEY, "-"]],
+        keys: [
+            [CANVAS_MODIFIER_KEY, "+"],
+            [CANVAS_MODIFIER_KEY, "-"],
+        ],
         keywords: ["放大", "缩小", "zoom"],
     },
     {
@@ -94,7 +97,12 @@ export const CANVAS_SHORTCUTS: CanvasShortcutItem[] = [
         category: "navigation",
         title: "快速调整视图",
         description: "0/1 恢复 100%，2 适应画布，3 适应选择",
-        keys: [[CANVAS_MODIFIER_KEY, "0"], [CANVAS_MODIFIER_KEY, "1"], [CANVAS_MODIFIER_KEY, "2"], [CANVAS_MODIFIER_KEY, "3"]],
+        keys: [
+            [CANVAS_MODIFIER_KEY, "0"],
+            [CANVAS_MODIFIER_KEY, "1"],
+            [CANVAS_MODIFIER_KEY, "2"],
+            [CANVAS_MODIFIER_KEY, "3"],
+        ],
         keywords: ["100%", "适应", "居中", "缩放", "fit"],
     },
     {
@@ -118,7 +126,10 @@ export const CANVAS_SHORTCUTS: CanvasShortcutItem[] = [
         category: "selection",
         title: "追加选择节点",
         description: "保留已有选择并加入更多节点",
-        keys: [["Shift", "点击"], [CANVAS_MODIFIER_KEY, "点击"]],
+        keys: [
+            ["Shift", "点击"],
+            [CANVAS_MODIFIER_KEY, "点击"],
+        ],
         keywords: ["多选", "添加", "selection"],
     },
     {
@@ -182,7 +193,10 @@ export const CANVAS_SHORTCUTS: CanvasShortcutItem[] = [
         category: "editing",
         title: "重做",
         description: "恢复刚刚撤销的画布编辑",
-        keys: [[CANVAS_MODIFIER_KEY, "Shift", "Z"], [CANVAS_MODIFIER_KEY, "Y"]],
+        keys: [
+            [CANVAS_MODIFIER_KEY, "Shift", "Z"],
+            [CANVAS_MODIFIER_KEY, "Y"],
+        ],
         keywords: ["恢复", "redo"],
     },
     {
@@ -212,9 +226,7 @@ export function filterCanvasShortcuts(query: string, category?: CanvasShortcutCa
         if (!terms.length) return true;
 
         const categoryLabel = CANVAS_SHORTCUT_CATEGORIES.find((entry) => entry.id === shortcut.category)?.label || "";
-        const searchableText = [shortcut.title, shortcut.description, categoryLabel, shortcut.keys.flat().join(" "), ...(shortcut.keywords || [])]
-            .join(" ")
-            .toLocaleLowerCase();
+        const searchableText = [shortcut.title, shortcut.description, categoryLabel, shortcut.keys.flat().join(" "), ...(shortcut.keywords || [])].join(" ").toLocaleLowerCase();
         return terms.every((term) => searchableText.includes(term));
     });
 }

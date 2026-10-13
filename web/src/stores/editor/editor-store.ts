@@ -7,13 +7,7 @@
 import { create, type StoreApi, type UseBoundStore } from "zustand";
 
 import type { TimelineProject } from "@/types/timeline";
-import {
-    createEditorHistory,
-    pushEditorHistory,
-    redoEditorHistory,
-    undoEditorHistory,
-    type EditorHistory,
-} from "@/lib/timeline/editor-history";
+import { createEditorHistory, pushEditorHistory, redoEditorHistory, undoEditorHistory, type EditorHistory } from "@/lib/timeline/editor-history";
 import { getEditorCommandRegistry, type EditCommand, type EditorCommandRegistry } from "@/lib/timeline/editor-commands";
 
 export type SaveTimeline = (project: TimelineProject) => Promise<void>;
@@ -75,8 +69,7 @@ export function createEditorStore(options: EditorStoreOptions = {}): UseBoundSto
         // 保存串行链：避免并行保存导致旧快照后落地覆盖新状态
         let saveChain: Promise<void> = Promise.resolve();
 
-        const setSaveError = (err: unknown) =>
-            set({ saveError: err instanceof Error ? err.message : String(err) });
+        const setSaveError = (err: unknown) => set({ saveError: err instanceof Error ? err.message : String(err) });
 
         const performSave = (): Promise<void> => {
             const { project } = get();

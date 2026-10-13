@@ -100,30 +100,55 @@ export function SkillEditorDrawer({ open, skill, onClose, onSaved }: { open: boo
     };
 
     return (
-        <AppDrawer className="library-drawer" open={open} size={720} mask={{ closable: !dirty }} title={skill ? "编辑技能" : "创建技能"} onClose={requestClose} extra={<Button type="primary" loading={saving} icon={<Save className="size-4" />} onClick={() => form.submit()}>保存技能</Button>}>
-            {!isPackageSkill ? <div className="mb-4 rounded-xl border bg-foreground/[.02] p-3">
-                <div className="mb-2 flex items-center gap-1.5 text-sm font-medium">
-                    <Wand2 className="size-4" />
-                    AI 起草
-                    <span className="font-normal text-foreground/45">描述想法，一键生成名称、简介与指令草稿（可再编辑）</span>
+        <AppDrawer
+            className="library-drawer"
+            open={open}
+            size={720}
+            mask={{ closable: !dirty }}
+            title={skill ? "编辑技能" : "创建技能"}
+            onClose={requestClose}
+            extra={
+                <Button type="primary" loading={saving} icon={<Save className="size-4" />} onClick={() => form.submit()}>
+                    保存技能
+                </Button>
+            }
+        >
+            {!isPackageSkill ? (
+                <div className="mb-4 rounded-xl border bg-foreground/[.02] p-3">
+                    <div className="mb-2 flex items-center gap-1.5 text-sm font-medium">
+                        <Wand2 className="size-4" />
+                        AI 起草
+                        <span className="font-normal text-foreground/45">描述想法，一键生成名称、简介与指令草稿（可再编辑）</span>
+                    </div>
+                    <Input.TextArea
+                        value={draftIdea}
+                        onChange={(event) => setDraftIdea(event.target.value)}
+                        autoSize={{ minRows: 3, maxRows: 6 }}
+                        maxLength={2000}
+                        showCount
+                        disabled={drafting}
+                        placeholder="例如：我要一个竖屏短剧分镜技能——输入剧本段落，输出按景别排列的分镜表，每个镜头包含画面、台词、时长与转场…"
+                    />
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                        <span className="text-xs text-foreground/45">将使用你的文本模型生成一次草稿</span>
+                        <Button type="primary" loading={drafting} disabled={!draftIdea.trim()} icon={<Wand2 className="size-4" />} onClick={() => void draftFromIdea()}>
+                            生成草稿
+                        </Button>
+                    </div>
                 </div>
-                <Input.TextArea
-                    value={draftIdea}
-                    onChange={(event) => setDraftIdea(event.target.value)}
-                    autoSize={{ minRows: 3, maxRows: 6 }}
-                    maxLength={2000}
-                    showCount
-                    disabled={drafting}
-                    placeholder="例如：我要一个竖屏短剧分镜技能——输入剧本段落，输出按景别排列的分镜表，每个镜头包含画面、台词、时长与转场…"
-                />
-                <div className="mt-2 flex items-center justify-between gap-2">
-                    <span className="text-xs text-foreground/45">将使用你的文本模型生成一次草稿</span>
-                    <Button type="primary" loading={drafting} disabled={!draftIdea.trim()} icon={<Wand2 className="size-4" />} onClick={() => void draftFromIdea()}>生成草稿</Button>
-                </div>
-            </div> : <div className="mb-4 rounded-xl border bg-foreground/[.02] p-3 text-sm leading-6 text-foreground/58">这是多文件技能包。这里仅编辑名称、简介、分类和展示信息；技能正文请更新 ZIP，或在 GitHub 仓库修改后执行同步。</div>}
+            ) : (
+                <div className="mb-4 rounded-xl border bg-foreground/[.02] p-3 text-sm leading-6 text-foreground/58">这是多文件技能包。这里仅编辑名称、简介、分类和展示信息；技能正文请更新 ZIP，或在 GitHub 仓库修改后执行同步。</div>
+            )}
             <Form form={form} layout="vertical" requiredMark="optional" onFinish={submit} onValuesChange={() => setDirty(true)}>
                 <div className="grid gap-x-4 sm:grid-cols-2">
-                    <Form.Item name="skillName" label="技能名称" rules={[{ required: true, message: "请填写技能名称" }, { max: 80, message: "最多 80 个字符" }]}>
+                    <Form.Item
+                        name="skillName"
+                        label="技能名称"
+                        rules={[
+                            { required: true, message: "请填写技能名称" },
+                            { max: 80, message: "最多 80 个字符" },
+                        ]}
+                    >
                         <Input maxLength={80} showCount placeholder="例如：短剧导演分镜" autoComplete="off" />
                     </Form.Item>
                     <Form.Item name="tag" label="技能分类" rules={[{ required: true, message: "请选择技能分类" }]}>
@@ -131,13 +156,30 @@ export function SkillEditorDrawer({ open, skill, onClose, onSaved }: { open: boo
                     </Form.Item>
                 </div>
 
-                <Form.Item name="description" label="技能简介" rules={[{ required: true, message: "请填写技能简介" }, { max: 500, message: "最多 500 个字符" }]}>
+                <Form.Item
+                    name="description"
+                    label="技能简介"
+                    rules={[
+                        { required: true, message: "请填写技能简介" },
+                        { max: 500, message: "最多 500 个字符" },
+                    ]}
+                >
                     <Input.TextArea autoSize={{ minRows: 3, maxRows: 6 }} maxLength={500} showCount placeholder="说明适用场景、输入条件和最终产出" />
                 </Form.Item>
 
-                {!isPackageSkill ? <Form.Item name="instruction" label="技能指令" rules={[{ required: true, message: "请填写技能指令" }, { max: 100000, message: "最多 100000 个字符" }]} extra="单文件技能会作为 SKILL.md 安装，Agent 按任务需要读取。">
-                    <Input.TextArea className="font-mono text-xs leading-5" autoSize={{ minRows: 14, maxRows: 28 }} maxLength={100000} showCount placeholder="使用 Markdown 编写角色、约束、流程、检查清单和输出格式" />
-                </Form.Item> : null}
+                {!isPackageSkill ? (
+                    <Form.Item
+                        name="instruction"
+                        label="技能指令"
+                        rules={[
+                            { required: true, message: "请填写技能指令" },
+                            { max: 100000, message: "最多 100000 个字符" },
+                        ]}
+                        extra="单文件技能会作为 SKILL.md 安装，Agent 按任务需要读取。"
+                    >
+                        <Input.TextArea className="font-mono text-xs leading-5" autoSize={{ minRows: 14, maxRows: 28 }} maxLength={100000} showCount placeholder="使用 Markdown 编写角色、约束、流程、检查清单和输出格式" />
+                    </Form.Item>
+                ) : null}
 
                 <div className="grid gap-x-4 sm:grid-cols-[minmax(0,1fr)_180px]">
                     <Form.Item name="markdownUrl" label={isPackageSkill ? "来源地址" : "Markdown 地址"} rules={[{ type: "url", message: "请输入有效的 HTTP(S) 链接" }]}>
@@ -152,20 +194,42 @@ export function SkillEditorDrawer({ open, skill, onClose, onSaved }: { open: boo
                     {(fields, { add, remove }) => (
                         <section aria-labelledby="skill-media-title">
                             <div className="mb-3 flex items-center justify-between">
-                                <div><h3 id="skill-media-title" className="text-sm font-medium">展示媒体</h3><p className="mt-1 text-xs text-foreground/50">可选，最多 8 个公开图片或视频链接。</p></div>
-                                <Button disabled={fields.length >= 8} icon={<Plus className="size-4" />} onClick={() => add(emptyMedia())}>添加媒体</Button>
+                                <div>
+                                    <h3 id="skill-media-title" className="text-sm font-medium">
+                                        展示媒体
+                                    </h3>
+                                    <p className="mt-1 text-xs text-foreground/50">可选，最多 8 个公开图片或视频链接。</p>
+                                </div>
+                                <Button disabled={fields.length >= 8} icon={<Plus className="size-4" />} onClick={() => add(emptyMedia())}>
+                                    添加媒体
+                                </Button>
                             </div>
                             <div className="space-y-2">
                                 {fields.map((field) => (
                                     <div key={field.key} className="grid grid-cols-[112px_minmax(0,1fr)_36px] gap-2">
                                         <Form.Item {...field} name={[field.name, "type"]} className="mb-0" rules={[{ required: true, message: "选择类型" }]}>
-                                            <Select options={[{ value: "image", label: "图片" }, { value: "video", label: "视频" }]} />
+                                            <Select
+                                                options={[
+                                                    { value: "image", label: "图片" },
+                                                    { value: "video", label: "视频" },
+                                                ]}
+                                            />
                                         </Form.Item>
-                                        <Form.Item {...field} name={[field.name, "showcaseUrl"]} className="mb-0" rules={[{ required: true, message: "请填写媒体链接" }, { type: "url", message: "链接格式无效" }]}>
+                                        <Form.Item
+                                            {...field}
+                                            name={[field.name, "showcaseUrl"]}
+                                            className="mb-0"
+                                            rules={[
+                                                { required: true, message: "请填写媒体链接" },
+                                                { type: "url", message: "链接格式无效" },
+                                            ]}
+                                        >
                                             <Input type="url" inputMode="url" spellCheck={false} placeholder="https://example.com/media" />
                                         </Form.Item>
                                         <Button aria-label="移除媒体" title="移除媒体" icon={<Minus className="size-4" />} onClick={() => remove(field.name)} />
-                                        <Form.Item {...field} name={[field.name, "showcaseUri"]} hidden><Input /></Form.Item>
+                                        <Form.Item {...field} name={[field.name, "showcaseUri"]} hidden>
+                                            <Input />
+                                        </Form.Item>
                                     </div>
                                 ))}
                             </div>

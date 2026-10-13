@@ -20,7 +20,9 @@ export function connectCanvasTextMention(nodes: CanvasNodeData[], connections: C
     }
     const nextConnections = connections.some((edge) => edge.fromNodeId === sourceId && edge.toNodeId === receiverId) ? connections : [...connections, { id: connectionId, fromNodeId: sourceId, toNodeId: receiverId }];
     const nextNodes = applyCanvasConnectionPromptSync(nodes, connections, nodes, nextConnections);
-    const reference = buildCanvasNodeMentionReferenceMap(nextNodes, nextConnections).get(targetId)?.find((item) => item.nodeId === sourceId);
+    const reference = buildCanvasNodeMentionReferenceMap(nextNodes, nextConnections)
+        .get(targetId)
+        ?.find((item) => item.nodeId === sourceId);
     if (!reference) throw new Error("文本引用未建立");
     return { nodes: nextNodes, connections: nextConnections, reference };
 }

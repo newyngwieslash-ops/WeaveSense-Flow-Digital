@@ -49,7 +49,8 @@ export function ModelEditorModal({
             closable={!busy}
             onCancel={onClose}
             footer={footer}
-            flush styles={{ body: { minHeight: 0, flex: 1 }, header: { margin: 0 }, footer: { margin: 0 } }}
+            flush
+            styles={{ body: { minHeight: 0, flex: 1 }, header: { margin: 0 }, footer: { margin: 0 } }}
         >
             {content}
         </AppModal>

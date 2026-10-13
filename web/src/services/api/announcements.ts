@@ -36,7 +36,6 @@ export type AdminAnnouncementListParams = {
     pageSize?: number;
 };
 
-
 export function getAnnouncementFeed() {
     return http.get<AnnouncementFeed>("/announcements");
 }

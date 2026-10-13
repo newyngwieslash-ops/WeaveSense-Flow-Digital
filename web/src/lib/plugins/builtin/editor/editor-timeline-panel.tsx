@@ -7,15 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { Eye, EyeOff, Film, Magnet, Maximize, MousePointer2, Music2, Plus, Scissors, Slice, Subtitles, Trash2, Volume2, VolumeX, X, ZoomIn, ZoomOut } from "lucide-react";
 
 import { useEditorStoreContext } from "@/components/editor/editor-context";
-import {
-    formatTimelineTime,
-    getFitTimelineZoom,
-    getRulerTickStep,
-    getTimelinePxPerMs,
-    getTimelineVisualEndMs,
-    zoomIn,
-    zoomOut,
-} from "@/lib/timeline/timeline-view";
+import { formatTimelineTime, getFitTimelineZoom, getRulerTickStep, getTimelinePxPerMs, getTimelineVisualEndMs, zoomIn, zoomOut } from "@/lib/timeline/timeline-view";
 import { getAudioTracks, getSubtitleTracks, getVisualTracks } from "@/lib/timeline/timeline-tracks";
 import { TRACK_KIND_BASE_LABELS } from "@/lib/timeline/editor-commands";
 import { computeSnap } from "@/lib/timeline/timeline-snap";
@@ -53,10 +45,8 @@ type GestureState = {
     originSourceStartMs: number;
 };
 
-
 export function EditorTimelinePanel() {
-    const { project, dispatch, previewGesture, commitGesture, cancelGesture, selectedClipId, selectClip, transportMs, setTransportMs } =
-        useEditorStoreContext();
+    const { project, dispatch, previewGesture, commitGesture, cancelGesture, selectedClipId, selectClip, transportMs, setTransportMs } = useEditorStoreContext();
 
     const containerRef = useRef<HTMLDivElement>(null);
     const [viewportWidth, setViewportWidth] = useState(0);
@@ -101,13 +91,7 @@ export function EditorTimelinePanel() {
     const visualTracks = getVisualTracks(project.tracks);
     const audioTracks = getAudioTracks(project.tracks);
     const subtitleTracks = getSubtitleTracks(project.tracks);
-    const clipAtPlayhead =
-        project.clips.find(
-            (clip) =>
-                clip.kind !== "subtitle" &&
-                clip.startMs + MIN_SPLIT_MS <= playheadMs &&
-                playheadMs <= clip.startMs + clip.durationMs - MIN_SPLIT_MS,
-        ) ?? null;
+    const clipAtPlayhead = project.clips.find((clip) => clip.kind !== "subtitle" && clip.startMs + MIN_SPLIT_MS <= playheadMs && playheadMs <= clip.startMs + clip.durationMs - MIN_SPLIT_MS) ?? null;
     const selectedClip = project.clips.find((clip) => clip.id === selectedClipId) ?? null;
 
     const handleSplitAtPlayhead = () => {
@@ -158,9 +142,7 @@ export function EditorTimelinePanel() {
                         aria-pressed={activeTool === "select"}
                         title="选择工具"
                         onClick={() => setActiveTool("select")}
-                        className={`grid size-6 place-items-center rounded-[6px] transition-colors ${
-                            activeTool === "select" ? TOOL_FG_ACTIVE : TOOL_FG_IDLE
-                        }`}
+                        className={`grid size-6 place-items-center rounded-[6px] transition-colors ${activeTool === "select" ? TOOL_FG_ACTIVE : TOOL_FG_IDLE}`}
                     >
                         <MousePointer2 className="size-4" />
                     </button>
@@ -170,9 +152,7 @@ export function EditorTimelinePanel() {
                         aria-pressed={activeTool === "razor"}
                         title="剃刀工具：点击片段在光标处分割"
                         onClick={() => setActiveTool((tool) => (tool === "razor" ? "select" : "razor"))}
-                        className={`grid size-6 place-items-center rounded-[6px] transition-colors ${
-                            activeTool === "razor" ? TOOL_FG_ACTIVE : TOOL_FG_IDLE
-                        }`}
+                        className={`grid size-6 place-items-center rounded-[6px] transition-colors ${activeTool === "razor" ? TOOL_FG_ACTIVE : TOOL_FG_IDLE}`}
                     >
                         <Slice className="size-4" />
                     </button>
@@ -208,49 +188,28 @@ export function EditorTimelinePanel() {
                     aria-pressed={snapEnabled}
                     title="吸附（拖动与时间刻度对齐）"
                     onClick={() => setSnapEnabled((v) => !v)}
-                    className={`grid size-7 place-items-center rounded-md transition-colors ${
-                        snapEnabled ? TOOL_FG_ACTIVE : TOOL_FG_IDLE
-                    }`}
+                    className={`grid size-7 place-items-center rounded-md transition-colors ${snapEnabled ? TOOL_FG_ACTIVE : TOOL_FG_IDLE}`}
                 >
                     <Magnet className="size-4" />
                 </button>
                 {/* 新增轨道 */}
                 <div className="relative">
-                    <button
-                        type="button"
-                        aria-label="新增轨道"
-                        aria-expanded={addMenuOpen}
-                        title="新增轨道"
-                        onClick={() => setAddMenuOpen((v) => !v)}
-                        className={`grid size-7 place-items-center rounded-md ${TOOL_FG_IDLE}`}
-                    >
+                    <button type="button" aria-label="新增轨道" aria-expanded={addMenuOpen} title="新增轨道" onClick={() => setAddMenuOpen((v) => !v)} className={`grid size-7 place-items-center rounded-md ${TOOL_FG_IDLE}`}>
                         <Plus className="size-4" />
                     </button>
                     {addMenuOpen && (
                         <>
                             <div className="fixed inset-0 z-40" onClick={() => setAddMenuOpen(false)} />
                             <div className="absolute left-0 top-8 z-50 min-w-32 overflow-hidden rounded-lg border border-[var(--director-sequencer-border)] bg-[var(--director-sequencer-surface-raised)] py-1 shadow-xl">
-                                <button
-                                    type="button"
-                                    onClick={() => handleAddTrack("video")}
-                                    className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs ${TOOL_FG_IDLE}`}
-                                >
+                                <button type="button" onClick={() => handleAddTrack("video")} className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs ${TOOL_FG_IDLE}`}>
                                     <Film className="size-3.5" />
                                     视频轨道
                                 </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleAddTrack("audio")}
-                                    className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs ${TOOL_FG_IDLE}`}
-                                >
+                                <button type="button" onClick={() => handleAddTrack("audio")} className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs ${TOOL_FG_IDLE}`}>
                                     <Music2 className="size-3.5" />
                                     音频轨道
                                 </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleAddTrack("subtitle")}
-                                    className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs ${TOOL_FG_IDLE}`}
-                                >
+                                <button type="button" onClick={() => handleAddTrack("subtitle")} className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs ${TOOL_FG_IDLE}`}>
                                     <Subtitles className="size-3.5" />
                                     字幕轨道
                                 </button>
@@ -264,32 +223,14 @@ export function EditorTimelinePanel() {
                 <span className="text-xs tabular-nums text-[var(--director-dock-fg)]">片段 {project.clips.length}</span>
                 <div className="mx-1 h-5 w-px bg-[var(--director-sequencer-border)]" />
                 {/* 适应宽度 */}
-                <button
-                    type="button"
-                    aria-label="适应宽度"
-                    title="适应宽度"
-                    onClick={handleFitWidth}
-                    className={`grid size-7 place-items-center rounded-md ${TOOL_FG_IDLE}`}
-                >
+                <button type="button" aria-label="适应宽度" title="适应宽度" onClick={handleFitWidth} className={`grid size-7 place-items-center rounded-md ${TOOL_FG_IDLE}`}>
                     <Maximize className="size-4" />
                 </button>
-                <button
-                    type="button"
-                    aria-label="缩小时间线"
-                    title="缩小时间线"
-                    onClick={() => setZoomLevel((z) => zoomOut(z))}
-                    className={`grid size-7 place-items-center rounded-md ${TOOL_FG_IDLE}`}
-                >
+                <button type="button" aria-label="缩小时间线" title="缩小时间线" onClick={() => setZoomLevel((z) => zoomOut(z))} className={`grid size-7 place-items-center rounded-md ${TOOL_FG_IDLE}`}>
                     <ZoomOut className="size-4" />
                 </button>
                 <span className="w-10 text-center text-xs tabular-nums text-[var(--director-dock-fg)]">{Math.round(zoomLevel * 100)}%</span>
-                <button
-                    type="button"
-                    aria-label="放大时间线"
-                    title="放大时间线"
-                    onClick={() => setZoomLevel((z) => zoomIn(z))}
-                    className={`grid size-7 place-items-center rounded-md ${TOOL_FG_IDLE}`}
-                >
+                <button type="button" aria-label="放大时间线" title="放大时间线" onClick={() => setZoomLevel((z) => zoomIn(z))} className={`grid size-7 place-items-center rounded-md ${TOOL_FG_IDLE}`}>
                     <ZoomIn className="size-4" />
                 </button>
             </div>
@@ -303,13 +244,7 @@ export function EditorTimelinePanel() {
                     </div>
                 ) : (
                     <div className="relative min-w-full" style={{ width: contentWidth }}>
-                        <TimelineRuler
-                            pxPerMs={pxPerMs}
-                            endMs={visualEndMs}
-                            playheadMs={playheadMs}
-                            snapEnabled={snapEnabled}
-                            onScrub={handleScrub}
-                        />
+                        <TimelineRuler pxPerMs={pxPerMs} endMs={visualEndMs} playheadMs={playheadMs} snapEnabled={snapEnabled} onScrub={handleScrub} />
                         {[
                             { label: "视觉轨道", tracks: visualTracks },
                             { label: "音频轨道", tracks: audioTracks },
@@ -334,57 +269,39 @@ export function EditorTimelinePanel() {
                                             onSelectClip={selectClip}
 
                                             removable={project.tracks.filter((t) => t.kind === track.kind).length > 1}
-                                             onRemoveTrack={handleRemoveTrack}
-                                             onRemoveBlocked={handleRemoveTrackBlocked}
+                                            onRemoveTrack={handleRemoveTrack}
+                                            onRemoveBlocked={handleRemoveTrackBlocked}
                                             onToggleTrackFlag={handleToggleTrackFlag}
-                                            onSplitClip={(clipId, splitAtMs) =>
-                                                dispatch({ op: "splitClip", payload: { id: clipId, splitAtMs } })
-                                            }
+                                            onSplitClip={(clipId, splitAtMs) => dispatch({ op: "splitClip", payload: { id: clipId, splitAtMs } })}
                                         />
                                     ))}
                                 </div>
                             ))}
 
                         {/* 播放头：贯穿标尺与全部轨道，与标尺拖动同源（视觉/音频/字幕均覆盖） */}
-                        <div
-                            aria-hidden
-                            className="pointer-events-none absolute inset-y-0 z-[14] w-px bg-[var(--director-danger)]"
-                            style={{ left: LABEL_COLUMN_PX + playheadMs * pxPerMs }}
-                        >
+                        <div aria-hidden className="pointer-events-none absolute inset-y-0 z-[14] w-px bg-[var(--director-danger)]" style={{ left: LABEL_COLUMN_PX + playheadMs * pxPerMs }}>
                             <div className="absolute -left-[5px] top-0 size-2.5 rotate-45 rounded-[2px] bg-[var(--director-danger)]" />
                         </div>
                     </div>
                 )}
 
-            {/* 点击不可移除轨道 X 时的原因提示（短暂居中浮现，不拦截交互） */}
-            {removeBlockedHint && (
-                <div
-                    key={removeBlockedHint.id}
-                    role="status"
-                    aria-live="polite"
-                    className="pointer-events-none absolute left-1/2 top-12 z-50 -translate-x-1/2 whitespace-nowrap rounded-md border border-[var(--director-sequencer-border)] bg-[var(--director-sequencer-surface-raised)] px-3 py-1.5 text-xs text-[var(--director-dock-fg-strong)] shadow-lg"
-                >
-                    {removeBlockedHint.text}
-                </div>
-            )}
+                {/* 点击不可移除轨道 X 时的原因提示（短暂居中浮现，不拦截交互） */}
+                {removeBlockedHint && (
+                    <div
+                        key={removeBlockedHint.id}
+                        role="status"
+                        aria-live="polite"
+                        className="pointer-events-none absolute left-1/2 top-12 z-50 -translate-x-1/2 whitespace-nowrap rounded-md border border-[var(--director-sequencer-border)] bg-[var(--director-sequencer-surface-raised)] px-3 py-1.5 text-xs text-[var(--director-dock-fg-strong)] shadow-lg"
+                    >
+                        {removeBlockedHint.text}
+                    </div>
+                )}
             </div>
         </div>
     );
 }
 
-function TimelineRuler({
-    pxPerMs,
-    endMs,
-    playheadMs,
-    snapEnabled,
-    onScrub,
-}: {
-    pxPerMs: number;
-    endMs: number;
-    playheadMs: number;
-    snapEnabled: boolean;
-    onScrub: (ms: number) => void;
-}) {
+function TimelineRuler({ pxPerMs, endMs, playheadMs, snapEnabled, onScrub }: { pxPerMs: number; endMs: number; playheadMs: number; snapEnabled: boolean; onScrub: (ms: number) => void }) {
     const step = getRulerTickStep(pxPerMs);
     const ticks: number[] = [];
     for (let t = 0; t <= endMs; t += step) ticks.push(t);
@@ -480,15 +397,7 @@ function TrackRow({
             <div className="sticky left-0 z-10 flex w-48 shrink-0 items-center gap-1 border-r border-[var(--director-sequencer-border)] bg-[var(--director-sequencer-surface-raised)] px-2">
                 <TrackBadge kind={track.kind} />
                 <div className="min-w-0 flex-1">
-                    <div
-                        className={`truncate text-xs font-medium ${
-                            track.visible === false
-                                ? "text-[var(--director-dock-fg)]"
-                                : "text-[var(--director-dock-fg-strong)]"
-                        }`}
-                    >
-                        {track.label}
-                    </div>
+                    <div className={`truncate text-xs font-medium ${track.visible === false ? "text-[var(--director-dock-fg)]" : "text-[var(--director-dock-fg-strong)]"}`}>{track.label}</div>
                     <div className="text-[10px] text-[var(--director-dock-fg)]">{clips.length} 个片段</div>
                 </div>
                 <button
@@ -498,9 +407,7 @@ function TrackRow({
                     aria-pressed={track.visible === false}
                     onClick={() => onToggleTrackFlag(track.id, "visible", track.visible === false)}
                     className={`grid size-6 shrink-0 place-items-center rounded-md transition-colors ${
-                        track.visible === false
-                            ? "bg-[var(--director-control-hover)] text-[var(--director-dock-fg-strong)]"
-                            : "text-[var(--director-dock-fg)] hover:bg-[var(--director-control-hover)]"
+                        track.visible === false ? "bg-[var(--director-control-hover)] text-[var(--director-dock-fg-strong)]" : "text-[var(--director-dock-fg)] hover:bg-[var(--director-control-hover)]"
                     }`}
                 >
                     {track.visible === false ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
@@ -512,9 +419,7 @@ function TrackRow({
                     aria-pressed={track.muted === true}
                     onClick={() => onToggleTrackFlag(track.id, "muted", !track.muted)}
                     className={`grid size-6 shrink-0 place-items-center rounded-md transition-colors ${
-                        track.muted === true
-                            ? "bg-[var(--director-control-hover)] text-[var(--director-dock-fg-strong)]"
-                            : "text-[var(--director-dock-fg)] hover:bg-[var(--director-control-hover)]"
+                        track.muted === true ? "bg-[var(--director-control-hover)] text-[var(--director-dock-fg-strong)]" : "text-[var(--director-dock-fg)] hover:bg-[var(--director-control-hover)]"
                     }`}
                 >
                     {track.muted ? <VolumeX className="size-3.5" /> : <Volume2 className="size-3.5" />}
@@ -534,9 +439,7 @@ function TrackRow({
                 </button>
             </div>
             <div
-                className={`relative flex-1 overflow-hidden bg-[var(--director-sequencer-grid)] transition-opacity ${
-                    razorActive ? "cursor-crosshair" : ""
-                } ${track.visible === false ? "opacity-40" : ""}`}
+                className={`relative flex-1 overflow-hidden bg-[var(--director-sequencer-grid)] transition-opacity ${razorActive ? "cursor-crosshair" : ""} ${track.visible === false ? "opacity-40" : ""}`}
                 onPointerDown={(e) => {
                     if (razorActive) return;
                     if (e.target === e.currentTarget) onSelectClip(null);
@@ -565,12 +468,7 @@ function TrackRow({
 }
 
 function TrackBadge({ kind }: { kind: TimelineTrack["kind"] }) {
-    const cls =
-        kind === "video" || kind === "image"
-            ? "text-[var(--director-dock-fg)]"
-            : kind === "audio"
-              ? "text-[var(--director-success)]"
-              : "text-[var(--director-warning)]";
+    const cls = kind === "video" || kind === "image" ? "text-[var(--director-dock-fg)]" : kind === "audio" ? "text-[var(--director-success)]" : "text-[var(--director-warning)]";
     return (
         <div className={`grid size-6 shrink-0 place-items-center rounded-md bg-[var(--director-dock-active-surface)] ${cls}`} title={kind}>
             {kind === "subtitle" ? <Subtitles className="size-3.5" /> : kind === "audio" ? <Music2 className="size-3.5" /> : <Film className="size-3.5" />}
@@ -656,10 +554,7 @@ function ClipItem({
             let snappedMs = candidateMs;
             if (leftHit && rightHit) {
                 const rightAltStartMs = rightSnap.snappedMs - clip.durationMs;
-                snappedMs =
-                    Math.abs(rightAltStartMs - candidateMs) < Math.abs(leftSnap.snappedMs - candidateMs)
-                        ? Math.max(0, rightAltStartMs)
-                        : leftSnap.snappedMs;
+                snappedMs = Math.abs(rightAltStartMs - candidateMs) < Math.abs(leftSnap.snappedMs - candidateMs) ? Math.max(0, rightAltStartMs) : leftSnap.snappedMs;
             } else if (leftHit) {
                 snappedMs = leftSnap.snappedMs;
             } else if (rightHit) {
@@ -769,13 +664,7 @@ function ClipItem({
                 <span className="truncate">{label}</span>
             </div>
             {/* 播放头经过片段时的对齐标线（razor/对齐视觉辅助） */}
-            {playheadInside && (
-                <div
-                    aria-hidden
-                    className="pointer-events-none absolute inset-y-0 w-px bg-[var(--director-danger)]/60"
-                    style={{ left: (playheadMs - clip.startMs) * pxPerMs }}
-                />
-            )}
+            {playheadInside && <div aria-hidden className="pointer-events-none absolute inset-y-0 w-px bg-[var(--director-danger)]/60" style={{ left: (playheadMs - clip.startMs) * pxPerMs }} />}
             <div
                 className="absolute inset-y-0 right-0 cursor-ew-resize rounded-r-md"
                 style={{ width: TRIM_HANDLE_PX }}

@@ -55,7 +55,10 @@ export function formatImageResolutionSize(size: string, options: ImageResolution
 }
 
 function parseImageResolutionOption(value: string): ImageResolutionOption | null {
-    const match = value.trim().toLowerCase().match(/^(\d+)x(\d+)$/);
+    const match = value
+        .trim()
+        .toLowerCase()
+        .match(/^(\d+)x(\d+)$/);
     if (!match) return null;
     const width = Number(match[1]);
     const height = Number(match[2]);
@@ -63,7 +66,8 @@ function parseImageResolutionOption(value: string): ImageResolutionOption | null
     const pixels = width * height;
     const tier: ImageResolutionTier | null = pixels <= 2_000_000 ? "1k" : pixels <= 4_300_000 ? "2k" : pixels <= 8_294_400 ? "4k" : null;
     if (!tier) return null;
-    let a = width, b = height;
+    let a = width,
+        b = height;
     while (b) [a, b] = [b, a % b];
     const ratio = closestRatio(width / height) || `${width / a}:${height / a}`;
     return { size: `${width}x${height}`, tier, ratio, width, height };

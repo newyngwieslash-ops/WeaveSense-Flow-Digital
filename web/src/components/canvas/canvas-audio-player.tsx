@@ -71,7 +71,9 @@ export function CanvasAudioPlayer({ node, theme }: CanvasAudioPlayerProps) {
                 </button>
                 <div className="relative min-w-0 flex-1">
                     <div className="relative mb-1 flex items-center gap-2 text-[var(--fs-label)] tabular-nums" style={{ color: theme.node.muted }}>
-                        <span>{formatAudioTime(snapshot.currentTimeMs)}/{durationMs ? formatAudioTime(durationMs) : "--:--"}</span>
+                        <span>
+                            {formatAudioTime(snapshot.currentTimeMs)}/{durationMs ? formatAudioTime(durationMs) : "--:--"}
+                        </span>
                     </div>
                     <input
                         type="range"

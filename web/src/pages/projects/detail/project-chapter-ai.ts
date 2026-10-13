@@ -55,12 +55,17 @@ export function chapterStoryboardFromGenerationTask(task: GenerationTask) {
 }
 
 export async function extractChapterAssets(input: ChapterAnalysisInput, options?: ChapterTaskOptions): Promise<ChapterAssetBreakdown> {
-    const result = await runProjectTextTask(input, "chapter_character_breakdown", {
-        项目名称: input.projectName,
-        章节名称: input.chapterTitle,
-        项目画风: input.projectStyle || "项目尚未指定画风，保持视觉描述中性、可执行。",
-        章节正文: input.sourceText,
-    }, options);
+    const result = await runProjectTextTask(
+        input,
+        "chapter_character_breakdown",
+        {
+            项目名称: input.projectName,
+            章节名称: input.chapterTitle,
+            项目画风: input.projectStyle || "项目尚未指定画风，保持视觉描述中性、可执行。",
+            章节正文: input.sourceText,
+        },
+        options,
+    );
     return parseChapterAssetBreakdown(result);
 }
 
@@ -82,11 +87,7 @@ export async function generateChapterStoryboard(input: ChapterStoryboardGenerati
     const config = { ...input.config, model };
     const skillExecution = await skillRuntime.prepare({
         profile: "shortDrama",
-        prompt: [
-            `章节：${input.chapterTitle}`,
-            input.sourceText,
-            "请将本章拆解为可直接进入短剧分镜制作的镜头脚本，保持剧情因果、人物关系、关键动作与台词完整。",
-        ].join("\n\n"),
+        prompt: [`章节：${input.chapterTitle}`, input.sourceText, "请将本章拆解为可直接进入短剧分镜制作的镜头脚本，保持剧情因果、人物关系、关键动作与台词完整。"].join("\n\n"),
         skills: input.skills,
         selectedSkillIds: input.selectedSkillIds,
     });
@@ -141,7 +142,7 @@ function generationTaskMetadata(inputJson?: string): Record<string, unknown> {
     if (!inputJson) return {};
     try {
         const input = JSON.parse(inputJson) as { metadata?: unknown };
-        return input.metadata && typeof input.metadata === "object" ? input.metadata as Record<string, unknown> : {};
+        return input.metadata && typeof input.metadata === "object" ? (input.metadata as Record<string, unknown>) : {};
     } catch {
         return {};
     }

@@ -151,7 +151,7 @@ func (g MCPGateway) Create(scope Scope, userID string, in MCPConnectionInput) (m
 	if in.Transport != "streamable_http" {
 		return model.FlowMCPConnection{}, fmt.Errorf("%w: only streamable_http transport is supported", ErrMCPInvalid)
 	}
-	if in.CredentialRef != "" && !strings.HasPrefix(in.CredentialRef, "env:FLOW_MCP_CRED_") && !strings.HasPrefix(in.CredentialRef, "oauth:FLOW_MCP_OAUTH_") {
+	if in.CredentialRef != "" && !strings.HasPrefix(in.CredentialRef, "env:FLOW_MCP_CRED_") && !strings.HasPrefix(in.CredentialRef, "oauth:FLOW_MCP_OAUTH_") && !strings.HasPrefix(in.CredentialRef, "oauthcode:FLOW_MCP_OAUTHCODE_") {
 		return model.FlowMCPConnection{}, fmt.Errorf("%w: credential ref must be env:FLOW_MCP_CRED_*", ErrMCPInvalid)
 	}
 	clamp := func(v, def, max int) int {
@@ -214,7 +214,13 @@ func (h headerRT) RoundTrip(r *http.Request) (*http.Response, error) {
 }
 
 func (g MCPGateway) session(ctx context.Context, c model.FlowMCPConnection) (*mcp.ClientSession, string, error) {
-	secret, err := g.credential(c.CredentialRef)
+	var secret string
+	var err error
+	if strings.HasPrefix(c.CredentialRef, oauthCodePrefix) {
+		secret, err = g.oauthCodeToken(ctx, c)
+	} else {
+		secret, err = g.credential(c.CredentialRef)
+	}
 	if err != nil {
 		return nil, "", err
 	}

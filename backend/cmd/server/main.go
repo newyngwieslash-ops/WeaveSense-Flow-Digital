@@ -137,6 +137,7 @@ func run(ctx context.Context) error {
 	mcpGateway := &flow.MCPGateway{DB: db}
 	svc.ConfigureFlowMCP(mcpGateway)
 	flow.RegisterMCPRoutes(flowAPI, db, mcpGateway, flowUser)
+	flow.RegisterMCPOAuthRoutes(flowAPI, db, mcpGateway, flowUser)
 	var modelGW flow.ModelGateway
 	if g := flow.ModelGatewayFromEnv(); g != nil {
 		modelGW = g

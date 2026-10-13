@@ -41,5 +41,18 @@ CID="smoke-canvas-$RANDOM"
 check "canvas doc save"      200 PUT  /api/agent/canvas-conversations/$CID '{"baseVersion":0,"document":{"version":1,"activeId":"c1","conversations":[{"id":"c1","title":"Smoke canvas chat","messages":[{"id":"m1","role":"user","text":"hello"}]}]}}'
 check "unified directory"    200 GET  /api/agent/conversations
 grep -q "\"subjectId\":\"$CID\"" /tmp/smoke.out && { echo "PASS canvas conversation listed in directory"; pass=$((pass+1)); } || { echo "FAIL canvas conversation not in directory"; failn=$((failn+1)); }
+# Message edit/delete through the directory, synced back to the canvas document (tombstone).
+ok() { if [ "$1" = 1 ]; then echo "PASS $2"; pass=$((pass+1)); else echo "FAIL $2"; failn=$((failn+1)); fi; }
+CONV=$(python3 -c 'import json,sys;d=json.load(open("/tmp/smoke.out"))["data"];print(next((c["id"] for c in d if c.get("subjectId")==sys.argv[1]),""))' "$CID")
+check "directory messages"   200 GET  "/api/agent/conversations/$CONV/messages"
+MSG=$(python3 -c 'import json;d=json.load(open("/tmp/smoke.out"))["data"]["messages"];print(next((m["id"] for m in d if m.get("externalId")=="m1"),""))')
+check "message edit"         200 PATCH "/api/agent/conversations/$CONV/messages/$MSG" '{"content":"hello (edited)","baseRevision":0}'
+check "stale edit conflicts" 409 PATCH "/api/agent/conversations/$CONV/messages/$MSG" '{"content":"stale","baseRevision":0}'
+check "canvas doc after edit" 200 GET "/api/agent/canvas-conversations/$CID"
+ok "$(grep -q 'hello (edited)' /tmp/smoke.out && echo 1)" "edit synced to canvas document"
+check "message delete"       200 DELETE "/api/agent/conversations/$CONV/messages/$MSG"
+check "delete idempotent"    200 DELETE "/api/agent/conversations/$CONV/messages/$MSG"
+check "canvas doc after delete" 200 GET "/api/agent/canvas-conversations/$CID"
+ok "$(grep -q '"deletedIds":\["m1"\]' /tmp/smoke.out && ! grep -q 'hello (edited)' /tmp/smoke.out && echo 1)" "delete synced to canvas document (tombstone)"
 echo "smoke: $pass passed, $failn failed"
 [ "$failn" -eq 0 ]

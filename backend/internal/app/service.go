@@ -28,6 +28,7 @@ import (
 type Service struct {
 	repo                     *repository.Repository
 	flowEngine               flow.EngineCaller
+	flowMCP                  *flow.MCPGateway
 	dataDir                  string
 	cancelMu                 sync.Mutex
 	registrationMu           sync.Mutex

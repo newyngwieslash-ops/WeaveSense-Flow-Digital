@@ -43,7 +43,7 @@ var p3Tools = []ToolSpec{
 	{Name: "intel_load_skill", Description: "Load an installed analysis skill (method, steps, references, output schema). The version is frozen for this run.",
 		Class: "read", Scope: "intel.documents.read", Timeout: 5 * time.Second, OutputCap: 12000,
 		Parameters: obj([]string{"skill_id"}, map[string]any{"skill_id": tStr}),
-		local: func(t Tools, conv model.FlowAgentConversation, ss SubjectScope, a map[string]any) (any, error) {
+		local: func(t Tools, _ context.Context, conv model.FlowAgentConversation, ss SubjectScope, _ string, a map[string]any) (any, error) {
 			return LoadSkillForRun(t.DB, ss.Scope, t.runKey(conv), argStr(a, "skill_id"))
 		}},
 	{Name: "intel_start_research", Description: "Start a child research task (single depth, at most 3 per run) over a fixed evidence scope. Returns claims with evidence ids and coverage.",

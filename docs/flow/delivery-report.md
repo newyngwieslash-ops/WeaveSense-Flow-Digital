@@ -87,3 +87,25 @@ The Pi agent loop now drives the intel tools for intelligence subjects; approval
   - notifications are per workspace (no per-user read state UI);
   - no web UI for skill install;
   - no browser e2e against a live model.
+
+### P4 (managed MCP + complex sources)
+- Built:
+  - MCP Gateway (official Go SDK): operator approval, schema-hash drift blocking, server-side credential injection with redaction, budget/usage, tenant-scoped connections, agent tool exposure;
+  - Telegram source (Telethon incremental + t.me/s fallback, forward-only cursor, media marked unsupported);
+  - WeChat OA source via the auth-gateway feed with provider metadata;
+  - source revocation;
+  - on-demand main-text extraction;
+  - connector acceptance records;
+  - web pages for MCP connections and source types.
+- Tests:
+  - Go `mcp_test.go`: credential never in output/prompt/API/stored calls; schema drift blocks until re-approval; tenant isolation; revoke stops calls; budget; validation;
+  - engine `p4.test.ts`: Telegram cursor safety (failed run, preview repeats); WeChat gateway; revoked source stops scheduled/queued runs; extraction revisions.
+- **A19 live acceptance is PENDING user credentials** (see p4-implementation.md). No RSS test is counted as Telegram/WeChat acceptance.
+- Gaps:
+  - MCP endpoint SSRF guard is scheme-only (https). There is no private-IP egress policy yet.
+  - Only streamable HTTP transport; no OAuth flow for MCP servers.
+  - MCP calls aren't idempotent against the remote (A16 reconciliation not done).
+  - No media download.
+  - The MCP tool snapshot is fixed per run (approval changes apply to new runs; execution still re-checks).
+
+Pending live acceptance and required credentials: see [pending-acceptance.md](pending-acceptance.md).

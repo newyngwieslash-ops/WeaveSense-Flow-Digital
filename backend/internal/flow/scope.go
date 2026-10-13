@@ -67,7 +67,7 @@ func ScopesForRole(role string) []string {
 	read := []string{"intel.sources.read", "intel.documents.read", "intel.operations.read"}
 	switch role {
 	case "admin", "editor":
-		return append(read, "intel.sources.write", "intel.monitors.write", "intel.schedules.write", "intel.collect", "intel.reports.write", "intel.research")
+		return append(read, "intel.sources.write", "intel.monitors.write", "intel.schedules.write", "intel.collect", "intel.reports.write", "intel.research", "intel.mcp.use")
 	}
 	return read
 }

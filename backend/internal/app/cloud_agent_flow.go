@@ -22,6 +22,26 @@ import (
 // ConfigureFlowEngine wires the Loom Engine client used by intel tools.
 func (s *Service) ConfigureFlowEngine(engine flow.EngineCaller) { s.flowEngine = engine }
 
+// ConfigureFlowMCP enables the MCP gateway for intelligence agent runs.
+func (s *Service) ConfigureFlowMCP(g *flow.MCPGateway) { s.flowMCP = g }
+
+// flowMCPToolsFor snapshots the approved MCP tools visible to the run's workspace.
+func (s *Service) flowMCPToolsFor(userID string, req CloudAgentRequest) []map[string]any {
+	if s.flowMCP == nil || req.PermissionMode == "read_only" {
+		return nil
+	}
+	_, ss, err := s.cloudAgentFlowConversation(userID, req)
+	if err != nil {
+		return nil
+	}
+	for _, sc := range flow.ScopesForRole(ss.Scope.Role) {
+		if sc == "intel.mcp.use" {
+			return s.flowMCP.AgentTools(ss.Scope)
+		}
+	}
+	return nil
+}
+
 func cloudAgentIntelSubject(req CloudAgentRequest) bool {
 	return req.Subject != nil && (req.Subject.Kind == flow.SubjectWorkspace || req.Subject.Kind == flow.SubjectTopic)
 }
@@ -43,7 +63,8 @@ func cloudAgentIntelTools(req CloudAgentRequest) []map[string]any {
 		}
 		return tools
 	}
-	return append(tools, flow.PiFunctionTools()...)
+	tools = append(tools, flow.PiFunctionTools()...)
+	return append(tools, req.FlowMCPTools...)
 }
 
 // cloudAgentFlowConversation re-resolves the conversation and the user's
@@ -193,7 +214,7 @@ func (s *Service) executeIntelTool(userID, runID string, req CloudAgentRequest, 
 			return nil, BadAuthRequest("工具参数不是合法 JSON")
 		}
 	}
-	tools := flow.Tools{DB: s.repo.DB(), Engine: s.flowEngine, RunID: runID}
+	tools := flow.Tools{DB: s.repo.DB(), Engine: s.flowEngine, RunID: runID, MCP: s.flowMCP}
 	r, err := tools.Invoke(context.Background(), conv, ss, userID, call.ID, call.Function.Name, args, approvalID)
 	if err != nil {
 		if errors.Is(err, flow.ErrForbidden) || errors.Is(err, flow.ErrNotFound) {

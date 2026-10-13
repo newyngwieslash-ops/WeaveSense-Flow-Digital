@@ -127,10 +127,14 @@ func run(ctx context.Context) error {
 	if flowCfg.Enabled() {
 		svc.ConfigureFlowEngine(flow.EngineClient{Cfg: flowCfg})
 	}
-	flow.RegisterRoutes(api, db, flowCfg, func(c *gin.Context) (*model.User, error) {
+	flowUser := func(c *gin.Context) (*model.User, error) {
 		cookie, _ := c.Cookie(service.SessionCookieName)
 		return svc.CurrentUser(cookie)
-	})
+	}
+	flow.RegisterRoutes(api, db, flowCfg, flowUser)
+	mcpGateway := &flow.MCPGateway{DB: db}
+	svc.ConfigureFlowMCP(mcpGateway)
+	flow.RegisterMCPRoutes(api, db, mcpGateway, flowUser)
 	r.NoRoute(handler.SystemProxyNoRouteHandler(svc))
 
 	listener, err := net.Listen("tcp", addr)

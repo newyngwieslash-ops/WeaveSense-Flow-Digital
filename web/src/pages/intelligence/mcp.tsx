@@ -1,0 +1,121 @@
+import { useCallback, useEffect, useState } from "react";
+import { Button, Card, Checkbox, Input, InputNumber, List, Select, Space, Tag, Typography, message } from "antd";
+
+import { approveMcpConnection, createMcpConnection, discoverMcpTools, listIntelWorkspaces, listMcpConnections, revokeMcpConnection, type IntelWorkspace, type McpConnection, type McpTool } from "@/services/api/intelligence";
+
+const STATUS_COLOR: Record<string, string> = { approved: "green", pending: "blue", needs_reapproval: "orange", revoked: "red" };
+
+/** P4: managed MCP connections. Credentials are referenced by name only (env:FLOW_MCP_CRED_*); values never reach the browser. */
+export default function McpConnectionsPage() {
+    const [workspaces, setWorkspaces] = useState<IntelWorkspace[]>([]);
+    const [workspaceId, setWorkspaceId] = useState<string>();
+    const [rows, setRows] = useState<McpConnection[]>([]);
+    const [form, setForm] = useState({ name: "", endpoint: "", credentialRef: "", maxCallsPerDay: 0, perCallCredits: 0 });
+    const [review, setReview] = useState<{ id: string; tools: McpTool[]; picked: string[] }>();
+
+    useEffect(() => {
+        void listIntelWorkspaces().then((list) => {
+            setWorkspaces(list);
+            setWorkspaceId((c) => c ?? list[0]?.id);
+        });
+    }, []);
+    const refresh = useCallback(() => {
+        if (workspaceId)
+            void listMcpConnections(workspaceId)
+                .then(setRows)
+                .catch(() => setRows([]));
+    }, [workspaceId]);
+    useEffect(refresh, [refresh]);
+
+    const guard = async (fn: () => Promise<unknown>) => {
+        try {
+            await fn();
+            refresh();
+        } catch (err) {
+            void message.error(err instanceof Error ? err.message : "request failed");
+        }
+    };
+
+    return (
+        <div style={{ display: "grid", gridTemplateColumns: "360px 1fr", gap: 16, padding: 16 }}>
+            <Card size="small" title="New MCP connection">
+                <Space direction="vertical" style={{ width: "100%" }}>
+                    <Select style={{ width: "100%" }} value={workspaceId} onChange={setWorkspaceId} options={workspaces.map((w) => ({ value: w.id, label: w.name }))} />
+                    <Input placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                    <Input placeholder="https://mcp.example.com/mcp (streamable HTTP)" value={form.endpoint} onChange={(e) => setForm({ ...form, endpoint: e.target.value })} />
+                    <Input placeholder="Credential ref, e.g. env:FLOW_MCP_CRED_ACME" value={form.credentialRef} onChange={(e) => setForm({ ...form, credentialRef: e.target.value })} />
+                    <Space>
+                        <InputNumber min={0} addonBefore="max calls/day" value={form.maxCallsPerDay} onChange={(v) => setForm({ ...form, maxCallsPerDay: Number(v) || 0 })} />
+                        <InputNumber min={0} addonBefore="credits/call" value={form.perCallCredits} onChange={(v) => setForm({ ...form, perCallCredits: Number(v) || 0 })} />
+                    </Space>
+                    <Button
+                        type="primary"
+                        disabled={!workspaceId || !form.endpoint}
+                        onClick={() =>
+                            void guard(() =>
+                                createMcpConnection(workspaceId!, {
+                                    name: form.name,
+                                    endpoint: form.endpoint,
+                                    credentialRef: form.credentialRef || undefined,
+                                    costRule: { max_calls_per_day: form.maxCallsPerDay, per_call_credits: form.perCallCredits },
+                                }),
+                            )
+                        }
+                    >
+                        Create (pending operator approval)
+                    </Button>
+                </Space>
+            </Card>
+            <Card size="small" title="Connections">
+                <List
+                    dataSource={rows}
+                    locale={{ emptyText: "No MCP connections" }}
+                    renderItem={(c) => (
+                        <List.Item
+                            actions={[
+                                <Button key="review" size="small" disabled={c.status === "revoked"} onClick={() => void guard(async () => setReview({ id: c.id, tools: await discoverMcpTools(workspaceId!, c.id), picked: c.allowedTools ?? [] }))}>
+                                    Review tools
+                                </Button>,
+                                <Button key="revoke" size="small" danger disabled={c.status === "revoked"} onClick={() => void guard(() => revokeMcpConnection(workspaceId!, c.id))}>
+                                    Revoke
+                                </Button>,
+                            ]}
+                        >
+                            <div style={{ width: "100%" }}>
+                                <Tag color={STATUS_COLOR[c.status]}>{c.status}</Tag>
+                                <b>{c.name || c.endpoint}</b> v{c.version}
+                                <div>
+                                    <Typography.Text type="secondary">
+                                        {c.endpoint} · cred {c.credentialRef || "none"} · {c.timeoutMs} ms · cap {c.outputCap} · allowed: {(c.allowedTools ?? []).join(", ") || "—"}
+                                    </Typography.Text>
+                                </div>
+                                {c.statusReason && <Typography.Text type="warning">{c.statusReason}</Typography.Text>}
+                                {review?.id === c.id && (
+                                    <Card size="small" style={{ marginTop: 8 }} title="Operator approval: allowed tools (schema hashes are frozen)">
+                                        <Checkbox.Group value={review.picked} onChange={(v) => setReview({ ...review, picked: v as string[] })}>
+                                            <Space direction="vertical">
+                                                {review.tools.map((t) => (
+                                                    <Checkbox key={t.name} value={t.name}>
+                                                        {t.name}{" "}
+                                                        <Typography.Text type="secondary">
+                                                            {t.description} · {t.hash.slice(0, 10)}
+                                                        </Typography.Text>
+                                                    </Checkbox>
+                                                ))}
+                                            </Space>
+                                        </Checkbox.Group>
+                                        <div style={{ marginTop: 8 }}>
+                                            <Button type="primary" size="small" onClick={() => void guard(async () => (await approveMcpConnection(workspaceId!, c.id, review.picked), setReview(undefined)))}>
+                                                Approve selected
+                                            </Button>
+                                        </div>
+                                    </Card>
+                                )}
+                            </div>
+                        </List.Item>
+                    )}
+                />
+            </Card>
+        </div>
+    );
+}

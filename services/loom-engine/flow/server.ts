@@ -77,6 +77,9 @@ export function handler(engine: Engine, cfg: ServerConfig) {
         const b = await readJson(req);
         return send(res, 201, await rp.applyBrief(ctx, actor, ctx.policy_version, { ...b, idempotency_key: idem() || String(b.idempotency_key ?? "") }));
       }
+      if (m === "POST" && (mm = p.match(/^\/v1\/sources\/([\w-]+)\/revoke$/))) { requireScope(ctx, "intel.sources.write"); return send(res, 200, await engine.revokeSource(ctx, mm[1], String((await readJson(req)).reason ?? "revoked"))); }
+      if (m === "GET" && p === "/v1/connector-samples") { requireScope(ctx, "intel.sources.read"); return send(res, 200, await engine.listConnectorSamples(ctx)); }
+      if (m === "POST" && p === "/v1/documents/extract") { requireScope(ctx, "intel.collect"); return send(res, 200, await engine.extractDocument(ctx, await readJson(req))); }
       return send(res, 404, null, "not found");
     } catch (e: any) {
       if (e instanceof AuthError || e instanceof HttpError) return send(res, e.status, null, e.message);

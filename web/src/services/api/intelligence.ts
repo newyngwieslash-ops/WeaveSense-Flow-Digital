@@ -49,8 +49,7 @@ export type SourceKind = "rss" | "telegram" | "wechat";
 export type IntelSource = { id: string; kind: SourceKind; url: string; title: string; status: string; last_error?: string | null; config?: Record<string, unknown> };
 export type ConnectorSample = { id: string; kind: string; source_id: string; collector: string; provider?: string | null; mode: "live" | "fixture"; items: number; media_unsupported: number; recorded_at: string };
 export const listSources = (workspaceId: string) => http.get<IntelSource[]>("/intelligence/sources", ws(workspaceId));
-export const createSource = (workspaceId: string, input: { kind: SourceKind; url?: string; title?: string; config?: Record<string, unknown> }) =>
-    http.post<IntelSource>("/intelligence/sources", input, ws(workspaceId));
+export const createSource = (workspaceId: string, input: { kind: SourceKind; url?: string; title?: string; config?: Record<string, unknown> }) => http.post<IntelSource>("/intelligence/sources", input, ws(workspaceId));
 export const revokeSource = (workspaceId: string, id: string) => http.post<{ status: string }>(`/intelligence/sources/${encodeURIComponent(id)}/revoke`, { reason: "revoked in UI" }, ws(workspaceId));
 export const listConnectorSamples = (workspaceId: string) => http.get<ConnectorSample[]>("/intelligence/connector-samples", ws(workspaceId));
 
@@ -73,6 +72,5 @@ export const listMcpConnections = (workspaceId: string) => http.get<McpConnectio
 export const createMcpConnection = (workspaceId: string, input: { name: string; endpoint: string; credentialRef?: string; timeoutMs?: number; outputCap?: number; costRule?: { per_call_credits?: number; max_calls_per_day?: number } }) =>
     http.post<McpConnection>("/intelligence/mcp/connections", input, ws(workspaceId));
 export const discoverMcpTools = (workspaceId: string, id: string) => http.get<McpTool[]>(`/intelligence/mcp/connections/${encodeURIComponent(id)}/tools`, ws(workspaceId));
-export const approveMcpConnection = (workspaceId: string, id: string, allowedTools: string[]) =>
-    http.post<McpConnection>(`/intelligence/mcp/connections/${encodeURIComponent(id)}/approve`, { allowedTools }, ws(workspaceId));
+export const approveMcpConnection = (workspaceId: string, id: string, allowedTools: string[]) => http.post<McpConnection>(`/intelligence/mcp/connections/${encodeURIComponent(id)}/approve`, { allowedTools }, ws(workspaceId));
 export const revokeMcpConnection = (workspaceId: string, id: string) => http.post<{ revoked: boolean }>(`/intelligence/mcp/connections/${encodeURIComponent(id)}/revoke`, {}, ws(workspaceId));

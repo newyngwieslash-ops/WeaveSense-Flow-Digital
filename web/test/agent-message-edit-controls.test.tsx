@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
-import { AgentMessageEditControls } from "@/components/canvas/canvas-cloud-agent-panel-parts";
+import { AgentMessageEditControls } from "@/components/canvas/canvas-agent-message-edit-controls";
 import { deleteConversationMessage, editConversationMessage, mergeDocuments } from "@/services/cloud-agent-conversations";
 
 test("sidebar messages expose edit and delete controls only when handlers are given", () => {

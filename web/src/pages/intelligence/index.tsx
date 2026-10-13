@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, Card, Input, List, Select, Space, Tag, Typography, message } from "antd";
 import { EmptyState } from "@/components/ui/product/empty-state/empty-state";
 import { ReportsPanel } from "./reports-panel";
+import { SourcesPanel } from "./sources-panel";
 
 import {
     cachedConversations,
@@ -225,6 +226,7 @@ export default function IntelligencePage() {
                     />
                 </Card>
             </div>
+            <SourcesPanel workspaceId={workspaceId} />
             <ReportsPanel workspaceId={workspaceId} />
         </>
     );

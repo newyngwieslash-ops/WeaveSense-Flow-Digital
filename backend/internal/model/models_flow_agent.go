@@ -106,3 +106,43 @@ type FlowNotification struct {
 	ReadAt      *time.Time `json:"readAt"`
 	CreatedAt   time.Time  `json:"createdAt" gorm:"index:idx_flow_notif_ws,priority:3"`
 }
+
+// FlowMCPConnection is an operator-approved remote MCP server for one workspace.
+// CredentialRef names a server-side secret; the secret itself is never stored
+// here, rendered to the frontend, or placed in prompts/skills/tool output.
+type FlowMCPConnection struct {
+	ID              string    `json:"id" gorm:"primaryKey;size:40"`
+	Slug            string    `json:"slug" gorm:"size:16;not null;uniqueIndex"`
+	TenantID        string    `json:"tenantId" gorm:"size:40;not null;index:idx_flow_mcp_ws,priority:1"`
+	WorkspaceID     string    `json:"workspaceId" gorm:"size:40;not null;index:idx_flow_mcp_ws,priority:2"`
+	Name            string    `json:"name" gorm:"size:120"`
+	Endpoint        string    `json:"endpoint" gorm:"size:500;not null"`
+	Transport       string    `json:"transport" gorm:"size:32;not null"`
+	CredentialRef   string    `json:"credentialRef" gorm:"size:120"`
+	AllowedTools    string    `json:"-" gorm:"type:text"` // JSON []string
+	ApprovedSchemas string    `json:"-" gorm:"type:text"` // JSON map[tool]{hash,description,inputSchema}
+	TimeoutMS       int       `json:"timeoutMs"`
+	OutputCap       int       `json:"outputCap"`
+	CostRule        string    `json:"-" gorm:"type:text"`             // JSON {per_call_credits, max_calls_per_day}
+	Status          string    `json:"status" gorm:"size:24;not null"` // pending|approved|needs_reapproval|revoked
+	StatusReason    string    `json:"statusReason" gorm:"size:300"`
+	Version         int       `json:"version"`
+	CreatedBy       string    `json:"createdBy" gorm:"size:36"`
+	ApprovedBy      string    `json:"approvedBy" gorm:"size:36"`
+	CreatedAt       time.Time `json:"createdAt"`
+	UpdatedAt       time.Time `json:"updatedAt"`
+}
+
+// FlowMCPUsage records each gateway tool execution (cost/budget accounting).
+type FlowMCPUsage struct {
+	ID           string    `json:"id" gorm:"primaryKey;size:40"`
+	TenantID     string    `json:"tenantId" gorm:"size:40;not null;index:idx_flow_mcp_usage,priority:1"`
+	ConnectionID string    `json:"connectionId" gorm:"size:40;not null;index:idx_flow_mcp_usage,priority:2"`
+	Tool         string    `json:"tool" gorm:"size:120"`
+	ActorID      string    `json:"actorId" gorm:"size:36"`
+	Status       string    `json:"status" gorm:"size:24"`
+	DurationMS   int64     `json:"durationMs"`
+	OutputBytes  int       `json:"outputBytes"`
+	Credits      int       `json:"credits"`
+	CreatedAt    time.Time `json:"createdAt" gorm:"index:idx_flow_mcp_usage,priority:3"`
+}

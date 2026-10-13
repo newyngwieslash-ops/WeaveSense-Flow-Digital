@@ -3,15 +3,24 @@
 import { createHash, randomBytes } from "node:crypto";
 import { affected, type Db, type Q } from "./db.ts";
 import type { ExecutionContext } from "./auth.ts";
+import { connectorEnvFromProcess, extractMainText, fetchTelegram, fetchWechat, normalizeHandle, telegramMessageId,
+  type ConnectorBatch, type ConnectorEnv, type ConnectorItem, type SourceRow } from "./connectors.ts";
 
 export type FeedItem = { external_id: string; title: string; body: string; url: string; published_at: string | null };
-export type Fetcher = (url: string, sourceId: string) => Promise<FeedItem[]>;
+export type FetchResult = FeedItem[] | ConnectorBatch;
+export type Fetcher = (url: string, sourceId: string, src?: SourceRow) => Promise<FetchResult>;
 
-export const defaultFetcher: Fetcher = async (url, sourceId) => {
+/** Dispatches by source kind: RSS (WeaveSense fetchRss), Telegram, WeChat (connectors.ts). */
+export const connectorFetcher = (env: ConnectorEnv): Fetcher => async (url, sourceId, src) => {
+  if (src?.kind === "telegram") return fetchTelegram(env, src);
+  if (src?.kind === "wechat") return fetchWechat(env, src);
   // Reuse WeaveSense's outbound-policy guarded fetch + RSS/Atom parser.
   const { fetchRss } = await import("../src/lib/server/rss.ts");
   return fetchRss(url, sourceId, "rss");
 };
+export const defaultFetcher: Fetcher = (url, sourceId, src) => connectorFetcher(connectorEnvFromProcess())(url, sourceId, src);
+export type Extractor = (url: string) => Promise<string>;
+const defaultExtractor: Extractor = async (url) => (await import("../src/lib/server/http.ts")).fetchText(url, 15000);
 
 export class HttpError extends Error {
   status: number;
@@ -24,22 +33,73 @@ const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 type Scope = Pick<ExecutionContext, "tenant_id" | "workspace_id">;
 
 export class Engine {
-  db: Db; fetcher: Fetcher; now: () => Date;
+  db: Db; fetcher: Fetcher; now: () => Date; extractor: Extractor = defaultExtractor;
   constructor(db: Db, fetcher: Fetcher = defaultFetcher, now: () => Date = () => new Date()) {
     this.db = db; this.fetcher = fetcher; this.now = now;
   }
 
-  async createSource(s: Scope, input: { url: string; title?: string }) {
-    let u: URL;
-    try { u = new URL(input.url); } catch { throw new HttpError(400, "invalid url"); }
-    if (!/^https?:$/.test(u.protocol)) throw new HttpError(400, "http(s) only");
+  async createSource(s: Scope, input: { url?: string; title?: string; kind?: string; config?: any }) {
+    const kind = input.kind ?? "rss";
+    let url: string; let config: any = {};
+    if (kind === "telegram") {
+      const handle = normalizeHandle(input.config?.handle ?? input.url ?? "");
+      if (!/^[A-Za-z0-9_]{4,64}$/.test(handle)) throw new HttpError(400, "telegram: channel handle required");
+      url = `https://t.me/s/${handle}`; config = { handle };
+    } else if (kind === "wechat") {
+      const feed = String(input.config?.gateway_source_id ?? "");
+      if (!/^[A-Za-z0-9._:-]{1,128}$/.test(feed)) throw new HttpError(400, "wechat: config.gateway_source_id (external gateway feed) required");
+      url = `wechat://${feed}`; config = { gateway_source_id: feed, wechat_id: input.config?.wechat_id ?? null };
+    } else if (kind === "rss") {
+      let u: URL;
+      try { u = new URL(input.url ?? ""); } catch { throw new HttpError(400, "invalid url"); }
+      if (!/^https?:$/.test(u.protocol)) throw new HttpError(400, "http(s) only");
+      url = u.toString();
+    } else throw new HttpError(400, "unsupported source kind");
     const id = newId("src_");
     const r = await this.db.query(
-      `INSERT INTO flow_sources (id, tenant_id, workspace_id, kind, url, title) VALUES ($1,$2,$3,'rss',$4,$5)
+      `INSERT INTO flow_sources (id, tenant_id, workspace_id, kind, url, title, config) VALUES ($1,$2,$3,$4,$5,$6,$7)
        ON CONFLICT (tenant_id, workspace_id, url) DO NOTHING RETURNING *`,
-      [id, s.tenant_id, s.workspace_id, u.toString(), input.title ?? ""]);
+      [id, s.tenant_id, s.workspace_id, kind, url, input.title ?? "", JSON.stringify(config)]);
     if (r.rows[0]) return r.rows[0];
-    return (await this.db.query(`SELECT * FROM flow_sources WHERE tenant_id=$1 AND workspace_id=$2 AND url=$3`, [s.tenant_id, s.workspace_id, u.toString()])).rows[0];
+    return (await this.db.query(`SELECT * FROM flow_sources WHERE tenant_id=$1 AND workspace_id=$2 AND url=$3`, [s.tenant_id, s.workspace_id, url])).rows[0];
+  }
+
+  /** Revokes a source: scheduled windows stop (scheduler requires active), queued jobs are cancelled, running ones fenced out. */
+  async revokeSource(s: Scope, id: string, reason = "revoked") {
+    return this.db.tx(async (q) => {
+      const r = await q.query(`UPDATE flow_sources SET status='revoked', revoked_reason=$4 WHERE tenant_id=$1 AND workspace_id=$2 AND id=$3 RETURNING id`, [s.tenant_id, s.workspace_id, id, reason.slice(0, 200)]);
+      if (!r.rows[0]) throw new HttpError(404, "source not found");
+      const c = await q.query(`UPDATE flow_collection_runs SET status='cancelled', finished_at=now(), lease_owner=NULL, fencing_token=fencing_token+1, error='source revoked'
+          WHERE tenant_id=$1 AND source_id=$2 AND status IN ('queued','running')`, [s.tenant_id, id]);
+      return { source_id: id, status: "revoked", cancelled_runs: affected(c) };
+    });
+  }
+
+  /** Connector acceptance records (real small-sample collections; mode=fixture for test doubles). */
+  async listConnectorSamples(s: Scope) {
+    return (await this.db.query(`SELECT * FROM flow_connector_samples WHERE tenant_id=$1 AND workspace_id=$2 ORDER BY recorded_at DESC LIMIT 100`, [s.tenant_id, s.workspace_id])).rows;
+  }
+
+  /** On-demand main-text extraction for a document URL; a changed text becomes a new revision (old citations keep theirs). */
+  async extractDocument(s: Scope, o: { document_id: string }) {
+    const d = (await this.db.query(`SELECT d.*, r.content_hash, r.body FROM flow_documents d JOIN flow_document_revisions r ON r.document_id=d.id AND r.revision=d.current_revision
+        WHERE d.tenant_id=$1 AND d.workspace_id=$2 AND d.id=$3`, [s.tenant_id, s.workspace_id, o.document_id])).rows[0];
+    if (!d) throw new HttpError(404, "document not found");
+    if (!/^https?:\/\//.test(d.url)) throw new HttpError(422, "document has no http(s) url to extract");
+    let html: string;
+    try { html = await this.extractor(d.url); } catch (e: any) { throw new HttpError(502, `extraction fetch failed: ${String(e?.message ?? e).slice(0, 200)}`); }
+    const { title, text } = extractMainText(html);
+    if (text.length < 40 || text.length <= String(d.body).length) return { document_id: d.id, revision: d.current_revision, changed: false, chars: text.length };
+    const t = title || d.title; const hash = sha(`${t}\n${text}`);
+    if (hash === d.content_hash) return { document_id: d.id, revision: d.current_revision, changed: false, chars: text.length };
+    return this.db.tx(async (q) => {
+      const rev = d.current_revision + 1;
+      await q.query(`UPDATE flow_documents SET current_revision=$2 WHERE id=$1`, [d.id, rev]);
+      await q.query(`INSERT INTO flow_document_revisions (document_id, revision, tenant_id, content_hash, title, body, collected_by_run) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+        [d.id, rev, d.tenant_id, hash, t, text, `extract:${d.id}:${rev}`]);
+      await this.indexChunks(q, { tenant_id: d.tenant_id, workspace_id: d.workspace_id }, d.source_id, d.id, rev, `${t}\n\n${text}`, d.published_at ? new Date(d.published_at).toISOString() : null);
+      return { document_id: d.id, revision: rev, changed: true, chars: text.length };
+    });
   }
 
   async listSources(s: Scope) {
@@ -146,9 +206,13 @@ export class Engine {
   /** Executes a claimed run. All writes + cursor + outbox commit atomically, guarded by fencing token. */
   async execute(run: any, hooks: { beforeCommit?: () => void | Promise<void> } = {}) {
     const src = (await this.db.query(`SELECT * FROM flow_sources WHERE id=$1 AND tenant_id=$2`, [run.source_id, run.tenant_id])).rows[0];
-    let items: FeedItem[];
+    if (!src || src.status !== "active") return this.fail(run, "source revoked");
+    const cursor = (await this.db.query(`SELECT last_external_id FROM flow_source_cursors WHERE source_id=$1`, [src.id])).rows[0];
+    let items: ConnectorItem[]; let meta: { collector: string; provider?: string; mode: string } = { collector: "rss", mode: "live" };
     try {
-      items = await this.fetcher(src.url, src.id);
+      const got = await this.fetcher(src.url, src.id, { ...src, config: typeof src.config === "string" ? JSON.parse(src.config) : (src.config ?? {}), last_external_id: cursor?.last_external_id ?? null });
+      if (Array.isArray(got)) items = got;
+      else { items = got.items; meta = { collector: got.collector, provider: got.provider, mode: got.mode }; }
     } catch (e: any) {
       return this.fail(run, String(e?.message ?? e));
     }
@@ -157,13 +221,22 @@ export class Engine {
       if (cur.rows[0]?.status !== "running" || Number(cur.rows[0].fencing_token) !== Number(run.fencing_token)) {
         throw new HttpError(409, "stale lease (fencing token mismatch)");
       }
+      const live = (await q.query(`SELECT status FROM flow_sources WHERE id=$1 FOR SHARE`, [src.id])).rows[0];
+      if (live?.status !== "active") throw new HttpError(409, "source revoked during collection");
+      let maxMsg = src.kind === "telegram" ? telegramMessageId(cursor?.last_external_id ?? "") : NaN;
+      let mediaUnsupported = 0;
       let created = 0, revised = 0, maxPub: string | null = null;
       for (const it of items) {
         if (!it.external_id) continue;
         const hash = sha(`${it.title}\n${it.body}`);
-        const ins = await q.query(`INSERT INTO flow_documents (id, tenant_id, workspace_id, source_id, external_id, url, title, published_at)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (tenant_id, source_id, external_id) DO NOTHING RETURNING id`,
-          [newId("doc_"), run.tenant_id, run.workspace_id, src.id, it.external_id, it.url ?? "", it.title ?? "", it.published_at]);
+        if (src.kind === "telegram") {
+          const mid = telegramMessageId(it.external_id);
+          if (Number.isFinite(mid) && (!Number.isFinite(maxMsg) || mid > maxMsg)) maxMsg = mid;
+        }
+        mediaUnsupported += it.media?.length ?? 0;
+        const ins = await q.query(`INSERT INTO flow_documents (id, tenant_id, workspace_id, source_id, external_id, url, title, published_at, media)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (tenant_id, source_id, external_id) DO NOTHING RETURNING id`,
+          [newId("doc_"), run.tenant_id, run.workspace_id, src.id, it.external_id, it.url ?? "", it.title ?? "", it.published_at, JSON.stringify(it.media ?? [])]);
         let docId: string, rev = 1;
         if (ins.rows[0]) { docId = ins.rows[0].id; created++; }
         else {
@@ -180,10 +253,19 @@ export class Engine {
         if (it.published_at && (!maxPub || it.published_at > maxPub)) maxPub = it.published_at;
       }
       // Cursor advances only inside the same commit as the data.
-      await q.query(`INSERT INTO flow_source_cursors (source_id, tenant_id, last_published_at, last_run_id) VALUES ($1,$2,$3,$4)
+      // Telegram message-id cursor only moves forward, and only in this commit.
+      const lastExt = Number.isFinite(maxMsg) ? String(maxMsg) : (cursor?.last_external_id ?? null);
+      await q.query(`INSERT INTO flow_source_cursors (source_id, tenant_id, last_published_at, last_run_id, last_external_id) VALUES ($1,$2,$3,$4,$5)
           ON CONFLICT (source_id) DO UPDATE SET last_published_at = GREATEST(flow_source_cursors.last_published_at, EXCLUDED.last_published_at),
-          last_run_id = EXCLUDED.last_run_id, updated_at = now()`, [src.id, run.tenant_id, maxPub, run.id]);
-      await q.query(`UPDATE flow_collection_runs SET status='succeeded', items_new=$2, items_revised=$3, finished_at=now(), lease_owner=NULL WHERE id=$1`, [run.id, created, revised]);
+          last_run_id = EXCLUDED.last_run_id, last_external_id = EXCLUDED.last_external_id, updated_at = now()`, [src.id, run.tenant_id, maxPub, run.id, lastExt]);
+      await q.query(`UPDATE flow_collection_runs SET status='succeeded', items_new=$2, items_revised=$3, finished_at=now(), lease_owner=NULL, collector=$4, provider=$5 WHERE id=$1`,
+        [run.id, created, revised, meta.collector, meta.provider ?? null]);
+      if (src.kind !== "rss" && items.length) {
+        await q.query(`INSERT INTO flow_connector_samples (id, tenant_id, workspace_id, kind, source_id, run_id, collector, provider, mode, items, media_unsupported, sample)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) ON CONFLICT (run_id) DO NOTHING`,
+          [newId("smp_"), run.tenant_id, run.workspace_id, src.kind, src.id, run.id, meta.collector, meta.provider ?? null, meta.mode, items.length, mediaUnsupported,
+           JSON.stringify(items.slice(0, 3).map((i) => ({ external_id: i.external_id, title: i.title.slice(0, 120), published_at: i.published_at })))]);
+      }
       await q.query(`UPDATE flow_sources SET consecutive_failures=0, last_error=NULL WHERE id=$1`, [src.id]);
       await this.emit(q, run, run.operation_id, run.id, "collection.completed", { source_id: src.id, items_new: created, items_revised: revised });
       if (hooks.beforeCommit) await hooks.beforeCommit();
@@ -203,7 +285,7 @@ export class Engine {
   }
 
   /** Splits a revision into ~CHUNK chars windows (paragraph aware) and indexes them for FTS. */
-  private async indexChunks(q: Q, run: Scope, sourceId: string, docId: string, rev: number, text: string, pub: string | null) {
+  async indexChunks(q: Q, run: Scope, sourceId: string, docId: string, rev: number, text: string, pub: string | null) {
     let start = 0, i = 0;
     while (start < text.length) {
       let end = Math.min(text.length, start + CHUNK);

@@ -37,7 +37,9 @@ type ToolSpec struct {
 	// or skill pinning. An error fails the call with a model-readable message.
 	prepare func(t Tools, ctx context.Context, conv model.FlowAgentConversation, ss SubjectScope, userID string, args map[string]any) (map[string]any, error)
 	// local (optional) answers without calling the Engine.
-	local func(t Tools, conv model.FlowAgentConversation, ss SubjectScope, args map[string]any) (any, error)
+	local func(t Tools, ctx context.Context, conv model.FlowAgentConversation, ss SubjectScope, userID string, args map[string]any) (any, error)
+	// rawArgs skips catalog argument validation (MCP tools: the remote server validates).
+	rawArgs bool
 }
 
 func obj(required []string, props map[string]any) map[string]any {
@@ -193,6 +195,8 @@ type Tools struct {
 	Now    func() time.Time
 	// RunID is the agent run driving the tools (research parent, skill pins).
 	RunID string
+	// MCP is the gateway for mcp_* tools (nil = MCP disabled).
+	MCP *MCPGateway
 }
 
 func (t Tools) runKey(conv model.FlowAgentConversation) string {
@@ -216,6 +220,9 @@ func (t Tools) now() time.Time {
 func (t Tools) Invoke(ctx context.Context, conv model.FlowAgentConversation, ss SubjectScope, userID, callID, name string, args map[string]any, approvalID string) (ToolResult, error) {
 	spec, ok := FindTool(name)
 	if !ok {
+		spec, ok = t.mcpSpec(ss.Scope, name)
+	}
+	if !ok {
 		return ToolResult{}, ErrToolUnknown
 	}
 	if conv.TenantID != ss.Scope.TenantID || conv.WorkspaceID != ss.Scope.WorkspaceID {
@@ -227,8 +234,10 @@ func (t Tools) Invoke(ctx context.Context, conv model.FlowAgentConversation, ss 
 	if args == nil {
 		args = map[string]any{}
 	}
-	if err := validateArgs(spec, args); err != nil {
-		return ToolResult{}, err
+	if !spec.rawArgs {
+		if err := validateArgs(spec, args); err != nil {
+			return ToolResult{}, err
+		}
 	}
 	if spec.NeedsApproval && approvalID == "" {
 		return ToolResult{}, ErrApprovalRequired
@@ -273,7 +282,7 @@ func (t Tools) Invoke(ctx context.Context, conv model.FlowAgentConversation, ss 
 		args = prepared
 	}
 	if spec.local != nil {
-		out, err := spec.local(t, conv, ss, args)
+		out, err := spec.local(t, ctx, conv, ss, userID, args)
 		r := ToolResult{CallID: row.CallID, Tool: row.ToolName, Status: "succeeded"}
 		if err != nil {
 			r.Status, r.Error = "failed", err.Error()
@@ -416,7 +425,26 @@ func (t Tools) trackEvidence(convID, tool string, args map[string]any, out json.
 // IsTool reports whether name is an intel_* tool served by this package.
 func IsTool(name string) bool {
 	_, ok := FindTool(name)
-	return ok
+	return ok || IsMCPToolName(name)
+}
+
+// mcpSpec synthesizes a spec for an approved MCP tool visible in this scope.
+func (t Tools) mcpSpec(scope Scope, name string) (ToolSpec, bool) {
+	if t.MCP == nil || !IsMCPToolName(name) {
+		return ToolSpec{}, false
+	}
+	conn, tool, ok := t.MCP.ResolveAgentTool(scope, name)
+	if !ok {
+		return ToolSpec{}, false
+	}
+	return ToolSpec{Name: name, Class: "write", Scope: "intel.mcp.use", Timeout: time.Duration(conn.TimeoutMS) * time.Millisecond, OutputCap: conn.OutputCap, rawArgs: true,
+		local: func(t Tools, ctx context.Context, _ model.FlowAgentConversation, ss SubjectScope, userID string, args map[string]any) (any, error) {
+			out, truncated, err := t.MCP.Execute(ctx, ss.Scope, userID, conn.ID, tool, args)
+			if err != nil {
+				return nil, err
+			}
+			return map[string]any{"connection": conn.Name, "tool": tool, "text": out, "truncated": truncated}, nil
+		}}, true
 }
 
 // recordEvidence persists evidence rows in Loom Engine for search hits and

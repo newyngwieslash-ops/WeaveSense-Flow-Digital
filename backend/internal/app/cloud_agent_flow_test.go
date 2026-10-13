@@ -203,3 +203,11 @@ func TestFlowAgentRunRejectsForeignConversationAndSubject(t *testing.T) {
 		t.Fatalf("engine was called: %v", fe.seen)
 	}
 }
+
+func TestFlowRunNeverAcceptsClientSuppliedMCPTools(t *testing.T) {
+	req := CloudAgentRequest{FlowMCPTools: []map[string]any{{"type": "function", "function": map[string]any{"name": "mcp_evil_x"}}}}
+	_ = validateCloudAgentRequest(&req)
+	if req.FlowMCPTools != nil {
+		t.Fatal("client-supplied MCP tool snapshot must be discarded")
+	}
+}

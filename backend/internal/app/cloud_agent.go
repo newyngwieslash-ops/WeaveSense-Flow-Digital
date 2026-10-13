@@ -54,6 +54,9 @@ type CloudAgentRequest struct {
 	// server-side conversation FlowConversationID and never use a canvas.
 	Subject            *flow.AgentSubject `json:"subject,omitempty"`
 	FlowConversationID string             `json:"conversationId,omitempty"`
+	// FlowMCPTools is the server-built snapshot of approved MCP tools for this
+	// run (never accepted from clients; cleared in validation).
+	FlowMCPTools []map[string]any `json:"flowMcpTools,omitempty"`
 }
 
 const cloudAgentMaxStepsLimit = 9999
@@ -120,6 +123,7 @@ func validateCloudAgentRequest(req *CloudAgentRequest) error {
 	if req == nil {
 		return BadAuthRequest("请求不能为空")
 	}
+	req.FlowMCPTools = nil
 	// IDs and protocol selectors are identifiers, not free-form text. Keep their
 	// validation in one place so byte/rune and Unicode handling cannot drift.
 	if cloudAgentIntelSubject(*req) {
@@ -381,6 +385,7 @@ func (s *Service) CreateCloudAgentRun(userID string, req CloudAgentRequest, pare
 			return nil, ctxErr
 		}
 		flowContext = message
+		req.FlowMCPTools = s.flowMCPToolsFor(userID, req)
 	} else {
 		var err error
 		canvas, err = s.repo.CanvasProjectForUser(userID, req.CanvasID)

@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -326,6 +327,9 @@ type CanvasConv struct {
 	ID       string              `json:"id"`
 	Title    string              `json:"title"`
 	Messages []CanvasConvMessage `json:"messages"`
+	// DeletedIDs are tombstones of sidebar messages deleted on either side;
+	// a deletion is never resurrected by a stale replica.
+	DeletedIDs []string `json:"deletedIds,omitempty"`
 }
 
 // CanvasConversationIndexID is the stable directory id for a canvas sidebar conversation.
@@ -394,14 +398,39 @@ func MirrorCanvasConversations(db *gorm.DB, userID, canvasID string, convs []Can
 				db.Model(&model.FlowAgentConversation{}).Where("id = ?", id).Update("title", truncRunes(cv.Title, 200))
 			}
 		}
-		var known []string
-		db.Model(&model.FlowAgentMessage{}).Where("conversation_id = ? AND external_id <> ''", id).Pluck("external_id", &known)
-		seen := map[string]bool{}
+		var known []model.FlowAgentMessage
+		db.Where("conversation_id = ? AND external_id <> ''", id).Find(&known)
+		seen := map[string]model.FlowAgentMessage{}
 		for _, k := range known {
-			seen[k] = true
+			seen[k.ExternalID] = k
+		}
+		deleted := map[string]bool{}
+		for _, d := range cv.DeletedIDs {
+			deleted[d] = true
+		}
+		now := time.Now().UTC()
+		for ext, k := range seen {
+			if k.TombstonedAt != nil || k.Revision != k.SyncedRevision {
+				continue // already deleted, or a directory-side change is pending write-back (directory wins)
+			}
+			if deleted[ext] {
+				// Deleted in the sidebar (explicit tombstone, never inferred from a
+				// possibly stale replica's absence): tombstone, idempotent, revision CAS.
+				db.Model(&model.FlowAgentMessage{}).Where("id = ? AND revision = ?", k.ID, k.Revision).
+					Updates(map[string]any{"tombstoned_at": now, "revision": k.Revision + 1, "synced_revision": k.Revision + 1})
+			}
 		}
 		for _, m := range msgs {
-			if seen[m.ID] {
+			if k, ok := seen[m.ID]; ok {
+				text := truncRunes(m.Text, 20000)
+				if k.TombstonedAt == nil && k.Revision == k.SyncedRevision && k.Content != text && !deleted[m.ID] {
+					// Edited in the sidebar: update the directory copy.
+					db.Model(&model.FlowAgentMessage{}).Where("id = ? AND revision = ?", k.ID, k.Revision).
+						Updates(map[string]any{"content": text, "edited_at": now, "revision": k.Revision + 1, "synced_revision": k.Revision + 1})
+				}
+				continue
+			}
+			if deleted[m.ID] {
 				continue
 			}
 			if dirID, ok := strings.CutPrefix(m.ID, dirMsgPrefix); ok {
@@ -431,7 +460,8 @@ func SyncConversationToCanvas(db *gorm.DB, convID string) error {
 		return nil
 	}
 	var pending []model.FlowAgentMessage
-	db.Where("conversation_id = ? AND role IN ? AND (external_id = '' OR external_id IS NULL)", convID, []string{"user", "assistant"}).Order("seq").Find(&pending)
+	db.Where("conversation_id = ? AND role IN ? AND (((external_id = '' OR external_id IS NULL) AND tombstoned_at IS NULL) OR revision <> synced_revision)",
+		convID, []string{"user", "assistant"}).Order("seq").Find(&pending)
 	if len(pending) == 0 {
 		return nil
 	}
@@ -454,20 +484,57 @@ func SyncConversationToCanvas(db *gorm.DB, convID string) error {
 			}
 			found = true
 			msgs, _ := c["messages"].([]any)
-			have := map[string]bool{}
+			have := map[string]map[string]any{}
 			for _, mm := range msgs {
 				if m, _ := mm.(map[string]any); m != nil {
 					if id, _ := m["id"].(string); id != "" {
-						have[id] = true
+						have[id] = m
+					}
+				}
+			}
+			tomb := map[string]bool{}
+			if old, _ := c["deletedIds"].([]any); old != nil {
+				for _, d := range old {
+					if s, _ := d.(string); s != "" {
+						tomb[s] = true
 					}
 				}
 			}
 			for _, p := range pending {
-				if !have[dirMsgPrefix+p.ID] {
-					msgs = append(msgs, map[string]any{"id": dirMsgPrefix + p.ID, "role": p.Role, "text": p.Content, "meta": "intelligence"})
+				ext := p.ExternalID
+				if ext == "" {
+					ext = dirMsgPrefix + p.ID
+				}
+				switch {
+				case p.TombstonedAt != nil:
+					tomb[ext] = true
+				case have[ext] != nil:
+					have[ext]["text"] = p.Content
+					have[ext]["editedAt"] = now
+				case !tomb[ext]:
+					m := map[string]any{"id": ext, "role": p.Role, "text": p.Content, "meta": "intelligence"}
+					have[ext] = m
+					msgs = append(msgs, m)
 				}
 			}
-			c["messages"] = msgs
+			kept := make([]any, 0, len(msgs))
+			for _, mm := range msgs {
+				if m, _ := mm.(map[string]any); m != nil {
+					if id, _ := m["id"].(string); tomb[id] {
+						continue
+					}
+				}
+				kept = append(kept, mm)
+			}
+			if len(tomb) > 0 {
+				ids := make([]string, 0, len(tomb))
+				for id := range tomb {
+					ids = append(ids, id)
+				}
+				sort.Strings(ids)
+				c["deletedIds"] = ids
+			}
+			c["messages"] = kept
 			c["updatedAt"] = now
 		}
 		if !found {
@@ -481,7 +548,13 @@ func SyncConversationToCanvas(db *gorm.DB, convID string) error {
 		}
 		if upd.RowsAffected == 1 {
 			for _, p := range pending {
-				db.Model(&model.FlowAgentMessage{}).Where("id = ?", p.ID).Update("external_id", dirMsgPrefix+p.ID)
+				ext := p.ExternalID
+				if ext == "" {
+					ext = dirMsgPrefix + p.ID
+				}
+				// Revision-guarded: a concurrent edit stays pending for the next sync.
+				db.Model(&model.FlowAgentMessage{}).Where("id = ? AND revision = ?", p.ID, p.Revision).
+					Updates(map[string]any{"external_id": ext, "synced_revision": p.Revision})
 			}
 			return nil
 		}

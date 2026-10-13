@@ -3,7 +3,7 @@ import { http } from "./request";
 export type AgentSubject = { kind: "canvas" | "intelligence_workspace" | "topic"; id: string };
 export type IntelWorkspace = { id: string; tenantId: string; slug: string; name: string };
 export type FlowConversation = { id: string; title: string; subjectKind: string; subjectId: string; workspaceId: string; updatedAt: string; lastSeq: number };
-export type FlowMessage = { id: string; seq: number; role: string; content: string; toolName?: string; createdAt: string };
+export type FlowMessage = { id: string; seq: number; role: string; content: string; toolName?: string; revision?: number; editedAt?: string; createdAt: string };
 export type ToolResult = { callId: string; tool: string; status: string; approvalId?: string; replayed?: boolean; output?: unknown; error?: string };
 export type IntelMonitor = { id: string; name: string; keywords: string[]; source_ids: string[]; interval_seconds: number; timezone: string; created_at: string };
 
@@ -31,6 +31,9 @@ export function cachedConversations(): FlowConversation[] {
 export const createConversation = (subject: AgentSubject, title: string) => http.post<FlowConversation>("/agent/conversations", { subject, title });
 export const listMessages = (id: string, beforeSeq?: number) => http.get<{ messages: FlowMessage[]; nextBeforeSeq: number }>(`/agent/conversations/${encodeURIComponent(id)}/messages`, { params: beforeSeq ? { before_seq: beforeSeq } : {} });
 export const postMessage = (id: string, content: string) => http.post<FlowMessage>(`/agent/conversations/${encodeURIComponent(id)}/messages`, { content });
+/** Edit / delete (tombstone) a message; baseRevision gives optimistic concurrency (409 on conflict). Canvas conversations sync back. */
+export const editMessage = (id: string, msgId: string, content: string, baseRevision?: number) => http.patch<FlowMessage>(`/agent/conversations/${encodeURIComponent(id)}/messages/${encodeURIComponent(msgId)}`, { content, baseRevision });
+export const deleteMessage = (id: string, msgId: string) => http.delete<FlowMessage>(`/agent/conversations/${encodeURIComponent(id)}/messages/${encodeURIComponent(msgId)}`);
 export const callTool = (id: string, callId: string, name: string, args: Record<string, unknown>) => http.post<ToolResult>(`/agent/conversations/${encodeURIComponent(id)}/tool-calls`, { callId, name, arguments: args });
 export const listMonitors = (workspaceId: string) => http.get<IntelMonitor[]>("/intelligence/monitors", { headers: { "X-Workspace-Id": workspaceId } });
 

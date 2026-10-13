@@ -38,17 +38,23 @@ type FlowAgentConversation struct {
 func (FlowAgentConversation) TableName() string { return "flow_agent_conversations" }
 
 type FlowAgentMessage struct {
-	ID             string    `json:"id" gorm:"primaryKey;size:40"`
-	ConversationID string    `json:"conversationId" gorm:"size:40;uniqueIndex:ux_flow_msg_seq,priority:1"`
-	Seq            int64     `json:"seq" gorm:"uniqueIndex:ux_flow_msg_seq,priority:2"`
-	TenantID       string    `json:"-" gorm:"size:40;index"`
-	Role           string    `json:"role" gorm:"size:16"` // user | assistant | tool | system
-	Content        string    `json:"content" gorm:"type:text"`
-	RunID          string    `json:"runId,omitempty" gorm:"size:80"`
-	ToolCallID     string    `json:"toolCallId,omitempty" gorm:"size:80"`
-	ToolName       string    `json:"toolName,omitempty" gorm:"size:80"`
-	ExternalID     string    `json:"externalId,omitempty" gorm:"size:80;index"` // id of the mirrored canvas sidebar message
-	CreatedAt      time.Time `json:"createdAt"`
+	ID             string `json:"id" gorm:"primaryKey;size:40"`
+	ConversationID string `json:"conversationId" gorm:"size:40;uniqueIndex:ux_flow_msg_seq,priority:1"`
+	Seq            int64  `json:"seq" gorm:"uniqueIndex:ux_flow_msg_seq,priority:2"`
+	TenantID       string `json:"-" gorm:"size:40;index"`
+	Role           string `json:"role" gorm:"size:16"` // user | assistant | tool | system
+	Content        string `json:"content" gorm:"type:text"`
+	RunID          string `json:"runId,omitempty" gorm:"size:80"`
+	ToolCallID     string `json:"toolCallId,omitempty" gorm:"size:80"`
+	ToolName       string `json:"toolName,omitempty" gorm:"size:80"`
+	ExternalID     string `json:"externalId,omitempty" gorm:"size:80;index"` // id of the mirrored canvas sidebar message
+	// Revision is bumped on every edit/delete; SyncedRevision is the revision
+	// last reconciled with the canvas sidebar document (two-way sync, v60).
+	Revision       int64      `json:"revision" gorm:"not null;default:0"`
+	SyncedRevision int64      `json:"-" gorm:"not null;default:0"`
+	EditedAt       *time.Time `json:"editedAt,omitempty"`
+	TombstonedAt   *time.Time `json:"deletedAt,omitempty" gorm:"index"` // tombstone: hidden, kept for sync/idempotency
+	CreatedAt      time.Time  `json:"createdAt"`
 }
 
 func (FlowAgentMessage) TableName() string { return "flow_agent_messages" }

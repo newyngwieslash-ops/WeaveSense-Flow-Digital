@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const CurrentSchemaVersion int64 = 59
+const CurrentSchemaVersion int64 = 60
 
 const baselineSchemaChecksum = "sha256:open-ai-canvas-schema-v1-20260830"
 const schemaMigrationAppliedAtIndexChecksum = "sha256:schema-migrations-applied-at-index-v2-20260830"
@@ -203,6 +203,9 @@ var schemaMigrations = []migration{
 			return err
 		}
 		return applyFlowRLS(tx)
+	}},
+	{version: 60, name: "flow_message_tombstones_p9", checksum: "sha256:flow-message-tombstones-p9-v60-20261013", apply: func(tx *gorm.DB) error {
+		return tx.AutoMigrate(&model.FlowAgentMessage{})
 	}},
 }
 

@@ -33,6 +33,8 @@ export type CloudAgentConversation = {
     model?: string;
     permissionMode: AgentPermissionMode;
     skillIds?: string[];
+    /** Tombstones of deleted messages (either side); a stale copy never resurrects them. */
+    deletedIds?: string[];
     createdAt: string;
     updatedAt: string;
 };
@@ -131,6 +133,7 @@ export function mergeDocuments(server: CloudAgentConversationDocument | null, lo
             byId.set(c.id, c);
             continue;
         }
+        const deleted = new Set([...(other.deletedIds || []), ...(c.deletedIds || [])]);
         const [base, extra] = other.updatedAt <= c.updatedAt ? [c, other] : [other, c];
         const seen = new Set(base.messages.map((m) => m.id));
         const messages = [...base.messages];
@@ -148,10 +151,23 @@ export function mergeDocuments(server: CloudAgentConversationDocument | null, lo
             }
             messages.splice(at, 0, m);
         });
-        byId.set(c.id, { ...base, messages });
+        const merged = { ...base, messages: messages.filter((m) => !deleted.has(m.id)) };
+        if (deleted.size) merged.deletedIds = [...deleted].sort();
+        byId.set(c.id, merged);
     }
     const conversations = [...byId.values()].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
     return { version: 1, activeId: local.activeId, conversations };
+}
+
+/** Delete a sidebar message: removed locally and tombstoned so the server and other replicas drop it too. */
+export function deleteConversationMessage(conversation: CloudAgentConversation, messageId: string): CloudAgentConversation {
+    const deletedIds = [...new Set([...(conversation.deletedIds || []), messageId])].sort();
+    return { ...conversation, messages: conversation.messages.filter((m) => m.id !== messageId), deletedIds, updatedAt: new Date().toISOString() };
+}
+
+/** Edit a sidebar message's text (newer conversation copy wins in mergeDocuments). */
+export function editConversationMessage(conversation: CloudAgentConversation, messageId: string, text: string): CloudAgentConversation {
+    return { ...conversation, messages: conversation.messages.map((m) => (m.id === messageId ? { ...m, text } : m)), updatedAt: new Date().toISOString() };
 }
 
 // Keep the retry key outside the chat snapshot. If the response is lost, a

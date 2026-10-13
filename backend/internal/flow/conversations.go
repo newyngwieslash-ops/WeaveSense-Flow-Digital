@@ -86,7 +86,7 @@ func (c Conversations) Messages(convID string, beforeSeq int64, limit int) ([]mo
 	if limit <= 0 || limit > 200 {
 		limit = 50
 	}
-	q := c.DB.Where("conversation_id = ?", convID).Order("seq DESC").Limit(limit + 1)
+	q := c.DB.Where("conversation_id = ? AND tombstoned_at IS NULL", convID).Order("seq DESC").Limit(limit + 1)
 	if beforeSeq > 0 {
 		q = q.Where("seq < ?", beforeSeq)
 	}
@@ -113,4 +113,74 @@ func (c Conversations) Runs(conv model.FlowAgentConversation) ([]map[string]any,
 	err := c.DB.Model(&model.CloudAgentExecution{}).Select("id, status, created_at").
 		Where("id IN ? AND user_id = ?", ids, conv.UserID).Order("created_at").Find(&out).Error
 	return out, err
+}
+
+// ErrRevisionConflict reports an edit/delete based on a stale message revision.
+var ErrRevisionConflict = errors.New("flow: message revision conflict")
+
+// EditMessage changes a user/assistant message's text. baseRevision (when >= 0)
+// must match the stored revision, else ErrRevisionConflict. Re-applying the same
+// text is a no-op (idempotent). Canvas conversations are written back.
+func (c Conversations) EditMessage(conv model.FlowAgentConversation, msgID, content string, baseRevision int64) (model.FlowAgentMessage, error) {
+	return c.mutateMessage(conv, msgID, baseRevision, func(m model.FlowAgentMessage) map[string]any {
+		if m.TombstonedAt != nil || m.Content == content {
+			return nil
+		}
+		return map[string]any{"content": content, "edited_at": time.Now().UTC()}
+	}, func(m model.FlowAgentMessage) error {
+		if m.TombstonedAt != nil {
+			return ErrNotFound
+		}
+		return nil
+	})
+}
+
+// DeleteMessage tombstones a message (idempotent: deleting twice succeeds).
+func (c Conversations) DeleteMessage(conv model.FlowAgentConversation, msgID string, baseRevision int64) (model.FlowAgentMessage, error) {
+	return c.mutateMessage(conv, msgID, baseRevision, func(m model.FlowAgentMessage) map[string]any {
+		if m.TombstonedAt != nil {
+			return nil
+		}
+		return map[string]any{"tombstoned_at": time.Now().UTC()}
+	}, nil)
+}
+
+func (c Conversations) mutateMessage(conv model.FlowAgentConversation, msgID string, baseRevision int64,
+	change func(model.FlowAgentMessage) map[string]any, check func(model.FlowAgentMessage) error) (model.FlowAgentMessage, error) {
+	var m model.FlowAgentMessage
+	if err := c.DB.First(&m, "id = ? AND conversation_id = ?", msgID, conv.ID).Error; err != nil {
+		return m, ErrNotFound
+	}
+	if m.Role != "user" && m.Role != "assistant" {
+		return m, ErrInvalid
+	}
+	if check != nil {
+		if err := check(m); err != nil {
+			return m, err
+		}
+	}
+	upd := change(m)
+	if upd == nil {
+		return m, nil // already in the requested state
+	}
+	if baseRevision >= 0 && baseRevision != m.Revision {
+		return m, ErrRevisionConflict
+	}
+	upd["revision"] = m.Revision + 1
+	r := c.DB.Model(&model.FlowAgentMessage{}).Where("id = ? AND revision = ?", m.ID, m.Revision).Updates(upd)
+	if r.Error != nil {
+		return m, r.Error
+	}
+	if r.RowsAffected != 1 {
+		return m, ErrRevisionConflict
+	}
+	c.DB.Model(&model.FlowAgentConversation{}).Where("id = ?", conv.ID).Update("updated_at", time.Now().UTC())
+	var out model.FlowAgentMessage
+	c.DB.First(&out, "id = ?", m.ID)
+	if conv.SubjectKind == SubjectCanvas && !c.noWriteBack {
+		if err := SyncConversationToCanvas(c.DB, conv.ID); err != nil {
+			slog.Warn("flow: canvas write-back", "conversation", conv.ID, "error", err)
+		}
+	}
+	return out, nil
 }

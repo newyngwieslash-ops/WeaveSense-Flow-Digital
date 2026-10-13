@@ -1,3 +1,5 @@
+import type { CollectorCoverage } from "./collectors/types.ts";
+
 type Queryable = {
   query<T = Record<string, unknown>>(text: string, params?: unknown[]): Promise<T[]>;
 };
@@ -51,6 +53,8 @@ export async function completeSourceClaim(
   lastExternalId: string,
   lastPublishedAt: string | null,
 ): Promise<boolean> {
+  const published = lastPublishedAt ? new Date(lastPublishedAt) : null;
+  const publishedIso = published && !Number.isNaN(published.getTime()) ? published.toISOString() : null;
   const rows = await sql.query<{ id: unknown }>(
     `update sources set
        status = 'ok',
@@ -62,7 +66,7 @@ export async function completeSourceClaim(
        claimed_at = null
      where id = $1 and claim_token = $4
      returning id`,
-    [sourceId, lastExternalId, lastPublishedAt, claimToken],
+    [sourceId, lastExternalId, publishedIso, claimToken],
   );
   return rows.length === 1;
 }
@@ -139,11 +143,12 @@ export async function finishSourceJob(
   itemsFound: number,
   itemsNew: number,
   meta: { provider: "" | "primary" | "dajiala" | "mixed"; attempts: string[]; paid_call: boolean },
+  coverage?: CollectorCoverage,
 ): Promise<void> {
   await sql.query(`update jobs set status = $2, finished_at = now(), error = $3,
-      items_found = $4, items_new = $5, provider = $6, attempts = $7::jsonb, paid_call = $8
+      items_found = $4, items_new = $5, provider = $6, attempts = $7::jsonb, paid_call = $8, coverage = $9::jsonb
     where id = $1`, [jobId, status, error, itemsFound, itemsNew, meta.provider,
-    JSON.stringify(meta.attempts), meta.paid_call]);
+    JSON.stringify(meta.attempts), meta.paid_call, JSON.stringify(coverage ?? {})]);
 }
 
 export async function mergeExistingItem(sql: Queryable, itemId: string, item: {
@@ -164,10 +169,8 @@ export async function mergeExistingItem(sql: Queryable, itemId: string, item: {
       title=coalesce(nullif(title,''),nullif($2,''),title),
       body=case when $14::boolean and coalesce(extra->>'body_complete','false') <> 'true'
           and nullif($3,'') is not null then $3 || case
-        when position('[OCR:' in body)>0 or position('[ASR:' in body)>0 then E'\n\n' || substring(body from case
-          when position('[OCR:' in body)=0 then position('[ASR:' in body)
-          when position('[ASR:' in body)=0 then position('[OCR:' in body)
-          else least(position('[OCR:' in body),position('[ASR:' in body)) end)
+        when body ~ '\\[(OCR:|ASR:|字幕:)' then E'\n\n' || substring(body from
+          least(nullif(position('[OCR:' in body),0),nullif(position('[ASR:' in body),0),nullif(position('[字幕:' in body),0)))
         else '' end
         else coalesce(nullif(body,''),nullif($3,''),body) end,
       author=coalesce(nullif(author,''),nullif($4,''),author),
@@ -186,7 +189,8 @@ export async function mergeExistingItem(sql: Queryable, itemId: string, item: {
           from jsonb_array_elements_text(items.matched_keywords || $13::jsonb)) merged)
     where id=$1`, [itemId, item.title, item.body, item.author, item.url, item.media_type,
     JSON.stringify(item.media_urls), item.thumbnail_url, item.views, item.likes, item.published_at,
-    JSON.stringify(item.extra), JSON.stringify(matchedKeywords), incomingComplete]);
+    JSON.stringify(Object.fromEntries(Object.entries(item.extra).filter(([key]) => !key.startsWith("article_") && !key.startsWith("transcript_")))),
+    JSON.stringify(matchedKeywords), incomingComplete]);
 }
 
 /**

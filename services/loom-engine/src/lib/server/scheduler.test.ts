@@ -77,6 +77,25 @@ test("expired source claims are recoverable and completion is token-bound", asyn
   await pg.close();
 });
 
+test("source completion normalizes dates and preserves the last valid timestamp", async () => {
+  const { pg, sql } = await sourceDb();
+  try {
+    await pg.query("insert into sources (id,enabled,status,last_error) values ('dates',true,'idle','')");
+    const valid = "2026-10-13T08:00:00+08:00";
+    for (const [index, published] of [valid, "invalid", "", null].entries()) {
+      const token = `date-job-${index}`;
+      assert.ok(await claimSource(sql, "dates", token));
+      assert.equal(await completeSourceClaim(sql, "dates", token, `anchor-${index}`, published), true);
+      const [source] = await sql.query<{ status: string; last_external_id: string; last_published_at: Date }>(
+        "select status,last_external_id,last_published_at from sources where id='dates'",
+      );
+      assert.equal(source.status, "ok");
+      assert.equal(source.last_external_id, `anchor-${index}`);
+      assert.equal(source.last_published_at.toISOString(), "2026-10-13T00:00:00.000Z");
+    }
+  } finally { await pg.close(); }
+});
+
 test("a conflicted item insert never enqueues media", async () => {
   let enqueued = 0;
   const inserted = await finishItemInsert([], ["https://img.example/cover.jpg"], "image", async () => {
@@ -93,7 +112,8 @@ test("source job completion persists successful and failed provider attempts", a
     id text primary key, status text not null, finished_at timestamptz,
     items_found integer not null default 0, items_new integer not null default 0,
     error text not null default '', provider text not null default '',
-    attempts jsonb not null default '[]'::jsonb, paid_call boolean not null default false
+    attempts jsonb not null default '[]'::jsonb, paid_call boolean not null default false,
+    coverage jsonb not null default '{}'::jsonb
   )`);
   const sql = { async query<T = Record<string, unknown>>(text: string, params: unknown[] = []) {
     return (await pg.query<T>(text, params)).rows;
@@ -168,4 +188,62 @@ test("merging an existing item stores a long body in full (T11)", async () => {
   assert.equal(rows[0].body.length, body.length, "the merged body must keep its tail");
   assert.ok(rows[0].body.endsWith("TAIL-READINESS-12500"));
   await pg.close();
+});
+
+test("runSourceJob ingests all 60 RSS entries and a replay adds no rows", async () => {
+  const { createServer } = await import("vite");
+  const { resolve } = await import("node:path");
+  const previousEnv = { ...process.env };
+  Object.assign(process.env, {
+    NODE_ENV: "test", LOOM_RUNTIME_MODE: "test", AI_ENGINE: "legacy", DATABASE_URL: "",
+    LOOM_MODEL_CONFIG: resolve(".superpowers/nonexistent-offline-model.json"), XAI_API_KEY: "",
+    EXTRACT_AUTO: "false", AUTO_ANALYZE: "false", AGENT_ASYNC_RESEARCH_ENABLED: "false",
+    AGENT_WORKER_ENABLED: "false", AGENT_OPENCODE_WORKER_ENABLED: "false",
+    AGENT_ASSISTANT_ENABLED: "false", AGENT_ASSISTANT_ACTIONS_ENABLED: "false",
+  });
+  const vite = await createServer({
+    configFile: false, logLevel: "silent", resolve: { alias: { "@": resolve("src") } }, server: { middlewareMode: true },
+  });
+  let database: { getPglite: () => Promise<PGlite> } | undefined;
+  try {
+    const { runSourceJob } = await vite.ssrLoadModule("/src/lib/server/scheduler.ts");
+    const db = await vite.ssrLoadModule("/src/lib/db.ts");
+    database = db as { getPglite: () => Promise<PGlite> };
+    const sql = await db.getSql();
+    const expectedIds = Array.from({ length: 60 }, (_, i) => `entry-${i}`);
+    const xml = `<rss version="2.0"><channel><title>60 entry fixture</title>${expectedIds.map((id) =>
+      `<item><guid>${id}</guid><title>Item ${id}</title><link>https://example.org/${id}</link><description>Offline body</description><pubDate>Tue, 13 Oct 2026 00:00:00 GMT</pubDate></item>`).join("")}</channel></rss>`;
+    let calls = 0;
+    const io = {
+      resolver: { async lookup() { return [{ address: "93.184.216.34", family: 4 }]; } },
+      transport: async () => {
+        calls += 1;
+        return { status: 200, headers: { "content-type": "application/rss+xml" }, body: new Response(xml).body! };
+      },
+    };
+    await sql.query(`insert into sources (id,platform,name,adapter,feed_url) values ('a05-rss','rss','60 entry fixture','rss','https://example.org/feed')`);
+    const first = await runSourceJob("a05-rss", "incremental", io);
+    const second = await runSourceJob("a05-rss", "incremental", io);
+    assert.equal(first.error, "");
+    assert.equal(second.error, "");
+    assert.equal(first.items_found, 60);
+    assert.equal(first.items_new, 60);
+    assert.equal(second.items_found, 60);
+    assert.equal(second.items_new, 0);
+    const storedIds = (await sql.query("select external_id from items where source_id='a05-rss'")).map((row: { external_id: string }) => row.external_id);
+    assert.equal(storedIds.length, 60);
+    assert.deepEqual(expectedIds.filter((id) => !storedIds.includes(id)), []);
+    assert.equal(new Set(storedIds).size, 60);
+    assert.equal(calls, 2);
+    const jobs = await sql.query("select status,coverage from jobs where source_id='a05-rss' order by started_at");
+    assert.deepEqual(jobs, [
+      { status: "ok", coverage: { complete: false, window_only: true, note: "initial_window" } },
+      { status: "ok", coverage: { complete: false, window_only: true, note: "window_overlap" } },
+    ]);
+  } finally {
+    await vite.close();
+    if (database) await (await database.getPglite()).close();
+    for (const key of ["__pgliteInstance__", "__pgliteMigrateChain__", "__pgBootstrapPromise__"]) Reflect.deleteProperty(globalThis, key);
+    process.env = previousEnv;
+  }
 });

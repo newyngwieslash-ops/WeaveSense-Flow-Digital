@@ -350,6 +350,111 @@ test("the configured cap is enforced through publicFetch", async () => {
 
 import { parseEgressCidrs, addressAllowedByEgress, declaredEgress } from "./outbound-policy.ts";
 
+test("total deadline bounds DNS before any transport can start", async () => {
+  const keepAlive = setTimeout(() => {}, 1000);
+  let transported = false;
+  try {
+    await assert.rejects(() => publicFetch("https://example.com/", {
+      timeoutMs: 40,
+      resolver: { lookup: () => new Promise(() => {}) },
+      transport: async () => { transported = true; throw new Error("must not dial"); },
+    }), /timeout|aborted/i);
+    assert.equal(transported, false);
+  } finally { clearTimeout(keepAlive); }
+});
+
+test("IPv6 compressed/expanded and hex-mapped private addresses stay blocked", () => {
+  for (const address of ["0:0:0:0:0:0:0:1", "::ffff:7f00:1", "::ffff:a00:1", "fe90::1", "febf::1", "fd12::1"]) {
+    assert.equal(addressBlocked(address), true, address);
+  }
+  assert.equal(addressBlocked("::ffff:808:808"), false);
+  assert.equal(addressBlocked("2606:4700::1111"), false);
+  for (const address of ["0:0:0:0:0:0:0:1", "::ffff:7f00:1", "fe90::1"]) {
+    assert.deepEqual(parseEgressCidrs(`${address}/128`), [], "private variants cannot masquerade as declared egress");
+  }
+});
+
+test("IPv6 benchmarking DNS is refused before transport unless explicitly declared as egress", async () => {
+  const saved = process.env.LOOM_EGRESS_CIDRS;
+  process.env.LOOM_EGRESS_CIDRS = "";
+  const spellings = ["2001:2::71", "2001:0002:0000:0000:0000:0000:0000:0071"];
+  let transportCalls = 0;
+  try {
+    for (const address of spellings) {
+      await assert.rejects(() => publicFetch("https://example.com/", {
+        resolver: resolverFor({ "example.com": [address] }),
+        transport: async () => { transportCalls += 1; throw new Error("transport_should_not_dial"); },
+      }), /blocked_address/);
+      assert.equal(transportCalls, 0, "an IPv6-only benchmark answer must not reach transport");
+    }
+    for (const address of [...spellings, "2001:2::", "2001:2:0:ffff:ffff:ffff:ffff:ffff"]) {
+      assert.equal(addressBlocked(address), true, address);
+    }
+    assert.equal(addressBlocked("2001:2:1::71"), false, "the guard covers exactly /48");
+    assert.equal(addressBlocked("2606:4700::1111"), false);
+
+    const egress = parseEgressCidrs("2001:2::/48");
+    assert.equal(egress.length, 1, "operator benchmarking proxy opt-in matches IPv4 policy");
+    for (const address of spellings) {
+      assert.equal(addressAllowedByEgress(address, egress), true);
+      const resolver = resolverFor({ "example.com": [address] });
+      assert.deepEqual(await resolvePublicAddresses("example.com", resolver, egress), [address]);
+      await assert.rejects(() => resolvePublicAddresses("example.com", resolver, []), /blocked_address/);
+    }
+    assert.equal(addressAllowedByEgress("2001:2:1::71", egress), false);
+    process.env.LOOM_EGRESS_CIDRS = "2001:2::/48";
+    const result = await publicFetch("https://example.com/", {
+      resolver: resolverFor({ "example.com": [spellings[0]] }),
+      transport: async () => textResponse("declared operator proxy"),
+    });
+    assert.equal(result.text, "declared operator proxy");
+  } finally {
+    if (saved === undefined) delete process.env.LOOM_EGRESS_CIDRS;
+    else process.env.LOOM_EGRESS_CIDRS = saved;
+  }
+});
+
+test("caller cancellation cancels a pending stream read and releases its lock", async () => {
+  const controller = new AbortController();
+  let cancelled = false, released = false;
+  const body: BodyLike = { getReader: () => ({
+    read: () => new Promise(() => {}),
+    cancel: async () => { cancelled = true; },
+    releaseLock: () => { released = true; },
+  }) };
+  const timer = setTimeout(() => controller.abort(new Error("caller cancelled")), 40);
+  try {
+    await assert.rejects(() => publicFetch("https://example.com/", {
+      signal: controller.signal, resolver: resolverFor({ "example.com": ["93.184.216.34"] }),
+      transport: async () => ({ status: 200, headers: {}, body }),
+    }), /caller cancelled/);
+    assert.equal(cancelled, true);
+    assert.equal(released, true);
+  } finally { clearTimeout(timer); }
+});
+
+test("nonsettling Web stream cancellation stays within the deadline and releases the lock", { timeout: 400 }, async () => {
+  const keepAlive = setTimeout(() => {}, 1000);
+  try {
+    for (const status of [200, 302, 500]) {
+      let cancelled = false;
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) { controller.enqueue(new Uint8Array(2)); },
+        cancel() { cancelled = true; return new Promise<void>(() => {}); },
+      });
+      const started = Date.now();
+      await assert.rejects(() => publicFetch("https://example.com/", {
+        timeoutMs: 25, maxBytes: 1,
+        resolver: resolverFor({ "example.com": ["93.184.216.34"] }),
+        transport: async () => ({ status, headers: { location: "https://example.com/next" }, body }),
+      }), /response_too_large|timeout|aborted/i);
+      assert.equal(cancelled, true, "underlying cancellation must still be invoked");
+      assert.equal(body.locked, false, "cleanup must release the reader even if cancellation never settles");
+      assert.ok(Date.now() - started < 150, "cancellation cleanup shares the request deadline");
+    }
+  } finally { clearTimeout(keepAlive); }
+});
+
 test("the environment declaration is honoured, and read per call", () => {
   const saved = process.env.LOOM_EGRESS_CIDRS;
   try {

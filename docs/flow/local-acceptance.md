@@ -94,6 +94,33 @@ Set either `FLOW_MCP_CRED_<NAME>` (bearer token) or an OAuth client-credentials 
 connection in Intelligence → MCP with credentialRef `env:FLOW_MCP_CRED_<NAME>` or `oauth:FLOW_MCP_OAUTH_<NAME>`.
 Discover the tools, approve them, and make one call.
 
+### 5.3.1 MCP OAuth with a real provider (authorization code + PKCE)
+Use this when the MCP server requires an interactive user login (any OAuth 2.0/2.1 provider that supports
+authorization code + PKCE, e.g. the provider in front of your hosted MCP server). Never paste client secrets or tokens
+into chat, tickets or the browser console; they live only in `.env.flow`.
+1. At the provider, register an OAuth client (confidential or public) with redirect URI
+   `https://<your-host>/api/intelligence/mcp/oauth/callback` (for a local stack: `http://localhost:<WEB_PORT>/api/intelligence/mcp/oauth/callback`)
+   and the scopes the MCP server needs. Enable PKCE (S256).
+2. In `.env.flow`, pick a NAME (upper case, e.g. `ACME`) and set:
+   `FLOW_MCP_OAUTHCODE_ACME_AUTH_URL`, `FLOW_MCP_OAUTHCODE_ACME_TOKEN_URL`, `FLOW_MCP_OAUTHCODE_ACME_CLIENT_ID`,
+   `FLOW_MCP_OAUTHCODE_ACME_CLIENT_SECRET` (empty for a public client), optional `_SCOPE` and `_REVOKE_URL`, and
+   `FLOW_MCP_OAUTHCODE_ACME_REDIRECT_URL` (exactly the URI registered in step 1).
+   Set `FLOW_OAUTH_ENC_KEY` to a random value of at least 32 characters (`openssl rand -hex 32`); tokens are stored
+   AES-GCM encrypted with it. Changing it later invalidates stored grants (users re-authorize).
+3. Restart `platform` (`docker compose -f docker-compose.flow.yml --env-file .env.flow up -d platform`).
+4. In Intelligence → MCP, add the connection with credentialRef `oauthcode:FLOW_MCP_OAUTHCODE_ACME` and press
+   **Authorize**. The browser goes to the provider's login/consent page (`POST /api/intelligence/mcp/connections/<id>/oauth/start`
+   returns that URL with `state` + `code_challenge`).
+5. Log in and consent. The provider redirects to `/api/intelligence/mcp/oauth/callback`; the page reports success and the
+   connection status (`GET …/connections/<id>/oauth`) shows `authorized`, the granted scope and the expiry — never the token.
+6. Discover tools, approve one, and make a call. Check MCP usage shows it with its credits.
+7. Refresh: wait for (or force, by setting a short token lifetime at the provider) access-token expiry and call again;
+   the platform refreshes with the stored refresh token without a new login.
+8. Negative checks: open the callback URL a second time (the `state` is single-use → rejected); start authorization as
+   another user and try to finish it with the first user's session (rejected); press **Revoke** (`POST …/oauth/revoke`),
+   confirm the provider shows the grant revoked and the next tool call asks for re-authorization.
+9. Confirm no token or client secret appears in `docker compose logs platform`, the UI, or the network responses.
+
 ### 5.4 A19 checklist (tick each one and record it in `delivery-report.md`)
 - [ ] Telegram: one collection run succeeded. The Sources panel "connector samples" shows `collector=telethon`, `mode=live`, items > 0.
 - [ ] Telegram: posts with photos have `media_status=saved` (objects under `telegram/<channel>/` in the intel bucket). Oversized media show `too_large`, not a failure.
@@ -101,6 +128,7 @@ Discover the tools, approve them, and make one call.
 - [ ] WeChat: one collection run with `collector` = the gateway or provider, `mode=live`, items > 0. Article bodies are readable in the document view.
 - [ ] Revoking a source stops new runs, and existing evidence stays readable (A17 live).
 - [ ] MCP: one approved tool call succeeded and appears in MCP usage with its credits. The token never appears in the UI or logs.
+- [ ] MCP OAuth (5.3.1): real-provider authorization succeeded, a tool call worked, refresh worked after expiry, replayed callback and revoke behaved as described.
 - [ ] Record the time (Asia/Shanghai), the commit SHA (`git rev-parse HEAD`) and the sample ids. Then set A19 to **pass** in `delivery-report.md`.
 
 ## 6. Stop / reset

@@ -43,14 +43,39 @@ func ModelStatusFromEnv() ModelStatus {
 	return ModelStatus{URL: strings.TrimSpace(os.Getenv("FLOW_MODEL_GATEWAY_STATUS_URL")), Key: os.Getenv("FLOW_MODEL_GATEWAY_KEY"), MicroPer1KTok: price}
 }
 
+type ModelStatusResult struct {
+	Status      string `json:"status"`
+	TotalTokens int64  `json:"total_tokens"`
+	Content     string `json:"content"`
+}
+
 func (m ModelStatus) Query(ctx context.Context, r model.FlowBudgetReservation) (Outcome, error) {
 	key := strings.TrimPrefix(r.ExternalRef, "model:")
 	if m.URL == "" || key == "" || !strings.HasPrefix(r.ExternalRef, "model:") {
 		return Outcome{}, nil
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, m.URL+"?idempotency_key="+url.QueryEscape(key), nil)
+	st, err := m.QueryKey(ctx, key)
 	if err != nil {
 		return Outcome{}, err
+	}
+	switch st.Status {
+	case "succeeded":
+		return Outcome{Known: true, Succeeded: true, Cost: st.TotalTokens * m.MicroPer1KTok / 1000}, nil
+	case "not_found", "failed":
+		return Outcome{Known: true}, nil
+	}
+	return Outcome{}, nil
+}
+
+// QueryKey asks the gateway what happened to the request with this idempotency key.
+func (m ModelStatus) QueryKey(ctx context.Context, key string) (ModelStatusResult, error) {
+	var st ModelStatusResult
+	if m.URL == "" {
+		return st, errors.New("no status url")
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, m.URL+"?idempotency_key="+url.QueryEscape(key), nil)
+	if err != nil {
+		return st, err
 	}
 	if m.Key != "" {
 		req.Header.Set("Authorization", "Bearer "+m.Key)
@@ -61,26 +86,16 @@ func (m ModelStatus) Query(ctx context.Context, r model.FlowBudgetReservation) (
 	}
 	resp, err := hc.Do(req)
 	if err != nil {
-		return Outcome{}, err
+		return st, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return Outcome{}, fmt.Errorf("status lookup %d", resp.StatusCode)
+		return st, fmt.Errorf("status lookup %d", resp.StatusCode)
 	}
-	var st struct {
-		Status      string `json:"status"`
-		TotalTokens int64  `json:"total_tokens"`
+	if err := json.NewDecoder(io.LimitReader(resp.Body, 1<<20)).Decode(&st); err != nil {
+		return st, err
 	}
-	if err := json.NewDecoder(io.LimitReader(resp.Body, 1<<16)).Decode(&st); err != nil {
-		return Outcome{}, err
-	}
-	switch st.Status {
-	case "succeeded":
-		return Outcome{Known: true, Succeeded: true, Cost: st.TotalTokens * m.MicroPer1KTok / 1000}, nil
-	case "not_found", "failed":
-		return Outcome{Known: true}, nil
-	}
-	return Outcome{}, nil
+	return st, nil
 }
 
 // ResolveReservation is the operator path for an unknown reservation:

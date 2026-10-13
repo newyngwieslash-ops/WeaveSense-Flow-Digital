@@ -141,7 +141,9 @@ func run(ctx context.Context) error {
 	if g := flow.ModelGatewayFromEnv(); g != nil {
 		modelGW = g
 		svc.ConfigureFlowModel(g)
+		go flow.RunModelTaskWorker(context.Background(), flow.ModelTasks{DB: db, GW: g, Status: flow.ModelStatusFromEnv()}, 2*time.Second)
 	}
+	flow.RegisterModelTaskRoutes(flowAPI, db, flowUser)
 	flow.RegisterP5Routes(flowAPI, db, flowCfg, flowUser, modelGW)
 	flow.RegisterP7Routes(flowAPI, db, flowUser, mcpGateway)
 	flow.RegisterCanvasConversationRoutes(flowAPI, db, flowUser)

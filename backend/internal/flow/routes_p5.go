@@ -242,9 +242,6 @@ func RunBillingMaintenance(ctx context.Context, db *gorm.DB, every time.Duration
 	defer t.Stop()
 	for {
 		_, _ = b.SweepStale(6 * time.Hour)
-		_, _ = b.Reconcile(10*time.Minute, func(r model.FlowBudgetReservation) (Outcome, error) {
-			return ModelStatusFromEnv().Query(ctx, r)
-		})
 		// No status endpoint / still unknown after 24h: charge conservatively.
 		_, _ = b.Reconcile(24*time.Hour, func(r model.FlowBudgetReservation) (Outcome, error) {
 			return Outcome{Known: true, Succeeded: true, Cost: r.ReservedMicro}, nil

@@ -72,6 +72,9 @@ func (g *OpenAICompatGateway) Complete(ctx context.Context, system, user string,
 	}
 	defer resp.Body.Close()
 	raw, _ := io.ReadAll(io.LimitReader(resp.Body, 4<<20))
+	if resp.StatusCode == http.StatusTooManyRequests {
+		return "", 0, fmt.Errorf("%w: upstream 429", ErrModelRetryable)
+	}
 	if resp.StatusCode >= 500 {
 		return "", 0, fmt.Errorf("%w: upstream %d", ErrModelUnknownOutcome, resp.StatusCode)
 	}
@@ -114,6 +117,7 @@ type Synthesis struct {
 	Claims        []ReportClaim `json:"claims"`
 	Dropped       []string      `json:"dropped_claims,omitempty"`
 	ReservationID string        `json:"reservation_id"`
+	TaskID        string        `json:"task_id"`
 	CostMicro     int64         `json:"cost_micro"`
 }
 
@@ -133,35 +137,26 @@ func Synthesize(ctx context.Context, gw ModelGateway, b Billing, req SynthesisRe
 	if req.MaxTokens <= 0 {
 		req.MaxTokens = 1200
 	}
-	var rsv, err = func() (string, error) {
-		if req.ParentResID != "" {
-			r, err := b.Allocate(req.ParentResID, req.Key, req.Purpose, req.Question, req.BudgetMicro)
-			return r.ID, err
-		}
-		r, err := b.Reserve(req.TenantID, req.Key, req.Purpose, req.Question, req.BudgetMicro)
-		return r.ID, err
-	}()
-	if err != nil {
-		return res, err
-	}
-	res.ReservationID = rsv
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "Question / brief topic: %s\n\nEvidence:\n", req.Question)
 	for _, e := range req.Evidence {
 		fmt.Fprintf(&sb, "- id=%s revision=%d source=%s title=%q\n  quote: %s\n", e.EvidenceID, e.Revision, e.SourceID, e.Title, truncRunes(e.Quote, 600))
 	}
-	text, cost, err := gw.Complete(context.WithValue(ctx, modelIdemCtx{}, req.Key), synthesisSystem, sb.String(), req.MaxTokens)
+	// Routed through the async task pipeline (queue, claim, retries,
+	// reconciliation); Wait executes due attempts inline when no worker runs.
+	tasks := ModelTasks{DB: b.DB, GW: gw, Now: b.Now, Status: ModelStatusFromEnv()}
+	task, err := tasks.Enqueue(ModelTaskInput{TenantID: req.TenantID, ParentResID: req.ParentResID, Key: req.Key, Purpose: req.Purpose, RefID: req.Question,
+		System: synthesisSystem, User: sb.String(), MaxTokens: req.MaxTokens, BudgetMicro: req.BudgetMicro})
 	if err != nil {
-		if errors.Is(err, ErrModelUnknownOutcome) {
-			_ = b.MarkUnknown(rsv, "model:"+req.Key, err.Error())
-		} else {
-			_, _ = b.Release(rsv)
-		}
 		return res, err
 	}
-	if _, err := b.Settle(rsv, cost); err != nil {
+	res.ReservationID = task.ReservationID
+	res.TaskID = task.ID
+	task, err = tasks.Wait(ctx, task.ID)
+	if err != nil {
 		return res, err
 	}
+	text, cost := task.Result, task.CostMicro
 	res.CostMicro = cost
 	var parsed struct {
 		Body   string        `json:"body"`

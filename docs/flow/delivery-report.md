@@ -271,3 +271,12 @@ Pending live acceptance and required credentials: see [pending-acceptance.md](pe
 - **Canvas sidebar edit/delete controls.** The canvas sidebar UI has no edit or delete buttons yet. The sync supports them (helpers exported and tested), but sidebar edits reach the directory only once that UI is added. Edit and delete from the intelligence page are wired in.
 - **Engine summarize continuation is tick-driven.** The parked brief window is completed by the next scheduler tick (default 15 s), not by a push event from the platform.
 - **Agent-run summarize.** The agent's research synthesis tool still uses `Synthesize` (enqueue, then wait inside the tool call); only the engine path is non-blocking.
+
+### P9 merge record
+- PR #18 (`p9-close-gaps`) was merged on 2026-10-13 at 22:34 Asia/Shanghai after green CI (Backend checks, Web checks, Payment plugin artifacts). Merge commit: `895382744800221541bbd3c61285ed47bd3e378f`.
+- Compose stack on the build box at this commit: schema v60 (the `revision`/`tombstoned_at` columns are present); `smoke.sh` 16/16; `browser-smoke.mjs` 6/6.
+- Local tests:
+  - `go vet` passes. `go test ./...` passes everything except the 5 known Pi e2e tests in `internal/app`, which need the Pi `node_modules` (they pass in CI). The RLS tests ran against real Postgres 17 as a non-superuser.
+  - Engine `test:flow` 34/34 and typecheck pass. The full engine `npm test` has 1 failure, `service-env-least-privilege` ("runtime requires pids_limit: 64"); it fails the same way on the base commit `c36991da` and is unrelated to P9.
+  - Telethon worker unittest passes.
+  - Web: tsc and eslint pass, `bun test` 2222/2222, and Prettier passes on the changed files.

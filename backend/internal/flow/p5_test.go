@@ -3,6 +3,12 @@ package flow
 import (
 	"context"
 	"errors"
+	"net/http"
+	"net/http/httptest"
+	"net/netip"
+	"strings"
+
+	"github.com/gin-gonic/gin"
 	"testing"
 	"time"
 
@@ -168,5 +174,84 @@ func TestOrgInviteSingleUseAndGrantRevocation(t *testing.T) {
 	}
 	if err := AuthorizeGrant(db, "user:u_bob", tn.ID, ws.ID, "intel.reports.write"); err == nil {
 		t.Fatal("removed member's grant must be denied")
+	}
+}
+
+func TestEgressBlocksPrivateAddresses(t *testing.T) {
+	for _, a := range []string{"127.0.0.1", "10.1.2.3", "172.16.0.1", "192.168.1.1", "169.254.169.254", "100.64.0.1", "::1", "fe80::1", "fc00::1", "::ffff:127.0.0.1", "0.0.0.0"} {
+		if PublicAddr(netip.MustParseAddr(a)) {
+			t.Fatalf("%s must be blocked", a)
+		}
+	}
+	if !PublicAddr(netip.MustParseAddr("1.1.1.1")) {
+		t.Fatal("public address must pass")
+	}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {}))
+	defer srv.Close()
+	_, err := (&http.Client{Transport: PublicTransport()}).Get(srv.URL)
+	if err == nil || !errors.Is(err, ErrEgressBlocked) {
+		t.Fatalf("loopback dial must be blocked, got %v", err)
+	}
+}
+
+func TestRunLeaseOwnershipAndTakeover(t *testing.T) {
+	db := testDB(t)
+	now := time.Now()
+	l := RunLeases{DB: db, TTL: time.Minute, Now: func() time.Time { return now }}
+	tok, err := l.Acquire("run1", "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := l.Acquire("run1", "b"); !errors.Is(err, ErrLeaseHeld) {
+		t.Fatalf("second owner must be refused: %v", err)
+	}
+	if again, _ := l.Acquire("run1", "a"); again != tok {
+		t.Fatal("re-acquire by owner keeps token")
+	}
+	now = now.Add(2 * time.Minute) // owner a crashed; lease expired
+	tb, err := l.Acquire("run1", "b")
+	if err != nil || tb != tok+1 {
+		t.Fatalf("takeover: %d %v", tb, err)
+	}
+	if err := l.Renew("run1", "a", tok); !errors.Is(err, ErrLeaseHeld) {
+		t.Fatal("stale owner renew must fail")
+	}
+	l.Release("run1", "a", tok) // stale release is a no-op
+	if err := l.Renew("run1", "b", tb); err != nil {
+		t.Fatal(err)
+	}
+	l.Release("run1", "b", tb)
+	if _, err := l.Acquire("run1", "c"); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestCanvasConversationDocOptimisticConcurrency(t *testing.T) {
+	db := testDB(t)
+	gin.SetMode(gin.TestMode)
+	r := gin.New()
+	who := "u_alice"
+	RegisterCanvasConversationRoutes(r.Group("/api"), db, func(*gin.Context) (*model.User, error) { return &model.User{ID: who}, nil })
+	do := func(method, body string) (int, string) {
+		w := httptest.NewRecorder()
+		req := httptest.NewRequest(method, "/api/agent/canvas-conversations/cv1", strings.NewReader(body))
+		r.ServeHTTP(w, req)
+		return w.Code, w.Body.String()
+	}
+	if code, _ := do("PUT", `{"baseVersion":0,"document":{"version":1,"activeId":null,"conversations":[]}}`); code != 200 {
+		t.Fatal(code)
+	}
+	if code, _ := do("PUT", `{"baseVersion":0,"document":{"x":1}}`); code != 409 {
+		t.Fatalf("stale create must conflict: %d", code)
+	}
+	if code, _ := do("PUT", `{"baseVersion":1,"document":{"v":2}}`); code != 200 {
+		t.Fatal(code)
+	}
+	if code, body := do("PUT", `{"baseVersion":1,"document":{"v":3}}`); code != 409 || !strings.Contains(body, `"v":2`) {
+		t.Fatalf("stale write must conflict and return server copy: %d %s", code, body)
+	}
+	who = "u_bob"
+	if _, body := do("GET", ""); !strings.Contains(body, `"document":null`) {
+		t.Fatalf("other user must not see doc: %s", body)
 	}
 }

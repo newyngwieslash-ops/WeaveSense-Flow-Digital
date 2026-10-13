@@ -53,3 +53,24 @@ type FlowInvite struct {
 	RevokedAt   *time.Time `json:"revokedAt,omitempty"`
 	CreatedAt   time.Time  `json:"createdAt"`
 }
+
+// FlowRunLease gives one process exclusive ownership of an agent run across
+// replicas. FencingToken increases on every takeover so a stale owner's
+// renewals fail and it stops its session.
+type FlowRunLease struct {
+	RunID        string    `json:"runId" gorm:"primaryKey;size:80"`
+	Owner        string    `json:"owner" gorm:"size:120;not null"`
+	FencingToken int64     `json:"fencingToken" gorm:"not null"`
+	ExpiresAt    time.Time `json:"expiresAt" gorm:"index"`
+	UpdatedAt    time.Time `json:"updatedAt"`
+}
+
+// FlowCanvasConversationDoc is the server-side copy of a canvas agent sidebar
+// conversation directory (per user + canvas), so it follows the user across devices.
+type FlowCanvasConversationDoc struct {
+	UserID    string    `json:"userId" gorm:"primaryKey;size:36"`
+	CanvasID  string    `json:"canvasId" gorm:"primaryKey;size:80"`
+	Document  string    `json:"-" gorm:"type:text;not null"`
+	Version   int64     `json:"version" gorm:"not null"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}

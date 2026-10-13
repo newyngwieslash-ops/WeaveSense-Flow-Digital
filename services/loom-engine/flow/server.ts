@@ -3,6 +3,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { verify, requireScope, AuthError, type ExecutionContext } from "./auth.ts";
 import { Engine, HttpError } from "./engine.ts";
 import { Reports } from "./reports.ts";
+import { withTenant } from "./db.ts";
 
 export interface ServerConfig { signingKey: string; audience: string }
 
@@ -26,6 +27,16 @@ export function handler(engine: Engine, cfg: ServerConfig) {
       if (url.pathname === "/healthz") return send(res, 200, { ok: true });
       const auth = req.headers.authorization ?? "";
       const ctx: ExecutionContext = verify(cfg.signingKey, auth.replace(/^Bearer /, ""), cfg.audience);
+      // Postgres RLS second layer: every query of this request runs with app.tenant_id = token tenant.
+      return await withTenant(ctx.tenant_id, () => route(req, res, url, ctx));
+    } catch (e: any) {
+      if (e instanceof AuthError || e instanceof HttpError) return send(res, e.status, null, e.message);
+      console.error("[loom-engine]", e);
+      return send(res, 500, null, "internal error");
+    }
+  };
+  async function route(req: IncomingMessage, res: ServerResponse, url: URL, ctx: ExecutionContext) {
+    {
       const p = url.pathname, m = req.method;
       let mm: RegExpMatchArray | null;
       if (m === "GET" && p === "/v1/sources") { requireScope(ctx, "intel.sources.read"); return send(res, 200, await engine.listSources(ctx)); }
@@ -81,12 +92,8 @@ export function handler(engine: Engine, cfg: ServerConfig) {
       if (m === "GET" && p === "/v1/connector-samples") { requireScope(ctx, "intel.sources.read"); return send(res, 200, await engine.listConnectorSamples(ctx)); }
       if (m === "POST" && p === "/v1/documents/extract") { requireScope(ctx, "intel.collect"); return send(res, 200, await engine.extractDocument(ctx, await readJson(req))); }
       return send(res, 404, null, "not found");
-    } catch (e: any) {
-      if (e instanceof AuthError || e instanceof HttpError) return send(res, e.status, null, e.message);
-      console.error("[loom-engine]", e);
-      return send(res, 500, null, "internal error");
     }
-  };
+  }
 }
 
 export const createApiServer = (engine: Engine, cfg: ServerConfig) => createServer(handler(engine, cfg));

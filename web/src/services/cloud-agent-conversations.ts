@@ -2,6 +2,7 @@ import { localForageStorageForScope } from "@/lib/localforage-storage";
 import { markdownPlainText } from "@/lib/markdown-plain-text";
 import { getActiveUserScope } from "@/lib/user-scope";
 import type { AgentPermissionMode, AgentRun } from "@/services/api/agent";
+import { http } from "@/services/api/request";
 
 export type CloudAgentMessagePresentation = {
     displayText?: string;
@@ -52,8 +53,24 @@ export type CloudAgentPendingSubmission = CloudAgentMessagePresentation & {
 
 const CLOUD_AGENT_CONVERSATIONS_KEY = "cloud-agent-conversations-v1";
 
+// Server copy (cross-device). The local store stays as a warm cache / offline fallback.
+const serverVersions = new Map<string, number>();
+type ServerDoc = { version: number; document: CloudAgentConversationDocument | null };
+const serverPath = (canvasId: string) => `/agent/canvas-conversations/${encodeURIComponent(canvasId)}`;
+
 export async function loadCloudAgentConversations(canvasId: string): Promise<CloudAgentConversationDocument> {
     if (!canvasId) throw new Error("缺少画布 ID，无法读取 Agent 对话");
+    try {
+        const remote = await http.get<ServerDoc>(serverPath(canvasId));
+        serverVersions.set(canvasId, remote.version);
+        if (remote.document && isConversationDocument(remote.document)) return remote.document;
+    } catch {
+        // offline or server unavailable: fall back to the local cache below
+    }
+    return loadLocalCloudAgentConversations(canvasId);
+}
+
+async function loadLocalCloudAgentConversations(canvasId: string): Promise<CloudAgentConversationDocument> {
     const value = await localForageStorageForScope(getActiveUserScope()).getItem(storageKey(canvasId));
     if (!value) return emptyDocument();
 
@@ -77,6 +94,37 @@ export async function saveCloudAgentConversations(canvasId: string, activeId: st
     }));
     const document: CloudAgentConversationDocument = { version: 1, activeId, conversations: persistedConversations };
     await localForageStorageForScope(getActiveUserScope()).setItem(storageKey(canvasId), JSON.stringify(document));
+    await pushServerDocument(canvasId, document);
+}
+
+async function pushServerDocument(canvasId: string, document: CloudAgentConversationDocument, retry = true): Promise<void> {
+    try {
+        const saved = await http.put<{ version: number }>(serverPath(canvasId), { baseVersion: serverVersions.get(canvasId) ?? 0, document });
+        serverVersions.set(canvasId, saved.version);
+    } catch (cause) {
+        if (retry && (cause as { status?: number })?.status === 409) {
+            // Another device wrote first: merge by conversation id (newest updatedAt wins), then retry once.
+            try {
+                const remote = await http.get<ServerDoc>(serverPath(canvasId));
+                serverVersions.set(canvasId, remote.version);
+                return pushServerDocument(canvasId, mergeDocuments(remote.document, document), false);
+            } catch {
+                return;
+            }
+        }
+        // Network failure: the local copy is kept and the next save retries.
+    }
+}
+
+function mergeDocuments(server: CloudAgentConversationDocument | null, local: CloudAgentConversationDocument): CloudAgentConversationDocument {
+    if (!server || !isConversationDocument(server)) return local;
+    const byId = new Map(server.conversations.map((c) => [c.id, c]));
+    for (const c of local.conversations) {
+        const other = byId.get(c.id);
+        if (!other || other.updatedAt <= c.updatedAt) byId.set(c.id, c);
+    }
+    const conversations = [...byId.values()].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
+    return { version: 1, activeId: local.activeId, conversations };
 }
 
 // Keep the retry key outside the chat snapshot. If the response is lost, a
@@ -94,7 +142,15 @@ export async function loadCloudAgentPendingSubmission(canvasId: string, conversa
         if (parsed.request !== undefined && (!parsed.request || parsed.request.idempotencyKey !== parsed.key || parsed.request.canvasId !== canvasId || typeof parsed.request.prompt !== "string")) throw new Error("invalid request");
         if (parsed.parentRunId !== undefined && typeof parsed.parentRunId !== "string") throw new Error("invalid parent");
         if (parsed.messageId !== undefined && typeof parsed.messageId !== "string") throw new Error("invalid message");
-        return { fingerprint: parsed.fingerprint, key: parsed.key, request: parsed.request, parentRunId: parsed.parentRunId, messageId: parsed.messageId, displayText: parsed.displayText, canvasReferenceNodeId: parsed.canvasReferenceNodeId } satisfies CloudAgentPendingSubmission;
+        return {
+            fingerprint: parsed.fingerprint,
+            key: parsed.key,
+            request: parsed.request,
+            parentRunId: parsed.parentRunId,
+            messageId: parsed.messageId,
+            displayText: parsed.displayText,
+            canvasReferenceNodeId: parsed.canvasReferenceNodeId,
+        } satisfies CloudAgentPendingSubmission;
     } catch {
         throw new Error("待确认请求记录损坏，已暂停本对话发送；请先在任务中心核对原运行，不要直接重复生成");
     }
@@ -138,11 +194,13 @@ function isConversationDocument(value: unknown): value is CloudAgentConversation
     return document.conversations.every((conversation) => {
         if (!conversation || typeof conversation !== "object") return false;
         const candidate = conversation as Partial<CloudAgentConversation>;
-        return typeof candidate.id === "string"
-            && typeof candidate.title === "string"
-            && Array.isArray(candidate.messages)
-            && typeof candidate.createdAt === "string"
-            && typeof candidate.updatedAt === "string"
-            && ["read_only", "auto", "request_approval"].includes(candidate.permissionMode || "");
+        return (
+            typeof candidate.id === "string" &&
+            typeof candidate.title === "string" &&
+            Array.isArray(candidate.messages) &&
+            typeof candidate.createdAt === "string" &&
+            typeof candidate.updatedAt === "string" &&
+            ["read_only", "auto", "request_approval"].includes(candidate.permissionMode || "")
+        );
     });
 }

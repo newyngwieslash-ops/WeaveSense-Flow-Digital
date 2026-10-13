@@ -66,6 +66,14 @@ func (s *Service) startCloudAgentPi(userID, runID string) {
 			s.piRunnerWg.Done()
 		}()
 
+		// Cross-replica ownership: only the lease holder runs the session; a lost
+		// lease (another replica took over after expiry) cancels this one.
+		release, err := s.acquirePiRunLease(ctx, cancel, runID)
+		if err != nil {
+			log.Printf("[Agent] run %s owned elsewhere: %v", runID, err)
+			return
+		}
+		defer release()
 		if err := s.runCloudAgentPiSession(ctx, userID, runID); err != nil && !errors.Is(err, context.Canceled) {
 			log.Printf("[Agent] session failed run=%s: %v", runID, err)
 			s.failPiRunner(runID, userID, errors.New(cloudAgentUserFailureMessage(runID, err)))

@@ -67,6 +67,7 @@ services:
       DATABASE_URL: postgres://${PLATFORM_DB_USER:-flow_platform}:${PLATFORM_DB_PASSWORD}@postgres:5432/${PLATFORM_DB_NAME:-flow_platform}?sslmode=disable
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       LOOM_ENGINE_URL: http://loom-engine:8080
+      # P5 Model Gateway (OpenAI-compatible). Set FLOW_MODEL_GATEWAY_URL/_KEY/_MODEL in .env.flow; unset = extractive only.
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_started }
@@ -101,6 +102,8 @@ services:
     environment:
       DATABASE_URL: postgres://${INTEL_DB_USER:-flow_intel}:${INTEL_DB_PASSWORD}@postgres:5432/${INTEL_DB_NAME:-flow_intel}?sslmode=disable
       LOOM_ROLE: scheduler      # single due-window scanner (advisory-locked)
+      # P5: re-check grant authorization + LLM brief summarization via the platform (internal network only).
+      FLOW_PLATFORM_INTERNAL_URL: http://platform:8080
       LOOM_AUTO_MIGRATE: "false"
     command: ["node", "flow/main.ts"]
     depends_on:

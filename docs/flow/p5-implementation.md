@@ -37,3 +37,43 @@
 **Tests.**
 - `backend/internal/flow/p5_test.go`: reserve, allocate and settle; child over-allocation rejected; unknown → reconcile; quota; Synthesize drops invalid citations; unknown outcome; invite single-use; removed member's grant denied.
 - `services/loom-engine/flow/p5.test.ts`: revoked grant disables collection and brief schedules; LLM brief path; transactional brief.
+
+## p5-hardening (local, uncommitted on branch `p5-hardening`)
+
+**Agent run leases.** `backend/internal/flow/lease.go`, `cloud_agent_pi_lease.go`, migration v56 `flow_run_leases`
+- One replica owns a run; fencing token rises on takeover so a stale owner’s renew fails and cancels its session.
+- TTL 60s with renew every TTL/3; wired at `startCloudAgentPi`.
+
+**MCP egress allowlist.** `backend/internal/flow/egress.go`
+- `PublicTransport` blocks loopback, private, link-local/metadata, CGNAT, and related prefixes on the resolved dial address.
+- Production MCP gateway uses it; `AllowInsecure` keeps DefaultTransport for loopback test mocks.
+
+**Nginx.** `/api/internal/` returns 404 at the edge so engine/platform internal routes stay off the public entry.
+
+**Loom Engine RLS.** migration `0006_rls.sql`, `db.ts` `withTenant` / `app.tenant_id`
+- Request handlers run under the token tenant; workers leave tenant empty (system context).
+- `FORCE ROW LEVEL SECURITY`; deploy engine as non-superuser. Real-PG coverage in `pg.test.ts` (needs `FLOW_TEST_PG_*`).
+
+**Backup/restore.** `deploy/flow/backup/{backup,manifest,restore}.sh`
+- `pg_dump` custom format + per-table row counts/checksums; restore verifies the manifest.
+
+**Tests.** `TestEgressBlocksPrivateAddresses`, `TestRunLeaseOwnershipAndTakeover` in `p5_test.go` (pass locally).
+
+## p5-hardening
+
+- **Postgres RLS (second layer).**
+  - Engine migration `0006_rls.sql` turns on ENABLE + FORCE RLS for all 17 tenant tables, with policy `tenant_id = current_setting('app.tenant_id')`. An empty value means system context.
+  - `db.ts` `withTenant()` uses AsyncLocalStorage. Every API request runs its statements inside a transaction with `set_config('app.tenant_id', …, true)`.
+  - Verified on real PostgreSQL 17 as a non-superuser (`flow/pg.test.ts`): rows are hidden, cross-tenant INSERT is rejected, cross-tenant UPDATE affects 0 rows, and the HTTP API passes end to end.
+- **Egress block.**
+  - `flow/egress.go` `PublicTransport()` checks the resolved socket address in `net.Dialer.Control`, so DNS rebinding and redirects are covered too. The MCP gateway uses it in production.
+  - Engine fetches already use `publicFetch`.
+- **nginx.** `location ^~ /api/internal/ { return 404; }`.
+- **Pi run lease/recovery ownership.**
+  - `flow_run_leases` (schema v56) holds owner, fencing token and expiry. A Pi session starts only after `Acquire` succeeds, and renews every TTL/3 (TTL 60s).
+  - A lost lease cancels the session. Recovery on another replica takes over after expiry, with a new fencing token.
+  - Release on exit allows immediate recovery.
+- **Canvas sidebar server conversations.**
+  - The canvas agent conversation directory is stored server-side via `GET/PUT /api/agent/canvas-conversations/:canvasId`, per user, with optimistic concurrency on `version`.
+  - The client merges on 409 (newest `updatedAt` wins per conversation). localForage remains the warm cache and offline fallback.
+- **Backup/restore + release/deploy docs.** See `release-deploy.md`.

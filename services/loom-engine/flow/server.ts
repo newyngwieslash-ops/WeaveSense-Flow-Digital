@@ -48,6 +48,17 @@ export function handler(engine: Engine, cfg: ServerConfig) {
       if (m === "GET" && (mm = p.match(/^\/v1\/operations\/([\w-]+)$/))) {
         requireScope(ctx, "intel.operations.read"); return send(res, 200, await engine.getOperation(ctx, mm[1]));
       }
+      if (m === "POST" && p === "/v1/documents/search") { requireScope(ctx, "intel.documents.read"); return send(res, 200, await engine.searchDocuments(ctx, await readJson(req))); }
+      if (m === "POST" && p === "/v1/documents/read") { requireScope(ctx, "intel.documents.read"); return send(res, 200, await engine.readDocument(ctx, await readJson(req))); }
+      if (m === "GET" && p === "/v1/monitors") { requireScope(ctx, "intel.sources.read"); return send(res, 200, await engine.listMonitors(ctx)); }
+      if (m === "POST" && p === "/v1/monitors/preview") { requireScope(ctx, "intel.sources.read"); return send(res, 200, await engine.previewMonitor(ctx, await readJson(req))); }
+      if (m === "POST" && p === "/v1/monitors") {
+        requireScope(ctx, "intel.monitors.write");
+        const b = await readJson(req);
+        return send(res, 201, await engine.applyMonitor(ctx, `${ctx.actor.type}:${ctx.actor.id}`, ctx.policy_version,
+          { ...b, idempotency_key: String(req.headers["x-idempotency-key"] ?? b.idempotency_key ?? "") }));
+      }
+      if (m === "POST" && (mm = p.match(/^\/v1\/operations\/([\w-]+)\/cancel$/))) { requireScope(ctx, "intel.collect"); return send(res, 200, await engine.cancelOperation(ctx, mm[1])); }
       return send(res, 404, null, "not found");
     } catch (e: any) {
       if (e instanceof AuthError || e instanceof HttpError) return send(res, e.status, null, e.message);

@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 	"unicode/utf8"
+	"yingce/backend/internal/flow"
 
 	"yingce/backend/internal/auth"
 	"yingce/backend/internal/canvas"
@@ -26,6 +27,7 @@ import (
 
 type Service struct {
 	repo                     *repository.Repository
+	flowEngine               flow.EngineCaller
 	dataDir                  string
 	cancelMu                 sync.Mutex
 	registrationMu           sync.Mutex

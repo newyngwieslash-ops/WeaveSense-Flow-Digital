@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"yingce/backend/internal/flow"
 )
 
 func cloudAgentCanonical(system string, history []providerTextMessage, prompt string, req CloudAgentRequest) canonicalAgentRequest {
@@ -76,6 +77,9 @@ func cloudAgentTools(req CloudAgentRequest) []map[string]any {
 }
 
 func compileCloudAgentTools(req CloudAgentRequest, includeProfileTool bool) []map[string]any {
+	if cloudAgentIntelSubject(req) {
+		return cloudAgentIntelTools(req)
+	}
 	tools := []map[string]any{}
 	add := func(name, description string, properties map[string]any, required ...string) {
 		if required == nil {
@@ -334,7 +338,7 @@ func CloudAgentSupportedToolNames() []string {
 	// 平台支持的工具全集：含只在特定条件下暴露的工具（看图需要渠道模型声明图片输入能力）。
 	req := CloudAgentRequest{PermissionMode: "auto", ContextScope: []string{"canvas"}, SkillIDs: []string{"capability-list"}, VisionEnabled: true}
 	req.Budget.MaxGenerationTasks = 1
-	tools := cloudAgentTools(req)
+	tools := append(cloudAgentTools(req), flow.PiFunctionTools()...)
 	names := make([]string, 0, len(tools))
 	for _, tool := range tools {
 		function, _ := tool["function"].(map[string]any)

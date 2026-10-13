@@ -168,7 +168,7 @@ var schemaMigrations = []migration{
 	}},
 	{version: 51, name: "flow_tenancy", checksum: "sha256:flow-tenancy-v51-20261012", apply: migrateFlowTenancy},
 	{version: 52, name: "flow_agent", checksum: "sha256:flow-agent-v52-20261013", apply: func(tx *gorm.DB) error {
-		return tx.AutoMigrate(&model.FlowTopic{}, &model.FlowAgentConversation{}, &model.FlowAgentMessage{}, &model.FlowAgentToolCall{}, &model.FlowAgentApproval{})
+		return tx.AutoMigrate(&model.FlowTopic{}, &model.FlowAgentConversation{}, &model.FlowAgentMessage{}, &model.FlowAgentToolCall{})
 	}},
 }
 

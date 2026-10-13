@@ -69,20 +69,3 @@ type FlowAgentToolCall struct {
 }
 
 func (FlowAgentToolCall) TableName() string { return "flow_agent_tool_calls" }
-
-type FlowAgentApproval struct {
-	ID             string     `json:"id" gorm:"primaryKey;size:40"`
-	TenantID       string     `json:"tenantId" gorm:"size:40;index"`
-	WorkspaceID    string     `json:"workspaceId" gorm:"size:40"`
-	ConversationID string     `json:"conversationId" gorm:"size:40;index"`
-	ToolCallID     string     `json:"toolCallId" gorm:"size:40"`
-	ToolName       string     `json:"toolName" gorm:"size:80"`
-	Summary        string     `json:"summary" gorm:"type:text"`
-	Status         string     `json:"status" gorm:"size:16"` // pending | approved | rejected | expired
-	DecidedBy      string     `json:"decidedBy,omitempty" gorm:"size:36"`
-	DecidedAt      *time.Time `json:"decidedAt,omitempty"`
-	ExpiresAt      time.Time  `json:"expiresAt"`
-	CreatedAt      time.Time  `json:"createdAt"`
-}
-
-func (FlowAgentApproval) TableName() string { return "flow_agent_approvals" }

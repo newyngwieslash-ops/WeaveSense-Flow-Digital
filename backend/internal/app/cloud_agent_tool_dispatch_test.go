@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"yingce/backend/internal/flow"
 )
 
 // 本文件是一致性守卫：工具表（模型看到的契约）与运行期分派必须始终一致。
@@ -23,7 +24,15 @@ import (
 // 因此这里用 go/ast 读源码抽取集合再做集合断言——检查的正是"分派有没有写"。
 func TestCloudAgentToolTableMatchesRuntimeDispatch(t *testing.T) {
 	registered := cloudAgentRegisteredToolNames(t)
-	supported := CloudAgentSupportedToolNames()
+	supported := []string{}
+	for _, name := range CloudAgentSupportedToolNames() {
+		// intel_* tools are dispatched by the flow.IsTool bridge branch in
+		// advanceCloudAgentTool and live in the subject-specific tool table.
+		if flow.IsTool(name) {
+			continue
+		}
+		supported = append(supported, name)
+	}
 	dispatched := cloudAgentDispatchedToolNames(t)
 
 	// 1. 平台支持集合里每个名字都能被执行分派处理（读/写两条分派路径都算）。

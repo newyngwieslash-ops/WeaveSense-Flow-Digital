@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, Card, Input, List, Select, Space, Tag, Typography, message } from "antd";
 import { EmptyState } from "@/components/ui/product/empty-state/empty-state";
 
@@ -6,18 +6,19 @@ import {
     cachedConversations,
     callTool,
     createConversation,
-    decideApproval,
     listConversations,
     listIntelWorkspaces,
     listMessages,
     listMonitors,
-    postMessage,
     type FlowConversation,
     type FlowMessage,
     type IntelMonitor,
     type IntelWorkspace,
     type ToolResult,
 } from "@/services/api/intelligence";
+import { createAgentRun, decideAgentApproval, getAgentRun, subscribeAgentEvents, type AgentApproval } from "@/services/api/agent";
+
+const TERMINAL = new Set(["completed", "failed", "cancelled", "rejected"]);
 
 const newCallId = () => `ui_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 
@@ -31,6 +32,11 @@ export default function IntelligencePage() {
     const [monitors, setMonitors] = useState<IntelMonitor[]>([]);
     const [pending, setPending] = useState<ToolResult[]>([]);
     const [text, setText] = useState("");
+    const [runId, setRunId] = useState<string>();
+    const [streaming, setStreaming] = useState("");
+    const [approval, setApproval] = useState<AgentApproval>();
+    const unsubscribe = useRef<(() => void) | undefined>(undefined);
+    useEffect(() => () => unsubscribe.current?.(), []);
 
     useEffect(() => {
         void listIntelWorkspaces().then((list) => {
@@ -62,12 +68,42 @@ export default function IntelligencePage() {
         return conv;
     };
 
+    /** Sends the turn to the Pi agent (subject-bound run) and streams the model reply. */
     const send = async () => {
-        if (!text.trim()) return;
+        const prompt = text.trim();
+        if (!prompt || runId) return;
         const conv = await ensureConversation();
-        await postMessage(conv.id, text.trim());
         setText("");
-        await refreshMessages(conv);
+        setStreaming("");
+        try {
+            const { run } = await createAgentRun({ subject: { kind: conv.subjectKind as "intelligence_workspace" | "topic", id: conv.subjectId }, conversationId: conv.id, prompt, permissionMode: "request_approval", idempotencyKey: newCallId() });
+            setRunId(run.id);
+            await refreshMessages(conv);
+            unsubscribe.current?.();
+            unsubscribe.current = subscribeAgentEvents(run.id, (event) => {
+                const p = event.payload as { text?: string; replace?: boolean; status?: string };
+                if (event.type === "assistant_delta") setStreaming((cur) => (p.replace ? p.text || "" : cur + (p.text || "")));
+                else if (event.type === "assistant_message") setStreaming(p.text || "");
+                else if (event.type === "approval_requested") void getAgentRun(run.id).then((r) => setApproval(r.run.approval));
+                if (TERMINAL.has(event.type.replace(/^run_/, "")) || (p.status && TERMINAL.has(p.status))) {
+                    unsubscribe.current?.();
+                    setRunId(undefined);
+                    setApproval(undefined);
+                    setStreaming("");
+                    refreshMonitors();
+                    void refreshMessages(conv);
+                }
+            });
+        } catch (err) {
+            setRunId(undefined);
+            void message.error(err instanceof Error ? err.message : "agent run failed");
+        }
+    };
+
+    const decideRun = async (approve: boolean) => {
+        if (!runId || !approval) return;
+        await decideAgentApproval(runId, approval.approvalId, approve ? "approve" : "reject");
+        setApproval(undefined);
     };
 
     const runTool = async (name: string, args: Record<string, unknown>) => {
@@ -79,12 +115,10 @@ export default function IntelligencePage() {
         return result;
     };
 
-    const decide = async (r: ToolResult, approve: boolean) => {
-        if (!r.approvalId) return;
-        await decideApproval(r.approvalId, approve);
-        setPending((p) => p.filter((x) => x.approvalId !== r.approvalId));
-        refreshMonitors();
-        if (active) await refreshMessages(active);
+    const decide = (r: ToolResult) => {
+        // Manual tool calls no longer approve outside the agent: apply_monitor is approved via the Pi run chain.
+        setPending((p) => p.filter((x) => x !== r));
+        void message.info("Ask the agent to create the monitor; approval happens in the agent run.");
     };
 
     return (
@@ -128,26 +162,38 @@ export default function IntelligencePage() {
                             </div>
                         ))
                     )}
+                    {streaming && (
+                        <div style={{ marginBottom: 8 }}>
+                            <Tag color="blue">assistant</Tag>
+                            <Typography.Text style={{ whiteSpace: "pre-wrap" }}>{streaming}</Typography.Text>
+                        </div>
+                    )}
                 </div>
                 <Space.Compact style={{ width: "100%" }}>
                     <Input value={text} onChange={(e) => setText(e.target.value)} onPressEnter={() => void send()} placeholder="Message" />
-                    <Button type="primary" onClick={() => void send()}>
+                    <Button type="primary" loading={!!runId} onClick={() => void send()}>
                         Send
                     </Button>
                     <Button onClick={() => void runTool("intel_search_documents", { query: text })} disabled={!text.trim()}>
                         Search
                     </Button>
                 </Space.Compact>
-                {pending.map((p) => (
-                    <Card key={p.approvalId} size="small" style={{ marginTop: 8 }} title={`Approval needed: ${p.tool}`}>
+                {approval && (
+                    <Card size="small" style={{ marginTop: 8 }} title={`Approval needed: ${approval.call.function.name}`}>
+                        <Typography.Paragraph style={{ whiteSpace: "pre-wrap" }}>{approval.call.function.arguments}</Typography.Paragraph>
                         <Space>
-                            <Button type="primary" onClick={() => void decide(p, true)}>
+                            <Button type="primary" onClick={() => void decideRun(true)}>
                                 Approve
                             </Button>
-                            <Button danger onClick={() => void decide(p, false)}>
+                            <Button danger onClick={() => void decideRun(false)}>
                                 Reject
                             </Button>
                         </Space>
+                    </Card>
+                )}
+                {pending.map((p) => (
+                    <Card key={p.callId} size="small" style={{ marginTop: 8 }} title={`Needs agent approval: ${p.tool}`}>
+                        <Button onClick={() => decide(p)}>Dismiss</Button>
                     </Card>
                 ))}
             </Card>

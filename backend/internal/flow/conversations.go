@@ -89,10 +89,15 @@ func (c Conversations) Messages(convID string, beforeSeq int64, limit int) ([]mo
 	return rows, next, nil
 }
 
-// Runs lists linked CloudAgent executions (Pi runs/events) for the conversation.
+// Runs lists CloudAgent executions (Pi runs/events) linked to the conversation
+// through the run ids recorded on its messages.
 func (c Conversations) Runs(conv model.FlowAgentConversation) ([]map[string]any, error) {
+	var ids []string
+	if err := c.DB.Model(&model.FlowAgentMessage{}).Where("conversation_id = ? AND run_id <> ''", conv.ID).Distinct().Pluck("run_id", &ids).Error; err != nil || len(ids) == 0 {
+		return []map[string]any{}, err
+	}
 	var out []map[string]any
 	err := c.DB.Model(&model.CloudAgentExecution{}).Select("id, status, created_at").
-		Where("conversation_id = ? AND user_id = ?", conv.ID, conv.UserID).Order("created_at").Find(&out).Error
+		Where("id IN ? AND user_id = ?", ids, conv.UserID).Order("created_at").Find(&out).Error
 	return out, err
 }

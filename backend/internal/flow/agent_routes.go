@@ -159,32 +159,13 @@ func RegisterAgentRoutes(api gin.IRouter, db *gorm.DB, engine EngineCaller, user
 			reply(c, http.StatusBadRequest, nil, "callId and name required")
 			return
 		}
-		r, err := tools.Invoke(c.Request.Context(), conv, ss, u.ID, in.CallID, in.Name, in.Arguments)
+		r, err := tools.Invoke(c.Request.Context(), conv, ss, u.ID, in.CallID, in.Name, in.Arguments, "")
 		if err != nil {
 			reply(c, toolErrStatus(err), nil, err.Error())
 			return
 		}
 		b, _ := json.Marshal(r)
 		_, _ = convs.Append(conv, model.FlowAgentMessage{Role: "tool", Content: string(b), ToolCallID: in.CallID, ToolName: in.Name})
-		reply(c, http.StatusOK, r, "ok")
-	})
-	g.POST("/approvals/:id/decision", func(c *gin.Context) {
-		u, ok := authed(c)
-		if !ok {
-			return
-		}
-		var in struct {
-			Approve bool `json:"approve"`
-		}
-		if c.ShouldBindJSON(&in) != nil {
-			reply(c, http.StatusBadRequest, nil, "bad request")
-			return
-		}
-		r, err := tools.Decide(c.Request.Context(), u.ID, c.Param("id"), in.Approve)
-		if err != nil {
-			reply(c, toolErrStatus(err), nil, err.Error())
-			return
-		}
 		reply(c, http.StatusOK, r, "ok")
 	})
 }
@@ -197,7 +178,7 @@ func toolErrStatus(err error) int {
 		return http.StatusForbidden
 	case errors.Is(err, ErrToolArgs), errors.Is(err, ErrToolUnknown):
 		return http.StatusBadRequest
-	case errors.Is(err, ErrToolConflict):
+	case errors.Is(err, ErrToolConflict), errors.Is(err, ErrApprovalRequired):
 		return http.StatusConflict
 	}
 	return http.StatusInternalServerError

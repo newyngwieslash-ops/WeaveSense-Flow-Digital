@@ -73,3 +73,6 @@
 | Web `tsc --noEmit` (whole project) | pass |
 | Web `eslint` + `prettier --check` on touched files | pass |
 | Web `bun test`, full backend `go test ./...`, Docker, real Postgres | not run (quota); full Go suite has 5 known env failures (Pi node_modules) per P1 |
+
+### P2b (agent loop ↔ intel tools)
+The Pi agent loop now drives the intel tools for intelligence subjects; approvals go through the Pi chain, evidence and confirmed plans are recorded, and the web chat streams agent replies. Known gaps: no browser e2e against a live model/engine; the manual "Search" button still calls the tool route directly; topic subjects use the same tool table as workspaces.

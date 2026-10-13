@@ -301,6 +301,30 @@ export class Engine {
     });
   }
 
+  /** Records evidence spans for documents in scope; idempotent per key+index. Foreign docs are skipped. */
+  async createEvidence(s: Scope, key: string, o: { items: { document_id: string; revision?: number; char_start?: number; char_end?: number; quote?: string }[]; created_by?: string }) {
+    if (!key) throw new HttpError(400, "X-Idempotency-Key required");
+    const items = (o.items ?? []).slice(0, 50);
+    return this.db.tx(async (q) => {
+      let created = 0;
+      for (const [i, it] of items.entries()) {
+        const d = (await q.query(`SELECT current_revision FROM flow_documents WHERE tenant_id=$1 AND workspace_id=$2 AND id=$3`, [s.tenant_id, s.workspace_id, it.document_id])).rows[0];
+        if (!d) continue;
+        const r = await q.query(`INSERT INTO flow_evidence (id, tenant_id, workspace_id, document_id, revision, char_start, char_end, quote, created_by, idempotency_key)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT (tenant_id, idempotency_key) DO NOTHING`,
+          [newId("ev_"), s.tenant_id, s.workspace_id, it.document_id, Number(it.revision) || d.current_revision, Math.max(0, Number(it.char_start) || 0),
+           Math.max(0, Number(it.char_end) || 0), String(it.quote ?? "").slice(0, 1000), String(o.created_by ?? "agent").slice(0, 200), `${key}:${i}`]);
+        created += affected(r);
+      }
+      return { created };
+    });
+  }
+
+  async listEvidence(s: Scope, documentId?: string) {
+    return (await this.db.query(`SELECT * FROM flow_evidence WHERE tenant_id=$1 AND workspace_id=$2 AND ($3::text IS NULL OR document_id=$3) ORDER BY created_at DESC LIMIT 200`,
+      [s.tenant_id, s.workspace_id, documentId || null])).rows;
+  }
+
   async workOnce(owner: string) {
     const run = await this.claim(owner);
     if (!run) return null;

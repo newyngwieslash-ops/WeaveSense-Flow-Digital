@@ -50,6 +50,8 @@ func newFakeEngine(t *testing.T) (*fakeEngine, EngineClient) {
 				f.monitors[ctx.TenantID] = append(f.monitors[ctx.TenantID], map[string]any{"id": "mon_1", "approval_id": in["approval_id"]})
 			}
 			data = map[string]any{"monitor": f.monitors[ctx.TenantID][0]}
+		case "POST /v1/evidence":
+			data = map[string]any{"created": 1}
 		case "GET /v1/monitors":
 			data = f.monitors[ctx.TenantID]
 		case "POST /v1/collection-runs":
@@ -84,13 +86,13 @@ func TestMultiTurnContextCarriesPriorTurnEvidenceAndReceipts(t *testing.T) {
 	tools, convs, _, conv, ss := setupAgent(t)
 	ctx := context.Background()
 	convs.Append(conv, model.FlowAgentMessage{Role: "user", Content: "Find news about Acme lithium"})
-	r, err := tools.Invoke(ctx, conv, ss, "u_alice", "call_1", "intel_search_documents", map[string]any{"query": "lithium"})
+	r, err := tools.Invoke(ctx, conv, ss, "u_alice", "call_1", "intel_search_documents", map[string]any{"query": "lithium"}, "")
 	if err != nil || r.Status != "succeeded" {
 		t.Fatalf("search %v %+v", err, r)
 	}
 	b, _ := json.Marshal(r)
 	convs.Append(conv, model.FlowAgentMessage{Role: "tool", Content: string(b), ToolCallID: "call_1", ToolName: r.Tool})
-	if _, err := tools.Invoke(ctx, conv, ss, "u_alice", "call_2", "intel_collect_once", map[string]any{"source_ids": []any{"src_1"}}); err != nil {
+	if _, err := tools.Invoke(ctx, conv, ss, "u_alice", "call_2", "intel_collect_once", map[string]any{"source_ids": []any{"src_1"}}, ""); err != nil {
 		t.Fatal(err)
 	}
 	convs.Append(conv, model.FlowAgentMessage{Role: "user", Content: "Summarize that article"})
@@ -118,37 +120,36 @@ func TestMultiTurnContextCarriesPriorTurnEvidenceAndReceipts(t *testing.T) {
 	}
 }
 
-func TestApplyMonitorRequiresApprovalThenVisibleViaAPI(t *testing.T) {
+func TestApplyMonitorNeedsPiApprovalIDAndExecutesOnce(t *testing.T) {
 	tools, _, fe, conv, ss := setupAgent(t)
 	ctx := context.Background()
-	r, err := tools.Invoke(ctx, conv, ss, "u_alice", "c1", "intel_apply_monitor", map[string]any{"preview_id": "mpv_1"})
-	if err != nil || r.Status != "waiting_approval" || r.ApprovalID == "" {
-		t.Fatalf("want waiting_approval: %v %+v", err, r)
+	if _, err := tools.Invoke(ctx, conv, ss, "u_alice", "c1", "intel_apply_monitor", map[string]any{"preview_id": "mpv_1"}, ""); !errors.Is(err, ErrApprovalRequired) {
+		t.Fatalf("want ErrApprovalRequired, got %v", err)
 	}
 	if fe.calls["POST /v1/monitors"] != 0 {
-		t.Fatal("write executed before approval")
+		t.Fatal("write executed without approval")
 	}
-	if _, err := tools.Decide(ctx, "u_bob", r.ApprovalID, true); !errors.Is(err, ErrNotFound) {
-		t.Fatalf("other user must not decide: %v", err)
+	r, err := tools.Invoke(ctx, conv, ss, "u_alice", "c2", "intel_apply_monitor", map[string]any{"preview_id": "mpv_1"}, "run-1-0")
+	if err != nil || r.Status != "succeeded" {
+		t.Fatalf("approved apply: %v %+v", err, r)
 	}
-	d, err := tools.Decide(ctx, "u_alice", r.ApprovalID, true)
-	if err != nil || d.Status != "succeeded" {
-		t.Fatalf("decide %v %+v", err, d)
+	again, _ := tools.Invoke(ctx, conv, ss, "u_alice", "c2", "intel_apply_monitor", map[string]any{"preview_id": "mpv_1"}, "run-1-0")
+	if !again.Replayed || fe.calls["POST /v1/monitors"] != 1 {
+		t.Fatalf("approved write must execute once: calls=%d", fe.calls["POST /v1/monitors"])
 	}
-	again, _ := tools.Decide(ctx, "u_alice", r.ApprovalID, true)
-	if fe.calls["POST /v1/monitors"] != 1 || again.Status != "succeeded" {
-		t.Fatalf("approval must execute exactly once: calls=%d", fe.calls["POST /v1/monitors"])
-	}
-	// Visible through the platform → engine monitors API with the same scope.
 	status, body, err := tools.Engine.Do(ctx, ss.Scope, Actor{Type: "user", ID: "u_alice"}, "GET", "/v1/monitors", "", nil)
-	if err != nil || status != 200 || !strings.Contains(string(body), r.ApprovalID) {
-		t.Fatalf("monitor not visible: %d %s %v", status, body, err)
+	if err != nil || status != 200 || !strings.Contains(string(body), "run-1-0") {
+		t.Fatalf("monitor not visible with approval id: %d %s %v", status, body, err)
 	}
-	// Rejection path: no execution.
-	r2, _ := tools.Invoke(ctx, conv, ss, "u_alice", "c2", "intel_apply_monitor", map[string]any{"preview_id": "mpv_2"})
-	rej, _ := tools.Decide(ctx, "u_alice", r2.ApprovalID, false)
-	if rej.Status != "rejected" || fe.calls["POST /v1/monitors"] != 1 {
-		t.Fatalf("rejected approval executed: %+v", rej)
+}
+
+func TestSearchWritesEvidenceRows(t *testing.T) {
+	tools, _, fe, conv, ss := setupAgent(t)
+	if _, err := tools.Invoke(context.Background(), conv, ss, "u_alice", "s1", "intel_search_documents", map[string]any{"query": "lithium"}, ""); err != nil {
+		t.Fatal(err)
+	}
+	if fe.calls["POST /v1/evidence"] != 1 {
+		t.Fatalf("evidence not recorded: %+v", fe.calls)
 	}
 }
 
@@ -162,7 +163,7 @@ func TestCrossTenantToolCallsRejected(t *testing.T) {
 	if _, err := ResolveSubject(tools.DB, "u_bob", AgentSubject{Kind: SubjectWorkspace, ID: conv.WorkspaceID}); !errors.Is(err, ErrForbidden) {
 		t.Fatalf("bob resolved alice workspace: %v", err)
 	}
-	if _, err := tools.Invoke(ctx, conv, bob, "u_bob", "x", "intel_search_documents", map[string]any{"query": "q"}); !errors.Is(err, ErrForbidden) {
+	if _, err := tools.Invoke(ctx, conv, bob, "u_bob", "x", "intel_search_documents", map[string]any{"query": "q"}, ""); !errors.Is(err, ErrForbidden) {
 		t.Fatalf("cross-tenant invoke: %v", err)
 	}
 	if fe.calls["POST /v1/documents/search"] != 0 {
@@ -171,7 +172,7 @@ func TestCrossTenantToolCallsRejected(t *testing.T) {
 	// viewer cannot write
 	tools.DB.Model(&model.WorkspaceMembership{}).Where("user_id = ?", "u_alice").Update("role", "viewer")
 	_, ss, _ := convs.Get("u_alice", conv.ID)
-	if _, err := tools.Invoke(ctx, conv, ss, "u_alice", "y", "intel_collect_once", map[string]any{"source_ids": []any{"s"}}); !errors.Is(err, ErrToolPermission) {
+	if _, err := tools.Invoke(ctx, conv, ss, "u_alice", "y", "intel_collect_once", map[string]any{"source_ids": []any{"s"}}, ""); !errors.Is(err, ErrToolPermission) {
 		t.Fatalf("viewer write: %v", err)
 	}
 }
@@ -180,18 +181,18 @@ func TestIdempotentToolReplayAndArgValidation(t *testing.T) {
 	tools, _, fe, conv, ss := setupAgent(t)
 	ctx := context.Background()
 	a := map[string]any{"source_ids": []any{"src_1"}}
-	r1, _ := tools.Invoke(ctx, conv, ss, "u_alice", "call_9", "intel_collect_once", a)
-	r2, err := tools.Invoke(ctx, conv, ss, "u_alice", "call_9", "intel_collect_once", a)
+	r1, _ := tools.Invoke(ctx, conv, ss, "u_alice", "call_9", "intel_collect_once", a, "")
+	r2, err := tools.Invoke(ctx, conv, ss, "u_alice", "call_9", "intel_collect_once", a, "")
 	if err != nil || !r2.Replayed || string(r2.Output) != string(r1.Output) || fe.calls["POST /v1/collection-runs"] != 1 {
 		t.Fatalf("replay: %v %+v calls=%d", err, r2, fe.calls["POST /v1/collection-runs"])
 	}
-	if _, err := tools.Invoke(ctx, conv, ss, "u_alice", "call_9", "intel_collect_once", map[string]any{"source_ids": []any{"other"}}); !errors.Is(err, ErrToolConflict) {
+	if _, err := tools.Invoke(ctx, conv, ss, "u_alice", "call_9", "intel_collect_once", map[string]any{"source_ids": []any{"other"}}, ""); !errors.Is(err, ErrToolConflict) {
 		t.Fatalf("conflict: %v", err)
 	}
-	if _, err := tools.Invoke(ctx, conv, ss, "u_alice", "c", "intel_read_document", map[string]any{"document_id": 5}); !errors.Is(err, ErrToolArgs) {
+	if _, err := tools.Invoke(ctx, conv, ss, "u_alice", "c", "intel_read_document", map[string]any{"document_id": 5}, ""); !errors.Is(err, ErrToolArgs) {
 		t.Fatalf("type check: %v", err)
 	}
-	if _, err := tools.Invoke(ctx, conv, ss, "u_alice", "c", "intel_read_document", map[string]any{"document_id": "d", "evil": "x"}); !errors.Is(err, ErrToolArgs) {
+	if _, err := tools.Invoke(ctx, conv, ss, "u_alice", "c", "intel_read_document", map[string]any{"document_id": "d", "evil": "x"}, ""); !errors.Is(err, ErrToolArgs) {
 		t.Fatalf("unknown field: %v", err)
 	}
 }

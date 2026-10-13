@@ -24,3 +24,12 @@
 - `intel_read_document` / `flow_evidence` table exists but no tool creates evidence rows yet (P3 report citations).
 - Cross-device: directory is server-side; existing Canvas agent sidebar still uses its localStorage directory.
 - Tests use PGlite and SQLite; no real Postgres/Docker run.
+
+## P2b — Pi agent loop wired to intel tools
+
+- `CloudAgentRequest` accepts `subject` + `conversationId`. For `intelligence_workspace`/`topic` subjects the run is canvas-less: the flow conversation is re-resolved and checked against the subject and tenant, `flow.BuildTurnContext` output is injected as a `flow_context` message, and the tool table is `plan_update` plus the 7 `intel_*` tools (only the read tools in `read_only`).
+- Intel tool calls go through the existing Pi/Go bridge (`advanceCloudAgentTool` → `flow.IsTool` branch → `flow.Tools.Invoke` with a signed execution context).
+- `intel_apply_monitor` uses the standard Pi approval chain (`waiting_approval` → `approval_requested` → `/api/agent/runs/:id/approvals/:approvalId/decision`), and the engine call is idempotent by approval ID. `flow_agent_approvals` and `/api/agent/approvals/*` were removed; this is safe because v52 was never released.
+- Successful search/read results write evidence rows (engine `POST /v1/evidence`, idempotent per conversation+call). A `plan_update` on an intel run is recorded in `confirmed_plans`. The user turn and the final assistant reply are mirrored into the flow conversation.
+- Web `/intelligence` chat creates subject-bound agent runs, streams `assistant_delta`/`assistant_message` and shows the run approval card.
+- Tests: `TestFlowAgentRunUsesIntelToolsViaPiBridge` (mocked model → tool via bridge → evidence), `TestFlowApplyMonitorGoesThroughPiApprovalChain`, `TestFlowAgentRunRejectsForeignConversationAndSubject`, plus flow-package and engine evidence tests.

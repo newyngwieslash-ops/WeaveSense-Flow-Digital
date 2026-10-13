@@ -104,10 +104,11 @@ func PiFunctionTools() []map[string]any {
 }
 
 var (
-	ErrToolUnknown    = errors.New("flow: unknown tool")
-	ErrToolPermission = errors.New("flow: permission denied for tool")
-	ErrToolArgs       = errors.New("flow: invalid tool arguments")
-	ErrToolConflict   = errors.New("flow: tool call id reused with different arguments")
+	ErrToolUnknown      = errors.New("flow: unknown tool")
+	ErrToolPermission   = errors.New("flow: permission denied for tool")
+	ErrToolArgs         = errors.New("flow: invalid tool arguments")
+	ErrToolConflict     = errors.New("flow: tool call id reused with different arguments")
+	ErrApprovalRequired = errors.New("flow: tool requires approval through the agent run")
 )
 
 func validateArgs(spec ToolSpec, args map[string]any) error {
@@ -182,7 +183,9 @@ func (t Tools) now() time.Time {
 
 // Invoke runs (or replays) a tool call. callID is the model's tool_call id,
 // unique per conversation; replay with identical args returns the stored result.
-func (t Tools) Invoke(ctx context.Context, conv model.FlowAgentConversation, ss SubjectScope, userID, callID, name string, args map[string]any) (ToolResult, error) {
+// approvalID must be the id of an approval already granted through the Pi
+// approval chain for tools that need approval; it is empty otherwise.
+func (t Tools) Invoke(ctx context.Context, conv model.FlowAgentConversation, ss SubjectScope, userID, callID, name string, args map[string]any, approvalID string) (ToolResult, error) {
 	spec, ok := FindTool(name)
 	if !ok {
 		return ToolResult{}, ErrToolUnknown
@@ -198,6 +201,9 @@ func (t Tools) Invoke(ctx context.Context, conv model.FlowAgentConversation, ss 
 	}
 	if err := validateArgs(spec, args); err != nil {
 		return ToolResult{}, err
+	}
+	if spec.NeedsApproval && approvalID == "" {
+		return ToolResult{}, ErrApprovalRequired
 	}
 	raw, _ := json.Marshal(args)
 	sum := sha256.Sum256(append([]byte(name+"\x00"), raw...))
@@ -220,22 +226,18 @@ func (t Tools) Invoke(ctx context.Context, conv model.FlowAgentConversation, ss 
 		r.Replayed = true
 		return r, nil
 	}
+	idem := "tool:" + conv.ID + ":" + callID
 	if spec.NeedsApproval {
-		ap := model.FlowAgentApproval{ID: NewID("ap_"), TenantID: conv.TenantID, WorkspaceID: conv.WorkspaceID, ConversationID: conv.ID,
-			ToolCallID: row.ID, ToolName: name, Summary: string(raw), Status: "pending", ExpiresAt: t.now().Add(24 * time.Hour)}
-		err := t.DB.Transaction(func(tx *gorm.DB) error {
-			if err := tx.Create(&ap).Error; err != nil {
-				return err
-			}
-			return tx.Model(&row).Updates(map[string]any{"status": "waiting_approval", "approval_id": ap.ID}).Error
-		})
-		if err != nil {
-			return ToolResult{}, err
+		row.ApprovalID = approvalID
+		t.DB.Model(&row).Update("approval_id", approvalID)
+		exec := map[string]any{}
+		for k, v := range args {
+			exec[k] = v
 		}
-		row.Status, row.ApprovalID = "waiting_approval", ap.ID
-		return storedResult(row), nil
+		exec["approval_id"] = approvalID
+		args, idem = exec, "approval:"+approvalID
 	}
-	return t.execute(ctx, row, spec, ss, userID, args, "tool:"+conv.ID+":"+callID)
+	return t.execute(ctx, row, spec, ss, userID, args, idem)
 }
 
 func (t Tools) execute(ctx context.Context, row model.FlowAgentToolCall, spec ToolSpec, ss SubjectScope, userID string, args map[string]any, idem string) (ToolResult, error) {
@@ -275,6 +277,7 @@ func (t Tools) execute(ctx context.Context, row model.FlowAgentToolCall, spec To
 	}
 	if result.Status == "succeeded" {
 		t.trackEvidence(row.ConversationID, row.ToolName, args, result.Output)
+		t.recordEvidence(ctx, ss, userID, row, result.Output)
 	}
 	return result, nil
 }
@@ -298,60 +301,6 @@ func storedResult(row model.FlowAgentToolCall) ToolResult {
 		return r
 	}
 	return ToolResult{CallID: row.CallID, Tool: row.ToolName, Status: row.Status, ApprovalID: row.ApprovalID}
-}
-
-// Decide approves/rejects a pending write. Approval executes exactly once
-// (idempotency key derived from the approval id).
-func (t Tools) Decide(ctx context.Context, userID, approvalID string, approve bool) (ToolResult, error) {
-	var ap model.FlowAgentApproval
-	if err := t.DB.First(&ap, "id = ?", approvalID).Error; err != nil {
-		return ToolResult{}, ErrNotFound
-	}
-	conv, ss, err := Conversations{DB: t.DB}.Get(userID, ap.ConversationID)
-	if err != nil || ap.TenantID != ss.Scope.TenantID {
-		return ToolResult{}, ErrNotFound
-	}
-	var row model.FlowAgentToolCall
-	if err := t.DB.First(&row, "id = ?", ap.ToolCallID).Error; err != nil {
-		return ToolResult{}, err
-	}
-	if ap.Status != "pending" {
-		return storedResult(row), nil
-	}
-	now := t.now()
-	status := "rejected"
-	if approve {
-		status = "approved"
-	}
-	if now.After(ap.ExpiresAt) {
-		status = "expired"
-	}
-	upd := t.DB.Model(&model.FlowAgentApproval{}).Where("id = ? AND status = 'pending'", ap.ID).
-		Updates(map[string]any{"status": status, "decided_by": userID, "decided_at": now})
-	if upd.Error != nil {
-		return ToolResult{}, upd.Error
-	}
-	if upd.RowsAffected == 0 { // concurrent decision won
-		_ = t.DB.First(&row, "id = ?", row.ID).Error
-		return storedResult(row), nil
-	}
-	if status != "approved" {
-		r := ToolResult{CallID: row.CallID, Tool: row.ToolName, Status: "rejected", ApprovalID: ap.ID, Error: status}
-		b, _ := json.Marshal(r)
-		t.DB.Model(&row).Updates(map[string]any{"status": "rejected", "result": string(b)})
-		return r, nil
-	}
-	spec, _ := FindTool(row.ToolName)
-	if !hasScope(ss.Scope.Role, spec.Scope) {
-		return ToolResult{}, ErrToolPermission
-	}
-	var args map[string]any
-	_ = json.Unmarshal([]byte(row.Arguments), &args)
-	args["approval_id"] = ap.ID
-	r, err := t.execute(ctx, row, spec, ss, userID, args, "approval:"+ap.ID)
-	r.ApprovalID = ap.ID
-	_ = conv
-	return r, err
 }
 
 // trackEvidence keeps recently searched/read documents in the conversation's
@@ -403,4 +352,69 @@ func (t Tools) trackEvidence(convID, tool string, args map[string]any, out json.
 		b, _ := json.Marshal(scope)
 		return tx.Model(&c).Update("evidence_scope", string(b)).Error
 	})
+}
+
+// IsTool reports whether name is an intel_* tool served by this package.
+func IsTool(name string) bool {
+	_, ok := FindTool(name)
+	return ok
+}
+
+// recordEvidence persists evidence rows in Loom Engine for search hits and
+// read windows (document, revision, char span, quote). Best effort; keyed by
+// the tool call so replays do not duplicate rows.
+func (t Tools) recordEvidence(ctx context.Context, ss SubjectScope, userID string, row model.FlowAgentToolCall, out json.RawMessage) {
+	var items []map[string]any
+	switch row.ToolName {
+	case "intel_search_documents":
+		var r struct {
+			Items []struct {
+				DocumentID string `json:"document_id"`
+				Revision   int    `json:"revision"`
+				CharStart  int    `json:"char_start"`
+				CharEnd    int    `json:"char_end"`
+				Snippet    string `json:"snippet"`
+			} `json:"items"`
+		}
+		if json.Unmarshal(out, &r) != nil {
+			return
+		}
+		for _, it := range r.Items {
+			items = append(items, map[string]any{"document_id": it.DocumentID, "revision": it.Revision, "char_start": it.CharStart, "char_end": it.CharEnd, "quote": it.Snippet})
+		}
+	case "intel_read_document":
+		var r struct {
+			DocumentID string `json:"document_id"`
+			Revision   int    `json:"revision"`
+			Offset     int    `json:"offset"`
+			Text       string `json:"text"`
+		}
+		if json.Unmarshal(out, &r) != nil || r.DocumentID == "" {
+			return
+		}
+		items = append(items, map[string]any{"document_id": r.DocumentID, "revision": r.Revision, "char_start": r.Offset, "char_end": r.Offset + len([]rune(r.Text)), "quote": truncRunes(r.Text, 500)})
+	default:
+		return
+	}
+	if len(items) == 0 {
+		return
+	}
+	body, _ := json.Marshal(map[string]any{"items": items, "created_by": "agent:" + row.ConversationID + ":" + row.CallID})
+	cctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	_, _, _ = t.Engine.Do(cctx, ss.Scope, Actor{Type: "user", ID: userID}, http.MethodPost, "/v1/evidence", "evidence:"+row.ConversationID+":"+row.CallID, body)
+}
+
+func truncRunes(s string, n int) string {
+	r := []rune(s)
+	if len(r) > n {
+		return string(r[:n])
+	}
+	return s
+}
+
+// RecordConfirmedPlan stores the latest confirmed plan on the conversation.
+func RecordConfirmedPlan(db *gorm.DB, convID, runID string, plan any) error {
+	entry, _ := json.Marshal([]any{map[string]any{"runId": runID, "items": plan, "confirmedAt": time.Now().UTC()}})
+	return db.Model(&model.FlowAgentConversation{}).Where("id = ?", convID).Update("confirmed_plans", string(entry)).Error
 }

@@ -50,6 +50,8 @@ export function handler(engine: Engine, cfg: ServerConfig) {
       }
       if (m === "POST" && p === "/v1/documents/search") { requireScope(ctx, "intel.documents.read"); return send(res, 200, await engine.searchDocuments(ctx, await readJson(req))); }
       if (m === "POST" && p === "/v1/documents/read") { requireScope(ctx, "intel.documents.read"); return send(res, 200, await engine.readDocument(ctx, await readJson(req))); }
+      if (m === "POST" && p === "/v1/evidence") { requireScope(ctx, "intel.documents.read"); return send(res, 201, await engine.createEvidence(ctx, String(req.headers["x-idempotency-key"] ?? ""), await readJson(req))); }
+      if (m === "GET" && p === "/v1/evidence") { requireScope(ctx, "intel.documents.read"); return send(res, 200, await engine.listEvidence(ctx, url.searchParams.get("document_id") ?? undefined)); }
       if (m === "GET" && p === "/v1/monitors") { requireScope(ctx, "intel.sources.read"); return send(res, 200, await engine.listMonitors(ctx)); }
       if (m === "POST" && p === "/v1/monitors/preview") { requireScope(ctx, "intel.sources.read"); return send(res, 200, await engine.previewMonitor(ctx, await readJson(req))); }
       if (m === "POST" && p === "/v1/monitors") {

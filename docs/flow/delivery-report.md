@@ -245,3 +245,7 @@ Pending live acceptance and required credentials: see [pending-acceptance.md](pe
 - **Agent-runtime internals still bypass RLS.** The Pi tools, auto-continue resumer and billing maintenance run in system context; they are scoped by application code and protected by the tenant checks in `Tools.Invoke`.
 - **No real OAuth provider tested.** OAuth was verified only against the mock server; a real provider needs your client registration.
 - **No async status for the engine's synthesis call.** Model tasks are pollable via the status API, but `/internal/flow/summarize` still waits for its own task synchronously (within the request context).
+
+### P8 merge record
+- PR #16 (`p8-runtime-hardening`) merged 2026-10-13 (Asia/Shanghai) after green CI (Backend checks, Web checks, Payment plugin artifacts). Merge commit: `ab257d7be258b5da076a2d5e5ff02cca60252b0c`, verified on `main` with `git ls-remote`.
+- Compose stack on the build box at this commit: schema v59. The platform DB role `flow_platform` is not a superuser, so RLS is live; the `tenant_isolation` policies are present. `smoke.sh` 16/16 (register, then re-run with login), `browser-smoke.mjs` 6/6.

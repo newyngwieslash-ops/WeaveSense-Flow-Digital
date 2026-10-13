@@ -131,18 +131,20 @@ func run(ctx context.Context) error {
 		cookie, _ := c.Cookie(service.SessionCookieName)
 		return svc.CurrentUser(cookie)
 	}
-	flow.RegisterRoutes(api, db, flowCfg, flowUser)
+	// Every authenticated flow request runs in a tenant-scoped transaction (RLS enforced).
+	flowAPI := api.Group("", flow.TenantMiddleware(db, flowUser))
+	flow.RegisterRoutes(flowAPI, db, flowCfg, flowUser)
 	mcpGateway := &flow.MCPGateway{DB: db}
 	svc.ConfigureFlowMCP(mcpGateway)
-	flow.RegisterMCPRoutes(api, db, mcpGateway, flowUser)
+	flow.RegisterMCPRoutes(flowAPI, db, mcpGateway, flowUser)
 	var modelGW flow.ModelGateway
 	if g := flow.ModelGatewayFromEnv(); g != nil {
 		modelGW = g
 		svc.ConfigureFlowModel(g)
 	}
-	flow.RegisterP5Routes(api, db, flowCfg, flowUser, modelGW)
-	flow.RegisterP7Routes(api, db, flowUser, mcpGateway)
-	flow.RegisterCanvasConversationRoutes(api, db, flowUser)
+	flow.RegisterP5Routes(flowAPI, db, flowCfg, flowUser, modelGW)
+	flow.RegisterP7Routes(flowAPI, db, flowUser, mcpGateway)
+	flow.RegisterCanvasConversationRoutes(flowAPI, db, flowUser)
 	go flow.RunBillingMaintenance(context.Background(), db, 15*time.Minute)
 	go svc.RunFlowAutoContinue(context.Background(), 5*time.Second)
 	r.NoRoute(handler.SystemProxyNoRouteHandler(svc))

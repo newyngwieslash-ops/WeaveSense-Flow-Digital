@@ -36,6 +36,8 @@ func RegisterCanvasConversationRoutes(api gin.IRouter, db *gorm.DB, user UserFun
 		return u.ID, id, true
 	}
 	g.GET("/:canvasId", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
 		uid, cid, ok := auth(c)
 		if !ok {
 			return
@@ -53,6 +55,8 @@ func RegisterCanvasConversationRoutes(api gin.IRouter, db *gorm.DB, user UserFun
 		reply(c, http.StatusOK, gin.H{"version": row.Version, "document": json.RawMessage(row.Document), "updatedAt": row.UpdatedAt}, "ok")
 	})
 	g.PUT("/:canvasId", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
 		uid, cid, ok := auth(c)
 		if !ok {
 			return

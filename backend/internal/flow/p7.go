@@ -367,7 +367,7 @@ func MirrorCanvasConversations(db *gorm.DB, userID, canvasID string, convs []Can
 // ---------------------------------------------------------------------------
 // Platform RLS: scoped transactions
 
-// TenantTx runs fn in a transaction with app.tenant_id set, so Postgres RLS
+// TenantTx runs fn in a transaction with app.tenant_ids set, so Postgres RLS
 // policies on flow tables restrict every statement to that tenant.
 func TenantTx(db *gorm.DB, tenantID string, fn func(tx *gorm.DB) error) error {
 	if tenantID == "" {
@@ -375,7 +375,7 @@ func TenantTx(db *gorm.DB, tenantID string, fn func(tx *gorm.DB) error) error {
 	}
 	return db.Transaction(func(tx *gorm.DB) error {
 		if tx.Dialector.Name() == "postgres" {
-			if err := tx.Exec("SELECT set_config('app.tenant_id', ?, true)", tenantID).Error; err != nil {
+			if err := tx.Exec("SELECT set_config('app.tenant_ids', ?, true)", tenantID).Error; err != nil {
 				return err
 			}
 		}

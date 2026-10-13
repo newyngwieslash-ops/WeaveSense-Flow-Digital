@@ -1,8 +1,9 @@
 // P4 connectors for flow sources. Reuses WeaveSense's Telethon worker contract
 // (POST /v1/history, incremental by min_id), the t.me/s web-preview parser and
 // the WeChat auth-gateway Atom feed (with its backup-provider metadata).
-// Media is NOT downloaded: the Telethon worker's save_media is a stub, so every
-// media URL is recorded with status "unsupported".
+// Media: the Telethon worker downloads photo/video/audio/file media into object
+// storage within size/time limits (media_status=saved → status "stored"); skipped
+// media keeps the worker's reason. t.me/s preview links are not downloaded ("unsupported").
 import { parseTelegramHtml } from "../src/lib/server/telegram.ts";
 import { parseFeedXml } from "../src/lib/server/rss-parser.ts";
 import type { FeedItem } from "./engine.ts";
@@ -17,19 +18,25 @@ export type ConnectorEnv = {
   /** "fixture" when the transport is a test double; recorded on acceptance samples. */
   mode?: "live" | "fixture";
 };
-export type MediaRef = { url: string; type: string; status: "unsupported"; reason: string };
+export type MediaRef = { url: string; type: string; status: "stored" | "unsupported" | "too_large" | "timeout" | "failed" | "disabled"; reason: string };
 export type ConnectorItem = FeedItem & { media?: MediaRef[] };
 export type ConnectorBatch = { items: ConnectorItem[]; collector: string; provider?: string; mode: "live" | "fixture" };
 export type SourceRow = { id: string; kind: string; url: string; config: any; last_external_id?: string | null };
 
-const MEDIA_REASON = "media download not supported (Telethon save_media is a stub)";
+const MEDIA_REASON = "preview link only; media is downloaded by the Telethon worker";
+const MEDIA_SKIP: Record<string, string> = { too_large: "exceeds TELEGRAM_MEDIA_MAX_BYTES", timeout: "download timed out", failed: "download failed", disabled: "object storage not configured" };
 export const telegramMessageId = (externalId: string) => Number(String(externalId).match(/(\d+)$/)?.[1] ?? NaN);
 export const normalizeHandle = (h: string) => String(h ?? "").trim().replace(/^https?:\/\/t\.me\/(s\/)?/i, "").replace(/^@/, "").split(/[/?#]/)[0];
 
 function toItem(it: any, kind: string): ConnectorItem {
-  const media: MediaRef[] = (Array.isArray(it.media_urls) ? it.media_urls : []).filter(Boolean)
-    .map((url: string) => ({ url, type: String(it.media_type ?? "media"), status: "unsupported", reason: MEDIA_REASON }));
-  const body = String(it.body ?? "") + (media.length ? `\n\n[${media.length} media attachment(s) not collected: unsupported]` : "");
+  const type = String(it.media_type ?? "media");
+  const urls: string[] = (Array.isArray(it.media_urls) ? it.media_urls : []).filter(Boolean);
+  let media: MediaRef[];
+  if (it.media_status === "saved") media = urls.map((url) => ({ url, type, status: "stored", reason: "" }));
+  else if (MEDIA_SKIP[it.media_status]) media = [{ url: "", type, status: it.media_status, reason: MEDIA_SKIP[it.media_status] }];
+  else media = urls.map((url) => ({ url, type, status: "unsupported", reason: MEDIA_REASON }));
+  const missing = media.filter((m) => m.status !== "stored");
+  const body = String(it.body ?? "") + (missing.length ? `\n\n[${missing.length} media attachment(s) not collected: ${missing[0].status}]` : "");
   return { external_id: String(it.external_id), title: String(it.title ?? "").slice(0, 300) || (kind === "telegram" ? body.slice(0, 80) : ""),
     body, url: String(it.url ?? ""), published_at: it.published_at ?? null, media };
 }

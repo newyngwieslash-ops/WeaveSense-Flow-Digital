@@ -33,15 +33,19 @@ services:
     networks: [internal]
   minio:
     <<: *restart
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
+    # Upstream minio/minio images are no longer pullable from Docker Hub/quay;
+    # override with FLOW_MINIO_IMAGE if you mirror your own.
+    image: ${FLOW_MINIO_IMAGE:-cgr.dev/chainguard/minio:latest}
+    user: "0:0"
+    command: ["server", "/data", "--console-address", ":9001"]
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:?set in .env.flow}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set in .env.flow}
     volumes: [objects:/data]
     networks: [internal]
   minio-init:
-    image: minio/mc:latest
+    image: ${FLOW_MC_IMAGE:-bitnamilegacy/minio-client:2025.7.21}
+    user: "0:0"
     depends_on: [minio]
     entrypoint: ["/bin/sh", "-c"]
     command:
@@ -109,9 +113,22 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
     networks: [internal]
+  # Optional Telegram MTProto collector (A19). Enable with
+  # `--profile telegram` and set TELEGRAM_WORKER_URL=http://telethon:8787 in .env.flow.
+  telethon:
+    <<: *restart
+    profiles: [telegram]
+    build: { context: ./services/loom-engine/workers/telethon, dockerfile: Dockerfile }
+    env_file: [.env.flow]
+    environment:
+      MINIO_ENDPOINT: minio:9000
+      MINIO_BUCKET: ${INTEL_BUCKET:-flow-intel}
+    volumes: [telethondata:/data]
+    networks: [internal]
 networks:
   internal: {}
 volumes:
+  telethondata: {}
   pgdata: {}
   redisdata: {}
   objects: {}

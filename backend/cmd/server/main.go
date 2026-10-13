@@ -141,6 +141,7 @@ func run(ctx context.Context) error {
 		svc.ConfigureFlowModel(g)
 	}
 	flow.RegisterP5Routes(api, db, flowCfg, flowUser, modelGW)
+	flow.RegisterP7Routes(api, db, flowUser, mcpGateway)
 	flow.RegisterCanvasConversationRoutes(api, db, flowUser)
 	go flow.RunBillingMaintenance(context.Background(), db, 15*time.Minute)
 	go svc.RunFlowAutoContinue(context.Background(), 5*time.Second)

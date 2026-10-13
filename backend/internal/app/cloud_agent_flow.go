@@ -51,6 +51,21 @@ func cloudAgentIntelSubject(req CloudAgentRequest) bool {
 
 // cloudAgentIntelTools is the tool table for intelligence subjects.
 func cloudAgentIntelTools(req CloudAgentRequest) []map[string]any {
+	kind := ""
+	if req.Subject != nil {
+		kind = req.Subject.Kind
+	}
+	out := []map[string]any{}
+	for _, t := range cloudAgentIntelToolsAll(req) {
+		fn, _ := t["function"].(map[string]any)
+		if name, _ := fn["name"].(string); name == "plan_update" || flow.ToolAllowedForSubject(kind, name) {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
+func cloudAgentIntelToolsAll(req CloudAgentRequest) []map[string]any {
 	tools := []map[string]any{}
 	for _, t := range compileCloudAgentTools(CloudAgentRequest{PermissionMode: req.PermissionMode}, false) {
 		if fn, _ := t["function"].(map[string]any); fn["name"] == "plan_update" {
@@ -231,7 +246,7 @@ func (s *Service) executeIntelTool(userID, runID string, req CloudAgentRequest, 
 	if r.Status != "succeeded" {
 		return nil, BadAuthRequest(firstNonEmpty(r.Error, "情报工具执行失败"))
 	}
-	if call.Function.Name == "intel_collect_once" {
+	if parksFlowOperation(call.Function.Name) {
 		s.parkFlowOperation(userID, runID, req, ss, call.ID, r)
 	}
 	b, _ := json.Marshal(r)

@@ -104,6 +104,14 @@ func RegisterCanvasConversationRoutes(api gin.IRouter, db *gorm.DB, user UserFun
 			reply(c, http.StatusInternalServerError, nil, "save error")
 			return
 		}
+		// Index into the shared conversation directory (best effort; the
+		// document above stays the source of truth for the canvas sidebar).
+		var doc struct {
+			Conversations []CanvasConv `json:"conversations"`
+		}
+		if json.Unmarshal(body.Document, &doc) == nil {
+			_ = MirrorCanvasConversations(db, uid, cid, doc.Conversations)
+		}
 		reply(c, http.StatusOK, gin.H{"version": version}, "ok")
 	})
 }

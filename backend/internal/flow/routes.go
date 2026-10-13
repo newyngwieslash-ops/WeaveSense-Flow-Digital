@@ -150,12 +150,13 @@ func RegisterRoutes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc) {
 		reply(c, http.StatusOK, out, "ok")
 	})
 	g.GET("/notifications", func(c *gin.Context) {
-		s, _, ok := scoped(c)
+		s, u, ok := scoped(c)
 		if !ok {
 			return
 		}
-		var rows []model.FlowNotification
-		if err := db.Where("tenant_id = ? AND workspace_id = ?", s.TenantID, s.WorkspaceID).Order("created_at DESC").Limit(100).Find(&rows).Error; err != nil {
+		var rows []NotificationView
+		err := TenantTx(db, s.TenantID, func(tx *gorm.DB) (e error) { rows, e = ListNotificationsForUser(tx, s, u.ID); return })
+		if err != nil {
 			reply(c, http.StatusInternalServerError, nil, "list error")
 			return
 		}

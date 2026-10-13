@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"yingce/backend/internal/flow"
@@ -38,17 +39,51 @@ func (s *Service) releasePiRunSlot(runID string) {
 // parkFlowOperation records waiting_external for an async engine operation
 // returned by an intel tool, with the run request as resume checkpoint (A21).
 func (s *Service) parkFlowOperation(userID, runID string, req CloudAgentRequest, ss flow.SubjectScope, callID string, r flow.ToolResult) {
-	var out struct {
-		OperationID string `json:"operation_id"`
-	}
-	if json.Unmarshal(r.Output, &out) != nil || out.OperationID == "" {
+	opID, ok := asyncOperationID(r.Output)
+	if !ok {
 		return
 	}
+	out := struct{ OperationID string }{opID}
 	cp, _ := json.Marshal(req)
 	if _, err := (flow.Waits{DB: s.repo.DB()}).Park(model.FlowExternalWait{TenantID: ss.Scope.TenantID, WorkspaceID: ss.Scope.WorkspaceID, UserID: userID,
 		RunID: runID, ToolCallID: callID, OperationID: out.OperationID, Reservation: "run:" + runID, Checkpoint: string(cp)}); err != nil {
 		slog.Warn("flow: park operation", "run", runID, "error", err)
 	}
+}
+
+// parksFlowOperation: every intel tool that can start background work
+// (collect, research, extract, brief, …) parks; operation inspection/cancel
+// tools never do.
+func parksFlowOperation(tool string) bool {
+	return strings.HasPrefix(tool, "intel_") && tool != "intel_get_operation" && tool != "intel_cancel_operation"
+}
+
+// asyncOperationID returns the operation id of a tool output that started (or
+// is still running) a background operation; terminal outputs are not parked.
+func asyncOperationID(raw json.RawMessage) (string, bool) {
+	var out struct {
+		OperationID string `json:"operation_id"`
+		Status      string `json:"status"`
+		Operation   *struct {
+			ID     string `json:"id"`
+			Status string `json:"status"`
+		} `json:"operation"`
+	}
+	if json.Unmarshal(raw, &out) != nil {
+		return "", false
+	}
+	id, st := out.OperationID, out.Status
+	if id == "" && out.Operation != nil {
+		id, st = out.Operation.ID, out.Operation.Status
+	}
+	if id == "" {
+		return "", false
+	}
+	switch st {
+	case "succeeded", "completed", "failed", "cancelled", "canceled", "partial":
+		return "", false
+	}
+	return id, true
 }
 
 // resumeFlowWait auto-continues a parked run exactly once: a continuation run

@@ -346,6 +346,9 @@ func RegisterAgentRoutes(r *gin.RouterGroup, svc *service.Service) {
 				writeAgentSSE(c, "run_snapshot", 0, &snapshot)
 				revision, lastWrite = run.Revision, time.Now()
 				if !run.CleanupPending && (run.Status == "completed" || run.Status == "failed" || run.Status == "cancelled" || run.Status == "rejected") {
+					// Explicit end-of-run marker: clients stop on this instead of
+					// inferring the end from event names or snapshot heuristics.
+					writeAgentSSE(c, "run_terminal", 0, gin.H{"runId": run.ID, "status": run.Status, "lastSeq": after})
 					return
 				}
 			} else if time.Since(lastWrite) >= 15*time.Second {

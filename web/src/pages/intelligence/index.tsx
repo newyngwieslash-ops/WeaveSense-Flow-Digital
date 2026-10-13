@@ -75,6 +75,10 @@ export default function IntelligencePage() {
     const send = async () => {
         const prompt = text.trim();
         if (!prompt || runId) return;
+        if (active?.subjectKind === "canvas") {
+            void message.info("This conversation belongs to a canvas; continue it from the canvas sidebar.");
+            return;
+        }
         const conv = await ensureConversation();
         setText("");
         setStreaming("");
@@ -88,7 +92,8 @@ export default function IntelligencePage() {
                 if (event.type === "assistant_delta") setStreaming((cur) => (p.replace ? p.text || "" : cur + (p.text || "")));
                 else if (event.type === "assistant_message") setStreaming(p.text || "");
                 else if (event.type === "approval_requested") void getAgentRun(run.id).then((r) => setApproval(r.run.approval));
-                if (TERMINAL.has(event.type.replace(/^run_/, "")) || (p.status && TERMINAL.has(p.status))) {
+                // run_terminal is the server's explicit end marker; the status checks are a fallback for older servers.
+                if (event.type === "run_terminal" || (event.type === "run_status" && p.status && TERMINAL.has(p.status))) {
                     unsubscribe.current?.();
                     setRunId(undefined);
                     setApproval(undefined);
@@ -149,6 +154,8 @@ export default function IntelligencePage() {
                                     void refreshMessages(c);
                                 }}
                             >
+                                {c.subjectKind === "canvas" && <Tag color="purple">canvas</Tag>}
+                                {c.subjectKind === "topic" && <Tag color="gold">topic</Tag>}
                                 {c.title || c.id}
                             </List.Item>
                         )}

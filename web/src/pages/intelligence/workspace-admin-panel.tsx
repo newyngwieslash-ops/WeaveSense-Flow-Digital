@@ -8,8 +8,12 @@ import {
     getBilling,
     installSkills,
     listNotifications,
+    listMembers,
     listSkills,
     markNotificationRead,
+    resolveReservation,
+    setMemberRole,
+    type OrgMember,
     type BillingAccount,
     type BudgetReservation,
     type FlowNotification,
@@ -31,6 +35,8 @@ export function WorkspaceAdminPanel({ workspaceId, onWorkspacesChanged }: { work
     const [inviteRole, setInviteRole] = useState("editor");
     const [inviteToken, setInviteToken] = useState("");
     const [acceptToken, setAcceptToken] = useState("");
+    const [members, setMembers] = useState<OrgMember[]>([]);
+    const [canManage, setCanManage] = useState(false);
 
     const refresh = useCallback(() => {
         if (!workspaceId) return;
@@ -49,6 +55,12 @@ export function WorkspaceAdminPanel({ workspaceId, onWorkspacesChanged }: { work
                 setReservations(r.reservations ?? []);
             })
             .catch(() => setAccount(undefined));
+        void listMembers(workspaceId)
+            .then((r) => {
+                setMembers(r.members ?? []);
+                setCanManage(!!r.canManage);
+            })
+            .catch(() => setMembers([]));
     }, [workspaceId]);
     useEffect(refresh, [refresh]);
 
@@ -149,6 +161,16 @@ export function WorkspaceAdminPanel({ workspaceId, onWorkspacesChanged }: { work
                                         <span>
                                             reserved {credits(r.reservedMicro)} · used {credits(r.consumedMicro)}
                                         </span>
+                                        {r.status === "unknown" && (
+                                            <>
+                                                <Button size="small" onClick={() => void run(() => resolveReservation(workspaceId!, r.id, "succeeded"), "Charged")}>
+                                                    Mark executed
+                                                </Button>
+                                                <Button size="small" onClick={() => void run(() => resolveReservation(workspaceId!, r.id, "not_executed"), "Released")}>
+                                                    Mark not executed
+                                                </Button>
+                                            </>
+                                        )}
                                     </Space>
                                 </List.Item>
                             )}
@@ -157,6 +179,35 @@ export function WorkspaceAdminPanel({ workspaceId, onWorkspacesChanged }: { work
                 ) : (
                     <Typography.Text type="secondary">Billing unavailable</Typography.Text>
                 )}
+            </Card>
+            <Card size="small" title={`Members (${members.length})`}>
+                <List
+                    size="small"
+                    dataSource={members}
+                    locale={{ emptyText: "No members" }}
+                    renderItem={(m) => (
+                        <List.Item>
+                            <Space wrap>
+                                <span>{m.name || m.email || m.userId}</span>
+                                {m.role === "owner" || !canManage ? (
+                                    <Tag>{m.role}</Tag>
+                                ) : (
+                                    <Select
+                                        size="small"
+                                        style={{ width: 120 }}
+                                        value={m.role}
+                                        onChange={(role: "admin" | "member" | "viewer") => void run(() => setMemberRole(workspaceId!, m.userId, role), "Role updated")}
+                                        options={[
+                                            { value: "admin", label: "admin" },
+                                            { value: "member", label: "member" },
+                                            { value: "viewer", label: "viewer" },
+                                        ]}
+                                    />
+                                )}
+                            </Space>
+                        </List.Item>
+                    )}
+                />
             </Card>
             <Card size="small" title="Organization & invites">
                 <Space direction="vertical" style={{ width: "100%" }}>

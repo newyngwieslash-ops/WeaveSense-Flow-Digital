@@ -142,7 +142,13 @@ func run(ctx context.Context) error {
 	if g := flow.ModelGatewayFromEnv(); g != nil {
 		modelGW = g
 		svc.ConfigureFlowModel(g)
-		go flow.RunModelTaskWorker(context.Background(), flow.ModelTasks{DB: db, GW: g, Status: flow.ModelStatusFromEnv()}, 2*time.Second)
+		tasks := flow.ModelTasks{DB: db, GW: g, Status: flow.ModelStatusFromEnv()}
+		if flowCfg.Enabled() {
+			// Push completion: a finished brief summarization wakes the engine's
+			// brief generator for that window (its scheduler tick stays the fallback).
+			tasks.Notify = flow.BriefWakeNotifier(flow.EngineClient{Cfg: flowCfg})
+		}
+		go flow.RunModelTaskWorker(context.Background(), tasks, 2*time.Second)
 	}
 	flow.RegisterModelTaskRoutes(flowAPI, db, flowUser)
 	flow.RegisterP5Routes(flowAPI, db, flowCfg, flowUser, modelGW)

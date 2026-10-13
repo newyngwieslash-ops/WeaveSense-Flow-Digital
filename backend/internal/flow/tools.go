@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"yingce/backend/internal/model"
@@ -308,6 +309,18 @@ func (t Tools) finish(row model.FlowAgentToolCall, result ToolResult, args map[s
 }
 
 func (t Tools) execute(ctx context.Context, row model.FlowAgentToolCall, spec ToolSpec, ss SubjectScope, userID string, args map[string]any, idem string) (ToolResult, error) {
+	if id, _ := args["operation_id"].(string); strings.HasPrefix(id, "mt_") && spec.Name == "intel_get_operation" {
+		// Platform model task (async synthesis), not an engine operation.
+		op, err := ModelTaskOperation(t.DB, ss.Scope.TenantID, id)
+		result := ToolResult{CallID: row.CallID, Tool: row.ToolName, Status: "succeeded"}
+		if err != nil {
+			result.Status, result.Error = "failed", "operation not found"
+		} else {
+			raw, _ := json.Marshal(op)
+			result.Output = capJSON(raw, spec.OutputCap, &result.Truncated)
+		}
+		return t.finish(row, result, args)
+	}
 	method, path, body := spec.route(args)
 	var payload []byte
 	if body != nil {

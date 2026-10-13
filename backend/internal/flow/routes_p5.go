@@ -223,7 +223,7 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 		// operation. The model task worker runs it; the engine re-submits the same
 		// key on its next scheduler tick (the brief window stays parked until then)
 		// and receives the citation-validated result once the task succeeded.
-		req := SynthesisRequest{TenantID: ctx.TenantID, Key: "brief:" + body.Key, Purpose: "brief", Question: body.Topic, Evidence: body.Evidence, Scope: body.Scope}
+		req := SynthesisRequest{TenantID: ctx.TenantID, WorkspaceID: body.WorkspaceID, Key: "brief:" + body.Key, Purpose: "brief", Question: body.Topic, Evidence: body.Evidence, Scope: body.Scope}
 		_, task, err := StartSynthesis(gw, billing, req)
 		switch {
 		case errors.Is(err, ErrBudgetInsufficient), errors.Is(err, ErrBudgetQuota):

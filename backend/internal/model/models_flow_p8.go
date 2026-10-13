@@ -20,8 +20,13 @@ type FlowModelTask struct {
 	LastError     string     `json:"lastError,omitempty" gorm:"size:500"`
 	NextAttemptAt time.Time  `json:"nextAttemptAt" gorm:"index"`
 	LeaseUntil    *time.Time `json:"leaseUntil,omitempty"`
-	CreatedAt     time.Time  `json:"createdAt"`
-	UpdatedAt     time.Time  `json:"updatedAt"`
+	// Context is the caller's completion context (workspace, evidence, scope)
+	// so a finished task can be validated and delivered asynchronously (v61).
+	Context string `json:"-" gorm:"type:text"`
+	// NotifiedAt: completion was pushed to waiters (parked runs, engine briefs).
+	NotifiedAt *time.Time `json:"notifiedAt,omitempty" gorm:"index"`
+	CreatedAt  time.Time  `json:"createdAt"`
+	UpdatedAt  time.Time  `json:"updatedAt"`
 }
 
 func (FlowModelTask) TableName() string { return "flow_model_tasks" }

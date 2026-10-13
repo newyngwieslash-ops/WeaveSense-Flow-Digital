@@ -190,12 +190,25 @@ func researchSynthesis(t Tools, ctx context.Context, ss SubjectScope, callID str
 		return nil, err
 	}
 	defer slots.Release(slotID)
-	syn, err := Synthesize(ctx, t.Model, b, SynthesisRequest{TenantID: ss.Scope.TenantID, ParentResID: parent.ID, Key: "research:" + parentKey + ":" + callID,
-		Purpose: "research", Question: fmt.Sprint(args["question"]), Evidence: ev, Scope: scope})
+	// Non-blocking: enqueue the model task and return it as an operation. The
+	// async pipeline completes it; the run parks on the operation and is
+	// auto-continued when the task finishes (intel_get_operation returns the
+	// validated synthesis). An already-finished task (replay) is returned inline.
+	req := SynthesisRequest{TenantID: ss.Scope.TenantID, WorkspaceID: ss.Scope.WorkspaceID, ParentResID: parent.ID, Key: "research:" + parentKey + ":" + callID,
+		Purpose: "research", Question: fmt.Sprint(args["question"]), Evidence: ev, Scope: scope}
+	_, task, err := StartSynthesis(t.Model, b, req)
 	if err != nil {
 		return nil, err
 	}
-	return appendField(out, "synthesis", syn), nil
+	if task.Status == "succeeded" {
+		syn, err := FinishSynthesis(task, req)
+		if err != nil {
+			return nil, err
+		}
+		return appendField(out, "synthesis", syn), nil
+	}
+	return appendField(out, "synthesis", map[string]any{"status": task.Status, "task_id": task.ID,
+		"operation": map[string]any{"id": task.ID, "kind": "model_task", "status": task.Status}}), nil
 }
 
 // SettleRunBudget closes an agent run's root reservation (children already rolled up).

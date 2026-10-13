@@ -20,6 +20,7 @@ const storagePath = join(dir, "storage.ts");
 writeFileSync(storagePath, 'export const data = new Map(); export const localForageStorageForScope = () => ({ getItem: async (k) => data.get(k) ?? null, setItem: async (k,v) => {data.set(k,v);}, removeItem: async (k) => {data.delete(k);} });');
 writeFileSync(join(dir, "scope.ts"), 'export const getActiveUserScope = () => "test-user";');
 writeFileSync(join(dir, "conversations.ts"), readFileSync(new URL("services/cloud-agent-conversations.ts", root), "utf8")
+    .replace('"@/services/api/request"', JSON.stringify(requestPath))
     .replace('"@/lib/localforage-storage"', JSON.stringify(storagePath))
     .replace('"@/lib/user-scope"', JSON.stringify(join(dir, "scope.ts")))
     .replace('"@/lib/markdown-plain-text"', JSON.stringify(fileURLToPath(new URL("lib/markdown-plain-text.ts", root)))));

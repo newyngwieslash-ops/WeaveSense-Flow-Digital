@@ -46,3 +46,5 @@ Estimate (2 Go/TS engineers + test support): first RSS + Q&A loop ≈ 2–3 week
 A03 permits separate billing for legitimate batch children / independent model steps; it forbids duplicate effects from replays. A21 is mandatory for auto-continue mode. RSS fixtures do not prove Telegram media, WeChat or Douyin; paid model/API acceptance uses an explicit small budget with source, time, environment and receipts recorded.
 
 Real-sample connector acceptance is deferred to the last step; see [pending-acceptance.md](pending-acceptance.md).
+
+P5: [p5-implementation.md](p5-implementation.md) (billing/SaaS/Model Gateway + hardening) and [release-deploy.md](release-deploy.md) (release, deploy, backup/restore).

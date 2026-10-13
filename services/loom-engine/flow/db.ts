@@ -2,6 +2,12 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { AsyncLocalStorage } from "node:async_hooks";
+
+/** Tenant of the current API request; drives Postgres RLS (app.tenant_id). Empty = system/worker context. */
+const tenantStore = new AsyncLocalStorage<string>();
+export const withTenant = <T>(tenantId: string, fn: () => Promise<T>) => tenantStore.run(tenantId, fn);
+export const currentTenant = () => tenantStore.getStore() ?? "";
 
 export interface Q {
   query<T = any>(sql: string, params?: unknown[]): Promise<{ rows: T[]; rowCount?: number | null; affectedRows?: number }>;
@@ -14,12 +20,15 @@ export interface Db extends Q {
 export async function pgDb(url: string): Promise<Db> {
   const pg = (await import("pg")).default;
   const pool = new pg.Pool({ connectionString: url, max: 10 });
-  return {
-    query: (s, p) => pool.query(s, p as any[]) as any,
+  const db: Db = {
+    // Inside a tenant request every statement runs in a transaction with app.tenant_id set locally,
+    // so RLS policies apply; system context (workers, scheduler) leaves it empty.
+    query: (s, p) => (currentTenant() ? db.tx((q) => q.query(s, p)) : (pool.query(s, p as any[]) as any)),
     async tx(fn) {
       const c = await pool.connect();
       try {
         await c.query("BEGIN");
+        if (currentTenant()) await c.query("SELECT set_config('app.tenant_id', $1, true)", [currentTenant()]);
         const r = await fn({ query: (s, p) => c.query(s, p as any[]) as any });
         await c.query("COMMIT");
         return r;
@@ -32,6 +41,7 @@ export async function pgDb(url: string): Promise<Db> {
     },
     close: () => pool.end(),
   };
+  return db;
 }
 
 export async function pgliteDb(): Promise<Db> {

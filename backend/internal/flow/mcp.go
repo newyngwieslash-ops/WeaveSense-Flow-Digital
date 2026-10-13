@@ -211,7 +211,12 @@ func (g MCPGateway) session(ctx context.Context, c model.FlowMCPConnection) (*mc
 	if err != nil {
 		return nil, "", err
 	}
-	base := http.DefaultTransport
+	// Production: public-address-only dialer (blocks loopback/private/metadata,
+	// checked on the resolved socket address). Tests with AllowInsecure use loopback mocks.
+	var base http.RoundTripper = PublicTransport()
+	if g.AllowInsecure {
+		base = http.DefaultTransport
+	}
 	if g.HTTP != nil && g.HTTP.Transport != nil {
 		base = g.HTTP.Transport
 	}

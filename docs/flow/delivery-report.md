@@ -109,3 +109,60 @@ The Pi agent loop now drives the intel tools for intelligence subjects; approval
   - The MCP tool snapshot is fixed per run (approval changes apply to new runs; execution still re-checks).
 
 Pending live acceptance and required credentials: see [pending-acceptance.md](pending-acceptance.md).
+
+## P5 — Billing/SaaS, Model Gateway, hardening — final delivery (2026-10-13, Asia/Shanghai)
+
+| Item | Value |
+|---|---|
+| Target repository | https://github.com/newyngwieslash-ops/WeaveSense-Flow |
+| Branches / PRs | `p5-billing-saas` → PR #10 (merged, merge commit `5abe97947157948e3c7a75be8103849963227e59`); `p5-hardening` → PR #11 (merged after green CI; merge SHA recorded in the hand-off report and verified with `git ls-remote origin refs/heads/main`) |
+| Earlier merges | PR #7 P2b `f7e29746`, PR #8 P3 `339b977c`, PR #9 P4 `937e4ac3` |
+| Scope / gaps | [p5-implementation.md](p5-implementation.md), [release-deploy.md](release-deploy.md), [pending-acceptance.md](pending-acceptance.md) |
+| Not touched | Dependabot PRs #2–#6; no force-push |
+
+### Acceptance matrix status
+
+| ID | Status | Evidence |
+|---|---|---|
+| A01 | pass | engine `engine.test.ts`: two tenants with the same feed are isolated. **Plus Postgres RLS on real PG17** (`pg.test.ts`). |
+| A02 | pass | Engine: guessed IDs → 404, plus HTTP cross-tenant checks. Go: cross-tenant conversation and tool calls are rejected. RLS hides foreign rows even when an app query asks for them. |
+| A03 | pass | Engine replay creates no new run or outbox event. Go: callId replay. Budget `Reserve`/`Allocate` are idempotent per key, and a double settle has no second ledger effect. |
+| A04 | pass | Same key with different parameters → 409. |
+| A05 | pass | A queued job survives an engine restart. Pi runs: DB lease (`flow_run_leases`) with takeover after expiry. |
+| A06 | pass | A crash before commit leaves no cursor advance and no documents. |
+| A07 | pass | Fencing token rejects a stale worker. Run lease: a stale owner's renew fails, which cancels its session. |
+| A08 | pass (no browser e2e) | Jobs run in the background. Agent run events are persisted and replayable. |
+| A09 | pass | Multi-turn context carries prior turns and evidence scope. |
+| A10 | pass | Approve, reject and expire are handled; only an approved action executes, exactly once. |
+| A11 | pass | Briefs and reports surface truncation and source failures. LLM synthesis drops claims with invalid citations, and the engine re-validates. |
+| A12 | pass | A new revision is created and old citations stay readable. |
+| A13 | pass | A 429 or transient failure triggers exponential backoff. Invalid credentials pause the source. Paused or backing-off sources get no new scheduled runs (`p5.test.ts`). |
+| A14 | pass (live MCP server pending-credentials) | Schema drift blocks until re-approval. Tools that are not approved don't execute. |
+| A15 | not done (partial) | Cancel propagates and research child budgets are visible in billing. A "runtime busy → queue" policy is not implemented. |
+| A16 | partial | Model Gateway: an unknown outcome is recorded as `unknown` and reconciled, never blindly retried. MCP calls have no remote reconciliation. |
+| A17 | pass | An insufficient budget or quota blocks new reservations. A revoked MCP connection or source stops new calls, and old evidence stays readable. |
+| A18 | pass for intel DB (platform DB restore uses the same scripts; object storage not tested) | `pg.test.ts` on real PG17: backup → restore into an empty DB; the manifest (row counts and checksums) matches, app reads work, and there is no re-migration. |
+| A19 | **pending-credentials** | Telegram and WeChat live samples: see pending-acceptance.md. Deferred to the very last step. |
+| A20 | pass | Each PR merged after green CI, and the remote `main` SHA was verified with `git ls-remote`. |
+| A21 | not done | The `waiting_external` auto-continue state (resume exactly once via Inbox) is not implemented. Long tools return 202 + operation_id and the user continues manually. |
+
+### Verification actually executed (P5)
+| Check | Result |
+|---|---|
+| `go build ./...`, `go vet` (flow, app, cmd) | pass |
+| `go test ./internal/flow ./internal/database` | pass. Covers: budget reserve, allocate, settle and release; child over-allocation rejected; root with open children can't close; unknown → reconcile; quota; Synthesize drops invalid citations, and an unknown outcome is marked; org, shared billing account, single-use invite; a removed member's grant is denied; egress blocks loopback, private and metadata addresses (including a real loopback dial); run lease takeover and fencing; canvas conversation doc optimistic concurrency and per-user isolation. |
+| `go test ./internal/app` | Everything passes except the 5 known Pi-runtime e2e tests (missing Pi `node_modules` on this host; CI runs them) |
+| Engine `node --test flow/*.test.ts` (PGlite) | 29 pass, 3 skipped (the real-PG tests) |
+| Engine `pg.test.ts` on **real PostgreSQL 17**, app role `flow_app` (non-superuser) | 3/3 pass: RLS isolation, HTTP API end to end under RLS, backup/restore consistency |
+| Web `tsc --noEmit`, eslint, changed-file formatting, `bun test` (touched suites) | pass |
+| CI on PR #10 / #11 | Backend checks, Web checks, Payment plugin artifacts: green before merge |
+| Docker stack boot | **not run** (no Docker on host). Compose changes were reviewed only. |
+
+### Remaining gaps
+- A21 auto-continue (`waiting_external`) is not implemented. A15 runtime-busy queueing is not implemented. A16 remote reconciliation for MCP is not implemented.
+- The Model Gateway is a synchronous OpenAI-compatible client. It is not routed through the canvas async task/channel pipeline, and the gateway offers no status-lookup API, so unknown outcomes are billed at the reserved amount after 24h.
+- RLS applies to the engine database. The platform database relies on application scoping.
+- The canvas sidebar keeps its own conversation format: it is now stored server-side, but it is not unified with the intelligence `flow_agent_conversations`.
+- Org UI is minimal: create, invite, accept. There is no member list or role editing UI, and no per-user notification read state (read state is per workspace).
+- A19 live connector acceptance is pending user credentials and is the very last step.
+- There is no browser e2e and no Docker stack boot.

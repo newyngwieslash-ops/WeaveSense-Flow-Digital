@@ -76,3 +76,14 @@
 
 ### P2b (agent loop ↔ intel tools)
 The Pi agent loop now drives the intel tools for intelligence subjects; approvals go through the Pi chain, evidence and confirmed plans are recorded, and the web chat streams agent replies. Known gaps: no browser e2e against a live model/engine; the manual "Search" button still calls the tool route directly; topic subjects use the same tool table as workspaces.
+
+### P3 (skills, research, reports, briefs)
+- Built: versioned skill packs (5 core skills plus the energy-storage industry pack), install and per-run pinning, single-depth research (≤3 per run), reports with claim kinds and citation maps, platform citation validation, brief schedules (cron + timezone, approval through the Pi chain) and scheduler generation that surfaces partial failure, truncation and conflicts, in-app report notifications, and minimal web views.
+- Tests:
+  - engine `p3.test.ts`: cron/timezone; research depth and limit; reproducibility after a document update; brief idempotency window and partial failure;
+  - Go `p3_test.go`: citation rejections (foreign tenant, wrong revision or chunk, out of scope); research child limit; schedule approval; skill pinning; single notification.
+- Gaps:
+  - research and briefs are extractive (no LLM synthesis);
+  - notifications are per workspace (no per-user read state UI);
+  - no web UI for skill install;
+  - no browser e2e against a live model.

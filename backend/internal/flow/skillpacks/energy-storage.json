@@ -1,0 +1,133 @@
+{
+ "id": "energy-storage",
+ "version": "1.0.0",
+ "name": "Energy storage industry pack",
+ "kind": "industry",
+ "source_templates": [
+  {
+   "title": "Energy-Storage.news",
+   "url": "https://www.energy-storage.news/feed/",
+   "kind": "rss"
+  },
+  {
+   "title": "PV Magazine – storage",
+   "url": "https://www.pv-magazine.com/category/energy-storage/feed/",
+   "kind": "rss"
+  },
+  {
+   "title": "CNESA (中关村储能产业技术联盟) news",
+   "url": "https://www.cnesa.org/",
+   "kind": "rss",
+   "note": "configure an RSS bridge"
+  }
+ ],
+ "glossary": {
+  "BESS": "Battery energy storage system",
+  "LFP": "Lithium iron phosphate cell chemistry",
+  "C-rate": "Charge/discharge rate relative to capacity",
+  "MWh": "Energy capacity",
+  "MW": "Power rating",
+  "工商业储能": "Commercial & industrial (C&I) storage",
+  "独立储能": "Standalone grid-side storage"
+ },
+ "skills": [
+  {
+   "id": "storage-market-brief",
+   "version": "1.0.0",
+   "name": "Energy storage market brief",
+   "method": "Weekly brief on storage tenders, prices (¥/Wh, $/kWh), policy and project commissioning.",
+   "steps": [
+    "Run periodic-brief with query terms from the glossary (BESS, 储能, LFP).",
+    "Separate price statements from policy statements.",
+    "Apply cross-source-verification to price numbers.",
+    "Run citation-integrity before saving."
+   ],
+   "references": [
+    "skills: periodic-brief@1.0.0, cross-source-verification@1.0.0, citation-integrity@1.0.0"
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "title",
+     "claims"
+    ],
+    "properties": {
+     "title": {
+      "type": "string"
+     },
+     "body": {
+      "type": "string"
+     },
+     "claims": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "text",
+        "kind",
+        "citations"
+       ],
+       "properties": {
+        "text": {
+         "type": "string"
+        },
+        "kind": {
+         "enum": [
+          "source_statement",
+          "cross_source_verified",
+          "model_inference"
+         ]
+        },
+        "citations": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "required": [
+           "evidence_id",
+           "revision"
+          ],
+          "properties": {
+           "evidence_id": {
+            "type": "string"
+           },
+           "revision": {
+            "type": "integer"
+           },
+           "chunk_index": {
+            "type": "integer"
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ ],
+ "report_schema": {
+  "sections": [
+   "Headline developments",
+   "Prices & tenders",
+   "Policy",
+   "Projects",
+   "Coverage & gaps"
+  ],
+  "claim_kinds": [
+   "source_statement",
+   "cross_source_verified",
+   "model_inference"
+  ]
+ },
+ "eval_samples": [
+  {
+   "question": "What changed in LFP cell prices this week?",
+   "expect": "price claims cite ≥1 evidence; claims from one source are source_statement; reasons are model_inference"
+  },
+  {
+   "question": "Summarize new standalone storage projects",
+   "expect": "each project cites its document; failed sources listed in coverage"
+  }
+ ]
+}

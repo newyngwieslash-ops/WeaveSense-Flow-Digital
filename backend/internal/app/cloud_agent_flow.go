@@ -141,6 +141,9 @@ func (s *Service) advanceCloudAgentIntelTool(run *model.CloudAgentExecution, sta
 		return s.repo.MutateCloudAgent(run.UserID, run.ID, run.Revision, func(current *model.CloudAgentExecution, _ *repository.Repository) error {
 			preview := cloudAgentApprovalPreview{Kind: "intel_monitor", Title: "保存情报监控", Description: "Agent 请求保存一个周期监控（创建定时采集计划）。批准后才会写入。",
 				Items: []cloudAgentApprovalPreviewItem{{Operation: "create"}}}
+			if call.Function.Name == "intel_apply_schedule" {
+				preview.Kind, preview.Title, preview.Description = "intel_brief_schedule", "保存周期简报计划", "Agent 请求保存一个周期简报计划（按 cron 与时区定时生成报告）。批准后才会写入。"
+			}
 			approvalID := fmt.Sprintf("%s-%d-%d", run.ID, state.Step, state.CallIndex)
 			state.Approval = &cloudAgentApproval{ID: approvalID, Call: call, CallHash: cloudAgentApprovalCallHash(call), Preview: preview}
 			current.Status = "waiting_approval"
@@ -165,7 +168,7 @@ func (s *Service) advanceCloudAgentIntelTool(run *model.CloudAgentExecution, sta
 			}
 		}
 		if toolErr == nil {
-			result, toolErr = s.executeIntelTool(run.UserID, state.Request, call, approvalID)
+			result, toolErr = s.executeIntelTool(run.UserID, run.ID, state.Request, call, approvalID)
 		}
 	}
 	s.storageMu.Lock()
@@ -179,7 +182,7 @@ func (s *Service) advanceCloudAgentIntelTool(run *model.CloudAgentExecution, sta
 	})
 }
 
-func (s *Service) executeIntelTool(userID string, req CloudAgentRequest, call cloudAgentCall, approvalID string) (any, error) {
+func (s *Service) executeIntelTool(userID, runID string, req CloudAgentRequest, call cloudAgentCall, approvalID string) (any, error) {
 	conv, ss, err := s.cloudAgentFlowConversation(userID, req)
 	if err != nil {
 		return nil, err
@@ -190,7 +193,7 @@ func (s *Service) executeIntelTool(userID string, req CloudAgentRequest, call cl
 			return nil, BadAuthRequest("工具参数不是合法 JSON")
 		}
 	}
-	tools := flow.Tools{DB: s.repo.DB(), Engine: s.flowEngine}
+	tools := flow.Tools{DB: s.repo.DB(), Engine: s.flowEngine, RunID: runID}
 	r, err := tools.Invoke(context.Background(), conv, ss, userID, call.ID, call.Function.Name, args, approvalID)
 	if err != nil {
 		if errors.Is(err, flow.ErrForbidden) || errors.Is(err, flow.ErrNotFound) {

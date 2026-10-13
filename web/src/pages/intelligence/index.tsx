@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, Card, Input, List, Select, Space, Tag, Typography, message } from "antd";
 import { EmptyState } from "@/components/ui/product/empty-state/empty-state";
+import { ReportsPanel } from "./reports-panel";
 
 import {
     cachedConversations,
@@ -122,106 +123,109 @@ export default function IntelligencePage() {
     };
 
     return (
-        <div style={{ display: "grid", gridTemplateColumns: "240px 1fr 320px", gap: 16, padding: 16 }}>
-            <Card size="small" title="Conversations">
-                <Select style={{ width: "100%", marginBottom: 8 }} value={workspaceId} onChange={setWorkspaceId} options={workspaces.map((w) => ({ value: w.id, label: w.name }))} />
-                <Button
-                    block
-                    onClick={() => {
-                        setActive(undefined);
-                        setMessages([]);
-                    }}
+        <>
+            <div style={{ display: "grid", gridTemplateColumns: "240px 1fr 320px", gap: 16, padding: 16 }}>
+                <Card size="small" title="Conversations">
+                    <Select style={{ width: "100%", marginBottom: 8 }} value={workspaceId} onChange={setWorkspaceId} options={workspaces.map((w) => ({ value: w.id, label: w.name }))} />
+                    <Button
+                        block
+                        onClick={() => {
+                            setActive(undefined);
+                            setMessages([]);
+                        }}
+                    >
+                        New
+                    </Button>
+                    <List
+                        size="small"
+                        dataSource={conversations}
+                        renderItem={(c) => (
+                            <List.Item
+                                style={{ cursor: "pointer", fontWeight: c.id === active?.id ? 600 : 400 }}
+                                onClick={() => {
+                                    setActive(c);
+                                    void refreshMessages(c);
+                                }}
+                            >
+                                {c.title || c.id}
+                            </List.Item>
+                        )}
+                    />
+                </Card>
+                <Card size="small" title="Intelligence chat">
+                    <div style={{ minHeight: 320, maxHeight: 520, overflow: "auto" }}>
+                        {messages.length === 0 ? (
+                            <EmptyState title="Ask about collected materials" />
+                        ) : (
+                            messages.map((m) => (
+                                <div key={m.id} style={{ marginBottom: 8 }}>
+                                    <Tag>{m.toolName || m.role}</Tag>
+                                    <Typography.Text style={{ whiteSpace: "pre-wrap" }}>{m.content.slice(0, 2000)}</Typography.Text>
+                                </div>
+                            ))
+                        )}
+                        {streaming && (
+                            <div style={{ marginBottom: 8 }}>
+                                <Tag color="blue">assistant</Tag>
+                                <Typography.Text style={{ whiteSpace: "pre-wrap" }}>{streaming}</Typography.Text>
+                            </div>
+                        )}
+                    </div>
+                    <Space.Compact style={{ width: "100%" }}>
+                        <Input value={text} onChange={(e) => setText(e.target.value)} onPressEnter={() => void send()} placeholder="Message" />
+                        <Button type="primary" loading={!!runId} onClick={() => void send()}>
+                            Send
+                        </Button>
+                        <Button onClick={() => void runTool("intel_search_documents", { query: text })} disabled={!text.trim()}>
+                            Search
+                        </Button>
+                    </Space.Compact>
+                    {approval && (
+                        <Card size="small" style={{ marginTop: 8 }} title={`Approval needed: ${approval.call.function.name}`}>
+                            <Typography.Paragraph style={{ whiteSpace: "pre-wrap" }}>{approval.call.function.arguments}</Typography.Paragraph>
+                            <Space>
+                                <Button type="primary" onClick={() => void decideRun(true)}>
+                                    Approve
+                                </Button>
+                                <Button danger onClick={() => void decideRun(false)}>
+                                    Reject
+                                </Button>
+                            </Space>
+                        </Card>
+                    )}
+                    {pending.map((p) => (
+                        <Card key={p.callId} size="small" style={{ marginTop: 8 }} title={`Needs agent approval: ${p.tool}`}>
+                            <Button onClick={() => decide(p)}>Dismiss</Button>
+                        </Card>
+                    ))}
+                </Card>
+                <Card
+                    size="small"
+                    title="Monitors"
+                    extra={
+                        <Button size="small" onClick={refreshMonitors}>
+                            Refresh
+                        </Button>
+                    }
                 >
-                    New
-                </Button>
-                <List
-                    size="small"
-                    dataSource={conversations}
-                    renderItem={(c) => (
-                        <List.Item
-                            style={{ cursor: "pointer", fontWeight: c.id === active?.id ? 600 : 400 }}
-                            onClick={() => {
-                                setActive(c);
-                                void refreshMessages(c);
-                            }}
-                        >
-                            {c.title || c.id}
-                        </List.Item>
-                    )}
-                />
-            </Card>
-            <Card size="small" title="Intelligence chat">
-                <div style={{ minHeight: 320, maxHeight: 520, overflow: "auto" }}>
-                    {messages.length === 0 ? (
-                        <EmptyState title="Ask about collected materials" />
-                    ) : (
-                        messages.map((m) => (
-                            <div key={m.id} style={{ marginBottom: 8 }}>
-                                <Tag>{m.toolName || m.role}</Tag>
-                                <Typography.Text style={{ whiteSpace: "pre-wrap" }}>{m.content.slice(0, 2000)}</Typography.Text>
-                            </div>
-                        ))
-                    )}
-                    {streaming && (
-                        <div style={{ marginBottom: 8 }}>
-                            <Tag color="blue">assistant</Tag>
-                            <Typography.Text style={{ whiteSpace: "pre-wrap" }}>{streaming}</Typography.Text>
-                        </div>
-                    )}
-                </div>
-                <Space.Compact style={{ width: "100%" }}>
-                    <Input value={text} onChange={(e) => setText(e.target.value)} onPressEnter={() => void send()} placeholder="Message" />
-                    <Button type="primary" loading={!!runId} onClick={() => void send()}>
-                        Send
-                    </Button>
-                    <Button onClick={() => void runTool("intel_search_documents", { query: text })} disabled={!text.trim()}>
-                        Search
-                    </Button>
-                </Space.Compact>
-                {approval && (
-                    <Card size="small" style={{ marginTop: 8 }} title={`Approval needed: ${approval.call.function.name}`}>
-                        <Typography.Paragraph style={{ whiteSpace: "pre-wrap" }}>{approval.call.function.arguments}</Typography.Paragraph>
-                        <Space>
-                            <Button type="primary" onClick={() => void decideRun(true)}>
-                                Approve
-                            </Button>
-                            <Button danger onClick={() => void decideRun(false)}>
-                                Reject
-                            </Button>
-                        </Space>
-                    </Card>
-                )}
-                {pending.map((p) => (
-                    <Card key={p.callId} size="small" style={{ marginTop: 8 }} title={`Needs agent approval: ${p.tool}`}>
-                        <Button onClick={() => decide(p)}>Dismiss</Button>
-                    </Card>
-                ))}
-            </Card>
-            <Card
-                size="small"
-                title="Monitors"
-                extra={
-                    <Button size="small" onClick={refreshMonitors}>
-                        Refresh
-                    </Button>
-                }
-            >
-                <List
-                    size="small"
-                    dataSource={monitors}
-                    locale={{ emptyText: "No monitors yet" }}
-                    renderItem={(m) => (
-                        <List.Item>
-                            <div>
-                                <div>{m.name}</div>
-                                <Typography.Text type="secondary">
-                                    every {Math.round(m.interval_seconds / 60)} min · {m.timezone} · {m.keywords.join(", ")}
-                                </Typography.Text>
-                            </div>
-                        </List.Item>
-                    )}
-                />
-            </Card>
-        </div>
+                    <List
+                        size="small"
+                        dataSource={monitors}
+                        locale={{ emptyText: "No monitors yet" }}
+                        renderItem={(m) => (
+                            <List.Item>
+                                <div>
+                                    <div>{m.name}</div>
+                                    <Typography.Text type="secondary">
+                                        every {Math.round(m.interval_seconds / 60)} min · {m.timezone} · {m.keywords.join(", ")}
+                                    </Typography.Text>
+                                </div>
+                            </List.Item>
+                        )}
+                    />
+                </Card>
+            </div>
+            <ReportsPanel workspaceId={workspaceId} />
+        </>
     );
 }

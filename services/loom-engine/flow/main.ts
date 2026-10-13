@@ -4,6 +4,7 @@
 import { pgDb, migrate } from "./db.ts";
 import { Engine } from "./engine.ts";
 import { createApiServer } from "./server.ts";
+import { Reports } from "./reports.ts";
 import { sign } from "./auth.ts";
 import { hostname } from "node:os";
 
@@ -48,4 +49,7 @@ if (role === "api" || role === "all") {
 if (role === "scheduler" || role === "all") {
   // schedulerTick takes a transaction-scoped advisory lock: one active scanner only.
   void loop("scheduler", Number(env("LOOM_SCHEDULER_TICK_MS", "15000")), () => engine.schedulerTick());
+  // Periodic briefs: each (schedule, window) is idempotent, so overlapping ticks produce one report.
+  const reports = new Reports(engine);
+  void loop("briefs", Number(env("LOOM_SCHEDULER_TICK_MS", "15000")), () => reports.briefTick());
 }

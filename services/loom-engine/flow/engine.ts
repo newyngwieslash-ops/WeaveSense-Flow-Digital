@@ -331,7 +331,7 @@ export class Engine {
     return { run_id: run.id, ...(await this.execute(run)) };
   }
 
-  private async emit(q: Q, s: Scope, op: string, job: string, type: string, payload: object) {
+  async emit(q: Q, s: Scope, op: string, job: string, type: string, payload: object) {
     await q.query(`INSERT INTO flow_outbox (event_id, tenant_id, workspace_id, operation_id, job_id, type, payload) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
       [newId("evt_"), s.tenant_id, s.workspace_id, op, job, type, JSON.stringify(payload)]);
   }

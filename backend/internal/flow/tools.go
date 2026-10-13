@@ -33,6 +33,11 @@ type ToolSpec struct {
 	OutputCap     int            `json:"outputCap"`
 	Parameters    map[string]any `json:"parameters"`
 	route         func(args map[string]any) (method, path string, body any)
+	// prepare (optional) rewrites args before routing, e.g. citation validation
+	// or skill pinning. An error fails the call with a model-readable message.
+	prepare func(t Tools, ctx context.Context, conv model.FlowAgentConversation, ss SubjectScope, userID string, args map[string]any) (map[string]any, error)
+	// local (optional) answers without calling the Engine.
+	local func(t Tools, conv model.FlowAgentConversation, ss SubjectScope, args map[string]any) (any, error)
 }
 
 func obj(required []string, props map[string]any) map[string]any {
@@ -43,6 +48,7 @@ var (
 	tStr  = map[string]any{"type": "string"}
 	tInt  = map[string]any{"type": "integer"}
 	tStrs = map[string]any{"type": "array", "items": map[string]any{"type": "string"}}
+	tObj  = map[string]any{"type": "object"}
 )
 
 func opPath(args map[string]any, suffix string) string {
@@ -130,12 +136,25 @@ func validateArgs(spec ToolSpec, args map[string]any) error {
 		case "integer":
 			f, isNum := v.(float64)
 			okType = isNum && f == float64(int64(f))
+		case "object":
+			_, okType = v.(map[string]any)
 		case "array":
 			arr, isArr := v.([]any)
 			okType = isArr
+			itemType := "string"
+			if it, ok := p["items"].(map[string]any); ok {
+				itemType, _ = it["type"].(string)
+			}
 			for _, x := range arr {
-				if _, s := x.(string); !s {
-					okType = false
+				switch itemType {
+				case "string":
+					if _, s := x.(string); !s {
+						okType = false
+					}
+				case "object":
+					if _, o := x.(map[string]any); !o {
+						okType = false
+					}
 				}
 			}
 		}
@@ -172,6 +191,15 @@ type Tools struct {
 	DB     *gorm.DB
 	Engine EngineCaller
 	Now    func() time.Time
+	// RunID is the agent run driving the tools (research parent, skill pins).
+	RunID string
+}
+
+func (t Tools) runKey(conv model.FlowAgentConversation) string {
+	if t.RunID != "" {
+		return t.RunID
+	}
+	return "conv:" + conv.ID
 }
 
 func (t Tools) now() time.Time {
@@ -237,7 +265,32 @@ func (t Tools) Invoke(ctx context.Context, conv model.FlowAgentConversation, ss 
 		exec["approval_id"] = approvalID
 		args, idem = exec, "approval:"+approvalID
 	}
+	if spec.prepare != nil {
+		prepared, err := spec.prepare(t, ctx, conv, ss, userID, args)
+		if err != nil {
+			return t.finish(row, ToolResult{CallID: row.CallID, Tool: row.ToolName, Status: "failed", Error: err.Error()}, args)
+		}
+		args = prepared
+	}
+	if spec.local != nil {
+		out, err := spec.local(t, conv, ss, args)
+		r := ToolResult{CallID: row.CallID, Tool: row.ToolName, Status: "succeeded"}
+		if err != nil {
+			r.Status, r.Error = "failed", err.Error()
+		} else {
+			raw, _ := json.Marshal(out)
+			r.Output = capJSON(raw, spec.OutputCap, &r.Truncated)
+		}
+		return t.finish(row, r, args)
+	}
 	return t.execute(ctx, row, spec, ss, userID, args, idem)
+}
+
+func (t Tools) finish(row model.FlowAgentToolCall, result ToolResult, args map[string]any) (ToolResult, error) {
+	stored, _ := json.Marshal(result)
+	err := t.DB.Model(&model.FlowAgentToolCall{}).Where("id = ?", row.ID).
+		Updates(map[string]any{"status": result.Status, "result": string(stored), "updated_at": t.now()}).Error
+	return result, err
 }
 
 func (t Tools) execute(ctx context.Context, row model.FlowAgentToolCall, spec ToolSpec, ss SubjectScope, userID string, args map[string]any, idem string) (ToolResult, error) {
@@ -259,6 +312,12 @@ func (t Tools) execute(ctx context.Context, row model.FlowAgentToolCall, spec To
 		result.Status, result.Error = "failed", "engine unavailable"
 	case status >= 400:
 		result.Status, result.Error = "failed", fmt.Sprintf("engine returned %d", status)
+		var env struct {
+			Msg string `json:"msg"`
+		}
+		if json.Unmarshal(out, &env) == nil && env.Msg != "" {
+			result.Error += ": " + env.Msg
+		}
 		result.Output = capJSON(out, spec.OutputCap, &result.Truncated)
 	default:
 		result.Status = "succeeded"

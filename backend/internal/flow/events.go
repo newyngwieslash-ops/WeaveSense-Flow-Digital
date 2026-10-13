@@ -52,6 +52,18 @@ func ConsumeEvent(db *gorm.DB, consumerID string, e Event) (bool, error) {
 			return nil
 		}
 		applied = true
+		if e.Type == "report.completed" {
+			var p struct {
+				ReportID string `json:"report_id"`
+				Title    string `json:"title"`
+				Kind     string `json:"kind"`
+			}
+			_ = json.Unmarshal(e.Payload, &p)
+			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&model.FlowNotification{ID: NewID("ntf_"), TenantID: e.TenantID,
+				WorkspaceID: e.WorkspaceID, EventID: e.EventID, Type: e.Type, Title: p.Title, RefID: p.ReportID, CreatedAt: time.Now().UTC()}).Error; err != nil {
+				return err
+			}
+		}
 		status, ok := statusByType[e.Type]
 		if !ok {
 			return nil

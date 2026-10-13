@@ -93,6 +93,72 @@ func RegisterRoutes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc) {
 	g.GET("/documents", proxy(http.MethodGet, "/v1/documents"))
 	g.GET("/operations/:id", proxy(http.MethodGet, "/v1/operations/:id"))
 	g.GET("/monitors", proxy(http.MethodGet, "/v1/monitors"))
+	g.GET("/reports", proxy(http.MethodGet, "/v1/reports"))
+	g.GET("/reports/:id", proxy(http.MethodGet, "/v1/reports/:id"))
+	g.GET("/brief-schedules", proxy(http.MethodGet, "/v1/brief-schedules"))
+	g.GET("/skills", func(c *gin.Context) {
+		s, _, ok := scoped(c)
+		if !ok {
+			return
+		}
+		ps, err := SkillPacks()
+		installed, err2 := ListInstalledSkills(db, s)
+		if err != nil || err2 != nil {
+			reply(c, http.StatusInternalServerError, nil, "skills error")
+			return
+		}
+		reply(c, http.StatusOK, gin.H{"packs": ps, "installed": installed}, "ok")
+	})
+	g.POST("/skills/install", func(c *gin.Context) {
+		s, u, ok := scoped(c)
+		if !ok {
+			return
+		}
+		if !hasScope(s.Role, "intel.reports.write") {
+			reply(c, http.StatusForbidden, nil, "forbidden")
+			return
+		}
+		var in struct {
+			SkillID string `json:"skillId"`
+			Version string `json:"version"`
+			PackID  string `json:"packId"`
+		}
+		if c.ShouldBindJSON(&in) != nil {
+			reply(c, http.StatusBadRequest, nil, "bad request")
+			return
+		}
+		var out []model.FlowSkillInstall
+		ps, _ := SkillPacks()
+		for _, p := range ps {
+			for _, sk := range p.Skills {
+				if (in.PackID != "" && p.ID == in.PackID) || (in.PackID == "" && sk.ID == in.SkillID) {
+					row, err := InstallSkill(db, s, u.ID, sk.ID, map[bool]string{true: in.Version, false: ""}[in.PackID == ""])
+					if err != nil {
+						reply(c, http.StatusNotFound, nil, err.Error())
+						return
+					}
+					out = append(out, row)
+				}
+			}
+		}
+		if len(out) == 0 {
+			reply(c, http.StatusNotFound, nil, "skill not found")
+			return
+		}
+		reply(c, http.StatusOK, out, "ok")
+	})
+	g.GET("/notifications", func(c *gin.Context) {
+		s, _, ok := scoped(c)
+		if !ok {
+			return
+		}
+		var rows []model.FlowNotification
+		if err := db.Where("tenant_id = ? AND workspace_id = ?", s.TenantID, s.WorkspaceID).Order("created_at DESC").Limit(100).Find(&rows).Error; err != nil {
+			reply(c, http.StatusInternalServerError, nil, "list error")
+			return
+		}
+		reply(c, http.StatusOK, rows, "ok")
+	})
 	RegisterAgentRoutes(api, db, client, user)
 
 	// Engine → platform outbox delivery. Authenticated with a context token

@@ -69,3 +69,40 @@ type FlowAgentToolCall struct {
 }
 
 func (FlowAgentToolCall) TableName() string { return "flow_agent_tool_calls" }
+
+// FlowSkillInstall pins one version of a skill (from an embedded skill pack)
+// for a workspace. Hash is the sha256 of the canonical skill JSON.
+type FlowSkillInstall struct {
+	ID          string    `json:"id" gorm:"primaryKey;size:40"`
+	TenantID    string    `json:"tenantId" gorm:"size:40;not null;uniqueIndex:idx_flow_skill_ws,priority:1"`
+	WorkspaceID string    `json:"workspaceId" gorm:"size:40;not null;uniqueIndex:idx_flow_skill_ws,priority:2"`
+	SkillID     string    `json:"skillId" gorm:"size:80;not null;uniqueIndex:idx_flow_skill_ws,priority:3"`
+	Version     string    `json:"version" gorm:"size:40;not null"`
+	Hash        string    `json:"hash" gorm:"size:64;not null"`
+	PackID      string    `json:"packId" gorm:"size:80"`
+	InstalledBy string    `json:"installedBy" gorm:"size:64"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
+// FlowSkillRunPin freezes the skill version/hash used by one agent run.
+type FlowSkillRunPin struct {
+	RunID     string    `json:"runId" gorm:"primaryKey;size:80"`
+	SkillID   string    `json:"skillId" gorm:"primaryKey;size:80"`
+	TenantID  string    `json:"tenantId" gorm:"size:40;not null"`
+	Version   string    `json:"version" gorm:"size:40;not null"`
+	Hash      string    `json:"hash" gorm:"size:64;not null"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+// FlowNotification is an in-app notification for a workspace (e.g. report completed).
+type FlowNotification struct {
+	ID          string     `json:"id" gorm:"primaryKey;size:40"`
+	TenantID    string     `json:"tenantId" gorm:"size:40;not null;index:idx_flow_notif_ws,priority:1"`
+	WorkspaceID string     `json:"workspaceId" gorm:"size:40;not null;index:idx_flow_notif_ws,priority:2"`
+	EventID     string     `json:"eventId" gorm:"size:64;not null;uniqueIndex"`
+	Type        string     `json:"type" gorm:"size:40;not null"`
+	Title       string     `json:"title" gorm:"size:300"`
+	RefID       string     `json:"refId" gorm:"size:64"`
+	ReadAt      *time.Time `json:"readAt"`
+	CreatedAt   time.Time  `json:"createdAt" gorm:"index:idx_flow_notif_ws,priority:3"`
+}

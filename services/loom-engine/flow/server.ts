@@ -2,6 +2,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { verify, requireScope, AuthError, type ExecutionContext } from "./auth.ts";
 import { Engine, HttpError } from "./engine.ts";
+import { Reports } from "./reports.ts";
 
 export interface ServerConfig { signingKey: string; audience: string }
 
@@ -18,6 +19,7 @@ function send(res: ServerResponse, status: number, data: unknown, msg = "ok") {
 }
 
 export function handler(engine: Engine, cfg: ServerConfig) {
+  const rp = new Reports(engine);
   return async (req: IncomingMessage, res: ServerResponse) => {
     try {
       const url = new URL(req.url ?? "/", "http://engine");
@@ -61,6 +63,20 @@ export function handler(engine: Engine, cfg: ServerConfig) {
           { ...b, idempotency_key: String(req.headers["x-idempotency-key"] ?? b.idempotency_key ?? "") }));
       }
       if (m === "POST" && (mm = p.match(/^\/v1\/operations\/([\w-]+)\/cancel$/))) { requireScope(ctx, "intel.collect"); return send(res, 200, await engine.cancelOperation(ctx, mm[1])); }
+      const idem = () => String(req.headers["x-idempotency-key"] ?? "");
+      const actor = `${ctx.actor.type}:${ctx.actor.id}`;
+      if (m === "POST" && p === "/v1/evidence/resolve") { requireScope(ctx, "intel.documents.read"); return send(res, 200, await rp.resolveEvidence(ctx, (await readJson(req)).evidence_ids ?? [])); }
+      if (m === "GET" && p === "/v1/reports") { requireScope(ctx, "intel.documents.read"); return send(res, 200, await rp.listReports(ctx)); }
+      if (m === "GET" && (mm = p.match(/^\/v1\/reports\/([\w-]+)$/))) { requireScope(ctx, "intel.documents.read"); return send(res, 200, await rp.getReport(ctx, mm[1])); }
+      if (m === "POST" && p === "/v1/reports") { requireScope(ctx, "intel.reports.write"); return send(res, 201, await rp.saveReport(ctx, actor, idem(), await readJson(req))); }
+      if (m === "POST" && p === "/v1/research-runs") { requireScope(ctx, "intel.research"); return send(res, 201, await rp.startResearch(ctx, idem(), await readJson(req))); }
+      if (m === "GET" && p === "/v1/brief-schedules") { requireScope(ctx, "intel.sources.read"); return send(res, 200, await rp.listBriefSchedules(ctx)); }
+      if (m === "POST" && p === "/v1/brief-schedules/preview") { requireScope(ctx, "intel.sources.read"); return send(res, 200, await rp.previewBrief(ctx, await readJson(req))); }
+      if (m === "POST" && p === "/v1/brief-schedules") {
+        requireScope(ctx, "intel.schedules.write");
+        const b = await readJson(req);
+        return send(res, 201, await rp.applyBrief(ctx, actor, ctx.policy_version, { ...b, idempotency_key: idem() || String(b.idempotency_key ?? "") }));
+      }
       return send(res, 404, null, "not found");
     } catch (e: any) {
       if (e instanceof AuthError || e instanceof HttpError) return send(res, e.status, null, e.message);

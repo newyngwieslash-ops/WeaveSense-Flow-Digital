@@ -33,3 +33,14 @@ export const listMessages = (id: string, beforeSeq?: number) => http.get<{ messa
 export const postMessage = (id: string, content: string) => http.post<FlowMessage>(`/agent/conversations/${encodeURIComponent(id)}/messages`, { content });
 export const callTool = (id: string, callId: string, name: string, args: Record<string, unknown>) => http.post<ToolResult>(`/agent/conversations/${encodeURIComponent(id)}/tool-calls`, { callId, name, arguments: args });
 export const listMonitors = (workspaceId: string) => http.get<IntelMonitor[]>("/intelligence/monitors", { headers: { "X-Workspace-Id": workspaceId } });
+
+export type ReportCitation = { evidence_id: string; document_id: string; source_id: string; title?: string; revision: number; chunk_index: number; quote: string; truncated: boolean; chunk_text?: string | null };
+export type ReportClaim = { idx: number; text: string; kind: "source_statement" | "cross_source_verified" | "model_inference"; citations: ReportCitation[] };
+export type ReportCoverage = { truncated?: boolean; truncated_citations?: string[]; source_failures?: { source_id: string; error: string }[]; conflicting_evidence?: { document_id: string; revision: number; note: string }[] };
+export type ReportSummary = { id: string; kind: "report" | "brief"; title: string; coverage: ReportCoverage; claims: number; created_at: string; scheduled_at?: string };
+export type ReportDetail = ReportSummary & { body: string; skill: { id?: string; version?: string; hash?: string }; claims: ReportClaim[] };
+export type BriefSchedule = { id: string; name: string; query: string; cron: string; timezone: string; window_hours: number; next_run_at: string; enabled: boolean };
+const ws = (workspaceId: string) => ({ headers: { "X-Workspace-Id": workspaceId } });
+export const listReports = (workspaceId: string) => http.get<ReportSummary[]>("/intelligence/reports", ws(workspaceId));
+export const getReport = (workspaceId: string, id: string) => http.get<ReportDetail>(`/intelligence/reports/${encodeURIComponent(id)}`, ws(workspaceId));
+export const listBriefSchedules = (workspaceId: string) => http.get<BriefSchedule[]>("/intelligence/brief-schedules", ws(workspaceId));

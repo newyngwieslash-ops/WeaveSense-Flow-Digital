@@ -1,0 +1,355 @@
+{
+ "id": "core",
+ "version": "1.0.0",
+ "name": "Core analysis skills",
+ "skills": [
+  {
+   "id": "source-evaluation",
+   "version": "1.0.0",
+   "name": "Source evaluation",
+   "method": "Rate each source on provenance, recency, primary vs secondary and track record before relying on it.",
+   "steps": [
+    "List sources behind the evidence in scope (intel_search_documents).",
+    "For each source note: publisher type, first-hand or reposted, publication time, prior corrections.",
+    "Mark sources with collection failures or truncated reads as low-coverage.",
+    "Output one claim per source as source_statement citing the evidence used."
+   ],
+   "references": [
+    "Admiralty / NATO source reliability grading (A–F, 1–6)"
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "sources"
+    ],
+    "properties": {
+     "sources": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "source_id",
+        "reliability",
+        "rationale"
+       ],
+       "properties": {
+        "source_id": {
+         "type": "string"
+        },
+        "reliability": {
+         "enum": [
+          "A",
+          "B",
+          "C",
+          "D",
+          "E",
+          "F"
+         ]
+        },
+        "rationale": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "cross-source-verification",
+   "version": "1.0.0",
+   "name": "Cross-source verification",
+   "method": "A statement is cross_source_verified only when ≥2 independent sources (different source_id, not reposts) state it.",
+   "steps": [
+    "Extract candidate statements from evidence.",
+    "Search for each statement in other sources in scope.",
+    "Label: cross_source_verified (≥2 independent), source_statement (1 source), conflicting (sources disagree → keep both, note conflict).",
+    "Never upgrade a model inference to verified."
+   ],
+   "references": [
+    "Each cross_source_verified claim must cite evidence from ≥2 distinct sources."
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "title",
+     "claims"
+    ],
+    "properties": {
+     "title": {
+      "type": "string"
+     },
+     "body": {
+      "type": "string"
+     },
+     "claims": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "text",
+        "kind",
+        "citations"
+       ],
+       "properties": {
+        "text": {
+         "type": "string"
+        },
+        "kind": {
+         "enum": [
+          "source_statement",
+          "cross_source_verified",
+          "model_inference"
+         ]
+        },
+        "citations": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "required": [
+           "evidence_id",
+           "revision"
+          ],
+          "properties": {
+           "evidence_id": {
+            "type": "string"
+           },
+           "revision": {
+            "type": "integer"
+           },
+           "chunk_index": {
+            "type": "integer"
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "change-analysis",
+   "version": "1.0.0",
+   "name": "Company / industry change analysis",
+   "method": "Compare the current window with the prior window and explain what changed, citing both revisions when a document was updated.",
+   "steps": [
+    "Define entity (company or industry segment) and time windows.",
+    "Collect evidence for both windows (intel_start_research with from/to).",
+    "List changes: new facts, revised facts (document revision > 1), disappeared topics.",
+    "Label explanations of causes as model_inference."
+   ],
+   "references": [
+    "Revised documents keep their original revision citations; cite the revision you read."
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "title",
+     "claims"
+    ],
+    "properties": {
+     "title": {
+      "type": "string"
+     },
+     "body": {
+      "type": "string"
+     },
+     "claims": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "text",
+        "kind",
+        "citations"
+       ],
+       "properties": {
+        "text": {
+         "type": "string"
+        },
+        "kind": {
+         "enum": [
+          "source_statement",
+          "cross_source_verified",
+          "model_inference"
+         ]
+        },
+        "citations": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "required": [
+           "evidence_id",
+           "revision"
+          ],
+          "properties": {
+           "evidence_id": {
+            "type": "string"
+           },
+           "revision": {
+            "type": "integer"
+           },
+           "chunk_index": {
+            "type": "integer"
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "periodic-brief",
+   "version": "1.0.0",
+   "name": "Periodic brief writing",
+   "method": "Write a short brief for a fixed window: top developments first, each sentence backed by a citation; state coverage gaps.",
+   "steps": [
+    "Search the window for the brief query.",
+    "Pick ≤8 developments by relevance and recency.",
+    "Write one claim per development with its evidence.",
+    "Add a coverage line: failed sources, truncation, conflicting evidence."
+   ],
+   "references": [
+    "Brief schedules are created with intel_preview_schedule then intel_apply_schedule (needs approval)."
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "title",
+     "claims"
+    ],
+    "properties": {
+     "title": {
+      "type": "string"
+     },
+     "body": {
+      "type": "string"
+     },
+     "claims": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "text",
+        "kind",
+        "citations"
+       ],
+       "properties": {
+        "text": {
+         "type": "string"
+        },
+        "kind": {
+         "enum": [
+          "source_statement",
+          "cross_source_verified",
+          "model_inference"
+         ]
+        },
+        "citations": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "required": [
+           "evidence_id",
+           "revision"
+          ],
+          "properties": {
+           "evidence_id": {
+            "type": "string"
+           },
+           "revision": {
+            "type": "integer"
+           },
+           "chunk_index": {
+            "type": "integer"
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "citation-integrity",
+   "version": "1.0.0",
+   "name": "Citation integrity check",
+   "method": "Before saving a report, every non-inference claim must cite evidence inside the report's material scope at the revision that was read.",
+   "steps": [
+    "For each claim check citations exist and point to the revision you read.",
+    "Remove or relabel as model_inference any claim without evidence.",
+    "Keep truncated citations but mention truncation in the body.",
+    "Save with intel_save_report; fix and retry on validation errors."
+   ],
+   "references": [
+    "Platform validation rejects: unknown/foreign evidence, wrong revision or chunk, documents outside material_scope."
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "title",
+     "claims"
+    ],
+    "properties": {
+     "title": {
+      "type": "string"
+     },
+     "body": {
+      "type": "string"
+     },
+     "claims": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "text",
+        "kind",
+        "citations"
+       ],
+       "properties": {
+        "text": {
+         "type": "string"
+        },
+        "kind": {
+         "enum": [
+          "source_statement",
+          "cross_source_verified",
+          "model_inference"
+         ]
+        },
+        "citations": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "required": [
+           "evidence_id",
+           "revision"
+          ],
+          "properties": {
+           "evidence_id": {
+            "type": "string"
+           },
+           "revision": {
+            "type": "integer"
+           },
+           "chunk_index": {
+            "type": "integer"
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ ]
+}

@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const CurrentSchemaVersion int64 = 52
+const CurrentSchemaVersion int64 = 53
 
 const baselineSchemaChecksum = "sha256:open-ai-canvas-schema-v1-20260830"
 const schemaMigrationAppliedAtIndexChecksum = "sha256:schema-migrations-applied-at-index-v2-20260830"
@@ -169,6 +169,9 @@ var schemaMigrations = []migration{
 	{version: 51, name: "flow_tenancy", checksum: "sha256:flow-tenancy-v51-20261012", apply: migrateFlowTenancy},
 	{version: 52, name: "flow_agent", checksum: "sha256:flow-agent-v52-20261013", apply: func(tx *gorm.DB) error {
 		return tx.AutoMigrate(&model.FlowTopic{}, &model.FlowAgentConversation{}, &model.FlowAgentMessage{}, &model.FlowAgentToolCall{})
+	}},
+	{version: 53, name: "flow_skills_reports", checksum: "sha256:flow-skills-reports-v53-20261013", apply: func(tx *gorm.DB) error {
+		return tx.AutoMigrate(&model.FlowSkillInstall{}, &model.FlowSkillRunPin{}, &model.FlowNotification{})
 	}},
 }
 

@@ -218,3 +218,7 @@ Pending live acceptance and required credentials: see [pending-acceptance.md](pe
 - MCP OAuth supports the client-credentials grant only. Interactive authorization-code flows are not implemented.
 - The browser smoke checks rendering and API wiring. It does not drive an LLM agent run (no model credentials on the build box).
 - The build box needed an `iptables-legacy` FORWARD rule for the compose bridge (a host quirk; documented in local-acceptance.md).
+
+### P7 merge record
+- PR #14 (`p7-close-gaps`) merged 2026-10-13 (Asia/Shanghai) after green CI (Backend checks, Web checks, Payment plugin artifacts). Merge commit: `7a47be888fe1d0b540f61bcacf7ab600b2d2546e`, verified on `main` with `git ls-remote`.
+- Note: `smoke.sh` without `SMOKE_USER`/`SMOKE_PASSWORD` fails once a first user exists, because registration is closed by default after that. Pass credentials for an existing account.

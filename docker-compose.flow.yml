@@ -1,7 +1,6 @@
 # WeaveSense-Flow P0 portable stack. Relative paths + named volumes only.
 # Usage: cp .env.flow.example .env.flow && docker compose -f docker-compose.flow.yml --env-file .env.flow up -d
-# P0 baseline: services build from the imported upstream sources unchanged;
-# integration wiring (internal auth, outbox/inbox) lands in P1+.
+# P1: loom-engine/loom-scheduler run the Flow engine (services/loom-engine/flow/main.ts).
 name: weavesense-flow
 x-restart: &restart
   restart: unless-stopped
@@ -61,19 +60,25 @@ services:
     build: { context: ., dockerfile: backend/Dockerfile }
     env_file: [.env.flow]
     environment:
+      # Names below are the ones backend/cmd/server/main.go and internal/flow actually read.
+      CANVAS_DATABASE_DRIVER: postgres
+      CANVAS_BACKEND_ADDR: ":8080"
+      CANVAS_BACKEND_DATA_DIR: /data
       DATABASE_URL: postgres://${PLATFORM_DB_USER:-flow_platform}:${PLATFORM_DB_PASSWORD}@postgres:5432/${PLATFORM_DB_NAME:-flow_platform}?sslmode=disable
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       LOOM_ENGINE_URL: http://loom-engine:8080
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_started }
-    volumes: [platformdata:/app/data]
-    networks: [internal]
+    volumes: [platformdata:/data]
+    networks:
+      internal:
+        aliases: [backend]   # nginx.conf proxies /api to http://backend:8080
   web:
     <<: *restart
     build: { context: ., dockerfile: Dockerfile }
     depends_on: [platform]
-    ports: ["${FLOW_HTTP_PORT:-8088}:80"]   # the only published entrypoint
+    ports: ["${FLOW_HTTP_PORT:-8088}:3000"]   # the only published entrypoint
     networks: [internal]
   # Loom Engine (extracted from WeaveSense): sources, cursors, documents, jobs.
   loom-engine:
@@ -82,11 +87,12 @@ services:
     env_file: [.env.flow]
     environment:
       DATABASE_URL: postgres://${INTEL_DB_USER:-flow_intel}:${INTEL_DB_PASSWORD}@postgres:5432/${INTEL_DB_NAME:-flow_intel}?sslmode=disable
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
-      LOOM_ROLE: api
+      LOOM_ROLE: api            # internal API + collection worker + outbox dispatcher
+      LOOM_PORT: "8080"
+      FLOW_PLATFORM_EVENTS_URL: http://platform:8080/api/internal/flow/events
+    command: ["node", "flow/main.ts"]
     depends_on:
       postgres: { condition: service_healthy }
-    volumes: [loomdata:/app/data]
     networks: [internal]
   loom-scheduler:
     <<: *restart
@@ -94,8 +100,9 @@ services:
     env_file: [.env.flow]
     environment:
       DATABASE_URL: postgres://${INTEL_DB_USER:-flow_intel}:${INTEL_DB_PASSWORD}@postgres:5432/${INTEL_DB_NAME:-flow_intel}?sslmode=disable
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
-      LOOM_ROLE: scheduler
+      LOOM_ROLE: scheduler      # single due-window scanner (advisory-locked)
+      LOOM_AUTO_MIGRATE: "false"
+    command: ["node", "flow/main.ts"]
     depends_on:
       postgres: { condition: service_healthy }
     networks: [internal]
@@ -106,4 +113,3 @@ volumes:
   redisdata: {}
   objects: {}
   platformdata: {}
-  loomdata: {}

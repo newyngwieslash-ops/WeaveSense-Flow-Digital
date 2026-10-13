@@ -68,6 +68,12 @@ func ConsumeEvent(db *gorm.DB, consumerID string, e Event) (bool, error) {
 		if !ok {
 			return nil
 		}
+		if status == "succeeded" || status == "failed" {
+			// waiting_external: a duplicate delivery never reaches here (inbox dedupe).
+			if err := markWaitsReady(tx, e.TenantID, e.OperationID, status); err != nil {
+				return err
+			}
+		}
 		var p model.FlowOperationProjection
 		err := tx.First(&p, "operation_id = ?", e.OperationID).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {

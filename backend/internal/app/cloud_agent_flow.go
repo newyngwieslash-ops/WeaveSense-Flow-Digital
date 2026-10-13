@@ -231,6 +231,9 @@ func (s *Service) executeIntelTool(userID, runID string, req CloudAgentRequest, 
 	if r.Status != "succeeded" {
 		return nil, BadAuthRequest(firstNonEmpty(r.Error, "情报工具执行失败"))
 	}
+	if call.Function.Name == "intel_collect_once" {
+		s.parkFlowOperation(userID, runID, req, ss, call.ID, r)
+	}
 	b, _ := json.Marshal(r)
 	_, _ = flow.Conversations{DB: s.repo.DB()}.Append(conv, model.FlowAgentMessage{Role: "tool", Content: string(b), ToolCallID: call.ID, ToolName: call.Function.Name})
 	return r, nil

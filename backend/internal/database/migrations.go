@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const CurrentSchemaVersion int64 = 56
+const CurrentSchemaVersion int64 = 57
 
 const baselineSchemaChecksum = "sha256:open-ai-canvas-schema-v1-20260830"
 const schemaMigrationAppliedAtIndexChecksum = "sha256:schema-migrations-applied-at-index-v2-20260830"
@@ -188,6 +188,9 @@ var schemaMigrations = []migration{
 	}},
 	{version: 56, name: "flow_run_leases_canvas_conversations", checksum: "sha256:flow-run-leases-canvas-conv-v56-20261013", apply: func(tx *gorm.DB) error {
 		return tx.AutoMigrate(&model.FlowRunLease{}, &model.FlowCanvasConversationDoc{})
+	}},
+	{version: 57, name: "flow_acceptance_gaps", checksum: "sha256:flow-acceptance-gaps-v57-20261013", apply: func(tx *gorm.DB) error {
+		return tx.AutoMigrate(&model.FlowMCPCall{}, &model.FlowRunSlot{}, &model.FlowExternalWait{})
 	}},
 }
 

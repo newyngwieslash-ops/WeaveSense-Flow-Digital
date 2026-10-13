@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"gorm.io/gorm"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 
 	"yingce/backend/internal/model"
@@ -181,6 +183,13 @@ func researchSynthesis(t Tools, ctx context.Context, ss SubjectScope, callID str
 	if err != nil {
 		return nil, err
 	}
+	// Research executor concurrency per tenant (A15): busy => wait in queue.
+	slots := RunSlots{DB: t.DB, Limit: researchExecutorLimit()}
+	slotID := "research:" + parentKey + ":" + callID
+	if err := slots.Wait(ctx, "tenant:"+ss.Scope.TenantID, "research", slotID); err != nil {
+		return nil, err
+	}
+	defer slots.Release(slotID)
 	syn, err := Synthesize(ctx, t.Model, b, SynthesisRequest{TenantID: ss.Scope.TenantID, ParentResID: parent.ID, Key: "research:" + parentKey + ":" + callID,
 		Purpose: "research", Question: fmt.Sprint(args["question"]), Evidence: ev, Scope: scope})
 	if err != nil {
@@ -197,4 +206,9 @@ func SettleRunBudget(db *gorm.DB, tenantID, runID string) error {
 	}
 	_, err := Billing{DB: db}.Settle(r.ID, 0)
 	return err
+}
+
+func researchExecutorLimit() int {
+	n, _ := strconv.Atoi(os.Getenv("FLOW_MAX_CONCURRENT_RESEARCH_PER_TENANT"))
+	return n
 }

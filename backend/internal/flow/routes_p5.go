@@ -51,6 +51,10 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 	}
 	g := api.Group("/intelligence")
 	g.POST("/notifications/:id/read", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		billing := Billing{DB: db, Now: billing.Now}
+		_ = billing
 		s, u, ok := scoped(c)
 		if !ok {
 			return
@@ -64,6 +68,10 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 		reply(c, http.StatusOK, gin.H{"updated": n}, "ok")
 	})
 	g.GET("/billing", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		billing := Billing{DB: db, Now: billing.Now}
+		_ = billing
 		s, _, ok := scoped(c)
 		if !ok {
 			return
@@ -78,6 +86,10 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 		reply(c, http.StatusOK, gin.H{"account": acc, "reservations": rows}, "ok")
 	})
 	g.POST("/orgs", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		billing := Billing{DB: db, Now: billing.Now}
+		_ = billing
 		u, ok := authed(c)
 		if !ok {
 			return
@@ -98,6 +110,10 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 		reply(c, http.StatusOK, gin.H{"tenant": t, "workspace": ws}, "ok")
 	})
 	g.POST("/invites", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		billing := Billing{DB: db, Now: billing.Now}
+		_ = billing
 		s, u, ok := scoped(c)
 		if !ok {
 			return
@@ -113,6 +129,10 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 		reply(c, http.StatusOK, gin.H{"invite": inv, "token": tok}, "ok")
 	})
 	g.POST("/invites/accept", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		billing := Billing{DB: db, Now: billing.Now}
+		_ = billing
 		u, ok := authed(c)
 		if !ok {
 			return
@@ -127,6 +147,10 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 		reply(c, http.StatusOK, s, "ok")
 	})
 	g.DELETE("/members/:userId", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		billing := Billing{DB: db, Now: billing.Now}
+		_ = billing
 		s, _, ok := scoped(c)
 		if !ok {
 			return
@@ -140,6 +164,10 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 
 	// Engine → platform: does the schedule's grant actor still hold the scope?
 	api.POST("/internal/flow/authorize", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		billing := Billing{DB: db, Now: billing.Now}
+		_ = billing
 		ctx, ok := internalServiceCtx(c, cfg)
 		if !ok {
 			return
@@ -162,6 +190,10 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 	// Engine → platform: LLM brief summarization through the Model Gateway,
 	// billed to the tenant and citation-validated before returning.
 	api.POST("/internal/flow/summarize", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		billing := Billing{DB: db, Now: billing.Now}
+		_ = billing
 		ctx, ok := internalServiceCtx(c, cfg)
 		if !ok {
 			return
@@ -210,9 +242,6 @@ func RunBillingMaintenance(ctx context.Context, db *gorm.DB, every time.Duration
 	defer t.Stop()
 	for {
 		_, _ = b.SweepStale(6 * time.Hour)
-		_, _ = b.Reconcile(10*time.Minute, func(r model.FlowBudgetReservation) (Outcome, error) {
-			return ModelStatusFromEnv().Query(ctx, r)
-		})
 		// No status endpoint / still unknown after 24h: charge conservatively.
 		_, _ = b.Reconcile(24*time.Hour, func(r model.FlowBudgetReservation) (Outcome, error) {
 			return Outcome{Known: true, Succeeded: true, Cost: r.ReservedMicro}, nil

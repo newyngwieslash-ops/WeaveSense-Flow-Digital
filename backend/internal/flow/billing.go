@@ -274,3 +274,17 @@ func (b Billing) SweepStale(maxAge time.Duration) (int, error) {
 	}
 	return len(rows), nil
 }
+
+// Reopen returns an unknown reservation to reserved when reconciliation proved
+// the external call never happened and it will be retried under the same key.
+func (b Billing) Reopen(id string) error {
+	res := b.DB.Model(&model.FlowBudgetReservation{}).Where("id = ? AND status = ?", id, "unknown").
+		Updates(map[string]any{"status": "reserved", "updated_at": b.now()})
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return ErrBudgetState
+	}
+	return nil
+}

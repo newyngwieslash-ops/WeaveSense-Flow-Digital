@@ -116,12 +116,39 @@ async function pushServerDocument(canvasId: string, document: CloudAgentConversa
     }
 }
 
-function mergeDocuments(server: CloudAgentConversationDocument | null, local: CloudAgentConversationDocument): CloudAgentConversationDocument {
+/**
+ * Conflict merge for concurrent writers (another device, or turns added from the
+ * intelligence page, which the server writes back as `dir_*` messages). Per
+ * conversation the newer copy wins for metadata, and messages are the union by
+ * id: messages only the other side has are kept in their original order.
+ */
+export function mergeDocuments(server: CloudAgentConversationDocument | null, local: CloudAgentConversationDocument): CloudAgentConversationDocument {
     if (!server || !isConversationDocument(server)) return local;
     const byId = new Map(server.conversations.map((c) => [c.id, c]));
     for (const c of local.conversations) {
         const other = byId.get(c.id);
-        if (!other || other.updatedAt <= c.updatedAt) byId.set(c.id, c);
+        if (!other) {
+            byId.set(c.id, c);
+            continue;
+        }
+        const [base, extra] = other.updatedAt <= c.updatedAt ? [c, other] : [other, c];
+        const seen = new Set(base.messages.map((m) => m.id));
+        const messages = [...base.messages];
+        extra.messages.forEach((m, index) => {
+            if (seen.has(m.id)) return;
+            seen.add(m.id);
+            // Insert after the closest preceding message both sides share.
+            let at = messages.length;
+            for (let i = index - 1; i >= 0; i--) {
+                const pos = messages.findIndex((x) => x.id === extra.messages[i].id);
+                if (pos >= 0) {
+                    at = pos + 1;
+                    break;
+                }
+            }
+            messages.splice(at, 0, m);
+        });
+        byId.set(c.id, { ...base, messages });
     }
     const conversations = [...byId.values()].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
     return { version: 1, activeId: local.activeId, conversations };

@@ -40,6 +40,10 @@ func RegisterP7Routes(api gin.IRouter, db *gorm.DB, user UserFunc, mcp *MCPGatew
 	}
 	g := api.Group("/intelligence")
 	g.GET("/members", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		mcp := mcp.withDB(db)
+		_ = mcp
 		s, ok := scoped(c)
 		if !ok {
 			return
@@ -52,6 +56,10 @@ func RegisterP7Routes(api gin.IRouter, db *gorm.DB, user UserFunc, mcp *MCPGatew
 		reply(c, http.StatusOK, gin.H{"members": out, "canManage": s.Role == "admin"}, "ok")
 	})
 	g.PATCH("/members/:userId", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		mcp := mcp.withDB(db)
+		_ = mcp
 		s, ok := scoped(c)
 		if !ok {
 			return
@@ -67,6 +75,10 @@ func RegisterP7Routes(api gin.IRouter, db *gorm.DB, user UserFunc, mcp *MCPGatew
 		reply(c, http.StatusOK, gin.H{"ok": true}, "ok")
 	})
 	g.GET("/mcp/calls", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		mcp := mcp.withDB(db)
+		_ = mcp
 		s, ok := scoped(c)
 		if !ok {
 			return
@@ -83,6 +95,10 @@ func RegisterP7Routes(api gin.IRouter, db *gorm.DB, user UserFunc, mcp *MCPGatew
 		reply(c, http.StatusOK, out, "ok")
 	})
 	g.POST("/mcp/calls/:id/resolve", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		mcp := mcp.withDB(db)
+		_ = mcp
 		s, ok := scoped(c)
 		if !ok {
 			return
@@ -100,6 +116,10 @@ func RegisterP7Routes(api gin.IRouter, db *gorm.DB, user UserFunc, mcp *MCPGatew
 		reply(c, http.StatusOK, row, "ok")
 	})
 	g.POST("/billing/reservations/:id/resolve", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		mcp := mcp.withDB(db)
+		_ = mcp
 		s, ok := scoped(c)
 		if !ok {
 			return

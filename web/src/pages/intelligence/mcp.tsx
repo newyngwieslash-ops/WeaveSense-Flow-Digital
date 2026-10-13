@@ -9,6 +9,9 @@ import {
     listMcpCalls,
     listMcpConnections,
     resolveMcpCall,
+    getMcpOAuth,
+    revokeMcpOAuth,
+    startMcpOAuth,
     revokeMcpConnection,
     type IntelWorkspace,
     type McpCall,
@@ -18,7 +21,7 @@ import {
 
 const STATUS_COLOR: Record<string, string> = { approved: "green", pending: "blue", needs_reapproval: "orange", revoked: "red" };
 
-/** P4: managed MCP connections. Credentials are referenced by name only (env:FLOW_MCP_CRED_* or oauth:FLOW_MCP_OAUTH_*); values never reach the browser. */
+/** P4: managed MCP connections. Credentials are referenced by name only (env:FLOW_MCP_CRED_*, oauth:FLOW_MCP_OAUTH_* or interactive oauthcode:FLOW_MCP_OAUTHCODE_*); values never reach the browser. */
 export default function McpConnectionsPage() {
     const [workspaces, setWorkspaces] = useState<IntelWorkspace[]>([]);
     const [workspaceId, setWorkspaceId] = useState<string>();
@@ -26,6 +29,7 @@ export default function McpConnectionsPage() {
     const [form, setForm] = useState({ name: "", endpoint: "", credentialRef: "", maxCallsPerDay: 0, perCallCredits: 0 });
     const [review, setReview] = useState<{ id: string; tools: McpTool[]; picked: string[] }>();
     const [unknownCalls, setUnknownCalls] = useState<McpCall[]>([]);
+    const [oauth, setOauth] = useState<Record<string, { connected: boolean; expiresAt?: string }>>({});
 
     useEffect(() => {
         void listIntelWorkspaces().then((list) => {
@@ -36,7 +40,13 @@ export default function McpConnectionsPage() {
     const refresh = useCallback(() => {
         if (workspaceId) {
             void listMcpConnections(workspaceId)
-                .then(setRows)
+                .then((list) => {
+                    setRows(list);
+                    for (const c of list.filter((x) => x.credentialRef.startsWith("oauthcode:")))
+                        void getMcpOAuth(workspaceId, c.id)
+                            .then((st) => setOauth((cur) => ({ ...cur, [c.id]: st })))
+                            .catch(() => undefined);
+                })
                 .catch(() => setRows([]));
             void listMcpCalls(workspaceId, "unknown")
                 .then(setUnknownCalls)
@@ -97,6 +107,25 @@ export default function McpConnectionsPage() {
                                 <Button key="revoke" size="small" danger disabled={c.status === "revoked"} onClick={() => void guard(() => revokeMcpConnection(workspaceId!, c.id))}>
                                     Revoke
                                 </Button>,
+                                ...(c.credentialRef.startsWith("oauthcode:")
+                                    ? [
+                                          <Button
+                                              key="oauth"
+                                              size="small"
+                                              onClick={() =>
+                                                  void guard(async () => {
+                                                      const { authorizeUrl } = await startMcpOAuth(workspaceId!, c.id);
+                                                      window.location.assign(authorizeUrl);
+                                                  })
+                                              }
+                                          >
+                                              {oauth[c.id]?.connected ? "Re-authorize" : "Authorize"}
+                                          </Button>,
+                                          <Button key="oauth-revoke" size="small" disabled={!oauth[c.id]?.connected} onClick={() => void guard(() => revokeMcpOAuth(workspaceId!, c.id))}>
+                                              Revoke OAuth
+                                          </Button>,
+                                      ]
+                                    : []),
                             ]}
                         >
                             <div style={{ width: "100%" }}>

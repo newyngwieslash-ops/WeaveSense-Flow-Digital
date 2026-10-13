@@ -53,8 +53,17 @@ func ResolveSubject(db *gorm.DB, userID string, s AgentSubject) (SubjectScope, e
 	case SubjectCanvas:
 		// Canvas stays owned by the user; intel tools operate on the personal workspace.
 		var n int64
-		if err := db.Model(&model.Canvas{}).Where("id = ? AND user_id = ?", s.ID, userID).Count(&n).Error; err != nil {
-			return SubjectScope{}, err
+		if db.Migrator().HasTable(&model.Canvas{}) {
+			if err := db.Model(&model.Canvas{}).Where("id = ? AND user_id = ?", s.ID, userID).Count(&n).Error; err != nil {
+				return SubjectScope{}, err
+			}
+		}
+		if n == 0 {
+			db.Model(&model.CanvasProject{}).Where("id = ? AND user_id = ?", s.ID, userID).Count(&n)
+		}
+		if n == 0 {
+			// The user's own canvas sidebar document (keyed by user + canvas id).
+			db.Model(&model.FlowCanvasConversationDoc{}).Where("canvas_id = ? AND user_id = ?", s.ID, userID).Count(&n)
 		}
 		if n == 0 {
 			return SubjectScope{}, ErrForbidden

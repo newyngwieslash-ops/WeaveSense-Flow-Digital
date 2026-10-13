@@ -54,4 +54,12 @@ describe("canvas agent conversations on the server", () => {
         expect(puts[1].baseVersion).toBe(5);
         expect(puts[1].document.conversations.map((c) => c.id).sort()).toEqual(["x", "y"]);
     });
+
+    it("keeps intelligence-page turns (dir_*) when the canvas saves a stale copy", () => {
+        const m = (id: string) => ({ id, role: "user", text: id });
+        const server = { version: 1, activeId: "c", conversations: [{ ...conv("c", "2026-10-13T03:00:00Z"), messages: [m("m1"), m("m2"), m("dir_a"), m("dir_b")] }] };
+        const local = { version: 1, activeId: "c", conversations: [{ ...conv("c", "2026-10-13T04:00:00Z"), messages: [m("m1"), m("m2"), m("m3")] }] };
+        const merged = mod.mergeDocuments(server, local);
+        expect(merged.conversations[0].messages.map((x: { id: string }) => x.id)).toEqual(["m1", "m2", "dir_a", "dir_b", "m3"]);
+    });
 });

@@ -47,6 +47,8 @@ func RegisterRoutes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc) {
 	}
 	g := api.Group("/intelligence")
 	g.GET("/workspaces", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
 		u, err := user(c)
 		if err != nil || u == nil {
 			reply(c, http.StatusUnauthorized, nil, "unauthorized")
@@ -61,6 +63,8 @@ func RegisterRoutes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc) {
 	})
 	proxy := func(method, enginePath string) gin.HandlerFunc {
 		return func(c *gin.Context) {
+			db := reqDB(c, db)
+			_ = db
 			if !cfg.Enabled() {
 				reply(c, http.StatusServiceUnavailable, nil, "loom engine not configured")
 				return
@@ -99,6 +103,8 @@ func RegisterRoutes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc) {
 	g.GET("/reports/:id", proxy(http.MethodGet, "/v1/reports/:id"))
 	g.GET("/brief-schedules", proxy(http.MethodGet, "/v1/brief-schedules"))
 	g.GET("/skills", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
 		s, _, ok := scoped(c)
 		if !ok {
 			return
@@ -112,6 +118,8 @@ func RegisterRoutes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc) {
 		reply(c, http.StatusOK, gin.H{"packs": ps, "installed": installed}, "ok")
 	})
 	g.POST("/skills/install", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
 		s, u, ok := scoped(c)
 		if !ok {
 			return
@@ -150,6 +158,8 @@ func RegisterRoutes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc) {
 		reply(c, http.StatusOK, out, "ok")
 	})
 	g.GET("/notifications", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
 		s, u, ok := scoped(c)
 		if !ok {
 			return
@@ -167,6 +177,8 @@ func RegisterRoutes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc) {
 	// Engine → platform outbox delivery. Authenticated with a context token
 	// whose audience is the platform issuer; tenant must match the event.
 	api.POST("/internal/flow/events", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
 		tok := strings.TrimPrefix(c.GetHeader("Authorization"), "Bearer ")
 		ctx, err := Verify(cfg.SigningKey, tok, cfg.Issuer, time.Now())
 		if err != nil || ctx.Actor.Type != "service_principal" {

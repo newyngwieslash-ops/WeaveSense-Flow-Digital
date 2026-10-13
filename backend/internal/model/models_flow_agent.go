@@ -29,6 +29,7 @@ type FlowAgentConversation struct {
 	EvidenceScope     string    `json:"evidenceScope" gorm:"type:text"`  // JSON: {document_ids, source_ids, from, to}
 	ConfirmedPlans    string    `json:"confirmedPlans" gorm:"type:text"` // JSON array
 	PiSessionID       string    `json:"piSessionId" gorm:"size:80"`
+	ExternalID        string    `json:"externalId,omitempty" gorm:"size:80"` // canvas sidebar conversation id (subject canvas)
 	LastSeq           int64     `json:"lastSeq"`
 	CreatedAt         time.Time `json:"createdAt"`
 	UpdatedAt         time.Time `json:"updatedAt" gorm:"index"`
@@ -46,6 +47,7 @@ type FlowAgentMessage struct {
 	RunID          string    `json:"runId,omitempty" gorm:"size:80"`
 	ToolCallID     string    `json:"toolCallId,omitempty" gorm:"size:80"`
 	ToolName       string    `json:"toolName,omitempty" gorm:"size:80"`
+	ExternalID     string    `json:"externalId,omitempty" gorm:"size:80;index"` // id of the mirrored canvas sidebar message
 	CreatedAt      time.Time `json:"createdAt"`
 }
 

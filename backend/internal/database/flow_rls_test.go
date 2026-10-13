@@ -51,7 +51,7 @@ func TestFlowRLSPostgres(t *testing.T) {
 	}
 	scoped := func(tn string, fn func(tx *gorm.DB) error) error {
 		return db.Transaction(func(tx *gorm.DB) error {
-			if err := tx.Exec("SELECT set_config('app.tenant_id', ?, true)", tn).Error; err != nil {
+			if err := tx.Exec("SELECT set_config('app.tenant_ids', ?, true)", tn).Error; err != nil {
 				return err
 			}
 			return fn(tx)

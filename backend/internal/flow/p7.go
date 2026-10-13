@@ -43,14 +43,39 @@ func ModelStatusFromEnv() ModelStatus {
 	return ModelStatus{URL: strings.TrimSpace(os.Getenv("FLOW_MODEL_GATEWAY_STATUS_URL")), Key: os.Getenv("FLOW_MODEL_GATEWAY_KEY"), MicroPer1KTok: price}
 }
 
+type ModelStatusResult struct {
+	Status      string `json:"status"`
+	TotalTokens int64  `json:"total_tokens"`
+	Content     string `json:"content"`
+}
+
 func (m ModelStatus) Query(ctx context.Context, r model.FlowBudgetReservation) (Outcome, error) {
 	key := strings.TrimPrefix(r.ExternalRef, "model:")
 	if m.URL == "" || key == "" || !strings.HasPrefix(r.ExternalRef, "model:") {
 		return Outcome{}, nil
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, m.URL+"?idempotency_key="+url.QueryEscape(key), nil)
+	st, err := m.QueryKey(ctx, key)
 	if err != nil {
 		return Outcome{}, err
+	}
+	switch st.Status {
+	case "succeeded":
+		return Outcome{Known: true, Succeeded: true, Cost: st.TotalTokens * m.MicroPer1KTok / 1000}, nil
+	case "not_found", "failed":
+		return Outcome{Known: true}, nil
+	}
+	return Outcome{}, nil
+}
+
+// QueryKey asks the gateway what happened to the request with this idempotency key.
+func (m ModelStatus) QueryKey(ctx context.Context, key string) (ModelStatusResult, error) {
+	var st ModelStatusResult
+	if m.URL == "" {
+		return st, errors.New("no status url")
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, m.URL+"?idempotency_key="+url.QueryEscape(key), nil)
+	if err != nil {
+		return st, err
 	}
 	if m.Key != "" {
 		req.Header.Set("Authorization", "Bearer "+m.Key)
@@ -61,26 +86,16 @@ func (m ModelStatus) Query(ctx context.Context, r model.FlowBudgetReservation) (
 	}
 	resp, err := hc.Do(req)
 	if err != nil {
-		return Outcome{}, err
+		return st, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return Outcome{}, fmt.Errorf("status lookup %d", resp.StatusCode)
+		return st, fmt.Errorf("status lookup %d", resp.StatusCode)
 	}
-	var st struct {
-		Status      string `json:"status"`
-		TotalTokens int64  `json:"total_tokens"`
+	if err := json.NewDecoder(io.LimitReader(resp.Body, 1<<20)).Decode(&st); err != nil {
+		return st, err
 	}
-	if err := json.NewDecoder(io.LimitReader(resp.Body, 1<<16)).Decode(&st); err != nil {
-		return Outcome{}, err
-	}
-	switch st.Status {
-	case "succeeded":
-		return Outcome{Known: true, Succeeded: true, Cost: st.TotalTokens * m.MicroPer1KTok / 1000}, nil
-	case "not_found", "failed":
-		return Outcome{Known: true}, nil
-	}
-	return Outcome{}, nil
+	return st, nil
 }
 
 // ResolveReservation is the operator path for an unknown reservation:
@@ -302,6 +317,7 @@ var ErrToolNotInSubjectSet = errors.New("flow: tool not available for this subje
 // Canvas sidebar conversations → unified conversation directory
 
 type CanvasConvMessage struct {
+	ID   string `json:"id"`
 	Role string `json:"role"`
 	Text string `json:"text"`
 }
@@ -317,25 +333,42 @@ func CanvasConversationIndexID(userID, canvasID, convID string) string {
 	return "cvc_" + shortHash(userID+"\x00"+canvasID+"\x00"+convID)
 }
 
-// MirrorCanvasConversations upserts canvas sidebar conversations into the
-// shared conversation directory (subject kind "canvas") and appends new
-// user/assistant messages, so canvas and intelligence surfaces list and read
-// the same conversations.
+const dirMsgPrefix = "dir_"
+
+func syncableCanvasMessages(cv CanvasConv) []CanvasConvMessage {
+	out := make([]CanvasConvMessage, 0, len(cv.Messages))
+	for i, m := range cv.Messages {
+		if (m.Role == "user" || m.Role == "assistant") && strings.TrimSpace(m.Text) != "" {
+			if m.ID == "" {
+				m.ID = fmt.Sprintf("idx_%d", i)
+			}
+			out = append(out, m)
+		}
+	}
+	return out
+}
+
+// MirrorCanvasConversations is the canvas → directory half of the two-way
+// sync: each sidebar conversation maps to a directory conversation (subject
+// canvas, ExternalID = sidebar id) and every user/assistant message is
+// appended once, keyed by its sidebar message id. Messages that originated in
+// the directory (written back as "dir_<id>") are recognised, not duplicated.
 func MirrorCanvasConversations(db *gorm.DB, userID, canvasID string, convs []CanvasConv) error {
 	sc, err := ResolveScope(db, userID, "")
 	if err != nil {
 		return err
 	}
-	cs := Conversations{DB: db}
+	cs := Conversations{DB: db, noWriteBack: true}
 	for _, cv := range convs {
 		if cv.ID == "" {
 			continue
 		}
 		id := CanvasConversationIndexID(userID, canvasID, cv.ID)
+		msgs := syncableCanvasMessages(cv)
 		var row model.FlowAgentConversation
 		err := db.First(&row, "id = ?", id).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			row = model.FlowAgentConversation{ID: id, TenantID: sc.TenantID, WorkspaceID: sc.WorkspaceID, UserID: userID,
+			row = model.FlowAgentConversation{ID: id, TenantID: sc.TenantID, WorkspaceID: sc.WorkspaceID, UserID: userID, ExternalID: cv.ID,
 				SubjectKind: SubjectCanvas, SubjectID: canvasID, Title: truncRunes(cv.Title, 200), EvidenceScope: "{}", ConfirmedPlans: "[]"}
 			if err := db.Create(&row).Error; err != nil {
 				return err
@@ -344,19 +377,40 @@ func MirrorCanvasConversations(db *gorm.DB, userID, canvasID string, convs []Can
 			return err
 		} else if row.UserID != userID {
 			continue
-		} else if cv.Title != "" && cv.Title != row.Title {
-			db.Model(&row).Update("title", truncRunes(cv.Title, 200))
-		}
-		var n int64
-		db.Model(&model.FlowAgentMessage{}).Where("conversation_id = ?", id).Count(&n)
-		msgs := make([]CanvasConvMessage, 0, len(cv.Messages))
-		for _, m := range cv.Messages {
-			if (m.Role == "user" || m.Role == "assistant") && strings.TrimSpace(m.Text) != "" {
-				msgs = append(msgs, m)
+		} else {
+			if row.ExternalID == "" {
+				// Rows mirrored before v59 matched by position: backfill ids.
+				var legacy []model.FlowAgentMessage
+				db.Where("conversation_id = ? AND (external_id = '' OR external_id IS NULL)", id).Order("seq").Find(&legacy)
+				for i, m := range legacy {
+					if i < len(msgs) {
+						db.Model(&model.FlowAgentMessage{}).Where("id = ?", m.ID).Update("external_id", msgs[i].ID)
+					}
+				}
+				db.Model(&model.FlowAgentConversation{}).Where("id = ?", id).Update("external_id", cv.ID)
+				row.ExternalID = cv.ID
+			}
+			if cv.Title != "" && cv.Title != row.Title {
+				db.Model(&model.FlowAgentConversation{}).Where("id = ?", id).Update("title", truncRunes(cv.Title, 200))
 			}
 		}
-		for i := int(n); i < len(msgs); i++ {
-			if _, err := cs.Append(row, model.FlowAgentMessage{Role: msgs[i].Role, Content: truncRunes(msgs[i].Text, 20000)}); err != nil {
+		var known []string
+		db.Model(&model.FlowAgentMessage{}).Where("conversation_id = ? AND external_id <> ''", id).Pluck("external_id", &known)
+		seen := map[string]bool{}
+		for _, k := range known {
+			seen[k] = true
+		}
+		for _, m := range msgs {
+			if seen[m.ID] {
+				continue
+			}
+			if dirID, ok := strings.CutPrefix(m.ID, dirMsgPrefix); ok {
+				r := db.Model(&model.FlowAgentMessage{}).Where("id = ? AND conversation_id = ?", dirID, id).Update("external_id", m.ID)
+				if r.RowsAffected == 1 {
+					continue
+				}
+			}
+			if _, err := cs.Append(row, model.FlowAgentMessage{Role: m.Role, Content: truncRunes(m.Text, 20000), ExternalID: m.ID}); err != nil {
 				return err
 			}
 		}
@@ -364,10 +418,81 @@ func MirrorCanvasConversations(db *gorm.DB, userID, canvasID string, convs []Can
 	return nil
 }
 
+// SyncConversationToCanvas is the directory → canvas half: user/assistant
+// messages added from the intelligence page are appended to the sidebar
+// document with optimistic concurrency (version CAS, retried on conflict),
+// then marked as synced. Other document fields are preserved verbatim.
+func SyncConversationToCanvas(db *gorm.DB, convID string) error {
+	var conv model.FlowAgentConversation
+	if err := db.First(&conv, "id = ?", convID).Error; err != nil {
+		return err
+	}
+	if conv.SubjectKind != SubjectCanvas || conv.ExternalID == "" {
+		return nil
+	}
+	var pending []model.FlowAgentMessage
+	db.Where("conversation_id = ? AND role IN ? AND (external_id = '' OR external_id IS NULL)", convID, []string{"user", "assistant"}).Order("seq").Find(&pending)
+	if len(pending) == 0 {
+		return nil
+	}
+	for attempt := 0; attempt < 5; attempt++ {
+		var doc model.FlowCanvasConversationDoc
+		if err := db.First(&doc, "user_id = ? AND canvas_id = ?", conv.UserID, conv.SubjectID).Error; err != nil {
+			return err
+		}
+		var root map[string]any
+		if err := json.Unmarshal([]byte(nonEmpty(doc.Document)), &root); err != nil {
+			return err
+		}
+		list, _ := root["conversations"].([]any)
+		now := time.Now().UTC().Format(time.RFC3339Nano)
+		found := false
+		for _, item := range list {
+			c, _ := item.(map[string]any)
+			if c == nil || c["id"] != conv.ExternalID {
+				continue
+			}
+			found = true
+			msgs, _ := c["messages"].([]any)
+			have := map[string]bool{}
+			for _, mm := range msgs {
+				if m, _ := mm.(map[string]any); m != nil {
+					if id, _ := m["id"].(string); id != "" {
+						have[id] = true
+					}
+				}
+			}
+			for _, p := range pending {
+				if !have[dirMsgPrefix+p.ID] {
+					msgs = append(msgs, map[string]any{"id": dirMsgPrefix + p.ID, "role": p.Role, "text": p.Content, "meta": "intelligence"})
+				}
+			}
+			c["messages"] = msgs
+			c["updatedAt"] = now
+		}
+		if !found {
+			return nil
+		}
+		raw, _ := json.Marshal(root)
+		upd := db.Model(&model.FlowCanvasConversationDoc{}).Where("user_id = ? AND canvas_id = ? AND version = ?", conv.UserID, conv.SubjectID, doc.Version).
+			Updates(map[string]any{"document": string(raw), "version": doc.Version + 1, "updated_at": time.Now().UTC()})
+		if upd.Error != nil {
+			return upd.Error
+		}
+		if upd.RowsAffected == 1 {
+			for _, p := range pending {
+				db.Model(&model.FlowAgentMessage{}).Where("id = ?", p.ID).Update("external_id", dirMsgPrefix+p.ID)
+			}
+			return nil
+		}
+	}
+	return errVersionConflict
+}
+
 // ---------------------------------------------------------------------------
 // Platform RLS: scoped transactions
 
-// TenantTx runs fn in a transaction with app.tenant_id set, so Postgres RLS
+// TenantTx runs fn in a transaction with app.tenant_ids set, so Postgres RLS
 // policies on flow tables restrict every statement to that tenant.
 func TenantTx(db *gorm.DB, tenantID string, fn func(tx *gorm.DB) error) error {
 	if tenantID == "" {
@@ -375,7 +500,7 @@ func TenantTx(db *gorm.DB, tenantID string, fn func(tx *gorm.DB) error) error {
 	}
 	return db.Transaction(func(tx *gorm.DB) error {
 		if tx.Dialector.Name() == "postgres" {
-			if err := tx.Exec("SELECT set_config('app.tenant_id', ?, true)", tenantID).Error; err != nil {
+			if err := tx.Exec("SELECT set_config('app.tenant_ids', ?, true)", tenantID).Error; err != nil {
 				return err
 			}
 		}

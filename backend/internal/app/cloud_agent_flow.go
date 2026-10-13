@@ -46,7 +46,15 @@ func (s *Service) flowMCPToolsFor(userID string, req CloudAgentRequest) []map[st
 }
 
 func cloudAgentIntelSubject(req CloudAgentRequest) bool {
-	return req.Subject != nil && (req.Subject.Kind == flow.SubjectWorkspace || req.Subject.Kind == flow.SubjectTopic)
+	if req.Subject == nil {
+		return false
+	}
+	// A canvas sidebar conversation continued from the intelligence page runs
+	// as a server-side conversation (no canvas snapshot, intelligence tools).
+	if req.Subject.Kind == flow.SubjectCanvas {
+		return req.FlowConversationID != "" && strings.TrimSpace(req.CanvasID) == ""
+	}
+	return req.Subject.Kind == flow.SubjectWorkspace || req.Subject.Kind == flow.SubjectTopic
 }
 
 // cloudAgentIntelTools is the tool table for intelligence subjects.

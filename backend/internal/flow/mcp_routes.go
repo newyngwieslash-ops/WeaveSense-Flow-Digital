@@ -39,6 +39,10 @@ func RegisterMCPRoutes(api gin.IRouter, db *gorm.DB, gw *MCPGateway, user UserFu
 	}
 	g := api.Group("/intelligence/mcp/connections")
 	g.GET("", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		gw := gw.withDB(db)
+		_ = gw
 		s, _, ok := scoped(c)
 		if !ok {
 			return
@@ -51,6 +55,10 @@ func RegisterMCPRoutes(api gin.IRouter, db *gorm.DB, gw *MCPGateway, user UserFu
 		reply(c, http.StatusOK, rows, "ok")
 	})
 	g.POST("", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		gw := gw.withDB(db)
+		_ = gw
 		s, u, ok := scoped(c)
 		if !ok {
 			return
@@ -72,6 +80,10 @@ func RegisterMCPRoutes(api gin.IRouter, db *gorm.DB, gw *MCPGateway, user UserFu
 		reply(c, http.StatusCreated, gw.View(row), "ok")
 	})
 	g.GET("/:id/tools", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		gw := gw.withDB(db)
+		_ = gw
 		s, u, ok := scoped(c)
 		if !ok {
 			return
@@ -88,6 +100,10 @@ func RegisterMCPRoutes(api gin.IRouter, db *gorm.DB, gw *MCPGateway, user UserFu
 		reply(c, http.StatusOK, tools, "ok")
 	})
 	g.POST("/:id/approve", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		gw := gw.withDB(db)
+		_ = gw
 		s, u, ok := scoped(c)
 		if !ok {
 			return
@@ -111,6 +127,10 @@ func RegisterMCPRoutes(api gin.IRouter, db *gorm.DB, gw *MCPGateway, user UserFu
 		reply(c, http.StatusOK, v, "ok")
 	})
 	g.POST("/:id/revoke", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		gw := gw.withDB(db)
+		_ = gw
 		s, u, ok := scoped(c)
 		if !ok {
 			return

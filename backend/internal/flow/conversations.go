@@ -2,6 +2,7 @@ package flow
 
 import (
 	"errors"
+	"log/slog"
 	"time"
 
 	"yingce/backend/internal/model"
@@ -14,7 +15,11 @@ var ErrNotFound = errors.New("flow: not found")
 
 // Conversations is the server-side directory. The web client's localStorage
 // directory becomes a cache of ListConversations.
-type Conversations struct{ DB *gorm.DB }
+type Conversations struct {
+	DB *gorm.DB
+	// noWriteBack: set by the canvas mirror itself (no echo back to the sidebar).
+	noWriteBack bool
+}
 
 func (c Conversations) Create(userID string, ss SubjectScope, title string) (model.FlowAgentConversation, error) {
 	conv := model.FlowAgentConversation{ID: NewID("conv_"), TenantID: ss.Scope.TenantID, WorkspaceID: ss.Scope.WorkspaceID,
@@ -54,17 +59,25 @@ func (c Conversations) List(userID string, limit int, before time.Time) ([]model
 
 // Append adds a message with the next sequence number atomically.
 func (c Conversations) Append(conv model.FlowAgentConversation, m model.FlowAgentMessage) (model.FlowAgentMessage, error) {
+	var kind string
 	err := c.DB.Transaction(func(tx *gorm.DB) error {
 		var cur model.FlowAgentConversation
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&cur, "id = ?", conv.ID).Error; err != nil {
 			return err
 		}
+		kind = cur.SubjectKind
 		m.ID, m.ConversationID, m.TenantID, m.Seq = NewID("msg_"), cur.ID, cur.TenantID, cur.LastSeq+1
 		if err := tx.Create(&m).Error; err != nil {
 			return err
 		}
 		return tx.Model(&cur).Updates(map[string]any{"last_seq": m.Seq, "updated_at": time.Now().UTC()}).Error
 	})
+	if err == nil && !c.noWriteBack && kind == SubjectCanvas && m.ExternalID == "" && (m.Role == "user" || m.Role == "assistant") {
+		// Two-way canvas sync: write intelligence-side turns back to the sidebar document.
+		if serr := SyncConversationToCanvas(c.DB, conv.ID); serr != nil {
+			slog.Warn("flow: canvas write-back", "conversation", conv.ID, "error", serr)
+		}
+	}
 	return m, err
 }
 

@@ -37,9 +37,19 @@ func RegisterAgentRoutes(api gin.IRouter, db *gorm.DB, engine EngineCaller, user
 	}
 	g := api.Group("/agent")
 	g.GET("/tools", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		convs := Conversations{DB: db}
+		tools := tools.withDB(db)
+		_, _ = convs, tools
 		reply(c, http.StatusOK, gin.H{"catalog": Catalog, "functions": PiFunctionTools()}, "ok")
 	})
 	g.GET("/conversations", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		convs := Conversations{DB: db}
+		tools := tools.withDB(db)
+		_, _ = convs, tools
 		u, ok := authed(c)
 		if !ok {
 			return
@@ -57,6 +67,11 @@ func RegisterAgentRoutes(api gin.IRouter, db *gorm.DB, engine EngineCaller, user
 		reply(c, http.StatusOK, list, "ok")
 	})
 	g.POST("/conversations", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		convs := Conversations{DB: db}
+		tools := tools.withDB(db)
+		_, _ = convs, tools
 		u, ok := authed(c)
 		if !ok {
 			return
@@ -82,6 +97,11 @@ func RegisterAgentRoutes(api gin.IRouter, db *gorm.DB, engine EngineCaller, user
 		reply(c, http.StatusCreated, conv, "ok")
 	})
 	g.GET("/conversations/:id/messages", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		convs := Conversations{DB: db}
+		tools := tools.withDB(db)
+		_, _ = convs, tools
 		u, ok := authed(c)
 		if !ok {
 			return
@@ -101,6 +121,11 @@ func RegisterAgentRoutes(api gin.IRouter, db *gorm.DB, engine EngineCaller, user
 		reply(c, http.StatusOK, gin.H{"messages": msgs, "nextBeforeSeq": next, "runs": runs}, "ok")
 	})
 	g.POST("/conversations/:id/messages", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		convs := Conversations{DB: db}
+		tools := tools.withDB(db)
+		_, _ = convs, tools
 		u, ok := authed(c)
 		if !ok {
 			return
@@ -125,6 +150,11 @@ func RegisterAgentRoutes(api gin.IRouter, db *gorm.DB, engine EngineCaller, user
 		reply(c, http.StatusCreated, m, "ok")
 	})
 	g.GET("/conversations/:id/context", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		convs := Conversations{DB: db}
+		tools := tools.withDB(db)
+		_, _ = convs, tools
 		u, ok := authed(c)
 		if !ok {
 			return
@@ -141,6 +171,11 @@ func RegisterAgentRoutes(api gin.IRouter, db *gorm.DB, engine EngineCaller, user
 		reply(c, http.StatusOK, gin.H{"context": tc, "messages": tc.Messages(), "tools": PiFunctionTools()}, "ok")
 	})
 	g.POST("/conversations/:id/tool-calls", func(c *gin.Context) {
+		db := reqDB(c, db)
+		_ = db
+		convs := Conversations{DB: db}
+		tools := tools.withDB(db)
+		_, _ = convs, tools
 		u, ok := authed(c)
 		if !ok {
 			return

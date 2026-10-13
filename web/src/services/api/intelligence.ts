@@ -101,3 +101,7 @@ export const resolveReservation = (workspaceId: string, id: string, outcome: "su
 export type McpCall = { id: string; connectionId: string; tool: string; status: "pending" | "succeeded" | "failed" | "unknown"; billed: boolean; attempts: number; idemKey: string; createdAt: string; updatedAt: string };
 export const listMcpCalls = (workspaceId: string, status?: string) => http.get<McpCall[]>("/intelligence/mcp/calls", { ...ws(workspaceId), params: status ? { status } : {} });
 export const resolveMcpCall = (workspaceId: string, id: string, outcome: "succeeded" | "not_executed", output?: string) => http.post<McpCall>(`/intelligence/mcp/calls/${encodeURIComponent(id)}/resolve`, { outcome, output }, ws(workspaceId));
+
+export const startMcpOAuth = (workspaceId: string, id: string) => http.post<{ authorizeUrl: string }>(`/intelligence/mcp/connections/${encodeURIComponent(id)}/oauth/start`, {}, ws(workspaceId));
+export const getMcpOAuth = (workspaceId: string, id: string) => http.get<{ connected: boolean; expiresAt?: string; scope?: string }>(`/intelligence/mcp/connections/${encodeURIComponent(id)}/oauth`, ws(workspaceId));
+export const revokeMcpOAuth = (workspaceId: string, id: string) => http.post<{ revoked: boolean }>(`/intelligence/mcp/connections/${encodeURIComponent(id)}/oauth/revoke`, {}, ws(workspaceId));

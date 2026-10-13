@@ -45,14 +45,17 @@ func (s *Service) flowMCPToolsFor(userID string, req CloudAgentRequest) []map[st
 	return nil
 }
 
+// cloudAgentCanvasMirror: a canvas run continued from the intelligence page.
+// It is a normal canvas run (server-side canvas document, ownership-checked,
+// revisioned canvas tools) whose turns are also recorded in the directory
+// conversation, and therefore written back to the canvas sidebar.
+func cloudAgentCanvasMirror(req CloudAgentRequest) bool {
+	return req.Subject != nil && req.Subject.Kind == flow.SubjectCanvas && req.FlowConversationID != "" && req.CanvasID == req.Subject.ID
+}
+
 func cloudAgentIntelSubject(req CloudAgentRequest) bool {
 	if req.Subject == nil {
 		return false
-	}
-	// A canvas sidebar conversation continued from the intelligence page runs
-	// as a server-side conversation (no canvas snapshot, intelligence tools).
-	if req.Subject.Kind == flow.SubjectCanvas {
-		return req.FlowConversationID != "" && strings.TrimSpace(req.CanvasID) == ""
 	}
 	return req.Subject.Kind == flow.SubjectWorkspace || req.Subject.Kind == flow.SubjectTopic
 }
@@ -150,7 +153,7 @@ func (s *Service) recordFlowAssistantReply(userID, runID string) {
 		return
 	}
 	state, err := cloudAgentDecode(execution)
-	if err != nil || !cloudAgentIntelSubject(state.Request) {
+	if err != nil || !(cloudAgentIntelSubject(state.Request) || cloudAgentCanvasMirror(state.Request)) {
 		return
 	}
 	if _, ss, cerr := s.cloudAgentFlowConversation(userID, state.Request); cerr == nil {

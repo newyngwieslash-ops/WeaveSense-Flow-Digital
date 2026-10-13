@@ -82,6 +82,8 @@ export default function IntelligencePage() {
             const { run } = await createAgentRun({
                 subject: { kind: conv.subjectKind as "intelligence_workspace" | "topic" | "canvas", id: conv.subjectId },
                 conversationId: conv.id,
+                // Continuing a canvas conversation runs as a full canvas run (server-side canvas tools).
+                ...(conv.subjectKind === "canvas" ? { canvasId: conv.subjectId } : {}),
                 prompt,
                 permissionMode: "request_approval",
                 idempotencyKey: newCallId(),

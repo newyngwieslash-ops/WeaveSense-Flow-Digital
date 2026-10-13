@@ -62,4 +62,17 @@ describe("canvas agent conversations on the server", () => {
         const merged = mod.mergeDocuments(server, local);
         expect(merged.conversations[0].messages.map((x: { id: string }) => x.id)).toEqual(["m1", "m2", "dir_a", "dir_b", "m3"]);
     });
+
+    it("honours message tombstones from either side and edits by newer copy", () => {
+        const m = (id: string, text = id) => ({ id, role: "user", text });
+        const server = { version: 1, activeId: "c", conversations: [{ ...conv("c", "2026-10-13T05:00:00Z"), messages: [m("m1"), m("m2", "m2 edited")], deletedIds: ["dir_x"] }] };
+        const stale = { version: 1, activeId: "c", conversations: [{ ...conv("c", "2026-10-13T04:00:00Z"), messages: [m("m1"), m("m2"), m("dir_x")] }] };
+        const merged = mod.mergeDocuments(server, stale);
+        expect(merged.conversations[0].messages.map((x: { id: string; text: string }) => x.text)).toEqual(["m1", "m2 edited"]);
+        const deleted = mod.deleteConversationMessage(merged.conversations[0], "m1");
+        expect(deleted.deletedIds).toEqual(["dir_x", "m1"]);
+        const again = mod.mergeDocuments(server, { version: 1, activeId: "c", conversations: [deleted] });
+        expect(again.conversations[0].messages.map((x: { id: string }) => x.id)).toEqual(["m2"]);
+        expect(mod.editConversationMessage(again.conversations[0], "m2", "v3").messages[0].text).toBe("v3");
+    });
 });

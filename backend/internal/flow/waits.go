@@ -52,7 +52,11 @@ func (w Waits) ResumeReady(resume func(model.FlowExternalWait) (string, error)) 
 		if claim.Error != nil || claim.RowsAffected != 1 {
 			continue
 		}
-		if err := AuthorizeGrant(w.DB, "user:"+r.UserID, r.TenantID, r.WorkspaceID, "intel.collect"); err != nil {
+		// Grant re-check runs RLS-scoped to the wait's tenant; the continuation
+		// run itself records/executes through UserTx (tenant-scoped as well).
+		if err := TenantTx(w.DB, r.TenantID, func(tx *gorm.DB) error {
+			return AuthorizeGrant(tx, "user:"+r.UserID, r.TenantID, r.WorkspaceID, "intel.collect")
+		}); err != nil {
 			w.DB.Model(&model.FlowExternalWait{}).Where("id = ?", r.ID).Update("status", "denied")
 			continue
 		}

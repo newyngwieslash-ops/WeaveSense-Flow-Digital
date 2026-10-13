@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"yingce/backend/internal/model"
@@ -149,6 +150,54 @@ func RegisterAgentRoutes(api gin.IRouter, db *gorm.DB, engine EngineCaller, user
 		}
 		reply(c, http.StatusCreated, m, "ok")
 	})
+	// Message edit / delete (tombstone). Optional baseRevision gives optimistic
+	// concurrency (409 on conflict); repeating a request is idempotent.
+	mutate := func(c *gin.Context, del bool) {
+		db := reqDB(c, db)
+		convs := Conversations{DB: db}
+		u, ok := authed(c)
+		if !ok {
+			return
+		}
+		conv, _, ok := loadConv(c, u)
+		if !ok {
+			return
+		}
+		var in struct {
+			Content      string `json:"content"`
+			BaseRevision *int64 `json:"baseRevision"`
+		}
+		_ = c.ShouldBindJSON(&in)
+		base := int64(-1)
+		if in.BaseRevision != nil {
+			base = *in.BaseRevision
+		}
+		var m model.FlowAgentMessage
+		var err error
+		if del {
+			m, err = convs.DeleteMessage(conv, c.Param("msgId"), base)
+		} else {
+			if strings.TrimSpace(in.Content) == "" {
+				reply(c, http.StatusBadRequest, nil, "content required")
+				return
+			}
+			m, err = convs.EditMessage(conv, c.Param("msgId"), in.Content, base)
+		}
+		switch {
+		case errors.Is(err, ErrRevisionConflict):
+			reply(c, http.StatusConflict, m, "revision conflict")
+		case errors.Is(err, ErrNotFound):
+			reply(c, http.StatusNotFound, nil, "message not found")
+		case errors.Is(err, ErrInvalid):
+			reply(c, http.StatusBadRequest, nil, "only user/assistant messages can be changed")
+		case err != nil:
+			reply(c, http.StatusInternalServerError, nil, "update failed")
+		default:
+			reply(c, http.StatusOK, m, "ok")
+		}
+	}
+	g.PATCH("/conversations/:id/messages/:msgId", func(c *gin.Context) { mutate(c, false) })
+	g.DELETE("/conversations/:id/messages/:msgId", func(c *gin.Context) { mutate(c, true) })
 	g.GET("/conversations/:id/context", func(c *gin.Context) {
 		db := reqDB(c, db)
 		_ = db

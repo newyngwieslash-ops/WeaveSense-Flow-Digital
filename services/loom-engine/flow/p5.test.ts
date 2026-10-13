@@ -49,6 +49,29 @@ test("brief uses platform summarization; engine re-validates citations", async (
   assert.match(rep.body, /LLM summary/); assert.equal(rep.coverage.summarized_by, "model_gateway");
 });
 
+test("brief summarization is non-blocking: pending model task parks the window, next tick completes it", async () => {
+  const { rp, eng, sched } = await setup();
+  const keys: string[] = [];
+  let done = false;
+  rp.summarize = async (input) => {
+    keys.push(input.key);
+    if (!done) return { pending: true, task_id: "mt_1" };
+    const ev = input.evidence[0];
+    return { body: "Async LLM summary", claims: [{ text: "Tariff announced", kind: "source_statement", citations: [{ evidence_id: ev.evidence_id, revision: ev.revision }] }] };
+  };
+  assert.equal(await rp.briefTick(), 0);
+  assert.equal(rp.pendingSummaries.get(keys[0]), "mt_1");
+  assert.equal((await rp.listReports(A)).length, 0);
+  const b = (await eng.db.query(`SELECT next_run_at FROM flow_brief_schedules WHERE id=$1`, [sched.id])).rows[0];
+  assert.equal(new Date(b.next_run_at).toISOString(), "2026-10-13T01:00:00.000Z");
+  done = true; // async pipeline finished the model task
+  assert.equal(await rp.briefTick(), 1);
+  assert.equal(keys[0], keys[1]); // same idempotency key re-submitted
+  assert.equal(rp.pendingSummaries.size, 0);
+  const rep = await rp.getReport(A, (await rp.listReports(A))[0].id);
+  assert.match(rep.body, /Async LLM summary/);
+});
+
 test("brief generation is transactional: failed save leaves the window due and no report", async () => {
   const { rp, eng, sched } = await setup();
   rp.summarize = async () => ({ body: "x", claims: [{ text: "bogus", kind: "source_statement", citations: [{ evidence_id: "ev_fake", revision: 1 }] }] });

@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"gorm.io/gorm"
 	"log/slog"
 	"strings"
 
@@ -45,14 +46,17 @@ func (s *Service) flowMCPToolsFor(userID string, req CloudAgentRequest) []map[st
 	return nil
 }
 
+// cloudAgentCanvasMirror: a canvas run continued from the intelligence page.
+// It is a normal canvas run (server-side canvas document, ownership-checked,
+// revisioned canvas tools) whose turns are also recorded in the directory
+// conversation, and therefore written back to the canvas sidebar.
+func cloudAgentCanvasMirror(req CloudAgentRequest) bool {
+	return req.Subject != nil && req.Subject.Kind == flow.SubjectCanvas && req.FlowConversationID != "" && req.CanvasID == req.Subject.ID
+}
+
 func cloudAgentIntelSubject(req CloudAgentRequest) bool {
 	if req.Subject == nil {
 		return false
-	}
-	// A canvas sidebar conversation continued from the intelligence page runs
-	// as a server-side conversation (no canvas snapshot, intelligence tools).
-	if req.Subject.Kind == flow.SubjectCanvas {
-		return req.FlowConversationID != "" && strings.TrimSpace(req.CanvasID) == ""
 	}
 	return req.Subject.Kind == flow.SubjectWorkspace || req.Subject.Kind == flow.SubjectTopic
 }
@@ -95,8 +99,25 @@ func cloudAgentIntelToolsAll(req CloudAgentRequest) []map[string]any {
 
 // cloudAgentFlowConversation re-resolves the conversation and the user's
 // tenant/workspace/role; the subject on the request must match it.
-func (s *Service) cloudAgentFlowConversation(userID string, req CloudAgentRequest) (model.FlowAgentConversation, flow.SubjectScope, error) {
-	conv, ss, err := flow.Conversations{DB: s.repo.DB()}.Get(userID, req.FlowConversationID)
+func (s *Service) cloudAgentFlowConversation(userID string, req CloudAgentRequest) (conv model.FlowAgentConversation, ss flow.SubjectScope, err error) {
+	if terr := s.inFlowUser(userID, func(db *gorm.DB) error {
+		conv, ss, err = s.cloudAgentFlowConversationIn(db, userID, req)
+		return nil
+	}); terr != nil && err == nil {
+		err = terr
+	}
+	return conv, ss, err
+}
+
+// inFlowUser runs fn in a transaction scoped by RLS to the user's tenants:
+// background agent work (tool bridge, recording, auto-continue) gets the same
+// enforcement as HTTP requests through TenantMiddleware.
+func (s *Service) inFlowUser(userID string, fn func(db *gorm.DB) error) error {
+	return flow.UserTx(s.repo.DB(), userID, fn)
+}
+
+func (s *Service) cloudAgentFlowConversationIn(db *gorm.DB, userID string, req CloudAgentRequest) (model.FlowAgentConversation, flow.SubjectScope, error) {
+	conv, ss, err := flow.Conversations{DB: db}.Get(userID, req.FlowConversationID)
 	if err != nil {
 		return conv, ss, NotFound("情报会话不存在或无权访问")
 	}
@@ -109,11 +130,19 @@ func (s *Service) cloudAgentFlowConversation(userID string, req CloudAgentReques
 // cloudAgentFlowContextMessage renders the server-assembled turn context as a
 // data message (same slot the canvas catalog uses).
 func (s *Service) cloudAgentFlowContextMessage(userID string, req CloudAgentRequest) (map[string]any, error) {
-	conv, ss, err := s.cloudAgentFlowConversation(userID, req)
-	if err != nil {
-		return nil, err
+	var tc flow.TurnContext
+	var err error
+	if terr := s.inFlowUser(userID, func(db *gorm.DB) error {
+		conv, ss, cerr := s.cloudAgentFlowConversationIn(db, userID, req)
+		if cerr != nil {
+			err = cerr
+			return nil
+		}
+		tc, err = flow.BuildTurnContext(db, conv, ss)
+		return nil
+	}); terr != nil && err == nil {
+		err = terr
 	}
-	tc, err := flow.BuildTurnContext(s.repo.DB(), conv, ss)
 	if err != nil {
 		return nil, err
 	}
@@ -131,15 +160,18 @@ func (s *Service) cloudAgentFlowContextMessage(userID string, req CloudAgentRequ
 
 // recordFlowUserTurn appends the user's prompt to the conversation, linked to the run.
 func (s *Service) recordFlowUserTurn(userID string, req CloudAgentRequest, runID string) {
-	conv, _, err := s.cloudAgentFlowConversation(userID, req)
-	if err != nil {
-		return
-	}
-	var n int64
-	s.repo.DB().Model(&model.FlowAgentMessage{}).Where("conversation_id = ? AND run_id = ? AND role = 'user'", conv.ID, runID).Count(&n)
-	if n == 0 {
-		_, _ = flow.Conversations{DB: s.repo.DB()}.Append(conv, model.FlowAgentMessage{Role: "user", Content: req.Prompt, RunID: runID})
-	}
+	_ = s.inFlowUser(userID, func(db *gorm.DB) error {
+		conv, _, err := s.cloudAgentFlowConversationIn(db, userID, req)
+		if err != nil {
+			return nil
+		}
+		var n int64
+		db.Model(&model.FlowAgentMessage{}).Where("conversation_id = ? AND run_id = ? AND role = 'user'", conv.ID, runID).Count(&n)
+		if n == 0 {
+			_, _ = flow.Conversations{DB: db}.Append(conv, model.FlowAgentMessage{Role: "user", Content: req.Prompt, RunID: runID})
+		}
+		return nil
+	})
 }
 
 // recordFlowAssistantReply copies the run's final assistant message into the
@@ -150,12 +182,15 @@ func (s *Service) recordFlowAssistantReply(userID, runID string) {
 		return
 	}
 	state, err := cloudAgentDecode(execution)
-	if err != nil || !cloudAgentIntelSubject(state.Request) {
+	if err != nil || !(cloudAgentIntelSubject(state.Request) || cloudAgentCanvasMirror(state.Request)) {
 		return
 	}
-	if _, ss, cerr := s.cloudAgentFlowConversation(userID, state.Request); cerr == nil {
-		_ = flow.SettleRunBudget(s.repo.DB(), ss.Scope.TenantID, runID)
-	}
+	_ = s.inFlowUser(userID, func(db *gorm.DB) error {
+		if _, ss, cerr := s.cloudAgentFlowConversationIn(db, userID, state.Request); cerr == nil {
+			_ = flow.SettleRunBudget(db, ss.Scope.TenantID, runID)
+		}
+		return nil
+	})
 	run, err := s.CloudAgentRun(userID, runID, CloudAgentRunViewOptions{EventLimit: cloudAgentContinuationEventLimit})
 	if err != nil {
 		return
@@ -169,15 +204,18 @@ func (s *Service) recordFlowAssistantReply(userID, runID string) {
 	if strings.TrimSpace(text) == "" {
 		return
 	}
-	conv, _, err := s.cloudAgentFlowConversation(userID, state.Request)
-	if err != nil {
-		return
-	}
-	var n int64
-	s.repo.DB().Model(&model.FlowAgentMessage{}).Where("conversation_id = ? AND run_id = ? AND role = 'assistant'", conv.ID, runID).Count(&n)
-	if n == 0 {
-		_, _ = flow.Conversations{DB: s.repo.DB()}.Append(conv, model.FlowAgentMessage{Role: "assistant", Content: text, RunID: runID})
-	}
+	_ = s.inFlowUser(userID, func(db *gorm.DB) error {
+		conv, _, err := s.cloudAgentFlowConversationIn(db, userID, state.Request)
+		if err != nil {
+			return nil
+		}
+		var n int64
+		db.Model(&model.FlowAgentMessage{}).Where("conversation_id = ? AND run_id = ? AND role = 'assistant'", conv.ID, runID).Count(&n)
+		if n == 0 {
+			_, _ = flow.Conversations{DB: db}.Append(conv, model.FlowAgentMessage{Role: "assistant", Content: text, RunID: runID})
+		}
+		return nil
+	})
 }
 
 // advanceCloudAgentIntelTool executes one intel_* call for the current step.
@@ -232,8 +270,20 @@ func (s *Service) advanceCloudAgentIntelTool(run *model.CloudAgentExecution, sta
 	})
 }
 
-func (s *Service) executeIntelTool(userID, runID string, req CloudAgentRequest, call cloudAgentCall, approvalID string) (any, error) {
-	conv, ss, err := s.cloudAgentFlowConversation(userID, req)
+func (s *Service) executeIntelTool(userID, runID string, req CloudAgentRequest, call cloudAgentCall, approvalID string) (out any, err error) {
+	// The whole tool execution (receipts, writes, parking, transcript) runs in
+	// one RLS-scoped transaction for the user's tenants.
+	if terr := s.inFlowUser(userID, func(db *gorm.DB) error {
+		out, err = s.executeIntelToolIn(db, userID, runID, req, call, approvalID)
+		return nil
+	}); terr != nil && err == nil {
+		return nil, terr
+	}
+	return out, err
+}
+
+func (s *Service) executeIntelToolIn(db *gorm.DB, userID, runID string, req CloudAgentRequest, call cloudAgentCall, approvalID string) (any, error) {
+	conv, ss, err := s.cloudAgentFlowConversationIn(db, userID, req)
 	if err != nil {
 		return nil, err
 	}
@@ -243,7 +293,7 @@ func (s *Service) executeIntelTool(userID, runID string, req CloudAgentRequest, 
 			return nil, BadAuthRequest("工具参数不是合法 JSON")
 		}
 	}
-	tools := flow.Tools{DB: s.repo.DB(), Engine: s.flowEngine, RunID: runID, MCP: s.flowMCP, Model: s.flowModel}
+	tools := flow.Tools{DB: s.repo.DB(), Engine: s.flowEngine, RunID: runID, MCP: s.flowMCP, Model: s.flowModel}.WithDB(db)
 	r, err := tools.Invoke(context.Background(), conv, ss, userID, call.ID, call.Function.Name, args, approvalID)
 	if err != nil {
 		if errors.Is(err, flow.ErrForbidden) || errors.Is(err, flow.ErrNotFound) {
@@ -255,23 +305,26 @@ func (s *Service) executeIntelTool(userID, runID string, req CloudAgentRequest, 
 		return nil, BadAuthRequest(firstNonEmpty(r.Error, "情报工具执行失败"))
 	}
 	if parksFlowOperation(call.Function.Name) {
-		s.parkFlowOperation(userID, runID, req, ss, call.ID, r)
+		s.parkFlowOperation(db, userID, runID, req, ss, call.ID, r)
 	}
 	b, _ := json.Marshal(r)
-	_, _ = flow.Conversations{DB: s.repo.DB()}.Append(conv, model.FlowAgentMessage{Role: "tool", Content: string(b), ToolCallID: call.ID, ToolName: call.Function.Name})
+	_, _ = flow.Conversations{DB: db}.Append(conv, model.FlowAgentMessage{Role: "tool", Content: string(b), ToolCallID: call.ID, ToolName: call.Function.Name})
 	return r, nil
 }
 
 // recordFlowConfirmedPlan stores a plan the user confirmed (or the model
 // committed after first approval) on the conversation.
 func (s *Service) recordFlowConfirmedPlan(userID, runID string, req CloudAgentRequest, plan any) {
-	conv, _, err := s.cloudAgentFlowConversation(userID, req)
-	if err != nil {
-		return
-	}
-	if err := flow.RecordConfirmedPlan(s.repo.DB(), conv.ID, runID, plan); err != nil {
-		slog.Warn("flow: record confirmed plan", "run", runID, "error", err)
-	}
+	_ = s.inFlowUser(userID, func(db *gorm.DB) error {
+		conv, _, err := s.cloudAgentFlowConversationIn(db, userID, req)
+		if err != nil {
+			return nil
+		}
+		if err := flow.RecordConfirmedPlan(db, conv.ID, runID, plan); err != nil {
+			slog.Warn("flow: record confirmed plan", "run", runID, "error", err)
+		}
+		return nil
+	})
 }
 
 func (s *Service) cloudAgentRequestOf(userID, runID string) (CloudAgentRequest, error) {

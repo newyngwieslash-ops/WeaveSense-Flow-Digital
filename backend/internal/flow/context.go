@@ -31,7 +31,7 @@ func BuildTurnContext(db *gorm.DB, conv model.FlowAgentConversation, ss SubjectS
 		Summary: conv.Summary, EvidenceScope: map[string]any{}, ConfirmedPlans: []any{}, ActionReceipts: []ToolResult{}, BackgroundJobs: []map[string]any{}}
 	// Recent messages after the summarized prefix, oldest first.
 	var msgs []model.FlowAgentMessage
-	if err := db.Where("conversation_id = ? AND seq > ?", conv.ID, conv.SummaryThroughSeq).Order("seq DESC").Limit(recentWindow).Find(&msgs).Error; err != nil {
+	if err := db.Where("conversation_id = ? AND seq > ? AND tombstoned_at IS NULL", conv.ID, conv.SummaryThroughSeq).Order("seq DESC").Limit(recentWindow).Find(&msgs).Error; err != nil {
 		return tc, err
 	}
 	for i, j := 0, len(msgs)-1; i < j; i, j = i+1, j-1 {

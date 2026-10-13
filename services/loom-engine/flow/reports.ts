@@ -54,7 +54,10 @@ export function nextCron(expr: string, tz: string, after: Date): Date {
 export class Reports {
   e: Engine;
   /** Platform summarization hook (Model Gateway + citation validation + billing). Throw {status:403} when the grant is revoked. */
-  summarize?: (input: any) => Promise<{ body: string; claims: any[] } | null>;
+  /** Platform Model Gateway. Non-blocking: `{pending, task_id}` while the model task runs. */
+  /** Brief windows parked on an in-flight model task (key → task id). */
+  readonly pendingSummaries = new Map<string, string>();
+  summarize?: (input: any) => Promise<{ body: string; claims: any[] } | { pending: true; task_id?: string } | null>;
   constructor(e: Engine) { this.e = e; }
   private get db() { return this.e.db; }
 
@@ -281,6 +284,13 @@ export class Reports {
           const evidence = (await this.resolveEvidence(s, g.evidence_ids)).map(({ current_revision, char_start, char_end, ...x }: any) => x);
           const out = await this.summarize({ grant_actor: b.grant_actor, workspace_id: b.workspace_id, tenant_id: b.tenant_id, key: key, topic: b.query,
             scope: { source_ids: b.source_ids, from, to: scheduledAt }, evidence });
+          if (out && "pending" in out) {
+            // Model task queued/running: park this window (not saved, schedule not
+            // advanced); the next tick re-submits the same idempotency key.
+            this.pendingSummaries.set(key, out.task_id ?? "");
+            continue;
+          }
+          this.pendingSummaries.delete(key);
           if (out && Array.isArray(out.claims) && out.claims.length) {
             claims = out.claims;
             body = [out.body, ...notes].filter(Boolean).join("\n");

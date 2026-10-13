@@ -148,6 +148,11 @@ func validateCloudAgentRequest(req *CloudAgentRequest) error {
 		if req.Subject != nil && req.Subject.ID != req.CanvasID {
 			return BadAuthRequest("主体与画布不一致")
 		}
+		if req.FlowConversationID != "" {
+			if err := validateCloudAgentID(req.FlowConversationID, "会话 ID", 80); err != nil {
+				return err
+			}
+		}
 	}
 	if err := validateCloudAgentPrompt(req.Prompt, 16000); err != nil {
 		return err
@@ -388,6 +393,17 @@ func (s *Service) CreateCloudAgentRun(userID string, req CloudAgentRequest, pare
 		req.FlowMCPTools = s.flowMCPToolsFor(userID, req)
 	} else {
 		var err error
+		if cloudAgentCanvasMirror(req) {
+			// Ownership of the directory conversation is re-checked; recent
+			// directory turns (incl. intelligence-page turns) become context.
+			message, ctxErr := s.cloudAgentFlowContextMessage(userID, req)
+			if ctxErr != nil {
+				return nil, ctxErr
+			}
+			flowContext = message
+		} else {
+			req.FlowConversationID = ""
+		}
 		canvas, err = s.repo.CanvasProjectForUser(userID, req.CanvasID)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -582,7 +598,7 @@ func (s *Service) CreateCloudAgentRun(userID string, req CloudAgentRequest, pare
 	if err != nil {
 		return nil, err
 	}
-	if intel {
+	if intel || cloudAgentCanvasMirror(req) {
 		s.recordFlowUserTurn(userID, req, task.ID)
 	}
 	s.startCloudAgentPi(userID, task.ID)

@@ -9,6 +9,8 @@ import {
     cachedConversations,
     callTool,
     createConversation,
+    deleteMessage,
+    editMessage,
     listConversations,
     listIntelWorkspaces,
     listMessages,
@@ -62,6 +64,16 @@ export default function IntelligencePage() {
         setMessages([...page.messages].reverse());
     }, []);
 
+    const mutateMessage = async (op: () => Promise<unknown>) => {
+        try {
+            await op();
+        } catch (e) {
+            const status = (e as { status?: number }).status;
+            void message.error(status === 409 ? "The message changed elsewhere; reloaded." : "Update failed");
+        }
+        if (active) await refreshMessages(active);
+    };
+
     const ensureConversation = async () => {
         if (active) return active;
         if (!workspaceId) throw new Error("no workspace");
@@ -82,6 +94,8 @@ export default function IntelligencePage() {
             const { run } = await createAgentRun({
                 subject: { kind: conv.subjectKind as "intelligence_workspace" | "topic" | "canvas", id: conv.subjectId },
                 conversationId: conv.id,
+                // Continuing a canvas conversation runs as a full canvas run (server-side canvas tools).
+                ...(conv.subjectKind === "canvas" ? { canvasId: conv.subjectId } : {}),
                 prompt,
                 permissionMode: "request_approval",
                 idempotencyKey: newCallId(),
@@ -171,7 +185,17 @@ export default function IntelligencePage() {
                             messages.map((m) => (
                                 <div key={m.id} style={{ marginBottom: 8 }}>
                                     <Tag>{m.toolName || m.role}</Tag>
-                                    <Typography.Text style={{ whiteSpace: "pre-wrap" }}>{m.content.slice(0, 2000)}</Typography.Text>
+                                    <Typography.Text
+                                        style={{ whiteSpace: "pre-wrap" }}
+                                        editable={active && (m.role === "user" || m.role === "assistant") ? { onChange: (v) => void mutateMessage(() => editMessage(active.id, m.id, v, m.revision ?? 0)) } : false}
+                                    >
+                                        {m.content.slice(0, 2000)}
+                                    </Typography.Text>
+                                    {active && (m.role === "user" || m.role === "assistant") && (
+                                        <Button size="small" type="link" danger onClick={() => void mutateMessage(() => deleteMessage(active.id, m.id))}>
+                                            Delete
+                                        </Button>
+                                    )}
                                 </div>
                             ))
                         )}

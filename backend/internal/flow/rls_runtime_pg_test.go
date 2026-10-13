@@ -131,3 +131,61 @@ func TestRuntimeRLSBlocksUnfilteredHandlerQueries(t *testing.T) {
 		t.Fatalf("system context sees %d", all)
 	}
 }
+
+// TestBackgroundWorkIsTenantScoped: agent tool execution / recording /
+// auto-continue run through UserTx and billing maintenance per tenant through
+// TenantTx, so RLS applies outside HTTP requests too (non-superuser role).
+func TestBackgroundWorkIsTenantScoped(t *testing.T) {
+	db := pgTestDB(t)
+	b := Billing{DB: db}
+	for _, u := range []string{"u_alice", "u_bob"} {
+		db.Create(&model.User{ID: u, Username: u})
+		s, err := ResolveScope(db, u, "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		db.Create(&model.CreditAccount{UserID: u, AvailableMicrocredits: 1_000_000})
+		if _, err := b.Reserve(s.TenantID, "run:"+u, "agent_run", u, 100_000); err != nil {
+			t.Fatal(err)
+		}
+		db.Create(&model.FlowAgentConversation{ID: "cv_" + u, TenantID: s.TenantID, WorkspaceID: s.WorkspaceID, UserID: u, SubjectKind: SubjectWorkspace, SubjectID: s.WorkspaceID, EvidenceScope: "{}", ConfirmedPlans: "[]"})
+	}
+	// A background step that "forgets" its tenant filter only sees/changes alice's rows.
+	var seen, convs, touched int64
+	if err := UserTx(db, "u_alice", func(tx *gorm.DB) error {
+		tx.Model(&model.FlowBudgetReservation{}).Count(&seen)
+		tx.Model(&model.FlowAgentConversation{}).Count(&convs)
+		touched = tx.Model(&model.FlowAgentConversation{}).Where("1 = 1").Update("title", "bg").RowsAffected
+		_, _, err := (Conversations{DB: tx}).Get("u_alice", "cv_u_bob")
+		if err == nil {
+			t.Error("bob's conversation readable in alice's background scope")
+		}
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if seen != 1 || convs != 1 || touched != 1 {
+		t.Fatalf("background scope leaked: reservations=%d convs=%d updated=%d", seen, convs, touched)
+	}
+	var bob model.FlowAgentConversation
+	db.First(&bob, "id = ?", "cv_u_bob")
+	if bob.Title == "bg" {
+		t.Fatal("alice's background update reached bob")
+	}
+	// Billing maintenance: stale reservations of every tenant are closed, each inside its own tenant scope.
+	db.Exec("UPDATE flow_budget_reservations SET updated_at = now() - interval '7 hours'")
+	BillingMaintenancePass(db)
+	var open int64
+	db.Model(&model.FlowBudgetReservation{}).Where("status = ?", "reserved").Count(&open)
+	if open != 0 {
+		t.Fatalf("%d stale reservations left open", open)
+	}
+	// Auto-continue grant re-check runs RLS-scoped: a wait whose tenant the user
+	// cannot act in is denied, not resumed.
+	alice, _ := ResolveScope(db, "u_alice", "")
+	db.Create(&model.FlowExternalWait{ID: "w1", TenantID: alice.TenantID, WorkspaceID: alice.WorkspaceID, UserID: "u_bob", RunID: "r", OperationID: "op", Status: "ready", Checkpoint: "{}"})
+	n, err := (Waits{DB: db}).ResumeReady(func(model.FlowExternalWait) (string, error) { return "run2", nil })
+	if err != nil || n != 0 {
+		t.Fatalf("foreign wait resumed: n=%d err=%v", n, err)
+	}
+}

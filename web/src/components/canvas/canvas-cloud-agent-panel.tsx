@@ -39,6 +39,7 @@ import {
     loadCloudAgentConversations,
     loadCloudAgentPendingSubmission,
     saveCloudAgentConversations,
+    deleteConversationMessage,
     saveCloudAgentPendingSubmission,
     type CloudAgentConversation,
     type CloudAgentPendingSubmission,
@@ -569,6 +570,8 @@ export function CanvasCloudAgentPanel({ canvasId, domainProjectId, nodeCount, se
                 model: selectedModel || undefined,
                 permissionMode,
                 skillIds: selectedSkillIds,
+                // Tombstones survive the rebuild so deletions keep syncing (two-way with the intelligence directory).
+                ...(existing?.deletedIds?.length ? { deletedIds: existing.deletedIds } : {}),
                 createdAt: existing?.createdAt || now,
                 updatedAt: now,
             };
@@ -1075,6 +1078,11 @@ export function CanvasCloudAgentPanel({ canvasId, domainProjectId, nodeCount, se
                                         onApprovalReasonChange={(reason) => setApproval((current) => (current ? { ...current, reason } : current))}
                                         onApprove={(settings) => void submitApproval("approve", settings)}
                                         onReject={() => void submitApproval("reject")}
+                                        onEditMessage={(messageId, text) => setMessages((current) => current.map((item) => (item.id === messageId ? { ...item, text } : item)))}
+                                        onDeleteMessage={(messageId) => {
+                                            setConversations((current) => current.map((conversation) => (conversation.id === activeConversationId ? deleteConversationMessage(conversation, messageId) : conversation)));
+                                            setMessages((current) => current.filter((item) => item.id !== messageId));
+                                        }}
                                     />
                                     {planVisible ? (
                                         <AgentPlanBar

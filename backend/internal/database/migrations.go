@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const CurrentSchemaVersion int64 = 51
+const CurrentSchemaVersion int64 = 52
 
 const baselineSchemaChecksum = "sha256:open-ai-canvas-schema-v1-20260830"
 const schemaMigrationAppliedAtIndexChecksum = "sha256:schema-migrations-applied-at-index-v2-20260830"
@@ -167,6 +167,9 @@ var schemaMigrations = []migration{
 		return tx.AutoMigrate(&model.CanvasMutationReceipt{})
 	}},
 	{version: 51, name: "flow_tenancy", checksum: "sha256:flow-tenancy-v51-20261012", apply: migrateFlowTenancy},
+	{version: 52, name: "flow_agent", checksum: "sha256:flow-agent-v52-20261013", apply: func(tx *gorm.DB) error {
+		return tx.AutoMigrate(&model.FlowTopic{}, &model.FlowAgentConversation{}, &model.FlowAgentMessage{}, &model.FlowAgentToolCall{})
+	}},
 }
 
 func migratePrefixedIDSequenceReconcile(tx *gorm.DB) error {

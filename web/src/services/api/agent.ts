@@ -109,7 +109,10 @@ export class AgentStreamError extends Error {
 export type CreateAgentRunInput = {
     reasoningMode?: AgentReasoningMode;
     profileRevision?: string;
-    canvasId: string;
+    /** Canvas runs set canvasId; intelligence runs set subject + conversationId instead. */
+    canvasId?: string;
+    subject?: { kind: "canvas" | "intelligence_workspace" | "topic"; id: string };
+    conversationId?: string;
     prompt: string;
     model?: string;
     logicalModelId?: string;

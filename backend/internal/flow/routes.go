@@ -92,6 +92,8 @@ func RegisterRoutes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc) {
 	g.POST("/collection-runs", proxy(http.MethodPost, "/v1/collection-runs"))
 	g.GET("/documents", proxy(http.MethodGet, "/v1/documents"))
 	g.GET("/operations/:id", proxy(http.MethodGet, "/v1/operations/:id"))
+	g.GET("/monitors", proxy(http.MethodGet, "/v1/monitors"))
+	RegisterAgentRoutes(api, db, client, user)
 
 	// Engine → platform outbox delivery. Authenticated with a context token
 	// whose audience is the platform issuer; tenant must match the event.

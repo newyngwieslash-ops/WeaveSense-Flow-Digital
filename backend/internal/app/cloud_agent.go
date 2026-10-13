@@ -11,6 +11,7 @@ import (
 	"time"
 	"unicode"
 	"unicode/utf8"
+	"yingce/backend/internal/flow"
 
 	"gorm.io/gorm"
 	"yingce/backend/internal/kernel"
@@ -48,6 +49,11 @@ type CloudAgentRequest struct {
 	// 必须持久化：工具授权校验每步都从落库状态重建，丢掉这个标记会让模型看得见工具
 	// 却被判为"未获本轮权限授权"。
 	VisionEnabled bool `json:"visionEnabled,omitempty"`
+	// Subject generalizes the run target (WeaveSense-Flow). Nil or kind=canvas
+	// keeps the canvas behaviour; intelligence_workspace/topic runs bind to the
+	// server-side conversation FlowConversationID and never use a canvas.
+	Subject            *flow.AgentSubject `json:"subject,omitempty"`
+	FlowConversationID string             `json:"conversationId,omitempty"`
 }
 
 const cloudAgentMaxStepsLimit = 9999
@@ -116,10 +122,29 @@ func validateCloudAgentRequest(req *CloudAgentRequest) error {
 	}
 	// IDs and protocol selectors are identifiers, not free-form text. Keep their
 	// validation in one place so byte/rune and Unicode handling cannot drift.
-	if err := validateCloudAgentID(req.CanvasID, "画布 ID", 80); err != nil {
-		return err
+	if cloudAgentIntelSubject(*req) {
+		if strings.TrimSpace(req.CanvasID) != "" {
+			return BadAuthRequest("情报主体的运行不能同时指定画布")
+		}
+		if err := validateCloudAgentID(req.FlowConversationID, "会话 ID", 80); err != nil {
+			return err
+		}
+		if err := validateCloudAgentID(req.Subject.ID, "主体 ID", 80); err != nil {
+			return err
+		}
+		req.ContextScope, req.FocusNodeIDs = nil, nil
+	} else {
+		if req.Subject != nil && req.Subject.Kind != flow.SubjectCanvas {
+			return BadAuthRequest("不支持的 Agent 主体类型")
+		}
+		if err := validateCloudAgentID(req.CanvasID, "画布 ID", 80); err != nil {
+			return err
+		}
+		req.CanvasID = strings.TrimSpace(req.CanvasID)
+		if req.Subject != nil && req.Subject.ID != req.CanvasID {
+			return BadAuthRequest("主体与画布不一致")
+		}
 	}
-	req.CanvasID = strings.TrimSpace(req.CanvasID)
 	if err := validateCloudAgentPrompt(req.Prompt, 16000); err != nil {
 		return err
 	}
@@ -346,12 +371,25 @@ func (s *Service) CreateCloudAgentRun(userID string, req CloudAgentRequest, pare
 	if userID == "" {
 		return nil, kernel.Unauthorized("请先登录")
 	}
-	canvas, err := s.repo.CanvasProjectForUser(userID, req.CanvasID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, kernel.NotFound("画布不存在或尚未保存到服务端，请先完成画布同步")
+	intel := cloudAgentIntelSubject(req)
+	var canvas *model.CanvasProject
+	var flowContext map[string]any
+	if intel {
+		// Tenant/workspace/role are re-resolved from auth; nothing canvas-bound.
+		message, ctxErr := s.cloudAgentFlowContextMessage(userID, req)
+		if ctxErr != nil {
+			return nil, ctxErr
 		}
-		return nil, err
+		flowContext = message
+	} else {
+		var err error
+		canvas, err = s.repo.CanvasProjectForUser(userID, req.CanvasID)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, kernel.NotFound("画布不存在或尚未保存到服务端，请先完成画布同步")
+			}
+			return nil, err
+		}
 	}
 	// Resolve and freeze the effective preference document before idempotency
 	// lookup. A retry without an explicit revision must still refer to the same
@@ -394,6 +432,9 @@ func (s *Service) CreateCloudAgentRun(userID string, req CloudAgentRequest, pare
 		}
 		if parent.ProjectID != req.CanvasID {
 			return nil, kernel.Forbidden("不能跨画布追加 Agent 消息")
+		}
+		if parentState, decodeErr := s.cloudAgentRequestOf(userID, parentID); decodeErr != nil || parentState.FlowConversationID != req.FlowConversationID {
+			return nil, kernel.Forbidden("不能跨会话追加 Agent 消息")
 		}
 		superseded := s.cloudAgentParentCanBeSuperseded(userID, parentID)
 		// 续轮收束要读上一轮**全部**事件（运行详情默认只返回尾部一窗）：长会话一旦被截断，
@@ -455,9 +496,11 @@ func (s *Service) CreateCloudAgentRun(userID string, req CloudAgentRequest, pare
 	if creativeAnchor.Version > 0 {
 		inheritedAnchor = &creativeAnchor
 	}
-	creativeAnchor, err = cloudAgentCreativeAnchorForCanvas(s.repo, userID, canvas, req.Prompt, inheritedAnchor)
-	if err != nil {
-		return nil, err
+	if !intel {
+		creativeAnchor, err = cloudAgentCreativeAnchorForCanvas(s.repo, userID, canvas, req.Prompt, inheritedAnchor)
+		if err != nil {
+			return nil, err
+		}
 	}
 	skillSnapshots, err := s.cloudAgentSkills(userID, req.SkillIDs)
 	if err != nil {
@@ -497,6 +540,10 @@ func (s *Service) CreateCloudAgentRun(userID string, req CloudAgentRequest, pare
 		last := canonical.Messages[len(canonical.Messages)-1]
 		canonical.Messages = append(append([]map[string]any{}, canonical.Messages[:len(canonical.Messages)-1]...), catalog, last)
 	}
+	if flowContext != nil && len(canonical.Messages) > 0 {
+		last := canonical.Messages[len(canonical.Messages)-1]
+		canonical.Messages = append(append([]map[string]any{}, canonical.Messages[:len(canonical.Messages)-1]...), flowContext, last)
+	}
 	s.attachCloudAgentLessons(&canonical, userID, req.Prompt)
 	canonical.PromptCacheKey = cloudAgentPromptCacheKeyForRequest(req.CanvasID, cloudAgentPromptCacheIdentity(req, policy), canonical.SystemPrompt, canonical.Tools)
 	attachCloudAgentPlan(&canonical, inheritedPlan)
@@ -529,6 +576,9 @@ func (s *Service) CreateCloudAgentRun(userID string, req CloudAgentRequest, pare
 	run, err := s.CloudAgentRun(userID, task.ID)
 	if err != nil {
 		return nil, err
+	}
+	if intel {
+		s.recordFlowUserTurn(userID, req, task.ID)
 	}
 	s.startCloudAgentPi(userID, task.ID)
 	return run, nil

@@ -123,7 +123,11 @@ func run(ctx context.Context) error {
 	registerSystemStatusRoutes(api, status)
 	handler.RegisterOAuthCallbackRoutes(r, svc)
 	handler.RegisterCanvasAPI(api, svc)
-	flow.RegisterRoutes(api, db, flow.ConfigFromEnv(), func(c *gin.Context) (*model.User, error) {
+	flowCfg := flow.ConfigFromEnv()
+	if flowCfg.Enabled() {
+		svc.ConfigureFlowEngine(flow.EngineClient{Cfg: flowCfg})
+	}
+	flow.RegisterRoutes(api, db, flowCfg, func(c *gin.Context) (*model.User, error) {
 		cookie, _ := c.Cookie(service.SessionCookieName)
 		return svc.CurrentUser(cookie)
 	})

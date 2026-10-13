@@ -490,6 +490,9 @@ func (s *Service) completeCloudAgentPiRun(userID, runID string) error {
 				s.resumeCloudAgentPi(userID, runID)
 				return nil
 			}
+			if err == nil {
+				s.recordFlowAssistantReply(userID, runID)
+			}
 			return err
 		}
 	}

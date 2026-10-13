@@ -46,24 +46,40 @@ func (s *Service) buildEnhancedPiRequest(ctx context.Context, params EnhancedPiR
 	// 4. 构建 Memory 配置
 	memory := s.buildMemoryConfig(params.UserID, params.CanvasID)
 
+	var canvasData map[string]any
+	if cloudAgentIntelSubject(params.RuntimeState.Request) {
+		// Intelligence subjects carry no canvas; context arrives as the flow_context message.
+		canvasData = map[string]any{"subject": params.RuntimeState.Request.Subject}
+	} else {
+		var err error
+		canvasData, err = s.buildPiCanvasData(ctx, params)
+		if err != nil {
+			return cloudAgentPiProcessRequest{}, err
+		}
+	}
+	return s.finishEnhancedPiRequest(params, tools, enabledSkills, profile, memory, canvasData)
+}
+
+func (s *Service) buildPiCanvasData(ctx context.Context, params EnhancedPiRequestParams) (map[string]any, error) {
 	// 5. 构建画布智能上下文（核心创新）
 	canvasIntelligence := s.NewCanvasIntelligence()
 	enhancedCanvas, err := canvasIntelligence.BuildEnhancedCanvasContext(ctx, params.UserID, params.CanvasID, params.FocusNodeIDs)
 	if err != nil {
-		return cloudAgentPiProcessRequest{}, fmt.Errorf("build canvas intelligence: %w", err)
+		return nil, fmt.Errorf("build canvas intelligence: %w", err)
 	}
-
 	canvasData, err := s.marshalEnhancedCanvas(enhancedCanvas)
 	if err != nil {
-		return cloudAgentPiProcessRequest{}, fmt.Errorf("marshal canvas: %w", err)
+		return nil, fmt.Errorf("marshal canvas: %w", err)
 	}
-
 	slog.Debug("agent canvas intelligence", "nodes",
 		enhancedCanvas.Snapshot.TotalNodes,
 		"focus", len(enhancedCanvas.Snapshot.FocusNodes),
 		"relationships", len(enhancedCanvas.Snapshot.Relationships),
 		"clusters", len(enhancedCanvas.Snapshot.Layout.Clusters))
+	return canvasData, nil
+}
 
+func (s *Service) finishEnhancedPiRequest(params EnhancedPiRequestParams, tools []map[string]any, enabledSkills []map[string]any, profile, memory, canvasData map[string]any) (cloudAgentPiProcessRequest, error) {
 	// 6. 构建 Features 配置
 	features := s.buildFeaturesConfig(params.RuntimeState)
 

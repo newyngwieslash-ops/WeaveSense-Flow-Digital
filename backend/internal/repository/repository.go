@@ -177,3 +177,7 @@ func (r *Repository) Delete(value any, query any, args ...any) error {
 	conds := append([]any{query}, args...)
 	return r.db.Delete(value, conds...).Error
 }
+
+// DB exposes the underlying handle for packages with their own tables
+// (internal/flow). Callers must not use it inside a MutateCloudAgent callback.
+func (r *Repository) DB() *gorm.DB { return r.db }

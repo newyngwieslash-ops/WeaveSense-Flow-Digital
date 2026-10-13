@@ -19,6 +19,7 @@ export class HttpError extends Error {
 }
 
 export const newId = (p: string) => p + randomBytes(10).toString("hex");
+const CHUNK = 1200;
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 type Scope = Pick<ExecutionContext, "tenant_id" | "workspace_id">;
 
@@ -175,6 +176,7 @@ export class Engine {
         }
         await q.query(`INSERT INTO flow_document_revisions (document_id, revision, tenant_id, content_hash, title, body, collected_by_run)
             VALUES ($1,$2,$3,$4,$5,$6,$7)`, [docId, rev, run.tenant_id, hash, it.title ?? "", it.body ?? "", run.id]);
+        await this.indexChunks(q, run, src.id, docId, rev, `${it.title ?? ""}\n\n${it.body ?? ""}`, it.published_at);
         if (it.published_at && (!maxPub || it.published_at > maxPub)) maxPub = it.published_at;
       }
       // Cursor advances only inside the same commit as the data.
@@ -200,6 +202,129 @@ export class Engine {
     });
   }
 
+  /** Splits a revision into ~CHUNK chars windows (paragraph aware) and indexes them for FTS. */
+  private async indexChunks(q: Q, run: Scope, sourceId: string, docId: string, rev: number, text: string, pub: string | null) {
+    let start = 0, i = 0;
+    while (start < text.length) {
+      let end = Math.min(text.length, start + CHUNK);
+      if (end < text.length) { const br = text.lastIndexOf("\n", end); if (br > start + CHUNK / 2) end = br + 1; }
+      const piece = text.slice(start, end);
+      await q.query(`INSERT INTO flow_document_chunks (document_id, revision, chunk_index, tenant_id, workspace_id, source_id, char_start, char_end, text, published_at, tsv)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, to_tsvector('simple', $9))`, [docId, rev, i++, run.tenant_id, run.workspace_id, sourceId, start, end, piece, pub]);
+      start = end;
+    }
+  }
+
+  /** Full-text search over current revisions; filters by time window and sources. */
+  async searchDocuments(s: Scope, o: { query: string; source_ids?: string[]; from?: string; to?: string; limit?: number; offset?: number }) {
+    if (!o.query?.trim()) throw new HttpError(400, "query required");
+    const limit = Math.min(Math.max(Number(o.limit) || 10, 1), 50), offset = Math.max(Number(o.offset) || 0, 0);
+    const r = await this.db.query(`SELECT c.document_id, c.revision, c.chunk_index, c.char_start, c.char_end, c.source_id, c.published_at, d.title, d.url,
+          ts_rank(c.tsv, plainto_tsquery('simple', $3)) AS rank, left(c.text, 300) AS snippet
+        FROM flow_document_chunks c JOIN flow_documents d ON d.id=c.document_id AND d.current_revision=c.revision
+        WHERE c.tenant_id=$1 AND c.workspace_id=$2 AND (c.tsv @@ plainto_tsquery('simple', $3) OR c.text ILIKE '%'||$3||'%')
+          AND ($4::text[] IS NULL OR c.source_id = ANY($4::text[]))
+          AND ($5::timestamptz IS NULL OR c.published_at >= $5) AND ($6::timestamptz IS NULL OR c.published_at < $6)
+        ORDER BY rank DESC, c.published_at DESC NULLS LAST, c.document_id, c.chunk_index LIMIT $7 OFFSET $8`,
+      [s.tenant_id, s.workspace_id, o.query, o.source_ids?.length ? o.source_ids : null, o.from || null, o.to || null, limit + 1, offset]);
+    return { items: r.rows.slice(0, limit), next_offset: r.rows.length > limit ? offset + limit : null };
+  }
+
+  /** Chunked read with coverage info so the agent knows what it has not seen. */
+  async readDocument(s: Scope, o: { document_id: string; revision?: number; offset?: number; max_chars?: number }) {
+    const d = (await this.db.query(`SELECT * FROM flow_documents WHERE tenant_id=$1 AND workspace_id=$2 AND id=$3`, [s.tenant_id, s.workspace_id, o.document_id])).rows[0];
+    if (!d) throw new HttpError(404, "document not found");
+    const rev = Number(o.revision) || d.current_revision;
+    const r = (await this.db.query(`SELECT title, body FROM flow_document_revisions WHERE document_id=$1 AND revision=$2 AND tenant_id=$3`, [d.id, rev, s.tenant_id])).rows[0];
+    if (!r) throw new HttpError(404, "revision not found");
+    const full = `${r.title}\n\n${r.body}`, off = Math.max(Number(o.offset) || 0, 0), max = Math.min(Math.max(Number(o.max_chars) || 4000, 1), 20000);
+    const text = full.slice(off, off + max);
+    return { document_id: d.id, revision: rev, title: d.title, url: d.url, offset: off, text,
+      coverage: { total_chars: full.length, returned_chars: text.length, truncated: off + text.length < full.length, next_offset: off + text.length < full.length ? off + text.length : null } };
+  }
+
+  async previewMonitor(s: Scope, o: { name?: string; keywords: string[]; source_ids: string[]; interval_seconds: number; timezone?: string }) {
+    const ids = [...new Set(o.source_ids ?? [])].sort();
+    if (!o.keywords?.length) throw new HttpError(400, "keywords required");
+    if (!(o.interval_seconds >= 300)) throw new HttpError(400, "interval_seconds >= 300");
+    await this.ownedSources(this.db, s, ids);
+    const tz = o.timezone || "UTC";
+    try { new Intl.DateTimeFormat("en", { timeZone: tz }); } catch { throw new HttpError(400, "invalid timezone"); }
+    const spec = { name: o.name || o.keywords.join(", "), keywords: o.keywords, source_ids: ids, interval_seconds: o.interval_seconds, timezone: tz };
+    const id = newId("mpv_"), now = this.now();
+    await this.db.query(`INSERT INTO flow_monitor_previews (id, tenant_id, workspace_id, spec, expires_at) VALUES ($1,$2,$3,$4,$5)`,
+      [id, s.tenant_id, s.workspace_id, JSON.stringify(spec), new Date(now.getTime() + 3600_000).toISOString()]);
+    return { preview_id: id, ...spec, next_run_at: new Date(now.getTime() + o.interval_seconds * 1000).toISOString(),
+      runs_per_day: Math.floor(86400 / o.interval_seconds) * ids.length, expires_at: new Date(now.getTime() + 3600_000).toISOString() };
+  }
+
+  /** Applies an approved preview: creates monitor + schedule atomically; idempotent on key. */
+  async applyMonitor(s: Scope, actor: string, policy: string, o: { preview_id: string; approval_id: string; idempotency_key: string }) {
+    if (!o.idempotency_key || !o.approval_id) throw new HttpError(400, "approval_id and idempotency_key required");
+    return this.db.tx(async (q) => {
+      const prior = (await q.query(`SELECT * FROM flow_monitors WHERE tenant_id=$1 AND idempotency_key=$2`, [s.tenant_id, o.idempotency_key])).rows[0];
+      const pv = (await q.query(`SELECT * FROM flow_monitor_previews WHERE id=$1 AND tenant_id=$2 AND workspace_id=$3 FOR UPDATE`, [o.preview_id, s.tenant_id, s.workspace_id])).rows[0];
+      if (!pv) throw new HttpError(404, "preview not found");
+      if (prior) {
+        if (pv.applied_monitor_id !== prior.id) throw new HttpError(409, "idempotency key reused with different preview");
+        return { monitor: prior, replayed: true };
+      }
+      if (pv.applied_monitor_id) throw new HttpError(409, "preview already applied");
+      if (new Date(pv.expires_at) < this.now()) throw new HttpError(410, "preview expired");
+      const spec = typeof pv.spec === "string" ? JSON.parse(pv.spec) : pv.spec;
+      await this.ownedSources(q, s, spec.source_ids);
+      const schId = newId("sch_"), monId = newId("mon_");
+      await q.query(`INSERT INTO flow_schedules (id, tenant_id, workspace_id, source_ids, interval_seconds, next_run_at, grant_actor, policy_version)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`, [schId, s.tenant_id, s.workspace_id, spec.source_ids, spec.interval_seconds, this.now().toISOString(), actor, policy]);
+      const m = (await q.query(`INSERT INTO flow_monitors (id, tenant_id, workspace_id, name, keywords, source_ids, interval_seconds, timezone, schedule_id, approval_id, idempotency_key)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+        [monId, s.tenant_id, s.workspace_id, spec.name, spec.keywords, spec.source_ids, spec.interval_seconds, spec.timezone, schId, o.approval_id, o.idempotency_key])).rows[0];
+      await q.query(`UPDATE flow_monitor_previews SET applied_monitor_id=$2 WHERE id=$1`, [pv.id, monId]);
+      return { monitor: m, replayed: false };
+    });
+  }
+
+  async listMonitors(s: Scope) {
+    return (await this.db.query(`SELECT * FROM flow_monitors WHERE tenant_id=$1 AND workspace_id=$2 ORDER BY created_at`, [s.tenant_id, s.workspace_id])).rows;
+  }
+
+  /** Cancels queued jobs immediately; running jobs are flagged and fenced out on commit. */
+  async cancelOperation(s: Scope, op: string) {
+    return this.db.tx(async (q) => {
+      const r = await q.query(`SELECT id, status FROM flow_collection_runs WHERE tenant_id=$1 AND workspace_id=$2 AND operation_id=$3 FOR UPDATE`, [s.tenant_id, s.workspace_id, op]);
+      if (!r.rows.length) throw new HttpError(404, "operation not found");
+      await q.query(`UPDATE flow_collection_runs SET status='cancelled', finished_at=now(), lease_owner=NULL, fencing_token=fencing_token+1
+          WHERE operation_id=$1 AND tenant_id=$2 AND status IN ('queued','running')`, [op, s.tenant_id]);
+      const cancelled = r.rows.filter((x: any) => x.status === "queued" || x.status === "running").length;
+      if (cancelled) await this.emit(q, s, op, r.rows[0].id, "operation.cancelled", { cancelled });
+      return { operation_id: op, cancelled };
+    });
+  }
+
+  /** Records evidence spans for documents in scope; idempotent per key+index. Foreign docs are skipped. */
+  async createEvidence(s: Scope, key: string, o: { items: { document_id: string; revision?: number; char_start?: number; char_end?: number; quote?: string }[]; created_by?: string }) {
+    if (!key) throw new HttpError(400, "X-Idempotency-Key required");
+    const items = (o.items ?? []).slice(0, 50);
+    return this.db.tx(async (q) => {
+      let created = 0;
+      for (const [i, it] of items.entries()) {
+        const d = (await q.query(`SELECT current_revision FROM flow_documents WHERE tenant_id=$1 AND workspace_id=$2 AND id=$3`, [s.tenant_id, s.workspace_id, it.document_id])).rows[0];
+        if (!d) continue;
+        const r = await q.query(`INSERT INTO flow_evidence (id, tenant_id, workspace_id, document_id, revision, char_start, char_end, quote, created_by, idempotency_key)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT (tenant_id, idempotency_key) DO NOTHING`,
+          [newId("ev_"), s.tenant_id, s.workspace_id, it.document_id, Number(it.revision) || d.current_revision, Math.max(0, Number(it.char_start) || 0),
+           Math.max(0, Number(it.char_end) || 0), String(it.quote ?? "").slice(0, 1000), String(o.created_by ?? "agent").slice(0, 200), `${key}:${i}`]);
+        created += affected(r);
+      }
+      return { created };
+    });
+  }
+
+  async listEvidence(s: Scope, documentId?: string) {
+    return (await this.db.query(`SELECT * FROM flow_evidence WHERE tenant_id=$1 AND workspace_id=$2 AND ($3::text IS NULL OR document_id=$3) ORDER BY created_at DESC LIMIT 200`,
+      [s.tenant_id, s.workspace_id, documentId || null])).rows;
+  }
+
   async workOnce(owner: string) {
     const run = await this.claim(owner);
     if (!run) return null;
@@ -216,7 +341,7 @@ export class Engine {
         FROM flow_collection_runs WHERE tenant_id=$1 AND workspace_id=$2 AND operation_id=$3 ORDER BY id`, [s.tenant_id, s.workspace_id, op]);
     if (!r.rows.length) throw new HttpError(404, "operation not found");
     const st = r.rows.map((x: any) => x.status);
-    const status = st.every((x: string) => x === "succeeded") ? "succeeded" : st.some((x: string) => x === "queued" || x === "running") ? "running" : "failed";
+    const status = st.every((x: string) => x === "succeeded") ? "succeeded" : st.every((x: string) => x === "cancelled") ? "cancelled" : st.some((x: string) => x === "queued" || x === "running") ? "running" : "failed";
     return { operation_id: op, status, jobs: r.rows };
   }
 

@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"yingce/backend/internal/flow"
 
 	"yingce/backend/internal/model"
 	"yingce/backend/internal/repository"
@@ -452,6 +453,9 @@ func (s *Service) advanceCloudAgentTool(run *model.CloudAgentExecution, state *c
 		return s.terminateCloudAgent(run, "审批内容与待执行操作不一致，本轮已停止")
 	}
 	allowed := cloudAgentToolAllowed(state.Request, call.Function.Name)
+	if flow.IsTool(call.Function.Name) {
+		return s.advanceCloudAgentIntelTool(run, state, call, allowed)
+	}
 	mediaTool := call.Function.Name == "generate_media" || call.Function.Name == "image_layer_split"
 	// 媒体工具在所有模式下都进入审批；其他写入只在 request_approval 下审批。
 	if allowed && cloudAgentWrite(call.Function.Name) && (state.Request.PermissionMode == "request_approval" || mediaTool) && state.Approval == nil {
@@ -716,9 +720,9 @@ func (s *Service) advanceCloudAgentTool(run *model.CloudAgentExecution, state *c
 			skillResult, skillErr = cloudAgentReadToolCached(s.repo, run.UserID, state, call, s)
 		}
 	}
+	recordPlan := false
 	s.storageMu.Lock()
-	defer s.storageMu.Unlock()
-	return s.repo.MutateCloudAgent(run.UserID, run.ID, run.Revision, func(current *model.CloudAgentExecution, repo *repository.Repository) error {
+	err = s.repo.MutateCloudAgent(run.UserID, run.ID, run.Revision, func(current *model.CloudAgentExecution, repo *repository.Repository) error {
 		var result any
 		var toolErr error
 		switch {
@@ -784,6 +788,9 @@ func (s *Service) advanceCloudAgentTool(run *model.CloudAgentExecution, state *c
 		if call.Function.Name == "plan_update" && toolErr == nil {
 			state.event(run.ID, "plan_updated", map[string]any{"items": state.Plan, "pendingTitles": cloudAgentPendingPlanItems(state.Plan)})
 		}
+		if call.Function.Name == "plan_update" && toolErr == nil && cloudAgentIntelSubject(state.Request) {
+			recordPlan = true
+		}
 		if call.Function.Name == "ask_user" && toolErr == nil {
 			payload, _ := result.(map[string]any)
 			if payload["phase"] == "question" {
@@ -807,4 +814,11 @@ func (s *Service) advanceCloudAgentTool(run *model.CloudAgentExecution, state *c
 		}
 		return cloudAgentSave(current, state)
 	})
+	s.storageMu.Unlock()
+	if err == nil && recordPlan {
+		// A plan accepted by the user (first-plan approval) or committed by the model
+		// becomes the conversation's confirmed plan for later turns.
+		s.recordFlowConfirmedPlan(run.UserID, run.ID, state.Request, state.Plan)
+	}
+	return err
 }

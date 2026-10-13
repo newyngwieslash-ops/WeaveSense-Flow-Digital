@@ -322,7 +322,7 @@ function SkillLibraryCard({
     const coverUrl = cover?.showcaseUrl;
     const hasCover = Boolean(coverUrl && !coverFailed);
     const categoryLabel = rootLabel || categories.find((item) => item.value === skill.tag)?.label || "其他";
-    const author = skill.effectiveUser?.name || "影策创作者";
+    const author = skill.effectiveUser?.name || "源铭振跃创作者";
     const addedCount = formatSkillCount(skill.addedCount || 0);
 
     useEffect(() => setCoverFailed(false), [coverUrl]);

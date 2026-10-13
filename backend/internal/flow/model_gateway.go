@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"yingce/backend/internal/model"
 )
 
 // ModelGateway is the platform's single path to LLMs for flow executors
@@ -127,9 +128,23 @@ Rules: cite only evidence ids given to you, with their revision. source_statemen
 // Synthesize reserves budget, calls the model, validates every citation and
 // settles the reservation. Claims failing validation are dropped (reported).
 func Synthesize(ctx context.Context, gw ModelGateway, b Billing, req SynthesisRequest) (Synthesis, error) {
-	var res Synthesis
+	tasks, task, err := StartSynthesis(gw, b, req)
+	if err != nil {
+		return Synthesis{}, err
+	}
+	task, err = tasks.Wait(ctx, task.ID)
+	if err != nil {
+		return Synthesis{ReservationID: task.ReservationID, TaskID: task.ID}, err
+	}
+	return FinishSynthesis(task, req)
+}
+
+// StartSynthesis enqueues the model task (idempotent per tenant+key) and
+// returns immediately; the model task worker executes it asynchronously.
+func StartSynthesis(gw ModelGateway, b Billing, req SynthesisRequest) (ModelTasks, model.FlowModelTask, error) {
+	tasks := ModelTasks{DB: b.DB, GW: gw, Now: b.Now, Status: ModelStatusFromEnv()}
 	if gw == nil {
-		return res, errors.New("flow: model gateway not configured")
+		return tasks, model.FlowModelTask{}, errors.New("flow: model gateway not configured")
 	}
 	if req.BudgetMicro <= 0 {
 		req.BudgetMicro = 500_000
@@ -142,36 +157,25 @@ func Synthesize(ctx context.Context, gw ModelGateway, b Billing, req SynthesisRe
 	for _, e := range req.Evidence {
 		fmt.Fprintf(&sb, "- id=%s revision=%d source=%s title=%q\n  quote: %s\n", e.EvidenceID, e.Revision, e.SourceID, e.Title, truncRunes(e.Quote, 600))
 	}
-	// Routed through the async task pipeline (queue, claim, retries,
-	// reconciliation); Wait executes due attempts inline when no worker runs.
-	tasks := ModelTasks{DB: b.DB, GW: gw, Now: b.Now, Status: ModelStatusFromEnv()}
 	task, err := tasks.Enqueue(ModelTaskInput{TenantID: req.TenantID, ParentResID: req.ParentResID, Key: req.Key, Purpose: req.Purpose, RefID: req.Question,
 		System: synthesisSystem, User: sb.String(), MaxTokens: req.MaxTokens, BudgetMicro: req.BudgetMicro})
-	if err != nil {
-		return res, err
-	}
-	res.ReservationID = task.ReservationID
-	res.TaskID = task.ID
-	task, err = tasks.Wait(ctx, task.ID)
-	if err != nil {
-		return res, err
-	}
-	text, cost := task.Result, task.CostMicro
-	res.CostMicro = cost
+	return tasks, task, err
+}
+
+// FinishSynthesis parses a succeeded task's output and validates every
+// citation against the request's evidence and scope (invalid claims dropped).
+func FinishSynthesis(task model.FlowModelTask, req SynthesisRequest) (Synthesis, error) {
+	res := Synthesis{ReservationID: task.ReservationID, TaskID: task.ID, CostMicro: task.CostMicro}
 	var parsed struct {
 		Body   string        `json:"body"`
 		Claims []ReportClaim `json:"claims"`
 	}
-	if err := json.Unmarshal([]byte(strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(strings.TrimSpace(text), "```json"), "```"))), &parsed); err != nil {
+	if err := json.Unmarshal([]byte(strings.TrimSpace(strings.TrimSuffix(strings.TrimPrefix(strings.TrimSpace(task.Result), "```json"), "```"))), &parsed); err != nil {
 		return res, fmt.Errorf("model returned invalid JSON")
-	}
-	resolved := make([]ResolvedEvidence, 0, len(req.Evidence))
-	for _, e := range req.Evidence {
-		resolved = append(resolved, e)
 	}
 	res.Body = parsed.Body
 	for _, c := range parsed.Claims {
-		if _, err := ValidateCitations([]ReportClaim{c}, req.Scope, resolved); err != nil {
+		if _, err := ValidateCitations([]ReportClaim{c}, req.Scope, req.Evidence); err != nil {
 			res.Dropped = append(res.Dropped, truncRunes(c.Text, 200)+" — "+err.Error())
 			continue
 		}

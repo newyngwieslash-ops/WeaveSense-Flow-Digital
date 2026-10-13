@@ -70,6 +70,9 @@ if (role === "scheduler" || role === "all") {
     reports.summarize = async (input) => {
       const r = await platformCall("/api/internal/flow/summarize", input, input);
       if (r.status === 403) throw Object.assign(new Error("grant revoked"), { status: 403 });
+      // 202: the platform enqueued a model task (async pipeline); the brief window
+      // stays parked and the next scheduler tick re-submits the same key.
+      if (r.status === 202) return { pending: true, task_id: ((await r.json()) as any).data?.task_id };
       if (!r.ok) throw new Error(`summarize ${r.status}`);
       return ((await r.json()) as any).data ?? null;
     };

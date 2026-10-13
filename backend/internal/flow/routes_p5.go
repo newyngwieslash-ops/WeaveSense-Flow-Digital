@@ -219,17 +219,33 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 			reply(c, http.StatusServiceUnavailable, nil, "model gateway not configured")
 			return
 		}
-		cctx, cancel := context.WithTimeout(c.Request.Context(), 90*time.Second)
-		defer cancel()
-		out, err := Synthesize(cctx, gw, billing, SynthesisRequest{TenantID: ctx.TenantID, Key: "brief:" + body.Key, Purpose: "brief",
-			Question: body.Topic, Evidence: body.Evidence, Scope: body.Scope})
+		// Non-blocking: enqueue the model task (idempotent per key) and return the
+		// operation. The model task worker runs it; the engine re-submits the same
+		// key on its next scheduler tick (the brief window stays parked until then)
+		// and receives the citation-validated result once the task succeeded.
+		req := SynthesisRequest{TenantID: ctx.TenantID, Key: "brief:" + body.Key, Purpose: "brief", Question: body.Topic, Evidence: body.Evidence, Scope: body.Scope}
+		_, task, err := StartSynthesis(gw, billing, req)
 		switch {
 		case errors.Is(err, ErrBudgetInsufficient), errors.Is(err, ErrBudgetQuota):
 			reply(c, http.StatusPaymentRequired, nil, err.Error())
+			return
 		case err != nil:
 			reply(c, http.StatusBadGateway, nil, err.Error())
-		default:
+			return
+		}
+		op := gin.H{"task_id": task.ID, "operation": gin.H{"id": task.ID, "kind": "model_task", "status": task.Status}, "status": task.Status}
+		switch task.Status {
+		case "succeeded":
+			out, err := FinishSynthesis(task, req)
+			if err != nil {
+				reply(c, http.StatusBadGateway, op, err.Error())
+				return
+			}
 			reply(c, http.StatusOK, out, "ok")
+		case "failed":
+			reply(c, http.StatusBadGateway, op, "model task failed: "+task.LastError)
+		default: // queued | running | unknown (being reconciled)
+			reply(c, http.StatusAccepted, op, "queued")
 		}
 	})
 }

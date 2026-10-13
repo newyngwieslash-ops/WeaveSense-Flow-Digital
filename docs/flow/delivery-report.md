@@ -303,3 +303,12 @@ Pending live acceptance and required credentials: see [pending-acceptance.md](pe
 - **Source-text contract tests.** 34 files are excluded from Prettier because about 15 tests match exact source snippets. Making those files formattable requires rewriting the tests against behaviour.
 - **Brief wake-up delivery.** The wake-up is best-effort, at least once per finished task. If the engine is unreachable for long, the platform keeps retrying each pass and the scheduler tick still completes the window.
 - **Research synthesis budget.** It is allocated when the task is queued. If the agent never reads the result, the task still completes and is billed (as before).
+
+### P10 merge record
+- PR #20 (`p10-close-gaps`) was merged on 2026-10-13 at 23:09 Asia/Shanghai after green CI (Backend checks, Web checks, Payment plugin artifacts). Merge commit: `de99b15b8b446485cfc70e24b746bd0032756137`.
+- The first CI run failed on a Bun module-cache collision: a test imported `canvas-cloud-agent-panel-parts.tsx` as text while the new test imported it as a module. Moving the controls into `canvas-agent-message-edit-controls.tsx` fixed it.
+- Compose stack on the build box: schema v61. `smoke.sh` 25/25; `browser-smoke.mjs` 6/6.
+- Local tests:
+  - `go vet` passes. `go test ./...` passes except the 5 known Pi e2e tests in `internal/app`, which pass in CI. The RLS tests ran on real Postgres 17 as a non-superuser.
+  - Engine full `npm test` passes, as do `test:flow` 35/35 and typecheck.
+  - Web: `prettier --check .`, tsc, eslint and `bun test` 2224/2224 all pass.

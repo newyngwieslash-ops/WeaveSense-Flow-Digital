@@ -138,13 +138,13 @@ Pending live acceptance and required credentials: see [pending-acceptance.md](pe
 | A12 | pass | A new revision is created and old citations stay readable. |
 | A13 | pass | A 429 or transient failure triggers exponential backoff. Invalid credentials pause the source. Paused or backing-off sources get no new scheduled runs (`p5.test.ts`). |
 | A14 | pass (live MCP server pending-credentials) | Schema drift blocks until re-approval. Tools that are not approved don't execute. |
-| A15 | not done (partial) | Cancel propagates and research child budgets are visible in billing. A "runtime busy → queue" policy is not implemented. |
-| A16 | partial | Model Gateway: an unknown outcome is recorded as `unknown` and reconciled, never blindly retried. MCP calls have no remote reconciliation. |
+| A15 | pass (P6) | `RunSlots`: per-user agent-run and per-tenant research-executor limits (`FLOW_MAX_CONCURRENT_RUNS_PER_USER`, `FLOW_MAX_CONCURRENT_RESEARCH_PER_TENANT`); busy => FIFO queue, release starts the next run, cancel removes a queued run, a cancelled waiter leaves the queue; costs visible in billing (`p6_test.go`). |
+| A16 | pass (P6) | Model Gateway: unknown → reconciled. MCP: `ExecuteKeyed` per tool call key (sent to the server as `_meta.idempotency_key`); a lost response becomes `unknown`; retries reconcile first via the connection's `reconcile_tool` and re-execute only on `not_found`; with no reconcile tool, the call is never retried; credits are charged once (test: server executed once, billed once). |
 | A17 | pass | An insufficient budget or quota blocks new reservations. A revoked MCP connection or source stops new calls, and old evidence stays readable. |
 | A18 | pass for intel DB (platform DB restore uses the same scripts; object storage not tested) | `pg.test.ts` on real PG17: backup → restore into an empty DB; the manifest (row counts and checksums) matches, app reads work, and there is no re-migration. |
 | A19 | **pending-credentials** | Telegram and WeChat live samples: see pending-acceptance.md. Deferred to the very last step. |
 | A20 | pass | Each PR merged after green CI, and the remote `main` SHA was verified with `git ls-remote`. |
-| A21 | not done | The `waiting_external` auto-continue state (resume exactly once via Inbox) is not implemented. Long tools return 202 + operation_id and the user continues manually. |
+| A21 | pass (P6) | `flow_external_waits`: `intel_collect_once` parks the run (checkpoint = run request, reservation ref) on its operation. The deduplicated inbox event marks it ready (and completion consumed before parking is picked up from the projection after a restart). The resumer claims each wait with a conditional update, re-authorizes the grant (revoked → `denied`), and creates exactly one continuation run (idempotency key `autocontinue:<wait>`). Test: 3 duplicate deliveries + 2 resumer passes → 1 resume. |
 
 ### Verification actually executed (P5)
 | Check | Result |
@@ -159,10 +159,18 @@ Pending live acceptance and required credentials: see [pending-acceptance.md](pe
 | Docker stack boot | **not run** (no Docker on host). Compose changes were reviewed only. |
 
 ### Remaining gaps
-- A21 auto-continue (`waiting_external`) is not implemented. A15 runtime-busy queueing is not implemented. A16 remote reconciliation for MCP is not implemented.
+- A21 continuation runs are created server-side but have no browser e2e; only `intel_collect_once` parks (other async tools return operation ids without auto-continue). A16 MCP reconciliation depends on the remote server offering a reconcile tool; without one, unknown calls stay unknown for an operator to resolve. A15 concurrency limits are off by default (env = 0).
 - The Model Gateway is a synchronous OpenAI-compatible client. It is not routed through the canvas async task/channel pipeline, and the gateway offers no status-lookup API, so unknown outcomes are billed at the reserved amount after 24h.
 - RLS applies to the engine database. The platform database relies on application scoping.
 - The canvas sidebar keeps its own conversation format: it is now stored server-side, but it is not unified with the intelligence `flow_agent_conversations`.
 - Org UI is minimal: create, invite, accept. There is no member list or role editing UI, and no per-user notification read state (read state is per workspace).
 - A19 live connector acceptance is pending user credentials and is the very last step.
 - There is no browser e2e and no Docker stack boot.
+
+## P6 — Acceptance gaps A15/A16/A21 (2026-10-13, Asia/Shanghai)
+
+| Item | Value |
+|---|---|
+| Branch / PR | `p6-acceptance-gaps` → PR #13 (merged after green CI; merge SHA in the hand-off report, verified with `git ls-remote`) |
+| Schema | platform v57 `flow_acceptance_gaps` (`flow_mcp_calls`, `flow_run_slots`, `flow_external_waits`) |
+| Tests | `backend/internal/flow/p6_test.go`: A15 FIFO queue, per-owner isolation, release → next, queued cancel, cancelled waiter; A16 lost response → unknown → reconcile without re-execution, billed once, key reuse with different args rejected, no reconcile tool → never retried; A21 idempotent park, duplicate completion events, repeated resumer, completion before park, revoked grant denied. Plus `go test ./internal/flow ./internal/database ./cmd/...` all pass; `internal/app` only the 5 known Pi e2e env failures. |

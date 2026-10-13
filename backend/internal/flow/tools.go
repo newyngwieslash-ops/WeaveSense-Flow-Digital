@@ -264,6 +264,11 @@ func (t Tools) Invoke(ctx context.Context, conv model.FlowAgentConversation, ss 
 			return ToolResult{}, ErrToolConflict
 		}
 		r := storedResult(prior)
+		if prior.Status == "unknown" && spec.local != nil {
+			// Unknown outcome: re-enter the executor, which reconciles before any retry.
+			out, err := spec.local(t, context.WithValue(ctx, callKeyCtx{}, "tool:"+conv.ID+":"+callID), conv, ss, userID, args)
+			return t.finish(prior, localResult(prior, spec, out, err), args)
+		}
 		r.Replayed = true
 		return r, nil
 	}
@@ -286,15 +291,8 @@ func (t Tools) Invoke(ctx context.Context, conv model.FlowAgentConversation, ss 
 		args = prepared
 	}
 	if spec.local != nil {
-		out, err := spec.local(t, ctx, conv, ss, userID, args)
-		r := ToolResult{CallID: row.CallID, Tool: row.ToolName, Status: "succeeded"}
-		if err != nil {
-			r.Status, r.Error = "failed", err.Error()
-		} else {
-			raw, _ := json.Marshal(out)
-			r.Output = capJSON(raw, spec.OutputCap, &r.Truncated)
-		}
-		return t.finish(row, r, args)
+		out, err := spec.local(t, context.WithValue(ctx, callKeyCtx{}, idem), conv, ss, userID, args)
+		return t.finish(row, localResult(row, spec, out, err), args)
 	}
 	return t.execute(ctx, row, spec, ss, userID, args, idem)
 }
@@ -450,7 +448,8 @@ func (t Tools) mcpSpec(scope Scope, name string) (ToolSpec, bool) {
 	}
 	return ToolSpec{Name: name, Class: "write", Scope: "intel.mcp.use", Timeout: time.Duration(conn.TimeoutMS) * time.Millisecond, OutputCap: conn.OutputCap, rawArgs: true,
 		local: func(t Tools, ctx context.Context, _ model.FlowAgentConversation, ss SubjectScope, userID string, args map[string]any) (any, error) {
-			out, truncated, err := t.MCP.Execute(ctx, ss.Scope, userID, conn.ID, tool, args)
+			key, _ := ctx.Value(callKeyCtx{}).(string)
+			out, truncated, err := t.MCP.ExecuteKeyed(ctx, ss.Scope, userID, conn.ID, tool, args, key)
 			if err != nil {
 				return nil, err
 			}
@@ -525,4 +524,20 @@ func appendField(raw json.RawMessage, k string, v any) json.RawMessage {
 	m[k] = v
 	b, _ := json.Marshal(m)
 	return b
+}
+
+type callKeyCtx struct{}
+
+func localResult(row model.FlowAgentToolCall, spec ToolSpec, out any, err error) ToolResult {
+	r := ToolResult{CallID: row.CallID, Tool: row.ToolName, Status: "succeeded"}
+	switch {
+	case errors.Is(err, ErrMCPUnknownOutcome):
+		r.Status, r.Error = "unknown", err.Error()
+	case err != nil:
+		r.Status, r.Error = "failed", err.Error()
+	default:
+		raw, _ := json.Marshal(out)
+		r.Output = capJSON(raw, spec.OutputCap, &r.Truncated)
+	}
+	return r
 }

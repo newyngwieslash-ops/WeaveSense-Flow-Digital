@@ -68,6 +68,13 @@ func (s *Service) startCloudAgentPi(userID, runID string) {
 
 		// Cross-replica ownership: only the lease holder runs the session; a lost
 		// lease (another replica took over after expiry) cancels this one.
+		// Runtime busy => queue (A15): over the per-user limit the run waits
+		// and is started when a running one releases its slot.
+		if ok, pos, slotErr := s.piRunSlots().Acquire("user:"+userID, "agent_run", runID, userID); slotErr == nil && !ok {
+			log.Printf("[Agent] run %s queued (position %d)", runID, pos)
+			return
+		}
+		defer s.releasePiRunSlot(runID)
 		release, err := s.acquirePiRunLease(ctx, cancel, runID)
 		if err != nil {
 			log.Printf("[Agent] run %s owned elsewhere: %v", runID, err)
@@ -221,6 +228,9 @@ func (s *Service) stopCloudAgentPi(runID string) {
 	s.piRunnerMu.Unlock()
 	if cancel != nil {
 		cancel()
+	} else {
+		// Cancel propagates to a queued run: drop it from the queue.
+		s.releasePiRunSlot(runID)
 	}
 }
 

@@ -40,6 +40,10 @@ var mcpToolNameRe = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)
 type MCPCostRule struct {
 	PerCallCredits int `json:"per_call_credits"`
 	MaxCallsPerDay int `json:"max_calls_per_day"`
+	// ReconcileTool (operator-configured) answers {"idempotency_key": k} with
+	// {"status":"succeeded","output":...} | {"status":"not_found"} for calls
+	// whose outcome is unknown. Without it, unknown calls are never retried.
+	ReconcileTool string `json:"reconcile_tool,omitempty"`
 }
 
 type MCPApprovedTool struct {
@@ -333,6 +337,10 @@ func (g MCPGateway) usage(c model.FlowMCPConnection, tool, actor, status string,
 // Execute runs one allowed tool. The live schema must still match the approved
 // hash; any change flips the connection to needs_reapproval and blocks the call.
 func (g MCPGateway) Execute(ctx context.Context, scope Scope, actorID, connID, tool string, args map[string]any) (string, bool, error) {
+	return g.execute(ctx, scope, actorID, connID, tool, args, "")
+}
+
+func (g MCPGateway) execute(ctx context.Context, scope Scope, actorID, connID, tool string, args map[string]any, idemKey string) (string, bool, error) {
 	start := time.Now()
 	c, err := g.get(scope, connID)
 	if err != nil {
@@ -373,10 +381,16 @@ func (g MCPGateway) Execute(ctx context.Context, scope Scope, actorID, connID, t
 		g.usage(c, tool, actorID, "blocked_schema_drift", start, 0, 0)
 		return "", false, ErrMCPSchemaDrift
 	}
-	res, err := cs.CallTool(cctx, &mcp.CallToolParams{Name: tool, Arguments: args})
+	params := &mcp.CallToolParams{Name: tool, Arguments: args}
+	if idemKey != "" {
+		// Lets servers dedupe and answer the reconcile lookup for this key.
+		params.Meta = mcp.Meta{"idempotency_key": idemKey}
+	}
+	res, err := cs.CallTool(cctx, params)
 	if err != nil {
-		g.usage(c, tool, actorID, "failed", start, 0, 0)
-		return "", false, fmt.Errorf("mcp call failed: %s", redact(err.Error(), secret))
+		// The request may have reached the server: outcome unknown.
+		g.usage(c, tool, actorID, "unknown", start, 0, 0)
+		return "", false, fmt.Errorf("%w: %s", errMCPSent, redact(err.Error(), secret))
 	}
 	var b strings.Builder
 	for _, ct := range res.Content {

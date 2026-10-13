@@ -143,6 +143,7 @@ func run(ctx context.Context) error {
 	flow.RegisterP5Routes(api, db, flowCfg, flowUser, modelGW)
 	flow.RegisterCanvasConversationRoutes(api, db, flowUser)
 	go flow.RunBillingMaintenance(context.Background(), db, 15*time.Minute)
+	go svc.RunFlowAutoContinue(context.Background(), 5*time.Second)
 	r.NoRoute(handler.SystemProxyNoRouteHandler(svc))
 
 	listener, err := net.Listen("tcp", addr)

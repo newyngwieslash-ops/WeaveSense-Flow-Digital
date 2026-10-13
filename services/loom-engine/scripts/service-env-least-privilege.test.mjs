@@ -119,7 +119,7 @@ test("optional OpenCode runtime has only task credentials and an isolated networ
     assert.ok(!runtime.includes(secret), `runtime must not receive ${secret}`);
   }
   const names = [...runtime.matchAll(/^ {6}([A-Z_]+):/gm)].map(match => match[1]);
-  assert.deepEqual(names.sort(), ["OPENCODE_RUNTIME_TOKEN", "OPENCODE_BRIDGE_URL", "OPENCODE_MODEL_NAME", "OPENCODE_MAX_OUTPUT_TOKENS"].sort() // output cap is a non-secret tuning value);
+  assert.deepEqual(names.sort(), ["OPENCODE_RUNTIME_TOKEN", "OPENCODE_BRIDGE_URL", "OPENCODE_MODEL_NAME", "OPENCODE_MAX_OUTPUT_TOKENS"].sort()); // output cap is a non-secret tuning value
   assert.match(compose, /networks:\s*\n {2}opencode-runtime:\s*\n {4}internal: true\s*\n {4}driver_opts:\s*\n {6}com\.docker\.network\.bridge\.gateway_mode_ipv4: isolated/);
 });
 

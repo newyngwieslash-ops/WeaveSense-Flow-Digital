@@ -418,7 +418,7 @@ The audit is in `docs/implementation-status.md`. Work was done in batches, one P
 ### Verification
 - Local runs:
   - `go vet ./...` passes, and `go test ./internal/flow/ ./internal/database/ ./cmd/...` passes. The 5 known `internal/app` Pi e2e tests fail on this box only because the Pi runtime's node_modules aren't installed here (`undici` missing). They pass in CI.
-  - Engine `test:flow` passes 60/60 on PGlite.
+  - Engine `test:flow` on PGlite: 61 tests, 58 pass, 3 skipped (the real-PG tests, which run in CI).
   - Web: `bun test` 2224/2224, tsc passes, and `prettier --check .` passes.
 - CI: the engine job ran 58/58 tests with 0 skipped, including the real PostgreSQL 17 RLS and backup tests as a non-superuser. The OCR tests, including the real tesseract test, pass in CI.
 - Not run:

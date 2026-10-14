@@ -3,7 +3,7 @@ package flow
 import "testing"
 
 func TestEnrichmentToolsRouteToEngine(t *testing.T) {
-	want := map[string]string{"intel_extract_document": "/v1/documents/extract", "intel_transcribe_document": "/v1/documents/transcript"}
+	want := map[string]string{"intel_extract_document": "/v1/documents/extract", "intel_transcribe_document": "/v1/documents/transcript", "intel_ocr_document": "/v1/documents/ocr"}
 	for _, spec := range Catalog {
 		path, ok := want[spec.Name]
 		if !ok {

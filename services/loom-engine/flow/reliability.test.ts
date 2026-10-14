@@ -87,34 +87,45 @@ test("telegram: history refs are stored through /v1/media with the media token; 
       { external_id: "12", body: "huge video", url: "https://t.me/energynews/12", media_type: "video", media_urls: ["telegram://energynews/12"] },
       { external_id: "13", body: "text only", url: "https://t.me/energynews/13", media_type: "text", media_urls: [] },
     ], last_id: "13" }];
-    if (b.message_id === "11") return [200, { object_key: "telegram/energynews/11", content_type: "image/jpeg", bytes: 10, sha256: "a".repeat(64) }];
+    if (b.message_id === "11") return [200, { object_key: `tenants/${b.tenant_id}/workspaces/${b.workspace_id}/telegram/energynews/11`, content_type: "image/jpeg", bytes: 10, sha256: "a".repeat(64) }];
     return [413, { error: "media_too_large" }];
   }, calls);
-  const batch = await fetchTelegram({ telegramWorkerUrl: "http://telethon:8787", telegramMediaToken: "mt", fetchImpl }, { id: "s", kind: "telegram", url: "energynews", config: { handle: "energynews" }, last_external_id: "10" });
+  const batch = await fetchTelegram({ telegramWorkerUrl: "http://telethon:8787", telegramMediaToken: "mt", fetchImpl }, { id: "s", kind: "telegram", url: "energynews", config: { handle: "energynews" }, last_external_id: "10", tenant_id: "tn_a", workspace_id: "ws_a" });
   assert.deepEqual(batch.items.map((i) => i.media?.map((m) => m.status)), [["stored"], ["too_large"], []]);
-  assert.equal(batch.items[0].media![0].url, "telegram/energynews/11");
+  assert.equal(batch.items[0].media![0].url, "tenants/tn_a/workspaces/ws_a/telegram/energynews/11");
+  assert.equal(batch.items[0].media![0].ref, "telegram://energynews/11");
   assert.match(batch.items[1].body, /\[1 media attachment\(s\) not collected: too_large\]/);
   const media = calls.filter((c) => c.url.endsWith("/v1/media"));
-  assert.deepEqual(media.map((c) => [c.b, c.auth]), [[{ channel: "energynews", message_id: "11" }, "Bearer mt"], [{ channel: "energynews", message_id: "12" }, "Bearer mt"]]);
+  assert.deepEqual(media.map((c) => [c.b, c.auth]), [[{ channel: "energynews", message_id: "11", tenant_id: "tn_a", workspace_id: "ws_a" }, "Bearer mt"], [{ channel: "energynews", message_id: "12", tenant_id: "tn_a", workspace_id: "ws_a" }, "Bearer mt"]]);
 });
 
 test("telegram media: no token → disabled without calls; flood wait stops the batch; batch is bounded", async () => {
   const mk = (n: number): ConnectorItem[] => Array.from({ length: n }, (_, i) => ({ external_id: String(i + 1), title: "", body: "", url: "", published_at: null,
     media: [{ url: `telegram://chan_x/${i + 1}`, type: "image", status: "failed", reason: "pending" }] }));
+  const sc = { tenant_id: "tn_a", workspace_id: "ws_a" };
   const calls: any[] = [];
-  const none = mk(2); await storeTelegramMedia({ telegramWorkerUrl: "http://w", fetchImpl: fixtureWorker(() => [200, {}], calls) }, none);
+  const none = mk(2); await storeTelegramMedia({ telegramWorkerUrl: "http://w", fetchImpl: fixtureWorker(() => [200, {}], calls) }, none, Date.now, sc);
   assert.deepEqual(none.map((i) => i.media![0].status), ["disabled", "disabled"]); assert.equal(calls.length, 0);
   const flood = mk(3); let n = 0;
-  await storeTelegramMedia({ telegramWorkerUrl: "http://w", telegramMediaToken: "t", fetchImpl: fixtureWorker(() => (++n === 1 ? [429, { error: "flood_wait" }] : [200, { object_key: "telegram/chan_x/9" }]), calls) }, flood);
+  await storeTelegramMedia({ telegramWorkerUrl: "http://w", telegramMediaToken: "t", fetchImpl: fixtureWorker(() => (++n === 1 ? [429, { error: "flood_wait" }] : [200, { object_key: "tenants/tn_a/workspaces/ws_a/telegram/chan_x/9" }]), calls) }, flood, Date.now, sc);
   assert.equal(n, 1, "no further downloads after a flood wait");
   assert.ok(flood.every((i) => i.media![0].status === "failed" && /flood/.test(i.media![0].reason)));
   const many = mk(12); let m = 0;
-  await storeTelegramMedia({ telegramWorkerUrl: "http://w", telegramMediaToken: "t", fetchImpl: fixtureWorker((_u, b) => { m++; return [200, { object_key: `telegram/chan_x/${b.message_id}` }]; }) }, many);
+  await storeTelegramMedia({ telegramWorkerUrl: "http://w", telegramMediaToken: "t", fetchImpl: fixtureWorker((_u, b) => { m++; return [200, { object_key: `tenants/tn_a/workspaces/ws_a/telegram/chan_x/${b.message_id}` }]; }) }, many, Date.now, sc);
   assert.equal(m, 10); assert.equal(many.filter((i) => i.media![0].status === "stored").length, 10);
   assert.match(many[11].media![0].reason, /budget/);
   const bad = mk(1);
-  await storeTelegramMedia({ telegramWorkerUrl: "http://w", telegramMediaToken: "t", fetchImpl: fixtureWorker(() => [200, { object_key: "../../etc/passwd" }]) }, bad);
+  await storeTelegramMedia({ telegramWorkerUrl: "http://w", telegramMediaToken: "t", fetchImpl: fixtureWorker(() => [200, { object_key: "../../etc/passwd" }]) }, bad, Date.now, sc);
   assert.equal(bad[0].media![0].status, "failed", "an unexpected object key is never trusted");
+  // §10.4: a key under another tenant/workspace, an unscoped legacy key, or a call without scope are all rejected.
+  for (const key of ["tenants/tn_b/workspaces/ws_a/telegram/chan_x/1", "telegram/chan_x/1"]) {
+    const x = mk(1);
+    await storeTelegramMedia({ telegramWorkerUrl: "http://w", telegramMediaToken: "t", fetchImpl: fixtureWorker(() => [200, { object_key: key }]) }, x, Date.now, sc);
+    assert.equal(x[0].media![0].status, "failed", key);
+  }
+  const noScope = mk(1); const c2: any[] = [];
+  await storeTelegramMedia({ telegramWorkerUrl: "http://w", telegramMediaToken: "t", fetchImpl: fixtureWorker(() => [200, {}], c2) }, noScope);
+  assert.equal(c2.length, 0); assert.match(noScope[0].media![0].reason, /scope/);
 });
 
 test("failure classes for the reliability worker's errors", () => {

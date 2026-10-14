@@ -166,7 +166,18 @@ async def normalize(message: Message, channel: str) -> dict[str, Any]:
     }
 
 
-async def download_media_to_store(channel: str, message_id: int) -> dict:
+SCOPE_ID = re.compile(r"[A-Za-z0-9_-]{1,64}")
+
+
+def media_object_key(channel: str, message_id: int, tenant_id: str | None = None, workspace_id: str | None = None) -> str:
+    """§10.4: object keys carry tenant and workspace; the unscoped form is kept only for old callers."""
+    base = f"telegram/{channel.lower()}/{message_id}"
+    if tenant_id is None and workspace_id is None:
+        return base
+    return f"tenants/{tenant_id}/workspaces/{workspace_id}/{base}"
+
+
+async def download_media_to_store(channel: str, message_id: int, tenant_id: str | None = None, workspace_id: str | None = None) -> dict:
     assert client is not None and minio_client is not None
     entity = await resolve_channel(channel)
     message = await client.get_messages(entity, ids=message_id)
@@ -178,7 +189,7 @@ async def download_media_to_store(channel: str, message_id: int) -> dict:
     content_type = getattr(message.file, "mime_type", None) or "application/octet-stream"
     if not re.fullmatch(r"[\w.+-]+/[\w.+-]+", content_type, re.ASCII) or len(content_type) > 120:
         raise ValueError("media_invalid_type")
-    key = f"telegram/{channel.lower()}/{message_id}"
+    key = media_object_key(channel, message_id, tenant_id, workspace_id)
     sha, size = hashlib.sha256(), 0
     # TemporaryFile removes its backing file on every exit, including cancellation.
     with tempfile.TemporaryFile(mode="w+b") as temp:
@@ -223,7 +234,11 @@ async def handle_media(request: web.Request) -> web.Response:
         body = await request.json()
     except Exception:
         body = None
-    if (not isinstance(body, dict) or set(body) != {"channel", "message_id"}
+    scoped = isinstance(body, dict) and set(body) == {"channel", "message_id", "tenant_id", "workspace_id"}
+    if scoped and not (isinstance(body["tenant_id"], str) and SCOPE_ID.fullmatch(body["tenant_id"])
+                       and isinstance(body["workspace_id"], str) and SCOPE_ID.fullmatch(body["workspace_id"])):
+        return web.json_response({"error": "invalid_media_locator"}, status=400)
+    if (not isinstance(body, dict) or (set(body) != {"channel", "message_id"} and not scoped)
         or not isinstance(body["channel"], str) or not re.fullmatch(r"[A-Za-z0-9_]{5,32}", body["channel"])
         or not isinstance(body["message_id"], str) or not re.fullmatch(r"[1-9][0-9]{0,319}", body["message_id"])):
         return web.json_response({"error": "invalid_media_locator"}, status=400)
@@ -244,7 +259,8 @@ async def handle_media(request: web.Request) -> web.Response:
                     return web.json_response({"error": "flood_wait"}, status=429, headers={"Retry-After": str(wait)})
                 if client is None or not client.is_connected() or connection_state != "ready":
                     return web.json_response({"error": "unavailable"}, status=503)
-                result = await download_media_to_store(body["channel"].lower(), int(body["message_id"]))
+                result = await download_media_to_store(body["channel"].lower(), int(body["message_id"]),
+                                                       body.get("tenant_id"), body.get("workspace_id"))
                 return web.json_response(result)
     except FloodWaitError as exc:
         paused_until = max(paused_until, time.monotonic() + int(exc.seconds) + 1)

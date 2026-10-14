@@ -124,6 +124,7 @@ export function handler(engine: Engine, cfg: ServerConfig) {
       if (m === "POST" && (mm = p.match(/^\/v1\/sources\/([\w-]+)\/revoke$/))) { requireScope(ctx, "intel.sources.write"); return send(res, 200, await engine.revokeSource(ctx, mm[1], String((await readJson(req)).reason ?? "revoked"))); }
       if (m === "GET" && p === "/v1/connector-samples") { requireScope(ctx, "intel.sources.read"); return send(res, 200, await engine.listConnectorSamples(ctx)); }
       if (m === "POST" && p === "/v1/documents/extract") { requireScope(ctx, "intel.collect"); return send(res, 200, await engine.extractDocument(ctx, await readJson(req))); }
+      if (m === "POST" && p === "/v1/documents/ocr") { requireScope(ctx, "intel.collect"); return send(res, 200, await engine.ocrDocument(ctx, await readJson(req))); }
       if (m === "POST" && p === "/v1/documents/transcript") { requireScope(ctx, "intel.collect"); return send(res, 200, await engine.transcribeDocument(ctx, await readJson(req))); }
       return send(res, 404, null, "not found");
     }

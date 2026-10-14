@@ -411,6 +411,23 @@ class HistoryPaginationTests(unittest.TestCase):
             self.assertEqual(download_calls, 1)
         asyncio.run(run())
 
+    def test_media_keys_are_tenant_and_workspace_scoped(self):
+        import json
+        mod = self.mod
+        self.assertEqual(mod.media_object_key("Chan", 7, "tn_a", "ws_a"), "tenants/tn_a/workspaces/ws_a/telegram/chan/7")
+        self.assertEqual(mod.media_object_key("Chan", 7), "telegram/chan/7")
+        async def run():
+            mod.MEDIA_TOKEN = "synthetic-media-token"
+            for bad in ({"channel": "Channel", "message_id": "1", "tenant_id": "../x", "workspace_id": "ws"},
+                        {"channel": "Channel", "message_id": "1", "tenant_id": "tn"}):
+                class Request:
+                    headers = {"Authorization": "Bearer synthetic-media-token"}
+                    async def json(self, b=bad): return b
+                response = await mod.handle_media(Request())
+                self.assertEqual(response.status, 400, response.text)
+                self.assertEqual(json.loads(response.text)["error"], "invalid_media_locator")
+        asyncio.run(run())
+
     def test_media_auth_validation_limits_cleanup_and_shared_cooldown(self):
         import json
         from types import SimpleNamespace

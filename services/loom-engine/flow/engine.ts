@@ -3,10 +3,17 @@
 import { createHash, randomBytes } from "node:crypto";
 import { affected, type Db, type Q } from "./db.ts";
 import type { ExecutionContext } from "./auth.ts";
-import { connectorEnvFromProcess, extractMainText, fetchTelegram, fetchWechat, normalizeHandle, telegramMessageId,
+import { connectorEnvFromProcess, extractMainText, fetchTelegram, fetchWechat, normalizeHandle, telegramMessageId, storeTelegramMedia, SCOPED_MEDIA_KEY,
+  type MediaRef,
   type ConnectorBatch, type ConnectorEnv, type ConnectorItem, type SourceRow } from "./connectors.ts";
 import { expandQuery, mergeAliases, BUILTIN_TERMS_VERSION, BUILTIN_TERM_GROUPS } from "./terms.ts";
-import { defaultArticleReader, documentVideoId, enrichmentStatus, isSubtitleLanguage, subtitleClient, type ArticleReader, type SubtitleClient } from "./enrichment.ts";
+import { defaultArticleReader, documentVideoId, enrichmentStatus, isSubtitleLanguage, ocrClient, subtitleClient, type ArticleReader, type OcrClient, type SubtitleClient } from "./enrichment.ts";
+
+/** Media download attempts (initial + retries) before a failed attachment is left as is. */
+export const MEDIA_MAX_ATTEMPTS = 4;
+export const OCR_MAX_ATTEMPTS = 3;
+const MEDIA_RETRYABLE = new Set(["failed", "timeout"]);
+const isImage = (m: MediaRef) => m.type === "image" || /^image\//.test(m.content_type ?? "");
 
 export type FeedItem = { external_id: string; title: string; body: string; url: string; published_at: string | null };
 export type FetchResult = FeedItem[] | ConnectorBatch;
@@ -47,7 +54,8 @@ type Scope = Pick<ExecutionContext, "tenant_id" | "workspace_id">;
 
 export class Engine {
   db: Db; fetcher: Fetcher; now: () => Date; extractor: Extractor = defaultExtractor;
-  articleReader: ArticleReader = defaultArticleReader; subtitles: SubtitleClient = subtitleClient();
+  articleReader: ArticleReader = defaultArticleReader; subtitles: SubtitleClient = subtitleClient(); ocr: OcrClient = ocrClient();
+  connectorEnv: ConnectorEnv = connectorEnvFromProcess();
   /** Platform authorization hook: false ⇒ grant revoked (schedule is disabled). Errors propagate (fail closed, retry next tick). */
   authorize?: (sc: { tenant_id: string; workspace_id: string; grant_actor: string }, scope: string) => Promise<boolean>;
   constructor(db: Db, fetcher: Fetcher = defaultFetcher, now: () => Date = () => new Date()) {
@@ -151,6 +159,89 @@ export class Engine {
     const base = String(d.body);
     if (base.includes(marker)) return { document_id: d.id, revision: d.current_revision, changed: false, status: "ok", language, kind: t.kind };
     return this.addRevision(d, d.title, `${base}\n\n${marker}\n${t.text}`.slice(0, 400_000), "transcript", { status: "ok", language, kind: t.kind, digest: t.digest });
+  }
+
+  /**
+   * §6.4 retry of attachments not stored during a run: only failed/timeout telegram:// targets with attempts left;
+   * text and cursor are untouched. The media JSON update is optimistic, so a concurrent retry cannot clobber it.
+   */
+  async retryMedia(limit = 20) {
+    const r = await this.db.query(`SELECT d.id, d.tenant_id, d.workspace_id, d.media FROM flow_documents d JOIN flow_sources s ON s.id=d.source_id AND s.tenant_id=d.tenant_id
+        WHERE s.kind='telegram' AND s.status='active' AND EXISTS (SELECT 1 FROM jsonb_array_elements(d.media) m
+          WHERE m->>'status' IN ('failed','timeout') AND coalesce(m->>'ref', m->>'url') LIKE 'telegram://%' AND coalesce((m->>'attempts')::int, 1) < $1)
+        ORDER BY d.created_at DESC LIMIT $2`, [MEDIA_MAX_ATTEMPTS, limit]);
+    let stored = 0, failed = 0;
+    for (const d of r.rows as any[]) {
+      const before = JSON.stringify(typeof d.media === "string" ? JSON.parse(d.media) : d.media);
+      const media: MediaRef[] = JSON.parse(before);
+      const retry = media.filter((m) => MEDIA_RETRYABLE.has(m.status) && /^telegram:\/\//.test(m.ref ?? m.url) && (m.attempts ?? 1) < MEDIA_MAX_ATTEMPTS);
+      for (const m of retry) { m.ref = m.ref ?? m.url; m.attempts = m.attempts ?? 1; m.reason = "pending"; }
+      await storeTelegramMedia(this.connectorEnv, [{ external_id: d.id, title: "", body: "", url: "", published_at: null, media }], Date.now, { tenant_id: d.tenant_id, workspace_id: d.workspace_id });
+      for (const m of retry) m.status === "stored" ? stored++ : failed++;
+      const u = await this.db.query(`UPDATE flow_documents SET media=$2::jsonb WHERE id=$1 AND tenant_id=$3 AND media=$4::jsonb`, [d.id, JSON.stringify(media), d.tenant_id, before]);
+      if (affected(u) && retry.some((m) => m.status === "stored")) {
+        await this.db.tx((q) => this.emit(q, d, `media:${d.id}`, d.id, "media.stored", { document_id: d.id, stored: retry.filter((m) => m.status === "stored").map((m) => m.url) }));
+        if (process.env.OCR_ENABLED === "true") await this.enqueueOcr(d, media);
+      }
+    }
+    return { documents: r.rows.length, stored, failed };
+  }
+
+  private async enqueueOcr(d: { id: string; tenant_id: string; workspace_id: string }, media: MediaRef[]) {
+    let n = 0;
+    for (const m of media) {
+      if (m.status !== "stored" || !isImage(m) || !SCOPED_MEDIA_KEY.test(m.url)) continue;
+      n += affected(await this.db.query(`INSERT INTO flow_media_ocr (tenant_id, workspace_id, document_id, object_key) VALUES ($1,$2,$3,$4) ON CONFLICT DO NOTHING`,
+        [d.tenant_id, d.workspace_id, d.id, m.url]));
+    }
+    return n;
+  }
+
+  /** OCR one target: text is appended as a new revision (marker per object, so a re-run is a no-op); usage.recorded ocr_pages. */
+  private async runOcr(t: { tenant_id: string; workspace_id: string; document_id: string; object_key: string; attempts: number }) {
+    const sc = { tenant_id: t.tenant_id, workspace_id: t.workspace_id };
+    try {
+      const out = await this.ocr(t.object_key, sc);
+      const d = await this.currentDocument(sc, t.document_id);
+      const marker = `[OCR: ${t.object_key}]`;
+      let rev = d.current_revision;
+      if (out.text.trim() && !String(d.body).includes(marker)) rev = (await this.addRevision(d, d.title, `${d.body}\n\n${marker}\n${out.text.trim()}`.slice(0, 400_000), "ocr")).revision;
+      await this.db.tx(async (q) => {
+        await q.query(`UPDATE flow_media_ocr SET status='succeeded', attempts=attempts+1, pages=$4, text_digest=$5, revision=$6, error=NULL, updated_at=now()
+            WHERE tenant_id=$1 AND document_id=$2 AND object_key=$3`, [t.tenant_id, t.document_id, t.object_key, out.pages, out.digest, rev]);
+        await this.emit(q, sc, `ocr:${t.document_id}`, t.document_id, "usage.recorded", { usage_type: "ocr_pages", quantity: out.pages, document_id: t.document_id, object_key: t.object_key });
+      });
+      return { object_key: t.object_key, status: "succeeded", pages: out.pages, revision: rev };
+    } catch (e: any) {
+      const code = String(e?.code ?? e?.message ?? e).slice(0, 200);
+      const status = /_(unsupported)$/.test(code) ? "unsupported" : "failed";
+      await this.db.query(`UPDATE flow_media_ocr SET status=$4, attempts=attempts+1, error=$5, updated_at=now() WHERE tenant_id=$1 AND document_id=$2 AND object_key=$3`,
+        [t.tenant_id, t.document_id, t.object_key, status, code]);
+      return { object_key: t.object_key, status, error: code };
+    }
+  }
+
+  /** On-demand OCR of a document's stored images (REST/agent). Already-succeeded targets are not re-run. */
+  async ocrDocument(s: Scope, o: { document_id: string }) {
+    const d = await this.currentDocument(s, o.document_id);
+    const media: MediaRef[] = typeof d.media === "string" ? JSON.parse(d.media) : (d.media ?? []);
+    if (!media.some((m) => m.status === "stored" && isImage(m))) throw new HttpError(422, "ocr_unsupported: document has no stored image attachment");
+    if (!media.some((m) => m.status === "stored" && isImage(m) && SCOPED_MEDIA_KEY.test(m.url))) throw new HttpError(422, "ocr_unsupported: attachment uses a legacy unscoped object key; run the media key migration first");
+    await this.enqueueOcr({ id: d.id, tenant_id: s.tenant_id, workspace_id: s.workspace_id }, media);
+    const due = (await this.db.query(`SELECT * FROM flow_media_ocr WHERE tenant_id=$1 AND workspace_id=$2 AND document_id=$3 AND status IN ('queued','failed') AND attempts < $4 ORDER BY object_key`,
+      [s.tenant_id, s.workspace_id, d.id, OCR_MAX_ATTEMPTS])).rows;
+    const results = [];
+    for (const t of due as any[]) results.push(await this.runOcr(t));
+    const all = (await this.db.query(`SELECT object_key, status, attempts, pages, revision, error FROM flow_media_ocr WHERE tenant_id=$1 AND workspace_id=$2 AND document_id=$3 ORDER BY object_key`,
+      [s.tenant_id, s.workspace_id, d.id])).rows;
+    return { document_id: d.id, processed: results, targets: all };
+  }
+
+  /** Worker: queued and failed OCR targets with attempts left (system context). */
+  async ocrTick(limit = 10) {
+    const due = (await this.db.query(`SELECT * FROM flow_media_ocr WHERE status IN ('queued','failed') AND attempts < $1 ORDER BY updated_at LIMIT $2`, [OCR_MAX_ATTEMPTS, limit])).rows;
+    for (const t of due as any[]) await this.runOcr(t);
+    return due.length;
   }
 
   async listSources(s: Scope) {

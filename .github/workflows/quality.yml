@@ -40,6 +40,8 @@ jobs:
           --health-retries 12
     env:
       CANVAS_TEST_POSTGRES_DSN: postgres://postgres:canvas_test@127.0.0.1:5432/canvas_test?sslmode=disable
+      # 平台侧 RLS 测试必须用非超级用户（超级用户会绕过 RLS）。
+      FLOW_TEST_PG_RLS_DSN: postgres://flow_app:flow_app_pw@127.0.0.1:5432/rls_test?sslmode=disable
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -61,6 +63,11 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq redis-server
           sudo systemctl stop redis-server || true
+      - name: Create non-superuser app role (platform RLS tests)
+        run: |
+          psql "postgres://postgres:canvas_test@127.0.0.1:5432/postgres" -v ON_ERROR_STOP=1 \
+            -c "CREATE ROLE flow_app LOGIN PASSWORD 'flow_app_pw' NOSUPERUSER NOBYPASSRLS CREATEDB" \
+            -c "CREATE DATABASE rls_test OWNER flow_app"
       - name: Check formatting
         shell: bash
         run: |

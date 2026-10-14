@@ -9,6 +9,10 @@ REQUIRED = {
     ("repository", "TestCanvasRevision/postgres"),
     ("platform", "TestRuntimeCoordinatorRedisLeasePreservesLongestTTL"),
     ("app", "TestClearAdminRuntimeCacheUsesRedisWhitelist"),
+    # Platform-side PostgreSQL RLS (non-superuser role, FLOW_TEST_PG_RLS_DSN).
+    ("database", "TestFlowRLSPostgres"),
+    ("flow", "TestRuntimeRLSBlocksUnfilteredHandlerQueries"),
+    ("flow", "TestBackgroundWorkIsTenantScoped"),
 }
 
 
@@ -31,4 +35,4 @@ if __name__ == "__main__":
         missing = missing_tests(json.loads(line) for line in stream if line.strip())
     if missing:
         sys.exit("Dependency tests missing, skipped or failed: " + repr(sorted(missing)))
-    print("All five dependency-backed tests ran and passed.")
+    print("All dependency-backed tests ran and passed.")

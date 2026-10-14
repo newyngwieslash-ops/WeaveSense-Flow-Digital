@@ -336,7 +336,7 @@ Pending live acceptance and required credentials: see [pending-acceptance.md](pe
 | Article reader | `POST /v1/documents/extract {"via":"reader"}` uses upstream `readArticle`. The platform proxy is `POST /api/intelligence/documents/extract`, and the tool `intel_extract_document` gains a `via` parameter. Opt-in with `ARTICLE_READER_ENABLED` and `ARTICLE_READER_ALLOWED_HOSTS`. The document is resolved under tenant/workspace before any outbound call, and the result becomes a new revision (re-chunked). |
 | YouTube transcripts | `POST /v1/documents/transcript` uses the upstream worker contract with upstream `youtubeVideoId`/`transcriptText`. The platform proxy is `POST /api/intelligence/documents/transcript`, plus a new tool `intel_transcribe_document` (`intel.collect`, also allowed in topic conversations). Compose gets `--profile subtitles` (an isolated `subtitle-worker` and a `subtitle-egress` on the internal network). New `.env.flow.example` keys. |
 | Revision fencing | Enrichment revisions are written with `UPDATE … WHERE current_revision=$read`, so a concurrent enrichment gets 409 instead of a lost update. HTML extraction shares the same path. |
-| Rename | The new upstream text contains no `影策`, so nothing needed renaming. |
+| Rename | The new upstream text does not contain the old brand name, so nothing needed renaming to 源铭振跃. |
 
 Tests: `flow/enrichment.test.ts` (4 tests: tenant isolation with no outbound call for a foreign tenant, idempotency, error mapping, worker-contract checks, 2 MiB cap, searchable transcript) and Go `TestEnrichmentToolsRouteToEngine`. `smoke.sh` gains 3 platform→engine enrichment checks.
 

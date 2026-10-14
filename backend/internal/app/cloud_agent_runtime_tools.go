@@ -6,6 +6,7 @@
 package app
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -383,7 +384,11 @@ func (s *Service) advanceCloudAgentReadBatch(run *model.CloudAgentExecution, sta
 		if call.Function.Name == "skill_read_file" || call.Function.Name == "model_list" {
 			state.RuntimeRunID = run.ID
 		}
-		result, err := cloudAgentReadToolCached(s.repo, run.UserID, state, call, s)
+		// PRD §8.1: batched canvas reads also go through the canvas ToolExecutor.
+		executed, err := s.agentRunChain(run.ID, state.Request).Exec.Execute(context.Background(), nil, flow.ToolCall{
+			UserID: run.UserID, RunID: run.ID, CallID: call.ID, Name: call.Function.Name,
+			Payload: canvasToolExecution{Mode: canvasExecRead, Svc: s, Repo: s.repo, Run: run, State: state, Call: call}})
+		result := executed.Value
 		if err == nil {
 			cacheKey := cloudAgentReadCacheKeyForState(s.repo, run.UserID, state, call)
 			if batchReadResults[cacheKey] {
@@ -511,7 +516,7 @@ func (s *Service) advanceCloudAgentTool(run *model.CloudAgentExecution, state *c
 				if err != nil {
 					return err
 				}
-				return s.enqueueCloudAgentTask(latest, &fresh, mediaRequest, plan)
+				return s.dispatchCanvasTool(canvasToolExecution{Mode: canvasExecEnqueue, Svc: s, Run: latest, State: &fresh, Call: call, MediaRequest: mediaRequest, Plan: plan})
 			}
 			// Auto media is a direct, server-admitted write. Prepare the draft and
 			// its immutable quote in one checkpoint transaction, then release the
@@ -565,7 +570,7 @@ func (s *Service) advanceCloudAgentTool(run *model.CloudAgentExecution, state *c
 			if err != nil {
 				return err
 			}
-			return s.enqueueCloudAgentTask(latest, &fresh, mediaRequest, plan)
+			return s.dispatchCanvasTool(canvasToolExecution{Mode: canvasExecEnqueue, Svc: s, Run: latest, State: &fresh, Call: call, MediaRequest: mediaRequest, Plan: plan})
 		}
 		s.storageMu.Lock()
 		defer s.storageMu.Unlock()
@@ -684,7 +689,7 @@ func (s *Service) advanceCloudAgentTool(run *model.CloudAgentExecution, state *c
 		}
 	}
 	if allowed && (call.Function.Name == "generate_media" || call.Function.Name == "image_layer_split") && state.Approval != nil && state.Approval.Decision == "approve" {
-		return s.advanceCloudAgentMedia(run, state, cloudAgentMediaCall(call))
+		return s.dispatchCanvasTool(canvasToolExecution{Mode: canvasExecMedia, Svc: s, Run: run, State: state, Call: call})
 	}
 	policy, err := s.RuntimePolicy()
 	if err != nil {
@@ -725,48 +730,14 @@ func (s *Service) advanceCloudAgentTool(run *model.CloudAgentExecution, state *c
 	err = s.repo.MutateCloudAgent(run.UserID, run.ID, run.Revision, func(current *model.CloudAgentExecution, repo *repository.Repository) error {
 		var result any
 		var toolErr error
-		switch {
-		case !allowed:
-			// 幻觉出来的工具名与"真被权限挡住"要分开反馈：前者模型根本不该发这个调用，
-			// 后者是授权边界问题。两者仍然一律拒绝，只是给模型的下一步更明确。
-			if !cloudAgentPlatformToolNames()[call.Function.Name] {
-				toolErr = BadAuthRequest("模型调用了不存在的工具「" + truncateRunes(call.Function.Name, 60) + "」，本轮已拒绝；请只使用本轮工具表里列出的工具")
-			} else {
-				toolErr = BadAuthRequest("工具未获本轮权限授权")
-			}
-		case call.Function.Name == "canvas_apply_ops":
-			result, toolErr = applyCloudAgentCanvas(repo, run.UserID, state.Request.CanvasID, call, policy, cloudAgentCanvasEventRecorder(run.ID, state))
-		case call.Function.Name == "canvas_arrange_nodes":
-			result, toolErr = applyCloudAgentArrangeNodes(repo, run.UserID, state.Request.CanvasID, call, policy, cloudAgentCanvasEventRecorder(run.ID, state))
-		case call.Function.Name == "canvas_create_storyboard", call.Function.Name == "canvas_edit_storyboard":
-			result, toolErr = applyCloudAgentStoryboardMutation(repo, run.UserID, state.Request.CanvasID, call, policy, cloudAgentCanvasEventRecorder(run.ID, state))
-		case call.Function.Name == "canvas_create_character":
-			result, toolErr = applyCloudAgentCharacterCreate(repo, run.UserID, state.Request.CanvasID, call, policy, cloudAgentCanvasEventRecorder(run.ID, state))
-		case call.Function.Name == "canvas_edit_batch_table":
-			result, toolErr = applyCloudAgentBatchTableMutation(repo, run.UserID, state.Request.CanvasID, call, policy, cloudAgentCanvasEventRecorder(run.ID, state))
-		case call.Function.Name == "previs_scene_create", call.Function.Name == "previs_apply_patch":
-			result, toolErr = applyCloudAgentPrevisMutation(repo, run.UserID, state.Request.CanvasID, call, policy, cloudAgentCanvasEventRecorder(run.ID, state))
-		case call.Function.Name == "canvas_inspect_image":
-			result, toolErr = inspectionResult, inspectionErr
-			if toolErr == nil && inspectionResult != nil {
-				if inspection, ok := inspectionResult.(cloudAgentImageInspection); ok {
-					state.markCanvasImageInspection(stringValue(inspection.Receipt["nodeId"]), strings.TrimSpace(inspection.ImageURL) != "")
-					if inspection.CacheKey != "" {
-						if state.ImageInspectionReads == nil {
-							state.ImageInspectionReads = map[string]int{}
-						}
-						state.ImageInspectionReads[inspection.CacheKey]++
-					}
-					if inspection.Receipt["repeat"] == true {
-						cloudAgentMarkReadLoopNudge(state, call, state.ImageInspectionReads[inspection.CacheKey])
-					}
-				}
-			}
-		case call.Function.Name == "skill_read_file", call.Function.Name == "model_list", call.Function.Name == "image_annotation_render", call.Function.Name == "canvas_read_text":
-			result, toolErr = skillResult, skillErr
-		default:
-			result, toolErr = cloudAgentReadToolCached(repo, run.UserID, state, call)
-		}
+		// PRD §8.1: canvas tool calls execute through the run chain's ToolExecutor.
+		var executed flow.ToolResult
+		executed, toolErr = s.agentRunChain(run.ID, state.Request).Exec.Execute(context.Background(), nil, flow.ToolCall{
+			UserID: run.UserID, RunID: run.ID, CallID: call.ID, Name: call.Function.Name,
+			Payload: canvasToolExecution{Mode: canvasExecCheckpoint, Repo: repo, Run: run, State: state, Call: call, Policy: policy, Allowed: allowed,
+				InspectionResult: inspectionResult, InspectionErr: inspectionErr, SkillResult: skillResult, SkillErr: skillErr},
+		})
+		result = executed.Value
 		if toolErr == nil && cloudAgentWrite(call.Function.Name) {
 			// A successful canvas mutation changes the read model. Do not replay a
 			// pre-mutation canvas snapshot later in the same Agent run.

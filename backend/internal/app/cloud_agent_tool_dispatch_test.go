@@ -126,6 +126,8 @@ func cloudAgentDispatchedToolNames(t *testing.T) []string {
 	}{
 		{"app 包", "advanceCloudAgentTool"},
 		{"app 包", "cloudAgentReadTool"},
+		// PRD §8.1: checkpoint writes moved behind the canvas ToolExecutor.
+		{"app 包", "executeCanvasTool"},
 	} {
 		file := parseCloudAgentFile(t, target.file)
 		found := false

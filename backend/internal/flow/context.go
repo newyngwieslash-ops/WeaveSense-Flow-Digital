@@ -22,6 +22,8 @@ type TurnContext struct {
 	ConfirmedPlans []any                    `json:"confirmedPlans"`
 	ActionReceipts []ToolResult             `json:"actionReceipts"`
 	BackgroundJobs []map[string]any         `json:"backgroundJobs"`
+	// Canvas is the canvas adapter's context (enhanced canvas snapshot); empty for intelligence subjects.
+	Canvas map[string]any `json:"canvas,omitempty"`
 }
 
 const recentWindow = 12

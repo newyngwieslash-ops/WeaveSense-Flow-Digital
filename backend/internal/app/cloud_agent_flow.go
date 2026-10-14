@@ -75,7 +75,7 @@ func (s *Service) flowRunChain(runID string, req CloudAgentRequest) flow.RunChai
 	if s.repo != nil {
 		tools = flow.Tools{DB: s.repo.DB(), Engine: s.flowEngine, RunID: runID, MCP: s.flowMCP, Model: s.flowModel}
 	}
-	return flow.IntelRunChain(tools, base)
+	return hookAgentRunChain(flow.IntelRunChain(tools, base))
 }
 
 // cloudAgentIntelTools is the tool table for intelligence subjects (ToolProvider).
@@ -283,7 +283,7 @@ func (s *Service) executeIntelToolIn(db *gorm.DB, userID, runID string, req Clou
 			return nil, BadAuthRequest("工具参数不是合法 JSON")
 		}
 	}
-	r, err := s.flowRunChain(runID, req).Exec.Execute(context.Background(), db, flow.ToolCall{Conv: conv, Subject: ss, UserID: userID, RunID: runID,
+	r, err := s.agentRunChain(runID, req).Exec.Execute(context.Background(), db, flow.ToolCall{Conv: conv, Subject: ss, UserID: userID, RunID: runID,
 		CallID: call.ID, Name: call.Function.Name, Args: args, ApprovalID: approvalID})
 	if err != nil {
 		if errors.Is(err, flow.ErrForbidden) || errors.Is(err, flow.ErrNotFound) {

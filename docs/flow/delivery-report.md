@@ -454,7 +454,36 @@ Based on the audit in `prd-audit-2`. Merged by PR (numbers and merge SHAs are re
 `main` = `97c8db33f5a392ec3b96e034455c44375d9287c7` (merge of #37, which sits on #36). CI on both PRs: Backend / Loom Engine flow / Web / Payment plugin artifacts all green before merge.
 
 ### Still not done (honest)
-- §8.1: the canvas agent path is not converted to `RunChain` adapters.
-- §6.2: the PRD's `pending` state is called `queued`.
+- §8.1: closed in round 6 (see below).
+- §6.2: `pending` is added as `job_state` in round 6 (see below).
 - The former snippet tests are format-independent source contracts, not rendering tests.
 - A19 (live Telegram/WeChat/MCP/OAuth), real SMTP/webhook, full stack boot, promtool, legacy production import and the PG16→17 volume upgrade still need a real environment (see `pending-acceptance.md`).
+
+## Round 6: canvas run chain (2026-10-15, Asia/Shanghai)
+
+| PR | Branch | Closes |
+|---|---|---|
+| (this PR) | `canvas-runchain` | §8.1 for canvas. The canvas agent path now goes through the same five interfaces as intelligence runs: canvas adapter `app/cloud_agent_runchain.go`, selected by `agentRunChain`. §6.2: operation job rows report `job_state` (`queued` → `pending`). |
+
+What runs through the canvas chain:
+- `ScopeResolver`: canvas ownership at run admission.
+- `ContextProvider`: the enhanced canvas snapshot for the Pi request.
+- `ToolProvider`: the canvas tool table.
+- `ToolExecutor`:
+  - checkpoint writes and reads (`executeCanvasTool`);
+  - batched reads;
+  - approved `generate_media` / `image_layer_split` dispatch;
+  - auto media submission.
+- `UsageRecorder`: `flow.DefaultUsageRecorder` (see "still deviating").
+
+### Verification actually executed (local)
+| Check | Result |
+|---|---|
+| `go test ./...` (backend, with `FLOW_TEST_PG_RLS_DSN` on PG17) | all packages pass. `internal/app` also passes the 5 Pi-runtime e2e tests once `agent-runtime/pi` `npm ci` is installed |
+| `app/cloud_agent_runchain_test.go` | a probe wraps all five interfaces. A canvas run calls scope, tools, exec (`canvas_get_state` read, `canvas_apply_ops` write) and context. A refusing executor leaves the canvas unwritten (checked: without the refusal the write lands). Intel runs use the intel adapter |
+| Loom Engine `node --test flow/*.test.ts` (PGlite + PG17) | 73/73 pass |
+
+### Still deviating
+- `UsageRecorder`: neither adapter's Pi loop writes a per-run usage line. Usage lines come from the gateways through `DefaultUsageRecorder`, and canvas media is billed in the existing credit/task ledger.
+- Canvas media admission, approval and credit reservation happen in the runtime before the dispatch reaches the `ToolExecutor`.
+- The stored state name is still `queued`; `pending` is only the reported `job_state`.

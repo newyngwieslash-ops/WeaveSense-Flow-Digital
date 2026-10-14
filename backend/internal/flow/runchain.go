@@ -10,10 +10,13 @@ import (
 	"gorm.io/gorm"
 )
 
-// PRD §8.1: the agent run chain is assembled from five minimal interfaces. The
-// intelligence_workspace / topic adapter below is what the Pi run (app package)
-// and the REST agent routes call. The canvas agent path in the app package does
-// not go through these interfaces yet (known deviation, see implementation-status).
+// PRD §8.1: every agent run is assembled from five minimal interfaces. Two
+// adapters implement them: the intelligence_workspace / topic adapter below
+// (used by the Pi run in the app package and by the REST agent routes), and the
+// canvas adapter in the app package (app/cloud_agent_runchain.go), which owns the
+// canvas catalog. The Pi run picks the adapter by subject and calls only the
+// chain for scope, context, tool table and tool execution.
+// Adapter-specific data travels in the Payload fields.
 
 // ScopeResolver turns an authenticated user + AgentSubject into tenant/workspace/role.
 type ScopeResolver interface {
@@ -32,6 +35,8 @@ type ToolRequest struct {
 	PermissionMode string
 	Scope          Scope
 	MCPTools       []map[string]any
+	// Payload carries adapter-specific input (the canvas adapter passes the run request).
+	Payload any
 }
 
 // ToolProvider lists the function tools offered to the model for a run.
@@ -49,6 +54,8 @@ type ToolCall struct {
 	Name       string
 	Args       map[string]any
 	ApprovalID string
+	// Payload carries adapter-specific execution state (canvas: run checkpoint, policy, prepared reads).
+	Payload any
 }
 
 // ToolExecutor executes a tool call (idempotent per call id, approvals enforced).

@@ -11,6 +11,9 @@ import (
 	"log"
 	"log/slog"
 	"path/filepath"
+
+	"yingce/backend/internal/flow"
+	"yingce/backend/internal/model"
 )
 
 // EnhancedPiRequestParams 增强的 Pi 请求参数
@@ -51,11 +54,12 @@ func (s *Service) buildEnhancedPiRequest(ctx context.Context, params EnhancedPiR
 		// Intelligence subjects carry no canvas; context arrives as the flow_context message.
 		canvasData = map[string]any{"subject": params.RuntimeState.Request.Subject}
 	} else {
-		var err error
-		canvasData, err = s.buildPiCanvasData(ctx, params)
+		// PRD §8.1: canvas context comes from the canvas run chain's ContextProvider.
+		tc, err := s.canvasRunChain(ctx, &params).Context.TurnContext(nil, model.FlowAgentConversation{}, flow.SubjectScope{Subject: flow.AgentSubject{Kind: flow.SubjectCanvas, ID: params.CanvasID}})
 		if err != nil {
 			return cloudAgentPiProcessRequest{}, err
 		}
+		canvasData = tc.Canvas
 	}
 	return s.finishEnhancedPiRequest(params, tools, enabledSkills, profile, memory, canvasData)
 }

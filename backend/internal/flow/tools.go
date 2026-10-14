@@ -193,6 +193,9 @@ type ToolResult struct {
 	Truncated  bool            `json:"truncated,omitempty"`
 	Output     json.RawMessage `json:"output,omitempty"`
 	Error      string          `json:"error,omitempty"`
+	// Value is the in-process result for adapters whose tools return structured
+	// values (canvas); it is never serialized.
+	Value any `json:"-"`
 }
 
 // Tools executes intel_* tools for a conversation.

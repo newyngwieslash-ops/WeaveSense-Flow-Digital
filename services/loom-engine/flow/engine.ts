@@ -14,6 +14,14 @@ export const MEDIA_MAX_ATTEMPTS = 4;
 export const OCR_MAX_ATTEMPTS = 3;
 /** PRD §6.2 collection job states. `queued` is the PRD's "pending". */
 export const JOB_STATES = ["queued", "leased", "running", "retry_wait", "partial", "reconciliation_required", "cancel_requested", "cancelled", "succeeded", "failed"] as const;
+/**
+ * PRD §6.2 names the waiting job state `pending`; it is stored as `queued` because
+ * §5.2's user-facing operation status for the same thing is `queued`. API job rows
+ * carry both: `status` (stored) and `job_state` (PRD §6.2 name).
+ */
+export function prdJobState(status: string): string {
+  return status === "queued" ? "pending" : status;
+}
 export const ACTIVE_JOB_STATES = ["queued", "leased", "running", "retry_wait", "reconciliation_required", "cancel_requested"];
 export const MISFIRE_POLICIES = ["coalesce", "skip", "catch_up"] as const;
 /** catch_up replays at most this many missed windows (never an unbounded backlog). */
@@ -858,7 +866,7 @@ export class Engine {
         FROM flow_collection_runs WHERE tenant_id=$1 AND workspace_id=$2 AND operation_id=$3 ORDER BY id`, [s.tenant_id, s.workspace_id, op]);
     if (!r.rows.length) throw new HttpError(404, "operation not found");
     const st = r.rows.map((x: any) => x.status);
-    return { operation_id: op, status: operationStatus(st), jobs: r.rows };
+    return { operation_id: op, status: operationStatus(st), jobs: r.rows.map((x: any) => ({ ...x, job_state: prdJobState(x.status) })) };
   }
 
   async listDocuments(s: Scope, opts: { q?: string; limit?: number; source_id?: string }) {

@@ -1,0 +1,59 @@
+{
+  "properties": {
+    "body": {
+      "type": "string"
+    },
+    "claims": {
+      "items": {
+        "properties": {
+          "citations": {
+            "items": {
+              "properties": {
+                "chunk_index": {
+                  "type": "integer"
+                },
+                "evidence_id": {
+                  "type": "string"
+                },
+                "revision": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "evidence_id",
+                "revision"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "source_statement",
+              "cross_source_verified",
+              "model_inference"
+            ]
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "kind",
+          "citations"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "title": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "claims"
+  ],
+  "type": "object"
+}

@@ -2744,7 +2744,7 @@ function CanvasViewportPage() {
                                                     openingBatchIds={openingBatchIds}
                                                     batchMotionById={batchMotionById}
                                                     showImageInfo={showImageInfo}
-                                                        resourceReferenceByNodeId={resourceReferenceByNodeId}
+                                                    resourceReferenceByNodeId={resourceReferenceByNodeId}
                                                     mentionReferencesByNodeId={mentionReferencesByNodeId}
                                                     mediaEffectsDisabledNodeId={emotionNodeId}
                                                     selectedNodeBounds={selectedNodeBounds}

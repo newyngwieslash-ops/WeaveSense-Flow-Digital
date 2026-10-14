@@ -1,0 +1,18 @@
+[
+  {
+    "kind": "rss",
+    "title": "Energy-Storage.news",
+    "url": "https://www.energy-storage.news/feed/"
+  },
+  {
+    "kind": "rss",
+    "title": "PV Magazine – storage",
+    "url": "https://www.pv-magazine.com/category/energy-storage/feed/"
+  },
+  {
+    "kind": "rss",
+    "note": "configure an RSS bridge",
+    "title": "CNESA (中关村储能产业技术联盟) news",
+    "url": "https://www.cnesa.org/"
+  }
+]

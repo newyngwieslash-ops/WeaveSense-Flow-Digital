@@ -1,0 +1,52 @@
+{
+  "evaluation_set": "evals/evidence-cases.jsonl",
+  "id": "core",
+  "kind": "base",
+  "name": "Core analysis skills",
+  "note": "generated from the embedded pack; edit the source and regenerate (see industry_packs_test.go)",
+  "optional_connectors": [
+    "rss",
+    "public-web"
+  ],
+  "report_schema": "schemas/report.json",
+  "required_tools": [
+    "intel_search_documents",
+    "intel_read_document",
+    "intel_compare_evidence",
+    "intel_save_report"
+  ],
+  "skills": [
+    {
+      "hash": "5c5dec96b205025fc187f25c8b1aca6508ebbbaa81e8f52252892e7cf8a1cf9b",
+      "id": "source-evaluation",
+      "output_schema": "schemas/source-evaluation.json",
+      "version": "1.0.0"
+    },
+    {
+      "hash": "68ce0a9c5d0c54a74893166447db5e76bf5d6a2cc74801ba0d90be4bbca27ebd",
+      "id": "cross-source-verification",
+      "output_schema": "schemas/cross-source-verification.json",
+      "version": "1.0.0"
+    },
+    {
+      "hash": "43b78641a429a7b7aef7aec47a62ccd9013844cebc5e89c2a9cad852a7e8caca",
+      "id": "change-analysis",
+      "output_schema": "schemas/change-analysis.json",
+      "version": "1.0.0"
+    },
+    {
+      "hash": "54aab7582101fabdacd762437b95044746b7804c82687c58e624c2dc7ce71834",
+      "id": "periodic-brief",
+      "output_schema": "schemas/periodic-brief.json",
+      "version": "1.0.0"
+    },
+    {
+      "hash": "dd17d9ebd2f31fd29ddc4a18c0a6e93ddce93c3bdcb6b09f70faa5f959b919ed",
+      "id": "citation-integrity",
+      "output_schema": "schemas/citation-integrity.json",
+      "version": "1.0.0"
+    }
+  ],
+  "source": "backend/internal/flow/skillpacks/core.json",
+  "version": "1.0.0"
+}

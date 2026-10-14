@@ -1,0 +1,14 @@
+{
+  "claim_kinds": [
+    "source_statement",
+    "cross_source_verified",
+    "model_inference"
+  ],
+  "sections": [
+    "Headline developments",
+    "Prices & tenders",
+    "Policy",
+    "Projects",
+    "Coverage & gaps"
+  ]
+}

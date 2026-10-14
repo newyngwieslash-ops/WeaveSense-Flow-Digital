@@ -40,14 +40,18 @@ export function CanvasFolderCard({ project, projectName, onClick, onPrefetch, op
             await loadCanvasProjectForEditing(project.id);
             renameProject(project.id, editingTitle);
             await saveRemoteUserDataNow();
-        } catch (error) { message.error(error instanceof Error ? error.message : "重命名失败"); }
+        } catch (error) {
+            message.error(error instanceof Error ? error.message : "重命名失败");
+        }
     };
     const exportProject = async () => {
         try {
             const fullProject = await loadCanvasProjectForEditing(project.id);
             if (!fullProject) throw new Error("画布不存在");
             await exportCanvasProjects([fullProject], project.title || "画布");
-        } catch (error) { message.error(error instanceof Error ? error.message : "导出失败"); }
+        } catch (error) {
+            message.error(error instanceof Error ? error.message : "导出失败");
+        }
     };
 
     const handleOpenKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -63,7 +67,12 @@ export function CanvasFolderCard({ project, projectName, onClick, onPrefetch, op
             <div className="canvas-collection-open" role="button" tabIndex={0} aria-label={`打开画布 ${project.title}`} aria-busy={opening} onClick={() => !editing && !opening && onClick()} onKeyDown={handleOpenKeyDown}>
                 <div className="canvas-collection-preview" aria-hidden="true">
                     <ProjectPreview project={{ id: project.id, nodes: project.previewNodes }} preferLatestImage />
-                    {opening ? <div className="canvas-collection-opening"><LoaderCircle className="size-5 animate-spin" /><span>正在打开</span></div> : null}
+                    {opening ? (
+                        <div className="canvas-collection-opening">
+                            <LoaderCircle className="size-5 animate-spin" />
+                            <span>正在打开</span>
+                        </div>
+                    ) : null}
                 </div>
                 <div className="canvas-collection-body">
                     <div className="canvas-collection-heading-row">
@@ -86,20 +95,19 @@ export function CanvasFolderCard({ project, projectName, onClick, onPrefetch, op
                     </div>
                     <div className="canvas-collection-meta">
                         <span className="canvas-collection-meta-item">{projectName ? `所属项目：${projectName}` : "自由画布"}</span>
-                        <span className="canvas-collection-meta-separator" aria-hidden="true">·</span>
+                        <span className="canvas-collection-meta-separator" aria-hidden="true">
+                            ·
+                        </span>
                         <span className="canvas-collection-meta-item">{project.nodeCount} 节点</span>
                     </div>
-                    <time className="canvas-collection-updated" dateTime={project.updatedAt} title={`创建于 ${formatCanvasDate(project.createdAt)}`}>{formatCanvasDate(project.updatedAt)} 更新</time>
+                    <time className="canvas-collection-updated" dateTime={project.updatedAt} title={`创建于 ${formatCanvasDate(project.createdAt)}`}>
+                        {formatCanvasDate(project.updatedAt)} 更新
+                    </time>
                 </div>
             </div>
 
             <span className={cn("canvas-collection-select", selected && "is-visible")} onClick={(event) => event.stopPropagation()}>
-                <input
-                    type="checkbox"
-                    checked={selected}
-                    onChange={(event) => toggleSelected(project.id, event.target.checked)}
-                    aria-label={`选择 ${project.title}`}
-                />
+                <input type="checkbox" checked={selected} onChange={(event) => toggleSelected(project.id, event.target.checked)} aria-label={`选择 ${project.title}`} />
             </span>
 
             <div className="canvas-collection-actions" onClick={(event) => event.stopPropagation()}>

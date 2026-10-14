@@ -1,0 +1,31 @@
+{
+  "schema": "weavesense-flow/upstreams-lock@1",
+  "updated": "2026-10-14",
+  "human_readable": "THIRD_PARTY_UPSTREAMS.md",
+  "upstreams": [
+    {
+      "name": "canvas",
+      "remote": "canvas-upstream",
+      "url": "https://github.com/ddcat-ai/open-ai-canvas",
+      "commit": "e70fe1b9c93d6af3b807a87ed15bb621af78095c",
+      "ref": "main (at import, 2026-10-12)",
+      "import_path": ".",
+      "import_method": "git merge (full history)",
+      "license": "MIT",
+      "license_files": ["LICENSE", "NOTICE"],
+      "notes": "tldraw module carries its own license; intelligence features do not depend on it"
+    },
+    {
+      "name": "loom",
+      "remote": "loom-upstream",
+      "url": "https://github.com/newyngwieslash-ops/WeaveSense",
+      "commit": "cdcb787f925e584da0302f7968431335b8f8122e",
+      "ref": "codex/collection-capability (upgraded from main bec6212a on 2026-10-14)",
+      "import_path": "services/loom-engine",
+      "import_method": "git subtree add/pull (not squashed)",
+      "license": "MIT",
+      "license_files": ["services/loom-engine/LICENSE"],
+      "notes": "selected codex/collection-reliability commits hand-ported; see docs/flow/delivery-report.md"
+    }
+  ]
+}

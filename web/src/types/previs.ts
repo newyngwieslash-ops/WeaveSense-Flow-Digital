@@ -39,10 +39,59 @@ export type PrevisKeyframe = {
 };
 
 export type PrevisFingerBone =
-    | "leftThumb1" | "leftThumb2" | "leftThumb3" | "leftIndex1" | "leftIndex2" | "leftIndex3" | "leftMiddle1" | "leftMiddle2" | "leftMiddle3" | "leftRing1" | "leftRing2" | "leftRing3" | "leftPinky1" | "leftPinky2" | "leftPinky3"
-    | "rightThumb1" | "rightThumb2" | "rightThumb3" | "rightIndex1" | "rightIndex2" | "rightIndex3" | "rightMiddle1" | "rightMiddle2" | "rightMiddle3" | "rightRing1" | "rightRing2" | "rightRing3" | "rightPinky1" | "rightPinky2" | "rightPinky3";
+    | "leftThumb1"
+    | "leftThumb2"
+    | "leftThumb3"
+    | "leftIndex1"
+    | "leftIndex2"
+    | "leftIndex3"
+    | "leftMiddle1"
+    | "leftMiddle2"
+    | "leftMiddle3"
+    | "leftRing1"
+    | "leftRing2"
+    | "leftRing3"
+    | "leftPinky1"
+    | "leftPinky2"
+    | "leftPinky3"
+    | "rightThumb1"
+    | "rightThumb2"
+    | "rightThumb3"
+    | "rightIndex1"
+    | "rightIndex2"
+    | "rightIndex3"
+    | "rightMiddle1"
+    | "rightMiddle2"
+    | "rightMiddle3"
+    | "rightRing1"
+    | "rightRing2"
+    | "rightRing3"
+    | "rightPinky1"
+    | "rightPinky2"
+    | "rightPinky3";
 
-export type PrevisHumanoidBone = "root" | "hips" | "spine" | "chest" | "neck" | "head" | "leftShoulder" | "leftUpperArm" | "leftLowerArm" | "leftHand" | "rightShoulder" | "rightUpperArm" | "rightLowerArm" | "rightHand" | "leftUpperLeg" | "leftLowerLeg" | "leftFoot" | "rightUpperLeg" | "rightLowerLeg" | "rightFoot" | PrevisFingerBone;
+export type PrevisHumanoidBone =
+    | "root"
+    | "hips"
+    | "spine"
+    | "chest"
+    | "neck"
+    | "head"
+    | "leftShoulder"
+    | "leftUpperArm"
+    | "leftLowerArm"
+    | "leftHand"
+    | "rightShoulder"
+    | "rightUpperArm"
+    | "rightLowerArm"
+    | "rightHand"
+    | "leftUpperLeg"
+    | "leftLowerLeg"
+    | "leftFoot"
+    | "rightUpperLeg"
+    | "rightLowerLeg"
+    | "rightFoot"
+    | PrevisFingerBone;
 
 export type PrevisBoneKeyframe = {
     id: string;
@@ -61,9 +110,7 @@ export type PrevisBoneTrack = {
  * 三类覆盖当前时间轴真正可见的关键帧轨道：对象 transform、对象骨骼、摄影机。
  */
 export type PrevisKeyframeDeleteTarget =
-    | { track: "object-transform"; objectId: string; keyframeId: string }
-    | { track: "object-bone"; objectId: string; bone: PrevisHumanoidBone; keyframeId: string }
-    | { track: "camera"; cameraId: string; keyframeId: string };
+    { track: "object-transform"; objectId: string; keyframeId: string } | { track: "object-bone"; objectId: string; bone: PrevisHumanoidBone; keyframeId: string } | { track: "camera"; cameraId: string; keyframeId: string };
 
 export type PrevisRig = {
     status: "unmapped" | "ready";

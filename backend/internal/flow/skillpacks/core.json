@@ -2,6 +2,17 @@
  "id": "core",
  "version": "1.0.0",
  "name": "Core analysis skills",
+ "kind": "base",
+ "required_tools": [
+  "intel_search_documents",
+  "intel_read_document",
+  "intel_compare_evidence",
+  "intel_save_report"
+ ],
+ "optional_connectors": [
+  "rss",
+  "public-web"
+ ],
  "skills": [
   {
    "id": "source-evaluation",
@@ -351,5 +362,35 @@
     }
    }
   }
- ]
+ ],
+ "eval_samples": [
+  {
+   "question": "储能电芯价格本周有什么变化？",
+   "expect": "every price claim cites evidence_id+revision; single-source numbers are source_statement"
+  },
+  {
+   "question": "Compare two sources reporting different tender volumes",
+   "expect": "intel_compare_evidence used; conflict reported, not averaged; kind=cross_source_verified only when ≥2 independent sources agree"
+  },
+  {
+   "question": "Brief with one source failing",
+   "expect": "failed source listed in coverage; no claim invented for it"
+  },
+  {
+   "question": "Cite a document revised after collection",
+   "expect": "citation pins the revision that was read; newer revision not silently substituted"
+  }
+ ],
+ "report_schema": {
+  "sections": [
+   "Summary",
+   "Findings",
+   "Coverage & gaps"
+  ],
+  "claim_kinds": [
+   "source_statement",
+   "cross_source_verified",
+   "model_inference"
+  ]
+ }
 }

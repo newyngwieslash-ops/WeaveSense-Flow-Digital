@@ -1,0 +1,9 @@
+{
+  "BESS": "Battery energy storage system",
+  "C-rate": "Charge/discharge rate relative to capacity",
+  "LFP": "Lithium iron phosphate cell chemistry",
+  "MW": "Power rating",
+  "MWh": "Energy capacity",
+  "工商业储能": "Commercial & industrial (C&I) storage",
+  "独立储能": "Standalone grid-side storage"
+}

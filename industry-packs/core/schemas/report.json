@@ -1,0 +1,12 @@
+{
+  "claim_kinds": [
+    "source_statement",
+    "cross_source_verified",
+    "model_inference"
+  ],
+  "sections": [
+    "Summary",
+    "Findings",
+    "Coverage & gaps"
+  ]
+}

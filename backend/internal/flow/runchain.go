@@ -12,8 +12,8 @@ import (
 
 // PRD §8.1: the agent run chain is assembled from five minimal interfaces. The
 // intelligence_workspace / topic adapter below is what the Pi run (app package)
-// and the REST agent routes call; the canvas adapter lives in the app package
-// (it owns the canvas catalog) and implements the same interfaces.
+// and the REST agent routes call. The canvas agent path in the app package does
+// not go through these interfaces yet (known deviation, see implementation-status).
 
 // ScopeResolver turns an authenticated user + AgentSubject into tenant/workspace/role.
 type ScopeResolver interface {

@@ -102,9 +102,7 @@ export function useCanvasRenderModel({
 
             if (rootId && collapsingBatchIds.has(rootId)) renderHiddenNodeIds.delete(node.id);
             if (rootId) batchChildNodes.push(node);
-            const childIndex = root?.metadata?.isBatchRoot
-                ? batchChildIndexByRootId.get(root.id) || new Map((root.metadata.batchChildIds || []).map((childId, index) => [childId, index]))
-                : undefined;
+            const childIndex = root?.metadata?.isBatchRoot ? batchChildIndexByRootId.get(root.id) || new Map((root.metadata.batchChildIds || []).map((childId, index) => [childId, index])) : undefined;
             if (root?.metadata?.isBatchRoot && childIndex && !batchChildIndexByRootId.has(root.id)) batchChildIndexByRootId.set(root.id, childIndex);
             if (root && childIndex?.has(node.id)) batchChildCountById.set(root.id, (batchChildCountById.get(root.id) || 0) + 1);
             const parent = node.parentId ? nodeById.get(node.parentId) : undefined;
@@ -239,7 +237,9 @@ export function useCanvasRenderModel({
     const visibleNodes = useMemo(() => candidateNodes.filter((node) => immediateRenderNodeIds.has(node.id) || mountedNodeIds.has(node.id)), [candidateNodes, immediateRenderNodeIds, mountedNodeIds]);
     const overviewRef = useRef(false);
     const overview = canvasOverviewMode(viewport.k, overviewRef.current);
-    useEffect(() => { overviewRef.current = overview; }, [overview]);
+    useEffect(() => {
+        overviewRef.current = overview;
+    }, [overview]);
     const nodeRenderLODById = useMemo(() => {
         const result = new Map<string, CanvasNodeRenderLOD>();
         for (const node of visibleNodes) {

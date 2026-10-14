@@ -5,6 +5,8 @@ import { createPortraitTextureNode, isCanvasImageSourceNode } from "../src/lib/c
 import { canGenerateImageInPlace } from "../src/lib/canvas/canvas-generation-layout";
 import { CanvasNodeType, type CanvasNodeData } from "../src/types/canvas";
 import { moduleGroupSource } from "./helpers/module-group-source";
+import "./helpers/source-contract";
+import { code, codeSlice } from "./helpers/source-contract";
 
 const source: CanvasNodeData = {
     id: "uploaded",
@@ -48,24 +50,24 @@ describe("上传图片是输入素材", () => {
         expect(canGenerateImageInPlace(source)).toBe(false);
     });
     test("页面和工具入口共享素材判定，人物质感接入原图连线", () => {
-        expect(flat(moduleGroupSource("pages/canvas/project.tsx"))).toContain("dialogNode && !isCanvasImageSourceNode(dialogNode)");
-        expect(read("lib/canvas/tool-registry/definitions/node-hover-tools.tsx")).toContain("!isCanvasImageSourceNode(ctx.node)");
+        expect(flat(moduleGroupSource("pages/canvas/project.tsx"))).toContainCode("dialogNode && !isCanvasImageSourceNode(dialogNode)");
+        expect(read("lib/canvas/tool-registry/definitions/node-hover-tools.tsx")).toContainCode("!isCanvasImageSourceNode(ctx.node)");
         const mediaTools = read("pages/canvas/use-canvas-media-tools.ts");
         const portrait = mediaTools.slice(mediaTools.indexOf("const openPortraitTextureEditor"), mediaTools.indexOf("const cropImageNode"));
-        expect(portrait).toContain("fromNodeId: node.id, toNodeId: child.id");
-        expect(portrait).toContain("setDialogNodeId(child.id)");
-        expect(portrait).not.toContain("current.map");
-        expect(mediaTools).toContain("payload.generationConfig");
-        expect(mediaTools).toContain("imageBatchExpanded: requestedCount > 1 ? true : undefined");
+        expect(portrait).toContainCode("fromNodeId: node.id, toNodeId: child.id");
+        expect(portrait).toContainCode("setDialogNodeId(child.id)");
+        expect(portrait).not.toContainCode("current.map");
+        expect(mediaTools).toContainCode("payload.generationConfig");
+        expect(mediaTools).toContainCode("imageBatchExpanded: requestedCount > 1 ? true : undefined");
         const dialog = read("components/canvas/canvas-node-mask-edit-dialog.tsx");
-        expect(dialog).toContain("ModelPicker");
-        expect(dialog).toContain("ImageSettingsPanel");
+        expect(dialog).toContainCode("ModelPicker");
+        expect(dialog).toContainCode("ImageSettingsPanel");
     });
 });
 
 test("底部菜单使用画布浮层管理并响应打开、鼠标和键盘交互", () => {
     const toolbar = read("components/canvas/canvas-toolbar.tsx");
-    expect(toolbar).toContain('useCanvasOverlayLayer("main-toolbar", "var(--z-toolbar)")');
-    expect(toolbar).toContain("if (addOpen || appearanceOpen) bringToFront()");
-    expect(toolbar).toContain("style={{ zIndex }} onPointerDownCapture={bringToFront} onFocusCapture={bringToFront}");
+    expect(toolbar).toContainCode('useCanvasOverlayLayer("main-toolbar", "var(--z-toolbar)")');
+    expect(toolbar).toContainCode("if (addOpen || appearanceOpen) bringToFront()");
+    expect(toolbar).toContainCode("style={{ zIndex }} onPointerDownCapture={bringToFront} onFocusCapture={bringToFront}");
 });

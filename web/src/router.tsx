@@ -72,7 +72,15 @@ function AuthenticatedWorkspaceLayout() {
     const { pathname } = useLocation();
     const isCanvasProjectRoute = pathname.startsWith("/canvas/");
     const fallback = isCanvasProjectRoute ? <CanvasRefreshShell /> : <FullScreenLoader label="正在打开创作空间" detail="准备当前页面" />;
-    return <RequireAuth allowAnonymous={isGuestWorkspacePath(pathname)}><Suspense fallback={fallback}><UserLayout><Outlet /></UserLayout></Suspense></RequireAuth>;
+    return (
+        <RequireAuth allowAnonymous={isGuestWorkspacePath(pathname)}>
+            <Suspense fallback={fallback}>
+                <UserLayout>
+                    <Outlet />
+                </UserLayout>
+            </Suspense>
+        </RequireAuth>
+    );
 }
 
 /**
@@ -186,7 +194,14 @@ export const router = createBrowserRouter([
                 ),
             },
             { path: "/canvas", element: <RequireAuth>{deferred(<CanvasPage />)}</RequireAuth> },
-            { path: "/canvas/:id", element: <RequireAuth><CanvasProjectPage /></RequireAuth> },
+            {
+                path: "/canvas/:id",
+                element: (
+                    <RequireAuth>
+                        <CanvasProjectPage />
+                    </RequireAuth>
+                ),
+            },
             {
                 path: "/admin",
                 element: <RequireAuth>{deferred(<AdminPage />)}</RequireAuth>,
@@ -194,7 +209,14 @@ export const router = createBrowserRouter([
                     { index: true, element: <AnalyticsPage /> },
                     { path: "users", element: <UsersPage /> },
                     { path: "channels", element: <ChannelsPage /> },
-                    { path: "models", element: <RequireFeature feature="frontendModelsEnabled"><LogicalModelsPage /></RequireFeature> },
+                    {
+                        path: "models",
+                        element: (
+                            <RequireFeature feature="frontendModelsEnabled">
+                                <LogicalModelsPage />
+                            </RequireFeature>
+                        ),
+                    },
                     { path: "plugins", element: <AdminPluginsPage /> },
                     { path: "skill-curation", element: <SkillCurationPage /> },
                     { path: "payments", element: <AdminPaymentsPage /> },

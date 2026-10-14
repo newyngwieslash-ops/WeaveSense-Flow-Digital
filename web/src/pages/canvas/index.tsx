@@ -60,12 +60,13 @@ export default function CanvasPage() {
         queryKey: ["canvas-library", userId, projectFilter, sort, debouncedKeyword],
         queryFn: ({ pageParam, signal }) => listRemoteCanvasProjectsPage({ page: pageParam, pageSize: 40, projectId: projectFilter, sort, query: debouncedKeyword, signal }),
         initialPageParam: 1,
-        getNextPageParam: (last) => last.hasMore ? last.page + 1 : undefined,
+        getNextPageParam: (last) => (last.hasMore ? last.page + 1 : undefined),
         enabled: Boolean(userId) && sessionHydrated,
     });
-    const projects = useMemo<CanvasLibrarySummary[]>(() => userId
-        ? libraryQuery.data?.pages.flatMap((page) => page.projects) || []
-        : localProjects.map((project) => ({ ...project, nodeCount: project.nodes.length, previewNodes: project.nodes.slice(0, 4) })), [libraryQuery.data, localProjects, userId]);
+    const projects = useMemo<CanvasLibrarySummary[]>(
+        () => (userId ? libraryQuery.data?.pages.flatMap((page) => page.projects) || [] : localProjects.map((project) => ({ ...project, nodeCount: project.nodes.length, previewNodes: project.nodes.slice(0, 4) }))),
+        [libraryQuery.data, localProjects, userId],
+    );
     const totalProjects = userId ? libraryQuery.data?.pages[0]?.total || 0 : projects.length;
     const importProject = useCanvasStore((state) => state.importProject);
     const selectedIds = useCanvasUiStore((state) => state.selectedProjectIds);
@@ -159,7 +160,9 @@ export default function CanvasPage() {
                 selected.push(project);
             }
             await exportCanvasProjects(selected, `${brandName}画布-${selected.length}个画布`);
-        } catch (error) { message.error(error instanceof Error ? error.message : "导出失败"); }
+        } catch (error) {
+            message.error(error instanceof Error ? error.message : "导出失败");
+        }
     };
     const importCanvas = async (file?: File) => {
         if (!file) return;
@@ -441,15 +444,27 @@ export default function CanvasPage() {
                 <CollectionToolbar
                     label="画布浏览工具"
                     active={Boolean(keyword || projectFilter !== "all" || sort !== "updated")}
-                    onReset={() => { setKeyword(""); setProjectFilter("all"); setSort("updated"); }}
-                    trailing={<Button type="text" icon={<History />} onClick={() => setHistoryOpen(true)}>创作历史</Button>}
+                    onReset={() => {
+                        setKeyword("");
+                        setProjectFilter("all");
+                        setSort("updated");
+                    }}
+                    trailing={
+                        <Button type="text" icon={<History />} onClick={() => setHistoryOpen(true)}>
+                            创作历史
+                        </Button>
+                    }
                 >
                     <Input prefix={<Search />} value={keyword} allowClear placeholder="搜索画布" aria-label="搜索画布" onChange={(event) => setKeyword(event.target.value)} />
                     <Dropdown trigger={["click"]} placement="bottomLeft" menu={{ items: projectFilterItems, selectedKeys: [projectFilter], onClick: ({ key }) => setProjectFilter(String(key)) }}>
-                        <Button icon={<SlidersHorizontal />} aria-label="按所属项目筛选">{projectFilterLabel}</Button>
+                        <Button icon={<SlidersHorizontal />} aria-label="按所属项目筛选">
+                            {projectFilterLabel}
+                        </Button>
                     </Dropdown>
                     <Dropdown trigger={["click"]} placement="bottomLeft" menu={{ items: sortItems, selectedKeys: [sort], onClick: ({ key }) => setSort(key as typeof sort) }}>
-                        <Button icon={sort === "updated" ? <Clock3 /> : sort === "name" ? <ArrowDownAZ /> : <ListFilter />} aria-label="画布排序">{sortLabel}</Button>
+                        <Button icon={sort === "updated" ? <Clock3 /> : sort === "name" ? <ArrowDownAZ /> : <ListFilter />} aria-label="画布排序">
+                            {sortLabel}
+                        </Button>
                     </Dropdown>
                 </CollectionToolbar>
             </div>
@@ -490,7 +505,9 @@ export default function CanvasPage() {
                 ) : null}
 
                 {userId && libraryQuery.isError ? (
-                    <div role="alert">画布列表读取失败<Button onClick={() => void libraryQuery.refetch()}>重试</Button></div>
+                    <div role="alert">
+                        画布列表读取失败<Button onClick={() => void libraryQuery.refetch()}>重试</Button>
+                    </div>
                 ) : !hydrated || (userId && libraryQuery.isPending) ? (
                     <WorkspaceLoadingState label="正在恢复画布" detail="读取本地缓存与账号同步状态" />
                 ) : visibleProjects.length ? (
@@ -507,7 +524,18 @@ export default function CanvasPage() {
                         ))}
                     </CollectionGrid>
                 ) : (
-                    <WorkspaceState icon="canvas" title={keyword || projectFilter !== "all" ? "没有匹配的画布" : "让第一个想法落在画布上"} description={keyword || projectFilter !== "all" ? "换一个画布名称或重置筛选条件。" : "图片、分镜和灵感，都可以在这里自由组织。"} action={!keyword && projectFilter === "all" ? <Button type="primary" icon={<Plus />} disabled={!hydrated} onClick={createAndEnter}>新建画布</Button> : undefined} />
+                    <WorkspaceState
+                        icon="canvas"
+                        title={keyword || projectFilter !== "all" ? "没有匹配的画布" : "让第一个想法落在画布上"}
+                        description={keyword || projectFilter !== "all" ? "换一个画布名称或重置筛选条件。" : "图片、分镜和灵感，都可以在这里自由组织。"}
+                        action={
+                            !keyword && projectFilter === "all" ? (
+                                <Button type="primary" icon={<Plus />} disabled={!hydrated} onClick={createAndEnter}>
+                                    新建画布
+                                </Button>
+                            ) : undefined
+                        }
+                    />
                 )}
                 {hydrated && visibleProjects.length ? (
                     <div ref={loadMoreRef} className="library-load-more" aria-live="polite">
@@ -536,7 +564,11 @@ export default function CanvasPage() {
                 />
             </Modal>
             <CanvasHistoryDrawer open={historyOpen} onClose={() => setHistoryOpen(false)} />
-            {deleteDialogOpen ? <Suspense fallback={null}><CanvasDeleteProjectsDialog /></Suspense> : null}
+            {deleteDialogOpen ? (
+                <Suspense fallback={null}>
+                    <CanvasDeleteProjectsDialog />
+                </Suspense>
+            ) : null}
         </WorkspacePage>
     );
 }

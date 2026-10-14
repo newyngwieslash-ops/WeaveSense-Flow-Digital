@@ -86,7 +86,25 @@ export function handler(engine: Engine, cfg: ServerConfig) {
       if (m === "GET" && p === "/v1/reports") { requireScope(ctx, "intel.documents.read"); return send(res, 200, await rp.listReports(ctx)); }
       if (m === "GET" && (mm = p.match(/^\/v1\/reports\/([\w-]+)$/))) { requireScope(ctx, "intel.documents.read"); return send(res, 200, await rp.getReport(ctx, mm[1])); }
       if (m === "POST" && p === "/v1/reports") { requireScope(ctx, "intel.reports.write"); return send(res, 201, await rp.saveReport(ctx, actor, idem(), await readJson(req))); }
-      if (m === "POST" && p === "/v1/research-runs") { requireScope(ctx, "intel.research"); return send(res, 201, await rp.startResearch(ctx, idem(), await readJson(req))); }
+      if (m === "POST" && p === "/v1/research-runs") {
+        requireScope(ctx, "intel.research");
+        // ?async=1 is the §11 REST contract (202 + id); the agent tool keeps the synchronous result.
+        if (url.searchParams.get("async") === "1") {
+          const b = await readJson(req);
+          const r = await rp.startResearch(ctx, idem(), { ...b, parent_run_id: b.parent_run_id || `rest:${ctx.actor.type}:${ctx.actor.id}:${idem()}` }, { async: true });
+          return send(res, (r as any).replayed ? 200 : 202, r, "accepted");
+        }
+        return send(res, 201, await rp.startResearch(ctx, idem(), await readJson(req)));
+      }
+      if (m === "GET" && (mm = p.match(/^\/v1\/research-runs\/([\w-]+)$/))) { requireScope(ctx, "intel.documents.read"); return send(res, 200, await rp.getResearch(ctx, mm[1])); }
+      if (m === "POST" && (mm = p.match(/^\/v1\/research-runs\/([\w-]+)\/cancel$/))) { requireScope(ctx, "intel.research"); return send(res, 200, await rp.cancelResearch(ctx, mm[1], String((await readJson(req)).reason ?? "cancelled"))); }
+      if (m === "POST" && p === "/v1/evidence/compare") { requireScope(ctx, "intel.documents.read"); return send(res, 200, await rp.compareEvidence(ctx, await readJson(req))); }
+      if (m === "GET" && p === "/v1/sources/health") { requireScope(ctx, "intel.sources.read"); return send(res, 200, await engine.listSourcesHealth(ctx)); }
+      if (m === "PATCH" && (mm = p.match(/^\/v1\/sources\/([\w-]+)$/))) { requireScope(ctx, "intel.sources.write"); return send(res, 200, await engine.updateSource(ctx, mm[1], await readJson(req))); }
+      if (m === "GET" && (mm = p.match(/^\/v1\/documents\/([\w-]+)\/revisions$/))) { requireScope(ctx, "intel.documents.read"); return send(res, 200, await engine.listRevisions(ctx, mm[1])); }
+      if (m === "GET" && p === "/v1/terms") { requireScope(ctx, "intel.sources.read"); return send(res, 200, await engine.listTerms(ctx)); }
+      if (m === "POST" && p === "/v1/terms") { requireScope(ctx, "intel.sources.write"); return send(res, 201, await engine.addTermAliases(ctx, actor, await readJson(req))); }
+      if (m === "POST" && p === "/v1/terms/delete") { requireScope(ctx, "intel.sources.write"); return send(res, 200, await engine.deleteTermAlias(ctx, await readJson(req))); }
       if (m === "POST" && p === "/v1/briefs/wake") {
         // Push from the platform: the model task of a parked brief window finished.
         // Completes just that schedule's due window now (idempotent with the scheduler tick).

@@ -61,7 +61,7 @@ func RegisterRoutes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc) {
 		}
 		reply(c, http.StatusOK, ws, "ok")
 	})
-	proxy := func(method, enginePath string) gin.HandlerFunc {
+	proxyWith := func(method, enginePath string, mutate func(body []byte, u *model.User, idem string) ([]byte, error)) gin.HandlerFunc {
 		return func(c *gin.Context) {
 			db := reqDB(c, db)
 			_ = db
@@ -78,9 +78,20 @@ func RegisterRoutes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc) {
 				path = strings.ReplaceAll(path, ":"+p.Key, p.Value)
 			}
 			if q := c.Request.URL.RawQuery; q != "" {
-				path += "?" + q
+				if strings.Contains(path, "?") {
+					path += "&" + q
+				} else {
+					path += "?" + q
+				}
 			}
 			body, _ := io.ReadAll(io.LimitReader(c.Request.Body, 1<<20))
+			if mutate != nil {
+				var err error
+				if body, err = mutate(body, u, c.GetHeader("X-Idempotency-Key")); err != nil {
+					reply(c, http.StatusBadRequest, nil, err.Error())
+					return
+				}
+			}
 			status, out, err := client.Do(c.Request.Context(), s, Actor{Type: "user", ID: u.ID}, method, path, c.GetHeader("X-Idempotency-Key"), body)
 			if err != nil {
 				reply(c, http.StatusBadGateway, nil, "loom engine unavailable")
@@ -89,6 +100,7 @@ func RegisterRoutes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc) {
 			c.Data(status, "application/json", out)
 		}
 	}
+	proxy := func(method, enginePath string) gin.HandlerFunc { return proxyWith(method, enginePath, nil) }
 	g.GET("/sources", proxy(http.MethodGet, "/v1/sources"))
 	g.POST("/sources", proxy(http.MethodPost, "/v1/sources"))
 	g.GET("/schedules", proxy(http.MethodGet, "/v1/schedules"))
@@ -104,6 +116,7 @@ func RegisterRoutes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc) {
 	g.GET("/reports", proxy(http.MethodGet, "/v1/reports"))
 	g.GET("/reports/:id", proxy(http.MethodGet, "/v1/reports/:id"))
 	g.GET("/brief-schedules", proxy(http.MethodGet, "/v1/brief-schedules"))
+	registerContractRoutes(g, proxy, proxyWith)
 	g.GET("/skills", func(c *gin.Context) {
 		db := reqDB(c, db)
 		_ = db

@@ -3,6 +3,7 @@
 import { affected, type Q } from "./db.ts";
 import { Engine, HttpError, newId } from "./engine.ts";
 import type { ExecutionContext } from "./auth.ts";
+import { BUILTIN_TERM_GROUPS, termPattern } from "./terms.ts";
 
 type Scope = Pick<ExecutionContext, "tenant_id" | "workspace_id">;
 export const MAX_RESEARCH_CHILDREN = 3;
@@ -169,8 +170,67 @@ export class Reports {
     return { claims: claims.map(({ source_id, ...c }) => c), evidence_ids: evidence, coverage };
   }
 
+  /**
+   * §8.3 intel_compare_evidence: structured, read-only comparison of evidence items (no model call).
+   * Groups by source, extracts numeric facts, flags stale revisions, shared terms and numeric divergences.
+   */
+  async compareEvidence(s: Scope, o: { evidence_ids?: string[] }) {
+    const ids = [...new Set((o.evidence_ids ?? []).map(String))];
+    if (ids.length < 2 || ids.length > 20) throw new HttpError(400, "evidence_ids: 2 to 20 ids required");
+    const found = await this.resolveEvidence(s, ids);
+    const pub = found.length ? (await this.db.query(`SELECT id, published_at, url FROM flow_documents WHERE tenant_id=$1 AND workspace_id=$2 AND id = ANY($3::text[])`,
+      [s.tenant_id, s.workspace_id, [...new Set(found.map((f) => f.document_id))]])).rows : [];
+    const meta = new Map(pub.map((r: any) => [r.id, r]));
+    const items = found.map((f) => ({ ...f, published_at: meta.get(f.document_id)?.published_at ?? null, url: meta.get(f.document_id)?.url ?? "",
+      stale: f.current_revision > f.revision, numbers: numericFacts(f.quote) }));
+    const termHits = new Map<string, Set<string>>();
+    for (const it of items) {
+      for (const g of BUILTIN_TERM_GROUPS) {
+        if (g.terms.some((t) => { const re = termPattern(t); return re ? re.test(it.quote) : it.quote.includes(t); })) {
+          const k = g.terms[0]; if (!termHits.has(k)) termHits.set(k, new Set()); termHits.get(k)!.add(it.evidence_id);
+        }
+      }
+      for (const w of new Set((it.quote.toLowerCase().match(/[a-z][a-z0-9-]{3,}/g) ?? []))) {
+        if (!termHits.has(w)) termHits.set(w, new Set()); termHits.get(w)!.add(it.evidence_id);
+      }
+    }
+    const shared_terms = [...termHits.entries()].filter(([, v]) => v.size >= 2).map(([term, v]) => ({ term, evidence_ids: [...v] })).slice(0, 30);
+    const divergences: any[] = [];
+    for (let i = 0; i < items.length; i++) for (let j = i + 1; j < items.length; j++) {
+      const a = items[i], b = items[j];
+      if (a.source_id === b.source_id) continue;
+      for (const na of a.numbers) for (const nb of b.numbers) {
+        if (na.unit && na.unit === nb.unit && na.value !== nb.value) divergences.push({ unit: na.unit, a: { evidence_id: a.evidence_id, value: na.value, text: na.text }, b: { evidence_id: b.evidence_id, value: nb.value, text: nb.text } });
+      }
+    }
+    const sources = [...new Set(items.map((i) => i.source_id))];
+    return { items, not_found: ids.filter((id) => !found.some((f) => f.evidence_id === id)), sources: sources.length,
+      by_source: sources.map((sid) => ({ source_id: sid, evidence_ids: items.filter((i) => i.source_id === sid).map((i) => i.evidence_id) })),
+      shared_terms, divergences: divergences.slice(0, 20), stale_evidence: items.filter((i) => i.stale).map((i) => i.evidence_id),
+      note: "structural comparison only: shared terms and numeric divergences are lexical signals, not verified conclusions" };
+  }
+
+  /** §11 REST: research run status (no model calls). */
+  async getResearch(s: Scope, id: string) {
+    const r = (await this.db.query(`SELECT * FROM flow_research_runs WHERE tenant_id=$1 AND workspace_id=$2 AND id=$3`, [s.tenant_id, s.workspace_id, id])).rows[0];
+    if (!r) throw new HttpError(404, "research run not found");
+    return { ...r, output: r.output == null ? null : json(r.output), skill: json(r.skill), evidence_scope: json(r.evidence_scope), budget: json(r.budget) };
+  }
+
+  /** §11 REST: cancel a running research run; a late completion cannot overwrite the cancellation. */
+  async cancelResearch(s: Scope, id: string, reason = "cancelled") {
+    const r = await this.db.query(`UPDATE flow_research_runs SET status='cancelled', cancel_reason=$4, finished_at=now()
+        WHERE tenant_id=$1 AND workspace_id=$2 AND id=$3 AND status IN ('queued','running') RETURNING id`, [s.tenant_id, s.workspace_id, id, reason.slice(0, 200)]);
+    if (!r.rows[0]) { const cur = await this.getResearch(s, id); return { id, status: cur.status, cancelled: false }; }
+    return { id, status: "cancelled", cancelled: true };
+  }
+
+  /** In-flight async research (REST 202 path); tests await settle(). */
+  readonly inflight = new Map<string, Promise<unknown>>();
+  async settle(id: string) { await this.inflight.get(id); }
+
   /** Single-depth child research for an agent run: fixed scope, budget and output shape; runs in-process. */
-  async startResearch(s: Scope, key: string, o: { parent_run_id: string; question: string; evidence_scope?: { source_ids?: string[]; document_ids?: string[]; from?: string; to?: string }; skill?: any }) {
+  async startResearch(s: Scope, key: string, o: { parent_run_id: string; question: string; evidence_scope?: { source_ids?: string[]; document_ids?: string[]; from?: string; to?: string }; skill?: any }, opts: { async?: boolean } = {}) {
     if (!key) throw new HttpError(400, "X-Idempotency-Key required");
     if (!o.parent_run_id || !String(o.question ?? "").trim()) throw new HttpError(400, "parent_run_id and question required");
     const prior = (await this.db.query(`SELECT * FROM flow_research_runs WHERE tenant_id=$1 AND idempotency_key=$2`, [s.tenant_id, key])).rows[0];
@@ -191,14 +251,24 @@ export class Reports {
         JSON.stringify(o.skill ?? {}), JSON.stringify(scope), JSON.stringify(RESEARCH_BUDGET), key]);
       return rid;
     });
-    try {
-      const out = await this.gather(s, null, `research:${id}`, { query: o.question, ...scope }, `research:${id}`);
-      await this.db.query(`UPDATE flow_research_runs SET status='succeeded', output=$2, finished_at=now() WHERE id=$1`, [id, JSON.stringify(out)]);
-      return { id, status: "succeeded", output: out, replayed: false };
-    } catch (err: any) {
-      await this.db.query(`UPDATE flow_research_runs SET status='failed', error=$2, finished_at=now() WHERE id=$1`, [id, String(err?.message ?? err).slice(0, 500)]);
-      return { id, status: "failed", error: String(err?.message ?? err), replayed: false };
+    const exec = async () => {
+      try {
+        const out = await this.gather(s, null, `research:${id}`, { query: o.question, ...scope }, `research:${id}`);
+        const u = await this.db.query(`UPDATE flow_research_runs SET status='succeeded', output=$2, finished_at=now() WHERE id=$1 AND status='running'`, [id, JSON.stringify(out)]);
+        if (!affected(u)) return { id, status: "cancelled", replayed: false };
+        return { id, status: "succeeded", output: out, replayed: false };
+      } catch (err: any) {
+        await this.db.query(`UPDATE flow_research_runs SET status='failed', error=$2, finished_at=now() WHERE id=$1 AND status='running'`, [id, String(err?.message ?? err).slice(0, 500)]);
+        return { id, status: "failed", error: String(err?.message ?? err), replayed: false };
+      }
+    };
+    if (opts.async) {
+      // REST contract: 202 + run id; the caller polls GET /research-runs/{id} or cancels it.
+      const p = exec().finally(() => this.inflight.delete(id));
+      this.inflight.set(id, p);
+      return { id, status: "running", replayed: false, accepted: true };
     }
+    return exec();
   }
 
   async previewBrief(s: Scope, o: { name?: string; query: string; source_ids: string[]; cron: string; timezone: string; window_hours?: number; skill?: any }) {
@@ -323,4 +393,19 @@ export class Reports {
   private async advanceBrief(q: Q | null, b: any, at: Date) {
     await (q ?? this.db).query(`UPDATE flow_brief_schedules SET next_run_at=$3 WHERE id=$1 AND next_run_at=$2`, [b.id, b.next_run_at, nextCron(b.cron, b.timezone, at).toISOString()]);
   }
+}
+
+/** Numeric facts in a quote: value + unit (%, 亿元, 万吨, GWh, …). Lexical, for comparison signals only. */
+export function numericFacts(text: string) {
+  const out: { value: number; unit: string; text: string }[] = [];
+  const re = /(-?\d+(?:[.,]\d+)?)\s*(%|％|percent|亿元|万元|元|亿美元|美元|万吨|吨|GWh|MWh|kWh|GW|MW|万辆|辆|亿|万)?/gi;
+  for (const m of String(text ?? "").matchAll(re)) {
+    const value = Number(m[1].replace(",", ""));
+    if (!Number.isFinite(value)) continue;
+    const unit = (m[2] ?? "").toLowerCase().replace("％", "%").replace("percent", "%");
+    if (!unit) continue;
+    out.push({ value, unit, text: m[0].trim() });
+    if (out.length >= 10) break;
+  }
+  return out;
 }

@@ -124,7 +124,7 @@ func TestModelTaskUnknownReconciledRequeuedAndLeaseExpiry(t *testing.T) {
 	}
 	// Worker crash: lease expires while running → unknown → status says succeeded → settled with content.
 	t4, _ := m.Enqueue(ModelTaskInput{TenantID: tenant, Key: "k4", Purpose: "brief", BudgetMicro: 100_000})
-	past := time.Now().Add(-time.Minute)
+	past := time.Now().UTC().Add(-time.Minute) // ModelTasks stores UTC; a local-offset time compares wrong in SQLite
 	m.DB.Model(&model.FlowModelTask{}).Where("id = ?", t4.ID).Updates(map[string]any{"status": "running", "lease_until": past, "attempts": 1})
 	_, _ = m.RunDue(context.Background())
 	if g, _ := m.Get(t4.ID); g.Status != "unknown" {

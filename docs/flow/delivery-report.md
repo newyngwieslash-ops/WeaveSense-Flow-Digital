@@ -437,8 +437,8 @@ Based on the audit in `prd-audit-2`. Merged by PR (numbers and merge SHAs are re
 |---|---|---|
 | #34 | `gaps5-ci` | The platform PostgreSQL RLS tests (`TestFlowRLSPostgres`, `TestRuntimeRLSBlocksUnfilteredHandlerQueries`, `TestBackgroundWorkIsTenantScoped`) now run in CI as the non-superuser `flow_app` role. The dependency-test guard requires them. |
 | #35 | `gaps5-engine-states` | §6.2 job state machine (`queued`/`leased`/`running`/`retry_wait`/`partial`/`reconciliation_required`/`cancel_requested`/`cancelled`/`succeeded`/`failed`), heartbeat, `max_attempts` + backoff, outbox-based `reconcile()`; §6.1 cron schedules with timezone and `misfire_policy` (`coalesce`/`skip`/`catch_up`). |
-| next | `gaps5-mcp-runchain` | §9.3 tenant-saved encrypted MCP credentials (`flow_mcp_secrets`, AES-256-GCM envelope with `FLOW_SECRETS_KEK`, `secret:<id>` refs, under RLS); `/api/mcp/connections` + `/api/mcp/secrets` aliases; §8.1 run-chain interfaces (`runchain.go`) used by the intelligence chain; `billing_account.owner_type` (schema v63); compose `core` profile; enum validation in tool args; direct tests for `intel_preview_monitor`, `intel_cancel_operation`, `intel_preview_schedule`; A08, A10, A18 and A20 tests; sqlite test DB pinned to one connection (fixes a flaky A15 lock). |
-| next | `gaps5-web-prettier` | Removes the last 12 `web/.prettierignore` source exclusions; the snippet tests now compare format-normalized source (`web/test/helpers/source-contract.ts`). |
+| #36 | `gaps5-mcp-runchain` (merge `28f62a4542a3dee980df8ecc8545d6b3a11a2900`) | §9.3 tenant-saved encrypted MCP credentials (`flow_mcp_secrets`, AES-256-GCM envelope with `FLOW_SECRETS_KEK`, `secret:<id>` refs, under RLS); `/api/mcp/connections` + `/api/mcp/secrets` aliases; §8.1 run-chain interfaces (`runchain.go`) used by the intelligence chain; `billing_account.owner_type` (schema v63); compose `core` profile; enum validation in tool args; direct tests for `intel_preview_monitor`, `intel_cancel_operation`, `intel_preview_schedule`; A08, A10, A18 and A20 tests; sqlite test DB pinned to one connection (fixes a flaky A15 lock). |
+| #37 | `gaps5-web-prettier` (merge `97c8db33f5a392ec3b96e034455c44375d9287c7`) | Removes the last 12 `web/.prettierignore` source exclusions; the snippet tests now compare format-normalized source (`web/test/helpers/source-contract.ts`). |
 
 ### Verification actually executed (local, before push)
 | Check | Result |
@@ -449,6 +449,9 @@ Based on the audit in `prd-audit-2`. Merged by PR (numbers and merge SHAs are re
 | Web `bun test test/` | 2200 pass, 0 fail |
 | Web `tsc --noEmit`, `eslint src test`, `prettier --check .` | pass |
 | `docker compose -f docker-compose.flow.yml config` for every profile | pass |
+
+### Post-merge
+`main` = `97c8db33f5a392ec3b96e034455c44375d9287c7` (merge of #37, which sits on #36). CI on both PRs: Backend / Loom Engine flow / Web / Payment plugin artifacts all green before merge.
 
 ### Still not done (honest)
 - §8.1: the canvas agent path is not converted to `RunChain` adapters.

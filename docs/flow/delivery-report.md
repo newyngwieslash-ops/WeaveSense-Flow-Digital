@@ -388,3 +388,17 @@ Tests: `flow/reliability.test.ts` (6 tests: validator reuse rules and 304; redir
 | `52a16ea2`, `2e58e723`, `6acbd26f`, `fec0739e`, `5d5d6174`, `1ea780f7`, `ff42cd5a` | Acceptance-evidence records and source zips for the bundled app's release (about 30k lines of logs/JSON). |
 | `d34dabf5`, `7cf37b75`, `17b91d79` | Encrypted SQLite recovery and fixed-image release artifacts for the bundled app's Windows deployment. Flow has its own Postgres backup/restore test and release workflow. |
 | `096ece89` / `d0602ef0` TypeScript collector parts, `telegram.ts` preview IDs | The bundled app's collectors. The preview-ID change (`channel/123` → `123`) would duplicate documents Flow already stored. |
+
+### Loom collection-reliability merge record
+- PR #27 (`cherry-pick-collection-reliability`) was merged on 2026-10-14 at 12:39 Asia/Shanghai after green CI (Backend checks, Web checks, Payment plugin artifacts). Merge commit: `7de81c0b06401723a634950eab623ffbe13e864c`.
+- Compose stack on the build box: migration `0008_feed_validators` applied to the existing database. `smoke.sh` 28/28. The Telethon image (`--profile telegram`) builds and imports.
+- Local tests:
+  - Engine full `npm test` passes. `test:flow` 45/45 (RLS and backup on real Postgres 17 as a non-superuser). `tsc` passes, and eslint has no errors. Telethon worker 29/29; WeChat gateway 128/128.
+  - `go vet` passes. `go test ./...` passes except the 5 known Pi e2e tests in `internal/app`, which pass in CI.
+  - Web: tsc and `bun test` 2224/2224 pass.
+
+### Container image publishing (PR #26) — status
+- PR #26 was merged on 2026-10-14 at 12:17 Asia/Shanghai (`5e5956edb63b3664eb4224e46d158d88edb14759`). The push-triggered "Publish container images" run is https://github.com/newyngwieslash-ops/WeaveSense-Flow/actions/runs/38510624108.
+- The 403 probe no longer blocks: "Reuse an existing commit image" passes. All four image builds then fail at the push with `denied: permission_denied: read_package` for `ghcr.io/newyngwieslash-ops/open-ai-canvas-{web,backend,yingce-agent}`.
+- Cause: those three container packages already exist in the account (the anonymous token probe answers `UNAUTHORIZED` for them and `DENIED` for a non-existent name) and are not linked to this repository, so this repo's `GITHUB_TOKEN` (which does have `packages: write`) may not touch them. Changing the repository's default workflow permissions would not help, because the job already declares `packages: write`. That setting was left unchanged (`read`).
+- Fix (owner action in GitHub, no API for it): for each of the three packages, open Package settings → "Manage Actions access" → add `WeaveSense-Flow` with the Write role (or "Connect repository"). Alternatively, delete the stale packages so the workflow recreates them linked to this repo. Then re-run the workflow.

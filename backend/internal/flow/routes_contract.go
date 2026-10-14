@@ -41,6 +41,7 @@ func registerContractRoutes(g *gin.RouterGroup, proxy proxyFunc, proxyWith proxy
 	g.GET("/research-runs/:id", proxy(http.MethodGet, "/v1/research-runs/:id"))
 	g.POST("/research-runs/:id/cancel", proxy(http.MethodPost, "/v1/research-runs/:id/cancel"))
 	g.POST("/operations/:id/cancel", proxy(http.MethodPost, "/v1/operations/:id/cancel"))
+	g.POST("/documents/ocr", proxy(http.MethodPost, "/v1/documents/ocr"))
 	g.POST("/evidence/compare", proxy(http.MethodPost, "/v1/evidence/compare"))
 	g.GET("/terms", proxy(http.MethodGet, "/v1/terms"))
 	g.POST("/terms", proxy(http.MethodPost, "/v1/terms"))

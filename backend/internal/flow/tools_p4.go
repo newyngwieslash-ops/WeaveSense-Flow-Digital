@@ -18,5 +18,12 @@ func init() {
 		Class:       "write", Scope: "intel.collect", Timeout: 60 * time.Second, OutputCap: 4000,
 		Parameters: obj([]string{"document_id"}, map[string]any{"document_id": tStr, "language": map[string]any{"type": "string", "enum": []string{"en", "zh-Hans", "zh-Hant"}}}),
 		route:      func(a map[string]any) (string, string, any) { return http.MethodPost, "/v1/documents/transcript", a },
+	}, ToolSpec{
+		Name:        "intel_ocr_document",
+		Description: "OCR the document's stored image attachments (operator-enabled OCR worker, Chinese + English). Recognised text is appended as a new revision per image; images already recognised are not re-run, failed ones are retried.",
+		Class:       "write", Scope: "intel.collect", Timeout: 120 * time.Second, OutputCap: 4000,
+		Parameters: obj([]string{"document_id"}, map[string]any{"document_id": tStr}),
+		route:      func(a map[string]any) (string, string, any) { return http.MethodPost, "/v1/documents/ocr", a },
 	})
+	topicTools["intel_ocr_document"] = true
 }

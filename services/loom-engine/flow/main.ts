@@ -61,6 +61,9 @@ if (role === "api" || role === "all") {
   createApiServer(engine, { signingKey: key, audience: env("FLOW_INTERNAL_JWT_AUDIENCE", "loom-engine"), summarize }).listen(port, () => console.log(`[loom] api on :${port}`));
   const owner = `${hostname()}:${process.pid}`;
   void loop("worker", 1000, async () => { while (!stopping && (await engine.workOnce(owner))); });
+  // §6.4: attachments not stored during a run are retried separately (bounded attempts), never by re-collecting.
+  void loop("media-retry", Number(env("LOOM_MEDIA_RETRY_MS", "120000")), () => engine.retryMedia());
+  if (env("OCR_ENABLED", "false") === "true") void loop("ocr", Number(env("LOOM_OCR_TICK_MS", "30000")), () => engine.ocrTick());
   const platform = env("FLOW_PLATFORM_EVENTS_URL", "");
   if (platform) {
     const iss = env("FLOW_INTERNAL_JWT_ISSUER", "flow-platform");

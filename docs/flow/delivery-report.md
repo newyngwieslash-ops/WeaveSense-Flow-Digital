@@ -344,3 +344,11 @@ Tests: `flow/enrichment.test.ts` (4 tests: tenant isolation with no outbound cal
 - **Loom-native item UI and collection coverage** (`inbox.$itemId.tsx` article panel, `jobs.tsx`, migration `0030` on the `items` table). These belong to the bundled WeaveSense app, which Flow does not deploy. Flow's documents and revisions are the equivalent surface. The files are present in the subtree, unused by Flow.
 - **`codex/collection-reliability`** (39 commits, Oct 4–5). It forked before `bec6212a`, was never merged into upstream `main`, and is not an ancestor of `collection-capability`. Pulling it would reintroduce a stale divergent line, so it waits until upstream merges it.
 - **Validation runners** (`validation/collection/b03-*`, `c02-*`). These are upstream's own live/Windows acceptance harnesses. Their offline self-checks run in `npm test` (`test:collection`).
+
+### Loom upstream sync merge record
+- PR #23 (`sync-loom-upstream`) was merged on 2026-10-14 at 08:08 Asia/Shanghai after green CI (Backend checks, Web checks, Payment plugin artifacts). Merge commit: `52affddf7c0f8121aecdde783bfcb775a443800f`.
+- Compose stack on the build box: `smoke.sh` 28/28 (25 earlier checks plus 3 enrichment checks). The `--profile subtitles` config validates.
+- Local tests:
+  - Engine full `npm test` passes, including upstream `test:collection`. `test:flow` 39/39 (the RLS and backup tests ran on real Postgres 17 as a non-superuser). `tsc --noEmit` and eslint pass.
+  - `go vet` passes. `go test ./...` passes except the 5 known Pi e2e tests in `internal/app`, which pass in CI.
+  - Web: tsc and `bun test` 2224/2224 pass.

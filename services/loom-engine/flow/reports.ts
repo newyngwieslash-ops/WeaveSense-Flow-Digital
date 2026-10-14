@@ -11,46 +11,8 @@ export const RESEARCH_BUDGET = Object.freeze({ max_documents: 8, max_quote_chars
 export const CLAIM_KINDS = ["source_statement", "cross_source_verified", "model_inference"] as const;
 const json = (v: any) => (typeof v === "string" ? JSON.parse(v) : v);
 
-// ---------- cron (5 fields: min hour dom mon dow) evaluated in an IANA timezone ----------
-function field(spec: string, min: number, max: number): Set<number> {
-  const out = new Set<number>();
-  for (const part of spec.split(",")) {
-    const [range, stepS] = part.split("/");
-    const step = stepS ? Number(stepS) : 1;
-    let lo = min, hi = max;
-    if (range !== "*") {
-      const [a, b] = range.split("-").map(Number);
-      lo = a; hi = b ?? (stepS ? max : a);
-    }
-    if (![lo, hi, step].every(Number.isInteger) || lo < min || hi > max || lo > hi || step < 1) throw new HttpError(400, `invalid cron field "${spec}"`);
-    for (let v = lo; v <= hi; v += step) out.add(v);
-  }
-  return out;
-}
-export function parseCron(expr: string) {
-  const f = String(expr ?? "").trim().split(/\s+/);
-  if (f.length !== 5) throw new HttpError(400, "cron must have 5 fields");
-  const dow = field(f[4], 0, 7);
-  if (dow.has(7)) dow.add(0);
-  return { min: field(f[0], 0, 59), hour: field(f[1], 0, 23), dom: field(f[2], 1, 31), mon: field(f[3], 1, 12), dow, domAny: f[2] === "*", dowAny: f[4] === "*" };
-}
-export function checkTimezone(tz: string) {
-  try { new Intl.DateTimeFormat("en-US", { timeZone: tz }); } catch { throw new HttpError(400, "invalid timezone"); }
-}
-/** Next fire time strictly after `after`, scanning minute by minute (≤ 62 days). */
-export function nextCron(expr: string, tz: string, after: Date): Date {
-  const c = parseCron(expr); checkTimezone(tz);
-  const fmt = new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", weekday: "short" });
-  const wd: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-  let t = Math.floor(after.getTime() / 60000) * 60000 + 60000;
-  for (let i = 0; i < 62 * 1440; i++, t += 60000) {
-    const p = Object.fromEntries(fmt.formatToParts(new Date(t)).map((x) => [x.type, x.value]));
-    const dom = c.dom.has(Number(p.day)), dow = c.dow.has(wd[p.weekday]);
-    const dayOk = c.domAny || c.dowAny ? dom && dow : dom || dow;
-    if (c.min.has(Number(p.minute)) && c.hour.has(Number(p.hour)) && c.mon.has(Number(p.month)) && dayOk) return new Date(t);
-  }
-  throw new HttpError(400, "cron never fires within 62 days");
-}
+export { parseCron, checkTimezone, nextCron } from "./cron.ts";
+import { nextCron, checkTimezone } from "./cron.ts";
 
 export class Reports {
   e: Engine;
@@ -162,7 +124,7 @@ export class Reports {
     const scopeSources = o.source_ids?.length ? o.source_ids : [...new Set(hits.map((h: any) => h.source_id))];
     const failed = scopeSources.length ? (await db.query(`SELECT DISTINCT ON (source_id) source_id, status, error FROM flow_collection_runs
         WHERE tenant_id=$1 AND workspace_id=$2 AND source_id = ANY($3::text[]) ORDER BY source_id, created_at DESC`, [s.tenant_id, s.workspace_id, scopeSources])).rows
-      .filter((r: any) => r.status === "failed").map((r: any) => ({ source_id: r.source_id, error: r.error })) : [];
+      .filter((r: any) => r.status === "failed" || r.status === "retry_wait").map((r: any) => ({ source_id: r.source_id, error: r.error, status: r.status })) : [];
     const revised = picked.filter((h) => h.revision > 1).map((h) => ({ document_id: h.document_id, revision: h.revision,
       note: "document changed after first collection; earlier revision may conflict" }));
     const coverage = { documents_considered: hits.length, documents_used: picked.length, truncated: hits.length > picked.length || picked.some((h) => String(h.snippet ?? "").length >= 300),

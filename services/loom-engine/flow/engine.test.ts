@@ -133,15 +133,25 @@ test("scheduler: window key tenant+schedule+scheduled_at, ticks are idempotent, 
   assert.equal(new Date((await eng.listSchedules(A))[0].next_run_at).toISOString(), "2026-10-13T06:00:00.000Z");
 });
 
-test("fetch failure marks run failed, emits operation.failed, cursor untouched", async () => {
+test("transient fetch failure: retry_wait → retried up to max_attempts → failed, cursor untouched", async () => {
   const { db } = await setup();
-  const eng = new Engine(db, async () => { throw new Error("HTTP 503"); });
+  let now = new Date("2026-10-13T00:00:00Z");
+  const eng = new Engine(db, async () => { throw new Error("HTTP 503"); }, () => now);
   const s = await eng.createSource(A, { url: FEED });
   const op = await eng.requestCollection(A, "k", { source_ids: [s.id] });
-  await eng.workOnce("w");
+  assert.equal((await eng.workOnce("w"))!.status, "retry_wait");
+  assert.equal((await eng.getOperation(A, op.operation_id)).status, "retrying");
+  assert.equal(await eng.claim("w"), null, "not claimable before retry_at");
+  for (const attempt of [2, 3]) {
+    now = new Date(now.getTime() + 31 * 60_000);
+    const r = await eng.workOnce("w");
+    assert.equal(r!.status, attempt < 3 ? "retry_wait" : "failed");
+  }
+  assert.equal((await db.query(`SELECT attempts FROM flow_collection_runs`)).rows[0].attempts, 3);
   assert.equal((await eng.getOperation(A, op.operation_id)).status, "failed");
+  assert.equal((await db.query(`SELECT count(*)::int n FROM flow_outbox WHERE type='operation.retrying'`)).rows[0].n, 2);
   assert.equal((await db.query(`SELECT count(*)::int n FROM flow_source_cursors`)).rows[0].n, 0);
-  assert.equal((await eng.listSources(A))[0].consecutive_failures, 1);
+  assert.equal((await eng.listSources(A))[0].consecutive_failures, 3);
 });
 
 test("outbox dispatch is ordered and at-least-once; stops on failure", async () => {

@@ -20,3 +20,12 @@ Live, real-account acceptance for the connectors below is **deferred to the very
 1. Configure the env vars above and create one source/connection per connector.
 2. Run one collection (or one MCP tool call) with a small budget.
 3. Record the `flow_connector_samples` row (`mode=live`) or the `flow_mcp_usage` row, with time (Asia/Shanghai), environment, and receipts, in `delivery-report.md`.
+
+## Added by the gap-closing round (2026-10-14)
+These need a real environment. None of them has been run yet.
+- `docker compose -f docker-compose.flow.yml --profile wechat --profile extract --profile research --profile monitoring config`, then boot the stack. Check that Prometheus shows both targets up.
+- Upgrade an existing PG16 volume to PG17 with backup.sh and restore.sh (see release-deploy.md).
+- Email notifications against a real SMTP server. Webhook notifications against a real receiver; verify the HMAC signature and `X-Flow-Delivery-Id`.
+- Legacy Loom import: dry run against a copy of the real legacy database, then `--apply`; spot-check the old_id→new_id map.
+- Telegram media key migration (`media-keys.ts plan` / `apply`) on real stored objects, before deleting the old keys.
+- OCR on real Telegram images (Chinese text) through `--profile extract`.

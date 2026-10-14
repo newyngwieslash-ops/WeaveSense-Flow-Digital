@@ -402,3 +402,28 @@ Tests: `flow/reliability.test.ts` (6 tests: validator reuse rules and 304; redir
 - The 403 probe no longer blocks: "Reuse an existing commit image" passes. All four image builds then fail at the push with `denied: permission_denied: read_package` for `ghcr.io/newyngwieslash-ops/open-ai-canvas-{web,backend,yingce-agent}`.
 - Cause: those three container packages already exist in the account (the anonymous token probe answers `UNAUTHORIZED` for them and `DENIED` for a non-existent name) and are not linked to this repository, so this repo's `GITHUB_TOKEN` (which does have `packages: write`) may not touch them. Changing the repository's default workflow permissions would not help, because the job already declares `packages: write`. That setting was left unchanged (`read`).
 - Fix (owner action in GitHub, no API for it): for each of the three packages, open Package settings → "Manage Actions access" → add `WeaveSense-Flow` with the Write role (or "Connect repository"). Alternatively, delete the stale packages so the workflow recreates them linked to this repo. Then re-run the workflow.
+
+## Gap-closing round after the PRD audit (2026-10-14, Asia/Shanghai)
+
+The audit is in `docs/implementation-status.md`. Work was done in batches, one PR each, merged only after CI was green. There were no force-pushes. Dependabot PRs #2–#6 were not touched.
+
+| PR | Branch | What it closes |
+|---|---|---|
+| #29 | record-publish-success | Records the successful image publish (docs) |
+| #30 | gaps-1-api-terms | §11 routes: PATCH sources with `expected_revision` (409 on conflict), document revisions, research start (202) and cancel, evidence compare, terms. Tools `intel_list_sources` and `intel_compare_evidence`. §7.3 Chinese term dictionary and tenant aliases (`flow_term_aliases`), with query expansion. New CI job runs the engine tests on real PostgreSQL 17, and backend CI moves to PG17. |
+| #31 | gaps-2-media-ocr | §10.4 tenant/workspace-scoped Telegram media keys (engine and telethon), plus a legacy-key migration tool. §6.4 bounded retry of attachments that were not stored, an OCR worker (tesseract chi_sim+eng), `ocr_pages` usage, and the tool `intel_ocr_document`. |
+| #32 | gaps-3-billing-notify | §5.2/§12 `retry_wait` / `reconciliation_required` (schema v62 migrates `unknown`), `price_version`, a usage ledger for all usage types, and email/webhook notifications (delivery_id, HMAC, backoff, idempotency, operator resolve). |
+| gaps-4 PR | gaps-4-ops | §13.3/§14 PG17 in the flow compose; profiles wechat / extract / research / monitoring; engine `/metrics` and platform `/metrics/flow`; Prometheus alert rules; legacy Loom import (`flow_legacy_id_map`); §9.2 industry-pack export (manifest, schemas, evals) with a drift test; `third_party/upstreams.lock.json`; `docs/implementation-status.md`; `docs/verification/`. Prettier exclusions cut from 34 files to 12. |
+
+### Verification
+- Local runs:
+  - `go vet ./...` passes, and `go test ./internal/flow/ ./internal/database/ ./cmd/...` passes. The 5 known `internal/app` Pi e2e tests fail on this box only because the Pi runtime's node_modules aren't installed here (`undici` missing). They pass in CI.
+  - Engine `test:flow` passes 60/60 on PGlite.
+  - Web: `bun test` 2224/2224, tsc passes, and `prettier --check .` passes.
+- CI: the engine job ran 58/58 tests with 0 skipped, including the real PostgreSQL 17 RLS and backup tests as a non-superuser. The OCR tests, including the real tesseract test, pass in CI.
+- Not run:
+  - `docker compose config` and booting the stack with the new profiles (no Docker on this box).
+  - Prometheus rule syntax check (`promtool`).
+  - A real SMTP server and a real webhook receiver.
+  - Legacy import against a real legacy production dump.
+  - A19 live acceptance.

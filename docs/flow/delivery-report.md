@@ -352,3 +352,39 @@ Tests: `flow/enrichment.test.ts` (4 tests: tenant isolation with no outbound cal
   - Engine full `npm test` passes, including upstream `test:collection`. `test:flow` 39/39 (the RLS and backup tests ran on real Postgres 17 as a non-superuser). `tsc --noEmit` and eslint pass.
   - `go vet` passes. `go test ./...` passes except the 5 known Pi e2e tests in `internal/app`, which pass in CI.
   - Web: tsc and `bun test` 2224/2224 pass.
+
+## Loom collection-reliability port (2026-10-14, Asia/Shanghai)
+
+| Item | Value |
+|---|---|
+| Branch / PR | `cherry-pick-collection-reliability` (merged after green CI; the merge SHA is recorded by the follow-up docs PR) |
+| Upstream | `loom-upstream` `codex/collection-reliability` @ `ff42cd5a` (39 commits, Oct 4–5). It forked at `c49829f3`, before the pinned `bec6212a`, and upstream never merged it. |
+| Method | `git cherry-pick -X subtree` conflicted in almost every file, because each commit builds on earlier commits in the branch that upstream `main` reworked differently. So the port is file-level 3-way merges (base `c49829f3`, ours = current subtree, theirs = `ff42cd5a`) for the components Flow runs, plus hand ports into the current egress guard. Newer `collection-capability` behaviour wins where the two disagree. |
+| Schema | Flow engine `0008_feed_validators`: `feed_etag`, `feed_last_modified`, `feed_validator_identity` on `flow_source_cursors` (tenant-scoped, RLS unchanged); `items_rejected` and `not_modified` on `flow_collection_runs`. |
+
+### Integrated
+| Commit | What Flow gets |
+|---|---|
+| `6d9aadb3` preserve feed entries, reject invalid feeds | Feed parser: one bad entry is counted and skipped instead of failing the feed (`feed_no_usable_entries` only when every entry is bad); `http(s)`-only links resolved against the final redirect URL; strict single-root RSS/Atom/RDF; overlong IDs rejected instead of truncated. The WeChat gateway primary feed gets strict roots and final-URL links. **Not taken:** rejecting entries with invalid dates, because `collection-capability` (`b8cce07b`) keeps them and finalizes those windows downstream. Error names keep the mainline spelling (`invalid_feed_xml` / `invalid_feed_root`). |
+| `cdd53353` legacy Atom link identities | Self/enclosure links stay the identity (no duplicate documents), while only article links become clickable URLs. |
+| `235466b9` conditional requests | Flow RSS sends `If-None-Match` / `If-Modified-Since` from validators stored on the cursor row. A 304 commits an empty run (`not_modified=true`). Validators are written in the same commit as the cursor, keyed to URL + platform + parser version, so a failed run or a parser change never skips content. `publicFetch` gains `allowNotModified` (first hop only). |
+| `d0602ef0` bound requests (partial) | Redirect header hygiene in `publicFetch`: validators never follow a redirect, and auth/cookie/token/key headers are dropped on cross-origin hops. The rest (`CollectionHttpError`, metrics, collector budgets) belongs to the bundled app's collectors, which Flow doesn't run. |
+| `25e19ea9`, `96733504`, `1e260c4f` Telethon worker reliability | Worker taken at `ff42cd5a`: connection lifecycle with bounded reconnect backoff (no auto-reconnect storms), 50 s history deadline, monotonic FloodWait cooldown shared by history and media, service messages consumed (no page loops), `has_more`, `membership_required` / `unavailable` / `timeout` statuses, and an admission recheck after storage recovery. 29 worker tests (`python -m unittest test_history`). |
+| `554599c0` async Telegram attachments, `096ece89` audio | History returns `telegram://<channel>/<id>` refs. Flow then stores each one through the worker's authenticated `/v1/media` (`TELEGRAM_MEDIA_TOKEN`; streamed, size-checked, sha256), at most 10 per run within a 90 s budget, and stops at a flood wait. The stored object key goes into the document's media. `too_large` / `timeout` / `disabled` / `failed` keep a reason, and the body notes uncollected attachments as before. Old workers that report `media_status` inline still work. `audio` is now a media type. This replaces Flow's inline `save_media`, which upstream identified as able to exhaust the 60 s history budget. |
+| `10b5c443`, `4b7ff349` WeChat freshness vs availability | Gateway: optional `expected_update_hours` per source, `freshness_state` (fresh / suspected_stale / unknown) with content age in status, `risk_control` failures recorded as such, and legacy freshness evidence preserved on upgrade. Feed headers are unchanged, so Flow's `fetchWechat` is unaffected. |
+| Failure classes | Flow `classifyFailure`: worker `unavailable` → transient (backoff), `membership_required` → auth (pause for operator action). |
+
+Tests: `flow/reliability.test.ts` (6 tests: validator reuse rules and 304; redirect hygiene; validators persist with the cursor, survive a failed run and never cross tenants; `/v1/media` storage, error mapping, flood stop, batch bound, untrusted object keys rejected; failure classes), upstream parser tests merged into `rss.test.ts`, gateway tests (128), and Telethon worker tests (29).
+
+### Skipped (and why)
+| Commits | Reason |
+|---|---|
+| `721663f8`, `bade923c`, `a141a5b1` | Baseline reconciliation, per-service env and preflight scripts for the bundled app's own (Windows-path) compose. Flow has its own compose and env. |
+| `59b40ede`, `10c17665`, `5664be2e` | Resumable progress, identity merges and atomic item+progress commits for the bundled app's `items` tables (migrations 0022/0024, which also collide with mainline's assistant migrations). Flow already commits documents, cursor and outbox in one fenced transaction. |
+| `8d9abdf2`, `4121d240` | Persisted retry schedules and paid-analysis cadence for the bundled app's scheduler (0023). Flow has `backoff_until` / `consecutive_failures` (0007). |
+| `0aa18e69`, `106e32f5`, `e64235c1`, `bb0fb5d1` | The bundled app's media and extraction pipeline (0025, `media.ts`, `extract.ts`, `storage.ts`). Flow records per-attachment status instead. |
+| `91163816`, `a98f81a1`, `d6715a2b`, `28a0e769`, `bd7798a1` | The bundled app's source UI, validation functions and ops health (0027). Flow validates at `createSource` and records runs and connector samples. |
+| `5e0bdd31` | Tests the reliability branch's redirect-budget code, which wasn't ported. |
+| `52a16ea2`, `2e58e723`, `6acbd26f`, `fec0739e`, `5d5d6174`, `1ea780f7`, `ff42cd5a` | Acceptance-evidence records and source zips for the bundled app's release (about 30k lines of logs/JSON). |
+| `d34dabf5`, `7cf37b75`, `17b91d79` | Encrypted SQLite recovery and fixed-image release artifacts for the bundled app's Windows deployment. Flow has its own Postgres backup/restore test and release workflow. |
+| `096ece89` / `d0602ef0` TypeScript collector parts, `telegram.ts` preview IDs | The bundled app's collectors. The preview-ID change (`channel/123` → `123`) would duplicate documents Flow already stored. |

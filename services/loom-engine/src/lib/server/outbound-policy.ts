@@ -518,6 +518,7 @@ export async function publicFetch(
     transport = pinnedTransport(),
     as = "text",
     signal: callerSignal,
+    allowNotModified = false,
   }: {
     headers?: Record<string, string>;
     timeoutMs?: number;
@@ -528,22 +529,26 @@ export async function publicFetch(
     transport?: OutboundTransport;
     as?: "text" | "bytes";
     signal?: AbortSignal;
+    /** Conditional GET: a first-hop 304 is returned (no body) instead of throwing. */
+    allowNotModified?: boolean;
   } = {},
-): Promise<{ text?: string; bytes?: Uint8Array; url: string; contentType: string }> {
+): Promise<{ text?: string; bytes?: Uint8Array; url: string; contentType: string; status: number; headers: Record<string, string> }> {
   const deadline = AbortSignal.timeout(timeoutMs);
   const signal = callerSignal ? AbortSignal.any([callerSignal, deadline]) : deadline;
   signal.throwIfAborted();
   let url = assertPublicUrl(rawUrl);
   let redirects = 0;
+  let requestHeaders = { ...headers };
 
   for (;;) {
     const addresses = await resolvePublicAddresses(url.hostname, resolver, undefined, signal);
     const approved = [...addresses];
     const lookup = createPinnedLookup(approved);
 
-    const response = await transport(url, { method: "GET", headers, timeoutMs, lookup, signal });
+    const response = await transport(url, { method: "GET", headers: requestHeaders, timeoutMs, lookup, signal });
     signal.throwIfAborted();
     const status = response.status ?? 0;
+    const responseHeaders = pickHeaders(response.headers);
 
     if (REDIRECT_CODES.has(status)) {
       await cancelBody(response.body, signal);
@@ -552,8 +557,14 @@ export async function publicFetch(
       if (!location) throw new Error("redirect_without_location");
       if (redirects >= maxRedirects) throw new Error("too_many_redirects");
       redirects += 1;
-      url = assertPublicUrl(new URL(location, url).href);
+      const next = assertPublicUrl(new URL(location, url).href);
+      requestHeaders = redirectHeaders(requestHeaders, url, next);
+      url = next;
       continue;
+    }
+    if (status === 304 && allowNotModified && redirects === 0) {
+      await cancelBody(response.body, signal);
+      return { url: url.href, contentType: responseHeaders["content-type"] ?? "", status, headers: responseHeaders };
     }
     if (status < 200 || status >= 300) {
       await cancelBody(response.body, signal);
@@ -565,9 +576,29 @@ export async function publicFetch(
     const limit = maxBytes ?? capFor(contentType, kind);
     const bytes = await readCapped(response.body, limit, signal);
     signal.throwIfAborted();
-    if (as === "bytes") return { bytes, url: url.href, contentType };
-    return { text: new TextDecoder().decode(bytes), url: url.href, contentType };
+    if (as === "bytes") return { bytes, url: url.href, contentType, status, headers: responseHeaders };
+    return { text: new TextDecoder().decode(bytes), url: url.href, contentType, status, headers: responseHeaders };
   }
+}
+
+const KEPT_RESPONSE_HEADERS = ["content-type", "etag", "last-modified", "retry-after"];
+function pickHeaders(raw: OutboundResponse["headers"] | undefined): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(raw ?? {})) {
+    const k = key.toLowerCase();
+    if (!KEPT_RESPONSE_HEADERS.includes(k)) continue;
+    const v = Array.isArray(value) ? value[0] : value;
+    if (typeof v === "string" && v.length <= 1024) out[k] = v;
+  }
+  return out;
+}
+
+/** (loom collection-reliability) Validators never follow a redirect; secrets never cross origins. */
+export function redirectHeaders(headers: Record<string, string>, from: URL, to: URL): Record<string, string> {
+  let next = Object.fromEntries(Object.entries(headers).filter(([key]) => !/^(if-none-match|if-modified-since)$/i.test(key)));
+  if (to.origin !== from.origin) next = Object.fromEntries(Object.entries(next)
+    .filter(([key]) => !/^(host|referer)$|auth|cookie|token|key|secret|credential|session|password/i.test(key)));
+  return next;
 }
 
 /** Rejected responses must not drain an unbounded body in the background. */

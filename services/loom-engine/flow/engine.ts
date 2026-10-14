@@ -15,15 +15,18 @@ export type Fetcher = (url: string, sourceId: string, src?: SourceRow) => Promis
 export const connectorFetcher = (env: ConnectorEnv): Fetcher => async (url, sourceId, src) => {
   if (src?.kind === "telegram") return fetchTelegram(env, src);
   if (src?.kind === "wechat") return fetchWechat(env, src);
-  // Reuse WeaveSense's outbound-policy guarded fetch + RSS/Atom parser.
-  const { fetchRss } = await import("../src/lib/server/rss.ts");
-  return fetchRss(url, sourceId, "rss");
+  // Reuse WeaveSense's outbound-policy guarded fetch + RSS/Atom parser, conditionally
+  // (If-None-Match / If-Modified-Since from the validators stored with the cursor).
+  const { fetchFeed } = await import("../src/lib/server/rss.ts");
+  const r = await fetchFeed(url, sourceId, "rss", src?.feed_validators ?? null);
+  return { items: r.items, collector: "rss", mode: "live", feed_validators: r.validators, not_modified: r.not_modified, rejected_entries: r.rejected_entries };
 };
 /** A13 failure classes: auth ⇒ pause; rate_limited/transient ⇒ backoff; permanent ⇒ record only. */
 export function classifyFailure(error: string): "auth" | "rate_limited" | "transient" | "permanent" {
   if (/\b(401|403)\b|unauthori[sz]ed|forbidden|credential|auth_key|session (expired|revoked)/i.test(error)) return "auth";
   if (/\b429\b|rate.?limit|too many requests|flood/i.test(error)) return "rate_limited";
-  if (/\b5\d\d\b|timeout|timed out|ECONN|ENOTFOUND|EAI_AGAIN|socket/i.test(error)) return "transient";
+  if (/membership_required/i.test(error)) return "auth"; // operator must (re)join the channel
+  if (/\b5\d\d\b|timeout|timed out|unavailable|ECONN|ENOTFOUND|EAI_AGAIN|socket/i.test(error)) return "transient";
   return "permanent";
 }
 
@@ -263,12 +266,14 @@ export class Engine {
   async execute(run: any, hooks: { beforeCommit?: () => void | Promise<void> } = {}) {
     const src = (await this.db.query(`SELECT * FROM flow_sources WHERE id=$1 AND tenant_id=$2`, [run.source_id, run.tenant_id])).rows[0];
     if (!src || src.status !== "active") return this.fail(run, "source revoked");
-    const cursor = (await this.db.query(`SELECT last_external_id FROM flow_source_cursors WHERE source_id=$1`, [src.id])).rows[0];
+    const cursor = (await this.db.query(`SELECT last_external_id, feed_etag, feed_last_modified, feed_validator_identity FROM flow_source_cursors WHERE source_id=$1 AND tenant_id=$2`, [src.id, run.tenant_id])).rows[0];
+    const feedValidators = cursor?.feed_validator_identity ? { etag: cursor.feed_etag ?? "", last_modified: cursor.feed_last_modified ?? "", identity: cursor.feed_validator_identity } : null;
     let items: ConnectorItem[]; let meta: { collector: string; provider?: string; mode: string } = { collector: "rss", mode: "live" };
+    let feed: ConnectorBatch | null = null;
     try {
-      const got = await this.fetcher(src.url, src.id, { ...src, config: typeof src.config === "string" ? JSON.parse(src.config) : (src.config ?? {}), last_external_id: cursor?.last_external_id ?? null });
+      const got = await this.fetcher(src.url, src.id, { ...src, config: typeof src.config === "string" ? JSON.parse(src.config) : (src.config ?? {}), last_external_id: cursor?.last_external_id ?? null, feed_validators: feedValidators });
       if (Array.isArray(got)) items = got;
-      else { items = got.items; meta = { collector: got.collector, provider: got.provider, mode: got.mode }; }
+      else { items = got.items; meta = { collector: got.collector, provider: got.provider, mode: got.mode }; feed = got; }
     } catch (e: any) {
       return this.fail(run, String(e?.message ?? e));
     }
@@ -314,8 +319,14 @@ export class Engine {
       await q.query(`INSERT INTO flow_source_cursors (source_id, tenant_id, last_published_at, last_run_id, last_external_id) VALUES ($1,$2,$3,$4,$5)
           ON CONFLICT (source_id) DO UPDATE SET last_published_at = GREATEST(flow_source_cursors.last_published_at, EXCLUDED.last_published_at),
           last_run_id = EXCLUDED.last_run_id, last_external_id = EXCLUDED.last_external_id, updated_at = now()`, [src.id, run.tenant_id, maxPub, run.id, lastExt]);
-      await q.query(`UPDATE flow_collection_runs SET status='succeeded', items_new=$2, items_revised=$3, finished_at=now(), lease_owner=NULL, collector=$4, provider=$5 WHERE id=$1`,
-        [run.id, created, revised, meta.collector, meta.provider ?? null]);
+      if (feed?.feed_validators) {
+        // Validators commit with the cursor; a failed run keeps the previous ones.
+        await q.query(`UPDATE flow_source_cursors SET feed_etag=$3, feed_last_modified=$4, feed_validator_identity=$5 WHERE source_id=$1 AND tenant_id=$2`,
+          [src.id, run.tenant_id, feed.feed_validators.etag.slice(0, 1024), feed.feed_validators.last_modified.slice(0, 1024), feed.feed_validators.identity]);
+      }
+      await q.query(`UPDATE flow_collection_runs SET status='succeeded', items_new=$2, items_revised=$3, finished_at=now(), lease_owner=NULL, collector=$4, provider=$5,
+          items_rejected=$6, not_modified=$7 WHERE id=$1`,
+        [run.id, created, revised, meta.collector, meta.provider ?? null, feed?.rejected_entries ?? 0, feed?.not_modified ?? false]);
       if (src.kind !== "rss" && items.length) {
         await q.query(`INSERT INTO flow_connector_samples (id, tenant_id, workspace_id, kind, source_id, run_id, collector, provider, mode, items, media_unsupported, sample)
             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) ON CONFLICT (run_id) DO NOTHING`,

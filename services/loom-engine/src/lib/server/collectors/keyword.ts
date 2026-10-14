@@ -51,7 +51,7 @@ export function classifyFailure(error: unknown): NonNullable<KeywordAttempt["err
   if (/^HTTP /.test(message)) return "http_error";
   if (/timeout|aborted|ETIMEDOUT|TimeoutError/i.test(message)) return "timeout";
   // A body that arrived but could not be parsed, or was refused for size.
-  if (["response_too_large", "invalid_feed_xml", "invalid_feed_root", "feed_entry_limit"].includes(message)
+  if (["response_too_large", "invalid_feed_xml", "invalid_feed_root", "feed_entry_limit", "feed_no_usable_entries"].includes(message)
     || /JSON|Unexpected token|invalid json/i.test(message)) {
     return "invalid_response";
   }

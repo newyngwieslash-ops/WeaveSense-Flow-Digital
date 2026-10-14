@@ -17,7 +17,7 @@ import (
 //   Allocate (child): carved atomically from the parent's unallocated remainder; no ledger move.
 //   Settle: child → consumed rolls up to the parent; root → ledger "consume" for the
 //           actual cost and "refund" for the remainder.
-//   MarkUnknown: an external call's outcome is unknown (e.g. lost ACK). Credits stay held
+//   MarkUnknown: an external call's outcome is unknown (e.g. lost ACK) → reconciliation_required. Credits stay held
 //           until Reconcile resolves it; nothing is retried blindly.
 
 var (
@@ -96,7 +96,7 @@ func (b Billing) Reserve(tenantID, key, purpose, refID string, amount int64) (mo
 		}
 		if acc.MaxOpenReserves > 0 {
 			var open int64
-			tx.Model(&model.FlowBudgetReservation{}).Where("account_id = ? AND parent_id = '' AND status IN ?", acc.ID, []string{"reserved", "unknown"}).Count(&open)
+			tx.Model(&model.FlowBudgetReservation{}).Where("account_id = ? AND parent_id = '' AND status IN ?", acc.ID, []string{"reserved", StatusReconciliation}).Count(&open)
 			if int(open) >= acc.MaxOpenReserves {
 				return ErrBudgetQuota
 			}
@@ -111,7 +111,7 @@ func (b Billing) Reserve(tenantID, key, purpose, refID string, amount int64) (mo
 		if res.RowsAffected == 0 {
 			return ErrBudgetInsufficient
 		}
-		out = model.FlowBudgetReservation{ID: NewID("rsv_"), TenantID: tenantID, AccountID: acc.ID, Purpose: purpose, RefID: refID, IdempotencyKey: key,
+		out = model.FlowBudgetReservation{ID: NewID("rsv_"), TenantID: tenantID, AccountID: acc.ID, Purpose: purpose, RefID: refID, IdempotencyKey: key, PriceVersion: CurrentPriceBook().Version,
 			ReservedMicro: amount, Status: "reserved", CreatedAt: b.now(), UpdatedAt: b.now()}
 		if err := tx.Create(&out).Error; err != nil {
 			return err
@@ -142,7 +142,7 @@ func (b Billing) Allocate(parentID, key, purpose, refID string, amount int64) (m
 		if res.RowsAffected == 0 || amount <= 0 {
 			return ErrBudgetParent
 		}
-		out = model.FlowBudgetReservation{ID: NewID("rsv_"), TenantID: p.TenantID, AccountID: p.AccountID, ParentID: p.ID, Purpose: purpose, RefID: refID,
+		out = model.FlowBudgetReservation{ID: NewID("rsv_"), TenantID: p.TenantID, AccountID: p.AccountID, ParentID: p.ID, PriceVersion: p.PriceVersion, Purpose: purpose, RefID: refID,
 			IdempotencyKey: key, ReservedMicro: amount, Status: "reserved", CreatedAt: b.now(), UpdatedAt: b.now()}
 		return tx.Create(&out).Error
 	})
@@ -179,7 +179,7 @@ func (b Billing) close(id string, actual int64, status string) (model.FlowBudget
 			total = r.ReservedMicro
 		}
 		now := b.now()
-		upd := tx.Model(&model.FlowBudgetReservation{}).Where("id = ? AND status IN ?", r.ID, []string{"reserved", "unknown"}).
+		upd := tx.Model(&model.FlowBudgetReservation{}).Where("id = ? AND status IN ?", r.ID, []string{"reserved", StatusReconciliation}).
 			Updates(map[string]any{"status": status, "consumed_micro": total, "settled_at": now, "updated_at": now})
 		if upd.Error != nil || upd.RowsAffected == 0 {
 			return upd.Error
@@ -218,7 +218,7 @@ func (b Billing) close(id string, actual int64, status string) (model.FlowBudget
 // Credits stay held; the reservation must be resolved by Reconcile.
 func (b Billing) MarkUnknown(id, externalRef, note string) error {
 	res := b.DB.Model(&model.FlowBudgetReservation{}).Where("id = ? AND status = ?", id, "reserved").
-		Updates(map[string]any{"status": "unknown", "external_ref": externalRef, "note": note, "updated_at": b.now()})
+		Updates(map[string]any{"status": StatusReconciliation, "external_ref": externalRef, "note": note, "updated_at": b.now()})
 	if res.Error != nil {
 		return res.Error
 	}
@@ -239,7 +239,7 @@ type Outcome struct {
 // (an idempotent status lookup, never a retry). Unresolved ones stay unknown.
 func (b Billing) Reconcile(minAge time.Duration, query func(model.FlowBudgetReservation) (Outcome, error)) (resolved int, err error) {
 	var rows []model.FlowBudgetReservation
-	if err := b.DB.Where("status = ? AND updated_at <= ?", "unknown", b.now().Add(-minAge)).Order("updated_at").Limit(200).Find(&rows).Error; err != nil {
+	if err := b.DB.Where("status = ? AND updated_at <= ?", StatusReconciliation, b.now().Add(-minAge)).Order("updated_at").Limit(200).Find(&rows).Error; err != nil {
 		return 0, err
 	}
 	for _, r := range rows {
@@ -278,7 +278,7 @@ func (b Billing) SweepStale(maxAge time.Duration) (int, error) {
 // Reopen returns an unknown reservation to reserved when reconciliation proved
 // the external call never happened and it will be retried under the same key.
 func (b Billing) Reopen(id string) error {
-	res := b.DB.Model(&model.FlowBudgetReservation{}).Where("id = ? AND status = ?", id, "unknown").
+	res := b.DB.Model(&model.FlowBudgetReservation{}).Where("id = ? AND status = ?", id, StatusReconciliation).
 		Updates(map[string]any{"status": "reserved", "updated_at": b.now()})
 	if res.Error != nil {
 		return res.Error

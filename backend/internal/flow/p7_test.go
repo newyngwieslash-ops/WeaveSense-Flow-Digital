@@ -172,7 +172,7 @@ func TestP7ModelStatusReconcileAndOperatorResolve(t *testing.T) {
 		t.Fatalf("kb %+v", r)
 	}
 	kc := get("kc")
-	if kc.Status != "unknown" {
+	if kc.Status != StatusReconciliation {
 		t.Fatal("pending must stay unknown")
 	}
 	scope, _ := ResolveScope(db, "u_alice", "")
@@ -191,12 +191,12 @@ func TestP7MCPOperatorResolve(t *testing.T) {
 	db := testDB(t)
 	scope, _ := ResolveScope(db, "u_alice", "")
 	gw := MCPGateway{DB: db}
-	row := model.FlowMCPCall{ID: "mc1", TenantID: scope.TenantID, IdemKey: "k", ConnectionID: "none", Tool: "t", Status: "unknown"}
+	row := model.FlowMCPCall{ID: "mc1", TenantID: scope.TenantID, IdemKey: "k", ConnectionID: "none", Tool: "t", Status: StatusReconciliation}
 	db.Create(&row)
 	if _, err := gw.ResolveMCPCall(Scope{TenantID: scope.TenantID, Role: "editor"}, "mc1", "succeeded", "x"); !errors.Is(err, ErrForbidden) {
 		t.Fatal("editor resolved")
 	}
-	calls, _ := ListMCPCalls(db, scope, "unknown")
+	calls, _ := ListMCPCalls(db, scope, StatusReconciliation)
 	if len(calls) != 1 {
 		t.Fatal("unknown call not listed")
 	}
@@ -208,7 +208,7 @@ func TestP7MCPOperatorResolve(t *testing.T) {
 		t.Fatal("resolved twice")
 	}
 	other := Scope{TenantID: "t_other", Role: "admin"}
-	db.Create(&model.FlowMCPCall{ID: "mc2", TenantID: scope.TenantID, IdemKey: "k2", ConnectionID: "none", Tool: "t", Status: "unknown"})
+	db.Create(&model.FlowMCPCall{ID: "mc2", TenantID: scope.TenantID, IdemKey: "k2", ConnectionID: "none", Tool: "t", Status: StatusReconciliation})
 	if _, err := gw.ResolveMCPCall(other, "mc2", "not_executed", ""); !errors.Is(err, ErrNotFound) {
 		t.Fatal("cross-tenant resolve")
 	}

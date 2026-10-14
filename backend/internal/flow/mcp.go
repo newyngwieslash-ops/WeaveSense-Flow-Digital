@@ -341,6 +341,11 @@ func redact(s, secret string) string {
 func (g MCPGateway) usage(c model.FlowMCPConnection, tool, actor, status string, start time.Time, outBytes int, credits int) {
 	g.DB.Create(&model.FlowMCPUsage{ID: NewID("mu_"), TenantID: c.TenantID, ConnectionID: c.ID, Tool: tool, ActorID: actor, Status: status,
 		DurationMS: time.Since(start).Milliseconds(), OutputBytes: outBytes, Credits: credits, CreatedAt: g.now()})
+	if status == "succeeded" || status == "truncated" {
+		// §12 usage line (the call's credits are charged by the MCP cost rule, not here).
+		_, _ = RecordUsage(g.DB, UsageInput{TenantID: c.TenantID, WorkspaceID: c.WorkspaceID, UsageType: UsageMCPCalls, Quantity: 1, CostMicro: 0,
+			SubjectRef: fmt.Sprintf("mcp:%s:%s:credits=%d", c.ID, tool, credits), IdemKey: NewID("mcpu_")}, g.now())
+	}
 }
 
 // Execute runs one allowed tool. The live schema must still match the approved

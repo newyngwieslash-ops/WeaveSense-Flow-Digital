@@ -23,7 +23,7 @@ type ModelGateway interface {
 }
 
 // ErrModelUnknownOutcome means the request may have been processed (e.g. the
-// connection dropped after sending); the reservation goes to "unknown".
+// connection dropped after sending); the reservation goes to reconciliation_required.
 var ErrModelUnknownOutcome = errors.New("flow: model call outcome unknown")
 
 // OpenAICompatGateway calls an OpenAI-compatible /chat/completions endpoint
@@ -58,6 +58,12 @@ func (g *OpenAICompatGateway) Complete(ctx context.Context, system, user string,
 	if g.Key != "" {
 		req.Header.Set("Authorization", "Bearer "+g.Key)
 	}
+	if m, ok := ctx.Value(modelCallMetaCtx{}).(ModelCallMeta); ok {
+		// §12: the gateway sees the reservation, the frozen price version and a stable call id.
+		req.Header.Set("X-Flow-Reservation-Id", m.ReservationID)
+		req.Header.Set("X-Flow-Price-Version", m.PriceVersion)
+		req.Header.Set("X-Flow-Call-Id", m.CallID)
+	}
 	if k, _ := ctx.Value(modelIdemCtx{}).(string); k != "" {
 		// Lets the gateway dedupe retries and answer status lookups (ModelStatus).
 		req.Header.Set("Idempotency-Key", k)
@@ -89,11 +95,16 @@ func (g *OpenAICompatGateway) Complete(ctx context.Context, system, user string,
 			} `json:"message"`
 		} `json:"choices"`
 		Usage struct {
-			TotalTokens int64 `json:"total_tokens"`
+			PromptTokens     int64 `json:"prompt_tokens"`
+			CompletionTokens int64 `json:"completion_tokens"`
+			TotalTokens      int64 `json:"total_tokens"`
 		} `json:"usage"`
 	}
 	if err := json.Unmarshal(raw, &out); err != nil || len(out.Choices) == 0 {
 		return "", 0, errors.New("model gateway: invalid response")
+	}
+	if u := modelUsageFrom(ctx); u != nil {
+		u.InputTokens, u.OutputTokens = out.Usage.PromptTokens, out.Usage.CompletionTokens
 	}
 	return out.Choices[0].Message.Content, out.Usage.TotalTokens * g.MicroPer1KTok / 1000, nil
 }

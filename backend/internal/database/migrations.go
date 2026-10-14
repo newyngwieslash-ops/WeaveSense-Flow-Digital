@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const CurrentSchemaVersion int64 = 61
+const CurrentSchemaVersion int64 = 62
 
 const baselineSchemaChecksum = "sha256:open-ai-canvas-schema-v1-20260830"
 const schemaMigrationAppliedAtIndexChecksum = "sha256:schema-migrations-applied-at-index-v2-20260830"
@@ -209,6 +209,23 @@ var schemaMigrations = []migration{
 	}},
 	{version: 61, name: "flow_model_task_push_p10", checksum: "sha256:flow-model-task-push-p10-v61-20261013", apply: func(tx *gorm.DB) error {
 		return tx.AutoMigrate(&model.FlowModelTask{})
+	}},
+	{version: 62, name: "flow_usage_notify_status_gaps", checksum: "sha256:flow-usage-notify-status-gaps-v62-20261014", apply: func(tx *gorm.DB) error {
+		// §6.2/§12 status names: unknown → reconciliation_required, model-task retry → retry_wait;
+		// price_version on reservations; usage records; external notification targets/deliveries.
+		if err := tx.AutoMigrate(&model.FlowBudgetReservation{}, &model.FlowMCPCall{}, &model.FlowModelTask{},
+			&model.FlowUsageRecord{}, &model.FlowNotificationTarget{}, &model.FlowNotificationDelivery{}); err != nil {
+			return err
+		}
+		for _, t := range []string{"flow_budget_reservations", "flow_mcp_calls", "flow_model_tasks"} {
+			if err := tx.Exec("UPDATE " + t + " SET status = 'reconciliation_required' WHERE status = 'unknown'").Error; err != nil {
+				return err
+			}
+		}
+		if err := tx.Exec("UPDATE flow_model_tasks SET status = 'retry_wait' WHERE status = 'queued' AND attempts > 0").Error; err != nil {
+			return err
+		}
+		return applyFlowRLS(tx)
 	}},
 }
 

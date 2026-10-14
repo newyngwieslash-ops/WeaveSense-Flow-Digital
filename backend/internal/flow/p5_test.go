@@ -132,7 +132,7 @@ func TestSynthesizeDropsInvalidCitationsAndUnknownOutcome(t *testing.T) {
 	}
 	var r model.FlowBudgetReservation
 	db.First(&r, "idempotency_key = ?", "k2")
-	if r.Status != "unknown" {
+	if r.Status != StatusReconciliation {
 		t.Fatalf("want unknown, got %s", r.Status)
 	}
 }

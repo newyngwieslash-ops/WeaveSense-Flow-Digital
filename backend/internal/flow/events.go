@@ -3,6 +3,7 @@ package flow
 import (
 	"encoding/json"
 	"errors"
+	"strings"
 	"time"
 
 	"yingce/backend/internal/model"
@@ -62,6 +63,39 @@ func ConsumeEvent(db *gorm.DB, consumerID string, e Event) (bool, error) {
 			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&model.FlowNotification{ID: NewID("ntf_"), TenantID: e.TenantID,
 				WorkspaceID: e.WorkspaceID, EventID: e.EventID, Type: e.Type, Title: p.Title, RefID: p.ReportID, CreatedAt: time.Now().UTC()}).Error; err != nil {
 				return err
+			}
+		}
+		if e.Type == "report.completed" || e.Type == "operation.failed" || e.Type == "schedule.blocked" {
+			// External deliveries are created in the same inbox transaction: exactly once per event.
+			var p struct {
+				ReportID string `json:"report_id"`
+				Title    string `json:"title"`
+				Error    string `json:"error"`
+			}
+			_ = json.Unmarshal(e.Payload, &p)
+			title := p.Title
+			if title == "" {
+				title = strings.TrimSpace(e.Type + " " + p.Error)
+			}
+			if err := fanOutDeliveries(tx, e, title, p.ReportID, time.Now().UTC()); err != nil {
+				return err
+			}
+		}
+		if e.Type == "usage.recorded" {
+			// Engine-metered usage (ocr_pages, asr_seconds, paid_source_calls, stored_bytes) is priced
+			// with the current price book and charged once per event.
+			var p struct {
+				UsageType  string `json:"usage_type"`
+				Quantity   int64  `json:"quantity"`
+				DocumentID string `json:"document_id"`
+				ObjectKey  string `json:"object_key"`
+			}
+			_ = json.Unmarshal(e.Payload, &p)
+			if validUsageType(p.UsageType) && p.Quantity >= 0 {
+				if _, err := RecordUsage(tx, UsageInput{TenantID: e.TenantID, WorkspaceID: e.WorkspaceID, UsageType: p.UsageType, Quantity: p.Quantity,
+					CostMicro: -1, SubjectRef: strings.Trim(p.DocumentID+":"+p.ObjectKey, ":"), IdemKey: "event:" + e.EventID, Charge: true}, time.Now().UTC()); err != nil {
+					return err
+				}
 			}
 		}
 		status, ok := statusByType[e.Type]

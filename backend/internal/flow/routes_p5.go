@@ -271,7 +271,7 @@ func RunBillingMaintenance(ctx context.Context, db *gorm.DB, every time.Duration
 // reads and writes then run per tenant inside TenantTx, so RLS applies.
 func BillingMaintenancePass(db *gorm.DB) {
 	var tenants []string
-	db.Model(&model.FlowBudgetReservation{}).Where("status IN ?", []string{"reserved", "unknown"}).Distinct().Pluck("tenant_id", &tenants)
+	db.Model(&model.FlowBudgetReservation{}).Where("status IN ?", []string{"reserved", StatusReconciliation}).Distinct().Pluck("tenant_id", &tenants)
 	for _, tenant := range tenants {
 		if tenant == "" {
 			continue

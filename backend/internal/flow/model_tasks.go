@@ -114,7 +114,7 @@ func (m ModelTasks) RunTask(ctx context.Context, id string) (bool, error) {
 	}
 	now := m.now()
 	until := now.Add(lease)
-	claim := m.DB.Model(&model.FlowModelTask{}).Where("id = ? AND status = ? AND next_attempt_at <= ?", id, "queued", now).
+	claim := m.DB.Model(&model.FlowModelTask{}).Where("id = ? AND status IN ? AND next_attempt_at <= ?", id, []string{"queued", StatusRetryWait}, now).
 		Updates(map[string]any{"status": "running", "lease_until": until, "attempts": gorm.Expr("attempts + 1"), "updated_at": now})
 	if claim.Error != nil || claim.RowsAffected == 0 {
 		return false, claim.Error
@@ -129,7 +129,11 @@ func (m ModelTasks) RunTask(ctx context.Context, id string) (bool, error) {
 		MaxTokens int    `json:"max_tokens"`
 	}
 	_ = json.Unmarshal([]byte(t.Request), &rq)
-	cctx, cancel := context.WithTimeout(context.WithValue(ctx, modelIdemCtx{}, t.IdemKey), lease)
+	var rsv model.FlowBudgetReservation
+	m.DB.Select("price_version").First(&rsv, "id = ?", t.ReservationID)
+	usage := &ModelUsage{}
+	cctx, cancel := context.WithTimeout(WithModelUsage(WithModelCallMeta(context.WithValue(ctx, modelIdemCtx{}, t.IdemKey),
+		ModelCallMeta{ReservationID: t.ReservationID, PriceVersion: rsv.PriceVersion, CallID: t.IdemKey}), usage), lease)
 	text, cost, cerr := m.GW.Complete(cctx, rq.System, rq.User, rq.MaxTokens)
 	cancel()
 	b := m.billing()
@@ -138,17 +142,20 @@ func (m ModelTasks) RunTask(ctx context.Context, id string) (bool, error) {
 		if _, err := b.Settle(t.ReservationID, cost); err != nil {
 			return true, err
 		}
+		if err := recordModelUsage(m.DB, t, *usage, cost, m.now()); err != nil {
+			return true, err
+		}
 		m.set(id, map[string]any{"status": "succeeded", "result": text, "cost_micro": cost, "lease_until": nil, "last_error": ""})
 	case errors.Is(cerr, ErrModelUnknownOutcome):
 		_ = b.MarkUnknown(t.ReservationID, "model:"+t.IdemKey, truncRunes(cerr.Error(), 280))
-		m.set(id, map[string]any{"status": "unknown", "lease_until": nil, "last_error": truncRunes(cerr.Error(), 480)})
+		m.set(id, map[string]any{"status": StatusReconciliation, "lease_until": nil, "last_error": truncRunes(cerr.Error(), 480)})
 	case errors.Is(cerr, ErrModelRetryable) && t.Attempts < t.MaxAttempts:
 		backoff := m.Backoff
 		if backoff <= 0 {
 			backoff = 2 * time.Second
 		}
 		next := m.now().Add(backoff * time.Duration(1<<(t.Attempts-1)))
-		m.set(id, map[string]any{"status": "queued", "next_attempt_at": next, "lease_until": nil, "last_error": truncRunes(cerr.Error(), 480)})
+		m.set(id, map[string]any{"status": StatusRetryWait, "next_attempt_at": next, "lease_until": nil, "last_error": truncRunes(cerr.Error(), 480)})
 	default:
 		_, _ = b.Release(t.ReservationID)
 		m.set(id, map[string]any{"status": "failed", "lease_until": nil, "last_error": truncRunes(cerr.Error(), 480)})
@@ -164,13 +171,13 @@ func (m ModelTasks) RunDue(ctx context.Context) (int, error) {
 	m.DB.Where("status = ? AND lease_until < ?", "running", now).Limit(50).Find(&stale)
 	for _, t := range stale {
 		upd := m.DB.Model(&model.FlowModelTask{}).Where("id = ? AND status = ?", t.ID, "running").
-			Updates(map[string]any{"status": "unknown", "lease_until": nil, "last_error": "worker lease expired", "updated_at": now})
+			Updates(map[string]any{"status": StatusReconciliation, "lease_until": nil, "last_error": "worker lease expired", "updated_at": now})
 		if upd.RowsAffected == 1 {
 			_ = m.billing().MarkUnknown(t.ReservationID, "model:"+t.IdemKey, "worker lease expired")
 		}
 	}
 	var ids []string
-	if err := m.DB.Model(&model.FlowModelTask{}).Where("status = ? AND next_attempt_at <= ?", "queued", now).Order("next_attempt_at").Limit(20).Pluck("id", &ids).Error; err != nil {
+	if err := m.DB.Model(&model.FlowModelTask{}).Where("status IN ? AND next_attempt_at <= ?", []string{"queued", StatusRetryWait}, now).Order("next_attempt_at").Limit(20).Pluck("id", &ids).Error; err != nil {
 		return 0, err
 	}
 	n := 0
@@ -190,7 +197,7 @@ func (m ModelTasks) Reconcile(ctx context.Context, minAge time.Duration) (int, e
 		return 0, nil
 	}
 	var rows []model.FlowModelTask
-	if err := m.DB.Where("status = ? AND updated_at <= ?", "unknown", m.now().Add(-minAge)).Limit(50).Find(&rows).Error; err != nil {
+	if err := m.DB.Where("status = ? AND updated_at <= ?", StatusReconciliation, m.now().Add(-minAge)).Limit(50).Find(&rows).Error; err != nil {
 		return 0, err
 	}
 	b := m.billing()
@@ -210,7 +217,7 @@ func (m ModelTasks) Reconcile(ctx context.Context, minAge time.Duration) (int, e
 			n++
 		case "not_found", "failed":
 			if t.Attempts < t.MaxAttempts && b.Reopen(t.ReservationID) == nil {
-				m.set(t.ID, map[string]any{"status": "queued", "next_attempt_at": m.now(), "last_error": "reconciled: not processed, retrying"})
+				m.set(t.ID, map[string]any{"status": StatusRetryWait, "next_attempt_at": m.now(), "last_error": "reconciled: not processed, retrying"})
 			} else {
 				_, _ = b.Release(t.ReservationID)
 				m.set(t.ID, map[string]any{"status": "failed", "last_error": "reconciled: not processed"})
@@ -234,9 +241,9 @@ func (m ModelTasks) Wait(ctx context.Context, id string) (model.FlowModelTask, e
 			return t, nil
 		case "failed":
 			return t, fmt.Errorf("model task failed: %s", t.LastError)
-		case "unknown":
+		case StatusReconciliation:
 			return t, fmt.Errorf("%w: %s", ErrModelUnknownOutcome, t.LastError)
-		case "queued":
+		case "queued", StatusRetryWait:
 			if !t.NextAttemptAt.After(m.now()) {
 				if _, err := m.RunTask(ctx, id); err != nil {
 					return t, err

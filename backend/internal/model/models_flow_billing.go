@@ -6,12 +6,15 @@ import "time"
 // the payer user's CreditAccount (personal tenants: the user; organizations:
 // the owner, shared by every member).
 type FlowBillingAccount struct {
-	ID                string    `json:"id" gorm:"primaryKey;size:40"`
-	TenantID          string    `json:"tenantId" gorm:"size:40;not null;uniqueIndex"`
-	PayerUserID       string    `json:"payerUserId" gorm:"size:36;not null;index"`
-	Kind              string    `json:"kind" gorm:"size:16;not null"` // personal | shared
-	MonthlyQuotaMicro int64     `json:"monthlyQuotaMicro"`            // 0 = unlimited (credit balance still applies)
-	MaxOpenReserves   int       `json:"maxOpenReserves"`              // 0 = unlimited
+	ID          string `json:"id" gorm:"primaryKey;size:40"`
+	TenantID    string `json:"tenantId" gorm:"size:40;not null;uniqueIndex"`
+	PayerUserID string `json:"payerUserId" gorm:"size:36;not null;index"`
+	Kind        string `json:"kind" gorm:"size:16;not null"` // personal | shared
+	// OwnerType (PRD §10 billing_account.owner_type): user = personal tenant billed to its
+	// owner's existing credit account; organization = the org's own account.
+	OwnerType         string    `json:"ownerType" gorm:"size:16;not null;default:user"`
+	MonthlyQuotaMicro int64     `json:"monthlyQuotaMicro"` // 0 = unlimited (credit balance still applies)
+	MaxOpenReserves   int       `json:"maxOpenReserves"`   // 0 = unlimited
 	CreatedAt         time.Time `json:"createdAt"`
 	UpdatedAt         time.Time `json:"updatedAt"`
 }

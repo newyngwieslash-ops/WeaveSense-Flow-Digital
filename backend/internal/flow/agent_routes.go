@@ -20,6 +20,8 @@ import (
 func RegisterAgentRoutes(api gin.IRouter, db *gorm.DB, engine EngineCaller, user UserFunc) {
 	convs := Conversations{DB: db}
 	tools := Tools{DB: db, Engine: engine}
+	// §8.1 run chain (intelligence_workspace / topic adapter).
+	chain := IntelRunChain(tools, nil)
 	authed := func(c *gin.Context) (*model.User, bool) {
 		u, err := user(c)
 		if err != nil || u == nil {
@@ -85,7 +87,7 @@ func RegisterAgentRoutes(api gin.IRouter, db *gorm.DB, engine EngineCaller, user
 			reply(c, http.StatusBadRequest, nil, "bad request")
 			return
 		}
-		ss, err := ResolveSubject(db, u.ID, in.Subject)
+		ss, err := chain.Scope.ResolveSubject(db, u.ID, in.Subject)
 		if err != nil {
 			reply(c, http.StatusNotFound, nil, "subject not found")
 			return
@@ -212,12 +214,12 @@ func RegisterAgentRoutes(api gin.IRouter, db *gorm.DB, engine EngineCaller, user
 		if !ok {
 			return
 		}
-		tc, err := BuildTurnContext(db, conv, ss)
+		tc, err := chain.Context.TurnContext(db, conv, ss)
 		if err != nil {
 			reply(c, http.StatusInternalServerError, nil, "context failed")
 			return
 		}
-		reply(c, http.StatusOK, gin.H{"context": tc, "messages": tc.Messages(), "tools": PiFunctionTools()}, "ok")
+		reply(c, http.StatusOK, gin.H{"context": tc, "messages": tc.Messages(), "tools": chain.Tools.Tools(ToolRequest{SubjectKind: conv.SubjectKind, Scope: ss.Scope})}, "ok")
 	})
 	g.POST("/conversations/:id/tool-calls", func(c *gin.Context) {
 		db := reqDB(c, db)
@@ -243,7 +245,7 @@ func RegisterAgentRoutes(api gin.IRouter, db *gorm.DB, engine EngineCaller, user
 			reply(c, http.StatusBadRequest, nil, "callId and name required")
 			return
 		}
-		r, err := tools.Invoke(c.Request.Context(), conv, ss, u.ID, in.CallID, in.Name, in.Arguments, "")
+		r, err := chain.Exec.Execute(c.Request.Context(), db, ToolCall{Conv: conv, Subject: ss, UserID: u.ID, CallID: in.CallID, Name: in.Name, Args: in.Arguments})
 		if err != nil {
 			reply(c, toolErrStatus(err), nil, err.Error())
 			return

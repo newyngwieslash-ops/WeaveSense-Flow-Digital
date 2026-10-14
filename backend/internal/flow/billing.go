@@ -50,11 +50,11 @@ func (b Billing) Account(tx *gorm.DB, tenantID string) (model.FlowBillingAccount
 	if err := tx.First(&t, "id = ?", tenantID).Error; err != nil {
 		return a, fmt.Errorf("flow: tenant %s: %w", tenantID, err)
 	}
-	kind := "personal"
+	kind, owner := "personal", "user"
 	if t.Kind == "organization" {
-		kind = "shared"
+		kind, owner = "shared", "organization"
 	}
-	a = model.FlowBillingAccount{ID: "ba_" + tenantID, TenantID: tenantID, PayerUserID: t.OwnerUserID, Kind: kind, CreatedAt: b.now(), UpdatedAt: b.now()}
+	a = model.FlowBillingAccount{ID: "ba_" + tenantID, TenantID: tenantID, PayerUserID: t.OwnerUserID, Kind: kind, OwnerType: owner, CreatedAt: b.now(), UpdatedAt: b.now()}
 	if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&a).Error; err != nil {
 		return a, err
 	}

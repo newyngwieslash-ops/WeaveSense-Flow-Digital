@@ -77,7 +77,7 @@ docker run --rm --network weavesense-flow_internal -e MINIO_ROOT_USER -e MINIO_R
    - optionally `TELEGRAM_MEDIA_MAX_BYTES` (default 20 MB) and `TELEGRAM_MEDIA_TIMEOUT_SECONDS` (default 15).
 4. Start the worker and restart the engine:
    ```bash
-   docker compose -f docker-compose.flow.yml --env-file .env.flow --profile telegram up -d --build telethon
+   docker compose -f docker-compose.flow.yml --env-file .env.flow --profile core --profile telegram up -d --build telethon
    docker compose -f docker-compose.flow.yml --env-file .env.flow up -d loom-engine loom-scheduler
    ```
 5. In the web UI, go to Intelligence → Sources → add a Telegram source with a public channel handle. Then ask the

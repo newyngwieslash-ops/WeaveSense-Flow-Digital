@@ -14,7 +14,7 @@ Live, real-account acceptance for the connectors below is **deferred to the very
 - Optional backup provider: `DAJIALA_KEY` (plus `DAJIALA_VERIFYCODE` if that account requires it)
 
 ## MCP
-- One real remote MCP endpoint (HTTPS, streamable HTTP) and its token, provided to the platform as `FLOW_MCP_CRED_<NAME>` and referenced by the connection as `env:FLOW_MCP_CRED_<NAME>`
+- One real remote MCP endpoint (HTTPS, streamable HTTP) and its token. Either save the token as a tenant secret (`POST /api/mcp/secrets`, needs `FLOW_SECRETS_KEK`) and reference it as `secret:<id>`, or provide it as `FLOW_MCP_CRED_<NAME>` and reference it as `env:FLOW_MCP_CRED_<NAME>`
 
 ## Procedure (when credentials arrive)
 1. Configure the env vars above and create one source/connection per connector.
@@ -23,9 +23,13 @@ Live, real-account acceptance for the connectors below is **deferred to the very
 
 ## Added by the gap-closing round (2026-10-14)
 These need a real environment. None of them has been run yet.
-- `docker compose -f docker-compose.flow.yml --profile wechat --profile extract --profile research --profile monitoring config`, then boot the stack. Check that Prometheus shows both targets up.
+- `docker compose -f docker-compose.flow.yml --profile core --profile wechat --profile extract --profile research --profile monitoring config`, then boot the stack. Check that Prometheus shows both targets up.
 - Upgrade an existing PG16 volume to PG17 with backup.sh and restore.sh (see release-deploy.md).
 - Email notifications against a real SMTP server. Webhook notifications against a real receiver; verify the HMAC signature and `X-Flow-Delivery-Id`.
 - Legacy Loom import: dry run against a copy of the real legacy database, then `--apply`; spot-check the old_id→new_id map.
 - Telegram media key migration (`media-keys.ts plan` / `apply`) on real stored objects, before deleting the old keys.
 - OCR on real Telegram images (Chinese text) through `--profile extract`.
+
+## Added by round 5 (2026-10-14)
+- Generate a production `FLOW_SECRETS_KEK` (`openssl rand -base64 32`), store it outside the database, and test secret rotation against a real MCP server.
+- `docker compose config` now passes for every profile locally; booting the full stack has still not been run.

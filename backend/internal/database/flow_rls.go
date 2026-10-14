@@ -9,6 +9,7 @@ var flowRLSTables = []string{
 	"flow_invites", "flow_external_waits", "flow_skill_installs",
 	"flow_model_tasks", "flow_mcp_oauth_grants", "flow_oauth_states",
 	"flow_usage_records", "flow_notification_targets", "flow_notification_deliveries",
+	"flow_mcp_secrets",
 }
 
 // applyFlowRLS enables Postgres row-level security on platform flow tables as

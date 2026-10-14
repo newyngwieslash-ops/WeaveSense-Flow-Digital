@@ -48,7 +48,7 @@ test("RLS: tenant context hides and blocks other tenants' rows (non-superuser ro
   } finally { await db.close(); }
 });
 
-test("backup/restore: dump → restore into an empty database → manifest and app reads match", { skip }, async () => {
+test("A18: backup/restore dump → restore into an empty database → manifest and app reads match", { skip }, async () => {
   const src = freshDb("flow_backup_src");
   const dst = freshDb("flow_backup_dst");
   const db = await pgDb(src.appUrl);

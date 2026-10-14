@@ -119,14 +119,16 @@ type FlowNotification struct {
 // CredentialRef names a server-side secret; the secret itself is never stored
 // here, rendered to the frontend, or placed in prompts/skills/tool output.
 type FlowMCPConnection struct {
-	ID              string    `json:"id" gorm:"primaryKey;size:40"`
-	Slug            string    `json:"slug" gorm:"size:16;not null;uniqueIndex"`
-	TenantID        string    `json:"tenantId" gorm:"size:40;not null;index:idx_flow_mcp_ws,priority:1"`
-	WorkspaceID     string    `json:"workspaceId" gorm:"size:40;not null;index:idx_flow_mcp_ws,priority:2"`
-	Name            string    `json:"name" gorm:"size:120"`
-	Endpoint        string    `json:"endpoint" gorm:"size:500;not null"`
-	Transport       string    `json:"transport" gorm:"size:32;not null"`
-	CredentialRef   string    `json:"credentialRef" gorm:"size:120"`
+	ID            string `json:"id" gorm:"primaryKey;size:40"`
+	Slug          string `json:"slug" gorm:"size:16;not null;uniqueIndex"`
+	TenantID      string `json:"tenantId" gorm:"size:40;not null;index:idx_flow_mcp_ws,priority:1"`
+	WorkspaceID   string `json:"workspaceId" gorm:"size:40;not null;index:idx_flow_mcp_ws,priority:2"`
+	Name          string `json:"name" gorm:"size:120"`
+	Endpoint      string `json:"endpoint" gorm:"size:500;not null"`
+	Transport     string `json:"transport" gorm:"size:32;not null"`
+	CredentialRef string `json:"credentialRef" gorm:"size:120"`
+	// SchemaHash is sha256 over the approved tool snapshot (PRD §9.3 schema_hash).
+	SchemaHash      string    `json:"schemaHash" gorm:"size:64"`
 	AllowedTools    string    `json:"-" gorm:"type:text"` // JSON []string
 	ApprovedSchemas string    `json:"-" gorm:"type:text"` // JSON map[tool]{hash,description,inputSchema}
 	TimeoutMS       int       `json:"timeoutMs"`
@@ -153,4 +155,23 @@ type FlowMCPUsage struct {
 	OutputBytes  int       `json:"outputBytes"`
 	Credits      int       `json:"credits"`
 	CreatedAt    time.Time `json:"createdAt" gorm:"index:idx_flow_mcp_usage,priority:3"`
+}
+
+// FlowMCPSecret is a tenant-saved MCP credential, envelope-encrypted: the value is
+// sealed with a random per-secret data key (AES-256-GCM) and the data key is
+// wrapped with the platform key-encryption key (FLOW_SECRETS_KEK). Both seals
+// bind tenant/workspace/secret id as associated data. The plaintext never leaves
+// the gateway; the API only returns metadata.
+type FlowMCPSecret struct {
+	ID          string    `json:"id" gorm:"primaryKey;size:40"`
+	TenantID    string    `json:"tenantId" gorm:"size:40;not null;index:idx_flow_mcp_secret_ws,priority:1"`
+	WorkspaceID string    `json:"workspaceId" gorm:"size:40;not null;index:idx_flow_mcp_secret_ws,priority:2"`
+	Name        string    `json:"name" gorm:"size:120;not null"`
+	Ciphertext  []byte    `json:"-"`
+	WrappedDEK  []byte    `json:"-"`
+	KeyID       string    `json:"keyId" gorm:"size:40;not null"`
+	Version     int       `json:"version"`
+	CreatedBy   string    `json:"createdBy" gorm:"size:36"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }

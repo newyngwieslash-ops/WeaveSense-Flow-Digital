@@ -85,7 +85,11 @@ type MCPGateway struct {
 	// AllowInsecure permits http:// endpoints (tests / local mocks only).
 	AllowInsecure bool
 	Now           func() time.Time
+	// KEK unwraps tenant-saved "secret:" credentials (default: FLOW_SECRETS_KEK).
+	KEK func() (SecretKEK, error)
 }
+
+func (g MCPGateway) secrets() MCPSecrets { return MCPSecrets{DB: g.DB, KEK: g.KEK} }
 
 func (g MCPGateway) now() time.Time {
 	if g.Now != nil {
@@ -151,8 +155,13 @@ func (g MCPGateway) Create(scope Scope, userID string, in MCPConnectionInput) (m
 	if in.Transport != "streamable_http" {
 		return model.FlowMCPConnection{}, fmt.Errorf("%w: only streamable_http transport is supported", ErrMCPInvalid)
 	}
-	if in.CredentialRef != "" && !strings.HasPrefix(in.CredentialRef, "env:FLOW_MCP_CRED_") && !strings.HasPrefix(in.CredentialRef, "oauth:FLOW_MCP_OAUTH_") && !strings.HasPrefix(in.CredentialRef, "oauthcode:FLOW_MCP_OAUTHCODE_") {
-		return model.FlowMCPConnection{}, fmt.Errorf("%w: credential ref must be env:FLOW_MCP_CRED_*", ErrMCPInvalid)
+	if id, ok := strings.CutPrefix(in.CredentialRef, secretRefPrefix); ok {
+		// Tenant-saved credential: must exist in this same tenant/workspace.
+		if _, err := g.secrets().get(scope, id); err != nil {
+			return model.FlowMCPConnection{}, fmt.Errorf("%w: credential secret not found in this workspace", ErrMCPInvalid)
+		}
+	} else if in.CredentialRef != "" && !strings.HasPrefix(in.CredentialRef, "env:FLOW_MCP_CRED_") && !strings.HasPrefix(in.CredentialRef, "oauth:FLOW_MCP_OAUTH_") && !strings.HasPrefix(in.CredentialRef, "oauthcode:FLOW_MCP_OAUTHCODE_") {
+		return model.FlowMCPConnection{}, fmt.Errorf("%w: credential ref must be secret:<id> or env:FLOW_MCP_CRED_*", ErrMCPInvalid)
 	}
 	clamp := func(v, def, max int) int {
 		if v <= 0 {
@@ -218,6 +227,8 @@ func (g MCPGateway) session(ctx context.Context, c model.FlowMCPConnection) (*mc
 	var err error
 	if strings.HasPrefix(c.CredentialRef, oauthCodePrefix) {
 		secret, err = g.oauthCodeToken(ctx, c)
+	} else if strings.HasPrefix(c.CredentialRef, secretRefPrefix) {
+		secret, err = g.secrets().Resolve(c)
 	} else {
 		secret, err = g.credential(c.CredentialRef)
 	}
@@ -315,7 +326,8 @@ func (g MCPGateway) Approve(ctx context.Context, scope Scope, id, operatorID str
 	}
 	al, _ := json.Marshal(allowed)
 	ap, _ := json.Marshal(approved)
-	if err := g.DB.Model(&c).Updates(map[string]any{"allowed_tools": string(al), "approved_schemas": string(ap), "status": "approved",
+	schemaSum := sha256.Sum256(ap)
+	if err := g.DB.Model(&c).Updates(map[string]any{"allowed_tools": string(al), "approved_schemas": string(ap), "schema_hash": hex.EncodeToString(schemaSum[:]), "status": "approved",
 		"status_reason": "", "approved_by": operatorID, "version": c.Version + 1, "updated_at": g.now()}).Error; err != nil {
 		return MCPConnectionView{}, err
 	}
@@ -343,7 +355,7 @@ func (g MCPGateway) usage(c model.FlowMCPConnection, tool, actor, status string,
 		DurationMS: time.Since(start).Milliseconds(), OutputBytes: outBytes, Credits: credits, CreatedAt: g.now()})
 	if status == "succeeded" || status == "truncated" {
 		// §12 usage line (the call's credits are charged by the MCP cost rule, not here).
-		_, _ = RecordUsage(g.DB, UsageInput{TenantID: c.TenantID, WorkspaceID: c.WorkspaceID, UsageType: UsageMCPCalls, Quantity: 1, CostMicro: 0,
+		_, _ = DefaultUsageRecorder.Record(g.DB, UsageInput{TenantID: c.TenantID, WorkspaceID: c.WorkspaceID, UsageType: UsageMCPCalls, Quantity: 1, CostMicro: 0,
 			SubjectRef: fmt.Sprintf("mcp:%s:%s:credits=%d", c.ID, tool, credits), IdemKey: NewID("mcpu_")}, g.now())
 	}
 }

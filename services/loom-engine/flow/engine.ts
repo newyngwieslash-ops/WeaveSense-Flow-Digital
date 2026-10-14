@@ -5,6 +5,7 @@ import { affected, type Db, type Q } from "./db.ts";
 import type { ExecutionContext } from "./auth.ts";
 import { connectorEnvFromProcess, extractMainText, fetchTelegram, fetchWechat, normalizeHandle, telegramMessageId,
   type ConnectorBatch, type ConnectorEnv, type ConnectorItem, type SourceRow } from "./connectors.ts";
+import { expandQuery, mergeAliases, BUILTIN_TERMS_VERSION, BUILTIN_TERM_GROUPS } from "./terms.ts";
 import { defaultArticleReader, documentVideoId, enrichmentStatus, isSubtitleLanguage, subtitleClient, type ArticleReader, type SubtitleClient } from "./enrichment.ts";
 
 export type FeedItem = { external_id: string; title: string; body: string; url: string; published_at: string | null };
@@ -154,6 +155,99 @@ export class Engine {
 
   async listSources(s: Scope) {
     return (await this.db.query(`SELECT * FROM flow_sources WHERE tenant_id=$1 AND workspace_id=$2 ORDER BY created_at`, [s.tenant_id, s.workspace_id])).rows;
+  }
+
+  /** Sources with health (intel_list_sources): status, failures, backoff, last run and cursor position. */
+  async listSourcesHealth(s: Scope) {
+    const r = await this.db.query(`SELECT s.id, s.kind, s.url, s.title, s.revision, s.status, s.paused_reason, s.revoked_reason, s.consecutive_failures, s.last_error, s.backoff_until,
+        c.last_published_at, c.updated_at AS cursor_updated_at,
+        (SELECT row_to_json(x) FROM (SELECT r.id AS run_id, r.status, r.items_new, r.items_revised, r.error, r.finished_at FROM flow_collection_runs r
+           WHERE r.tenant_id=s.tenant_id AND r.source_id=s.id ORDER BY r.created_at DESC LIMIT 1) x) AS last_run
+        FROM flow_sources s LEFT JOIN flow_source_cursors c ON c.source_id=s.id AND c.tenant_id=s.tenant_id
+        WHERE s.tenant_id=$1 AND s.workspace_id=$2 ORDER BY s.created_at`, [s.tenant_id, s.workspace_id]);
+    const now = this.now().getTime();
+    return r.rows.map((x: any) => {
+      const lr = typeof x.last_run === "string" ? JSON.parse(x.last_run) : x.last_run;
+      const health = x.status !== "active" ? x.status : x.backoff_until && new Date(x.backoff_until).getTime() > now ? "backoff"
+        : Number(x.consecutive_failures) > 0 ? "degraded" : lr ? "healthy" : "never_run";
+      return { ...x, last_run: lr ?? null, health };
+    });
+  }
+
+  /** §11 PATCH /sources/{id}: optimistic update on expected_revision; a replay of the applied change is idempotent. */
+  async updateSource(s: Scope, id: string, o: { expected_revision?: number; title?: string; status?: string; config?: Record<string, unknown> }) {
+    const exp = Number(o.expected_revision);
+    if (!Number.isInteger(exp) || exp < 1) throw new HttpError(400, "expected_revision required");
+    if (o.status !== undefined && o.status !== "active" && o.status !== "paused") throw new HttpError(400, "status must be active or paused");
+    if (o.title !== undefined && typeof o.title !== "string") throw new HttpError(400, "title must be a string");
+    return this.db.tx(async (q) => {
+      const cur = (await q.query(`SELECT * FROM flow_sources WHERE tenant_id=$1 AND workspace_id=$2 AND id=$3 FOR UPDATE`, [s.tenant_id, s.workspace_id, id])).rows[0];
+      if (!cur) throw new HttpError(404, "source not found");
+      if (cur.status === "revoked") throw new HttpError(409, "source revoked");
+      const cfg = typeof cur.config === "string" ? JSON.parse(cur.config) : (cur.config ?? {});
+      // Only connector-neutral settings are editable; the identity (handle/feed/url) needs a new source.
+      const patchCfg: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(o.config ?? {})) {
+        if (["handle", "gateway_source_id"].includes(k)) throw new HttpError(400, `config.${k} cannot change; create a new source`);
+        patchCfg[k] = v;
+      }
+      const next = { title: o.title ?? cur.title, status: o.status ?? cur.status, config: { ...cfg, ...patchCfg } };
+      const same = next.title === cur.title && next.status === cur.status && JSON.stringify(next.config) === JSON.stringify(cfg);
+      if (Number(cur.revision) !== exp) {
+        // Same change already applied at expected+1 ⇒ replay; anything else is a conflict.
+        if (same && Number(cur.revision) === exp + 1) return { ...cur, replayed: true };
+        throw new HttpError(409, `revision conflict: current revision is ${cur.revision}`);
+      }
+      if (same) return { ...cur, replayed: false, changed: false };
+      const u = (await q.query(`UPDATE flow_sources SET title=$4, status=$5, config=$6, revision=revision+1, updated_at=now(),
+          paused_reason = CASE WHEN $5='paused' THEN coalesce(paused_reason,'operator') ELSE NULL END,
+          backoff_until = CASE WHEN $5='active' THEN NULL ELSE backoff_until END,
+          consecutive_failures = CASE WHEN $5='active' AND status<>'active' THEN 0 ELSE consecutive_failures END
+          WHERE tenant_id=$1 AND workspace_id=$2 AND id=$3 RETURNING *`, [s.tenant_id, s.workspace_id, id, next.title, next.status, JSON.stringify(next.config)])).rows[0];
+      if (next.status === "paused") {
+        await q.query(`UPDATE flow_collection_runs SET status='cancelled', finished_at=now(), lease_owner=NULL, fencing_token=fencing_token+1, error='source paused'
+            WHERE tenant_id=$1 AND source_id=$2 AND status='queued'`, [s.tenant_id, id]);
+      }
+      await this.emit(q, s, `src:${id}`, `src:${id}:${u.revision}`, "source.updated", { source_id: id, revision: Number(u.revision), status: u.status });
+      return { ...u, replayed: false, changed: true };
+    });
+  }
+
+  /** Revision list of a document (newest first) with evidence counts. */
+  async listRevisions(s: Scope, docId: string) {
+    const d = (await this.db.query(`SELECT id, current_revision FROM flow_documents WHERE tenant_id=$1 AND workspace_id=$2 AND id=$3`, [s.tenant_id, s.workspace_id, docId])).rows[0];
+    if (!d) throw new HttpError(404, "document not found");
+    const r = await this.db.query(`SELECT r.revision, r.title, r.content_hash, r.created_at AS collected_at, r.collected_by_run, length(r.body) AS chars,
+        (SELECT count(*)::int FROM flow_evidence e WHERE e.tenant_id=r.tenant_id AND e.document_id=r.document_id AND e.revision=r.revision) AS evidence_count
+        FROM flow_document_revisions r WHERE r.document_id=$1 AND r.tenant_id=$2 ORDER BY r.revision DESC`, [docId, s.tenant_id]);
+    return { document_id: docId, current_revision: d.current_revision, revisions: r.rows };
+  }
+
+  /** §7.3 effective term groups for a workspace: built-in dictionary + workspace aliases. */
+  async termGroups(s: Scope) {
+    const rows = (await this.db.query(`SELECT term, alias FROM flow_term_aliases WHERE tenant_id=$1 AND workspace_id=$2 ORDER BY created_at`, [s.tenant_id, s.workspace_id])).rows;
+    return mergeAliases(rows);
+  }
+
+  async listTerms(s: Scope) {
+    const custom = (await this.db.query(`SELECT term, alias, created_by, created_at FROM flow_term_aliases WHERE tenant_id=$1 AND workspace_id=$2 ORDER BY created_at`, [s.tenant_id, s.workspace_id])).rows;
+    return { builtin_version: BUILTIN_TERMS_VERSION, builtin_groups: BUILTIN_TERM_GROUPS.length, builtin: BUILTIN_TERM_GROUPS, custom };
+  }
+
+  async addTermAliases(s: Scope, actor: string, o: { items?: { term: string; alias: string }[] }) {
+    const items = (o.items ?? []).slice(0, 100).map((i) => ({ term: String(i?.term ?? "").trim(), alias: String(i?.alias ?? "").trim() }));
+    if (!items.length || items.some((i) => !i.term || !i.alias || i.term.length > 64 || i.alias.length > 64 || i.term.toLowerCase() === i.alias.toLowerCase()))
+      throw new HttpError(400, "items[{term, alias}] required (1-64 chars, distinct)");
+    let added = 0;
+    for (const i of items) {
+      added += affected(await this.db.query(`INSERT INTO flow_term_aliases (tenant_id, workspace_id, term, alias, created_by) VALUES ($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING`,
+        [s.tenant_id, s.workspace_id, i.term, i.alias, actor.slice(0, 200)]));
+    }
+    return { added };
+  }
+
+  async deleteTermAlias(s: Scope, o: { term: string; alias: string }) {
+    return { deleted: affected(await this.db.query(`DELETE FROM flow_term_aliases WHERE tenant_id=$1 AND workspace_id=$2 AND term=$3 AND alias=$4`, [s.tenant_id, s.workspace_id, String(o.term ?? ""), String(o.alias ?? "")])) };
   }
 
   private async ownedSources(q: Q, s: Scope, ids: string[]) {
@@ -378,15 +472,20 @@ export class Engine {
   async searchDocuments(s: Scope, o: { query: string; source_ids?: string[]; from?: string; to?: string; limit?: number; offset?: number }) {
     if (!o.query?.trim()) throw new HttpError(400, "query required");
     const limit = Math.min(Math.max(Number(o.limit) || 10, 1), 50), offset = Math.max(Number(o.offset) || 0, 0);
+    // §7.3: expand with industry dictionary + workspace aliases. The original query keeps FTS-or-substring;
+    // alias variants that are Latin-only match through FTS tokens (no loose substring like "AI" in "said").
+    const exp = expandQuery(o.query, await this.termGroups(s));
+    const fts = exp.variants, sub = exp.variants.filter((v, i) => i === 0 || /[^\x00-\x7f]/.test(v));
     const r = await this.db.query(`SELECT c.document_id, c.revision, c.chunk_index, c.char_start, c.char_end, c.source_id, c.published_at, d.title, d.url,
-          ts_rank(c.tsv, plainto_tsquery('simple', $3)) AS rank, left(c.text, 300) AS snippet
+          (SELECT max(ts_rank(c.tsv, plainto_tsquery('simple', v))) FROM unnest($3::text[]) v) AS rank, left(c.text, 300) AS snippet
         FROM flow_document_chunks c JOIN flow_documents d ON d.id=c.document_id AND d.current_revision=c.revision
-        WHERE c.tenant_id=$1 AND c.workspace_id=$2 AND (c.tsv @@ plainto_tsquery('simple', $3) OR c.text ILIKE '%'||$3||'%')
+        WHERE c.tenant_id=$1 AND c.workspace_id=$2 AND (EXISTS (SELECT 1 FROM unnest($3::text[]) v WHERE c.tsv @@ plainto_tsquery('simple', v))
+          OR EXISTS (SELECT 1 FROM unnest($9::text[]) v WHERE c.text ILIKE '%'||v||'%'))
           AND ($4::text[] IS NULL OR c.source_id = ANY($4::text[]))
           AND ($5::timestamptz IS NULL OR c.published_at >= $5) AND ($6::timestamptz IS NULL OR c.published_at < $6)
         ORDER BY rank DESC, c.published_at DESC NULLS LAST, c.document_id, c.chunk_index LIMIT $7 OFFSET $8`,
-      [s.tenant_id, s.workspace_id, o.query, o.source_ids?.length ? o.source_ids : null, o.from || null, o.to || null, limit + 1, offset]);
-    return { items: r.rows.slice(0, limit), next_offset: r.rows.length > limit ? offset + limit : null };
+      [s.tenant_id, s.workspace_id, fts, o.source_ids?.length ? o.source_ids : null, o.from || null, o.to || null, limit + 1, offset, sub]);
+    return { items: r.rows.slice(0, limit), next_offset: r.rows.length > limit ? offset + limit : null, expanded_terms: exp.matched };
   }
 
   /** Chunked read with coverage info so the agent knows what it has not seen. */
@@ -515,7 +614,10 @@ export class Engine {
     const r = await this.db.query(`SELECT r.* FROM flow_document_revisions r JOIN flow_documents d ON d.id=r.document_id
         WHERE d.tenant_id=$1 AND d.workspace_id=$2 AND d.id=$3 AND r.revision=$4`, [s.tenant_id, s.workspace_id, docId, rev]);
     if (!r.rows[0]) throw new HttpError(404, "document not found");
-    return r.rows[0];
+    // §11: a revision comes with the evidence recorded against it.
+    const ev = await this.db.query(`SELECT id, char_start, char_end, quote, created_by, created_at FROM flow_evidence WHERE tenant_id=$1 AND workspace_id=$2 AND document_id=$3 AND revision=$4 ORDER BY created_at`,
+      [s.tenant_id, s.workspace_id, docId, rev]);
+    return { ...r.rows[0], evidence: ev.rows };
   }
 
   /** Delivers pending outbox events in sequence order; at-least-once (platform dedupes). */

@@ -15,18 +15,7 @@ bun.lock
 # third-party / static assets (minified vendor bundles, generated pages)
 public/
 # Source-text contract tests (test/*.test.ts) assert exact source snippets in these files.
-# 22 of the original 34 were reformatted on 2026-10-14 without breaking any test; the 12 below
-# still break those snippet assertions when formatted and stay excluded until the tests are
-# rewritten against behaviour.
-src/components/canvas/previs/previs-sequencer.tsx
-src/pages/canvas/index.tsx
-src/pages/canvas/use-canvas-previs.ts
-src/pages/canvas/use-canvas-render-model.ts
-src/pages/projects/detail/chapters.tsx
-src/pages/projects/detail/workflow-production-workbench.tsx
-src/pages/welcome/index.tsx
-src/router.tsx
-src/styles/globals.css
-src/components/canvas/canvas-node-prompt-panel.tsx
-src/components/canvas/canvas-toolbar.tsx
-src/pages/create/creation-workspace.tsx
+# No source-snippet exclusions remain (2026-10-14): the last 12 files were
+# reformatted; their snippet tests now compare whitespace/format-normalized
+# source (test/helpers/source-contract.ts). They are still source contracts,
+# not rendering tests.

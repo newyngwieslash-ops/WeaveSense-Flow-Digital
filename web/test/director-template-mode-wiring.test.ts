@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { moduleGroupSource } from "./helpers/module-group-source";
+import "./helpers/source-contract";
+import { code, codeSlice } from "./helpers/source-contract";
 
 /**
  * 生产接线回归：模板与模式的领域函数正确，不代表真实入口用上了。
@@ -16,43 +18,37 @@ const modal = readFileSync(resolve(import.meta.dir, "../src/components/canvas/pr
 const store = readFileSync(resolve(import.meta.dir, "../src/stores/canvas/use-previs-workbench-store.ts"), "utf8");
 const styles = readFileSync(resolve(import.meta.dir, "../src/styles/globals.css"), "utf8");
 
-function slice(source: string, from: string, to: string) {
-    const start = source.indexOf(from);
-    expect(start).toBeGreaterThanOrEqual(0);
-    const end = source.indexOf(to, start + from.length);
-    expect(end).toBeGreaterThan(start);
-    return source.slice(start, end);
-}
+const slice = codeSlice;
 
 describe("新建场景必须显式选模板", () => {
     test("createPrevisShot 第一个参数是 templateId，没有默认值", () => {
-        expect(hook).toContain("const createPrevisShot = useCallback((templateId: PrevisTemplateId, position?: Position) => {");
+        expect(hook).toContainCode("const createPrevisShot = useCallback((templateId: PrevisTemplateId, position?: Position) => {");
         // 有默认模板等于又回到「无条件塞演员」。
-        expect(hook).not.toContain("templateId: PrevisTemplateId = ");
+        expect(hook).not.toContainCode("templateId: PrevisTemplateId = ");
     });
 
     test("新建走模板工厂，不再走带默认演员的 createPrevisScene", () => {
-        expect(hook).toContain("createPrevisSceneFromTemplate(templateId, `镜头 ${shotIndex}`)");
-        expect(hook).not.toContain("createPrevisScene(");
+        expect(hook).toContainCode("createPrevisSceneFromTemplate(templateId, `镜头 ${shotIndex}`)");
+        expect(hook).not.toContainCode("createPrevisScene(");
     });
 
     test("两个新建入口都先开模板选择，而不是直接建场景", () => {
-        expect(project).toContain("onOpenPrevis={() => setPrevisTemplateRequest({})}");
-        expect(project).toContain("onOpenPrevis={(position) => setPrevisTemplateRequest({ position })}");
-        expect(project).not.toContain("onOpenPrevis={() => createPrevisShot()}");
-        expect(project).not.toContain("onOpenPrevis={createPrevisShot}");
+        expect(project).toContainCode("onOpenPrevis={() => setPrevisTemplateRequest({})}");
+        expect(project).toContainCode("onOpenPrevis={(position) => setPrevisTemplateRequest({ position })}");
+        expect(project).not.toContainCode("onOpenPrevis={() => createPrevisShot()}");
+        expect(project).not.toContainCode("onOpenPrevis={createPrevisShot}");
     });
 
     test("选中模板后带着 position 建场景", () => {
         const element = slice(project, "<CanvasPrevisTemplateModal", "/>");
-        expect(element).toContain("open={Boolean(previsTemplateRequest)}");
-        expect(element).toContain("onSelect={(templateId) => createPrevisShot(templateId, previsTemplateRequest?.position)}");
+        expect(element).toContainCode("open={Boolean(previsTemplateRequest)}");
+        expect(element).toContainCode("onSelect={(templateId) => createPrevisShot(templateId, previsTemplateRequest?.position)}");
     });
 
     test("模板弹窗把 5 个模板全列出来，没有「默认」快捷项", () => {
-        expect(modal).toContain("PREVIS_TEMPLATES.map");
-        expect(modal).toContain("onSelect(template.id)");
-        expect(modal).not.toContain("默认模板");
+        expect(modal).toContainCode("PREVIS_TEMPLATES.map");
+        expect(modal).toContainCode("onSelect(template.id)");
+        expect(modal).not.toContainCode("默认模板");
     });
 });
 
@@ -60,122 +56,122 @@ describe("已有场景不触发模板选择", () => {
     test("openPrevisWorkbench 命中已存在场景时不建新场景、不弹模板", () => {
         const opener = slice(hook, "const openPrevisWorkbench = useCallback", "/** 每次保存都基于 store");
         // 只有找不到场景（孤儿节点修复）才补建。
-        expect(opener).toContain("if (!scene) {");
-        expect(opener).toContain('createPrevisSceneFromTemplate("empty"');
-        expect(opener).not.toContain("setPrevisTemplateRequest");
+        expect(opener).toContainCode("if (!scene) {");
+        expect(opener).toContainCode('createPrevisSceneFromTemplate("empty"');
+        expect(opener).not.toContainCode("setPrevisTemplateRequest");
     });
 
     test("孤儿修复用空场景兜底：用户没选过就不许塞演员", () => {
         const opener = slice(hook, "const openPrevisWorkbench = useCallback", "/** 每次保存都基于 store");
-        expect(opener).not.toContain('createPrevisSceneFromTemplate("monologue"');
-        expect(opener).not.toContain("createPrevisActor");
+        expect(opener).not.toContainCode('createPrevisSceneFromTemplate("monologue"');
+        expect(opener).not.toContainCode("createPrevisActor");
     });
 
     test("workbench 自身不含模板选择逻辑：打开已保存场景不改写内容", () => {
-        expect(workbench).not.toContain("PREVIS_TEMPLATES");
-        expect(workbench).not.toContain("createPrevisSceneFromTemplate");
+        expect(workbench).not.toContainCode("PREVIS_TEMPLATES");
+        expect(workbench).not.toContainCode("createPrevisSceneFromTemplate");
     });
 });
 
 describe("模式接线", () => {
     test("workbench 从 store 读 mode，并按 capabilities 派生显示", () => {
-        expect(workbench).toContain("const mode = usePrevisWorkbenchStore((state) => state.mode);");
-        expect(workbench).toContain("const capabilities = previsModeCapabilities(mode);");
+        expect(workbench).toContainCode("const mode = usePrevisWorkbenchStore((state) => state.mode);");
+        expect(workbench).toContainCode("const capabilities = previsModeCapabilities(mode);");
     });
 
     test("时间轴只在 capabilities.timeline 为真时渲染", () => {
-        const timeline = slice(workbench, "{capabilities.timeline ?", ") : null}");
-        expect(timeline).toContain("<PrevisSequencer");
+        const timeline = slice(workbench, "{capabilities.timeline ?", "</section>) : null}");
+        expect(timeline).toContainCode("<PrevisSequencer");
         expect(workbench.match(/<PrevisSequencer\b/g)).toHaveLength(1);
     });
 
     test("动画模式把 Transform 轨迹接入视口，隐藏演员和零长度轨迹不显示", () => {
-        expect(workbench).toContain("showMotionPaths={capabilities.timeline}");
-        expect(viewport).toContain('object.visible && (object.kind === "actor" || object.primitive === "character")');
-        expect(viewport).toContain("previsTransformPathLength(object.keyframes) > 0.001");
-        expect(viewport).toContain("<Line points={points}");
-        expect(viewport).toContain("interpolatePrevisTransform(sorted[0].transform, sorted, playhead).position");
+        expect(workbench).toContainCode("showMotionPaths={capabilities.timeline}");
+        expect(viewport).toContainCode('object.visible && (object.kind === "actor" || object.primitive === "character")');
+        expect(viewport).toContainCode("previsTransformPathLength(object.keyframes) > 0.001");
+        expect(viewport).toContainCode("<Line points={points}");
+        expect(viewport).toContainCode("interpolatePrevisTransform(sorted[0].transform, sorted, playhead).position");
     });
 
     test("骨骼/姿势入口只对演员开放，且由 bones 把关", () => {
         const normalizedWorkbench = workbench.replace(/\s+/g, " ");
-        expect(normalizedWorkbench).toContain('{capabilities.bones && (object.kind === "actor" || object.primitive === "character") ? ( <>');
+        expect(normalizedWorkbench).toContainCode('{capabilities.bones && (object.kind === "actor" || object.primitive === "character") ? ( <>');
         // motionClips 不得再作为放行条件：带动画的普通模型不是演员。
-        expect(workbench).not.toContain('object.primitive === "character" || motionClips.length) ? <>');
+        expect(workbench).not.toContainCode('object.primitive === "character" || motionClips.length) ? <>');
     });
 
     test("姿态模式提供全身与当前骨骼重置，不删除动画轨道", () => {
         const inspector = slice(workbench, "function ObjectInspector(", "function LightInspector(");
         const normalizedInspector = inspector.replace(/\s+/g, " ");
-        expect(normalizedInspector).toContain('onClick={() => applyPose("stand")}> 重置姿态 </Button>');
-        expect(inspector).toContain("delete boneOverrides[selectedBoneId]");
-        expect(normalizedInspector).toContain("> 重置当前骨骼 </Button>");
-        expect(inspector).not.toContain("boneTracks: []");
+        expect(normalizedInspector).toContainCode('onClick={() => applyPose("stand")}> 重置姿态 </Button>');
+        expect(inspector).toContainCode("delete boneOverrides[selectedBoneId]");
+        expect(normalizedInspector).toContainCode("> 重置当前骨骼 </Button>");
+        expect(inspector).not.toContainCode("boneTracks: []");
     });
 
     test("动作片段与骨骼入口解耦：任何带 Clip 的对象都能调播放速度/循环", () => {
-        expect(workbench.replace(/\s+/g, " ")).toContain('{motionClips.length ? ( <> <Field label="动作片段">');
+        expect(workbench.replace(/\s+/g, " ")).toContainCode('{motionClips.length ? ( <> <Field label="动作片段">');
     });
 
     test("关键帧入口由 keyframes 把关", () => {
-        expect(workbench.replace(/\s+/g, " ")).toContain("{capabilities.keyframes ? ( <>");
+        expect(workbench.replace(/\s+/g, " ")).toContainCode("{capabilities.keyframes ? ( <>");
     });
 
     test("渲染视图下拉按当前模式过滤，而不是写死五项", () => {
-        expect(workbench).toContain("PREVIS_RENDER_MODE_LABELS.filter((option) => capabilities.renderModes.includes(option.value))");
-        expect(workbench).toContain("options={renderModeOptions}");
+        expect(workbench).toContainCode("PREVIS_RENDER_MODE_LABELS.filter((option) => capabilities.renderModes.includes(option.value))");
+        expect(workbench).toContainCode("options={renderModeOptions}");
     });
 
     test("dock 不是绕过模式门控的第二条路径：渲染视图按钮同样按 renderModes 过滤", () => {
-        expect(dock).toContain("renderModes: PrevisRenderMode[];");
-        expect(dock).toContain("RENDER_VIEW_BUTTONS.filter((item) => renderModes.includes(item.mode))");
+        expect(dock).toContainCode("renderModes: PrevisRenderMode[];");
+        expect(dock).toContainCode("RENDER_VIEW_BUTTONS.filter((item) => renderModes.includes(item.mode))");
         // 写死的按钮会绕过门控。
-        expect(dock).not.toContain('onClick={() => onRenderModeChange("pose")}');
+        expect(dock).not.toContainCode('onClick={() => onRenderModeChange("pose")}');
         // 工作台当前挂的是 PrevisCanvasDock：它不提供渲染视图入口，唯一入口是已按模式过滤的顶栏下拉。
         const canvasDock = readFileSync(resolve(import.meta.dir, "../src/components/canvas/previs/previs-canvas-dock.tsx"), "utf8");
-        expect(workbench).toContain("<PrevisCanvasDock");
-        expect(canvasDock).not.toContain("onRenderModeChange");
-        expect(workbench).not.toContain("<PrevisViewportDock");
+        expect(workbench).toContainCode("<PrevisCanvasDock");
+        expect(canvasDock).not.toContainCode("onRenderModeChange");
+        expect(workbench).not.toContainCode("<PrevisViewportDock");
     });
 
     test("store 层夹住 renderMode：任何路径都无法设置当前模式不允许的视图", () => {
-        expect(store).toContain("setRenderMode: (renderMode) => set((state) => (previsModeCapabilities(state.mode).renderModes.includes(renderMode) ? { renderMode } : {})),");
+        expect(store).toContainCode("setRenderMode: (renderMode) => set((state) => (previsModeCapabilities(state.mode).renderModes.includes(renderMode) ? { renderMode } : {})),");
     });
 
     test("摄影机模式固定显示 shot/camera 检查器", () => {
-        expect(workbench).toContain("selectedObject && !capabilities.cameraTools ?");
-        expect(workbench).toContain("selectedLight && !capabilities.cameraTools ?");
+        expect(workbench).toContainCode("selectedObject && !capabilities.cameraTools ?");
+        expect(workbench).toContainCode("selectedLight && !capabilities.cameraTools ?");
     });
 
     test("运镜生成只更新首尾帧并提示到动画模式继续编辑，不清空手工关键帧", () => {
-        expect(workbench).toContain("resolvePrevisCameraMoveKeyframes(item.keyframes");
-        expect(workbench).toContain("已更新运镜首尾关键帧，可在动画模式继续编辑");
-        expect(workbench).not.toContain("keyframes: [{ id: nanoid(), time: 0, transform: start }");
+        expect(workbench).toContainCode("resolvePrevisCameraMoveKeyframes(item.keyframes");
+        expect(workbench).toContainCode("已更新运镜首尾关键帧，可在动画模式继续编辑");
+        expect(workbench).not.toContainCode("keyframes: [{ id: nanoid(), time: 0, transform: start }");
     });
 
     test("小屏通过 dock 开合属性检查器，姿态与骨骼入口仍可达", () => {
         const workbenchCss = readFileSync(resolve(import.meta.dir, "../src/components/canvas/previs/canvas-previs-workbench.css"), "utf8");
-        expect(workbench).toContain('className={`pv-panel pv-panel--right thin-scrollbar ${inspectorOpen ? "is-open" : ""}`}');
+        expect(workbench).toContainCode('className={`pv-panel pv-panel--right thin-scrollbar ${inspectorOpen ? "is-open" : ""}`}');
         expect(workbench).toMatch(/onToggleInspector=\{\(\) =>\s*\(?\s*compactLayout\s*\?\s*setInspectorOpen\(\(value\) => !value\)\s*:\s*setInspectorDocked\(\(value\) => !value\)\s*\)?\s*\}/);
         expect(workbenchCss).toMatch(/\.pv-panel--right\.is-open\s*\{\s*transform:\s*translateX\(0\);\s*\}/);
-        expect(workbench).not.toContain("border-l max-lg:hidden");
+        expect(workbench).not.toContainCode("border-l max-lg:hidden");
     });
 
     test("store 的 setMode 走 resolvePrevisModeTransition，清理不靠组件自觉", () => {
-        expect(store).toContain("setMode: (mode) => set((state) => resolvePrevisModeTransition({ mode, playing: state.playing, autoKey: state.autoKey, renderMode: state.renderMode })),");
+        expect(store).toContainCode("setMode: (mode) => set((state) => resolvePrevisModeTransition({ mode, playing: state.playing, autoKey: state.autoKey, renderMode: state.renderMode })),");
     });
 
     test("mode 不写进 PrevisScene：类型文件里没有 mode 字段", () => {
         const types = readFileSync(resolve(import.meta.dir, "../src/types/previs.ts"), "utf8");
         const sceneType = slice(types, "export type PrevisScene = {", "};");
-        expect(sceneType).not.toContain("mode");
+        expect(sceneType).not.toContainCode("mode");
     });
 
     test("切模式不重建会话：初始化 effect 的依赖里没有 mode", () => {
         const initEffect = slice(workbench, "// 会话初始化只认 scene id", "// 打开会话时检查合法本地恢复候选");
         // 依赖里出现 mode 就意味着换视图会 resetWorkbench + 清空 history。
-        expect(initEffect).toContain("}, [open, resetWorkbench, scene, writeDraft]);");
-        expect(initEffect).not.toContain("mode");
+        expect(initEffect).toContainCode("}, [open, resetWorkbench, scene, writeDraft]);");
+        expect(initEffect).not.toContainCode("mode");
     });
 
     test("draft/history/save 的生命周期 effect 一律不依赖 mode", () => {
@@ -193,15 +189,15 @@ describe("模式接线", () => {
 
 describe("异步预演台输出使用最新权威状态", () => {
     test("上传后重新核验节点与场景，并把预览引用合入最新 scene", () => {
-        expect(hook).toContain("const sourceNodeAtStart = nodesRef.current.find");
-        expect(hook).toContain("const outputProjectId = projectId;");
-        expect(hook).toContain("projectIdRef.current !== outputProjectId");
-        expect(hook).toContain("const outputProject = useCanvasStore.getState().projects.find((item) => item.id === outputProjectId);");
-        expect(hook).toContain("const sourceNode = nodesRef.current.find((item) => item.id === sourceNodeId);");
-        expect(hook).toContain("const latestScene = outputProject?.previsScenes.find");
-        expect(hook).toContain("mergePrevisOutputPreview(latestScene");
-        expect(hook).toContain("savePrevisScene(mergedScene);");
-        expect(hook).not.toContain("savePrevisScene({ ...output.scene");
+        expect(hook).toContainCode("const sourceNodeAtStart = nodesRef.current.find");
+        expect(hook).toContainCode("const outputProjectId = projectId;");
+        expect(hook).toContainCode("projectIdRef.current !== outputProjectId");
+        expect(hook).toContainCode("const outputProject = useCanvasStore.getState().projects.find((item) => item.id === outputProjectId);");
+        expect(hook).toContainCode("const sourceNode = nodesRef.current.find((item) => item.id === sourceNodeId);");
+        expect(hook).toContainCode("const latestScene = outputProject?.previsScenes.find");
+        expect(hook).toContainCode("mergePrevisOutputPreview(latestScene");
+        expect(hook).toContainCode("savePrevisScene(mergedScene);");
+        expect(hook).not.toContainCode("savePrevisScene({ ...output.scene");
     });
 });
 
@@ -209,42 +205,42 @@ describe("模式控件可发现、可键盘、小屏可达", () => {
     const nav = slice(workbench, '<nav className="previs-mode-switch"', "</nav>");
 
     test("是真实 button 且用 aria-pressed 表达当前模式", () => {
-        expect(nav).toContain('type="button"');
-        expect(nav).toContain("aria-pressed={mode === item.mode}");
+        expect(nav).toContainCode('type="button"');
+        expect(nav).toContainCode("aria-pressed={mode === item.mode}");
     });
 
     test("不用 primary 表示普通选中，只加 is-active class", () => {
-        expect(nav).toContain('className={`previs-mode-switch-button ${mode === item.mode ? "is-active" : ""}`}');
-        expect(nav).not.toContain('type="primary"');
+        expect(nav).toContainCode('className={`previs-mode-switch-button ${mode === item.mode ? "is-active" : ""}`}');
+        expect(nav).not.toContainCode('type="primary"');
     });
 
     test("小屏不隐藏：整个开关没有 max-lg:hidden", () => {
-        expect(nav).not.toContain("max-lg:hidden");
+        expect(nav).not.toContainCode("max-lg:hidden");
     });
 
     test("鼠标点选后释放焦点：否则交互控件守卫会吃掉 W/E/R/Delete", () => {
-        expect(nav).toContain("releasePrevisFocusAfterPointer(event)");
+        expect(nav).toContainCode("releasePrevisFocusAfterPointer(event)");
     });
 
     test("焦点释放规则集中在共享 helper，不在按钮里各写一遍 blur", () => {
         // 无条件 blur 会破坏键盘 Tab 序列，判据必须留在 helper 内部。
-        expect(nav).not.toContain("event.currentTarget.blur()");
+        expect(nav).not.toContainCode("event.currentTarget.blur()");
     });
 
     test("有可见文字标签与 hint title，不是纯图标", () => {
-        expect(nav).toContain("{item.label}");
-        expect(nav).toContain("title={item.hint}");
-        expect(nav).toContain('aria-label="预演台模式"');
+        expect(nav).toContainCode("{item.label}");
+        expect(nav).toContainCode("title={item.hint}");
+        expect(nav).toContainCode('aria-label="预演台模式"');
     });
 
     test("带 data-mode 测试锚点：E2E 不靠中文文案定位模式按钮", () => {
-        expect(nav).toContain("data-mode={item.mode}");
+        expect(nav).toContainCode("data-mode={item.mode}");
     });
 
     test("模式与模板样式只用主题感知语义 token，不新增硬编码颜色", () => {
         const block = slice(styles, "/* 一级模式切换。", ".previs-actor-colors {");
-        expect(block).toContain("var(--control-selected-bg)");
-        expect(block).toContain("var(--control-focus-ring)");
+        expect(block).toContainCode("var(--control-selected-bg)");
+        expect(block).toContainCode("var(--control-focus-ring)");
         expect(block).not.toMatch(/rgba?\(/);
         expect(block).not.toMatch(/#[0-9a-fA-F]{3,8}/);
     });

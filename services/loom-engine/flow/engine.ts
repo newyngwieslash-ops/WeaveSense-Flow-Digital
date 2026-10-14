@@ -12,6 +12,18 @@ import { defaultArticleReader, documentVideoId, enrichmentStatus, isSubtitleLang
 /** Media download attempts (initial + retries) before a failed attachment is left as is. */
 export const MEDIA_MAX_ATTEMPTS = 4;
 export const OCR_MAX_ATTEMPTS = 3;
+/** PRD §6.2 collection job states. `queued` is the PRD's "pending". */
+export const JOB_STATES = ["queued", "leased", "running", "retry_wait", "partial", "reconciliation_required", "cancel_requested", "cancelled", "succeeded", "failed"] as const;
+export const ACTIVE_JOB_STATES = ["queued", "leased", "running", "retry_wait", "reconciliation_required", "cancel_requested"];
+export const MISFIRE_POLICIES = ["coalesce", "skip", "catch_up"] as const;
+/** catch_up replays at most this many missed windows (never an unbounded backlog). */
+export const MAX_CATCH_UP = 3;
+/** skip runs a due window only if it is at most this late. */
+export const MISFIRE_GRACE_MS = 120_000;
+/** Retry backoff for retry_wait: 30s·2^(attempt-1), capped at 30 min. */
+export const retryDelayMs = (attempt: number) => Math.min(30 * 60_000, 30_000 * 2 ** Math.max(0, attempt - 1));
+/** A commit whose outcome is unknown (connection dropped mid-COMMIT etc.). */
+export const isUnknownOutcome = (e: any) => !(e instanceof HttpError) && /connection (terminated|reset|lost)|ECONNRESET|EPIPE|socket hang up|outcome unknown/i.test(String(e?.message ?? e));
 const MEDIA_RETRYABLE = new Set(["failed", "timeout"]);
 const isImage = (m: MediaRef) => m.type === "image" || /^image\//.test(m.content_type ?? "");
 
@@ -38,14 +50,32 @@ export function classifyFailure(error: string): "auth" | "rate_limited" | "trans
   return "permanent";
 }
 
+class CancelRequested extends Error {}
+
+/**
+ * Operation status shown to users (PRD §5.2: queued, running, retrying, completed→succeeded,
+ * partial, failed, cancelled) aggregated from the job states.
+ */
+export function operationStatus(st: string[]): string {
+  if (st.every((x) => x === "succeeded")) return "succeeded";
+  if (st.every((x) => x === "cancelled")) return "cancelled";
+  if (st.some((x) => x === "cancel_requested")) return "cancel_requested";
+  if (st.some((x) => x === "reconciliation_required")) return "reconciliation_required";
+  if (st.some((x) => x === "leased" || x === "running")) return "running";
+  if (st.some((x) => x === "retry_wait")) return "retrying";
+  if (st.some((x) => x === "queued")) return "queued";
+  if (st.every((x) => x === "succeeded" || x === "partial")) return "partial";
+  if (st.some((x) => x === "succeeded" || x === "partial")) return "partial";
+  return "failed";
+}
+
 export const defaultFetcher: Fetcher = (url, sourceId, src) => connectorFetcher(connectorEnvFromProcess())(url, sourceId, src);
 export type Extractor = (url: string) => Promise<string>;
 const defaultExtractor: Extractor = async (url) => (await import("../src/lib/server/http.ts")).fetchText(url, 15000);
 
-export class HttpError extends Error {
-  status: number;
-  constructor(status: number, msg: string) { super(msg); this.status = status; }
-}
+import { HttpError } from "./errors.ts";
+import { nextCron, checkTimezone } from "./cron.ts";
+export { HttpError };
 
 export const newId = (p: string) => p + randomBytes(10).toString("hex");
 const CHUNK = 1200;
@@ -94,7 +124,7 @@ export class Engine {
       const r = await q.query(`UPDATE flow_sources SET status='revoked', revoked_reason=$4 WHERE tenant_id=$1 AND workspace_id=$2 AND id=$3 RETURNING id`, [s.tenant_id, s.workspace_id, id, reason.slice(0, 200)]);
       if (!r.rows[0]) throw new HttpError(404, "source not found");
       const c = await q.query(`UPDATE flow_collection_runs SET status='cancelled', finished_at=now(), lease_owner=NULL, fencing_token=fencing_token+1, error='source revoked'
-          WHERE tenant_id=$1 AND source_id=$2 AND status IN ('queued','running')`, [s.tenant_id, id]);
+          WHERE tenant_id=$1 AND source_id=$2 AND status IN ('queued','leased','running','retry_wait','cancel_requested')`, [s.tenant_id, id]);
       return { source_id: id, status: "revoked", cancelled_runs: affected(c) };
     });
   }
@@ -297,7 +327,7 @@ export class Engine {
           WHERE tenant_id=$1 AND workspace_id=$2 AND id=$3 RETURNING *`, [s.tenant_id, s.workspace_id, id, next.title, next.status, JSON.stringify(next.config)])).rows[0];
       if (next.status === "paused") {
         await q.query(`UPDATE flow_collection_runs SET status='cancelled', finished_at=now(), lease_owner=NULL, fencing_token=fencing_token+1, error='source paused'
-            WHERE tenant_id=$1 AND source_id=$2 AND status='queued'`, [s.tenant_id, id]);
+            WHERE tenant_id=$1 AND source_id=$2 AND status IN ('queued','retry_wait')`, [s.tenant_id, id]);
       }
       await this.emit(q, s, `src:${id}`, `src:${id}:${u.revision}`, "source.updated", { source_id: id, revision: Number(u.revision), status: u.status });
       return { ...u, replayed: false, changed: true };
@@ -373,17 +403,65 @@ export class Engine {
     });
   }
 
-  async createSchedule(s: Scope, actor: string, policy: string, input: { source_ids: string[]; interval_seconds: number; start_at?: string }) {
+  /** Validates a schedule spec (PRD §6.1): interval or 5-field cron in an IANA timezone, plus misfire_policy. */
+  scheduleSpec(input: { interval_seconds?: number; cron?: string; timezone?: string; misfire_policy?: string }) {
+    const tz = input.timezone || "Asia/Shanghai";
+    checkTimezone(tz);
+    const misfire = input.misfire_policy || "coalesce";
+    if (!(MISFIRE_POLICIES as readonly string[]).includes(misfire)) throw new HttpError(400, `misfire_policy must be one of ${MISFIRE_POLICIES.join("|")}`);
+    if (input.cron) {
+      if (input.interval_seconds != null) throw new HttpError(400, "give either cron or interval_seconds, not both");
+      nextCron(input.cron, tz, this.now()); // validates
+      return { kind: "cron", cron: String(input.cron).trim(), interval_seconds: null, timezone: tz, misfire_policy: misfire };
+    }
+    if (!(Number(input.interval_seconds) >= 60)) throw new HttpError(400, "interval_seconds >= 60");
+    return { kind: "interval", cron: null, interval_seconds: Number(input.interval_seconds), timezone: tz, misfire_policy: misfire };
+  }
+
+  async createSchedule(s: Scope, actor: string, policy: string, input: { source_ids: string[]; interval_seconds?: number; cron?: string; timezone?: string; misfire_policy?: string; start_at?: string }) {
     const ids = [...new Set(input.source_ids ?? [])].sort();
-    if (!(input.interval_seconds >= 60)) throw new HttpError(400, "interval_seconds >= 60");
+    const spec = this.scheduleSpec(input);
     return this.db.tx(async (q) => {
       await this.ownedSources(q, s, ids);
       const id = newId("sch_");
-      const start = input.start_at ? new Date(input.start_at) : this.now();
-      await q.query(`INSERT INTO flow_schedules (id, tenant_id, workspace_id, source_ids, interval_seconds, next_run_at, grant_actor, policy_version)
-                     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`, [id, s.tenant_id, s.workspace_id, ids, input.interval_seconds, start.toISOString(), actor, policy]);
+      const base = input.start_at ? new Date(input.start_at) : this.now();
+      const start = spec.kind === "cron" ? nextCron(spec.cron!, spec.timezone, new Date(base.getTime() - 60_000)) : base;
+      await q.query(`INSERT INTO flow_schedules (id, tenant_id, workspace_id, source_ids, interval_seconds, next_run_at, grant_actor, policy_version, kind, cron, timezone, misfire_policy)
+                     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+        [id, s.tenant_id, s.workspace_id, ids, spec.interval_seconds, start.toISOString(), actor, policy, spec.kind, spec.cron, spec.timezone, spec.misfire_policy]);
       return (await q.query(`SELECT * FROM flow_schedules WHERE id=$1`, [id])).rows[0];
     });
+  }
+
+  /**
+   * Due windows of a schedule at `now` and the next fire time after the last one.
+   * misfire_policy: coalesce (default) → one catch-up run for the latest missed window;
+   * skip → missed windows are dropped, only a window at most MISFIRE_GRACE_MS late runs;
+   * catch_up → the latest MAX_CATCH_UP missed windows each run once.
+   */
+  dueWindows(sc: any, now: Date): { run: Date[]; next: Date } {
+    const all: Date[] = [];
+    let at = new Date(sc.next_run_at);
+    if (sc.kind === "cron") {
+      // Never enumerate more than 2 days of backlog: only the latest windows can run anyway.
+      const floor = new Date(now.getTime() - 2 * 86400_000);
+      if (at < floor) at = nextCron(sc.cron, sc.timezone, floor);
+      while (at <= now && all.length < 5000) { all.push(at); at = nextCron(sc.cron, sc.timezone, at); }
+    } else {
+      const step = sc.interval_seconds * 1000;
+      const behind = Math.max(0, Math.floor((now.getTime() - at.getTime()) / step));
+      const first = Math.max(0, behind - MAX_CATCH_UP + 1);
+      for (let k = first; k <= behind; k++) all.push(new Date(at.getTime() + k * step));
+      at = new Date(at.getTime() + (behind + 1) * step);
+    }
+    const last = all[all.length - 1];
+    let run: Date[] = [];
+    if (last) {
+      if (sc.misfire_policy === "catch_up") run = all.slice(-MAX_CATCH_UP);
+      else if (sc.misfire_policy === "skip") run = now.getTime() - last.getTime() <= MISFIRE_GRACE_MS ? [last] : [];
+      else run = [last];
+    }
+    return { run, next: at };
   }
 
   async listSchedules(s: Scope) {
@@ -413,42 +491,96 @@ export class Engine {
       const due = await q.query(`SELECT * FROM flow_schedules WHERE enabled AND next_run_at <= $1 ORDER BY next_run_at LIMIT $2 FOR UPDATE SKIP LOCKED`, [now.toISOString(), limit]);
       let created = 0;
       for (const sc of due.rows as any[]) {
-        const step = sc.interval_seconds * 1000;
-        let at = new Date(sc.next_run_at).getTime();
-        const behind = Math.floor((now.getTime() - at) / step);
-        if (behind > 0) at += behind * step;
-        const scheduledAt = new Date(at).toISOString();
-        const key = `${sc.tenant_id}:${sc.id}:${scheduledAt}`;
-        const op = newId("op_");
-        for (const sid of sc.source_ids as string[]) {
-          const r = await q.query(`INSERT INTO flow_collection_runs (id, operation_id, tenant_id, workspace_id, source_id, idempotency_key, request_hash, schedule_id, scheduled_at)
-             SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9 WHERE EXISTS (SELECT 1 FROM flow_sources WHERE id=$5 AND tenant_id=$3 AND status='active' AND (backoff_until IS NULL OR backoff_until <= $10))
-             ON CONFLICT DO NOTHING`, [newId("job_"), op, sc.tenant_id, sc.workspace_id, sid, key, sha(key), sc.id, scheduledAt, now.toISOString()]);
-          created += affected(r);
+        const { run: windows, next } = this.dueWindows(sc, now);
+        for (const w of windows) {
+          const scheduledAt = w.toISOString();
+          const key = `${sc.tenant_id}:${sc.id}:${scheduledAt}`;
+          const op = newId("op_");
+          for (const sid of sc.source_ids as string[]) {
+            const r = await q.query(`INSERT INTO flow_collection_runs (id, operation_id, tenant_id, workspace_id, source_id, idempotency_key, request_hash, schedule_id, scheduled_at)
+               SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9 WHERE EXISTS (SELECT 1 FROM flow_sources WHERE id=$5 AND tenant_id=$3 AND status='active' AND (backoff_until IS NULL OR backoff_until <= $10))
+               ON CONFLICT DO NOTHING`, [newId("job_"), op, sc.tenant_id, sc.workspace_id, sid, key, sha(key), sc.id, scheduledAt, now.toISOString()]);
+            created += affected(r);
+          }
         }
-        await q.query(`UPDATE flow_schedules SET next_run_at=$2 WHERE id=$1`, [sc.id, new Date(at + step).toISOString()]);
+        await q.query(`UPDATE flow_schedules SET next_run_at=$2 WHERE id=$1`, [sc.id, next.toISOString()]);
       }
       return created;
     });
   }
 
-  /** Claims one queued run or a run whose lease expired (crash recovery). */
+  /**
+   * Claims one job: queued, retry_wait whose retry_at has come, or a leased/running job whose
+   * lease expired (crash recovery). queued/retry_wait → leased, with a new fencing token.
+   * cancel_requested jobs whose worker died are finalized to cancelled here.
+   */
   async claim(owner: string, leaseMs = 60_000) {
     const now = this.now();
     return this.db.tx(async (q) => {
+      await q.query(`UPDATE flow_collection_runs SET status='cancelled', finished_at=$1, lease_owner=NULL, fencing_token=fencing_token+1
+          WHERE status='cancel_requested' AND (lease_expires_at IS NULL OR lease_expires_at < $1)`, [now.toISOString()]);
       const r = await q.query(`SELECT id FROM flow_collection_runs
-          WHERE status='queued' OR (status='running' AND lease_expires_at < $1)
+          WHERE status='queued' OR (status='retry_wait' AND retry_at <= $1) OR (status IN ('leased','running') AND lease_expires_at < $1)
           ORDER BY created_at LIMIT 1 FOR UPDATE SKIP LOCKED`, [now.toISOString()]);
       if (!r.rows[0]) return null;
-      const u = await q.query(`UPDATE flow_collection_runs SET status='running', lease_owner=$2, lease_expires_at=$3,
+      const u = await q.query(`UPDATE flow_collection_runs SET status='leased', lease_owner=$2, lease_expires_at=$3, heartbeat_at=$4, retry_at=NULL,
           fencing_token=fencing_token+1, attempts=attempts+1 WHERE id=$1 RETURNING *`,
-        [r.rows[0].id, owner, new Date(now.getTime() + leaseMs).toISOString()]);
+        [r.rows[0].id, owner, new Date(now.getTime() + leaseMs).toISOString(), now.toISOString()]);
       return u.rows[0];
     });
   }
 
+  /**
+   * leased → running, or a heartbeat on a running job. Must carry the latest fencing token.
+   * Returns "cancel" when the job was asked to stop (the worker then finalizes via execute/stop).
+   */
+  async heartbeat(run: any, leaseMs = 60_000): Promise<"ok" | "cancel" | "stale"> {
+    const now = this.now();
+    return this.db.tx(async (q) => {
+      const cur = (await q.query(`SELECT status, fencing_token FROM flow_collection_runs WHERE id=$1 FOR UPDATE`, [run.id])).rows[0];
+      if (!cur || Number(cur.fencing_token) !== Number(run.fencing_token)) return "stale";
+      if (cur.status === "cancel_requested") return "cancel";
+      if (cur.status !== "leased" && cur.status !== "running") return "stale";
+      await q.query(`UPDATE flow_collection_runs SET status='running', heartbeat_at=$2, lease_expires_at=$3 WHERE id=$1`,
+        [run.id, now.toISOString(), new Date(now.getTime() + leaseMs).toISOString()]);
+      return "ok";
+    });
+  }
+
+  /** cancel_requested → cancelled, confirmed by the fenced worker that stopped. */
+  private async confirmCancel(run: any) {
+    return this.db.tx(async (q) => {
+      const r = await q.query(`UPDATE flow_collection_runs SET status='cancelled', finished_at=now(), lease_owner=NULL
+          WHERE id=$1 AND fencing_token=$2 AND status='cancel_requested'`, [run.id, run.fencing_token]);
+      if (affected(r)) await this.emit(q, run, run.operation_id, run.id, "operation.cancelled", { cancelled: 1, confirmed_by_worker: true });
+      return { status: affected(r) ? "cancelled" : "stale" };
+    });
+  }
+
+  /**
+   * Resolves reconciliation_required jobs: the commit either landed (its collection.completed
+   * outbox event exists → succeeded) or did not (→ queued again, cursor untouched).
+   */
+  async reconcile(limit = 20) {
+    const rows = (await this.db.query(`SELECT id, tenant_id, workspace_id, operation_id FROM flow_collection_runs WHERE status='reconciliation_required' ORDER BY created_at LIMIT $1`, [limit])).rows as any[];
+    const out: { id: string; status: string }[] = [];
+    for (const r of rows) {
+      await this.db.tx(async (q) => {
+        const done = (await q.query(`SELECT 1 FROM flow_outbox WHERE job_id=$1 AND type='collection.completed' LIMIT 1`, [r.id])).rows.length > 0;
+        const st = done ? "succeeded" : "queued";
+        const u = await q.query(`UPDATE flow_collection_runs SET status=$2, lease_owner=NULL, finished_at=CASE WHEN $2='succeeded' THEN coalesce(finished_at, now()) ELSE NULL END
+            WHERE id=$1 AND status='reconciliation_required'`, [r.id, st]);
+        if (affected(u)) out.push({ id: r.id, status: st });
+      });
+    }
+    return out;
+  }
+
   /** Executes a claimed run. All writes + cursor + outbox commit atomically, guarded by fencing token. */
   async execute(run: any, hooks: { beforeCommit?: () => void | Promise<void> } = {}) {
+    const hb = await this.heartbeat(run);
+    if (hb === "cancel") return this.confirmCancel(run);
+    if (hb === "stale") throw new HttpError(409, "stale lease (fencing token mismatch)");
     const src = (await this.db.query(`SELECT * FROM flow_sources WHERE id=$1 AND tenant_id=$2`, [run.source_id, run.tenant_id])).rows[0];
     if (!src || src.status !== "active") return this.fail(run, "source revoked");
     const cursor = (await this.db.query(`SELECT last_external_id, feed_etag, feed_last_modified, feed_validator_identity FROM flow_source_cursors WHERE source_id=$1 AND tenant_id=$2`, [src.id, run.tenant_id])).rows[0];
@@ -464,6 +596,7 @@ export class Engine {
     }
     return this.db.tx(async (q) => {
       const cur = await q.query(`SELECT fencing_token, status FROM flow_collection_runs WHERE id=$1 FOR UPDATE`, [run.id]);
+      if (cur.rows[0]?.status === "cancel_requested" && Number(cur.rows[0].fencing_token) === Number(run.fencing_token)) throw new CancelRequested();
       if (cur.rows[0]?.status !== "running" || Number(cur.rows[0].fencing_token) !== Number(run.fencing_token)) {
         throw new HttpError(409, "stale lease (fencing token mismatch)");
       }
@@ -509,9 +642,13 @@ export class Engine {
         await q.query(`UPDATE flow_source_cursors SET feed_etag=$3, feed_last_modified=$4, feed_validator_identity=$5 WHERE source_id=$1 AND tenant_id=$2`,
           [src.id, run.tenant_id, feed.feed_validators.etag.slice(0, 1024), feed.feed_validators.last_modified.slice(0, 1024), feed.feed_validators.identity]);
       }
-      await q.query(`UPDATE flow_collection_runs SET status='succeeded', items_new=$2, items_revised=$3, finished_at=now(), lease_owner=NULL, collector=$4, provider=$5,
-          items_rejected=$6, not_modified=$7 WHERE id=$1`,
-        [run.id, created, revised, meta.collector, meta.provider ?? null, feed?.rejected_entries ?? 0, feed?.not_modified ?? false]);
+      // partial: the batch committed but some of it was not fully processed (rejected entries or
+      // attachments not stored; those are retried by their own media/OCR jobs).
+      const reasons = [(feed?.rejected_entries ?? 0) > 0 ? `rejected_entries=${feed!.rejected_entries}` : "", mediaUnsupported > 0 ? `media_not_stored=${mediaUnsupported}` : ""].filter(Boolean);
+      const final = reasons.length ? "partial" : "succeeded";
+      await q.query(`UPDATE flow_collection_runs SET status=$8, items_new=$2, items_revised=$3, finished_at=now(), lease_owner=NULL, collector=$4, provider=$5,
+          items_rejected=$6, not_modified=$7, partial_reason=$9 WHERE id=$1`,
+        [run.id, created, revised, meta.collector, meta.provider ?? null, feed?.rejected_entries ?? 0, feed?.not_modified ?? false, final, reasons.join(",") || null]);
       if (src.kind !== "rss" && items.length) {
         await q.query(`INSERT INTO flow_connector_samples (id, tenant_id, workspace_id, kind, source_id, run_id, collector, provider, mode, items, media_unsupported, sample)
             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) ON CONFLICT (run_id) DO NOTHING`,
@@ -521,17 +658,38 @@ export class Engine {
       await q.query(`UPDATE flow_sources SET consecutive_failures=0, last_error=NULL, backoff_until=NULL WHERE id=$1`, [src.id]);
       await this.emit(q, run, run.operation_id, run.id, "collection.completed", { source_id: src.id, items_new: created, items_revised: revised });
       if (hooks.beforeCommit) await hooks.beforeCommit();
-      return { status: "succeeded", items_new: created, items_revised: revised };
+      return { status: final, items_new: created, items_revised: revised };
+    }).catch(async (err) => {
+      if (err instanceof CancelRequested) return this.confirmCancel(run);
+      if (isUnknownOutcome(err)) {
+        // We cannot tell whether COMMIT landed: park the job; reconcile() decides from the outbox.
+        await this.db.query(`UPDATE flow_collection_runs SET status='reconciliation_required', error=$3 WHERE id=$1 AND fencing_token=$2 AND status IN ('leased','running')`,
+          [run.id, run.fencing_token, String(err?.message ?? err).slice(0, 500)]);
+        return { status: "reconciliation_required" };
+      }
+      throw err;
     });
   }
 
   private async fail(run: any, error: string) {
     return this.db.tx(async (q) => {
-      const r = await q.query(`UPDATE flow_collection_runs SET status='failed', error=$3, finished_at=now(), lease_owner=NULL
-          WHERE id=$1 AND fencing_token=$2 AND status='running'`, [run.id, run.fencing_token, error.slice(0, 500)]);
-      if (!affected(r)) return { status: "stale" };
-      await q.query(`UPDATE flow_sources SET consecutive_failures=consecutive_failures+1, last_error=$2 WHERE id=$1`, [run.source_id, error.slice(0, 500)]);
       const cls = classifyFailure(error);
+      const cur = (await q.query(`SELECT status, attempts, max_attempts FROM flow_collection_runs WHERE id=$1 AND fencing_token=$2 FOR UPDATE`, [run.id, run.fencing_token])).rows[0];
+      if (cur?.status === "cancel_requested") {
+        await q.query(`UPDATE flow_collection_runs SET status='cancelled', finished_at=now(), lease_owner=NULL WHERE id=$1`, [run.id]);
+        await this.emit(q, run, run.operation_id, run.id, "operation.cancelled", { cancelled: 1, confirmed_by_worker: true });
+        return { status: "cancelled" };
+      }
+      if (!cur || (cur.status !== "running" && cur.status !== "leased")) return { status: "stale" };
+      const retryable = (cls === "rate_limited" || cls === "transient") && Number(cur.attempts) < Number(cur.max_attempts);
+      if (retryable) {
+        // Retryable: retry_wait until retry_at, then the job is claimable again (→ leased).
+        await q.query(`UPDATE flow_collection_runs SET status='retry_wait', error=$2, retry_at=$3, lease_owner=NULL WHERE id=$1`,
+          [run.id, error.slice(0, 500), new Date(this.now().getTime() + retryDelayMs(Number(cur.attempts))).toISOString()]);
+      } else {
+        await q.query(`UPDATE flow_collection_runs SET status='failed', error=$2, finished_at=now(), lease_owner=NULL WHERE id=$1`, [run.id, error.slice(0, 500)]);
+      }
+      await q.query(`UPDATE flow_sources SET consecutive_failures=consecutive_failures+1, last_error=$2 WHERE id=$1`, [run.source_id, error.slice(0, 500)]);
       if (cls === "auth") {
         // Credential invalid/revoked: pause until an operator fixes it (resume = re-activate source).
         await q.query(`UPDATE flow_sources SET status='paused', paused_reason='credential_invalid' WHERE id=$1 AND status='active'`, [run.source_id]);
@@ -540,6 +698,10 @@ export class Engine {
         await q.query(`UPDATE flow_sources SET backoff_until = now() + LEAST(interval '6 hours', interval '1 minute' * power(2, LEAST(consecutive_failures, 12) - 1)),
             status = CASE WHEN consecutive_failures >= 8 THEN 'paused' ELSE status END,
             paused_reason = CASE WHEN consecutive_failures >= 8 THEN 'too_many_failures' ELSE paused_reason END WHERE id=$1`, [run.source_id]);
+      }
+      if (retryable) {
+        await this.emit(q, run, run.operation_id, run.id, "operation.retrying", { error: error.slice(0, 500), class: cls, attempt: Number(cur.attempts) });
+        return { status: "retry_wait", error };
       }
       await this.emit(q, run, run.operation_id, run.id, "operation.failed", { error: error.slice(0, 500), class: cls });
       return { status: "failed", error };
@@ -592,14 +754,15 @@ export class Engine {
       coverage: { total_chars: full.length, returned_chars: text.length, truncated: off + text.length < full.length, next_offset: off + text.length < full.length ? off + text.length : null } };
   }
 
-  async previewMonitor(s: Scope, o: { name?: string; keywords: string[]; source_ids: string[]; interval_seconds: number; timezone?: string }) {
+  async previewMonitor(s: Scope, o: { name?: string; keywords: string[]; source_ids: string[]; interval_seconds: number; timezone?: string; misfire_policy?: string }) {
     const ids = [...new Set(o.source_ids ?? [])].sort();
     if (!o.keywords?.length) throw new HttpError(400, "keywords required");
     if (!(o.interval_seconds >= 300)) throw new HttpError(400, "interval_seconds >= 300");
     await this.ownedSources(this.db, s, ids);
     const tz = o.timezone || "UTC";
     try { new Intl.DateTimeFormat("en", { timeZone: tz }); } catch { throw new HttpError(400, "invalid timezone"); }
-    const spec = { name: o.name || o.keywords.join(", "), keywords: o.keywords, source_ids: ids, interval_seconds: o.interval_seconds, timezone: tz };
+    const misfire = this.scheduleSpec({ interval_seconds: o.interval_seconds, timezone: tz, misfire_policy: o.misfire_policy }).misfire_policy;
+    const spec = { name: o.name || o.keywords.join(", "), keywords: o.keywords, source_ids: ids, interval_seconds: o.interval_seconds, timezone: tz, misfire_policy: misfire };
     const id = newId("mpv_"), now = this.now();
     await this.db.query(`INSERT INTO flow_monitor_previews (id, tenant_id, workspace_id, spec, expires_at) VALUES ($1,$2,$3,$4,$5)`,
       [id, s.tenant_id, s.workspace_id, JSON.stringify(spec), new Date(now.getTime() + 3600_000).toISOString()]);
@@ -623,8 +786,9 @@ export class Engine {
       const spec = typeof pv.spec === "string" ? JSON.parse(pv.spec) : pv.spec;
       await this.ownedSources(q, s, spec.source_ids);
       const schId = newId("sch_"), monId = newId("mon_");
-      await q.query(`INSERT INTO flow_schedules (id, tenant_id, workspace_id, source_ids, interval_seconds, next_run_at, grant_actor, policy_version)
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`, [schId, s.tenant_id, s.workspace_id, spec.source_ids, spec.interval_seconds, this.now().toISOString(), actor, policy]);
+      await q.query(`INSERT INTO flow_schedules (id, tenant_id, workspace_id, source_ids, interval_seconds, next_run_at, grant_actor, policy_version, timezone, misfire_policy)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`, [schId, s.tenant_id, s.workspace_id, spec.source_ids, spec.interval_seconds, this.now().toISOString(), actor, policy,
+          spec.timezone, spec.misfire_policy ?? "coalesce"]);
       const m = (await q.query(`INSERT INTO flow_monitors (id, tenant_id, workspace_id, name, keywords, source_ids, interval_seconds, timezone, schedule_id, approval_id, idempotency_key)
           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
         [monId, s.tenant_id, s.workspace_id, spec.name, spec.keywords, spec.source_ids, spec.interval_seconds, spec.timezone, schId, o.approval_id, o.idempotency_key])).rows[0];
@@ -642,11 +806,15 @@ export class Engine {
     return this.db.tx(async (q) => {
       const r = await q.query(`SELECT id, status FROM flow_collection_runs WHERE tenant_id=$1 AND workspace_id=$2 AND operation_id=$3 FOR UPDATE`, [s.tenant_id, s.workspace_id, op]);
       if (!r.rows.length) throw new HttpError(404, "operation not found");
-      await q.query(`UPDATE flow_collection_runs SET status='cancelled', finished_at=now(), lease_owner=NULL, fencing_token=fencing_token+1
-          WHERE operation_id=$1 AND tenant_id=$2 AND status IN ('queued','running')`, [op, s.tenant_id]);
-      const cancelled = r.rows.filter((x: any) => x.status === "queued" || x.status === "running").length;
-      if (cancelled) await this.emit(q, s, op, r.rows[0].id, "operation.cancelled", { cancelled });
-      return { operation_id: op, cancelled };
+      // Not yet owned by a worker → cancelled at once (fencing bumped so a late claim cannot run it).
+      const now1 = await q.query(`UPDATE flow_collection_runs SET status='cancelled', finished_at=now(), lease_owner=NULL, fencing_token=fencing_token+1
+          WHERE operation_id=$1 AND tenant_id=$2 AND status IN ('queued','retry_wait')`, [op, s.tenant_id]);
+      // Owned by a worker → cancel_requested; the worker confirms the stop (→ cancelled) and its writes never commit.
+      const req = await q.query(`UPDATE flow_collection_runs SET status='cancel_requested'
+          WHERE operation_id=$1 AND tenant_id=$2 AND status IN ('leased','running')`, [op, s.tenant_id]);
+      const cancelled = affected(now1), cancel_requested = affected(req);
+      if (cancelled || cancel_requested) await this.emit(q, s, op, r.rows[0].id, cancel_requested ? "operation.cancel_requested" : "operation.cancelled", { cancelled, cancel_requested });
+      return { operation_id: op, cancelled: cancelled + cancel_requested, cancel_requested };
     });
   }
 
@@ -686,12 +854,11 @@ export class Engine {
   }
 
   async getOperation(s: Scope, op: string) {
-    const r = await this.db.query(`SELECT id AS job_id, source_id, status, items_new, items_revised, error, attempts, created_at, finished_at
+    const r = await this.db.query(`SELECT id AS job_id, source_id, status, items_new, items_revised, error, attempts, max_attempts, retry_at, partial_reason, created_at, finished_at
         FROM flow_collection_runs WHERE tenant_id=$1 AND workspace_id=$2 AND operation_id=$3 ORDER BY id`, [s.tenant_id, s.workspace_id, op]);
     if (!r.rows.length) throw new HttpError(404, "operation not found");
     const st = r.rows.map((x: any) => x.status);
-    const status = st.every((x: string) => x === "succeeded") ? "succeeded" : st.every((x: string) => x === "cancelled") ? "cancelled" : st.some((x: string) => x === "queued" || x === "running") ? "running" : "failed";
-    return { operation_id: op, status, jobs: r.rows };
+    return { operation_id: op, status: operationStatus(st), jobs: r.rows };
   }
 
   async listDocuments(s: Scope, opts: { q?: string; limit?: number; source_id?: string }) {

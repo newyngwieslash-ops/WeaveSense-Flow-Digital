@@ -72,7 +72,7 @@ test("intel_list_sources health and document revision routes with evidence", asy
   const h = await eng.listSourcesHealth(A);
   assert.equal(h.find((x: any) => x.id === s1.id).health, "healthy");
   assert.equal(h.find((x: any) => x.id === s2.id).health, "backoff");
-  assert.equal(h.find((x: any) => x.id === s2.id).last_run.status, "failed");
+  assert.equal(h.find((x: any) => x.id === s2.id).last_run.status, "retry_wait"); // transient 503: retried before giving up
   feeds["https://one.example/f"] = [item("1", "Lithium", "lithium price 12% (revised)")];
   await collect(s1, "c3");
   const doc = (await eng.listDocuments(A, {}))[0];

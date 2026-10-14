@@ -91,6 +91,8 @@ if (runBriefs) {
 }
 if (runEnrich) {
   // §6.4: attachments not stored during a run are retried separately (bounded attempts), never by re-collecting.
+  // PRD §6.2: jobs whose commit outcome was unknown are settled from the outbox.
+  void loop("reconcile", Number(env("LOOM_RECONCILE_MS", "30000")), () => engine.reconcile());
   void loop("media-retry", Number(env("LOOM_MEDIA_RETRY_MS", "120000")), () => engine.retryMedia());
   if (env("OCR_ENABLED", "false") === "true") void loop("ocr", Number(env("LOOM_OCR_TICK_MS", "30000")), () => engine.ocrTick());
 }

@@ -72,7 +72,7 @@ var Catalog = []ToolSpec{
 		route:      func(a map[string]any) (string, string, any) { return http.MethodPost, "/v1/documents/read", a }},
 	{Name: "intel_preview_monitor", Description: "Preview a monitor (keywords, sources, interval, timezone) with run counts. Does not write configuration.",
 		Class: "read", Scope: "intel.sources.read", Timeout: 10 * time.Second, OutputCap: 8000,
-		Parameters: obj([]string{"keywords", "source_ids", "interval_seconds"}, map[string]any{"name": tStr, "keywords": tStrs, "source_ids": tStrs, "interval_seconds": tInt, "timezone": tStr}),
+		Parameters: obj([]string{"keywords", "source_ids", "interval_seconds"}, map[string]any{"name": tStr, "keywords": tStrs, "source_ids": tStrs, "interval_seconds": tInt, "timezone": tStr, "misfire_policy": map[string]any{"type": "string", "enum": []string{"coalesce", "skip", "catch_up"}}}),
 		route:      func(a map[string]any) (string, string, any) { return http.MethodPost, "/v1/monitors/preview", a }},
 	{Name: "intel_apply_monitor", Description: "Save a previewed monitor. Requires user approval; runs only after approval.",
 		Class: "write", Scope: "intel.monitors.write", NeedsApproval: true, Timeout: 15 * time.Second, OutputCap: 8000,

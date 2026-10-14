@@ -19,7 +19,7 @@ export async function metricsText(db: Db): Promise<string> {
   gauge("flow_engine_uptime_seconds", "Seconds since process start.", [{ value: Math.round((Date.now() - started) / 1000) }]);
   gauge("flow_collection_runs", "Collection runs by status.", (await q(`SELECT status, count(*)::int n FROM flow_collection_runs GROUP BY status`)).map((r) => ({ labels: { status: r.status }, value: r.n })));
   gauge("flow_collection_runs_lease_expired", "Running collection runs whose lease expired (stuck worker).",
-    [{ value: (await q(`SELECT count(*)::int n FROM flow_collection_runs WHERE status='running' AND lease_expires_at < now()`))[0]?.n ?? 0 }]);
+    [{ value: (await q(`SELECT count(*)::int n FROM flow_collection_runs WHERE status IN ('leased','running') AND lease_expires_at < now()`))[0]?.n ?? 0 }]);
   const ob = (await q(`SELECT count(*)::int n, coalesce(extract(epoch FROM now() - min(occurred_at)), 0)::float8 age FROM flow_outbox WHERE delivered_at IS NULL`))[0] ?? {};
   gauge("flow_outbox_pending", "Outbox events not yet delivered to the platform.", [{ value: ob.n ?? 0 }]);
   gauge("flow_outbox_oldest_pending_seconds", "Age of the oldest undelivered outbox event.", [{ value: Math.round(ob.age ?? 0) }]);

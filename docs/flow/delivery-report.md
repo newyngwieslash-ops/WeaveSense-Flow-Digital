@@ -312,3 +312,35 @@ Pending live acceptance and required credentials: see [pending-acceptance.md](pe
   - `go vet` passes. `go test ./...` passes except the 5 known Pi e2e tests in `internal/app`, which pass in CI. The RLS tests ran on real Postgres 17 as a non-superuser.
   - Engine full `npm test` passes, as do `test:flow` 35/35 and typecheck.
   - Web: `prettier --check .`, tsc, eslint and `bun test` 2224/2224 all pass.
+
+## Loom upstream sync — collection capability (2026-10-14, Asia/Shanghai)
+
+| Item | Value |
+|---|---|
+| Branch / PR | `sync-loom-upstream` (merged after green CI; merge SHA recorded by the follow-up docs PR) |
+| Upstream | `loom-upstream` `codex/collection-capability` @ `cdcb787f` (28 commits on top of the previous pin `bec6212a`; upstream `main` unchanged) |
+| Method | `git subtree pull --prefix services/loom-engine loom-upstream codex/collection-capability` (no squash, history kept) |
+| Conflicts | `package.json` (kept Flow `test:flow`/`flow:start` and added upstream `test:collection`/`qa:collection:*`/`test:subtitles:isolation`); `scripts/service-env-least-privilege.test.mjs` (kept Flow's P10 pid-cap assertion, which upstream's literal `pids_limit: 512` would have reverted). All other files merged cleanly; `flow/`, tenancy/RLS, cursor/lease, egress guard and Telegram `save_media` were untouched by upstream. |
+
+### Upstream capabilities (bec6212a..cdcb787f)
+- **Bounded feed ingestion:** every entry in a bounded feed is kept, keyword search sources are merged fairly, the discovery anchor is the newest finite window, invalid-date windows are finalized, and feed refusals are classified. Window coverage is recorded (migration `0030_collection_coverage`).
+- **Article enrichment:** bounded public article candidates come from a hosted reader with an exact-host allowlist and public-DNS checks. Adoption uses version checks, a fresh cache is reused after lease admission, and the article is shown in item details.
+- **YouTube subtitle enrichment:** an isolated Python `subtitle-worker` plus an authenticated `subtitle-egress` proxy. The 2 MiB json3 output is parsed server-side, the extraction deadline is preserved, and the transcript is appended to the item.
+- **Outbound-policy hardening:** undeclared IPv6 benchmarking ranges are blocked, stream cancellation cleanup is bounded, and article validation stops on ambiguous DNS barriers.
+- **Validation tooling and docs:** portable collection verification, GitHub-release and public-feed observation scripts, channel/subtitle pilots, and a capability acceptance doc.
+
+### Integrated into Flow
+| Capability | How |
+|---|---|
+| Feed fixes and outbound-policy hardening | Automatic: Flow's RSS connector already reuses upstream `fetchRss`/`parseFeedXml` and the outbound-policy guarded fetch. |
+| Article reader | `POST /v1/documents/extract {"via":"reader"}` uses upstream `readArticle`. The platform proxy is `POST /api/intelligence/documents/extract`, and the tool `intel_extract_document` gains a `via` parameter. Opt-in with `ARTICLE_READER_ENABLED` and `ARTICLE_READER_ALLOWED_HOSTS`. The document is resolved under tenant/workspace before any outbound call, and the result becomes a new revision (re-chunked). |
+| YouTube transcripts | `POST /v1/documents/transcript` uses the upstream worker contract with upstream `youtubeVideoId`/`transcriptText`. The platform proxy is `POST /api/intelligence/documents/transcript`, plus a new tool `intel_transcribe_document` (`intel.collect`, also allowed in topic conversations). Compose gets `--profile subtitles` (an isolated `subtitle-worker` and a `subtitle-egress` on the internal network). New `.env.flow.example` keys. |
+| Revision fencing | Enrichment revisions are written with `UPDATE … WHERE current_revision=$read`, so a concurrent enrichment gets 409 instead of a lost update. HTML extraction shares the same path. |
+| Rename | The new upstream text contains no `影策`, so nothing needed renaming. |
+
+Tests: `flow/enrichment.test.ts` (4 tests: tenant isolation with no outbound call for a foreign tenant, idempotency, error mapping, worker-contract checks, 2 MiB cap, searchable transcript) and Go `TestEnrichmentToolsRouteToEngine`. `smoke.sh` gains 3 platform→engine enrichment checks.
+
+### Not integrated (and why)
+- **Loom-native item UI and collection coverage** (`inbox.$itemId.tsx` article panel, `jobs.tsx`, migration `0030` on the `items` table). These belong to the bundled WeaveSense app, which Flow does not deploy. Flow's documents and revisions are the equivalent surface. The files are present in the subtree, unused by Flow.
+- **`codex/collection-reliability`** (39 commits, Oct 4–5). It forked before `bec6212a`, was never merged into upstream `main`, and is not an ancestor of `collection-capability`. Pulling it would reintroduce a stale divergent line, so it waits until upstream merges it.
+- **Validation runners** (`validation/collection/b03-*`, `c02-*`). These are upstream's own live/Windows acceptance harnesses. Their offline self-checks run in `npm test` (`test:collection`).

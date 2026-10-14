@@ -3,9 +3,9 @@
 | Remote | Repository | Pinned commit | Imported as | License |
 |---|---|---|---|---|
 | canvas-upstream | https://github.com/ddcat-ai/open-ai-canvas | `e70fe1b9c93d6af3b807a87ed15bb621af78095c` | repository root (full upstream history kept; `main` builds on this commit) | MIT, © 2026 ddcat and Open AI Canvas contributors — `LICENSE`, `NOTICE` |
-| loom-upstream | https://github.com/newyngwieslash-ops/WeaveSense | `bec6212ac0cdc67272e488073e35d97087e7447a` | `services/loom-engine/` via `git subtree add` (history kept, not squashed) | MIT, © 2026 织识 Loom — `services/loom-engine/LICENSE` |
+| loom-upstream | https://github.com/newyngwieslash-ops/WeaveSense | `cdcb787f925e584da0302f7968431335b8f8122e` (branch `codex/collection-capability`; upstream `main` is still `bec6212a`) | `services/loom-engine/` via `git subtree add`, upgraded with `git subtree pull` (history kept, not squashed) | MIT, © 2026 织识 Loom — `services/loom-engine/LICENSE` |
 
-Both pinned commits equal the upstream `main` HEADs at import time (2026-10-12), so there is no discrepancy with the plan's audit baseline.
+Both pinned commits equalled the upstream `main` HEADs at import time (2026-10-12). On 2026-10-14 loom was upgraded from `bec6212a` to `cdcb787f`, the head of `codex/collection-capability`, which builds directly on `bec6212a` (28 commits). Upstream `main` had not moved. The older `codex/collection-reliability` branch forked before `bec6212a` and was never merged upstream, so it is not imported; see `docs/flow/delivery-report.md` (Loom upstream sync).
 
 Updating: `git subtree pull --prefix=services/loom-engine loom-upstream <commit>`; for Canvas, `git fetch canvas-upstream && git merge <commit>`. Re-audit interfaces and migrations after any upgrade and update this table.
 

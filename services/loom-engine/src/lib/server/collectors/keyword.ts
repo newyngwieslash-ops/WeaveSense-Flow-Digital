@@ -9,6 +9,29 @@ function wants(platforms: PlatformId[], id: PlatformId): boolean {
   return platforms.length === 0 || platforms.includes(id);
 }
 
+export function mergeKeywordResults(groups: NormalizedItem[][], limit = 40): NormalizedItem[] {
+  const result: NormalizedItem[] = [];
+  const seen = new Set<string>();
+  const positions = groups.map(() => 0);
+  const cap = Number.isSafeInteger(limit) ? Math.max(0, Math.min(40, limit)) : 40;
+  while (result.length < cap) {
+    let added = false;
+    for (let g = 0; g < groups.length && result.length < cap; g++) {
+      while (positions[g] < groups[g].length) {
+        const item = groups[g][positions[g]++];
+        const key = item.url || item.external_id;
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        result.push(item);
+        added = true;
+        break;
+      }
+    }
+    if (!added) break;
+  }
+  return result;
+}
+
 /**
  * Classify a failure into a stable, non-sensitive code.
  *
@@ -28,7 +51,8 @@ export function classifyFailure(error: unknown): NonNullable<KeywordAttempt["err
   if (/^HTTP /.test(message)) return "http_error";
   if (/timeout|aborted|ETIMEDOUT|TimeoutError/i.test(message)) return "timeout";
   // A body that arrived but could not be parsed, or was refused for size.
-  if (message === "response_too_large" || /JSON|Unexpected token|invalid json/i.test(message)) {
+  if (["response_too_large", "invalid_feed_xml", "invalid_feed_root", "feed_entry_limit"].includes(message)
+    || /JSON|Unexpected token|invalid json/i.test(message)) {
     return "invalid_response";
   }
   return "network_error";
@@ -175,17 +199,8 @@ export async function collectKeyword(
   }
 
   const settled = await Promise.all(tasks);
-  const merged: NormalizedItem[] = [];
-  const seen = new Set<string>();
-  const attempts: KeywordAttempt[] = [];
-  for (const { items, attempt: record } of settled) {
-    attempts.push(record);
-    for (const item of items) {
-      const key = (item.url || item.external_id).slice(0, 320);
-      if (!key || seen.has(key)) continue;
-      seen.add(key);
-      merged.push(item);
-    }
-  }
-  return { items: merged.slice(0, 40), attempts };
+  return {
+    items: mergeKeywordResults(settled.map(({ items }) => items)),
+    attempts: settled.map(({ attempt }) => attempt),
+  };
 }

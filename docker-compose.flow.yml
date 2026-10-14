@@ -125,8 +125,50 @@ services:
       MINIO_BUCKET: ${INTEL_BUCKET:-flow-intel}
     volumes: [telethondata:/data]
     networks: [internal]
+  # Optional YouTube subtitle enrichment (loom-upstream cdcb787f, POST /v1/documents/transcript).
+  # Enable with `--profile subtitles`, SUBTITLE_ENABLED=true and two different random tokens
+  # (SUBTITLE_SERVICE_TOKEN, SUBTITLE_PROXY_TOKEN, 24-128 chars [A-Za-z0-9_-]) in .env.flow.
+  # The worker sits on an isolated network with no route out; all its traffic goes through
+  # the authenticated egress proxy, which is the only subtitle container loom-engine can reach.
+  subtitle-worker:
+    <<: *restart
+    profiles: [subtitles]
+    build: { context: ./services/loom-engine/workers/subtitle, dockerfile: Dockerfile }
+    environment:
+      SUBTITLE_ROLE: worker
+      SUBTITLE_SERVICE_TOKEN: ${SUBTITLE_SERVICE_TOKEN:-}
+      SUBTITLE_PROXY_TOKEN: ${SUBTITLE_PROXY_TOKEN:-}
+    networks: [subtitle-internal]
+    dns: ["127.0.0.1"]
+    init: true
+    user: "1000:1000"
+    read_only: true
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 64
+    mem_limit: 256m
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=32m,uid=1000,gid=1000"]
+  subtitle-egress:
+    <<: *restart
+    profiles: [subtitles]
+    build: { context: ./services/loom-engine/workers/subtitle, dockerfile: Dockerfile }
+    environment:
+      SUBTITLE_ROLE: egress
+      SUBTITLE_SERVICE_TOKEN: ${SUBTITLE_SERVICE_TOKEN:-}
+      SUBTITLE_PROXY_TOKEN: ${SUBTITLE_PROXY_TOKEN:-}
+    networks: [internal, subtitle-internal]
+    init: true
+    user: "1000:1000"
+    read_only: true
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 64
+    mem_limit: 256m
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=32m,uid=1000,gid=1000"]
 networks:
   internal: {}
+  subtitle-internal:
+    internal: true
 volumes:
   telethondata: {}
   pgdata: {}

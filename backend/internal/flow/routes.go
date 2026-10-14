@@ -99,6 +99,8 @@ func RegisterRoutes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc) {
 	g.GET("/monitors", proxy(http.MethodGet, "/v1/monitors"))
 	g.POST("/sources/:id/revoke", proxy(http.MethodPost, "/v1/sources/:id/revoke"))
 	g.GET("/connector-samples", proxy(http.MethodGet, "/v1/connector-samples"))
+	g.POST("/documents/extract", proxy(http.MethodPost, "/v1/documents/extract"))
+	g.POST("/documents/transcript", proxy(http.MethodPost, "/v1/documents/transcript"))
 	g.GET("/reports", proxy(http.MethodGet, "/v1/reports"))
 	g.GET("/reports/:id", proxy(http.MethodGet, "/v1/reports/:id"))
 	g.GET("/brief-schedules", proxy(http.MethodGet, "/v1/brief-schedules"))

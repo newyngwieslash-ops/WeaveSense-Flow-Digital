@@ -300,7 +300,7 @@ func MarkNotificationsRead(db *gorm.DB, scope Scope, userID, id string) (int64, 
 // change monitors/schedules, trigger collection or call external MCP tools.
 var topicTools = map[string]bool{
 	"intel_search_documents": true, "intel_read_document": true, "intel_extract_document": true,
-	"intel_get_operation": true, "intel_cancel_operation": true, "intel_load_skill": true,
+	"intel_transcribe_document": true, "intel_get_operation": true, "intel_cancel_operation": true, "intel_load_skill": true,
 	"intel_start_research": true, "intel_save_report": true,
 }
 

@@ -36,6 +36,8 @@ export type KeywordRow = {
 
 export type JsonScalar = string | number | boolean | null;
 
+export type ArticleAvailability = { available: boolean; reason?: string };
+
 export type ItemRow = {
   material_version?: number;
   id: string;
@@ -73,6 +75,7 @@ export type JobRow = {
   provider: "" | "primary" | "dajiala" | "mixed";
   attempts: string[];
   paid_call: boolean;
+  coverage: { complete?: boolean; window_only?: boolean; note?: string };
   keyword_id?: string;
   source_name?: string;
 };

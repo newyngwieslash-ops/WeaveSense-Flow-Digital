@@ -5,6 +5,7 @@ import { affected, type Db, type Q } from "./db.ts";
 import type { ExecutionContext } from "./auth.ts";
 import { connectorEnvFromProcess, extractMainText, fetchTelegram, fetchWechat, normalizeHandle, telegramMessageId,
   type ConnectorBatch, type ConnectorEnv, type ConnectorItem, type SourceRow } from "./connectors.ts";
+import { defaultArticleReader, documentVideoId, enrichmentStatus, isSubtitleLanguage, subtitleClient, type ArticleReader, type SubtitleClient } from "./enrichment.ts";
 
 export type FeedItem = { external_id: string; title: string; body: string; url: string; published_at: string | null };
 export type FetchResult = FeedItem[] | ConnectorBatch;
@@ -42,6 +43,7 @@ type Scope = Pick<ExecutionContext, "tenant_id" | "workspace_id">;
 
 export class Engine {
   db: Db; fetcher: Fetcher; now: () => Date; extractor: Extractor = defaultExtractor;
+  articleReader: ArticleReader = defaultArticleReader; subtitles: SubtitleClient = subtitleClient();
   /** Platform authorization hook: false ⇒ grant revoked (schedule is disabled). Errors propagate (fail closed, retry next tick). */
   authorize?: (sc: { tenant_id: string; workspace_id: string; grant_actor: string }, scope: string) => Promise<boolean>;
   constructor(db: Db, fetcher: Fetcher = defaultFetcher, now: () => Date = () => new Date()) {
@@ -91,25 +93,60 @@ export class Engine {
   }
 
   /** On-demand main-text extraction for a document URL; a changed text becomes a new revision (old citations keep theirs). */
-  async extractDocument(s: Scope, o: { document_id: string }) {
+  private async currentDocument(s: Scope, id: string) {
     const d = (await this.db.query(`SELECT d.*, r.content_hash, r.body FROM flow_documents d JOIN flow_document_revisions r ON r.document_id=d.id AND r.revision=d.current_revision
-        WHERE d.tenant_id=$1 AND d.workspace_id=$2 AND d.id=$3`, [s.tenant_id, s.workspace_id, o.document_id])).rows[0];
+        WHERE d.tenant_id=$1 AND d.workspace_id=$2 AND d.id=$3`, [s.tenant_id, s.workspace_id, id])).rows[0];
     if (!d) throw new HttpError(404, "document not found");
-    if (!/^https?:\/\//.test(d.url)) throw new HttpError(422, "document has no http(s) url to extract");
-    let html: string;
-    try { html = await this.extractor(d.url); } catch (e: any) { throw new HttpError(502, `extraction fetch failed: ${String(e?.message ?? e).slice(0, 200)}`); }
-    const { title, text } = extractMainText(html);
-    if (text.length < 40 || text.length <= String(d.body).length) return { document_id: d.id, revision: d.current_revision, changed: false, chars: text.length };
-    const t = title || d.title; const hash = sha(`${t}\n${text}`);
-    if (hash === d.content_hash) return { document_id: d.id, revision: d.current_revision, changed: false, chars: text.length };
+    return d;
+  }
+
+  /** Writes title+text as a new revision (old revisions kept) and re-indexes; unchanged content is a no-op. */
+  private async addRevision(d: any, title: string, text: string, tag: string, extra: Record<string, unknown> = {}) {
+    const hash = sha(`${title}\n${text}`);
+    if (hash === d.content_hash) return { document_id: d.id, revision: d.current_revision, changed: false, chars: text.length, ...extra };
     return this.db.tx(async (q) => {
+      // Fenced on the revision we read: a concurrent enrichment loses instead of overwriting.
       const rev = d.current_revision + 1;
-      await q.query(`UPDATE flow_documents SET current_revision=$2 WHERE id=$1`, [d.id, rev]);
+      if (affected(await q.query(`UPDATE flow_documents SET current_revision=$2 WHERE id=$1 AND current_revision=$3`, [d.id, rev, d.current_revision])) !== 1) throw new HttpError(409, "document changed concurrently");
       await q.query(`INSERT INTO flow_document_revisions (document_id, revision, tenant_id, content_hash, title, body, collected_by_run) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-        [d.id, rev, d.tenant_id, hash, t, text, `extract:${d.id}:${rev}`]);
-      await this.indexChunks(q, { tenant_id: d.tenant_id, workspace_id: d.workspace_id }, d.source_id, d.id, rev, `${t}\n\n${text}`, d.published_at ? new Date(d.published_at).toISOString() : null);
-      return { document_id: d.id, revision: rev, changed: true, chars: text.length };
+        [d.id, rev, d.tenant_id, hash, title, text, `${tag}:${d.id}:${rev}`]);
+      await this.indexChunks(q, { tenant_id: d.tenant_id, workspace_id: d.workspace_id }, d.source_id, d.id, rev, `${title}\n\n${text}`, d.published_at ? new Date(d.published_at).toISOString() : null);
+      return { document_id: d.id, revision: rev, changed: true, chars: text.length, ...extra };
     });
+  }
+
+  /** On-demand full text. via "html" (default): guarded fetch + main-text extraction. via "reader": upstream article reader (opt-in, host allowlist). */
+  async extractDocument(s: Scope, o: { document_id: string; via?: "html" | "reader" }) {
+    const d = await this.currentDocument(s, o.document_id);
+    if (!/^https?:\/\//.test(d.url)) throw new HttpError(422, "document has no http(s) url to extract");
+    const via = o.via ?? "html";
+    if (via !== "html" && via !== "reader") throw new HttpError(400, "via must be html or reader");
+    let title: string, text: string;
+    if (via === "reader") {
+      try { const a = await this.articleReader(d.url); title = a.title; text = a.body.slice(0, 200_000); }
+      catch (e: any) { const code = String(e?.code ?? e?.message ?? e); const c = /^article_[a-z_]+$/.test(code) ? code : "article_unavailable"; throw new HttpError(enrichmentStatus(c), c); }
+    } else {
+      let html: string;
+      try { html = await this.extractor(d.url); } catch (e: any) { throw new HttpError(502, `extraction fetch failed: ${String(e?.message ?? e).slice(0, 200)}`); }
+      ({ title, text } = extractMainText(html));
+    }
+    if (text.length < 40 || text.length <= String(d.body).length) return { document_id: d.id, revision: d.current_revision, changed: false, chars: text.length, via };
+    return this.addRevision(d, title || d.title, text, via === "reader" ? "reader" : "extract", { via });
+  }
+
+  /** YouTube subtitles via the upstream subtitle worker; appended to the body as a new revision. */
+  async transcribeDocument(s: Scope, o: { document_id: string; language?: string }) {
+    const language = o.language ?? "en";
+    if (!isSubtitleLanguage(language)) throw new HttpError(400, "language must be en, zh-Hans or zh-Hant");
+    const d = await this.currentDocument(s, o.document_id);
+    let t;
+    try { t = await this.subtitles(documentVideoId(d), language); }
+    catch (e: any) { const code = String(e?.code ?? e?.message ?? e); const c = /^subtitle_[a-z_]+$/.test(code) ? code : "subtitle_unavailable"; throw new HttpError(enrichmentStatus(c), c); }
+    if (t.status === "no_subtitles") return { document_id: d.id, revision: d.current_revision, changed: false, status: "no_subtitles", language };
+    const marker = `[字幕: ${language}; ${t.kind}]`;
+    const base = String(d.body);
+    if (base.includes(marker)) return { document_id: d.id, revision: d.current_revision, changed: false, status: "ok", language, kind: t.kind };
+    return this.addRevision(d, d.title, `${base}\n\n${marker}\n${t.text}`.slice(0, 400_000), "transcript", { status: "ok", language, kind: t.kind, digest: t.digest });
   }
 
   async listSources(s: Scope) {

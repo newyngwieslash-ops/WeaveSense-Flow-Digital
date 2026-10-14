@@ -54,5 +54,9 @@ check "message delete"       200 DELETE "/api/agent/conversations/$CONV/messages
 check "delete idempotent"    200 DELETE "/api/agent/conversations/$CONV/messages/$MSG"
 check "canvas doc after delete" 200 GET "/api/agent/canvas-conversations/$CID"
 ok "$(grep -q '"deletedIds":\["m1"\]' /tmp/smoke.out && ! grep -q 'hello (edited)' /tmp/smoke.out && echo 1)" "delete synced to canvas document (tombstone)"
+# Loom upstream enrichment routes (platform → engine): input validation answers before any outbound call.
+check "transcript route validates language" 400 POST /api/intelligence/documents/transcript '{"document_id":"doc_missing","language":"xx"}'
+check "transcript unknown document"         404 POST /api/intelligence/documents/transcript '{"document_id":"doc_missing","language":"en"}'
+check "reader extract unknown document"     404 POST /api/intelligence/documents/extract '{"document_id":"doc_missing","via":"reader"}'
 echo "smoke: $pass passed, $failn failed"
 [ "$failn" -eq 0 ]

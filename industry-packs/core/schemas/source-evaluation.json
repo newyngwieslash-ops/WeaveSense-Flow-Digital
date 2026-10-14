@@ -1,0 +1,37 @@
+{
+  "properties": {
+    "sources": {
+      "items": {
+        "properties": {
+          "rationale": {
+            "type": "string"
+          },
+          "reliability": {
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F"
+            ]
+          },
+          "source_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_id",
+          "reliability",
+          "rationale"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "sources"
+  ],
+  "type": "object"
+}

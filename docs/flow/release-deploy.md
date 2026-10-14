@@ -76,3 +76,29 @@ deploy/flow/backup/restore.sh /backups/intel/flow-<ts>.dump "$NEW_INTEL_DATABASE
 - Platform RLS (schema v58) requires the platform to connect as a non-superuser for policies to apply.
 - Optional `telethon` service: `--profile telegram`.
 - Local startup and the A19 checklist: `docs/flow/local-acceptance.md`.
+
+## Gap-closing round (2026-10-14)
+- **PostgreSQL 17 everywhere.** `docker-compose.flow.yml` now uses `postgres:17-alpine`, the same as the deploy compose and CI. An existing PG16 data volume will not start under 17. Upgrade it with dump and restore:
+  1. Run `deploy/flow/backup/backup.sh` for both databases on the old stack.
+  2. `docker compose down`, then move the old `pgdata` volume aside. Don't delete it until the new stack has been verified.
+  3. `up -d postgres`. The init script recreates the two roles and databases.
+  4. Run `deploy/flow/backup/restore.sh` for each dump, then start everything else.
+- **Profiles:**
+  - `telegram`: telethon.
+  - `wechat`: wechat-gateway on :8790. Set `WECHAT_GATEWAY_URL=http://wechat-gateway:8790`, `WECHAT_GATEWAY_TOKEN` and `WECHAT_PRIMARY_ALLOWED_HOSTS`.
+  - `subtitles`.
+  - `extract`: ocr-worker plus loom-enrich (`LOOM_ROLE=enrich`). Set `OCR_ENABLED=true` and `OCR_SERVICE_TOKEN`.
+  - `research`: loom-research (`LOOM_ROLE=research`, periodic briefs).
+  - `monitoring`: Prometheus on 127.0.0.1:9090.
+  - When you enable `extract` or `research`, set `LOOM_SPLIT_ROLES=true` so `loom-engine` and `loom-scheduler` stop running those loops themselves.
+- **Monitoring:**
+  - Loom Engine `GET /metrics` returns aggregate gauges with no tenant ids. An optional `METRICS_TOKEN` restricts access.
+  - Platform `GET /metrics/flow` returns 404 unless `FLOW_METRICS_TOKEN` is set, and then requires that bearer token. Put the same token in `deploy/flow/monitoring/platform.token`; that file is git-ignored.
+  - Alert rules are in `deploy/flow/monitoring/alerts.yml`: engine/platform down, outbox backlog, expired leases, collection failures, media/OCR failures, reconciliation_required, failed notifications, and model tasks stuck in retry_wait.
+  - Alertmanager routing (where alerts are sent) is deployment-specific and is not included.
+- **Legacy Loom import** (`services/loom-engine/flow/tools/legacy-import.ts`):
+  - Source tables: sources, items, keywords.
+  - The default is a dry run. `--apply` writes. `--activate` keeps enabled sources active; otherwise they are imported paused.
+  - Each old_id→new_id pair is stored in `flow_legacy_id_map`. Running the import again reuses the mapping.
+  - Keywords are reported as skipped: monitors need a preview and approval. WeChat sources need a gateway id. Analyses and notes are not imported.
+- **Telegram media keys:** `flow/tools/media-keys.ts plan|apply` moves legacy `telegram/<channel>/<id>` keys to tenant/workspace-scoped keys.

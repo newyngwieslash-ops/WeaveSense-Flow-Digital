@@ -1,0 +1,2 @@
+{"question":"What changed in LFP cell prices this week?","expect":"price claims cite ≥1 evidence; claims from one source are source_statement; reasons are model_inference"}
+{"question":"Summarize new standalone storage projects","expect":"each project cites its document; failed sources listed in coverage"}

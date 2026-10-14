@@ -1,0 +1,52 @@
+# Flow alert rules (§14). Thresholds are starting points; tune per deployment.
+groups:
+  - name: flow
+    rules:
+      - alert: FlowEngineDown
+        expr: up{job="loom-engine"} == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations: { summary: "Loom Engine is not scrapeable" }
+      - alert: FlowPlatformDown
+        expr: up{job="flow-platform"} == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations: { summary: "Flow platform /metrics/flow is not scrapeable" }
+      - alert: FlowOutboxBacklog
+        expr: flow_outbox_oldest_pending_seconds > 600
+        for: 5m
+        labels: { severity: warning }
+        annotations: { summary: "Engine→platform outbox has undelivered events older than 10 minutes" }
+      - alert: FlowCollectionLeaseExpired
+        expr: flow_collection_runs_lease_expired > 0
+        for: 10m
+        labels: { severity: warning }
+        annotations: { summary: "Collection runs stuck with expired leases" }
+      - alert: FlowCollectionFailures
+        expr: increase(flow_collection_runs{status="failed"}[1h]) > 10
+        labels: { severity: warning }
+        annotations: { summary: "More than 10 collection runs failed in the last hour" }
+      - alert: FlowMediaFailuresGrowing
+        expr: delta(flow_media_failed[1h]) > 20
+        labels: { severity: info }
+        annotations: { summary: "Telegram attachment failures growing" }
+      - alert: FlowOcrFailed
+        expr: flow_ocr_jobs{status="failed"} > 0
+        for: 30m
+        labels: { severity: info }
+        annotations: { summary: "OCR jobs failing" }
+      - alert: FlowReconciliationRequired
+        expr: sum(flow_mcp_calls{status="reconciliation_required"}) + sum(flow_budget_reservations{status="reconciliation_required"}) + sum(flow_notification_deliveries{status="reconciliation_required"}) > 0
+        for: 15m
+        labels: { severity: warning }
+        annotations: { summary: "Operations waiting for operator reconciliation" }
+      - alert: FlowNotificationFailures
+        expr: flow_notification_deliveries{status="failed"} > 0
+        for: 30m
+        labels: { severity: warning }
+        annotations: { summary: "Email/webhook notification deliveries failed permanently" }
+      - alert: FlowModelTasksStuck
+        expr: flow_model_tasks{status="retry_wait"} > 20
+        for: 30m
+        labels: { severity: warning }
+        annotations: { summary: "Many model tasks waiting to retry (gateway degraded?)" }

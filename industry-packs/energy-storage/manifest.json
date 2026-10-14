@@ -1,0 +1,30 @@
+{
+  "evaluation_set": "evals/evidence-cases.jsonl",
+  "id": "energy-storage",
+  "kind": "industry",
+  "name": "Energy storage industry pack",
+  "note": "generated from the embedded pack; edit the source and regenerate (see industry_packs_test.go)",
+  "optional_connectors": [
+    "rss",
+    "telegram",
+    "wechat"
+  ],
+  "report_schema": "schemas/report.json",
+  "required_tools": [
+    "intel_search_documents",
+    "intel_read_document",
+    "intel_compare_evidence",
+    "intel_save_report",
+    "intel_list_sources"
+  ],
+  "skills": [
+    {
+      "hash": "a90100538cb8c647682b17d8502117e83c54d57a2c5f9351f233e7a2f6eb56c4",
+      "id": "storage-market-brief",
+      "output_schema": "schemas/storage-market-brief.json",
+      "version": "1.0.0"
+    }
+  ],
+  "source": "backend/internal/flow/skillpacks/energy-storage.json",
+  "version": "1.0.0"
+}

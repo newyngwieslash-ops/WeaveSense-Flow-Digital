@@ -1,4 +1,5 @@
 // Internal HTTP API for the Go platform. Every /v1 call needs a verified execution context.
+import { metricsText } from "./metrics.ts";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { verify, requireScope, AuthError, type ExecutionContext } from "./auth.ts";
 import { Engine, HttpError } from "./engine.ts";
@@ -31,6 +32,13 @@ export function handler(engine: Engine, cfg: ServerConfig) {
     try {
       const url = new URL(req.url ?? "/", "http://engine");
       if (url.pathname === "/healthz") return send(res, 200, { ok: true });
+      if (url.pathname === "/metrics" && req.method === "GET") {
+        // Internal network only; optional bearer (METRICS_TOKEN) for scrapers.
+        const mt = process.env.METRICS_TOKEN ?? "";
+        if (mt && (req.headers.authorization ?? "") !== `Bearer ${mt}`) return send(res, 401, null, "unauthorized");
+        res.writeHead(200, { "content-type": "text/plain; version=0.0.4" });
+        return res.end(await metricsText(engine.db));
+      }
       const auth = req.headers.authorization ?? "";
       const ctx: ExecutionContext = verify(cfg.signingKey, auth.replace(/^Bearer /, ""), cfg.audience);
       // Postgres RLS second layer: every query of this request runs with app.tenant_id = token tenant.

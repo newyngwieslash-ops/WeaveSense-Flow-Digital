@@ -1,13 +1,16 @@
 # WeaveSense-Flow P0 portable stack. Relative paths + named volumes only.
 # Usage: cp .env.flow.example .env.flow && docker compose -f docker-compose.flow.yml --env-file .env.flow up -d
 # P1: loom-engine/loom-scheduler run the Flow engine (services/loom-engine/flow/main.ts).
+# Optional profiles: telegram, wechat, subtitles, extract (OCR + attachment retry), research (briefs),
+# monitoring (Prometheus + alert rules). With extract/research set LOOM_SPLIT_ROLES=true in .env.flow
+# so api/scheduler hand those loops to the dedicated containers.
 name: weavesense-flow
 x-restart: &restart
   restart: unless-stopped
 services:
   postgres:
     <<: *restart
-    image: postgres:16-alpine
+    image: postgres:17-alpine   # PG17 everywhere (CI, deploy compose); 16→17 upgrade: docs/flow/release-deploy.md
     environment:
       POSTGRES_USER: ${POSTGRES_SUPERUSER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?set in .env.flow}
@@ -165,12 +168,82 @@ services:
     pids_limit: 64
     mem_limit: 256m
     tmpfs: ["/tmp:rw,noexec,nosuid,size=32m,uid=1000,gid=1000"]
+  # WeChat official-account gateway (primary feed + optional paid provider). Enable with
+  # `--profile wechat`; set WECHAT_GATEWAY_URL=http://wechat-gateway:8790, WECHAT_GATEWAY_TOKEN
+  # and WECHAT_PRIMARY_ALLOWED_HOSTS in .env.flow. A19 live acceptance is done by the user.
+  wechat-gateway:
+    <<: *restart
+    profiles: [wechat]
+    build: { context: ./services/loom-engine, dockerfile: Dockerfile }
+    env_file: [.env.flow]
+    environment:
+      PORT: "8790"
+      GATEWAY_DB_PATH: /data/gateway.db
+    command: ["node", "workers/wechat-gateway/server.mjs"]
+    volumes: [wechatdata:/data]
+    networks: [internal]
+  # OCR worker + attachment-retry/OCR loop (§6.4). `--profile extract`, OCR_ENABLED=true,
+  # OCR_SERVICE_TOKEN in .env.flow.
+  ocr-worker:
+    <<: *restart
+    profiles: [extract]
+    build: { context: ./services/loom-engine/workers/ocr, dockerfile: Dockerfile }
+    env_file: [.env.flow]
+    environment:
+      MINIO_ENDPOINT: minio:9000
+      MINIO_BUCKET: ${INTEL_BUCKET:-flow-intel}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+    networks: [internal]
+  loom-enrich:
+    <<: *restart
+    profiles: [extract]
+    build: { context: ./services/loom-engine, dockerfile: Dockerfile }
+    env_file: [.env.flow]
+    environment:
+      DATABASE_URL: postgres://${INTEL_DB_USER:-flow_intel}:${INTEL_DB_PASSWORD}@postgres:5432/${INTEL_DB_NAME:-flow_intel}?sslmode=disable
+      LOOM_ROLE: enrich
+      LOOM_AUTO_MIGRATE: "false"
+      OCR_URL: http://ocr-worker:8796
+    command: ["node", "flow/main.ts"]
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [internal]
+  # Periodic brief/research generation split from the scheduler. `--profile research`.
+  loom-research:
+    <<: *restart
+    profiles: [research]
+    build: { context: ./services/loom-engine, dockerfile: Dockerfile }
+    env_file: [.env.flow]
+    environment:
+      DATABASE_URL: postgres://${INTEL_DB_USER:-flow_intel}:${INTEL_DB_PASSWORD}@postgres:5432/${INTEL_DB_NAME:-flow_intel}?sslmode=disable
+      LOOM_ROLE: research
+      LOOM_AUTO_MIGRATE: "false"
+      FLOW_PLATFORM_INTERNAL_URL: http://platform:8080
+    command: ["node", "flow/main.ts"]
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [internal]
+  # Monitoring (§14): Prometheus scrapes loom-engine /metrics and platform /metrics/flow
+  # (FLOW_METRICS_TOKEN). Rules: deploy/flow/monitoring/alerts.yml. Bound to localhost only.
+  prometheus:
+    <<: *restart
+    profiles: [monitoring]
+    image: prom/prometheus:v3.5.0
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=15d"]
+    volumes:
+      - ./deploy/flow/monitoring:/etc/prometheus:ro
+      - promdata:/prometheus
+    ports: ["127.0.0.1:${FLOW_PROMETHEUS_PORT:-9090}:9090"]
+    networks: [internal]
 networks:
   internal: {}
   subtitle-internal:
     internal: true
 volumes:
   telethondata: {}
+  wechatdata: {}
+  promdata: {}
   pgdata: {}
   redisdata: {}
   objects: {}

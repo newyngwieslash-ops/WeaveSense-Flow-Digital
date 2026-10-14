@@ -1,4 +1,7 @@
-// Loom Engine (WeaveSense-Flow) entrypoint. LOOM_ROLE=api|scheduler|all.
+// Loom Engine (WeaveSense-Flow) entrypoint. LOOM_ROLE=api|scheduler|enrich|research|all.
+//  enrich:    attachment retry + OCR loops only (compose profile "extract")
+//  research:  periodic briefs only (compose profile "research")
+// With LOOM_SPLIT_ROLES=true the api/scheduler roles leave those loops to the dedicated roles.
 //  api:       internal HTTP API + collection worker + outbox dispatcher
 //  scheduler: the single due-window scanner (guarded by a PG advisory lock)
 import { pgDb, migrate } from "./db.ts";
@@ -15,6 +18,10 @@ const env = (k: string, d?: string) => {
   throw new Error(`missing env ${k}`);
 };
 const role = env("LOOM_ROLE", "api");
+if (!["api", "scheduler", "enrich", "research", "all"].includes(role)) throw new Error(`invalid LOOM_ROLE ${role}`);
+const split = env("LOOM_SPLIT_ROLES", "false") === "true";
+const runEnrich = role === "enrich" || role === "all" || (role === "api" && !split);
+const runBriefs = role === "research" || role === "all" || (role === "scheduler" && !split);
 const db = await pgDb(env("DATABASE_URL"));
 if (env("LOOM_AUTO_MIGRATE", "true") === "true") console.log("[loom] migrations applied:", await migrate(db));
 const engine = new Engine(db);
@@ -61,9 +68,6 @@ if (role === "api" || role === "all") {
   createApiServer(engine, { signingKey: key, audience: env("FLOW_INTERNAL_JWT_AUDIENCE", "loom-engine"), summarize }).listen(port, () => console.log(`[loom] api on :${port}`));
   const owner = `${hostname()}:${process.pid}`;
   void loop("worker", 1000, async () => { while (!stopping && (await engine.workOnce(owner))); });
-  // §6.4: attachments not stored during a run are retried separately (bounded attempts), never by re-collecting.
-  void loop("media-retry", Number(env("LOOM_MEDIA_RETRY_MS", "120000")), () => engine.retryMedia());
-  if (env("OCR_ENABLED", "false") === "true") void loop("ocr", Number(env("LOOM_OCR_TICK_MS", "30000")), () => engine.ocrTick());
   const platform = env("FLOW_PLATFORM_EVENTS_URL", "");
   if (platform) {
     const iss = env("FLOW_INTERNAL_JWT_ISSUER", "flow-platform");
@@ -78,8 +82,15 @@ if (role === "api" || role === "all") {
 if (role === "scheduler" || role === "all") {
   // schedulerTick takes a transaction-scoped advisory lock: one active scanner only.
   void loop("scheduler", Number(env("LOOM_SCHEDULER_TICK_MS", "15000")), () => engine.schedulerTick());
+}
+if (runBriefs) {
   // Periodic briefs: each (schedule, window) is idempotent, so overlapping ticks produce one report.
   const reports = new Reports(engine);
   reports.summarize = summarize;
   void loop("briefs", Number(env("LOOM_SCHEDULER_TICK_MS", "15000")), () => reports.briefTick());
+}
+if (runEnrich) {
+  // §6.4: attachments not stored during a run are retried separately (bounded attempts), never by re-collecting.
+  void loop("media-retry", Number(env("LOOM_MEDIA_RETRY_MS", "120000")), () => engine.retryMedia());
+  if (env("OCR_ENABLED", "false") === "true") void loop("ocr", Number(env("LOOM_OCR_TICK_MS", "30000")), () => engine.ocrTick());
 }

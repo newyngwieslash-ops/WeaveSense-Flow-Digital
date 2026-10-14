@@ -3,6 +3,18 @@
  "version": "1.0.0",
  "name": "Energy storage industry pack",
  "kind": "industry",
+ "required_tools": [
+  "intel_search_documents",
+  "intel_read_document",
+  "intel_compare_evidence",
+  "intel_save_report",
+  "intel_list_sources"
+ ],
+ "optional_connectors": [
+  "rss",
+  "telegram",
+  "wechat"
+ ],
  "source_templates": [
   {
    "title": "Energy-Storage.news",

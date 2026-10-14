@@ -36,6 +36,8 @@ type SkillPack struct {
 	Version         string          `json:"version"`
 	Name            string          `json:"name"`
 	Kind            string          `json:"kind,omitempty"`
+	RequiredTools   []string        `json:"required_tools,omitempty"`
+	OptionalConns   []string        `json:"optional_connectors,omitempty"`
 	Skills          []Skill         `json:"skills"`
 	SourceTemplates json.RawMessage `json:"source_templates,omitempty"`
 	Glossary        json.RawMessage `json:"glossary,omitempty"`

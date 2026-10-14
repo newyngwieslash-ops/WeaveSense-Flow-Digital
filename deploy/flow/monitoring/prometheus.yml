@@ -1,0 +1,14 @@
+# Prometheus for the Flow stack (compose profile "monitoring").
+# platform /metrics/flow requires FLOW_METRICS_TOKEN: write the same token to
+# deploy/flow/monitoring/platform.token (not committed) or remove that job.
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+rule_files: [alerts.yml]
+scrape_configs:
+  - job_name: loom-engine
+    static_configs: [{ targets: ["loom-engine:8080"] }]
+  - job_name: flow-platform
+    metrics_path: /metrics/flow
+    authorization: { type: Bearer, credentials_file: /etc/prometheus/platform.token }
+    static_configs: [{ targets: ["platform:8080"] }]

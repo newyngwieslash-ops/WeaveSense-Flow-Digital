@@ -141,7 +141,9 @@ export function PrevisCanvasDock(props: PrevisCanvasDockProps) {
                         </div>
                         {props.cameras.length ? (
                             <>
-                                <div className="pv-canvas-dock__menu-title is-sub"><span>机位</span></div>
+                                <div className="pv-canvas-dock__menu-title is-sub">
+                                    <span>机位</span>
+                                </div>
                                 <div className="pv-canvas-dock__camera-list">
                                     {props.cameras.map((camera) => {
                                         const current = props.viewMode === "camera" && camera.id === props.viewedCameraId;

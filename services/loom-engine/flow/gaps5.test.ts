@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { pgliteDb, migrate } from "./db.ts";
-import { Engine, operationStatus, JOB_STATES, type FetchResult } from "./engine.ts";
+import { Engine, operationStatus, prdJobState, JOB_STATES, type FetchResult } from "./engine.ts";
 
 const A = { tenant_id: "tn_a", workspace_id: "ws_a" };
 const item = (id: string) => ({ external_id: id, title: "t" + id, body: "b" + id, url: "u" + id, published_at: "2026-10-12T00:00:00Z" });
@@ -158,4 +158,14 @@ test("cron collection schedule in an IANA timezone, idempotent per window", asyn
   for (const bad of [{ cron: "61 * * * *" }, { cron: "0 9 * * *", timezone: "Mars/Base" }, { cron: "0 9 * * *", interval_seconds: 3600 }, { interval_seconds: 10 }]) {
     await assert.rejects(eng.createSchedule(A, "u", "p", { source_ids: [src.id], ...bad } as any), (e: any) => e.status === 400, JSON.stringify(bad));
   }
+});
+
+test("PRD §6.2 name: a waiting (queued) job is reported as job_state=pending", async () => {
+  const { eng, src } = await setup();
+  const op = await eng.requestCollection(A, "k-pending", { source_ids: [src.id] });
+  const view = await eng.getOperation(A, op.operation_id);
+  assert.equal(view.status, "queued"); // §5.2 user-facing operation status
+  assert.equal(view.jobs[0].status, "queued");
+  assert.equal(view.jobs[0].job_state, "pending");
+  assert.equal(prdJobState("retry_wait"), "retry_wait");
 });

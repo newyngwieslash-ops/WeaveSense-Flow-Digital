@@ -404,7 +404,10 @@ func (s *Service) CreateCloudAgentRun(userID string, req CloudAgentRequest, pare
 		} else {
 			req.FlowConversationID = ""
 		}
-		canvas, err = s.repo.CanvasProjectForUser(userID, req.CanvasID)
+		// PRD §8.1: canvas ownership is decided by the canvas run chain's ScopeResolver.
+		if _, err = s.canvasRunChain(nil, nil).Scope.ResolveSubject(nil, userID, flow.AgentSubject{Kind: flow.SubjectCanvas, ID: req.CanvasID}); err == nil {
+			canvas, err = s.repo.CanvasProjectForUser(userID, req.CanvasID)
+		}
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return nil, kernel.NotFound("画布不存在或尚未保存到服务端，请先完成画布同步")

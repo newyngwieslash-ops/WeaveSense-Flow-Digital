@@ -80,6 +80,13 @@ func compileCloudAgentTools(req CloudAgentRequest, includeProfileTool bool) []ma
 	if cloudAgentIntelSubject(req) {
 		return cloudAgentIntelTools(req)
 	}
+	// PRD §8.1: the canvas tool table comes from the canvas run chain's ToolProvider.
+	return (&Service{}).canvasRunChain(nil, nil).Tools.Tools(flow.ToolRequest{SubjectKind: flow.SubjectCanvas, PermissionMode: req.PermissionMode,
+		Payload: canvasToolRequest{Req: req, IncludeProfile: includeProfileTool}})
+}
+
+// compileCanvasAgentTools is the canvas adapter's tool table (see canvasToolProvider).
+func compileCanvasAgentTools(req CloudAgentRequest, includeProfileTool bool) []map[string]any {
 	tools := []map[string]any{}
 	add := func(name, description string, properties map[string]any, required ...string) {
 		if required == nil {

@@ -222,7 +222,7 @@ func (n Notifier) deliver(ctx context.Context, d model.FlowNotificationDelivery)
 	switch {
 	case err == nil:
 		upd["status"], upd["receipt"], upd["delivered_at"], upd["last_error"] = "delivered", truncRunes(receipt, 300), now, ""
-		_, _ = RecordUsage(n.DB, UsageInput{TenantID: d.TenantID, WorkspaceID: d.WorkspaceID, UsageType: UsageNotifications, Quantity: 1, CostMicro: -1,
+		_, _ = DefaultUsageRecorder.Record(n.DB, UsageInput{TenantID: d.TenantID, WorkspaceID: d.WorkspaceID, UsageType: UsageNotifications, Quantity: 1, CostMicro: -1,
 			SubjectRef: t.Channel + ":" + d.ID, IdemKey: "notify:" + d.ID, Charge: true}, now)
 	case errors.Is(err, errAmbiguous):
 		upd["status"], upd["last_error"] = StatusReconciliation, truncRunes(err.Error(), 480)

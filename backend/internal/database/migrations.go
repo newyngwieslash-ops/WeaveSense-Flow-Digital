@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const CurrentSchemaVersion int64 = 62
+const CurrentSchemaVersion int64 = 63
 
 const baselineSchemaChecksum = "sha256:open-ai-canvas-schema-v1-20260830"
 const schemaMigrationAppliedAtIndexChecksum = "sha256:schema-migrations-applied-at-index-v2-20260830"
@@ -223,6 +223,16 @@ var schemaMigrations = []migration{
 			}
 		}
 		if err := tx.Exec("UPDATE flow_model_tasks SET status = 'retry_wait' WHERE status = 'queued' AND attempts > 0").Error; err != nil {
+			return err
+		}
+		return applyFlowRLS(tx)
+	}},
+	{version: 63, name: "flow_mcp_secrets_owner_type", checksum: "sha256:flow-mcp-secrets-owner-type-v63-20261014", apply: func(tx *gorm.DB) error {
+		// §9.3 tenant-saved encrypted MCP credentials + schema_hash; §10 billing_account.owner_type.
+		if err := tx.AutoMigrate(&model.FlowMCPSecret{}, &model.FlowMCPConnection{}, &model.FlowBillingAccount{}); err != nil {
+			return err
+		}
+		if err := tx.Exec(`UPDATE flow_billing_accounts SET owner_type = CASE WHEN EXISTS (SELECT 1 FROM flow_tenants t WHERE t.id = flow_billing_accounts.tenant_id AND t.kind = 'organization') THEN 'organization' ELSE 'user' END`).Error; err != nil {
 			return err
 		}
 		return applyFlowRLS(tx)

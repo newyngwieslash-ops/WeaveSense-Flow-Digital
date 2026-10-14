@@ -61,40 +61,30 @@ func cloudAgentIntelSubject(req CloudAgentRequest) bool {
 	return req.Subject.Kind == flow.SubjectWorkspace || req.Subject.Kind == flow.SubjectTopic
 }
 
-// cloudAgentIntelTools is the tool table for intelligence subjects.
+// flowRunChain is the §8.1 run chain for intelligence subjects: scope resolver,
+// turn-context provider, tool provider (plan_update + intel_* + approved MCP),
+// tool executor (Go tool bridge) and usage recorder.
+func (s *Service) flowRunChain(runID string, req CloudAgentRequest) flow.RunChain {
+	base := []map[string]any{}
+	for _, t := range compileCloudAgentTools(CloudAgentRequest{PermissionMode: req.PermissionMode}, false) {
+		if fn, _ := t["function"].(map[string]any); fn["name"] == "plan_update" {
+			base = append(base, t)
+		}
+	}
+	var tools flow.Tools
+	if s.repo != nil {
+		tools = flow.Tools{DB: s.repo.DB(), Engine: s.flowEngine, RunID: runID, MCP: s.flowMCP, Model: s.flowModel}
+	}
+	return flow.IntelRunChain(tools, base)
+}
+
+// cloudAgentIntelTools is the tool table for intelligence subjects (ToolProvider).
 func cloudAgentIntelTools(req CloudAgentRequest) []map[string]any {
 	kind := ""
 	if req.Subject != nil {
 		kind = req.Subject.Kind
 	}
-	out := []map[string]any{}
-	for _, t := range cloudAgentIntelToolsAll(req) {
-		fn, _ := t["function"].(map[string]any)
-		if name, _ := fn["name"].(string); name == "plan_update" || flow.ToolAllowedForSubject(kind, name) {
-			out = append(out, t)
-		}
-	}
-	return out
-}
-
-func cloudAgentIntelToolsAll(req CloudAgentRequest) []map[string]any {
-	tools := []map[string]any{}
-	for _, t := range compileCloudAgentTools(CloudAgentRequest{PermissionMode: req.PermissionMode}, false) {
-		if fn, _ := t["function"].(map[string]any); fn["name"] == "plan_update" {
-			tools = append(tools, t)
-		}
-	}
-	if req.PermissionMode == "read_only" {
-		for _, t := range flow.PiFunctionTools() {
-			fn := t["function"].(map[string]any)
-			if spec, _ := flow.FindTool(fn["name"].(string)); spec.Class == "read" {
-				tools = append(tools, t)
-			}
-		}
-		return tools
-	}
-	tools = append(tools, flow.PiFunctionTools()...)
-	return append(tools, req.FlowMCPTools...)
+	return (&Service{}).flowRunChain("", req).Tools.Tools(flow.ToolRequest{SubjectKind: kind, PermissionMode: req.PermissionMode, MCPTools: req.FlowMCPTools})
 }
 
 // cloudAgentFlowConversation re-resolves the conversation and the user's
@@ -138,7 +128,7 @@ func (s *Service) cloudAgentFlowContextMessage(userID string, req CloudAgentRequ
 			err = cerr
 			return nil
 		}
-		tc, err = flow.BuildTurnContext(db, conv, ss)
+		tc, err = s.flowRunChain("", req).Context.TurnContext(db, conv, ss)
 		return nil
 	}); terr != nil && err == nil {
 		err = terr
@@ -293,8 +283,8 @@ func (s *Service) executeIntelToolIn(db *gorm.DB, userID, runID string, req Clou
 			return nil, BadAuthRequest("工具参数不是合法 JSON")
 		}
 	}
-	tools := flow.Tools{DB: s.repo.DB(), Engine: s.flowEngine, RunID: runID, MCP: s.flowMCP, Model: s.flowModel}.WithDB(db)
-	r, err := tools.Invoke(context.Background(), conv, ss, userID, call.ID, call.Function.Name, args, approvalID)
+	r, err := s.flowRunChain(runID, req).Exec.Execute(context.Background(), db, flow.ToolCall{Conv: conv, Subject: ss, UserID: userID, RunID: runID,
+		CallID: call.ID, Name: call.Function.Name, Args: args, ApprovalID: approvalID})
 	if err != nil {
 		if errors.Is(err, flow.ErrForbidden) || errors.Is(err, flow.ErrNotFound) {
 			return nil, NotFound("情报资源不存在或无权访问")

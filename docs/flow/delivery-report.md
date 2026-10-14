@@ -428,3 +428,30 @@ The audit is in `docs/implementation-status.md`. Work was done in batches, one P
   - A real SMTP server and a real webhook receiver.
   - Legacy import against a real legacy production dump.
   - A19 live acceptance.
+
+## Gap-closing round 5 (2026-10-14, Asia/Shanghai)
+
+Based on the audit in `prd-audit-2`. Merged by PR (numbers and merge SHAs are recorded below once merged):
+
+| PR | Branch | Closes |
+|---|---|---|
+| #34 | `gaps5-ci` | The platform PostgreSQL RLS tests (`TestFlowRLSPostgres`, `TestRuntimeRLSBlocksUnfilteredHandlerQueries`, `TestBackgroundWorkIsTenantScoped`) now run in CI as the non-superuser `flow_app` role. The dependency-test guard requires them. |
+| #35 | `gaps5-engine-states` | §6.2 job state machine (`queued`/`leased`/`running`/`retry_wait`/`partial`/`reconciliation_required`/`cancel_requested`/`cancelled`/`succeeded`/`failed`), heartbeat, `max_attempts` + backoff, outbox-based `reconcile()`; §6.1 cron schedules with timezone and `misfire_policy` (`coalesce`/`skip`/`catch_up`). |
+| next | `gaps5-mcp-runchain` | §9.3 tenant-saved encrypted MCP credentials (`flow_mcp_secrets`, AES-256-GCM envelope with `FLOW_SECRETS_KEK`, `secret:<id>` refs, under RLS); `/api/mcp/connections` + `/api/mcp/secrets` aliases; §8.1 run-chain interfaces (`runchain.go`) used by the intelligence chain; `billing_account.owner_type` (schema v63); compose `core` profile; enum validation in tool args; direct tests for `intel_preview_monitor`, `intel_cancel_operation`, `intel_preview_schedule`; A08, A10, A18 and A20 tests; sqlite test DB pinned to one connection (fixes a flaky A15 lock). |
+| next | `gaps5-web-prettier` | Removes the last 12 `web/.prettierignore` source exclusions; the snippet tests now compare format-normalized source (`web/test/helpers/source-contract.ts`). |
+
+### Verification actually executed (local, before push)
+| Check | Result |
+|---|---|
+| `go test ./internal/flow/ ./internal/database/` with `FLOW_TEST_PG_RLS_DSN` (PG17 container, role `flow_app`) | pass |
+| `go test ./internal/app/` | A08/A10 and Flow tests pass; the 5 CloudAgent Pi-runtime tests fail locally only because `agent-runtime/pi/node_modules` is not installed (known, see P1) |
+| Loom Engine `node --test flow/*.test.ts` (PGlite + PG17 via `FLOW_TEST_PG_ADMIN_URL`) | 72/72 pass |
+| Web `bun test test/` | 2200 pass, 0 fail |
+| Web `tsc --noEmit`, `eslint src test`, `prettier --check .` | pass |
+| `docker compose -f docker-compose.flow.yml config` for every profile | pass |
+
+### Still not done (honest)
+- §8.1: the canvas agent path is not converted to `RunChain` adapters.
+- §6.2: the PRD's `pending` state is called `queued`.
+- The former snippet tests are format-independent source contracts, not rendering tests.
+- A19 (live Telegram/WeChat/MCP/OAuth), real SMTP/webhook, full stack boot, promtool, legacy production import and the PG16→17 volume upgrade still need a real environment (see `pending-acceptance.md`).

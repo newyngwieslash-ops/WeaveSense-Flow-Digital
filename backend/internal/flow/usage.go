@@ -181,13 +181,13 @@ func recordModelUsage(db *gorm.DB, t model.FlowModelTask, u ModelUsage, cost int
 	if u.InputTokens == 0 && u.OutputTokens == 0 {
 		return nil
 	}
-	_, err := RecordUsage(db, UsageInput{TenantID: t.TenantID, UsageType: UsageLLMInputTokens, Quantity: u.InputTokens, CostMicro: 0,
+	_, err := DefaultUsageRecorder.Record(db, UsageInput{TenantID: t.TenantID, UsageType: UsageLLMInputTokens, Quantity: u.InputTokens, CostMicro: 0,
 		SubjectRef: "model_task:" + t.ID, IdemKey: fmt.Sprintf("model:%s:in", t.IdemKey), ReservationID: t.ReservationID}, now)
 	if err != nil {
 		return err
 	}
 	// The settled task cost is attributed to the output line so the total matches the ledger.
-	_, err = RecordUsage(db, UsageInput{TenantID: t.TenantID, UsageType: UsageLLMOutputTokens, Quantity: u.OutputTokens, CostMicro: cost,
+	_, err = DefaultUsageRecorder.Record(db, UsageInput{TenantID: t.TenantID, UsageType: UsageLLMOutputTokens, Quantity: u.OutputTokens, CostMicro: cost,
 		SubjectRef: "model_task:" + t.ID, IdemKey: fmt.Sprintf("model:%s:out", t.IdemKey), ReservationID: t.ReservationID}, now)
 	return err
 }

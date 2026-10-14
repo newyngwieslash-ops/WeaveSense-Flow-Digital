@@ -102,3 +102,9 @@ deploy/flow/backup/restore.sh /backups/intel/flow-<ts>.dump "$NEW_INTEL_DATABASE
   - Each old_id→new_id pair is stored in `flow_legacy_id_map`. Running the import again reuses the mapping.
   - Keywords are reported as skipped: monitors need a preview and approval. WeChat sources need a gateway id. Analyses and notes are not imported.
 - **Telegram media keys:** `flow/tools/media-keys.ts plan|apply` moves legacy `telegram/<channel>/<id>` keys to tenant/workspace-scoped keys.
+
+## Compose profiles (PRD §14)
+- `core` = postgres, redis, minio (+ minio-init), platform, web, loom-engine, loom-scheduler. Every core service now carries `profiles: [core]`; `.env.flow.example` sets `COMPOSE_PROFILES=core`, so `docker compose -f docker-compose.flow.yml --env-file .env.flow up -d` starts the core stack as before.
+- **Upgrading an existing `.env.flow`:** add `COMPOSE_PROFILES=core` (or `core,telegram,extract,...`). Without it no service starts.
+- With `--profile` on the command line, Compose ignores `COMPOSE_PROFILES`; always include `--profile core`, e.g. `--profile core --profile telegram`.
+- Optional: telegram, wechat, subtitles, extract, research, monitoring. `docker compose config` validates every profile combination (checked on the build box).

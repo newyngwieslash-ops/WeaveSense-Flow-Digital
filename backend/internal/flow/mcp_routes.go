@@ -33,11 +33,27 @@ func RegisterMCPRoutes(api gin.IRouter, db *gorm.DB, gw *MCPGateway, user UserFu
 			reply(c, http.StatusNotFound, nil, "connection not found")
 		case errors.Is(err, ErrMCPInvalid):
 			reply(c, http.StatusBadRequest, nil, err.Error())
+		case errors.Is(err, ErrSecretNotFound):
+			reply(c, http.StatusNotFound, nil, "secret not found")
+		case errors.Is(err, ErrSecretInUse):
+			reply(c, http.StatusConflict, nil, err.Error())
+		case errors.Is(err, ErrSecretKEK):
+			reply(c, http.StatusServiceUnavailable, nil, err.Error())
 		default:
 			reply(c, http.StatusBadGateway, nil, err.Error())
 		}
 	}
-	g := api.Group("/intelligence/mcp/connections")
+	// PRD §11 path is /api/mcp/connections; /api/intelligence/mcp/connections stays as the
+	// original path (same handlers, same auth).
+	for _, base := range []string{"/intelligence/mcp", "/mcp"} {
+		registerMCPConnectionRoutes(api.Group(base+"/connections"), db, gw, scoped, fail)
+		registerMCPSecretRoutes(api.Group(base+"/secrets"), db, gw, scoped, fail)
+	}
+}
+
+type mcpScopedFn func(c *gin.Context) (Scope, *model.User, bool)
+
+func registerMCPConnectionRoutes(g *gin.RouterGroup, db *gorm.DB, gw *MCPGateway, scoped mcpScopedFn, fail func(*gin.Context, error)) {
 	g.GET("", func(c *gin.Context) {
 		db := reqDB(c, db)
 		_ = db
@@ -144,5 +160,92 @@ func RegisterMCPRoutes(api gin.IRouter, db *gorm.DB, gw *MCPGateway, user UserFu
 			return
 		}
 		reply(c, http.StatusOK, gin.H{"revoked": true}, "ok")
+	})
+}
+
+// MCPSecretView is the only shape a secret is ever returned in: metadata plus the
+// reference to put into a connection's credentialRef. No value, no ciphertext.
+type MCPSecretView struct {
+	model.FlowMCPSecret
+	Ref string `json:"ref"`
+}
+
+func secretView(r model.FlowMCPSecret) MCPSecretView {
+	return MCPSecretView{FlowMCPSecret: r, Ref: secretRefPrefix + r.ID}
+}
+
+// registerMCPSecretRoutes: tenant-saved MCP credentials (workspace admins only).
+func registerMCPSecretRoutes(g *gin.RouterGroup, db *gorm.DB, gw *MCPGateway, scoped mcpScopedFn, fail func(*gin.Context, error)) {
+	admin := func(c *gin.Context) (Scope, *model.User, MCPSecrets, bool) {
+		s, u, ok := scoped(c)
+		if !ok {
+			return s, u, MCPSecrets{}, false
+		}
+		if s.Role != "admin" {
+			reply(c, http.StatusForbidden, nil, "workspace admin required")
+			return s, u, MCPSecrets{}, false
+		}
+		return s, u, gw.withDB(reqDB(c, db)).secrets(), true
+	}
+	g.GET("", func(c *gin.Context) {
+		s, _, sec, ok := admin(c)
+		if !ok {
+			return
+		}
+		rows, err := sec.List(s)
+		if err != nil {
+			fail(c, err)
+			return
+		}
+		out := make([]MCPSecretView, 0, len(rows))
+		for _, r := range rows {
+			out = append(out, secretView(r))
+		}
+		reply(c, http.StatusOK, out, "ok")
+	})
+	g.POST("", func(c *gin.Context) {
+		s, u, sec, ok := admin(c)
+		if !ok {
+			return
+		}
+		var in MCPSecretInput
+		if c.ShouldBindJSON(&in) != nil {
+			reply(c, http.StatusBadRequest, nil, "bad request")
+			return
+		}
+		row, err := sec.Create(s, u.ID, in)
+		if err != nil {
+			fail(c, err)
+			return
+		}
+		reply(c, http.StatusCreated, secretView(row), "ok")
+	})
+	g.PUT("/:id", func(c *gin.Context) {
+		s, _, sec, ok := admin(c)
+		if !ok {
+			return
+		}
+		var in MCPSecretInput
+		if c.ShouldBindJSON(&in) != nil {
+			reply(c, http.StatusBadRequest, nil, "bad request")
+			return
+		}
+		row, err := sec.Rotate(s, c.Param("id"), in)
+		if err != nil {
+			fail(c, err)
+			return
+		}
+		reply(c, http.StatusOK, secretView(row), "ok")
+	})
+	g.DELETE("/:id", func(c *gin.Context) {
+		s, _, sec, ok := admin(c)
+		if !ok {
+			return
+		}
+		if err := sec.Delete(s, c.Param("id")); err != nil {
+			fail(c, err)
+			return
+		}
+		reply(c, http.StatusOK, gin.H{"deleted": true}, "ok")
 	})
 }

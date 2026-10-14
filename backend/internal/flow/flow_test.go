@@ -19,6 +19,12 @@ var key = []byte(strings.Repeat("k", 32))
 func testDB(t *testing.T) *gorm.DB {
 	t.Helper()
 	db, err := gorm.Open(sqlite.Open("file:"+t.Name()+"?mode=memory&cache=shared"), &gorm.Config{Logger: logger.Discard})
+	if err == nil {
+		// The shared in-memory cache is one connection; a second one deadlocks
+		// against any transaction still open (e.g. the run-slot queue).
+		sqlDB, _ := db.DB()
+		sqlDB.SetMaxOpenConns(1)
+	}
 	if err != nil {
 		t.Fatal(err)
 	}

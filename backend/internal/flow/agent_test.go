@@ -21,10 +21,12 @@ type fakeEngine struct {
 	calls    map[string]int // path -> count
 	monitors map[string][]map[string]any
 	idem     map[string]bool
+	bodies   map[string]map[string]any // last request body per "METHOD path"
+	scopes   map[string][]string       // last token scopes per "METHOD path"
 }
 
 func newFakeEngine(t *testing.T) (*fakeEngine, EngineClient) {
-	f := &fakeEngine{calls: map[string]int{}, monitors: map[string][]map[string]any{}, idem: map[string]bool{}}
+	f := &fakeEngine{calls: map[string]int{}, monitors: map[string][]map[string]any{}, idem: map[string]bool{}, bodies: map[string]map[string]any{}, scopes: map[string][]string{}}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx, err := Verify(key, strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "), "loom-engine", timeNow())
 		if err != nil {
@@ -37,6 +39,8 @@ func newFakeEngine(t *testing.T) (*fakeEngine, EngineClient) {
 		body, _ := io.ReadAll(r.Body)
 		var in map[string]any
 		_ = json.Unmarshal(body, &in)
+		f.bodies[r.Method+" "+r.URL.Path] = in
+		f.scopes[r.Method+" "+r.URL.Path] = ctx.Scopes
 		var data any
 		switch r.Method + " " + r.URL.Path {
 		case "POST /v1/documents/search":
@@ -60,6 +64,10 @@ func newFakeEngine(t *testing.T) (*fakeEngine, EngineClient) {
 			data = []map[string]any{{"evidence_id": "ev1", "document_id": "d1", "source_id": "s1", "revision": 1, "quote": "Acme signed a lithium deal"}}
 		case "POST /v1/briefs/wake":
 			data = map[string]any{"key": in["key"], "made": 1}
+		case "POST /v1/brief-schedules/preview":
+			data = map[string]any{"preview_id": "bpv_1", "next_runs": []string{"2026-10-15T01:00:00.000Z"}, "tenant": ctx.TenantID}
+		case "POST /v1/operations/op_1/cancel":
+			data = map[string]any{"operation_id": "op_1", "cancelled": 1, "cancel_requested": 1}
 		case "POST /v1/collection-runs":
 			data = map[string]any{"operation_id": "op_" + r.Header.Get("X-Idempotency-Key")}
 		default:

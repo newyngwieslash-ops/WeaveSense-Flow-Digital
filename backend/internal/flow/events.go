@@ -92,7 +92,7 @@ func ConsumeEvent(db *gorm.DB, consumerID string, e Event) (bool, error) {
 			}
 			_ = json.Unmarshal(e.Payload, &p)
 			if validUsageType(p.UsageType) && p.Quantity >= 0 {
-				if _, err := RecordUsage(tx, UsageInput{TenantID: e.TenantID, WorkspaceID: e.WorkspaceID, UsageType: p.UsageType, Quantity: p.Quantity,
+				if _, err := DefaultUsageRecorder.Record(tx, UsageInput{TenantID: e.TenantID, WorkspaceID: e.WorkspaceID, UsageType: p.UsageType, Quantity: p.Quantity,
 					CostMicro: -1, SubjectRef: strings.Trim(p.DocumentID+":"+p.ObjectKey, ":"), IdemKey: "event:" + e.EventID, Charge: true}, time.Now().UTC()); err != nil {
 					return err
 				}

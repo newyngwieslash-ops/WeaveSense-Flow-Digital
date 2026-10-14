@@ -23,6 +23,8 @@ type flowFakeEngine struct {
 	mu    sync.Mutex
 	calls map[string]int
 	seen  []string // tenant ids seen
+	// monitorStatus, when set, is the HTTP status for POST /v1/monitors (e.g. 410 preview expired).
+	monitorStatus int
 }
 
 func newFlowFakeEngine(t *testing.T) (*flowFakeEngine, flow.EngineClient) {
@@ -36,7 +38,13 @@ func newFlowFakeEngine(t *testing.T) (*flowFakeEngine, flow.EngineClient) {
 		f.mu.Lock()
 		f.calls[r.Method+" "+r.URL.Path]++
 		f.seen = append(f.seen, ctx.TenantID)
+		status := f.monitorStatus
 		f.mu.Unlock()
+		if status != 0 && r.URL.Path == "/v1/monitors" {
+			w.WriteHeader(status)
+			_ = json.NewEncoder(w).Encode(map[string]any{"code": status, "message": "preview expired"})
+			return
+		}
 		_, _ = io.ReadAll(r.Body)
 		var data any = map[string]any{"ok": true}
 		switch r.URL.Path {

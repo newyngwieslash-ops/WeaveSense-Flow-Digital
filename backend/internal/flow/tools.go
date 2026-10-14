@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -165,6 +166,9 @@ func validateArgs(spec ToolSpec, args map[string]any) error {
 		}
 		if !okType {
 			return fmt.Errorf("%w: %s must be %v", ErrToolArgs, k, p["type"])
+		}
+		if enum, ok := p["enum"].([]string); ok && !slices.Contains(enum, fmt.Sprint(v)) {
+			return fmt.Errorf("%w: %s must be one of %v", ErrToolArgs, k, enum)
 		}
 	}
 	return nil

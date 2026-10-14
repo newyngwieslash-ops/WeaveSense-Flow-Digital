@@ -1,7 +1,9 @@
 # WeaveSense-Flow P0 portable stack. Relative paths + named volumes only.
 # Usage: cp .env.flow.example .env.flow && docker compose -f docker-compose.flow.yml --env-file .env.flow up -d
 # P1: loom-engine/loom-scheduler run the Flow engine (services/loom-engine/flow/main.ts).
-# Optional profiles: telegram, wechat, subtitles, extract (OCR + attachment retry), research (briefs),
+# PRD §14 profiles: core (postgres, redis, minio, platform, web, loom-engine, loom-scheduler; enabled by
+# COMPOSE_PROFILES=core in .env.flow, or pass --profile core), plus the optional
+# telegram, wechat, subtitles, extract (OCR + attachment retry), research (briefs),
 # monitoring (Prometheus + alert rules). With extract/research set LOOM_SPLIT_ROLES=true in .env.flow
 # so api/scheduler hand those loops to the dedicated containers.
 name: weavesense-flow
@@ -9,6 +11,7 @@ x-restart: &restart
   restart: unless-stopped
 services:
   postgres:
+    profiles: [core]
     <<: *restart
     image: postgres:17-alpine   # PG17 everywhere (CI, deploy compose); 16→17 upgrade: docs/flow/release-deploy.md
     environment:
@@ -29,12 +32,14 @@ services:
       retries: 20
     networks: [internal]
   redis:
+    profiles: [core]
     <<: *restart
     image: redis:7-alpine
     command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?set in .env.flow}"]
     volumes: [redisdata:/data]
     networks: [internal]
   minio:
+    profiles: [core]
     <<: *restart
     # Upstream minio/minio images are no longer pullable from Docker Hub/quay;
     # override with FLOW_MINIO_IMAGE if you mirror your own.
@@ -47,6 +52,7 @@ services:
     volumes: [objects:/data]
     networks: [internal]
   minio-init:
+    profiles: [core]
     image: ${FLOW_MC_IMAGE:-bitnamilegacy/minio-client:2025.7.21}
     user: "0:0"
     depends_on: [minio]
@@ -63,6 +69,7 @@ services:
   # Go platform: identity, authz, billing ledger, agent runs. Pi runtime is
   # bundled in this image (backend/Dockerfile stage pi-runtime-deps).
   platform:
+    profiles: [core]
     <<: *restart
     build: { context: ., dockerfile: backend/Dockerfile }
     env_file: [.env.flow]
@@ -83,6 +90,7 @@ services:
       internal:
         aliases: [backend]   # nginx.conf proxies /api to http://backend:8080
   web:
+    profiles: [core]
     <<: *restart
     build: { context: ., dockerfile: Dockerfile }
     depends_on: [platform]
@@ -90,6 +98,7 @@ services:
     networks: [internal]
   # Loom Engine (extracted from WeaveSense): sources, cursors, documents, jobs.
   loom-engine:
+    profiles: [core]
     <<: *restart
     build: { context: ./services/loom-engine, dockerfile: Dockerfile }
     env_file: [.env.flow]
@@ -103,6 +112,7 @@ services:
       postgres: { condition: service_healthy }
     networks: [internal]
   loom-scheduler:
+    profiles: [core]
     <<: *restart
     build: { context: ./services/loom-engine, dockerfile: Dockerfile }
     env_file: [.env.flow]

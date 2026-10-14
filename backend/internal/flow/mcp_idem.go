@@ -55,7 +55,7 @@ func (g MCPGateway) ExecuteKeyed(ctx context.Context, scope Scope, actorID, conn
 		switch row.Status {
 		case "succeeded":
 			return row.Output, row.Truncated, nil
-		case "pending", "unknown":
+		case "pending", StatusReconciliation:
 			found, out, err := g.reconcile(ctx, scope, row)
 			if err != nil {
 				return "", false, err
@@ -74,7 +74,7 @@ func (g MCPGateway) ExecuteKeyed(ctx context.Context, scope Scope, actorID, conn
 		g.DB.Model(&model.FlowMCPCall{}).Where("id = ?", row.ID).Updates(map[string]any{"status": "succeeded", "output": out, "truncated": truncated, "billed": true, "updated_at": g.now()})
 		return out, truncated, nil
 	case errors.Is(err, errMCPSent):
-		g.DB.Model(&model.FlowMCPCall{}).Where("id = ?", row.ID).Updates(map[string]any{"status": "unknown", "updated_at": g.now()})
+		g.DB.Model(&model.FlowMCPCall{}).Where("id = ?", row.ID).Updates(map[string]any{"status": StatusReconciliation, "updated_at": g.now()})
 		return "", false, fmt.Errorf("%w (%v)", ErrMCPUnknownOutcome, err)
 	default:
 		g.DB.Model(&model.FlowMCPCall{}).Where("id = ?", row.ID).Updates(map[string]any{"status": "failed", "updated_at": g.now()})
@@ -120,7 +120,7 @@ func (g MCPGateway) reconcile(ctx context.Context, scope Scope, row model.FlowMC
 	switch st.Status {
 	case "succeeded":
 		out := redact(st.Output, secret)
-		upd := g.DB.Model(&model.FlowMCPCall{}).Where("id = ? AND status IN ('pending','unknown')", row.ID).
+		upd := g.DB.Model(&model.FlowMCPCall{}).Where("id = ? AND status IN ('pending','reconciliation_required')", row.ID).
 			Updates(map[string]any{"status": "succeeded", "output": out, "billed": true, "updated_at": g.now()})
 		if upd.RowsAffected == 1 {
 			g.usage(c, row.Tool, "reconcile", "succeeded", g.now(), len(out), v.CostRule.PerCallCredits)

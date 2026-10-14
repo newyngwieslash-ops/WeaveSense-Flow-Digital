@@ -101,7 +101,7 @@ func TestModelTaskUnknownReconciledRequeuedAndLeaseExpiry(t *testing.T) {
 	}
 	var r model.FlowBudgetReservation
 	m.DB.First(&r, "id = ?", task.ReservationID)
-	if r.Status != "unknown" {
+	if r.Status != StatusReconciliation {
 		t.Fatalf("reservation %s", r.Status)
 	}
 	answers := map[string]string{"k3": "not_found", "k4": "succeeded"}
@@ -127,7 +127,7 @@ func TestModelTaskUnknownReconciledRequeuedAndLeaseExpiry(t *testing.T) {
 	past := time.Now().UTC().Add(-time.Minute) // ModelTasks stores UTC; a local-offset time compares wrong in SQLite
 	m.DB.Model(&model.FlowModelTask{}).Where("id = ?", t4.ID).Updates(map[string]any{"status": "running", "lease_until": past, "attempts": 1})
 	_, _ = m.RunDue(context.Background())
-	if g, _ := m.Get(t4.ID); g.Status != "unknown" {
+	if g, _ := m.Get(t4.ID); g.Status != StatusReconciliation {
 		t.Fatalf("expired lease %s", g.Status)
 	}
 	_, _ = m.Reconcile(context.Background(), 0)

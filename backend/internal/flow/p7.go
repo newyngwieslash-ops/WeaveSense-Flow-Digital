@@ -109,7 +109,7 @@ func ResolveReservation(db *gorm.DB, scope Scope, id, outcome string, cost int64
 	if err := db.First(&r, "id = ? AND tenant_id = ?", id, scope.TenantID).Error; err != nil {
 		return r, ErrNotFound
 	}
-	if r.Status != "unknown" {
+	if r.Status != StatusReconciliation {
 		return r, ErrBudgetState
 	}
 	b := Billing{DB: db}
@@ -148,12 +148,12 @@ func (g MCPGateway) ResolveMCPCall(scope Scope, id, outcome, output string) (mod
 	if err := g.DB.First(&row, "id = ? AND tenant_id = ?", id, scope.TenantID).Error; err != nil {
 		return row, ErrNotFound
 	}
-	if row.Status != "unknown" && row.Status != "pending" {
+	if row.Status != StatusReconciliation && row.Status != "pending" {
 		return row, ErrBudgetState
 	}
 	switch outcome {
 	case "succeeded":
-		upd := g.DB.Model(&model.FlowMCPCall{}).Where("id = ? AND status IN ('pending','unknown')", row.ID).
+		upd := g.DB.Model(&model.FlowMCPCall{}).Where("id = ? AND status IN ('pending','reconciliation_required')", row.ID).
 			Updates(map[string]any{"status": "succeeded", "output": truncRunes(output, 64000), "billed": true, "updated_at": g.now()})
 		if upd.RowsAffected == 1 {
 			if c, err := g.get(scope, row.ConnectionID); err == nil {
@@ -161,7 +161,7 @@ func (g MCPGateway) ResolveMCPCall(scope Scope, id, outcome, output string) (mod
 			}
 		}
 	case "not_executed":
-		g.DB.Model(&model.FlowMCPCall{}).Where("id = ? AND status IN ('pending','unknown')", row.ID).
+		g.DB.Model(&model.FlowMCPCall{}).Where("id = ? AND status IN ('pending','reconciliation_required')", row.ID).
 			Updates(map[string]any{"status": "failed", "updated_at": g.now()})
 	default:
 		return row, ErrInvalid

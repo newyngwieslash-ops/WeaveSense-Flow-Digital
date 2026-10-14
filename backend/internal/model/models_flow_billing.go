@@ -30,7 +30,8 @@ type FlowBudgetReservation struct {
 	ReservedMicro  int64      `json:"reservedMicro"`
 	AllocatedMicro int64      `json:"allocatedMicro"` // held by open children
 	ConsumedMicro  int64      `json:"consumedMicro"`
-	Status         string     `json:"status" gorm:"size:16;not null;index"` // reserved | settled | released | unknown
+	Status         string     `json:"status" gorm:"size:32;not null;index"` // reserved | settled | released | reconciliation_required
+	PriceVersion   string     `json:"priceVersion,omitempty" gorm:"size:40"`
 	ExternalRef    string     `json:"externalRef,omitempty" gorm:"size:200"`
 	Note           string     `json:"note,omitempty" gorm:"size:300"`
 	CreatedAt      time.Time  `json:"createdAt"`

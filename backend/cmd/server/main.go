@@ -154,6 +154,8 @@ func run(ctx context.Context) error {
 	flow.RegisterP5Routes(flowAPI, db, flowCfg, flowUser, modelGW)
 	flow.RegisterP7Routes(flowAPI, db, flowUser, mcpGateway)
 	flow.RegisterCanvasConversationRoutes(flowAPI, db, flowUser)
+	flow.RegisterNotifyRoutes(flowAPI, db, flowUser)
+	go flow.RunNotifier(context.Background(), flow.Notifier{DB: db, Mail: flow.SMTPMailerFromEnv(), BaseURL: os.Getenv("FLOW_PUBLIC_BASE_URL")}, 10*time.Second)
 	go flow.RunBillingMaintenance(context.Background(), db, 15*time.Minute)
 	go svc.RunFlowAutoContinue(context.Background(), 5*time.Second)
 	r.NoRoute(handler.SystemProxyNoRouteHandler(svc))

@@ -3,7 +3,7 @@ package model
 import "time"
 
 // FlowModelTask is one Model Gateway call executed by the async pipeline:
-// queued → running → succeeded | failed | unknown (→ reconciled). The task id
+// queued → running → succeeded | failed | retry_wait | reconciliation_required (→ reconciled). The task id
 // is the Idempotency-Key sent to the gateway.
 type FlowModelTask struct {
 	ID            string     `json:"id" gorm:"primaryKey;size:40"`
@@ -12,7 +12,7 @@ type FlowModelTask struct {
 	ReservationID string     `json:"reservationId" gorm:"size:40"`
 	Purpose       string     `json:"purpose" gorm:"size:40"`
 	Request       string     `json:"-" gorm:"type:text"` // JSON {system,user,max_tokens}
-	Status        string     `json:"status" gorm:"size:16;not null;index"`
+	Status        string     `json:"status" gorm:"size:32;not null;index"`
 	Attempts      int        `json:"attempts"`
 	MaxAttempts   int        `json:"maxAttempts"`
 	Result        string     `json:"-" gorm:"type:text"`

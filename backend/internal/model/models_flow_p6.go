@@ -12,7 +12,7 @@ type FlowMCPCall struct {
 	ConnectionID string    `json:"connectionId" gorm:"size:40;not null"`
 	Tool         string    `json:"tool" gorm:"size:120"`
 	ArgsHash     string    `json:"argsHash" gorm:"size:64"`
-	Status       string    `json:"status" gorm:"size:16;not null"` // pending | succeeded | failed | unknown
+	Status       string    `json:"status" gorm:"size:32;not null"` // pending | succeeded | failed | reconciliation_required
 	Output       string    `json:"-" gorm:"type:text"`
 	Truncated    bool      `json:"truncated"`
 	Billed       bool      `json:"billed"`

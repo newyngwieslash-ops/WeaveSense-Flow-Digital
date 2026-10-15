@@ -189,3 +189,92 @@ func TestBackgroundWorkIsTenantScoped(t *testing.T) {
 		t.Fatalf("foreign wait resumed: n=%d err=%v", n, err)
 	}
 }
+
+// TestRLSCapabilityAndProviderTables covers the round-7 tables on live
+// Postgres as the non-superuser role:
+//   - capability snapshots / run bindings are tenant-scoped;
+//   - provider accounts are system-only;
+//   - billing still holds the provider budget from inside a tenant-scoped
+//     transaction and gets its tenant scope back afterwards.
+func TestRLSCapabilityAndProviderTables(t *testing.T) {
+	db := pgTestDB(t)
+	now := time.Now()
+	for _, tn := range []string{"tn_a", "tn_b"} {
+		in := CapabilityInput{RunID: "run_" + tn, TenantID: tn, SubjectKind: SubjectCanvas}
+		snap, err := FreezeCapabilitySnapshot(db, in, now)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if snap.TenantID != tn {
+			t.Fatalf("snapshot for %s has tenant %s", tn, snap.TenantID)
+		}
+	}
+	if err := db.Create(&model.FlowProviderAccount{ID: "pa_1", Provider: "gw", MonthlyBudgetMicro: 1000, Status: "active"}).Error; err != nil {
+		t.Fatal(err)
+	}
+	inTenant := func(tn string, fn func(tx *gorm.DB) error) error {
+		return db.Transaction(func(tx *gorm.DB) error {
+			if err := tx.Exec("SELECT set_config('app.tenant_ids', ?, true)", tn).Error; err != nil {
+				return err
+			}
+			return fn(tx)
+		})
+	}
+	err := inTenant("tn_a", func(tx *gorm.DB) error {
+		var n int64
+		tx.Model(&model.FlowCapabilitySnapshot{}).Count(&n)
+		if n != 1 {
+			return fmt.Errorf("tenant a sees %d snapshots", n)
+		}
+		tx.Model(&model.FlowRunCapability{}).Count(&n)
+		if n != 1 {
+			return fmt.Errorf("tenant a sees %d run capabilities", n)
+		}
+		if _, err := RunCapability(tx, "run_tn_b"); err == nil {
+			return fmt.Errorf("tenant a read tenant b's run capability")
+		}
+		tx.SavePoint("s1")
+		ierr := tx.Create(&model.FlowRunCapability{RunID: "run_x", TenantID: "tn_b", SnapshotID: "cap_x", CreatedAt: now}).Error
+		tx.RollbackTo("s1")
+		if ierr == nil || !strings.Contains(ierr.Error(), "row-level security") {
+			return fmt.Errorf("cross-tenant run capability insert not blocked: %v", ierr)
+		}
+		tx.Model(&model.FlowProviderAccount{}).Count(&n)
+		if n != 0 {
+			return fmt.Errorf("tenant context sees %d provider accounts", n)
+		}
+		tx.SavePoint("s2")
+		ierr = tx.Create(&model.FlowProviderAccount{ID: "pa_evil", Provider: "x"}).Error
+		tx.RollbackTo("s2")
+		if ierr == nil || !strings.Contains(ierr.Error(), "row-level security") {
+			return fmt.Errorf("tenant provider-account insert not blocked: %v", ierr)
+		}
+		b := Billing{DB: db, Now: func() time.Time { return now }}
+		if err := b.holdProvider(tx, "pa_1", 400); err != nil {
+			return fmt.Errorf("holdProvider in tenant tx: %v", err)
+		}
+		if err := b.holdProvider(tx, "pa_1", 700); err != ErrBudgetProvider {
+			return fmt.Errorf("over-budget hold: %v", err)
+		}
+		var scope string
+		tx.Raw("SELECT current_setting('app.tenant_ids', true)").Scan(&scope)
+		if scope != "tn_a" {
+			return fmt.Errorf("tenant scope not restored: %q", scope)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var per model.FlowProviderAccountPeriod
+	if err := db.First(&per, "account_id = ?", "pa_1").Error; err != nil || per.ReservedMicro != 400 {
+		t.Fatalf("provider period %+v err %v", per, err)
+	}
+	for _, tb := range []string{"flow_capability_snapshots", "flow_run_capabilities", "flow_provider_accounts", "flow_provider_account_periods"} {
+		var forced bool
+		db.Raw("SELECT relforcerowsecurity FROM pg_class WHERE oid = ?::regclass", tb).Scan(&forced)
+		if !forced {
+			t.Fatalf("RLS not forced on %s", tb)
+		}
+	}
+}

@@ -19,7 +19,7 @@ Last updated 2026-10-15 (Asia/Shanghai) after round 7 (budgets, fair claim, even
 | §9.2 industry packs | done (export) | `industry-packs/*` (manifest, schemas, evals) generated from `backend/internal/flow/skillpacks/*.json` | `TestIndustryPackExport` (drift check); eval sets are review cases, not an automated grader |
 | §9.3 MCP Gateway | done; real server acceptance deferred (A19) | `mcp*.go`; tenant-saved credentials `mcp_secrets.go` (AES-256-GCM envelope, per-secret data key wrapped by `FLOW_SECRETS_KEK`, AAD binds tenant/workspace/id; referenced as `secret:<id>`, never returned by the API); `/api/mcp/connections` and `/api/mcp/secrets` aliases | A14/A16 tests, `mcp_secrets_test.go` |
 | §9.4 research sub-tasks | done; Eino/OpenCode executor not wired (optional) | `tools_p3.go`, `reports.ts` | tests |
-| §10.3 RLS | done; the platform agent runtime still runs in system context internally | engine 0006 + every new table; `flow_rls.go` (incl. `flow_mcp_secrets`) | `pg.test.ts` on PG17 in CI; platform `TestFlowRLSPostgres` / `TestRuntimeRLSBlocksUnfilteredHandlerQueries` / `TestBackgroundWorkIsTenantScoped` run in CI as non-superuser `flow_app` (PR #34) |
+| §10.3 RLS | done (v65 adds the capability snapshot tables under tenant RLS and the provider account tables under system-only RLS, see `TestRLSCapabilityAndProviderTables`); the platform agent runtime still runs in system context internally | engine 0006 + every new table; `flow_rls.go` (incl. `flow_mcp_secrets`) | `pg.test.ts` on PG17 in CI; platform `TestFlowRLSPostgres` / `TestRuntimeRLSBlocksUnfilteredHandlerQueries` / `TestBackgroundWorkIsTenantScoped` run in CI as non-superuser `flow_app` (PR #34) |
 | §10.4 private objects and tenant-scoped media keys | done | `connectors.ts` `SCOPED_MEDIA_KEY`, telethon `media_object_key`, `tools/media-keys.ts` | `gaps2.test.ts`, `test_history.py` |
 | §11 API contract | done | `routes_contract.go`, engine `server.ts`: PATCH sources with `expected_revision`, document revisions, research start (202) and cancel, evidence compare, terms | `routes_contract_test.go`, `gaps1.test.ts` |
 | §12 billing_account.owner_type | done | schema v63 backfill (`personal`/`organization`) | migration tests |
@@ -44,7 +44,7 @@ Round 7 additions (2026-10-15):
 | §12 schedule budgets, provider limits, 402 → blocked | done | engine `0013`, `billing.go` provider layer, `routes_p5.go` budget routes | `gaps6.test.ts`, `gaps6_test.go` |
 | §6.2 per-tenant fair claim | done | `engine.ts` claim, `flow_tenant_limits` | `gaps6.test.ts` |
 | §7 event time | done | `documents.event_occurred_at` | `gaps6.test.ts` |
-| §9.1 capability snapshots | done; tables not in the RLS list (filtered by tenant in code) | `flow/capability.go` | `gaps6_test.go`, `cloud_agent_capability_test.go` |
+| §9.1 capability snapshots | done; tenant FORCE RLS (schema v65) | `flow/capability.go` | `gaps6_test.go`, `cloud_agent_capability_test.go` |
 | §6.4 ASR | done (live only with the faster-whisper model) | `workers/asr`, engine `0014` | `workers/asr/test_server.py`, `gaps6.test.ts` |
 | §12 canvas usage in the flow ledger | done as a mirror (`Charge=false`); the debit stays on the canvas billing order | `app/cloud_agent_flow_usage.go` | Go tests |
 | §15 intelligence tabs and empty-state reasons | done | `web/src/pages/intelligence/views.tsx`, `empty-reason.ts` | `intelligence-empty-reason.test.ts` |

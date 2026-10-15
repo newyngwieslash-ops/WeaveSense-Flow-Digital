@@ -9,8 +9,15 @@ var flowRLSTables = []string{
 	"flow_invites", "flow_external_waits", "flow_skill_installs",
 	"flow_model_tasks", "flow_mcp_oauth_grants", "flow_oauth_states",
 	"flow_usage_records", "flow_notification_targets", "flow_notification_deliveries",
-	"flow_mcp_secrets",
+	"flow_mcp_secrets", "flow_capability_snapshots", "flow_run_capabilities",
 }
+
+// flowSystemOnlyTables are platform-wide tables with no tenant_id (managed
+// provider accounts shared by every tenant). Under FORCE RLS they are visible
+// and writable only in system context; tenant-scoped transactions see no rows
+// and cannot insert. Billing switches to system context for these statements
+// (flow.withSystemContext).
+var flowSystemOnlyTables = []string{"flow_provider_accounts", "flow_provider_account_periods"}
 
 // applyFlowRLS enables Postgres row-level security on platform flow tables as
 // a second tenant-isolation layer. Every authenticated platform request runs in
@@ -22,11 +29,19 @@ func applyFlowRLS(tx *gorm.DB) error {
 	if tx.Dialector.Name() != "postgres" {
 		return nil
 	}
+	system := "coalesce(current_setting('app.tenant_ids', true), '') = ''"
+	pols := map[string]string{}
 	for _, t := range flowRLSTables {
+		pols[t] = system + " OR tenant_id = ANY(string_to_array(current_setting('app.tenant_ids', true), ','))"
+	}
+	for _, t := range flowSystemOnlyTables {
+		pols[t] = system
+	}
+	for _, t := range append(append([]string{}, flowRLSTables...), flowSystemOnlyTables...) {
 		if !tx.Migrator().HasTable(t) {
 			continue
 		}
-		pol := "coalesce(current_setting('app.tenant_ids', true), '') = '' OR tenant_id = ANY(string_to_array(current_setting('app.tenant_ids', true), ','))"
+		pol := pols[t]
 		for _, stmt := range []string{
 			"ALTER TABLE " + t + " ENABLE ROW LEVEL SECURITY",
 			"ALTER TABLE " + t + " FORCE ROW LEVEL SECURITY",

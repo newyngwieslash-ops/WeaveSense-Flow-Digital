@@ -129,6 +129,7 @@ type Synthesis struct {
 	Body          string        `json:"body"`
 	Claims        []ReportClaim `json:"claims"`
 	Dropped       []string      `json:"dropped_claims,omitempty"`
+	Review        *ReviewResult `json:"review,omitempty"`
 	ReservationID string        `json:"reservation_id"`
 	TaskID        string        `json:"task_id"`
 	CostMicro     int64         `json:"cost_micro"`
@@ -194,5 +195,11 @@ func FinishSynthesis(task model.FlowModelTask, req SynthesisRequest) (Synthesis,
 		}
 		res.Claims = append(res.Claims, c)
 	}
+	// Producer draft → host Reviewer (§9.4).
+	accepted, review := ReviewClaims(res.Claims, req.Evidence)
+	for _, r := range review.Rejected {
+		res.Dropped = append(res.Dropped, r.Text+" — reviewer: "+r.Reason)
+	}
+	res.Claims, res.Review = accepted, &review
 	return res, nil
 }

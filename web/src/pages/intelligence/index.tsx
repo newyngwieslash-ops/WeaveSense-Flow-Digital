@@ -1,9 +1,26 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Button, Card, Input, List, Select, Space, Tag, Typography, message } from "antd";
+import { Button, Card, Input, List, Select, Space, Tabs, Tag, Typography, message } from "antd";
+import { Link, useNavigate, useParams } from "react-router";
 import { EmptyState } from "@/components/ui/product/empty-state/empty-state";
 import { ReportsPanel } from "./reports-panel";
 import { SourcesPanel } from "./sources-panel";
+import { JobsView, KeywordsView, LibraryView, OverviewView, PacksView } from "./views";
 import { WorkspaceAdminPanel } from "./workspace-admin-panel";
+
+/** PRD §5.1 navigation: 总览/信源/关键词/内容库/专题/报告/任务/行业包/连接设置. */
+export const INTEL_VIEWS = [
+    { key: "overview", label: "总览" },
+    { key: "sources", label: "信源" },
+    { key: "keywords", label: "关键词" },
+    { key: "library", label: "内容库" },
+    { key: "topics", label: "专题" },
+    { key: "reports", label: "报告" },
+    { key: "jobs", label: "任务" },
+    { key: "packs", label: "行业包" },
+    { key: "connections", label: "连接设置" },
+] as const;
+export type IntelView = (typeof INTEL_VIEWS)[number]["key"];
+export const intelView = (v?: string): IntelView => (INTEL_VIEWS.some((x) => x.key === v) ? (v as IntelView) : "overview");
 
 import {
     cachedConversations,
@@ -29,6 +46,9 @@ const newCallId = () => `ui_${Date.now().toString(36)}_${Math.random().toString(
 
 /** P2 intelligence workspace: scoped chat (server conversation directory), tool actions, approvals, monitors. */
 export default function IntelligencePage() {
+    const params = useParams();
+    const navigate = useNavigate();
+    const view = intelView(params.view);
     const [workspaces, setWorkspaces] = useState<IntelWorkspace[]>([]);
     const [workspaceId, setWorkspaceId] = useState<string>();
     const [conversations, setConversations] = useState<FlowConversation[]>(cachedConversations);
@@ -145,8 +165,38 @@ export default function IntelligencePage() {
         void message.info("Ask the agent to create the monitor; approval happens in the agent run.");
     };
 
+    const nav = (
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 16px 0" }}>
+            <Select style={{ width: 200 }} value={workspaceId} onChange={setWorkspaceId} options={workspaces.map((w) => ({ value: w.id, label: w.name }))} />
+            <Tabs activeKey={view} onChange={(k) => void navigate(k === "overview" ? "/intelligence" : `/intelligence/${k}`)} items={INTEL_VIEWS.map((v) => ({ key: v.key, label: v.label }))} />
+        </div>
+    );
+    if (view !== "topics") {
+        return (
+            <>
+                {nav}
+                {view === "overview" && <OverviewView workspaceId={workspaceId} />}
+                {view === "sources" && <SourcesPanel workspaceId={workspaceId} />}
+                {view === "keywords" && <KeywordsView workspaceId={workspaceId} />}
+                {view === "library" && <LibraryView workspaceId={workspaceId} />}
+                {view === "reports" && <ReportsPanel workspaceId={workspaceId} />}
+                {view === "jobs" && <JobsView workspaceId={workspaceId} />}
+                {view === "packs" && <PacksView workspaceId={workspaceId} />}
+                {view === "connections" && (
+                    <>
+                        <div style={{ padding: "8px 16px" }}>
+                            <Link to="/intelligence/mcp">MCP 连接与授权 →</Link>
+                        </div>
+                        <WorkspaceAdminPanel workspaceId={workspaceId} onWorkspacesChanged={() => void listIntelWorkspaces().then(setWorkspaces)} />
+                    </>
+                )}
+            </>
+        );
+    }
+
     return (
         <>
+            {nav}
             <div style={{ display: "grid", gridTemplateColumns: "240px 1fr 320px", gap: 16, padding: 16 }}>
                 <Card size="small" title="Conversations">
                     <Select style={{ width: "100%", marginBottom: 8 }} value={workspaceId} onChange={setWorkspaceId} options={workspaces.map((w) => ({ value: w.id, label: w.name }))} />
@@ -260,9 +310,6 @@ export default function IntelligencePage() {
                     />
                 </Card>
             </div>
-            <SourcesPanel workspaceId={workspaceId} />
-            <ReportsPanel workspaceId={workspaceId} />
-            <WorkspaceAdminPanel workspaceId={workspaceId} onWorkspacesChanged={() => void listIntelWorkspaces().then(setWorkspaces)} />
         </>
     );
 }

@@ -127,16 +127,24 @@ const (
 	canvasExecRead
 	// canvasExecMedia hands an approved generate_media / image_layer_split call to the media runner.
 	canvasExecMedia
-	// canvasExecEnqueue submits an auto-admitted media task.
+	// canvasExecEnqueue submits an auto-admitted media task (the billed charge).
 	canvasExecEnqueue
+	// canvasExecAdmit is the dry media admission (model, prompt limits, quote) without a task or charge.
+	canvasExecAdmit
 )
 
 // dispatchCanvasTool runs a call that has no in-process result (media and task
 // submission) through the canvas run chain's ToolExecutor.
 func (s *Service) dispatchCanvasTool(p canvasToolExecution) error {
-	_, err := s.agentRunChain(p.Run.ID, p.State.Request).Exec.Execute(context.Background(), nil, flow.ToolCall{
-		UserID: p.Run.UserID, RunID: p.Run.ID, CallID: p.Call.ID, Name: p.Call.Function.Name, Payload: p})
+	_, err := s.dispatchCanvasToolResult(p)
 	return err
+}
+
+// dispatchCanvasToolResult is dispatchCanvasTool returning the executor's value.
+func (s *Service) dispatchCanvasToolResult(p canvasToolExecution) (any, error) {
+	r, err := s.agentRunChain(p.Run.ID, p.State.Request).Exec.Execute(context.Background(), nil, flow.ToolCall{
+		UserID: p.Run.UserID, RunID: p.Run.ID, CallID: p.Call.ID, Name: p.Call.Function.Name, Payload: p})
+	return r.Value, err
 }
 
 type canvasToolExecutor struct{}
@@ -155,6 +163,12 @@ func (canvasToolExecutor) Execute(_ context.Context, _ *gorm.DB, c flow.ToolCall
 		err = p.Svc.advanceCloudAgentMedia(p.Run, p.State, cloudAgentMediaCall(p.Call))
 	case canvasExecEnqueue:
 		err = p.Svc.enqueueCloudAgentTask(p.Run, p.State, p.MediaRequest, p.Plan)
+	case canvasExecAdmit:
+		var task *model.Task
+		task, err = p.Svc.CreateTask(p.Run.UserID, p.MediaRequest)
+		if task != nil {
+			result = task
+		}
 	default:
 		if p.Repo == nil {
 			return flow.ToolResult{CallID: c.CallID, Tool: c.Name, Status: "failed"}, errors.New("canvas tool executor: missing repository")

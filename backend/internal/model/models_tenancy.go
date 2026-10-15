@@ -84,6 +84,9 @@ type FlowOperationProjection struct {
 	Status      string `gorm:"size:24"`
 	Sequence    int64
 	AsOf        time.Time
+	// PRD §12.1: SourceVersion = the Engine event sequence this row reflects; SyncStatus = synced | stale (computed at read).
+	SourceVersion int64  `gorm:"not null;default:0"`
+	SyncStatus    string `gorm:"size:16;not null;default:synced"`
 }
 
 func (FlowOperationProjection) TableName() string { return "flow_operation_projections" }

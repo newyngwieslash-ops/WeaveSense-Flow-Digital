@@ -142,12 +142,31 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Python worker tests (Telethon media keys, OCR incl. real tesseract)
+      - name: Python worker tests (Telethon media keys, OCR incl. real tesseract, ASR)
         run: |
           sudo apt-get install -y -qq tesseract-ocr tesseract-ocr-eng
           python3 -m pip install -q -r workers/telethon/requirements.txt -r workers/ocr/requirements.txt pillow
           (cd workers/telethon && python3 -m unittest test_history)
           (cd workers/ocr && python3 -m unittest -v test_server 2>&1 | tee /tmp/ocr.log) && ! grep -q "skipped 'tesseract" /tmp/ocr.log
+          (cd workers/asr && python3 -m unittest -v test_server)
+
+  object-restore:
+    name: Object storage restore (A18)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: MinIO backup/restore round trip
+        env:
+          MINIO_ROOT_USER: ci-minio
+          MINIO_ROOT_PASSWORD: ci-minio-secret-123
+        run: |
+          docker network create a18
+          docker run -d --name minio --network a18 -e MINIO_ROOT_USER -e MINIO_ROOT_PASSWORD \
+            minio/minio:RELEASE.2025-07-23T15-54-02Z server /data
+          for i in $(seq 1 30); do docker run --rm --network a18 curlimages/curl:8.10.1 -sf http://minio:9000/minio/health/live && break; sleep 2; done
+          docker run --rm --network a18 -e MINIO_ROOT_USER -e MINIO_ROOT_PASSWORD \
+            -v "$PWD/deploy/flow/backup:/b:ro" --entrypoint /bin/bash bitnamilegacy/minio-client:2025.7.21 /b/objects-test.sh
 
   payment-plugins:
     name: Payment plugin artifacts

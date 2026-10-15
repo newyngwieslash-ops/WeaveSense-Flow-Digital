@@ -36,9 +36,13 @@ const (
 	UsageMCPCalls        = "mcp_calls"
 	UsageStoredBytes     = "stored_bytes"
 	UsageNotifications   = "notifications"
+	// Canvas agent runs (mirrored from the run's settled billing orders; see app.recordCanvasRunUsage).
+	UsageCanvasModelCalls = "canvas_model_calls"
+	UsageCanvasMedia      = "canvas_media_generations"
 )
 
-var UsageTypes = []string{UsageLLMInputTokens, UsageLLMOutputTokens, UsageOCRPages, UsageASRSeconds, UsagePaidSourceCalls, UsageMCPCalls, UsageStoredBytes, UsageNotifications}
+var UsageTypes = []string{UsageLLMInputTokens, UsageLLMOutputTokens, UsageOCRPages, UsageASRSeconds, UsagePaidSourceCalls, UsageMCPCalls, UsageStoredBytes, UsageNotifications,
+	UsageCanvasModelCalls, UsageCanvasMedia}
 
 func validUsageType(t string) bool {
 	for _, u := range UsageTypes {
@@ -61,6 +65,7 @@ type PriceBook struct {
 var DefaultPriceBook = PriceBook{Version: "price_v1", UnitMicro: map[string]int64{
 	UsageLLMInputTokens: 0, UsageLLMOutputTokens: 0, UsageOCRPages: 2000, UsageASRSeconds: 100,
 	UsagePaidSourceCalls: 0, UsageMCPCalls: 0, UsageStoredBytes: 0, UsageNotifications: 0,
+	UsageCanvasModelCalls: 0, UsageCanvasMedia: 0,
 }}
 
 // CurrentPriceBook reads FLOW_PRICE_BOOK (JSON {"version","unit_micro"}) or returns the default.
@@ -87,8 +92,10 @@ var ErrUsageInvalid = errors.New("flow: invalid usage record")
 // (e.g. the Model Gateway's settled cost); -1 = price from the book.
 type UsageInput struct {
 	TenantID, WorkspaceID, UsageType, SubjectRef, IdemKey, ReservationID string
-	Quantity                                                             int64
-	CostMicro                                                            int64
+	// RunID: price with the run's frozen capability snapshot price book.
+	RunID     string
+	Quantity  int64
+	CostMicro int64
 	// Charge: debit the cost now (reserve+settle under the idempotency key).
 	Charge bool
 }
@@ -103,6 +110,9 @@ func RecordUsage(db *gorm.DB, in UsageInput, now time.Time) (model.FlowUsageReco
 		return out, nil
 	}
 	pb := CurrentPriceBook()
+	if in.RunID != "" {
+		pb = RunPriceBook(db, in.RunID)
+	}
 	unit := pb.UnitMicro[in.UsageType]
 	cost := in.Quantity * unit
 	if in.CostMicro >= 0 {

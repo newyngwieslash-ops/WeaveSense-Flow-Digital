@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -56,7 +57,18 @@ func (m ModelTasks) now() time.Time {
 	return time.Now().UTC()
 }
 
-func (m ModelTasks) billing() Billing { return Billing{DB: m.DB, Now: m.Now} }
+// ManagedProviderAccountID is the provider account model-gateway calls are held against
+// (FLOW_MODEL_PROVIDER_ACCOUNT_ID, default "model-gateway"); see FlowProviderAccount.
+func ManagedProviderAccountID() string {
+	if v := strings.TrimSpace(os.Getenv("FLOW_MODEL_PROVIDER_ACCOUNT_ID")); v != "" {
+		return v
+	}
+	return "model-gateway"
+}
+
+func (m ModelTasks) billing() Billing {
+	return Billing{DB: m.DB, Now: m.Now, ProviderAccountID: ManagedProviderAccountID()}
+}
 
 // Enqueue is idempotent per (tenant, key): the same key returns the same task.
 func (m ModelTasks) Enqueue(in ModelTaskInput) (model.FlowModelTask, error) {

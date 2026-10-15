@@ -1,7 +1,9 @@
 {
   "evaluation_set": "evals/evidence-cases.jsonl",
+  "glossary": "glossary.json",
   "id": "energy-storage",
   "kind": "industry",
+  "mcp_requirements": [],
   "name": "Energy storage industry pack",
   "note": "generated from the embedded pack; edit the source and regenerate (see industry_packs_test.go)",
   "optional_connectors": [
@@ -26,5 +28,6 @@
     }
   ],
   "source": "backend/internal/flow/skillpacks/energy-storage.json",
+  "source_templates": "source-templates.json",
   "version": "1.0.0"
 }

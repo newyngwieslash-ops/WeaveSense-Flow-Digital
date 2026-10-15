@@ -601,6 +601,7 @@ func (s *Service) CreateCloudAgentRun(userID string, req CloudAgentRequest, pare
 	if err != nil {
 		return nil, err
 	}
+	s.freezeRunCapability(userID, task.ID, req, canonical.Tools, policy, cloudAgentSkillRefs(skillSnapshots))
 	if intel || cloudAgentCanvasMirror(req) {
 		s.recordFlowUserTurn(userID, req, task.ID)
 	}

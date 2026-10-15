@@ -30,7 +30,7 @@ export const SCOPED_MEDIA_KEY = /^tenants\/([A-Za-z0-9_-]{1,64})\/workspaces\/([
 export const LEGACY_MEDIA_KEY = /^telegram\/([a-z0-9_]+)\/(\d+)$/;
 export const scopedMediaKey = (sc: MediaScope, legacyKey: string) => `tenants/${sc.tenant_id}/workspaces/${sc.workspace_id}/${legacyKey}`;
 const SCOPE_ID = /^[A-Za-z0-9_-]{1,64}$/;
-export type ConnectorItem = FeedItem & { media?: MediaRef[] };
+export type ConnectorItem = FeedItem & { media?: MediaRef[]; /** PRD §7.2 event-occurrence time when the connector knows it. */ occurred_at?: string | null };
 export type FeedValidators = { etag: string; last_modified: string; identity: string };
 export type ConnectorBatch = { items: ConnectorItem[]; collector: string; provider?: string; mode: "live" | "fixture";
   /** RSS only: conditional-request state to persist with the cursor, 304 flag, entries rejected by the parser. */

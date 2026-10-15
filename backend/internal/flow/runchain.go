@@ -129,6 +129,15 @@ func (e IntelToolExecutor) Execute(ctx context.Context, db *gorm.DB, c ToolCall)
 	if db != nil {
 		t = t.withDB(db)
 	}
+	if t.RunID != "" && t.DB != nil {
+		// The run's frozen tool table is authoritative (capability snapshot).
+		if err := CheckRunTool(t.DB, t.RunID, c.Name); err != nil {
+			return ToolResult{CallID: c.CallID, Tool: c.Name, Status: "failed"}, err
+		}
+		if snap, err := RunCapability(t.DB, t.RunID); err == nil {
+			ctx = WithCapabilitySnapshot(ctx, snap.ID)
+		}
+	}
 	return t.Invoke(ctx, c.Conv, c.Subject, c.UserID, c.CallID, c.Name, c.Args, c.ApprovalID)
 }
 

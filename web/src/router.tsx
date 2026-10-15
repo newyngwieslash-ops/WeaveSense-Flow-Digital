@@ -130,6 +130,7 @@ export const router = createBrowserRouter([
             { path: "/assets", element: <RequireAuth>{deferred(<AssetsPage />)}</RequireAuth> },
             { path: "/intelligence", element: <RequireAuth>{deferred(<IntelligencePage />)}</RequireAuth> },
             { path: "/intelligence/mcp", element: <RequireAuth>{deferred(<McpConnectionsPage />)}</RequireAuth> },
+            { path: "/intelligence/:view", element: <RequireAuth>{deferred(<IntelligencePage />)}</RequireAuth> },
             { path: "/skills", element: <RequireAuth>{deferred(<SkillsPage />)}</RequireAuth> },
             {
                 path: "/plugins",

@@ -175,3 +175,29 @@ type FlowMCPSecret struct {
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
+
+// FlowCapabilitySnapshot is a content-addressed, immutable run capability
+// snapshot (PRD §8.1 capabilitySnapshotId): skills, price book, tool schemas,
+// model route and policy hash frozen at run admission.
+type FlowCapabilitySnapshot struct {
+	ID             string    `json:"id" gorm:"primaryKey;size:40"`
+	TenantID       string    `json:"tenantId" gorm:"size:40;not null;index"`
+	Content        string    `json:"content" gorm:"type:text"`
+	PriceVersion   string    `json:"priceVersion" gorm:"size:40"`
+	SkillsHash     string    `json:"skillsHash" gorm:"size:64"`
+	ToolSchemaHash string    `json:"toolSchemaHash" gorm:"size:64"`
+	ModelRouteHash string    `json:"modelRouteHash" gorm:"size:64"`
+	CreatedAt      time.Time `json:"createdAt"`
+}
+
+func (FlowCapabilitySnapshot) TableName() string { return "flow_capability_snapshots" }
+
+// FlowRunCapability binds one run to its capability snapshot (set once).
+type FlowRunCapability struct {
+	RunID      string    `json:"runId" gorm:"primaryKey;size:80"`
+	TenantID   string    `json:"tenantId" gorm:"size:40;not null;index"`
+	SnapshotID string    `json:"snapshotId" gorm:"size:40;not null"`
+	CreatedAt  time.Time `json:"createdAt"`
+}
+
+func (FlowRunCapability) TableName() string { return "flow_run_capabilities" }

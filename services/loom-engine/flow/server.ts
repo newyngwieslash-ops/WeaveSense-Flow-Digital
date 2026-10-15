@@ -60,6 +60,10 @@ export function handler(engine: Engine, cfg: ServerConfig) {
         requireScope(ctx, "intel.schedules.write");
         return send(res, 201, await engine.createSchedule(ctx, `${ctx.actor.type}:${ctx.actor.id}`, ctx.policy_version, await readJson(req)));
       }
+      if (m === "GET" && p === "/v1/collection-runs") {
+        requireScope(ctx, "intel.sources.read");
+        return send(res, 200, await engine.listJobs(ctx, { limit: Number(url.searchParams.get("limit")) || undefined, status: url.searchParams.get("status") ?? undefined }));
+      }
       if (m === "POST" && p === "/v1/collection-runs") {
         requireScope(ctx, "intel.collect");
         const r = await engine.requestCollection(ctx, String(req.headers["x-idempotency-key"] ?? ""), await readJson(req));
@@ -99,10 +103,10 @@ export function handler(engine: Engine, cfg: ServerConfig) {
         // ?async=1 is the §11 REST contract (202 + id); the agent tool keeps the synchronous result.
         if (url.searchParams.get("async") === "1") {
           const b = await readJson(req);
-          const r = await rp.startResearch(ctx, idem(), { ...b, parent_run_id: b.parent_run_id || `rest:${ctx.actor.type}:${ctx.actor.id}:${idem()}` }, { async: true });
+          const r = await rp.startResearch(ctx, idem(), { ...b, capability_snapshot_id: ctx.capability_snapshot_id, parent_run_id: b.parent_run_id || `rest:${ctx.actor.type}:${ctx.actor.id}:${idem()}` }, { async: true });
           return send(res, (r as any).replayed ? 200 : 202, r, "accepted");
         }
-        return send(res, 201, await rp.startResearch(ctx, idem(), await readJson(req)));
+        return send(res, 201, await rp.startResearch(ctx, idem(), { ...(await readJson(req)), capability_snapshot_id: ctx.capability_snapshot_id }));
       }
       if (m === "GET" && (mm = p.match(/^\/v1\/research-runs\/([\w-]+)$/))) { requireScope(ctx, "intel.documents.read"); return send(res, 200, await rp.getResearch(ctx, mm[1])); }
       if (m === "POST" && (mm = p.match(/^\/v1\/research-runs\/([\w-]+)\/cancel$/))) { requireScope(ctx, "intel.research"); return send(res, 200, await rp.cancelResearch(ctx, mm[1], String((await readJson(req)).reason ?? "cancelled"))); }
@@ -133,6 +137,7 @@ export function handler(engine: Engine, cfg: ServerConfig) {
       if (m === "GET" && p === "/v1/connector-samples") { requireScope(ctx, "intel.sources.read"); return send(res, 200, await engine.listConnectorSamples(ctx)); }
       if (m === "POST" && p === "/v1/documents/extract") { requireScope(ctx, "intel.collect"); return send(res, 200, await engine.extractDocument(ctx, await readJson(req))); }
       if (m === "POST" && p === "/v1/documents/ocr") { requireScope(ctx, "intel.collect"); return send(res, 200, await engine.ocrDocument(ctx, await readJson(req))); }
+      if (m === "POST" && p === "/v1/documents/asr") { requireScope(ctx, "intel.collect"); return send(res, 200, await engine.asrDocument(ctx, await readJson(req))); }
       if (m === "POST" && p === "/v1/documents/transcript") { requireScope(ctx, "intel.collect"); return send(res, 200, await engine.transcribeDocument(ctx, await readJson(req))); }
       return send(res, 404, null, "not found");
     }

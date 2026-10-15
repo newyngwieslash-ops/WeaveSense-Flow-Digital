@@ -6,7 +6,7 @@ export interface ExecutionContext {
   tenant_id: string; workspace_id: string;
   actor: { type: string; id: string };
   operation_id?: string; job_id?: string; scopes: string[];
-  budget_reservation_id?: string; policy_version: string;
+  budget_reservation_id?: string; /** PRD §8.1 RunContext.capabilitySnapshotId (frozen run capabilities). */ capability_snapshot_id?: string; policy_version: string;
 }
 const HEADER = Buffer.from('{"alg":"HS256","typ":"JWT"}').toString("base64url");
 const MAX_TTL = 300;

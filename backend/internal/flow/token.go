@@ -35,7 +35,9 @@ type ExecutionContext struct {
 	JobID               string   `json:"job_id,omitempty"`
 	Scopes              []string `json:"scopes"`
 	BudgetReservationID string   `json:"budget_reservation_id,omitempty"`
-	PolicyVersion       string   `json:"policy_version"`
+	// CapabilitySnapshotID (PRD §8.1 RunContext.capabilitySnapshotId): the run's frozen capabilities.
+	CapabilitySnapshotID string `json:"capability_snapshot_id,omitempty"`
+	PolicyVersion        string `json:"policy_version"`
 }
 
 const MaxTokenTTL = 5 * time.Minute

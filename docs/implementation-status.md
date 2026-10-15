@@ -1,6 +1,6 @@
 # Implementation status (PRD v2 mapping)
 
-Last updated 2026-10-14 (Asia/Shanghai) after gap-closing rounds (PRs #30–#33) and round 5 (PRs #34 onward). Phase reports are in `docs/flow/delivery-report.md`. Commands and receipts are in `docs/verification/`.
+Last updated 2026-10-15 (Asia/Shanghai) after round 7 (budgets, fair claim, event time, capability snapshots, ASR, intelligence tabs; see `docs/flow/delivery-report.md` "Round 7"). Phase reports are in `docs/flow/delivery-report.md`.
 
 **A file existing does not mean the feature has passed:** the evidence column says what was actually exercised.
 
@@ -36,3 +36,16 @@ Last updated 2026-10-14 (Asia/Shanghai) after gap-closing rounds (PRs #30–#33)
 - §8.1: canvas media admission, approval and credit reservation still run in the runtime before the dispatch reaches the canvas `ToolExecutor`.
 - §6.2: the job state is stored as `queued` (it matches the §5.2 user-facing status). Operation job rows add `job_state` with the §6.2 name `pending`.
 - Eino/OpenCode research executor: not integrated (optional in the PRD).
+
+Round 7 additions (2026-10-15):
+
+| PRD section | Status | Code | Evidence |
+|---|---|---|---|
+| §12 schedule budgets, provider limits, 402 → blocked | done | engine `0013`, `billing.go` provider layer, `routes_p5.go` budget routes | `gaps6.test.ts`, `gaps6_test.go` |
+| §6.2 per-tenant fair claim | done | `engine.ts` claim, `flow_tenant_limits` | `gaps6.test.ts` |
+| §7 event time | done | `documents.event_occurred_at` | `gaps6.test.ts` |
+| §9.1 capability snapshots | done; tables not in the RLS list (filtered by tenant in code) | `flow/capability.go` | `gaps6_test.go`, `cloud_agent_capability_test.go` |
+| §6.4 ASR | done (live only with the faster-whisper model) | `workers/asr`, engine `0014` | `workers/asr/test_server.py`, `gaps6.test.ts` |
+| §12 canvas usage in the flow ledger | done as a mirror (`Charge=false`); the debit stays on the canvas billing order | `app/cloud_agent_flow_usage.go` | Go tests |
+| §15 intelligence tabs and empty-state reasons | done | `web/src/pages/intelligence/views.tsx`, `empty-reason.ts` | `intelligence-empty-reason.test.ts` |
+| A18 object restore | in CI | `deploy/flow/backup/objects-test.sh`, quality.yml `object-restore` | CI |

@@ -3,6 +3,7 @@ package flow
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"yingce/backend/internal/model"
 
@@ -78,7 +79,8 @@ func BuildTurnContext(db *gorm.DB, conv model.FlowAgentConversation, ss SubjectS
 	known := map[string]bool{}
 	for _, p := range proj {
 		known[p.OperationID] = true
-		tc.BackgroundJobs = append(tc.BackgroundJobs, map[string]any{"operationId": p.OperationID, "status": p.Status, "asOf": p.AsOf, "source": "projection"})
+		tc.BackgroundJobs = append(tc.BackgroundJobs, map[string]any{"operationId": p.OperationID, "status": p.Status, "asOf": p.AsOf, "source": "projection",
+			"sourceVersion": p.SourceVersion, "syncStatus": ProjectionSyncStatus(p, time.Now().UTC())})
 	}
 	for _, id := range opIDs {
 		if !known[id] {

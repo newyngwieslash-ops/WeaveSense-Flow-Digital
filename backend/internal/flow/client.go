@@ -51,7 +51,7 @@ type EngineClient struct {
 func (e EngineClient) Do(ctx context.Context, scope Scope, actor Actor, method, path, idemKey string, body []byte) (int, []byte, error) {
 	tok, err := Sign(e.Cfg.SigningKey, ExecutionContext{Issuer: e.Cfg.Issuer, Audience: e.Cfg.Audience,
 		TenantID: scope.TenantID, WorkspaceID: scope.WorkspaceID, Actor: actor, Scopes: ScopesForRole(scope.Role),
-		PolicyVersion: "policy_v1"}, time.Now(), e.Cfg.TTL)
+		CapabilitySnapshotID: capabilityFromCtx(ctx), PolicyVersion: "policy_v1"}, time.Now(), e.Cfg.TTL)
 	if err != nil {
 		return 0, nil, err
 	}

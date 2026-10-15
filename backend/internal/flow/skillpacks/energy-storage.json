@@ -15,6 +15,7 @@
   "telegram",
   "wechat"
  ],
+ "mcp_requirements": [],
  "source_templates": [
   {
    "title": "Energy-Storage.news",

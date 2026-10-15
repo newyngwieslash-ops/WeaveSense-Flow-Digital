@@ -569,10 +569,12 @@ func (s *Service) terminateCloudAgent(run *model.CloudAgentExecution, message st
 	if err := s.repo.MarkCloudAgentFailed(run.UserID, run.ID, run.Revision, message); err != nil && !errors.Is(err, repository.ErrCreationConflict) {
 		return err
 	}
+	s.recordCanvasRunUsage(run)
 	return nil
 }
 
 func (s *Service) failCloudAgent(run *model.CloudAgentExecution, state *cloudAgentRuntime, message string) error {
+	defer s.recordCanvasRunUsage(run)
 	return s.repo.MutateCloudAgent(run.UserID, run.ID, run.Revision, func(current *model.CloudAgentExecution, _ *repository.Repository) error {
 		current.Status = "failed"
 		current.FailureMessage = truncateRunes(message, 1000)

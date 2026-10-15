@@ -519,6 +519,9 @@ What it closes:
 
 ### Still deviating (honest)
 - Canvas media is still debited by the canvas billing order. The flow ledger copy is written with `Charge=false`, so it records usage without debiting a second time.
-- `flow_capability_snapshots`, `flow_run_capabilities`, `flow_provider_accounts` and `flow_provider_account_periods` are platform tables that are not in the platform RLS list. Every query filters by tenant in code.
+- RLS for the round-7 tables, closed in round 7b (PR "gaps6-rls", schema v65):
+  - `flow_capability_snapshots` and `flow_run_capabilities` have tenant FORCE RLS, and the snapshot id is now per tenant.
+  - `flow_provider_accounts` and `flow_provider_account_periods` hold no tenant data, so their FORCE RLS policy allows system context only. Billing switches to system context for those statements (`withSystemContext`), then restores the caller's tenant scope.
+  - Covered by `TestRLSCapabilityAndProviderTables`, which runs in CI as the non-superuser role.
 - ASR needs the faster-whisper model in the worker image (`requirements-model.txt`). The CI tests use a stub transcriber, and the real-model test is skipped.
 - A19 (live Telegram/WeChat/MCP/OAuth) was not run.

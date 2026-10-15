@@ -95,7 +95,9 @@ func FreezeCapabilitySnapshot(db *gorm.DB, in CapabilityInput, now time.Time) (m
 	sort.Strings(names)
 	c := capabilityContent{SubjectKind: in.SubjectKind, Skills: skills, PriceBook: CurrentPriceBook(), Tools: in.Tools, ToolNames: names, ModelRoute: in.ModelRoute, PolicyHash: in.PolicyHash}
 	raw, _ := json.Marshal(c)
-	sum := sha256.Sum256(raw)
+	// The id is per tenant: snapshot rows are tenant-scoped under RLS, so two
+	// tenants with identical capabilities must not share one row.
+	sum := sha256.Sum256(append([]byte(in.TenantID+"\x00"), raw...))
 	id := "cap_" + hex.EncodeToString(sum[:])[:32]
 	snap = model.FlowCapabilitySnapshot{ID: id, TenantID: in.TenantID, Content: string(raw), PriceVersion: c.PriceBook.Version,
 		SkillsHash: hashJSON(skills), ToolSchemaHash: hashJSON(in.Tools), ModelRouteHash: hashJSON(in.ModelRoute), CreatedAt: now}

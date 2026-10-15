@@ -43,7 +43,9 @@ func (b Billing) providerTag(tx *gorm.DB) string {
 		return ""
 	}
 	var n int64
-	tx.Model(&model.FlowProviderAccount{}).Where("id = ?", b.ProviderAccountID).Count(&n)
+	_ = withSystemContext(tx, func(tx *gorm.DB) error {
+		return tx.Model(&model.FlowProviderAccount{}).Where("id = ?", b.ProviderAccountID).Count(&n).Error
+	})
 	if n == 0 {
 		return ""
 	}
@@ -58,6 +60,10 @@ func (b Billing) holdProvider(tx *gorm.DB, accountID string, amount int64) error
 	if accountID == "" || amount <= 0 {
 		return nil
 	}
+	return withSystemContext(tx, func(tx *gorm.DB) error { return b.holdProviderSys(tx, accountID, amount) })
+}
+
+func (b Billing) holdProviderSys(tx *gorm.DB, accountID string, amount int64) error {
 	var acc model.FlowProviderAccount
 	if err := tx.First(&acc, "id = ?", accountID).Error; err != nil {
 		return nil // unknown account: layer not configured
@@ -89,8 +95,35 @@ func (b Billing) closeProvider(tx *gorm.DB, r model.FlowBudgetReservation, actua
 		return nil
 	}
 	per := r.CreatedAt.UTC().Format("2006-01")
-	return tx.Model(&model.FlowProviderAccountPeriod{}).Where("account_id = ? AND period = ?", r.ProviderAccountID, per).
-		Updates(map[string]any{"reserved_micro": gorm.Expr("CASE WHEN reserved_micro > ? THEN reserved_micro - ? ELSE 0 END", r.ReservedMicro, r.ReservedMicro), "consumed_micro": gorm.Expr("consumed_micro + ?", actual), "updated_at": b.now()}).Error
+	return withSystemContext(tx, func(tx *gorm.DB) error {
+		return tx.Model(&model.FlowProviderAccountPeriod{}).Where("account_id = ? AND period = ?", r.ProviderAccountID, per).
+			Updates(map[string]any{"reserved_micro": gorm.Expr("CASE WHEN reserved_micro > ? THEN reserved_micro - ? ELSE 0 END", r.ReservedMicro, r.ReservedMicro), "consumed_micro": gorm.Expr("consumed_micro + ?", actual), "updated_at": b.now()}).Error
+	})
+}
+
+// withSystemContext runs fn with app.tenant_ids cleared (system context) for
+// the platform-wide provider-account tables, then restores the caller's tenant
+// scope on the same transaction (tenant scope only exists inside a
+// transaction, see TenantTx). No-op on SQLite.
+func withSystemContext(tx *gorm.DB, fn func(*gorm.DB) error) error {
+	if tx.Dialector.Name() != "postgres" {
+		return fn(tx)
+	}
+	var prev string
+	if err := tx.Raw("SELECT coalesce(current_setting('app.tenant_ids', true), '')").Scan(&prev).Error; err != nil {
+		return err
+	}
+	if prev == "" {
+		return fn(tx)
+	}
+	if err := tx.Exec("SELECT set_config('app.tenant_ids', '', true)").Error; err != nil {
+		return err
+	}
+	ferr := fn(tx)
+	if err := tx.Exec("SELECT set_config('app.tenant_ids', ?, true)", prev).Error; err != nil && ferr == nil {
+		ferr = err
+	}
+	return ferr
 }
 
 func (b Billing) now() time.Time {

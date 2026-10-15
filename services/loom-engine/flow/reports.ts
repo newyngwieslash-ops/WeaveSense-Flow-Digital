@@ -4,6 +4,7 @@ import { affected, type Q } from "./db.ts";
 import { Engine, HttpError, newId } from "./engine.ts";
 import type { ExecutionContext } from "./auth.ts";
 import { BUILTIN_TERM_GROUPS, termPattern } from "./terms.ts";
+import { verifySnippet, renderReport, snippetHash } from "./gaps9.ts";
 
 type Scope = Pick<ExecutionContext, "tenant_id" | "workspace_id">;
 export const MAX_RESEARCH_CHILDREN = 3;
@@ -27,14 +28,17 @@ export class Reports {
   /** Resolves evidence ids visible to the caller with revision/chunk/truncation facts (citation validation input). */
   async resolveEvidence(s: Scope, ids: string[], q?: Q) {
     const r = await (q ?? this.db).query(`SELECT e.id AS evidence_id, e.document_id, e.revision, e.char_start, e.char_end, e.quote, d.source_id, d.current_revision, d.title,
-          c.chunk_index, c.char_end AS chunk_end
+          c.chunk_index, c.char_end AS chunk_end, e.snippet_hash, e.url, d.url AS doc_url, rv.title || E'\n\n' || rv.body AS rev_text
         FROM flow_evidence e JOIN flow_documents d ON d.id=e.document_id AND d.tenant_id=e.tenant_id
+        LEFT JOIN flow_document_revisions rv ON rv.document_id=e.document_id AND rv.revision=e.revision AND rv.tenant_id=e.tenant_id
         LEFT JOIN LATERAL (SELECT chunk_index, char_end FROM flow_document_chunks k WHERE k.document_id=e.document_id AND k.revision=e.revision
             AND k.char_start <= e.char_start ORDER BY k.char_start DESC LIMIT 1) c ON true
         WHERE e.tenant_id=$1 AND e.workspace_id=$2 AND e.id = ANY($3::text[])`, [s.tenant_id, s.workspace_id, [...new Set(ids ?? [])].slice(0, 200)]);
     return r.rows.map((x: any) => ({ evidence_id: x.evidence_id, document_id: x.document_id, source_id: x.source_id, title: x.title, revision: x.revision,
       current_revision: x.current_revision, chunk_index: x.chunk_index ?? 0, char_start: x.char_start, char_end: x.char_end, quote: x.quote,
-      truncated: (x.chunk_end != null && x.char_end > x.chunk_end) || x.quote.length < x.char_end - x.char_start }));
+      truncated: (x.chunk_end != null && x.char_end > x.chunk_end) || x.quote.length < x.char_end - x.char_start,
+      // §7.3: snippet hash and URL are re-verified on every resolve (tampered quote / moved document fail).
+      snippet_hash: x.snippet_hash, url: x.url ?? "", ...verifySnippet(x) }));
   }
 
   /**
@@ -52,6 +56,10 @@ export class Reports {
       for (const x of c.citations ?? []) {
         const ev = known.get(String(x.evidence_id));
         if (!ev || Number(x.revision) !== ev.revision) throw new HttpError(422, "citation evidence not found at cited revision");
+        if (!ev.snippet_ok) throw new HttpError(422, `citation evidence ${ev.evidence_id} snippet hash mismatch`);
+        if (!ev.url_ok) throw new HttpError(422, `citation evidence ${ev.evidence_id} url mismatch`);
+        if (x.snippet_hash != null && String(x.snippet_hash) !== ev.snippet_hash) throw new HttpError(422, `citation ${ev.evidence_id} cites a different snippet hash`);
+        if (x.url != null && String(x.url) !== ev.url) throw new HttpError(422, `citation ${ev.evidence_id} cites a different url`);
       }
     }
     const run = async (q: Q) => {
@@ -82,6 +90,13 @@ export class Reports {
       .map((r: any) => ({ ...r, coverage: json(r.coverage) }));
   }
 
+  /** §5.2 report export (md | html | json), scoped like getReport (foreign ids are 404). */
+  async exportReport(s: Scope, id: string, format: string) {
+    const r: any = await this.getReport(s, id);
+    for (const c of r.claims) for (const x of c.citations) { delete x.chunk_text; }
+    return renderReport(r, format || "md");
+  }
+
   /** Report detail. Citations resolve against the cited (original) revision, so later document updates don't change old reports. */
   async getReport(s: Scope, id: string) {
     const r = (await this.db.query(`SELECT * FROM flow_reports WHERE tenant_id=$1 AND workspace_id=$2 AND id=$3`, [s.tenant_id, s.workspace_id, id])).rows[0];
@@ -108,9 +123,9 @@ export class Reports {
     const claims: any[] = []; const evidence: string[] = [];
     for (const [i, h] of picked.entries()) {
       const quote = String(h.snippet ?? "").slice(0, RESEARCH_BUDGET.max_quote_chars);
-      const ev = (await db.query(`INSERT INTO flow_evidence (id, tenant_id, workspace_id, document_id, revision, char_start, char_end, quote, created_by, idempotency_key)
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT (tenant_id, idempotency_key) DO UPDATE SET quote=flow_evidence.quote RETURNING id`,
-        [newId("ev_"), s.tenant_id, s.workspace_id, h.document_id, h.revision, h.char_start, h.char_start + quote.length, quote, createdBy, `${key}:ev:${i}`])).rows[0].id;
+      const ev = (await db.query(`INSERT INTO flow_evidence (id, tenant_id, workspace_id, document_id, revision, char_start, char_end, quote, created_by, idempotency_key, snippet_hash, url)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) ON CONFLICT (tenant_id, idempotency_key) DO UPDATE SET quote=flow_evidence.quote RETURNING id`,
+        [newId("ev_"), s.tenant_id, s.workspace_id, h.document_id, h.revision, h.char_start, h.char_start + quote.length, quote, createdBy, `${key}:ev:${i}`, snippetHash(quote), h.url ?? ""])).rows[0].id;
       evidence.push(ev);
       if (claims.length < RESEARCH_BUDGET.max_claims) claims.push({ text: `${h.title}: ${quote.replace(/\s+/g, " ").trim()}`, kind: "source_statement", citations: [{ evidence_id: ev, revision: h.revision }], source_id: h.source_id });
     }

@@ -5,6 +5,7 @@ import { verify, requireScope, AuthError, type ExecutionContext } from "./auth.t
 import { Engine, HttpError } from "./engine.ts";
 import { Reports } from "./reports.ts";
 import { withTenant } from "./db.ts";
+import { downloadMedia, listDerivedJobs, getAnalysis } from "./gaps9.ts";
 
 export interface ServerConfig {
   signingKey: string;
@@ -91,6 +92,21 @@ export function handler(engine: Engine, cfg: ServerConfig) {
         return send(res, 201, await engine.applyMonitor(ctx, `${ctx.actor.type}:${ctx.actor.id}`, ctx.policy_version,
           { ...b, idempotency_key: String(req.headers["x-idempotency-key"] ?? b.idempotency_key ?? "") }));
       }
+      if (m === "GET" && (mm = p.match(/^\/v1\/monitors\/previews\/([\w-]+)$/))) { requireScope(ctx, "intel.sources.read"); return send(res, 200, await engine.getMonitorPreview(ctx, mm[1])); }
+      if (m === "PATCH" && (mm = p.match(/^\/v1\/monitors\/([\w-]+)$/))) {
+        requireScope(ctx, "intel.monitors.write");
+        return send(res, 200, await engine.updateMonitor(ctx, `${ctx.actor.type}:${ctx.actor.id}`, mm[1], await readJson(req)));
+      }
+      if (m === "GET" && (mm = p.match(/^\/v1\/monitors\/([\w-]+)\/revisions$/))) { requireScope(ctx, "intel.sources.read"); return send(res, 200, await engine.listMonitorRevisions(ctx, mm[1])); }
+      if (m === "GET" && (mm = p.match(/^\/v1\/reports\/([\w-]+)\/export$/))) {
+        requireScope(ctx, "intel.documents.read"); return send(res, 200, await rp.exportReport(ctx, mm[1], url.searchParams.get("format") ?? "md"));
+      }
+      if (m === "GET" && p === "/v1/media") {
+        requireScope(ctx, "intel.documents.read");
+        return send(res, 200, await downloadMedia(engine.db, engine.objectStore, ctx, { document_id: url.searchParams.get("document_id") ?? "", object_key: url.searchParams.get("object_key") ?? "" }));
+      }
+      if (m === "GET" && p === "/v1/derived-jobs") { requireScope(ctx, "intel.operations.read"); return send(res, 200, await listDerivedJobs(engine.db, ctx, url.searchParams.get("document_id") ?? undefined)); }
+      if (m === "GET" && (mm = p.match(/^\/v1\/documents\/([\w-]+)\/analysis$/))) { requireScope(ctx, "intel.documents.read"); return send(res, 200, await getAnalysis(engine.db, ctx, mm[1])); }
       if (m === "POST" && (mm = p.match(/^\/v1\/operations\/([\w-]+)\/cancel$/))) { requireScope(ctx, "intel.collect"); return send(res, 200, await engine.cancelOperation(ctx, mm[1])); }
       const idem = () => String(req.headers["x-idempotency-key"] ?? "");
       const actor = `${ctx.actor.type}:${ctx.actor.id}`;

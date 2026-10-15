@@ -26,15 +26,17 @@ type EngineCaller interface {
 
 // ToolSpec describes an intel_* tool for the Pi/Go tool bridge.
 type ToolSpec struct {
-	Name          string         `json:"name"`
-	Description   string         `json:"description"`
-	Class         string         `json:"class"` // read | write
-	Scope         string         `json:"scope"` // required Engine scope
-	NeedsApproval bool           `json:"needsApproval"`
-	Timeout       time.Duration  `json:"-"`
-	OutputCap     int            `json:"outputCap"`
-	Parameters    map[string]any `json:"parameters"`
-	route         func(args map[string]any) (method, path string, body any)
+	Name          string        `json:"name"`
+	Description   string        `json:"description"`
+	Class         string        `json:"class"` // read | write
+	Scope         string        `json:"scope"` // required Engine scope
+	NeedsApproval bool          `json:"needsApproval"`
+	Timeout       time.Duration `json:"-"`
+	OutputCap     int           `json:"outputCap"`
+	// CostBasis (§8.3 成本口径) states how a call is metered and billed.
+	CostBasis  string         `json:"costBasis"`
+	Parameters map[string]any `json:"parameters"`
+	route      func(args map[string]any) (method, path string, body any)
 	// prepare (optional) rewrites args before routing, e.g. citation validation
 	// or skill pinning. An error fails the call with a model-readable message.
 	prepare func(t Tools, ctx context.Context, conv model.FlowAgentConversation, ss SubjectScope, userID string, args map[string]any) (map[string]any, error)
@@ -469,7 +471,7 @@ func (t Tools) mcpSpec(scope Scope, name string) (ToolSpec, bool) {
 	if !ok {
 		return ToolSpec{}, false
 	}
-	return ToolSpec{Name: name, Class: "write", Scope: "intel.mcp.use", Timeout: time.Duration(conn.TimeoutMS) * time.Millisecond, OutputCap: conn.OutputCap, rawArgs: true,
+	return ToolSpec{Name: name, Class: "write", Scope: "intel.mcp.use", Timeout: time.Duration(conn.TimeoutMS) * time.Millisecond, OutputCap: conn.OutputCap, rawArgs: true, CostBasis: "mcp_call: per call (flow_mcp_usages) + reservation against the MCP connection budget",
 		local: func(t Tools, ctx context.Context, _ model.FlowAgentConversation, ss SubjectScope, userID string, args map[string]any) (any, error) {
 			key, _ := ctx.Value(callKeyCtx{}).(string)
 			out, truncated, err := t.MCP.ExecuteKeyed(ctx, ss.Scope, userID, conn.ID, tool, args, key)

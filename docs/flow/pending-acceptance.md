@@ -41,3 +41,8 @@ These need a real environment. None of them has been run yet.
 ## Added in round 8 (2026-10-15)
 - Boot `--profile backup` on the real stack, confirm `/backups/last-success` updates daily and retention prunes, and do one restore drill from a daily dump. CI runs `daily-test.sh` (PG17) only.
 - Wire Alertmanager routing for the new §14 alerts (deployment-specific) and confirm they fire on the real stack.
+
+## Added in round 9 (2026-10-15)
+- Media download against a real MinIO bucket (`MINIO_ACCESS_KEY`/`MINIO_SECRET_KEY` on `loom-engine`): download a stored Telegram attachment from the content library and confirm another workspace gets 404. Tests use a fake object store and check the SigV4 URL shape only.
+- Monitor cost estimate with a real price book: set `FLOW_PRICE_BOOK` (`paid_source_calls`) and `FLOW_PAID_SOURCE_KINDS`, then check the approval card numbers.
+- Optional embedding provider: only `none` and `hash` exist; a model-based provider and vector retrieval are not implemented (optional in the PRD).

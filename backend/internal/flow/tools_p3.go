@@ -38,7 +38,7 @@ func skillRefFor(t Tools, conv model.FlowAgentConversation, ss SubjectScope, a m
 var reportClaimSchema = map[string]any{"type": "object", "required": []string{"text", "kind", "citations"}, "properties": map[string]any{
 	"text": tStr, "kind": map[string]any{"type": "string", "enum": []string{"source_statement", "cross_source_verified", "model_inference"}},
 	"citations": map[string]any{"type": "array", "items": map[string]any{"type": "object", "required": []string{"evidence_id", "revision"},
-		"properties": map[string]any{"evidence_id": tStr, "revision": tInt, "chunk_index": tInt}}}}}
+		"properties": map[string]any{"evidence_id": tStr, "revision": tInt, "chunk_index": tInt, "snippet_hash": tStr, "url": tStr}}}}}
 
 var materialScopeSchema = map[string]any{"type": "object", "properties": map[string]any{"document_ids": tStrs, "source_ids": tStrs, "from": tStr, "to": tStr}}
 

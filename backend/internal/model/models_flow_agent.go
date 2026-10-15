@@ -8,7 +8,14 @@ type FlowTopic struct {
 	TenantID    string    `json:"tenantId" gorm:"size:40;index"`
 	WorkspaceID string    `json:"workspaceId" gorm:"size:40;index"`
 	Title       string    `json:"title" gorm:"size:200"`
+	Question    string    `json:"question" gorm:"type:text"`
+	Keywords    string    `json:"keywords" gorm:"type:text"`  // JSON array
+	SourceIDs   string    `json:"sourceIds" gorm:"type:text"` // JSON array
+	Notes       string    `json:"notes" gorm:"type:text"`
+	CreatedBy   string    `json:"createdBy" gorm:"size:40"`
+	Version     int       `json:"version" gorm:"not null;default:1"`
 	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
 func (FlowTopic) TableName() string { return "flow_topics" }

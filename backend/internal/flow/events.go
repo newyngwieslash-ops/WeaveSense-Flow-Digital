@@ -31,8 +31,12 @@ var statusByType = map[string]string{
 	"collection.accepted":  "running",
 	"collection.completed": "succeeded",
 	"operation.failed":     "failed",
-	"schedule.blocked":     "blocked",
-	"research.completed":   "succeeded", // payload.status=failed overrides
+	// §11.1 cancel/retry transitions so a cancelled task no longer shows "running".
+	"operation.cancelled":        "cancelled",
+	"operation.cancel_requested": "cancel_requested",
+	"operation.retrying":         "retry_wait",
+	"schedule.blocked":           "blocked",
+	"research.completed":         "succeeded", // payload.status=failed overrides
 }
 
 // ProjectionStaleAfter: a non-terminal projection not updated for this long is reported sync_status=stale.
@@ -40,7 +44,7 @@ const ProjectionStaleAfter = 15 * time.Minute
 
 // ProjectionSyncStatus reports whether a projection row can be trusted as current (PRD §12.1).
 func ProjectionSyncStatus(p model.FlowOperationProjection, now time.Time) string {
-	if (p.Status == "running" || p.Status == "queued" || p.Status == "blocked") && now.Sub(p.AsOf) > ProjectionStaleAfter {
+	if (p.Status == "running" || p.Status == "queued" || p.Status == "blocked" || p.Status == "retry_wait" || p.Status == "cancel_requested") && now.Sub(p.AsOf) > ProjectionStaleAfter {
 		return "stale"
 	}
 	if p.SyncStatus == "" {
@@ -161,7 +165,7 @@ func ConsumeEvent(db *gorm.DB, consumerID string, e Event) (bool, error) {
 				status = "failed"
 			}
 		}
-		if status == "succeeded" || status == "failed" {
+		if status == "succeeded" || status == "failed" || status == "cancelled" {
 			// waiting_external: a duplicate delivery never reaches here (inbox dedupe).
 			if err := markWaitsReady(tx, e.TenantID, e.OperationID, status); err != nil {
 				return err

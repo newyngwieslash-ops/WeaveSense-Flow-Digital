@@ -5,7 +5,19 @@ export type IntelWorkspace = { id: string; tenantId: string; slug: string; name:
 export type FlowConversation = { id: string; title: string; subjectKind: string; subjectId: string; workspaceId: string; updatedAt: string; lastSeq: number };
 export type FlowMessage = { id: string; seq: number; role: string; content: string; toolName?: string; revision?: number; editedAt?: string; createdAt: string };
 export type ToolResult = { callId: string; tool: string; status: string; approvalId?: string; replayed?: boolean; output?: unknown; error?: string };
-export type IntelMonitor = { id: string; name: string; keywords: string[]; source_ids: string[]; interval_seconds: number; timezone: string; created_at: string };
+export type IntelMonitor = {
+    id: string;
+    name: string;
+    keywords: string[];
+    source_ids: string[];
+    interval_seconds: number;
+    timezone: string;
+    created_at: string;
+    budget_micro_per_window?: number;
+    notification_target_ids?: string[];
+    extraction_method?: string;
+    version?: number;
+};
 
 const CACHE_KEY = "flow.conversations.cache.v1";
 
@@ -132,6 +144,7 @@ export type CollectionJob = {
     error?: string | null;
     partial_reason?: string | null;
     attempts: number;
+    retry_at?: string | null;
     created_at: string;
     finished_at?: string | null;
 };
@@ -149,7 +162,30 @@ export type CollectionSchedule = {
     disabled_reason?: string | null;
     budget_micro_per_window?: number;
 };
-export type LibraryDocument = { id: string; source_id: string; title: string; url: string; published_at?: string | null; event_occurred_at?: string | null; collected_at?: string; current_revision: number };
+export type ExtractionCompleteness = {
+    level: "full_text" | "feed_summary" | "title_only";
+    method: string;
+    body_chars: number;
+    media_total: number;
+    media_stored: number;
+    media_missing: number;
+    complete: boolean;
+};
+export type MediaObject = { object_key: string | null; type: string; status: string };
+export type LibraryDocument = {
+    id: string;
+    source_id: string;
+    source_title?: string | null;
+    source_kind?: string | null;
+    title: string;
+    url: string;
+    published_at?: string | null;
+    event_occurred_at?: string | null;
+    collected_at?: string;
+    current_revision: number;
+    extraction?: ExtractionCompleteness;
+    media_objects?: MediaObject[];
+};
 export type TermAlias = { term: string; alias: string; created_by?: string; created_at?: string };
 export const listSourcesHealth = (workspaceId: string) => http.get<SourceHealth[]>("/intelligence/sources/health", ws(workspaceId));
 export const listJobs = (workspaceId: string, status?: string) => http.get<CollectionJob[]>("/intelligence/collection-runs", { ...ws(workspaceId), params: status ? { status } : {} });
@@ -158,3 +194,65 @@ export const listDocuments = (workspaceId: string, q?: string) => http.get<Libra
 export const listTerms = (workspaceId: string) => http.get<{ builtin_version: string; builtin_groups: number; builtin: string[][]; custom: TermAlias[] }>("/intelligence/terms", ws(workspaceId));
 export const addTerm = (workspaceId: string, term: string, alias: string) => http.post<{ added: number }>("/intelligence/terms", { items: [{ term, alias }] }, ws(workspaceId));
 export const deleteTerm = (workspaceId: string, term: string, alias: string) => http.post<{ deleted: number }>("/intelligence/terms/delete", { term, alias }, ws(workspaceId));
+
+/** PRD §5.2 saved research topics. */
+export type IntelTopic = { id: string; workspaceId: string; title: string; question: string; keywords: string[]; sourceIds: string[]; notes: string; version: number; createdAt: string; updatedAt: string };
+export type TopicInput = { title?: string; question?: string; keywords?: string[]; sourceIds?: string[]; notes?: string };
+export const listTopics = (workspaceId: string) => http.get<IntelTopic[]>("/intelligence/topics", ws(workspaceId));
+export const createTopic = (workspaceId: string, input: TopicInput) => http.post<IntelTopic>("/intelligence/topics", input, ws(workspaceId));
+export const updateTopic = (workspaceId: string, id: string, input: TopicInput, ifVersion?: number) => http.patch<IntelTopic>(`/intelligence/topics/${encodeURIComponent(id)}`, { ...input, ifVersion }, ws(workspaceId));
+
+/** PRD §5.1 structured monitor plan (preview) and update with re-approval on expansion. */
+export type MonitorPlan = {
+    preview_id: string;
+    name: string;
+    keywords: string[];
+    source_ids: string[];
+    sources?: { id: string; kind: string; title: string; url: string }[];
+    interval_seconds: number;
+    timezone: string;
+    misfire_policy?: string;
+    extraction_method?: string;
+    budget_micro_per_window?: number;
+    notification_target_ids?: string[];
+    cost_estimate?: { price_version: string; per_window_micro: number; per_day_micro: number; per_30d_micro: number; basis: string };
+    runs_per_day?: number;
+    monitor_id?: string | null;
+    expansion?: string[];
+    requires_approval?: boolean;
+    expires_at?: string;
+};
+export const getMonitorPreview = (workspaceId: string, id: string) => http.get<MonitorPlan>(`/intelligence/monitors/previews/${encodeURIComponent(id)}`, ws(workspaceId));
+export type MonitorUpdate = { name?: string; keywords?: string[]; source_ids?: string[]; interval_seconds?: number; timezone?: string; budget_micro_per_window?: number; notification_target_ids?: string[]; enabled?: boolean; expected_version?: number };
+export const updateMonitor = (workspaceId: string, id: string, input: MonitorUpdate, confirmExpansion?: string) =>
+    http.patch<{ monitor: IntelMonitor; expansion: string[]; version: number }>(
+        `/intelligence/monitors/${encodeURIComponent(id)}`,
+        { ...input, ...(confirmExpansion ? { confirmExpansion: true } : {}) },
+        {
+            ...ws(workspaceId),
+            headers: { "X-Workspace-Id": workspaceId, ...(confirmExpansion ? { "X-Idempotency-Key": confirmExpansion } : {}) },
+        },
+    );
+
+function fileNameFrom(headers: unknown, fallback: string) {
+    const h = headers as Record<string, string | undefined> | undefined;
+    const cd = h?.["content-disposition"] ?? "";
+    const star = /filename\*=UTF-8''([^;]+)/i.exec(cd);
+    if (star) return decodeURIComponent(star[1]);
+    return /filename="([^"]+)"/i.exec(cd)?.[1] ?? fallback;
+}
+async function saveBlob(url: string, workspaceId: string, params: Record<string, string>, fallback: string) {
+    const res = await http.raw<Blob>({ method: "get", url, params, headers: { "X-Workspace-Id": workspaceId }, responseType: "blob" });
+    const name = fileNameFrom(res.headers, fallback);
+    const href = URL.createObjectURL(res.data);
+    const a = document.createElement("a");
+    a.href = href;
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(href);
+    return name;
+}
+/** PRD §5.2 report export (scoped; foreign ids are 404). */
+export const exportReport = (workspaceId: string, id: string, format: "md" | "html" | "json") => saveBlob(`/intelligence/reports/${encodeURIComponent(id)}/export`, workspaceId, { format }, `report.${format}`);
+/** PRD §10.4 verified media download (the server checks scope + reference, then proxies the private object). */
+export const downloadMedia = (workspaceId: string, documentId: string, objectKey: string) => saveBlob("/intelligence/media", workspaceId, { document_id: documentId, object_key: objectKey }, "attachment");

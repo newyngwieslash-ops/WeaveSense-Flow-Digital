@@ -17,6 +17,11 @@ type ResolvedEvidence struct {
 	Truncated  bool   `json:"truncated"`
 	Title      string `json:"title,omitempty"`
 	Quote      string `json:"quote,omitempty"`
+	// §7.3 snippet hash + URL, re-verified by the Engine on every resolve.
+	SnippetHash string `json:"snippet_hash,omitempty"`
+	URL         string `json:"url,omitempty"`
+	SnippetOK   *bool  `json:"snippet_ok,omitempty"`
+	URLOK       *bool  `json:"url_ok,omitempty"`
 }
 
 // Citation as submitted by the model.
@@ -24,6 +29,9 @@ type Citation struct {
 	EvidenceID string `json:"evidence_id"`
 	Revision   int    `json:"revision"`
 	ChunkIndex *int   `json:"chunk_index,omitempty"`
+	// Optional: when the model echoes them they must match the stored evidence.
+	SnippetHash string `json:"snippet_hash,omitempty"`
+	URL         string `json:"url,omitempty"`
 }
 
 type ReportClaim struct {
@@ -94,6 +102,14 @@ func ValidateCitations(claims []ReportClaim, scope MaterialScope, resolved []Res
 				problems = append(problems, fmt.Sprintf("claim %d: evidence %s is chunk %d, cited %d", i, ct.EvidenceID, r.ChunkIndex, *ct.ChunkIndex))
 			case !inScope(r):
 				problems = append(problems, fmt.Sprintf("claim %d: evidence %s is outside the report material scope", i, ct.EvidenceID))
+			case r.SnippetOK != nil && !*r.SnippetOK:
+				problems = append(problems, fmt.Sprintf("claim %d: evidence %s snippet hash does not match its document revision", i, ct.EvidenceID))
+			case r.URLOK != nil && !*r.URLOK:
+				problems = append(problems, fmt.Sprintf("claim %d: evidence %s url no longer matches its document", i, ct.EvidenceID))
+			case ct.SnippetHash != "" && ct.SnippetHash != r.SnippetHash:
+				problems = append(problems, fmt.Sprintf("claim %d: evidence %s cited with a different snippet hash", i, ct.EvidenceID))
+			case ct.URL != "" && ct.URL != r.URL:
+				problems = append(problems, fmt.Sprintf("claim %d: evidence %s cited with a different url", i, ct.EvidenceID))
 			}
 			if r.Truncated {
 				truncated = append(truncated, ct.EvidenceID)

@@ -601,7 +601,15 @@ func (s *Service) CreateCloudAgentRun(userID string, req CloudAgentRequest, pare
 	if err != nil {
 		return nil, err
 	}
-	s.freezeRunCapability(userID, task.ID, req, canonical.Tools, policy, cloudAgentSkillRefs(skillSnapshots))
+	if freezeErr := s.freezeRunCapability(userID, task.ID, req, canonical.Tools, policy, cloudAgentSkillRefs(skillSnapshots)); freezeErr != nil {
+		// PRD §9.2: a run never executes without its frozen capability snapshot.
+		if exec, readErr := s.repo.CloudAgent(userID, task.ID); readErr == nil {
+			if st, decErr := cloudAgentDecode(exec); decErr == nil {
+				_ = s.failCloudAgent(exec, &st, "能力快照冻结失败，运行已终止："+freezeErr.Error())
+			}
+		}
+		return nil, kernel.NewAppError(500, "能力快照冻结失败，运行未启动: "+freezeErr.Error())
+	}
 	if intel || cloudAgentCanvasMirror(req) {
 		s.recordFlowUserTurn(userID, req, task.ID)
 	}

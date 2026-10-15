@@ -20,6 +20,12 @@ func Models() []any {
 		&model.UploadReservation{},
 		&model.CloudAgentPiSession{},
 		&model.FlowRunLease{},
+		// §9.2: every run is admitted with a frozen capability snapshot (fail-closed).
+		&model.Membership{},
+		&model.FlowCapabilitySnapshot{},
+		&model.FlowRunCapability{},
+		&model.FlowSkillInstall{},
+		&model.FlowSkillRunPin{},
 		&model.CloudAgentEventRecord{},
 		&model.CloudAgentMessageRecord{},
 		&model.CloudAgentCanvasMutation{},

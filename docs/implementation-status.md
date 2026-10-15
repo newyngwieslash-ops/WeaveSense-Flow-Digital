@@ -15,7 +15,7 @@ Last updated 2026-10-15 (Asia/Shanghai) after round 8 (capability enforcement, R
 | §6.4 enrichment, OCR, media | done (OCR live only with tesseract) | `enrichment.ts` `ocrClient`, `workers/ocr`, `engine.retryMedia` / `ocrTick` | `gaps2.test.ts`; worker unit tests; the real-tesseract test runs in CI |
 | §7.3 Chinese term dictionary and aliases | done | `flow/terms/zh-industry.json`, `flow/terms.ts`, `flow_term_aliases` | `gaps1.test.ts` |
 | §8.1 run-chain interfaces | done for every agent run (canvas and intelligence) | `flow/runchain.go` (`ScopeResolver`, `ContextProvider`, `ToolProvider`, `ToolExecutor`, `UsageRecorder`); adapters: `flow.IntelRunChain` and the canvas adapter `app/cloud_agent_runchain.go`. The runtime picks one with `agentRunChain`. Canvas admission (ownership), Pi canvas context, the tool table, checkpoint writes, batched reads, approved media dispatch and auto media submission all call the chain | `app/cloud_agent_runchain_test.go`: a probe wraps all five interfaces. It shows a canvas run calling scope/tools/exec (read and write) and context. A refusing executor blocks the canvas write. Intel runs use the intel adapter |
-| §8.3 tools | done | 17 `intel_*` tools, including `intel_list_sources` and `intel_compare_evidence` | `routes_contract_test.go`, tool tests |
+| §8.3 tools | done | 18 `intel_*` tools (round 9 adds `intel_save_topic`; every tool has a cost basis), including `intel_list_sources` and `intel_compare_evidence` | `routes_contract_test.go`, tool tests |
 | §9.2 industry packs | done (export) | `industry-packs/*` (manifest, schemas, evals) generated from `backend/internal/flow/skillpacks/*.json` | `TestIndustryPackExport` (drift check); eval sets are review cases, not an automated grader |
 | §9.3 MCP Gateway | done; real server acceptance deferred (A19) | `mcp*.go`; tenant-saved credentials `mcp_secrets.go` (AES-256-GCM envelope, per-secret data key wrapped by `FLOW_SECRETS_KEK`, AAD binds tenant/workspace/id; referenced as `secret:<id>`, never returned by the API); `/api/mcp/connections` and `/api/mcp/secrets` aliases | A14/A16 tests, `mcp_secrets_test.go` |
 | §9.4 research sub-tasks | done; Eino/OpenCode executor not wired (optional) | `tools_p3.go`, `reports.ts` | tests |
@@ -28,6 +28,21 @@ Last updated 2026-10-15 (Asia/Shanghai) after round 8 (capability enforcement, R
 | §14 profiles and monitoring | done (config) | `docker-compose.flow.yml` profiles core / telegram / wechat / subtitles / extract / research / monitoring (`COMPOSE_PROFILES=core` in `.env.flow.example`); `/metrics`, `/metrics/flow`, `deploy/flow/monitoring/*` | `ops.test.ts`, `metrics_test.go`; `docker compose config` validated for every profile; **full stack boot not run** |
 | A08 / A10 / A18 / A20 direct tests | done | `app/flow_acceptance_test.go` (A08, A10), `pg.test.ts` (A18 backup), `flow/a20.test.ts` | Go + Node tests |
 | A19 live acceptance (Telegram, WeChat, MCP, OAuth) | deferred to user | `docs/flow/local-acceptance.md` | — |
+
+Round 9 additions (2026-10-15, audit-8 gaps; details in `docs/flow/delivery-report.md` "Round 9"):
+
+| PRD section | Status | Code | Evidence |
+|---|---|---|---|
+| §5.2 saved topics | done | `flow/topics.go`, `intel_save_topic`, `topics-panel.tsx` | `TestSavedTopicsCRUDAndTool` |
+| §5.2 / §10.3 report export (md/html/json) | done (no PDF/DOCX) | `gaps9.ts renderReport`, `gaps9.go` | `gaps9.test.ts`, `TestGaps9RoutesForwardAndRender` |
+| §10.4 verified media download | done (proxy, 25 MiB cap); **not run against a real MinIO** | `gaps9.ts downloadMedia/presignGet` | `gaps9.test.ts` |
+| §10.3 RLS on topics, event inbox, projections, billing accounts, skill pins | done (v66) | `flow_rls.go` | `TestFlowRLSPostgres` (PG17 non-superuser) |
+| §5.1 structured plan, cost estimate, budget, re-approval | done | `engine.ts`, `plan-card.tsx`, `monitor-editor.tsx` | `gaps9.test.ts`, Go route tests |
+| §7.3 snippet hash + URL | done | engine `0016`, `reports.ts`, `citations.go` | `gaps9.test.ts`, `TestCitationSnippetHashAndURL` |
+| §6.3 raw item + digest | done (normalised item, not raw bytes) | `engine.ts execute` | `gaps9.test.ts` |
+| §6.4 embed / analyze jobs | done (lexical analyze; embed none/hash) | `gaps9.ts derivedTick` | `gaps9.test.ts` |
+| §11.1 cancel/retry projection | done | `events.go` | `TestProjectionCancelAndRetryEvents` |
+| §8.3 cost basis | done | `zz_cost_basis.go` | `TestEveryToolHasCostBasis` |
 
 ## Known deviations
 - Directory layout: everything lives under `backend/internal/flow/` rather than `intelligence/`, `mcpgateway/` and `tenant/`. Workers live under `services/loom-engine/workers/`.

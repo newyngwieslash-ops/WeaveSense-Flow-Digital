@@ -542,7 +542,12 @@ What it closes:
 - Audit-8 follow-up (PR gaps8-legacy): §13.3 is closed. The legacy import now also covers analyses and knowledge notes (as an archive, not reports), disabled schedules and object key mapping. Keywords are still skipped on purpose. Tests run on PGlite and real PG17. Still open: an import from a real production legacy dump (E).
 
 ## Round 9 — audit-8 gaps (2026-10-15, Asia/Shanghai)
-Closes the 16 partial/missing items of the 196-item re-audit (`prd-audit-8`). PR numbers and merge commits are listed in the PR description and in `prd-audit-9`.
+Closes the 16 partial/missing items of the 196-item re-audit (`prd-audit-8`).
+| Item | Value |
+|---|---|
+| PR | [#48](https://github.com/newyngwieslash-ops/WeaveSense-Flow/pull/48) (`gaps9`) |
+| Merge commit | `258ad322e85e9944eb5d3e31ffd1d48d9376d8c2` |
+| Known simplifications (local follow-up) | [`known-limitations.md`](./known-limitations.md) |
 
 | PRD | What changed | Code | Tests |
 |---|---|---|---|
@@ -560,7 +565,8 @@ Closes the 16 partial/missing items of the 196-item re-audit (`prd-audit-8`). PR
 | §8.3 cost basis | `ToolSpec.CostBasis` on every tool (MCP tools too). | `zz_cost_basis.go` | `TestEveryToolHasCostBasis` |
 
 ### Still deviating (honest)
-- Report export is Markdown/HTML/JSON only.
+These four intentional simplifications are documented for local follow-up in [`known-limitations.md`](./known-limitations.md):
+- Report export is Markdown/HTML/JSON only (no PDF/DOCX).
 - Media download proxies through the platform (no browser-facing signed URL), up to 25 MiB.
-- The analyze job is lexical; the embed job has no model provider and its vectors are not used for retrieval.
+- The analyze job is lexical; the embed job has only `none`/`hash` providers and its vectors are not used for retrieval (vector search is optional in the PRD).
 - The raw response is the connector-normalised item plus digest, not the raw feed bytes.

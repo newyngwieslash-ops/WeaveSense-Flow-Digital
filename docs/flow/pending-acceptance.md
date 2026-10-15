@@ -46,3 +46,6 @@ These need a real environment. None of them has been run yet.
 - Media download against a real MinIO bucket (`MINIO_ACCESS_KEY`/`MINIO_SECRET_KEY` on `loom-engine`): download a stored Telegram attachment from the content library and confirm another workspace gets 404. Tests use a fake object store and check the SigV4 URL shape only.
 - Monitor cost estimate with a real price book: set `FLOW_PRICE_BOOK` (`paid_source_calls`) and `FLOW_PAID_SOURCE_KINDS`, then check the approval card numbers.
 - Optional embedding provider: only `none` and `hash` exist; a model-based provider and vector retrieval are not implemented (optional in the PRD).
+
+## Known simplifications (local development)
+Four intentional simplifications vs the PRD (report export formats, raw-response storage, embed providers, 25 MiB media proxy limit) are listed with code paths and suggested next steps in [`known-limitations.md`](./known-limitations.md). Update that file when you close any of them locally.

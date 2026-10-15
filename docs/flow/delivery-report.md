@@ -525,3 +525,15 @@ What it closes:
   - Covered by `TestRLSCapabilityAndProviderTables`, which runs in CI as the non-superuser role.
 - ASR needs the faster-whisper model in the worker image (`requirements-model.txt`). The CI tests use a stub transcriber, and the real-model test is skipped.
 - A19 (live Telegram/WeChat/MCP/OAuth) was not run.
+
+## Round 8 — audit-6 gaps (2026-10-15)
+| PR | Branch | Content |
+|---|---|---|
+| #43 | gaps7-snapshot | §9.2 model-route enforcement (`CheckRunModel` in the Pi model bridge and research synthesis); fail-closed checks for runs without a snapshot; a freeze failure fails the run (no silent ignore, transient lock contention retried). Merge `cbeaf73b`. |
+| #44 | gaps7-research | §9.4 host Reviewer (engine `Reports.review`, Go `ReviewClaims`) on research drafts, model briefs and model synthesis; parent-run cancel propagates to queued/running child research (A15). Merge `f3e4ab02`. |
+| #45 | gaps7-ops | §14 alerts for budget, MCP errors, citation/Reviewer rejections, duplicate delivery, oldest queued job with the metrics emitted, validated by promtool in CI; daily backup compose profile `backup` with retention, `daily-test.sh` on PG17 in CI. |
+
+### Still deviating (honest)
+- The Reviewer's support check is lexical (term overlap ≥ 0.5 for extractive claims, ≥ 0.3 for model paraphrases). It catches unsupported and off-topic claims, not subtle semantic misstatements.
+- Platform counters (`*_total`) are per-process and reset on restart.
+- Backup compose services and alert routing have not been booted on a real stack (see pending-acceptance.md).

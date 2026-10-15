@@ -199,6 +199,7 @@ func FinishSynthesis(task model.FlowModelTask, req SynthesisRequest) (Synthesis,
 	// Producer draft → host Reviewer (§9.4).
 	accepted, review := ReviewClaims(res.Claims, req.Evidence)
 	for _, r := range review.Rejected {
+		CountCitationRejected("reviewer")
 		res.Dropped = append(res.Dropped, r.Text+" — reviewer: "+r.Reason)
 	}
 	res.Claims, res.Review = accepted, &review

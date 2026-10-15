@@ -108,8 +108,10 @@ test("pushed wake-up completes the parked brief window via the API (no scheduler
 
 test("brief generation is transactional: failed save leaves the window due and no report", async () => {
   const { rp, eng, sched } = await setup();
-  rp.summarize = async () => ({ body: "x", claims: [{ text: "bogus", kind: "source_statement", citations: [{ evidence_id: "ev_fake", revision: 1 }] }] });
+  const save = rp.saveReport.bind(rp);
+  rp.saveReport = async () => { throw new Error("db write failed"); };
   await assert.rejects(rp.briefTick());
+  rp.saveReport = save;
   const b = (await eng.db.query(`SELECT next_run_at FROM flow_brief_schedules WHERE id=$1`, [sched.id])).rows[0];
   assert.equal(new Date(b.next_run_at).toISOString(), "2026-10-13T01:00:00.000Z");
   assert.equal((await rp.listReports(A)).length, 0);

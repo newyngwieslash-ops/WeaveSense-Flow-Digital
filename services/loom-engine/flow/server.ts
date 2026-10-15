@@ -110,6 +110,7 @@ export function handler(engine: Engine, cfg: ServerConfig) {
       }
       if (m === "GET" && (mm = p.match(/^\/v1\/research-runs\/([\w-]+)$/))) { requireScope(ctx, "intel.documents.read"); return send(res, 200, await rp.getResearch(ctx, mm[1])); }
       if (m === "POST" && (mm = p.match(/^\/v1\/research-runs\/([\w-]+)\/cancel$/))) { requireScope(ctx, "intel.research"); return send(res, 200, await rp.cancelResearch(ctx, mm[1], String((await readJson(req)).reason ?? "cancelled"))); }
+      if (m === "POST" && p === "/v1/research-runs/cancel-children") { requireScope(ctx, "intel.research"); const b = await readJson(req); return send(res, 200, await rp.cancelChildren(ctx, String(b.parent_run_id ?? ""), String(b.reason ?? "parent_cancelled"))); }
       if (m === "POST" && p === "/v1/evidence/compare") { requireScope(ctx, "intel.documents.read"); return send(res, 200, await rp.compareEvidence(ctx, await readJson(req))); }
       if (m === "GET" && p === "/v1/sources/health") { requireScope(ctx, "intel.sources.read"); return send(res, 200, await engine.listSourcesHealth(ctx)); }
       if (m === "PATCH" && (mm = p.match(/^\/v1\/sources\/([\w-]+)$/))) { requireScope(ctx, "intel.sources.write"); return send(res, 200, await engine.updateSource(ctx, mm[1], await readJson(req))); }

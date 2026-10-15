@@ -233,3 +233,30 @@ func researchExecutorLimit() int {
 	n, _ := strconv.Atoi(os.Getenv("FLOW_MAX_CONCURRENT_RESEARCH_PER_TENANT"))
 	return n
 }
+
+// CancelResearchChildren propagates a parent run's cancellation to its child
+// research in Loom Engine (queued and running children). Idempotent.
+func CancelResearchChildren(ctx context.Context, eng EngineCaller, scope Scope, userID, parentRunID, reason string) ([]string, error) {
+	if eng == nil || parentRunID == "" {
+		return nil, nil
+	}
+	body, _ := json.Marshal(map[string]any{"parent_run_id": parentRunID, "reason": reason})
+	status, out, err := eng.Do(ctx, scope, Actor{Type: "user", ID: userID}, http.MethodPost, "/v1/research-runs/cancel-children", "cancel-children:"+parentRunID, body)
+	if err != nil {
+		return nil, err
+	}
+	if status >= 300 {
+		return nil, fmt.Errorf("loom engine: cancel children HTTP %d", status)
+	}
+	var r struct {
+		Cancelled []string `json:"cancelled"`
+		Data      *struct {
+			Cancelled []string `json:"cancelled"`
+		} `json:"data"`
+	}
+	_ = json.Unmarshal(out, &r)
+	if r.Data != nil {
+		return r.Data.Cancelled, nil
+	}
+	return r.Cancelled, nil
+}

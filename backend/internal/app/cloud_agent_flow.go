@@ -324,3 +324,16 @@ func (s *Service) cloudAgentRequestOf(userID, runID string) (CloudAgentRequest, 
 	}
 	return state.Request, nil
 }
+
+// cancelFlowResearchChildren cancels the engine-side child research of a cancelled intel run.
+func (s *Service) cancelFlowResearchChildren(ctx context.Context, userID, runID string, req CloudAgentRequest) error {
+	if s == nil || s.flowEngine == nil || !cloudAgentIntelSubject(req) {
+		return nil
+	}
+	_, ss, err := s.cloudAgentFlowConversation(userID, req)
+	if err != nil {
+		return nil // conversation gone: nothing to scope the cancellation to
+	}
+	_, err = flow.CancelResearchChildren(ctx, s.flowEngine, ss.Scope, userID, runID, "parent run cancelled")
+	return err
+}

@@ -25,10 +25,11 @@ type flowFakeEngine struct {
 	seen  []string // tenant ids seen
 	// monitorStatus, when set, is the HTTP status for POST /v1/monitors (e.g. 410 preview expired).
 	monitorStatus int
+	bodies        map[string]string // last body per path
 }
 
 func newFlowFakeEngine(t *testing.T) (*flowFakeEngine, flow.EngineClient) {
-	f := &flowFakeEngine{calls: map[string]int{}}
+	f := &flowFakeEngine{calls: map[string]int{}, bodies: map[string]string{}}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx, err := flow.Verify(flowTestKey, strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "), "loom-engine", time.Now())
 		if err != nil {
@@ -45,7 +46,10 @@ func newFlowFakeEngine(t *testing.T) (*flowFakeEngine, flow.EngineClient) {
 			_ = json.NewEncoder(w).Encode(map[string]any{"code": status, "message": "preview expired"})
 			return
 		}
-		_, _ = io.ReadAll(r.Body)
+		body, _ := io.ReadAll(r.Body)
+		f.mu.Lock()
+		f.bodies[r.URL.Path] = string(body)
+		f.mu.Unlock()
 		var data any = map[string]any{"ok": true}
 		switch r.URL.Path {
 		case "/v1/documents/search":

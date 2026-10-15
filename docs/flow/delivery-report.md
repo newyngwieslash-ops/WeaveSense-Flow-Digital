@@ -531,9 +531,11 @@ What it closes:
 |---|---|---|
 | #43 | gaps7-snapshot | §9.2 model-route enforcement (`CheckRunModel` in the Pi model bridge and research synthesis); fail-closed checks for runs without a snapshot; a freeze failure fails the run (no silent ignore, transient lock contention retried). Merge `cbeaf73b`. |
 | #44 | gaps7-research | §9.4 host Reviewer (engine `Reports.review`, Go `ReviewClaims`) on research drafts, model briefs and model synthesis; parent-run cancel propagates to queued/running child research (A15). Merge `f3e4ab02`. |
-| #45 | gaps7-ops | §14 alerts for budget, MCP errors, citation/Reviewer rejections, duplicate delivery, oldest queued job with the metrics emitted, validated by promtool in CI; daily backup compose profile `backup` with retention, `daily-test.sh` on PG17 in CI. |
+| #45 | gaps7-ops | §14 alerts for budget, MCP errors, citation/Reviewer rejections, duplicate delivery, oldest queued job with the metrics emitted, validated by promtool in CI; daily backup compose profile `backup` with retention, `daily-test.sh` on PG17 in CI. Merge `c033c676`. |
 
 ### Still deviating (honest)
 - The Reviewer's support check is lexical (term overlap ≥ 0.5 for extractive claims, ≥ 0.3 for model paraphrases). It catches unsupported and off-topic claims, not subtle semantic misstatements.
 - Platform counters (`*_total`) are per-process and reset on restart.
 - Backup compose services and alert routing have not been booted on a real stack (see pending-acceptance.md).
+
+- Re-audit 7 (`prd-audit-7` summary): legacy import brings sources and items (as documents, revision 1) only; keywords are skipped (monitors need approval), analyses/notes/schedules/objects are not imported. This is a remaining §13.3 gap.

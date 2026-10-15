@@ -106,10 +106,14 @@ deploy/flow/backup/restore.sh /backups/intel/flow-<ts>.dump "$NEW_INTEL_DATABASE
   - Rules are validated in CI with `promtool check rules` and unit-tested with `promtool test rules alerts.test.yml`.
   - Alertmanager routing (where alerts are sent) is deployment-specific and is not included.
 - **Legacy Loom import** (`services/loom-engine/flow/tools/legacy-import.ts`):
-  - Source tables: sources, items, keywords.
+  - Source tables: sources, items, keywords, analyses, knowledge_notes (missing tables are skipped), plus `items.media_urls` and `sources.interval_minutes`.
   - The default is a dry run. `--apply` writes. `--activate` keeps enabled sources active; otherwise they are imported paused.
   - Each old_id→new_id pair is stored in `flow_legacy_id_map`. Running the import again reuses the mapping.
-  - Keywords are reported as skipped: monitors need a preview and approval. WeChat sources need a gateway id. Analyses and notes are not imported.
+  - Keywords are intentionally reported as skipped: monitors need a preview and approval. WeChat sources need a gateway id.
+  - Analyses and knowledge notes become read-only rows in `flow_legacy_archive` (migration 0015, FORCE RLS), linked to the mapped document ids and marked `verified:false`. They never become evidence-bound reports. Notes record any item ids that could not be resolved.
+  - Schedules: each imported source with `interval_minutes > 0` gets a Flow interval schedule created **disabled** (`state=disabled`, `blocked_reason=legacy_import…`). Re-bind the connection and budget, then enable it.
+  - Objects: each `items.media_urls` entry gets an `object` archive row with a target key `tenants/<t>/workspaces/<w>/legacy/<doc>/<n>-<name>`. The library API copies bytes through a `copyObject` hook. The CLI leaves `copy_status=pending`, and the operator copies the objects (`mc cp legacy_url target_key`), as with `media-keys.ts`.
+  - Mapping tables: sources, items, keywords, analyses, knowledge_notes, schedules (old_id = source id), objects (old_id = `<item>#<n>`). Re-runs are idempotent and objects are not copied twice.
 - **Telegram media keys:** `flow/tools/media-keys.ts plan|apply` moves legacy `telegram/<channel>/<id>` keys to tenant/workspace-scoped keys.
 
 ## Compose profiles (PRD §14)

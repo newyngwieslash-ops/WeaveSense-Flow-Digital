@@ -539,3 +539,4 @@ What it closes:
 - Backup compose services and alert routing have not been booted on a real stack (see pending-acceptance.md).
 
 - Re-audit 7 (`prd-audit-7` summary): legacy import brings sources and items (as documents, revision 1) only; keywords are skipped (monitors need approval), analyses/notes/schedules/objects are not imported. This is a remaining §13.3 gap.
+- Audit-8 follow-up (PR gaps8-legacy): §13.3 is closed. The legacy import now also covers analyses and knowledge notes (as an archive, not reports), disabled schedules and object key mapping. Keywords are still skipped on purpose. Tests run on PGlite and real PG17. Still open: an import from a real production legacy dump (E).

@@ -190,6 +190,7 @@ func FinishSynthesis(task model.FlowModelTask, req SynthesisRequest) (Synthesis,
 	res.Body = parsed.Body
 	for _, c := range parsed.Claims {
 		if _, err := ValidateCitations([]ReportClaim{c}, req.Scope, req.Evidence); err != nil {
+			CountCitationRejected("synthesis_validate")
 			res.Dropped = append(res.Dropped, truncRunes(c.Text, 200)+" — "+err.Error())
 			continue
 		}
@@ -198,6 +199,7 @@ func FinishSynthesis(task model.FlowModelTask, req SynthesisRequest) (Synthesis,
 	// Producer draft → host Reviewer (§9.4).
 	accepted, review := ReviewClaims(res.Claims, req.Evidence)
 	for _, r := range review.Rejected {
+		CountCitationRejected("reviewer")
 		res.Dropped = append(res.Dropped, r.Text+" — reviewer: "+r.Reason)
 	}
 	res.Claims, res.Review = accepted, &review

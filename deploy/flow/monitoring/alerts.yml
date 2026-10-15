@@ -50,3 +50,39 @@ groups:
         for: 30m
         labels: { severity: warning }
         annotations: { summary: "Many model tasks waiting to retry (gateway degraded?)" }
+      # --- §14 additions (audit-6): budget, MCP errors, citation failures, duplicate delivery, oldest queued job ---
+      - alert: FlowBudgetDenials
+        expr: sum(increase(flow_budget_denied_total[1h])) > 5
+        labels: { severity: warning }
+        annotations: { summary: "Budget reservations are being refused (quota/credits/provider account) — new cost tasks are blocked" }
+      - alert: FlowBudgetNearQuota
+        expr: flow_budget_accounts_near_quota > 0
+        for: 30m
+        labels: { severity: info }
+        annotations: { summary: "One or more billing accounts reached 90% of their monthly quota" }
+      - alert: FlowSchedulesBlockedByBudget
+        expr: sum(flow_schedules{state="blocked",reason=~"budget.*"}) > 0
+        for: 30m
+        labels: { severity: warning }
+        annotations: { summary: "Collection schedules blocked because the budget reservation was denied" }
+      - alert: FlowMCPErrors
+        expr: sum(increase(flow_mcp_errors_total[30m])) > 5
+        labels: { severity: warning }
+        annotations: { summary: "MCP tool calls failing (transport/protocol/schema drift/unknown outcome)" }
+      - alert: FlowMCPFailedCallsGrowing
+        expr: delta(flow_mcp_calls{status="failed"}[1h]) > 10
+        labels: { severity: warning }
+        annotations: { summary: "Persisted failed MCP calls growing" }
+      - alert: FlowCitationVerificationFailures
+        expr: sum(increase(flow_citation_rejected_total[1h])) > 10 or delta(flow_review_rejected_claims[1h]) > 10
+        labels: { severity: warning }
+        annotations: { summary: "Citation validation / Reviewer rejecting many claims (model drift or evidence store problem)" }
+      - alert: FlowDuplicateDeliveries
+        expr: sum(increase(flow_event_duplicate_deliveries_total[1h])) > 50 or flow_outbox_redelivery_attempts > 50
+        labels: { severity: warning }
+        annotations: { summary: "Engine events delivered repeatedly (ACK loss); inbox dedupes, but check the delivery path" }
+      - alert: FlowOldestQueuedJob
+        expr: max(flow_collection_oldest_queued_seconds) > 1800 or max(flow_research_oldest_queued_seconds) > 1800 or max(flow_model_task_oldest_queued_seconds) > 1800
+        for: 5m
+        labels: { severity: warning }
+        annotations: { summary: "A job has been queued for more than 30 minutes (workers down or tenant starved)" }

@@ -1,6 +1,6 @@
 # Implementation status (PRD v2 mapping)
 
-Last updated 2026-10-15 (Asia/Shanghai) after round 7 (budgets, fair claim, event time, capability snapshots, ASR, intelligence tabs; see `docs/flow/delivery-report.md` "Round 7"). Phase reports are in `docs/flow/delivery-report.md`.
+Last updated 2026-10-15 (Asia/Shanghai) after round 8 (capability enforcement, Reviewer, cancel propagation, alerts, daily backup) and round 7 (budgets, fair claim, event time, capability snapshots, ASR, intelligence tabs; see `docs/flow/delivery-report.md` "Round 7"). Phase reports are in `docs/flow/delivery-report.md`.
 
 **A file existing does not mean the feature has passed:** the evidence column says what was actually exercised.
 
@@ -49,3 +49,13 @@ Round 7 additions (2026-10-15):
 | §12 canvas usage in the flow ledger | done as a mirror (`Charge=false`); the debit stays on the canvas billing order | `app/cloud_agent_flow_usage.go` | Go tests |
 | §15 intelligence tabs and empty-state reasons | done | `web/src/pages/intelligence/views.tsx`, `empty-reason.ts` | `intelligence-empty-reason.test.ts` |
 | A18 object restore | in CI | `deploy/flow/backup/objects-test.sh`, quality.yml `object-restore` | CI |
+
+Round 8 additions (2026-10-15, audit-6 gaps):
+
+| PRD section | Status | Code | Evidence |
+|---|---|---|---|
+| §9.2 capability snapshot enforcement | done: tool table **and** model route enforced, fail-closed (no snapshot / empty table rejects), freeze failure fails the run | `flow/capability.go` (`CheckRunModel`, `CheckRunTool`), `app/cloud_agent.go`, `app/cloud_agent_pi_model.go`, `flow/tools_p3.go` | `TestRunCapabilityEnforcesModelRouteAndFailsClosed`, `runchain_test.go` |
+| §9.4 producer draft → host Reviewer | done: support / conflict / uncertainty checks on research drafts, model briefs and model synthesis; unsupported claims rejected with reasons | engine `reports.ts` (`review`), `flow/reviewer.go` | `flow/gaps7.test.ts`, `reviewer_test.go` |
+| §9.4 / A15 cancel propagation | done: a cancelled parent run cancels its queued and running child research (`POST /v1/research-runs/cancel-children`) during durable cleanup | `reports.ts` (`cancelChildren`), `app/cloud_agent_recovery.go` | `gaps7.test.ts` (A15), `TestCancelIntelRunPropagatesToChildResearch` |
+| §14 alerts | done: + budget, MCP errors, citation/Reviewer rejections, duplicate delivery, oldest queued job; metrics emitted | `deploy/flow/monitoring/alerts.yml`, `flow/ops_counters.go`, `flow/metrics.go`, engine `metrics.ts` | `promtool check/test rules` in CI, `TestMetricsEmitAlertSignals`, `gaps7ops.test.ts` |
+| §14 daily backup | done: compose profile `backup` (DB + objects, retention) | `deploy/flow/backup/daily.sh`, `docker-compose.flow.yml` | `daily-test.sh` on PG17 in CI |

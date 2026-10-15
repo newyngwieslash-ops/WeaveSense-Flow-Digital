@@ -37,3 +37,7 @@ These need a real environment. None of them has been run yet.
 ## Added in round 7 (2026-10-15)
 - ASR with a real model: build `workers/asr` with `requirements-model.txt` (faster-whisper) and transcribe a real audio or video file under compose profile `asr`. CI only covers the stub transcriber.
 - A18 object restore runs in CI on MinIO, but has not been run against the production object store.
+
+## Added in round 8 (2026-10-15)
+- Boot `--profile backup` on the real stack, confirm `/backups/last-success` updates daily and retention prunes, and do one restore drill from a daily dump. CI runs `daily-test.sh` (PG17) only.
+- Wire Alertmanager routing for the new §14 alerts (deployment-specific) and confirm they fire on the real stack.

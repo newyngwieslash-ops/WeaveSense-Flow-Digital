@@ -168,6 +168,19 @@ jobs:
           docker logs minio | tail -20
           docker run --rm --network a18 -e MINIO_ROOT_USER -e MINIO_ROOT_PASSWORD \
             -v "$PWD/deploy/flow/backup:/b:ro" --entrypoint /bin/bash bitnamilegacy/minio-client:2025.7.21 /b/objects-test.sh
+      - name: Daily backup schedule + retention (§14)
+        run: |
+          docker run -d --name pgbk --network a18 -e POSTGRES_PASSWORD=ci postgres:17-alpine
+          for i in $(seq 1 30); do docker exec pgbk pg_isready -U postgres && break; sleep 2; done
+          sleep 2
+          docker exec pgbk psql -U postgres -qc "CREATE DATABASE restore_t"
+          docker run --rm --network a18 -v "$PWD/deploy/flow/backup:/b:ro" \
+            -e DATABASE_URL=postgres://postgres:ci@pgbk/postgres -e RESTORE_URL=postgres://postgres:ci@pgbk/restore_t \
+            --entrypoint /bin/bash postgres:17-alpine /b/daily-test.sh
+      - name: Validate alert rules (promtool)
+        run: |
+          docker run --rm -v "$PWD/deploy/flow/monitoring:/m:ro" -w /m --entrypoint promtool prom/prometheus:v3.5.0 check rules alerts.yml
+          docker run --rm -v "$PWD/deploy/flow/monitoring:/m:ro" -w /m --entrypoint promtool prom/prometheus:v3.5.0 test rules alerts.test.yml
 
   payment-plugins:
     name: Payment plugin artifacts

@@ -7,6 +7,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -55,5 +56,23 @@ func MetricsText(db *gorm.DB) string {
 	byStatus("flow_mcp_calls", "MCP calls by status (reconciliation_required needs an operator).", &model.FlowMCPCall{})
 	byStatus("flow_budget_reservations", "Budget reservations by status.", &model.FlowBudgetReservation{})
 	byStatus("flow_usage_records", "Usage records by billing status.", &model.FlowUsageRecord{})
+	// Oldest queued platform job (async model tasks waiting to run).
+	var oldest struct{ Age float64 }
+	var first model.FlowModelTask
+	if db.Model(&model.FlowModelTask{}).Where("status IN ?", []string{"queued", "retry_wait"}).Order("created_at").Limit(1).Find(&first).RowsAffected > 0 {
+		oldest.Age = time.Since(first.CreatedAt).Seconds()
+	}
+	fmt.Fprintf(&b, "# HELP flow_model_task_oldest_queued_seconds Age of the oldest queued/retrying model task.\n# TYPE flow_model_task_oldest_queued_seconds gauge\nflow_model_task_oldest_queued_seconds %d\n", int64(oldest.Age))
+	// Budget pressure: tenants whose month-to-date consumption reached 90% of their quota.
+	var near int64
+	db.Raw(`SELECT count(*) FROM flow_billing_accounts a WHERE a.monthly_quota_micro > 0 AND
+		(SELECT coalesce(sum(CASE WHEN r.status = 'settled' THEN r.consumed_micro ELSE r.reserved_micro END),0) FROM flow_budget_reservations r
+		 WHERE r.account_id = a.id AND r.parent_id = '' AND r.created_at >= ? AND r.status <> 'released') >= a.monthly_quota_micro * 9 / 10`, monthStart(time.Now().UTC())).Scan(&near)
+	fmt.Fprintf(&b, "# HELP flow_budget_accounts_near_quota Billing accounts at >=90%% of their monthly quota.\n# TYPE flow_budget_accounts_near_quota gauge\nflow_budget_accounts_near_quota %d\n", near)
+	writeCounters(&b)
 	return b.String()
+}
+
+func monthStart(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC)
 }

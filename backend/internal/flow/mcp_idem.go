@@ -74,9 +74,11 @@ func (g MCPGateway) ExecuteKeyed(ctx context.Context, scope Scope, actorID, conn
 		g.DB.Model(&model.FlowMCPCall{}).Where("id = ?", row.ID).Updates(map[string]any{"status": "succeeded", "output": out, "truncated": truncated, "billed": true, "updated_at": g.now()})
 		return out, truncated, nil
 	case errors.Is(err, errMCPSent):
+		CountMCPError("unknown_outcome")
 		g.DB.Model(&model.FlowMCPCall{}).Where("id = ?", row.ID).Updates(map[string]any{"status": StatusReconciliation, "updated_at": g.now()})
 		return "", false, fmt.Errorf("%w (%v)", ErrMCPUnknownOutcome, err)
 	default:
+		CountMCPError(mcpErrorKind(err))
 		g.DB.Model(&model.FlowMCPCall{}).Where("id = ?", row.ID).Updates(map[string]any{"status": "failed", "updated_at": g.now()})
 		return "", false, err
 	}
@@ -130,4 +132,17 @@ func (g MCPGateway) reconcile(ctx context.Context, scope Scope, row model.FlowMC
 		return false, "", nil
 	}
 	return false, "", ErrMCPUnknownOutcome
+}
+
+func mcpErrorKind(err error) string {
+	switch {
+	case errors.Is(err, ErrMCPSchemaDrift):
+		return "schema_drift"
+	case errors.Is(err, ErrMCPBudget):
+		return "budget_blocked"
+	case errors.Is(err, ErrMCPToolDenied):
+		return "denied"
+	default:
+		return "call_failed"
+	}
 }

@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -37,5 +38,30 @@ func TestMetricsRouteTokenAndContent(t *testing.T) {
 	body := w.Body.String()
 	if w.Code != 200 || !strings.Contains(body, `flow_mcp_calls{status="reconciliation_required"} 1`) || strings.Contains(body, "tn_hidden") {
 		t.Fatalf("%d %s", w.Code, body)
+	}
+}
+
+// §14: the counters and gauges behind the budget / MCP / citation / duplicate
+// delivery / oldest-queued alerts are actually emitted.
+func TestMetricsEmitAlertSignals(t *testing.T) {
+	db := testDB(t)
+	CountBudgetDenied(ErrBudgetQuota)
+	CountMCPError("call_failed")
+	CountCitationRejected("report_save")
+	e := Event{EventID: "evt_dup", TenantID: "tn_x", OperationID: "op1", Type: "collection.completed", Payload: []byte(`{}`)}
+	if _, err := ConsumeEvent(db, "c1", e); err != nil {
+		t.Fatal(err)
+	}
+	if applied, _ := ConsumeEvent(db, "c1", e); applied {
+		t.Fatal("duplicate applied")
+	}
+	db.Create(&model.FlowModelTask{ID: "mt_old", TenantID: "tn_x", Status: "queued", CreatedAt: time.Now().Add(-2 * time.Hour)})
+	body := MetricsText(db)
+	for _, want := range []string{`flow_budget_denied_total{reason="quota"}`, `flow_mcp_errors_total{kind="call_failed"}`,
+		`flow_citation_rejected_total{stage="report_save"}`, `flow_event_duplicate_deliveries_total{source="inbox"}`,
+		"flow_budget_accounts_near_quota 0", "flow_model_task_oldest_queued_seconds 7"} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("metrics missing %q:\n%s", want, body)
+		}
 	}
 }

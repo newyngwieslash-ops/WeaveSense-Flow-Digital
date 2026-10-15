@@ -165,12 +165,12 @@ func (b Billing) ledger(tx *gorm.DB, userID string, typ model.CreditLedgerType, 
 }
 
 // Reserve opens a root reservation for the tenant (idempotent by key).
-func (b Billing) Reserve(tenantID, key, purpose, refID string, amount int64) (model.FlowBudgetReservation, error) {
-	var out model.FlowBudgetReservation
+func (b Billing) Reserve(tenantID, key, purpose, refID string, amount int64) (out model.FlowBudgetReservation, err error) {
+	defer func() { CountBudgetDenied(err) }()
 	if amount <= 0 || key == "" {
 		return out, fmt.Errorf("flow: invalid reservation")
 	}
-	err := b.DB.Transaction(func(tx *gorm.DB) error {
+	err = b.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&out, "tenant_id = ? AND idempotency_key = ?", tenantID, key).Error; err == nil {
 			return nil
 		}
@@ -219,9 +219,9 @@ func (b Billing) Reserve(tenantID, key, purpose, refID string, amount int64) (mo
 
 // Allocate carves a child reservation out of the parent's remaining budget
 // atomically (conditional UPDATE), idempotent by key.
-func (b Billing) Allocate(parentID, key, purpose, refID string, amount int64) (model.FlowBudgetReservation, error) {
-	var out model.FlowBudgetReservation
-	err := b.DB.Transaction(func(tx *gorm.DB) error {
+func (b Billing) Allocate(parentID, key, purpose, refID string, amount int64) (out model.FlowBudgetReservation, err error) {
+	defer func() { CountBudgetDenied(err) }()
+	err = b.DB.Transaction(func(tx *gorm.DB) error {
 		var p model.FlowBudgetReservation
 		if err := tx.First(&p, "id = ?", parentID).Error; err != nil {
 			return ErrBudgetNotFound

@@ -4,7 +4,7 @@
 # PRD §14 profiles: core (postgres, redis, minio, platform, web, loom-engine, loom-scheduler; enabled by
 # COMPOSE_PROFILES=core in .env.flow, or pass --profile core), plus the optional
 # telegram, wechat, subtitles, extract (OCR + attachment retry), asr (speech-to-text, with extract), research (briefs),
-# monitoring (Prometheus + alert rules). With extract/research set LOOM_SPLIT_ROLES=true in .env.flow
+# monitoring (Prometheus + alert rules), backup (daily DB + object backups with retention). With extract/research set LOOM_SPLIT_ROLES=true in .env.flow
 # so api/scheduler hand those loops to the dedicated containers.
 name: weavesense-flow
 x-restart: &restart
@@ -260,11 +260,51 @@ services:
       - promdata:/prometheus
     ports: ["127.0.0.1:${FLOW_PROMETHEUS_PORT:-9090}:9090"]
     networks: [internal]
+  # Daily backup (§14): both databases (dump + manifest + sha256) at BACKUP_AT UTC with
+  # retention BACKUP_RETENTION_DAYS (keeps ≥ BACKUP_KEEP_MIN). Restore drills: docs/flow/release-deploy.md.
+  flow-backup:
+    <<: *restart
+    profiles: [backup]
+    image: postgres:17-alpine
+    depends_on: [postgres]
+    entrypoint: ["/bin/bash", "/b/daily.sh"]
+    environment:
+      BACKUP_DATABASE_URLS: >-
+        platform=postgres://${POSTGRES_SUPERUSER:-postgres}:${POSTGRES_SUPERUSER_PASSWORD}@postgres:5432/${PLATFORM_DB_NAME:-flow_platform}
+        intel=postgres://${POSTGRES_SUPERUSER:-postgres}:${POSTGRES_SUPERUSER_PASSWORD}@postgres:5432/${INTEL_DB_NAME:-flow_intel}
+      BACKUP_AT: ${BACKUP_AT:-03:00}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+      BACKUP_KEEP_MIN: ${BACKUP_KEEP_MIN:-3}
+    volumes:
+      - ./deploy/flow/backup:/b:ro
+      - ${BACKUP_HOST_DIR:-backups}:/backups
+    networks: [internal]
+  # Daily object-store snapshot (object manifest + mirror) with the same retention.
+  flow-backup-objects:
+    <<: *restart
+    profiles: [backup]
+    image: ${FLOW_MC_IMAGE:-bitnamilegacy/minio-client:2025.7.21}
+    user: "0:0"
+    depends_on: [minio]
+    entrypoint: ["/bin/bash", "/b/daily.sh"]
+    environment:
+      BACKUP_OBJECT_BUCKETS: ${PLATFORM_BUCKET:-flow-platform} ${INTEL_BUCKET:-flow-intel}
+      MINIO_URL: http://minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      BACKUP_AT: ${BACKUP_AT:-03:00}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+      BACKUP_KEEP_MIN: ${BACKUP_KEEP_MIN:-3}
+    volumes:
+      - ./deploy/flow/backup:/b:ro
+      - ${BACKUP_HOST_DIR:-backups}:/backups
+    networks: [internal]
 networks:
   internal: {}
   subtitle-internal:
     internal: true
 volumes:
+  backups: {}
   telethondata: {}
   wechatdata: {}
   promdata: {}

@@ -92,6 +92,7 @@ var p3Tools = []ToolSpec{
 			}
 			truncated, err := ValidateCitations(claims, scope, resolved)
 			if err != nil {
+				CountCitationRejected("report_save")
 				return nil, err
 			}
 			skill, err := skillRefFor(t, conv, ss, a)

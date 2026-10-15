@@ -69,6 +69,13 @@ deploy/flow/backup/restore.sh /backups/intel/flow-<ts>.dump "$NEW_INTEL_DATABASE
   - Open budget reservations are closed by the billing maintenance loop.
 - **Consistency test.** `services/loom-engine/flow/pg.test.ts` runs against real Postgres as a non-superuser. It populates a database, backs it up, restores it into an empty database, checks the manifest diff and app-level reads, and confirms the restored DB is not re-migrated. Run it with `FLOW_TEST_PG_ADMIN_URL=postgres://<superuser>@host/db FLOW_TEST_PG_APP_ROLE=<role>:<password> node --test flow/pg.test.ts`.
 
+### Daily backup (§14, `--profile backup`)
+- `flow-backup` (postgres:17-alpine) runs `deploy/flow/backup/daily.sh` once a day at `BACKUP_AT` (UTC, default `03:00`): `backup.sh` for the platform and intel databases (dump + manifest + sha256) into the `backups` volume (or `BACKUP_HOST_DIR`), then prunes dumps older than `BACKUP_RETENTION_DAYS` (default 14) while always keeping the newest `BACKUP_KEEP_MIN` (default 3). Each successful cycle writes `/backups/last-success`.
+- `flow-backup-objects` (minio-client) mirrors both buckets into a dated snapshot `/backups/objects/<ts>/` with `objects.manifest`, same retention.
+- Without compose: `BACKUP_ONCE=1 BACKUP_DATABASE_URLS="platform=… intel=…" deploy/flow/backup/daily.sh` from host cron.
+- CI (`Object storage restore (A18)` job) runs `daily-test.sh` against a real PostgreSQL 17: one cycle, manifest/sha256 check, retention, restore of the new dump. The compose services themselves are not started in CI.
+- Restore drills stay manual: restore the latest dump into an empty database with `restore.sh` (it verifies the manifest) at least monthly.
+
 ## P7 additions
 - Smoke tests: `deploy/flow/smoke.sh [base]` (HTTP through nginx) and `deploy/flow/browser-smoke.mjs` (headless Chrome, `playwright-core`). Both accept `SMOKE_USER`/`SMOKE_PASSWORD`.
 - Object storage: `deploy/flow/backup/objects-backup.sh <alias> <dir> <bucket>…`, `objects-restore.sh <dir> <alias>`, and the round-trip test `objects-test.sh`.
@@ -94,7 +101,9 @@ deploy/flow/backup/restore.sh /backups/intel/flow-<ts>.dump "$NEW_INTEL_DATABASE
 - **Monitoring:**
   - Loom Engine `GET /metrics` returns aggregate gauges with no tenant ids. An optional `METRICS_TOKEN` restricts access.
   - Platform `GET /metrics/flow` returns 404 unless `FLOW_METRICS_TOKEN` is set, and then requires that bearer token. Put the same token in `deploy/flow/monitoring/platform.token`; that file is git-ignored.
-  - Alert rules are in `deploy/flow/monitoring/alerts.yml`: engine/platform down, outbox backlog, expired leases, collection failures, media/OCR failures, reconciliation_required, failed notifications, and model tasks stuck in retry_wait.
+  - Alert rules are in `deploy/flow/monitoring/alerts.yml`: engine/platform down, outbox backlog, expired leases, collection failures, media/OCR failures, reconciliation_required, failed notifications, model tasks stuck in retry_wait, and (audit-6) budget denials / accounts near quota / schedules blocked by budget, MCP errors, citation-verification and Reviewer rejections, duplicate deliveries, and the oldest queued job (collection, research, model task > 30 min).
+  - Metrics behind them: platform counters `flow_budget_denied_total`, `flow_mcp_errors_total`, `flow_citation_rejected_total`, `flow_event_duplicate_deliveries_total` and gauges `flow_budget_accounts_near_quota`, `flow_model_task_oldest_queued_seconds`; engine gauges `flow_collection_oldest_queued_seconds`, `flow_research_oldest_queued_seconds`, `flow_outbox_redelivery_attempts`, `flow_schedules{state,reason}`, `flow_review_rejected_claims`. Platform counters reset on restart (alerts use `increase()`).
+  - Rules are validated in CI with `promtool check rules` and unit-tested with `promtool test rules alerts.test.yml`.
   - Alertmanager routing (where alerts are sent) is deployment-specific and is not included.
 - **Legacy Loom import** (`services/loom-engine/flow/tools/legacy-import.ts`):
   - Source tables: sources, items, keywords.

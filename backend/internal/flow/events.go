@@ -72,6 +72,7 @@ func ConsumeEvent(db *gorm.DB, consumerID string, e Event) (bool, error) {
 			return res.Error
 		}
 		if res.RowsAffected == 0 {
+			CountDuplicateDelivery()
 			return nil
 		}
 		applied = true

@@ -1,0 +1,40 @@
+# promtool test rules deploy/flow/monitoring/alerts.test.yml
+rule_files: [alerts.yml]
+evaluation_interval: 1m
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'flow_budget_denied_total{reason="quota"}'
+        values: '0+1x60'
+      - series: 'flow_mcp_errors_total{kind="call_failed"}'
+        values: '0+1x60'
+      - series: 'flow_citation_rejected_total{stage="report_save"}'
+        values: '0+1x60'
+      - series: 'flow_review_rejected_claims'
+        values: '0x60'
+      - series: 'flow_event_duplicate_deliveries_total{source="inbox"}'
+        values: '0+2x60'
+      - series: 'flow_outbox_redelivery_attempts'
+        values: '0x60'
+      - series: 'flow_collection_oldest_queued_seconds'
+        values: '3600x60'
+      - series: 'flow_research_oldest_queued_seconds'
+        values: '0x60'
+      - series: 'flow_model_task_oldest_queued_seconds'
+        values: '0x60'
+    alert_rule_test:
+      - eval_time: 60m
+        alertname: FlowBudgetDenials
+        exp_alerts: [{ exp_labels: { severity: warning }, exp_annotations: { summary: "Budget reservations are being refused (quota/credits/provider account) — new cost tasks are blocked" } }]
+      - eval_time: 60m
+        alertname: FlowMCPErrors
+        exp_alerts: [{ exp_labels: { severity: warning }, exp_annotations: { summary: "MCP tool calls failing (transport/protocol/schema drift/unknown outcome)" } }]
+      - eval_time: 60m
+        alertname: FlowCitationVerificationFailures
+        exp_alerts: [{ exp_labels: { severity: warning }, exp_annotations: { summary: "Citation validation / Reviewer rejecting many claims (model drift or evidence store problem)" } }]
+      - eval_time: 60m
+        alertname: FlowDuplicateDeliveries
+        exp_alerts: [{ exp_labels: { severity: warning }, exp_annotations: { summary: "Engine events delivered repeatedly (ACK loss); inbox dedupes, but check the delivery path" } }]
+      - eval_time: 60m
+        alertname: FlowOldestQueuedJob
+        exp_alerts: [{ exp_labels: { severity: warning }, exp_annotations: { summary: "A job has been queued for more than 30 minutes (workers down or tenant starved)" } }]

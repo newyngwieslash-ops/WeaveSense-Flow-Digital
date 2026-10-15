@@ -28,5 +28,17 @@ export async function metricsText(db: Db): Promise<string> {
     [{ value: (await q(`SELECT count(*)::int n FROM flow_documents d, jsonb_array_elements(d.media) m WHERE m->>'status' IN ('failed','timeout')`))[0]?.n ?? 0 }]);
   gauge("flow_ocr_jobs", "OCR jobs by status.", (await q(`SELECT status, count(*)::int n FROM flow_media_ocr GROUP BY status`)).map((r) => ({ labels: { status: r.status }, value: r.n })));
   gauge("flow_research_runs", "Research runs by status.", (await q(`SELECT status, count(*)::int n FROM flow_research_runs GROUP BY status`)).map((r) => ({ labels: { status: r.status }, value: r.n })));
+  // §14: oldest queued job, redelivered events, blocked schedules (budget/grant), Reviewer rejections.
+  const oq = (await q(`SELECT coalesce(extract(epoch FROM now() - min(created_at)), 0)::float8 age FROM flow_collection_runs WHERE status IN ('queued','retry_wait')`))[0] ?? {};
+  gauge("flow_collection_oldest_queued_seconds", "Age of the oldest queued/retrying collection run.", [{ value: Math.round(oq.age ?? 0) }]);
+  const rq = (await q(`SELECT coalesce(extract(epoch FROM now() - min(created_at)), 0)::float8 age FROM flow_research_runs WHERE status = 'queued'`))[0] ?? {};
+  gauge("flow_research_oldest_queued_seconds", "Age of the oldest queued research run.", [{ value: Math.round(rq.age ?? 0) }]);
+  gauge("flow_outbox_redelivery_attempts", "Outbox events delivered more than once (attempts > 1): duplicate deliveries the platform inbox must dedupe.",
+    [{ value: (await q(`SELECT count(*)::int n FROM flow_outbox WHERE attempts > 1`))[0]?.n ?? 0 }]);
+  gauge("flow_schedules", "Collection schedules by state (blocked = budget denied or grant revoked).",
+    (await q(`SELECT state, coalesce(blocked_reason, '') reason, count(*)::int n FROM flow_schedules GROUP BY state, coalesce(blocked_reason, '')`))
+      .map((r) => ({ labels: { state: r.state, reason: String(r.reason).split(":")[0].slice(0, 40) }, value: r.n })));
+  gauge("flow_review_rejected_claims", "Claims rejected by the host Reviewer / citation checks in research outputs.",
+    [{ value: (await q(`SELECT coalesce(sum(jsonb_array_length(output->'review'->'rejected')), 0)::int n FROM flow_research_runs WHERE jsonb_typeof(output->'review'->'rejected') = 'array'`))[0]?.n ?? 0 }]);
   return out.join("\n") + "\n";
 }

@@ -183,7 +183,9 @@ func TestCitationSnippetHashAndURL(t *testing.T) {
 	f, tr := false, true
 	scope := MaterialScope{SourceIDs: []string{"s1"}}
 	base := ResolvedEvidence{EvidenceID: "e1", DocumentID: "d1", SourceID: "s1", Revision: 1, SnippetHash: "h1", URL: "https://a/1", SnippetOK: &tr, URLOK: &tr}
-	claim := func(c Citation) []ReportClaim { return []ReportClaim{{Text: "t", Kind: "source_statement", Citations: []Citation{c}}} }
+	claim := func(c Citation) []ReportClaim {
+		return []ReportClaim{{Text: "t", Kind: "source_statement", Citations: []Citation{c}}}
+	}
 	if _, err := ValidateCitations(claim(Citation{EvidenceID: "e1", Revision: 1, SnippetHash: "h1", URL: "https://a/1"}), scope, []ResolvedEvidence{base}); err != nil {
 		t.Fatal(err)
 	}

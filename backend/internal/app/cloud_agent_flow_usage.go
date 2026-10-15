@@ -88,10 +88,27 @@ func (s *Service) freezeRunCapability(userID, runID string, req CloudAgentReques
 			in.ModelRoute["flow_model_gateway"] = map[string]any{"model": mg.Model, "micro_per_1k_tokens": mg.MicroPer1KTok}
 		}
 	}
-	return s.inFlowUser(userID, func(db *gorm.DB) error {
-		_, err := flow.FreezeCapabilitySnapshot(db, in, time.Now().UTC())
-		return err
-	})
+	var err error
+	// Transient lock contention (concurrent admissions) is retried; any other
+	// error is returned and fails the run.
+	for attempt := 0; attempt < 6; attempt++ {
+		if attempt > 0 {
+			time.Sleep(time.Duration(attempt*attempt) * 25 * time.Millisecond)
+		}
+		err = s.inFlowUser(userID, func(db *gorm.DB) error {
+			_, err := flow.FreezeCapabilitySnapshot(db, in, time.Now().UTC())
+			return err
+		})
+		if err == nil || !transientDBError(err) {
+			return err
+		}
+	}
+	return err
+}
+
+func transientDBError(err error) bool {
+	m := strings.ToLower(err.Error())
+	return strings.Contains(m, "database is locked") || strings.Contains(m, "busy") || strings.Contains(m, "serializ") || strings.Contains(m, "deadlock")
 }
 
 // checkRunModel enforces the run's frozen model route for one model call.

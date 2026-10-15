@@ -107,6 +107,11 @@ services:
       LOOM_ROLE: api            # internal API + collection worker + outbox dispatcher
       LOOM_PORT: "8080"
       FLOW_PLATFORM_EVENTS_URL: http://platform:8080/api/internal/flow/events
+      # §10.4 verified media download: the engine reads the private bucket (never exposed to browsers).
+      MINIO_ENDPOINT: minio:9000
+      MINIO_BUCKET: ${INTEL_BUCKET:-flow-intel}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
     command: ["node", "flow/main.ts"]
     depends_on:
       postgres: { condition: service_healthy }

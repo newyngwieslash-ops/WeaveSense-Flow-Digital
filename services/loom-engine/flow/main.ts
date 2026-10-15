@@ -4,6 +4,7 @@
 // With LOOM_SPLIT_ROLES=true the api/scheduler roles leave those loops to the dedicated roles.
 //  api:       internal HTTP API + collection worker + outbox dispatcher
 //  scheduler: the single due-window scanner (guarded by a PG advisory lock)
+import { derivedTick, embedderFromEnv } from "./gaps9.ts";
 import { pgDb, migrate } from "./db.ts";
 import { Engine } from "./engine.ts";
 import { createApiServer } from "./server.ts";
@@ -110,5 +111,8 @@ if (runEnrich) {
   void loop("reconcile", Number(env("LOOM_RECONCILE_MS", "30000")), async () => { await engine.reconcile(); await engine.closeBudgets(); });
   void loop("media-retry", Number(env("LOOM_MEDIA_RETRY_MS", "120000")), () => engine.retryMedia());
   if (env("ASR_ENABLED", "false") === "true") void loop("asr", Number(env("LOOM_ASR_TICK_MS", "60000")), () => engine.asrTick());
+  // §6.4 embed + analyze run as their own jobs (unique per content hash). Embedding is pluggable (EMBED_PROVIDER=none|hash).
+  const embedder = embedderFromEnv();
+  void loop("derived", Number(env("LOOM_DERIVED_TICK_MS", "20000")), () => derivedTick(engine.db, embedder));
   if (env("OCR_ENABLED", "false") === "true") void loop("ocr", Number(env("LOOM_OCR_TICK_MS", "30000")), () => engine.ocrTick());
 }

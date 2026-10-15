@@ -118,6 +118,7 @@ func RegisterRoutes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc) {
 	g.GET("/reports/:id", proxy(http.MethodGet, "/v1/reports/:id"))
 	g.GET("/brief-schedules", proxy(http.MethodGet, "/v1/brief-schedules"))
 	registerContractRoutes(g, proxy, proxyWith)
+	registerGaps9Routes(g, db, client, cfg, scoped)
 	g.GET("/skills", func(c *gin.Context) {
 		db := reqDB(c, db)
 		_ = db

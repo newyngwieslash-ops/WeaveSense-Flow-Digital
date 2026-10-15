@@ -84,6 +84,7 @@ export type Extractor = (url: string) => Promise<string>;
 const defaultExtractor: Extractor = async (url) => (await import("../src/lib/server/http.ts")).fetchText(url, 15000);
 
 import { HttpError } from "./errors.ts";
+import { rawItem, snippetHash, enqueueDerived, extractionCompleteness, extractionMethodFor, costEstimate, monitorExpansion, type PriceHint, type ObjectStore, objectStoreFromEnv } from "./gaps9.ts";
 import { nextCron, checkTimezone } from "./cron.ts";
 export { HttpError };
 
@@ -113,6 +114,8 @@ export class Engine {
   db: Db; fetcher: Fetcher; now: () => Date; extractor: Extractor = defaultExtractor;
   articleReader: ArticleReader = defaultArticleReader; subtitles: SubtitleClient = subtitleClient(); ocr: OcrClient = ocrClient(); asr: AsrClient = asrClient();
   connectorEnv: ConnectorEnv = connectorEnvFromProcess();
+  /** §10.4 private bucket reader for verified media downloads (null = not configured). */
+  objectStore: ObjectStore | null = objectStoreFromEnv();
   /** Platform authorization hook: false ⇒ grant revoked (schedule is disabled). Errors propagate (fail closed, retry next tick). */
   authorize?: (sc: { tenant_id: string; workspace_id: string; grant_actor: string }, scope: string) => Promise<boolean>;
   /**
@@ -187,8 +190,9 @@ export class Engine {
       // Fenced on the revision we read: a concurrent enrichment loses instead of overwriting.
       const rev = d.current_revision + 1;
       if (affected(await q.query(`UPDATE flow_documents SET current_revision=$2 WHERE id=$1 AND current_revision=$3`, [d.id, rev, d.current_revision])) !== 1) throw new HttpError(409, "document changed concurrently");
-      await q.query(`INSERT INTO flow_document_revisions (document_id, revision, tenant_id, content_hash, title, body, collected_by_run) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-        [d.id, rev, d.tenant_id, hash, title, text, `${tag}:${d.id}:${rev}`]);
+      await q.query(`INSERT INTO flow_document_revisions (document_id, revision, tenant_id, content_hash, title, body, collected_by_run, extraction) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [d.id, rev, d.tenant_id, hash, title, text, `${tag}:${d.id}:${rev}`, tag]);
+      await enqueueDerived(q, { tenant_id: d.tenant_id, workspace_id: d.workspace_id }, d.id, rev, hash);
       await this.indexChunks(q, { tenant_id: d.tenant_id, workspace_id: d.workspace_id }, d.source_id, d.id, rev, `${title}\n\n${text}`, d.published_at ? new Date(d.published_at).toISOString() : null);
       await this.emit(q, d, `doc:${d.id}`, `doc:${d.id}:${rev}`, "document.revised", { document_id: d.id, revision: rev, previous_revision: d.current_revision, source_id: d.source_id, cause: tag });
       return { document_id: d.id, revision: rev, changed: true, chars: text.length, ...extra };
@@ -470,9 +474,10 @@ export class Engine {
 
   private async ownedSources(q: Q, s: Scope, ids: string[]) {
     if (!ids.length) throw new HttpError(400, "source_ids required");
-    const r = await q.query(`SELECT id FROM flow_sources WHERE tenant_id=$1 AND workspace_id=$2 AND id = ANY($3::text[])`, [s.tenant_id, s.workspace_id, ids]);
+    const r = await q.query(`SELECT id, kind, title, url FROM flow_sources WHERE tenant_id=$1 AND workspace_id=$2 AND id = ANY($3::text[]) ORDER BY id`, [s.tenant_id, s.workspace_id, ids]);
     // Foreign or guessed IDs are indistinguishable from missing ones.
     if (r.rows.length !== new Set(ids).size) throw new HttpError(404, "source not found");
+    return r.rows;
   }
 
   /** Manual collection. Same key+params replays; same key, different params → 409. */
@@ -768,6 +773,7 @@ export class Engine {
       let maxMsg = src.kind === "telegram" ? telegramMessageId(cursor?.last_external_id ?? "") : NaN;
       let mediaUnsupported = 0;
       let created = 0, revised = 0, maxPub: string | null = null;
+      const rawDigests: string[] = [];
       for (const it of items) {
         if (!it.external_id) continue;
         const hash = sha(`${it.title}\n${it.body}`);
@@ -797,8 +803,11 @@ export class Engine {
           await q.query(`UPDATE flow_documents SET current_revision=$2, title=$3 WHERE id=$1`, [docId, rev, it.title ?? ""]);
           await this.emit(q, run, run.operation_id, run.id, "document.revised", { document_id: docId, revision: rev, previous_revision: rev - 1, source_id: src.id, cause: "collection" });
         }
-        await q.query(`INSERT INTO flow_document_revisions (document_id, revision, tenant_id, content_hash, title, body, collected_by_run)
-            VALUES ($1,$2,$3,$4,$5,$6,$7)`, [docId, rev, run.tenant_id, hash, it.title ?? "", it.body ?? "", run.id]);
+        const raw = rawItem(it);
+        rawDigests.push(raw.digest);
+        await q.query(`INSERT INTO flow_document_revisions (document_id, revision, tenant_id, content_hash, title, body, collected_by_run, raw_item, raw_digest, extraction)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'feed')`, [docId, rev, run.tenant_id, hash, it.title ?? "", it.body ?? "", run.id, raw.json, raw.digest]);
+        await enqueueDerived(q, run, docId, rev, hash);
         await this.indexChunks(q, run, src.id, docId, rev, `${it.title ?? ""}\n\n${it.body ?? ""}`, it.published_at);
         if (it.published_at && (!maxPub || it.published_at > maxPub)) maxPub = it.published_at;
       }
@@ -818,8 +827,9 @@ export class Engine {
       const reasons = [(feed?.rejected_entries ?? 0) > 0 ? `rejected_entries=${feed!.rejected_entries}` : "", mediaUnsupported > 0 ? `media_not_stored=${mediaUnsupported}` : ""].filter(Boolean);
       const final = reasons.length ? "partial" : "succeeded";
       await q.query(`UPDATE flow_collection_runs SET status=$8, items_new=$2, items_revised=$3, finished_at=now(), lease_owner=NULL, collector=$4, provider=$5,
-          items_rejected=$6, not_modified=$7, partial_reason=$9 WHERE id=$1`,
-        [run.id, created, revised, meta.collector, meta.provider ?? null, feed?.rejected_entries ?? 0, feed?.not_modified ?? false, final, reasons.join(",") || null]);
+          items_rejected=$6, not_modified=$7, partial_reason=$9, raw_digest=$10, raw_items=$11 WHERE id=$1`,
+        [run.id, created, revised, meta.collector, meta.provider ?? null, feed?.rejected_entries ?? 0, feed?.not_modified ?? false, final, reasons.join(",") || null,
+         sha(JSON.stringify(items.map((i) => rawItem(i).digest))), items.length]);
       if (src.kind !== "rss" && items.length) {
         await q.query(`INSERT INTO flow_connector_samples (id, tenant_id, workspace_id, kind, source_id, run_id, collector, provider, mode, items, media_unsupported, sample)
             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) ON CONFLICT (run_id) DO NOTHING`,
@@ -926,23 +936,46 @@ export class Engine {
       coverage: { total_chars: full.length, returned_chars: text.length, truncated: off + text.length < full.length, next_offset: off + text.length < full.length ? off + text.length : null } };
   }
 
-  async previewMonitor(s: Scope, o: { name?: string; keywords: string[]; source_ids: string[]; interval_seconds: number; timezone?: string; misfire_policy?: string }) {
+  async previewMonitor(s: Scope, o: { name?: string; keywords: string[]; source_ids: string[]; interval_seconds: number; timezone?: string; misfire_policy?: string;
+      budget_micro_per_window?: number; notification_target_ids?: string[]; price?: PriceHint; monitor_id?: string }) {
     const ids = [...new Set(o.source_ids ?? [])].sort();
     if (!o.keywords?.length) throw new HttpError(400, "keywords required");
     if (!(o.interval_seconds >= 300)) throw new HttpError(400, "interval_seconds >= 300");
-    await this.ownedSources(this.db, s, ids);
+    const srcs = await this.ownedSources(this.db, s, ids);
     const tz = o.timezone || "UTC";
     try { new Intl.DateTimeFormat("en", { timeZone: tz }); } catch { throw new HttpError(400, "invalid timezone"); }
     const misfire = this.scheduleSpec({ interval_seconds: o.interval_seconds, timezone: tz, misfire_policy: o.misfire_policy }).misfire_policy;
-    const spec = { name: o.name || o.keywords.join(", "), keywords: o.keywords, source_ids: ids, interval_seconds: o.interval_seconds, timezone: tz, misfire_policy: misfire };
+    const kinds = (srcs as any[]).map((x) => x.kind);
+    const perSourceRunsPerDay = Math.floor(86400 / o.interval_seconds);
+    const estimate = costEstimate(kinds, perSourceRunsPerDay, o.price);
+    const budget = o.budget_micro_per_window == null ? estimate.per_window_micro : Number(o.budget_micro_per_window);
+    if (!Number.isSafeInteger(budget) || budget < 0) throw new HttpError(400, "budget_micro_per_window must be a non-negative integer");
+    const targets = [...new Set((o.notification_target_ids ?? []).map(String))].slice(0, 20);
+    const spec = { name: o.name || o.keywords.join(", "), keywords: o.keywords, source_ids: ids, interval_seconds: o.interval_seconds, timezone: tz, misfire_policy: misfire,
+      extraction_method: extractionMethodFor(kinds), budget_micro_per_window: budget, notification_target_ids: targets, cost_estimate: estimate,
+      sources: (srcs as any[]).map((x) => ({ id: x.id, kind: x.kind, title: x.title, url: x.url })) };
+    let expansion: string[] = [];
+    if (o.monitor_id) {
+      const cur = (await this.db.query(`SELECT * FROM flow_monitors WHERE id=$1 AND tenant_id=$2 AND workspace_id=$3`, [o.monitor_id, s.tenant_id, s.workspace_id])).rows[0];
+      if (!cur) throw new HttpError(404, "monitor not found");
+      expansion = monitorExpansion(cur, spec);
+    }
     const id = newId("mpv_"), now = this.now();
+    const full = { ...spec, monitor_id: o.monitor_id ?? null, expansion, requires_approval: !o.monitor_id || expansion.length > 0 };
     await this.db.query(`INSERT INTO flow_monitor_previews (id, tenant_id, workspace_id, spec, expires_at) VALUES ($1,$2,$3,$4,$5)`,
-      [id, s.tenant_id, s.workspace_id, JSON.stringify(spec), new Date(now.getTime() + 3600_000).toISOString()]);
-    return { preview_id: id, ...spec, next_run_at: new Date(now.getTime() + o.interval_seconds * 1000).toISOString(),
-      runs_per_day: Math.floor(86400 / o.interval_seconds) * ids.length, expires_at: new Date(now.getTime() + 3600_000).toISOString() };
+      [id, s.tenant_id, s.workspace_id, JSON.stringify(full), new Date(now.getTime() + 3600_000).toISOString()]);
+    return { preview_id: id, ...full, next_run_at: new Date(now.getTime() + o.interval_seconds * 1000).toISOString(),
+      runs_per_day: perSourceRunsPerDay * ids.length, expires_at: new Date(now.getTime() + 3600_000).toISOString() };
   }
 
-  /** Applies an approved preview: creates monitor + schedule atomically; idempotent on key. */
+  async getMonitorPreview(s: Scope, id: string) {
+    const pv = (await this.db.query(`SELECT * FROM flow_monitor_previews WHERE id=$1 AND tenant_id=$2 AND workspace_id=$3`, [id, s.tenant_id, s.workspace_id])).rows[0];
+    if (!pv) throw new HttpError(404, "preview not found");
+    const spec = typeof pv.spec === "string" ? JSON.parse(pv.spec) : pv.spec;
+    return { preview_id: pv.id, ...spec, runs_per_day: Math.floor(86400 / spec.interval_seconds) * (spec.source_ids?.length ?? 0), expires_at: pv.expires_at, applied_monitor_id: pv.applied_monitor_id ?? null };
+  }
+
+  /** Applies an approved preview: creates monitor + schedule (with the approved budget) atomically; idempotent on key. */
   async applyMonitor(s: Scope, actor: string, policy: string, o: { preview_id: string; approval_id: string; idempotency_key: string }) {
     if (!o.idempotency_key || !o.approval_id) throw new HttpError(400, "approval_id and idempotency_key required");
     return this.db.tx(async (q) => {
@@ -956,17 +989,75 @@ export class Engine {
       if (pv.applied_monitor_id) throw new HttpError(409, "preview already applied");
       if (new Date(pv.expires_at) < this.now()) throw new HttpError(410, "preview expired");
       const spec = typeof pv.spec === "string" ? JSON.parse(pv.spec) : pv.spec;
+      if (spec.monitor_id) return this.updateMonitorTx(q, s, actor, spec.monitor_id, spec, o.approval_id, pv.id);
       await this.ownedSources(q, s, spec.source_ids);
       const schId = newId("sch_"), monId = newId("mon_");
-      await q.query(`INSERT INTO flow_schedules (id, tenant_id, workspace_id, source_ids, interval_seconds, next_run_at, grant_actor, policy_version, timezone, misfire_policy)
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`, [schId, s.tenant_id, s.workspace_id, spec.source_ids, spec.interval_seconds, this.now().toISOString(), actor, policy,
-          spec.timezone, spec.misfire_policy ?? "coalesce"]);
-      const m = (await q.query(`INSERT INTO flow_monitors (id, tenant_id, workspace_id, name, keywords, source_ids, interval_seconds, timezone, schedule_id, approval_id, idempotency_key)
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
-        [monId, s.tenant_id, s.workspace_id, spec.name, spec.keywords, spec.source_ids, spec.interval_seconds, spec.timezone, schId, o.approval_id, o.idempotency_key])).rows[0];
+      const budget = Number(spec.budget_micro_per_window ?? 0);
+      await q.query(`INSERT INTO flow_schedules (id, tenant_id, workspace_id, source_ids, interval_seconds, next_run_at, grant_actor, policy_version, timezone, misfire_policy, budget_micro_per_window)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`, [schId, s.tenant_id, s.workspace_id, spec.source_ids, spec.interval_seconds, this.now().toISOString(), actor, policy,
+          spec.timezone, spec.misfire_policy ?? "coalesce", budget]);
+      const m = (await q.query(`INSERT INTO flow_monitors (id, tenant_id, workspace_id, name, keywords, source_ids, interval_seconds, timezone, schedule_id, approval_id, idempotency_key,
+            budget_micro_per_window, notification_target_ids, extraction_method)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
+        [monId, s.tenant_id, s.workspace_id, spec.name, spec.keywords, spec.source_ids, spec.interval_seconds, spec.timezone, schId, o.approval_id, o.idempotency_key,
+         budget, spec.notification_target_ids ?? [], spec.extraction_method ?? "feed"])).rows[0];
+      await q.query(`INSERT INTO flow_monitor_revisions (id, tenant_id, workspace_id, monitor_id, version, spec, expanded, expansion, approval_id, actor) VALUES ($1,$2,$3,$4,1,$5,true,$6,$7,$8)`,
+        [newId("mrv_"), s.tenant_id, s.workspace_id, monId, JSON.stringify(spec), ["created"], o.approval_id, actor]);
       await q.query(`UPDATE flow_monitor_previews SET applied_monitor_id=$2 WHERE id=$1`, [pv.id, monId]);
       return { monitor: m, replayed: false };
     });
+  }
+
+  /**
+   * PRD §5.1 monitor update. Narrowing changes (fewer sources, lower budget, keywords, name, timezone) apply directly;
+   * widening sources, raising the budget, increasing frequency or changing notification targets needs a new approval_id.
+   */
+  async updateMonitor(s: Scope, actor: string, id: string, o: { name?: string; keywords?: string[]; source_ids?: string[]; interval_seconds?: number; timezone?: string;
+      budget_micro_per_window?: number; notification_target_ids?: string[]; enabled?: boolean; expected_version?: number; approval_id?: string }) {
+    return this.db.tx(async (q) => {
+      const cur = (await q.query(`SELECT * FROM flow_monitors WHERE id=$1 AND tenant_id=$2 AND workspace_id=$3 FOR UPDATE`, [id, s.tenant_id, s.workspace_id])).rows[0];
+      if (!cur) throw new HttpError(404, "monitor not found");
+      if (o.expected_version != null && Number(o.expected_version) !== Number(cur.version)) throw new HttpError(409, "monitor version conflict");
+      const next: any = {
+        name: o.name ?? cur.name, keywords: o.keywords ?? cur.keywords, source_ids: o.source_ids ? [...new Set(o.source_ids)].sort() : cur.source_ids,
+        interval_seconds: o.interval_seconds ?? cur.interval_seconds, timezone: o.timezone ?? cur.timezone,
+        budget_micro_per_window: o.budget_micro_per_window ?? Number(cur.budget_micro_per_window),
+        notification_target_ids: o.notification_target_ids ? [...new Set(o.notification_target_ids)] : cur.notification_target_ids, enabled: o.enabled };
+      if (!next.keywords?.length) throw new HttpError(400, "keywords required");
+      if (!(next.interval_seconds >= 300)) throw new HttpError(400, "interval_seconds >= 300");
+      if (!Number.isSafeInteger(Number(next.budget_micro_per_window)) || next.budget_micro_per_window < 0) throw new HttpError(400, "budget_micro_per_window must be a non-negative integer");
+      try { new Intl.DateTimeFormat("en", { timeZone: next.timezone }); } catch { throw new HttpError(400, "invalid timezone"); }
+      return this.updateMonitorTx(q, s, actor, id, next, o.approval_id ?? null, null, cur);
+    });
+  }
+
+  private async updateMonitorTx(q: Q, s: Scope, actor: string, id: string, next: any, approvalId: string | null, previewId: string | null, cur?: any) {
+    cur = cur ?? (await q.query(`SELECT * FROM flow_monitors WHERE id=$1 AND tenant_id=$2 AND workspace_id=$3 FOR UPDATE`, [id, s.tenant_id, s.workspace_id])).rows[0];
+    if (!cur) throw new HttpError(404, "monitor not found");
+    const expansion = monitorExpansion(cur, next);
+    if (expansion.length && !approvalId) {
+      throw Object.assign(new HttpError(409, `reapproval_required: ${expansion.join(",")}`), { expansion });
+    }
+    const srcs = await this.ownedSources(q, s, next.source_ids);
+    const version = Number(cur.version) + 1;
+    const m = (await q.query(`UPDATE flow_monitors SET name=$4, keywords=$5, source_ids=$6, interval_seconds=$7, timezone=$8, budget_micro_per_window=$9, notification_target_ids=$10,
+          extraction_method=$11, version=$12, updated_at=now(), approval_id=coalesce($13, approval_id) WHERE id=$1 AND tenant_id=$2 AND workspace_id=$3 RETURNING *`,
+      [id, s.tenant_id, s.workspace_id, next.name, next.keywords, next.source_ids, next.interval_seconds, next.timezone, Number(next.budget_micro_per_window),
+       next.notification_target_ids ?? [], extractionMethodFor((srcs as any[]).map((x) => x.kind)), version, approvalId])).rows[0];
+    if (cur.schedule_id) {
+      await q.query(`UPDATE flow_schedules SET source_ids=$3, interval_seconds=$4, timezone=$5, budget_micro_per_window=$6,
+            state = CASE WHEN $7::boolean IS NULL THEN state WHEN $7 THEN 'active' ELSE 'disabled' END WHERE id=$1 AND tenant_id=$2`,
+        [cur.schedule_id, s.tenant_id, next.source_ids, next.interval_seconds, next.timezone, Number(next.budget_micro_per_window), next.enabled ?? null]);
+    }
+    await q.query(`INSERT INTO flow_monitor_revisions (id, tenant_id, workspace_id, monitor_id, version, spec, expanded, expansion, approval_id, actor) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+      [newId("mrv_"), s.tenant_id, s.workspace_id, id, version, JSON.stringify(next), expansion.length > 0, expansion, approvalId, actor]);
+    if (previewId) await q.query(`UPDATE flow_monitor_previews SET applied_monitor_id=$2 WHERE id=$1`, [previewId, id]);
+    return { monitor: m, replayed: false, expansion, version };
+  }
+
+  async listMonitorRevisions(s: Scope, id: string) {
+    return (await this.db.query(`SELECT version, spec, expanded, expansion, approval_id, actor, created_at FROM flow_monitor_revisions WHERE tenant_id=$1 AND workspace_id=$2 AND monitor_id=$3 ORDER BY version`,
+      [s.tenant_id, s.workspace_id, id])).rows;
   }
 
   async listMonitors(s: Scope) {
@@ -997,12 +1088,13 @@ export class Engine {
     return this.db.tx(async (q) => {
       let created = 0;
       for (const [i, it] of items.entries()) {
-        const d = (await q.query(`SELECT current_revision FROM flow_documents WHERE tenant_id=$1 AND workspace_id=$2 AND id=$3`, [s.tenant_id, s.workspace_id, it.document_id])).rows[0];
+        const d = (await q.query(`SELECT current_revision, url FROM flow_documents WHERE tenant_id=$1 AND workspace_id=$2 AND id=$3`, [s.tenant_id, s.workspace_id, it.document_id])).rows[0];
         if (!d) continue;
-        const r = await q.query(`INSERT INTO flow_evidence (id, tenant_id, workspace_id, document_id, revision, char_start, char_end, quote, created_by, idempotency_key)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT (tenant_id, idempotency_key) DO NOTHING`,
+        const quote = String(it.quote ?? "").slice(0, 1000);
+        const r = await q.query(`INSERT INTO flow_evidence (id, tenant_id, workspace_id, document_id, revision, char_start, char_end, quote, created_by, idempotency_key, snippet_hash, url)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) ON CONFLICT (tenant_id, idempotency_key) DO NOTHING`,
           [newId("ev_"), s.tenant_id, s.workspace_id, it.document_id, Number(it.revision) || d.current_revision, Math.max(0, Number(it.char_start) || 0),
-           Math.max(0, Number(it.char_end) || 0), String(it.quote ?? "").slice(0, 1000), String(o.created_by ?? "agent").slice(0, 200), `${key}:${i}`]);
+           Math.max(0, Number(it.char_end) || 0), quote, String(o.created_by ?? "agent").slice(0, 200), `${key}:${i}`, snippetHash(quote), d.url ?? ""]);
         created += affected(r);
       }
       return { created };
@@ -1046,9 +1138,13 @@ export class Engine {
 
   async listDocuments(s: Scope, opts: { q?: string; limit?: number; source_id?: string }) {
     const limit = Math.min(Math.max(Number(opts.limit) || 20, 1), 100);
-    return (await this.db.query(`SELECT d.id, d.source_id, d.title, d.url, d.published_at, d.event_occurred_at, d.event_occurred_at_source, d.created_at AS collected_at, d.current_revision FROM flow_documents d
+    const rows = (await this.db.query(`SELECT d.id, d.source_id, s.title AS source_title, s.kind AS source_kind, s.url AS source_url, d.title, d.url, d.published_at, d.event_occurred_at,
+        d.event_occurred_at_source, d.created_at AS collected_at, d.current_revision, d.media, r.extraction, length(r.body) AS body_chars
+        FROM flow_documents d LEFT JOIN flow_sources s ON s.id=d.source_id AND s.tenant_id=d.tenant_id
+        LEFT JOIN flow_document_revisions r ON r.document_id=d.id AND r.revision=d.current_revision AND r.tenant_id=d.tenant_id
         WHERE d.tenant_id=$1 AND d.workspace_id=$2 AND ($3::text IS NULL OR d.title ILIKE '%'||$3||'%') AND ($4::text IS NULL OR d.source_id=$4)
         ORDER BY d.published_at DESC NULLS LAST, d.id LIMIT $5`, [s.tenant_id, s.workspace_id, opts.q || null, opts.source_id || null, limit])).rows;
+    return rows.map(({ media, body_chars, extraction, ...d }: any) => ({ ...d, extraction: extractionCompleteness(extraction, Number(body_chars) || 0, typeof media === "string" ? JSON.parse(media) : (media ?? [])) }));
   }
 
   async getRevision(s: Scope, docId: string, rev: number) {

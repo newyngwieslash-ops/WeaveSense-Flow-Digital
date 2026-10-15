@@ -33,7 +33,6 @@ func directApproval(body []byte, u *model.User, idem string) ([]byte, error) {
 func registerContractRoutes(g *gin.RouterGroup, proxy proxyFunc, proxyWith proxyWithFunc) {
 	g.GET("/sources/health", proxy(http.MethodGet, "/v1/sources/health"))
 	g.PATCH("/sources/:id", proxy(http.MethodPatch, "/v1/sources/:id"))
-	g.POST("/monitors/preview", proxy(http.MethodPost, "/v1/monitors/preview"))
 	g.POST("/monitors", proxyWith(http.MethodPost, "/v1/monitors", directApproval))
 	g.GET("/documents/:id/revisions", proxy(http.MethodGet, "/v1/documents/:id/revisions"))
 	g.GET("/documents/:id/revisions/:rev", proxy(http.MethodGet, "/v1/documents/:id/revisions/:rev"))

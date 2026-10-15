@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"strings"
 	"time"
 
@@ -71,9 +72,10 @@ func canvasUsageType(t model.Task) string {
 }
 
 // freezeRunCapability binds the run's capability snapshot at admission (both adapters).
-func (s *Service) freezeRunCapability(userID, runID string, req CloudAgentRequest, tools []map[string]any, policy any, skills []flow.SkillRef) {
+// A freeze failure is returned (never ignored): the caller fails the run.
+func (s *Service) freezeRunCapability(userID, runID string, req CloudAgentRequest, tools []map[string]any, policy any, skills []flow.SkillRef) error {
 	if s == nil || s.repo == nil || runID == "" {
-		return
+		return errors.New("capability snapshot: no run")
 	}
 	in := flow.CapabilityInput{TenantID: model.PersonalTenantID(userID), RunID: runID, SubjectKind: flow.SubjectCanvas, Skills: skills, Tools: tools,
 		ModelRoute: map[string]any{"channel_id": req.ChannelID, "channel_model_key": req.ChannelModelKey, "model": req.Model, "logical_model_id": req.LogicalModelID},
@@ -86,10 +88,18 @@ func (s *Service) freezeRunCapability(userID, runID string, req CloudAgentReques
 			in.ModelRoute["flow_model_gateway"] = map[string]any{"model": mg.Model, "micro_per_1k_tokens": mg.MicroPer1KTok}
 		}
 	}
-	_ = s.inFlowUser(userID, func(db *gorm.DB) error {
+	return s.inFlowUser(userID, func(db *gorm.DB) error {
 		_, err := flow.FreezeCapabilitySnapshot(db, in, time.Now().UTC())
 		return err
 	})
+}
+
+// checkRunModel enforces the run's frozen model route for one model call.
+func (s *Service) checkRunModel(userID, runID, modelID string) error {
+	if s == nil || s.repo == nil {
+		return errors.New("capability snapshot: no repository")
+	}
+	return s.inFlowUser(userID, func(db *gorm.DB) error { return flow.CheckRunModel(db, runID, modelID) })
 }
 
 func capabilityPolicyHash(policy any) string {

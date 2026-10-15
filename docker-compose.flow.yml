@@ -3,7 +3,7 @@
 # P1: loom-engine/loom-scheduler run the Flow engine (services/loom-engine/flow/main.ts).
 # PRD §14 profiles: core (postgres, redis, minio, platform, web, loom-engine, loom-scheduler; enabled by
 # COMPOSE_PROFILES=core in .env.flow, or pass --profile core), plus the optional
-# telegram, wechat, subtitles, extract (OCR + attachment retry), research (briefs),
+# telegram, wechat, subtitles, extract (OCR + attachment retry), asr (speech-to-text, with extract), research (briefs),
 # monitoring (Prometheus + alert rules). With extract/research set LOOM_SPLIT_ROLES=true in .env.flow
 # so api/scheduler hand those loops to the dedicated containers.
 name: weavesense-flow
@@ -205,6 +205,19 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
     networks: [internal]
+  # ASR worker (§6.4 audio/video → transcript, local faster-whisper, no egress). `--profile asr`
+  # together with `--profile extract`; ASR_ENABLED=true and ASR_SERVICE_TOKEN in .env.flow.
+  asr-worker:
+    <<: *restart
+    profiles: [asr]
+    build: { context: ./services/loom-engine/workers/asr, dockerfile: Dockerfile, args: { ASR_MODEL: "${ASR_MODEL:-small}" } }
+    env_file: [.env.flow]
+    environment:
+      MINIO_ENDPOINT: minio:9000
+      MINIO_BUCKET: ${INTEL_BUCKET:-flow-intel}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+    networks: [internal]
   loom-enrich:
     <<: *restart
     profiles: [extract]
@@ -215,6 +228,7 @@ services:
       LOOM_ROLE: enrich
       LOOM_AUTO_MIGRATE: "false"
       OCR_URL: http://ocr-worker:8796
+      ASR_URL: http://asr-worker:8797
     command: ["node", "flow/main.ts"]
     depends_on:
       postgres: { condition: service_healthy }

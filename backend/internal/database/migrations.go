@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const CurrentSchemaVersion int64 = 63
+const CurrentSchemaVersion int64 = 64
 
 const baselineSchemaChecksum = "sha256:open-ai-canvas-schema-v1-20260830"
 const schemaMigrationAppliedAtIndexChecksum = "sha256:schema-migrations-applied-at-index-v2-20260830"
@@ -236,6 +236,14 @@ var schemaMigrations = []migration{
 			return err
 		}
 		return applyFlowRLS(tx)
+	}},
+	{version: 64, name: "flow_projection_sync_provider_budget", checksum: "sha256:flow-projection-sync-provider-budget-v64-20261015", apply: func(tx *gorm.DB) error {
+		// §12.1 projection source_version/sync_status; §9.2 managed provider account budget layer.
+		if err := tx.AutoMigrate(&model.FlowOperationProjection{}, &model.FlowBudgetReservation{}, &model.FlowProviderAccount{}, &model.FlowProviderAccountPeriod{},
+			&model.FlowCapabilitySnapshot{}, &model.FlowRunCapability{}); err != nil {
+			return err
+		}
+		return tx.Exec("UPDATE flow_operation_projections SET source_version = sequence WHERE source_version = 0").Error
 	}},
 }
 

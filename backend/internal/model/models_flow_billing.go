@@ -23,23 +23,25 @@ type FlowBillingAccount struct {
 // Root reservations move credits available→reserved in the platform ledger;
 // children are carved atomically out of their parent's unallocated remainder.
 type FlowBudgetReservation struct {
-	ID             string     `json:"id" gorm:"primaryKey;size:40"`
-	TenantID       string     `json:"tenantId" gorm:"size:40;not null;uniqueIndex:ux_flow_res_idem,priority:1;index"`
-	AccountID      string     `json:"accountId" gorm:"size:40;not null;index"`
-	ParentID       string     `json:"parentId,omitempty" gorm:"size:40;index"`
-	Purpose        string     `json:"purpose" gorm:"size:40"`
-	RefID          string     `json:"refId" gorm:"size:80;index"`
-	IdempotencyKey string     `json:"idempotencyKey" gorm:"size:160;not null;uniqueIndex:ux_flow_res_idem,priority:2"`
-	ReservedMicro  int64      `json:"reservedMicro"`
-	AllocatedMicro int64      `json:"allocatedMicro"` // held by open children
-	ConsumedMicro  int64      `json:"consumedMicro"`
-	Status         string     `json:"status" gorm:"size:32;not null;index"` // reserved | settled | released | reconciliation_required
-	PriceVersion   string     `json:"priceVersion,omitempty" gorm:"size:40"`
-	ExternalRef    string     `json:"externalRef,omitempty" gorm:"size:200"`
-	Note           string     `json:"note,omitempty" gorm:"size:300"`
-	CreatedAt      time.Time  `json:"createdAt"`
-	UpdatedAt      time.Time  `json:"updatedAt"`
-	SettledAt      *time.Time `json:"settledAt,omitempty"`
+	ID             string `json:"id" gorm:"primaryKey;size:40"`
+	TenantID       string `json:"tenantId" gorm:"size:40;not null;uniqueIndex:ux_flow_res_idem,priority:1;index"`
+	AccountID      string `json:"accountId" gorm:"size:40;not null;index"`
+	ParentID       string `json:"parentId,omitempty" gorm:"size:40;index"`
+	Purpose        string `json:"purpose" gorm:"size:40"`
+	RefID          string `json:"refId" gorm:"size:80;index"`
+	IdempotencyKey string `json:"idempotencyKey" gorm:"size:160;not null;uniqueIndex:ux_flow_res_idem,priority:2"`
+	ReservedMicro  int64  `json:"reservedMicro"`
+	AllocatedMicro int64  `json:"allocatedMicro"` // held by open children
+	ConsumedMicro  int64  `json:"consumedMicro"`
+	Status         string `json:"status" gorm:"size:32;not null;index"` // reserved | settled | released | reconciliation_required
+	PriceVersion   string `json:"priceVersion,omitempty" gorm:"size:40"`
+	// ProviderAccountID: managed provider account (4th budget layer) this reservation also holds.
+	ProviderAccountID string     `json:"providerAccountId,omitempty" gorm:"size:64;index"`
+	ExternalRef       string     `json:"externalRef,omitempty" gorm:"size:200"`
+	Note              string     `json:"note,omitempty" gorm:"size:300"`
+	CreatedAt         time.Time  `json:"createdAt"`
+	UpdatedAt         time.Time  `json:"updatedAt"`
+	SettledAt         *time.Time `json:"settledAt,omitempty"`
 }
 
 // FlowInvite invites a user into an organization tenant (token stored hashed).
@@ -78,3 +80,28 @@ type FlowCanvasConversationDoc struct {
 	Version   int64     `json:"version" gorm:"not null"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
+
+// FlowProviderAccount is a platform-managed upstream provider account (e.g. the
+// model gateway key) with its own monthly budget: PRD §9.2's fourth budget layer,
+// shared by all tenants. No row (or budget 0) means the layer is unlimited.
+type FlowProviderAccount struct {
+	ID                 string    `json:"id" gorm:"primaryKey;size:64"`
+	Provider           string    `json:"provider" gorm:"size:64"`
+	MonthlyBudgetMicro int64     `json:"monthlyBudgetMicro"`
+	Status             string    `json:"status" gorm:"size:16;not null;default:active"` // active | suspended
+	CreatedAt          time.Time `json:"createdAt"`
+	UpdatedAt          time.Time `json:"updatedAt"`
+}
+
+func (FlowProviderAccount) TableName() string { return "flow_provider_accounts" }
+
+// FlowProviderAccountPeriod holds reserved/consumed totals of one provider account per month.
+type FlowProviderAccountPeriod struct {
+	AccountID     string    `json:"accountId" gorm:"primaryKey;size:64"`
+	Period        string    `json:"period" gorm:"primaryKey;size:7"` // YYYY-MM (UTC)
+	ReservedMicro int64     `json:"reservedMicro"`
+	ConsumedMicro int64     `json:"consumedMicro"`
+	UpdatedAt     time.Time `json:"updatedAt"`
+}
+
+func (FlowProviderAccountPeriod) TableName() string { return "flow_provider_account_periods" }

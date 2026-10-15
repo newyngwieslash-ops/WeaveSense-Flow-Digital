@@ -32,12 +32,14 @@ type Skill struct {
 // SkillPack bundles skills; industry packs also carry source templates,
 // glossary, report schema and eval samples.
 type SkillPack struct {
-	ID              string          `json:"id"`
-	Version         string          `json:"version"`
-	Name            string          `json:"name"`
-	Kind            string          `json:"kind,omitempty"`
-	RequiredTools   []string        `json:"required_tools,omitempty"`
-	OptionalConns   []string        `json:"optional_connectors,omitempty"`
+	ID            string   `json:"id"`
+	Version       string   `json:"version"`
+	Name          string   `json:"name"`
+	Kind          string   `json:"kind,omitempty"`
+	RequiredTools []string `json:"required_tools,omitempty"`
+	OptionalConns []string `json:"optional_connectors,omitempty"`
+	// MCPRequirements names MCP servers the pack needs; empty means none.
+	MCPRequirements []string        `json:"mcp_requirements"`
 	Skills          []Skill         `json:"skills"`
 	SourceTemplates json.RawMessage `json:"source_templates,omitempty"`
 	Glossary        json.RawMessage `json:"glossary,omitempty"`

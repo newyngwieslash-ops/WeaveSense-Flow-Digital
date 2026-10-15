@@ -33,3 +33,7 @@ These need a real environment. None of them has been run yet.
 ## Added by round 5 (2026-10-14)
 - Generate a production `FLOW_SECRETS_KEK` (`openssl rand -base64 32`), store it outside the database, and test secret rotation against a real MCP server.
 - `docker compose config` now passes for every profile locally; booting the full stack has still not been run.
+
+## Added in round 7 (2026-10-15)
+- ASR with a real model: build `workers/asr` with `requirements-model.txt` (faster-whisper) and transcribe a real audio or video file under compose profile `asr`. CI only covers the stub transcriber.
+- A18 object restore runs in CI on MinIO, but has not been run against the production object store.

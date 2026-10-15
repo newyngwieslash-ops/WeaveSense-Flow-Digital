@@ -106,6 +106,7 @@ func RegisterRoutes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc) {
 	g.GET("/schedules", proxy(http.MethodGet, "/v1/schedules"))
 	g.POST("/schedules", proxy(http.MethodPost, "/v1/schedules"))
 	g.POST("/collection-runs", proxy(http.MethodPost, "/v1/collection-runs"))
+	g.GET("/collection-runs", proxy(http.MethodGet, "/v1/collection-runs"))
 	g.GET("/documents", proxy(http.MethodGet, "/v1/documents"))
 	g.GET("/operations/:id", proxy(http.MethodGet, "/v1/operations/:id"))
 	g.GET("/monitors", proxy(http.MethodGet, "/v1/monitors"))

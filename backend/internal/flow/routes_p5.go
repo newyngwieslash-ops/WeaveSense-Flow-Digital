@@ -188,6 +188,74 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 		}
 		reply(c, http.StatusOK, gin.H{"allowed": true}, "ok")
 	})
+	// Engine → platform (PRD §9.2): budget reservation for one scheduled collection window,
+	// idempotent by key; 402 when the tenant's budget/quota denies it (schedule → blocked).
+	api.POST("/internal/flow/budget/reserve", func(c *gin.Context) {
+		db := reqDB(c, db)
+		ctx, ok := internalServiceCtx(c, cfg)
+		if !ok {
+			return
+		}
+		var body struct {
+			GrantActor  string `json:"grant_actor"`
+			WorkspaceID string `json:"workspace_id"`
+			Key         string `json:"key"`
+			AmountMicro int64  `json:"amount_micro"`
+			RefID       string `json:"ref_id"`
+		}
+		if err := json.NewDecoder(io.LimitReader(c.Request.Body, 1<<16)).Decode(&body); err != nil || body.Key == "" || body.AmountMicro <= 0 {
+			reply(c, http.StatusBadRequest, nil, "bad request")
+			return
+		}
+		if err := AuthorizeGrant(db, body.GrantActor, ctx.TenantID, body.WorkspaceID, "intel.collect"); err != nil {
+			reply(c, http.StatusForbidden, nil, "grant revoked")
+			return
+		}
+		rsv, err := Billing{DB: db, Now: billing.Now}.Reserve(ctx.TenantID, body.Key, "schedule_window", body.RefID, body.AmountMicro)
+		if errors.Is(err, ErrBudgetInsufficient) || errors.Is(err, ErrBudgetQuota) || errors.Is(err, ErrBudgetProvider) {
+			reply(c, http.StatusPaymentRequired, gin.H{"reason": err.Error()}, "budget denied")
+			return
+		}
+		if err != nil {
+			reply(c, http.StatusInternalServerError, nil, "reserve failed")
+			return
+		}
+		reply(c, http.StatusOK, gin.H{"reservation_id": rsv.ID, "status": rsv.Status}, "ok")
+	})
+	// Engine → platform: settle (window ran) or release (nothing ran) a window reservation.
+	api.POST("/internal/flow/budget/close", func(c *gin.Context) {
+		db := reqDB(c, db)
+		ctx, ok := internalServiceCtx(c, cfg)
+		if !ok {
+			return
+		}
+		var body struct {
+			ReservationID string `json:"reservation_id"`
+			Outcome       string `json:"outcome"`
+			ActualMicro   int64  `json:"actual_micro"`
+		}
+		if err := json.NewDecoder(io.LimitReader(c.Request.Body, 1<<16)).Decode(&body); err != nil || (body.Outcome != "settle" && body.Outcome != "release") {
+			reply(c, http.StatusBadRequest, nil, "bad request")
+			return
+		}
+		var r model.FlowBudgetReservation
+		if err := db.First(&r, "id = ? AND tenant_id = ? AND purpose = ?", body.ReservationID, ctx.TenantID, "schedule_window").Error; err != nil {
+			reply(c, http.StatusNotFound, nil, "reservation not found")
+			return
+		}
+		b := Billing{DB: db, Now: billing.Now}
+		var err error
+		if body.Outcome == "settle" {
+			r, err = b.Settle(r.ID, body.ActualMicro)
+		} else {
+			r, err = b.Release(r.ID)
+		}
+		if err != nil {
+			reply(c, http.StatusConflict, nil, err.Error())
+			return
+		}
+		reply(c, http.StatusOK, gin.H{"reservation_id": r.ID, "status": r.Status}, "ok")
+	})
 	// Engine → platform: LLM brief summarization through the Model Gateway,
 	// billed to the tenant and citation-validated before returning.
 	api.POST("/internal/flow/summarize", func(c *gin.Context) {

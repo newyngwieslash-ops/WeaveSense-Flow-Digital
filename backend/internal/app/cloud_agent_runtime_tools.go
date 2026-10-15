@@ -486,7 +486,13 @@ func (s *Service) advanceCloudAgentTool(run *model.CloudAgentExecution, state *c
 				// Dry admission validates the selected model and prompt limits without a task or charge.
 				mediaPreparation = &creationTaskPreparation{}
 				req.creationPrepare = mediaPreparation
-				preparedTask, err = s.CreateTask(run.UserID, req)
+				// Dry admission goes through the canvas run chain's ToolExecutor (PRD §8.1).
+				var admitted any
+				admitted, err = s.dispatchCanvasToolResult(canvasToolExecution{Mode: canvasExecAdmit, Svc: s, Run: run, State: state, Call: call, MediaRequest: req})
+				preparedTask, _ = admitted.(*model.Task)
+				if err == nil && preparedTask == nil {
+					err = errors.New("media admission returned no task")
+				}
 				if err != nil {
 					return s.cloudAgentMediaError(run, state, "admission", false, false, err)
 				}

@@ -1,0 +1,14 @@
+[
+  {
+    "kind": "rss",
+    "note": "replace with a real feed URL",
+    "title": "Generic RSS/Atom feed",
+    "url": "https://example.com/feed.xml"
+  },
+  {
+    "kind": "public-web",
+    "note": "the domain must be on the tenant allowlist",
+    "title": "Allowlisted public web page",
+    "url": "https://example.com/news"
+  }
+]

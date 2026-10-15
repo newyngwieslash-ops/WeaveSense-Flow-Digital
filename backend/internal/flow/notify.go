@@ -75,7 +75,7 @@ func validateTarget(in TargetInput) (TargetInput, error) {
 		in.EventTypes = []string{DefaultNotifyEvent}
 	}
 	for _, t := range in.EventTypes {
-		if t != "report.completed" && t != "operation.failed" && t != "schedule.blocked" {
+		if t != "report.completed" && t != "operation.failed" && t != "schedule.blocked" && t != "research.completed" {
 			return in, fmt.Errorf("%w: unsupported event type %q", ErrNotifyTarget, t)
 		}
 	}

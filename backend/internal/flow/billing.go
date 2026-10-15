@@ -26,11 +26,71 @@ var (
 	ErrBudgetParent       = errors.New("flow: parent reservation cannot cover child budget")
 	ErrBudgetState        = errors.New("flow: reservation is not open")
 	ErrBudgetNotFound     = errors.New("flow: reservation not found")
+	ErrBudgetProvider     = errors.New("flow: managed provider account budget exhausted")
 )
 
 type Billing struct {
 	DB  *gorm.DB
 	Now func() time.Time
+	// ProviderAccountID, when set, makes Reserve/Allocate also hold the managed
+	// provider account's monthly budget (4th layer); close() releases/consumes it.
+	ProviderAccountID string
+}
+
+// providerTag is the provider account id recorded on a reservation (only when that account exists).
+func (b Billing) providerTag(tx *gorm.DB) string {
+	if b.ProviderAccountID == "" {
+		return ""
+	}
+	var n int64
+	tx.Model(&model.FlowProviderAccount{}).Where("id = ?", b.ProviderAccountID).Count(&n)
+	if n == 0 {
+		return ""
+	}
+	return b.ProviderAccountID
+}
+
+func (b Billing) period() string { return b.now().UTC().Format("2006-01") }
+
+// holdProvider atomically adds amount to the provider account's reserved total
+// for this month, failing when reserved+consumed would exceed its budget.
+func (b Billing) holdProvider(tx *gorm.DB, accountID string, amount int64) error {
+	if accountID == "" || amount <= 0 {
+		return nil
+	}
+	var acc model.FlowProviderAccount
+	if err := tx.First(&acc, "id = ?", accountID).Error; err != nil {
+		return nil // unknown account: layer not configured
+	}
+	if acc.Status == "suspended" {
+		return ErrBudgetProvider
+	}
+	per := b.period()
+	if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&model.FlowProviderAccountPeriod{AccountID: accountID, Period: per, UpdatedAt: b.now()}).Error; err != nil {
+		return err
+	}
+	q := tx.Model(&model.FlowProviderAccountPeriod{}).Where("account_id = ? AND period = ?", accountID, per)
+	if acc.MonthlyBudgetMicro > 0 {
+		q = q.Where("reserved_micro + consumed_micro + ? <= ?", amount, acc.MonthlyBudgetMicro)
+	}
+	res := q.Updates(map[string]any{"reserved_micro": gorm.Expr("reserved_micro + ?", amount), "updated_at": b.now()})
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return ErrBudgetProvider
+	}
+	return nil
+}
+
+// closeProvider moves a reservation's provider hold to consumed (actual) and frees the rest.
+func (b Billing) closeProvider(tx *gorm.DB, r model.FlowBudgetReservation, actual int64) error {
+	if r.ProviderAccountID == "" {
+		return nil
+	}
+	per := r.CreatedAt.UTC().Format("2006-01")
+	return tx.Model(&model.FlowProviderAccountPeriod{}).Where("account_id = ? AND period = ?", r.ProviderAccountID, per).
+		Updates(map[string]any{"reserved_micro": gorm.Expr("CASE WHEN reserved_micro > ? THEN reserved_micro - ? ELSE 0 END", r.ReservedMicro, r.ReservedMicro), "consumed_micro": gorm.Expr("consumed_micro + ?", actual), "updated_at": b.now()}).Error
 }
 
 func (b Billing) now() time.Time {
@@ -111,8 +171,11 @@ func (b Billing) Reserve(tenantID, key, purpose, refID string, amount int64) (mo
 		if res.RowsAffected == 0 {
 			return ErrBudgetInsufficient
 		}
+		if err := b.holdProvider(tx, b.ProviderAccountID, amount); err != nil {
+			return err
+		}
 		out = model.FlowBudgetReservation{ID: NewID("rsv_"), TenantID: tenantID, AccountID: acc.ID, Purpose: purpose, RefID: refID, IdempotencyKey: key, PriceVersion: CurrentPriceBook().Version,
-			ReservedMicro: amount, Status: "reserved", CreatedAt: b.now(), UpdatedAt: b.now()}
+			ReservedMicro: amount, Status: "reserved", ProviderAccountID: b.providerTag(tx), CreatedAt: b.now(), UpdatedAt: b.now()}
 		if err := tx.Create(&out).Error; err != nil {
 			return err
 		}
@@ -142,8 +205,11 @@ func (b Billing) Allocate(parentID, key, purpose, refID string, amount int64) (m
 		if res.RowsAffected == 0 || amount <= 0 {
 			return ErrBudgetParent
 		}
+		if err := b.holdProvider(tx, b.ProviderAccountID, amount); err != nil {
+			return err
+		}
 		out = model.FlowBudgetReservation{ID: NewID("rsv_"), TenantID: p.TenantID, AccountID: p.AccountID, ParentID: p.ID, PriceVersion: p.PriceVersion, Purpose: purpose, RefID: refID,
-			IdempotencyKey: key, ReservedMicro: amount, Status: "reserved", CreatedAt: b.now(), UpdatedAt: b.now()}
+			IdempotencyKey: key, ReservedMicro: amount, Status: "reserved", ProviderAccountID: b.providerTag(tx), CreatedAt: b.now(), UpdatedAt: b.now()}
 		return tx.Create(&out).Error
 	})
 	return out, err
@@ -183,6 +249,9 @@ func (b Billing) close(id string, actual int64, status string) (model.FlowBudget
 			Updates(map[string]any{"status": status, "consumed_micro": total, "settled_at": now, "updated_at": now})
 		if upd.Error != nil || upd.RowsAffected == 0 {
 			return upd.Error
+		}
+		if err := b.closeProvider(tx, r, total); err != nil {
+			return err
 		}
 		if r.ParentID != "" {
 			return tx.Model(&model.FlowBudgetReservation{}).Where("id = ?", r.ParentID).Updates(map[string]any{

@@ -463,7 +463,7 @@ Based on the audit in `prd-audit-2`. Merged by PR (numbers and merge SHAs are re
 
 | PR | Branch | Closes |
 |---|---|---|
-| (this PR) | `canvas-runchain` | §8.1 for canvas. The canvas agent path now goes through the same five interfaces as intelligence runs: canvas adapter `app/cloud_agent_runchain.go`, selected by `agentRunChain`. §6.2: operation job rows report `job_state` (`queued` → `pending`). |
+| #39 | `canvas-runchain` (merge `6bfa2939`) | §8.1 for canvas. The canvas agent path now goes through the same five interfaces as intelligence runs: canvas adapter `app/cloud_agent_runchain.go`, selected by `agentRunChain`. §6.2: operation job rows report `job_state` (`queued` → `pending`). |
 
 What runs through the canvas chain:
 - `ScopeResolver`: canvas ownership at run admission.
@@ -487,3 +487,38 @@ What runs through the canvas chain:
 - `UsageRecorder`: neither adapter's Pi loop writes a per-run usage line. Usage lines come from the gateways through `DefaultUsageRecorder`, and canvas media is billed in the existing credit/task ledger.
 - Canvas media admission, approval and credit reservation happen in the runtime before the dispatch reaches the `ToolExecutor`.
 - The stored state name is still `queued`; `pending` is only the reported `job_state`.
+
+## Round 7: remaining PRD gaps (2026-10-15, Asia/Shanghai)
+
+Branch `gaps6-engine`; the PR number and merge SHA are recorded in `docs/verification/receipts-2026-10-15.md` after merge.
+
+What it closes:
+- §12 budgets:
+  - per-schedule window budget (`budget_micro_per_window`); runs reserve before collection and close after (`/api/internal/flow/budget/{reserve,close}`).
+  - a 402 blocks the schedule (`state=blocked`, `schedule.blocked` event and notification) and skips that window.
+  - a revoked service grant disables the schedule.
+  - provider-account limits (`flow_provider_accounts`, per period) checked on every hold.
+- §6.2 fair claim: a per-tenant concurrency cap (`LOOM_TENANT_MAX_CONCURRENCY`, default 4; `flow_tenant_limits` overrides, under RLS).
+- §7 event time: `documents.event_occurred_at` and its source (connector / published / fetched), exposed as `occurred_at`.
+- §5.2 events: `document.revised` (it notifies only when a cited document changes), `research.completed` (succeeded and failed), `schedule.blocked`.
+- Projections: `source_version` and `sync_status` (stale after 15 min).
+- §9.1 capability snapshots:
+  - `flow_capability_snapshots` / `flow_run_capabilities` are frozen at run admission (canvas and intelligence).
+  - the run token carries `capability_snapshot_id`.
+  - the run-chain `ToolExecutor` refuses tools outside the snapshot.
+  - research runs store the snapshot id.
+- §6.4 ASR: `workers/asr` (faster-whisper) and `flow_media_asr`. Jobs are queued alongside OCR in the same commit. Adds `POST /v1/documents/asr` and the `intel_asr_document` tool. Compose profile `asr`.
+- §11: `GET /v1/collection-runs` (job list).
+- §12 canvas usage: settled canvas billing orders are mirrored into the flow usage ledger per run (canvas usage types, the run's price book).
+- §15 web: the intelligence tabs are Overview / Topics / Keywords / Library / Jobs / Packs (`/intelligence/:view`), and each empty state says why it is empty (no source, source unhealthy, nothing collected yet, filter too narrow).
+- §9.2 packs:
+  - the core pack now ships source templates and a base glossary.
+  - each manifest lists `mcp_requirements` (empty today) and points to its glossary and templates.
+- A18 objects: `objects-test.sh` now runs in CI against a MinIO container (job "Object storage restore (A18)").
+- Corrected the round-6 PR reference (#39, merge `6bfa2939`).
+
+### Still deviating (honest)
+- Canvas media is still debited by the canvas billing order. The flow ledger copy is written with `Charge=false`, so it records usage without debiting a second time.
+- `flow_capability_snapshots`, `flow_run_capabilities`, `flow_provider_accounts` and `flow_provider_account_periods` are platform tables that are not in the platform RLS list. Every query filters by tenant in code.
+- ASR needs the faster-whisper model in the worker image (`requirements-model.txt`). The CI tests use a stub transcriber, and the real-model test is skipped.
+- A19 (live Telegram/WeChat/MCP/OAuth) was not run.

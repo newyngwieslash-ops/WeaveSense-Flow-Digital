@@ -7,7 +7,7 @@ import { connectorEnvFromProcess, extractMainText, fetchTelegram, fetchWechat, n
   type MediaRef,
   type ConnectorBatch, type ConnectorEnv, type ConnectorItem, type SourceRow } from "./connectors.ts";
 import { expandQuery, mergeAliases, BUILTIN_TERMS_VERSION, BUILTIN_TERM_GROUPS } from "./terms.ts";
-import { defaultArticleReader, documentVideoId, enrichmentStatus, isSubtitleLanguage, ocrClient, subtitleClient, type ArticleReader, type OcrClient, type SubtitleClient } from "./enrichment.ts";
+import { defaultArticleReader, documentVideoId, enrichmentStatus, isSubtitleLanguage, ocrClient, subtitleClient, asrClient, type ArticleReader, type OcrClient, type SubtitleClient, type AsrClient } from "./enrichment.ts";
 
 /** Media download attempts (initial + retries) before a failed attachment is left as is. */
 export const MEDIA_MAX_ATTEMPTS = 4;
@@ -34,6 +34,8 @@ export const retryDelayMs = (attempt: number) => Math.min(30 * 60_000, 30_000 * 
 export const isUnknownOutcome = (e: any) => !(e instanceof HttpError) && /connection (terminated|reset|lost)|ECONNRESET|EPIPE|socket hang up|outcome unknown/i.test(String(e?.message ?? e));
 const MEDIA_RETRYABLE = new Set(["failed", "timeout"]);
 const isImage = (m: MediaRef) => m.type === "image" || /^image\//.test(m.content_type ?? "");
+const isAudioVideo = (m: MediaRef) => ["audio", "voice", "video", "video_note"].includes(m.type) || /^(audio|video)\//.test(m.content_type ?? "");
+export const ASR_MAX_ATTEMPTS = 3;
 
 export type FeedItem = { external_id: string; title: string; body: string; url: string; published_at: string | null };
 export type FetchResult = FeedItem[] | ConnectorBatch;
@@ -86,16 +88,43 @@ import { nextCron, checkTimezone } from "./cron.ts";
 export { HttpError };
 
 export const newId = (p: string) => p + randomBytes(10).toString("hex");
+
+/**
+ * PRD §7.2 event-occurrence time (when the reported thing happened), kept apart from published_at,
+ * collection time and analysis time. Connector-provided `occurred_at` wins; otherwise an explicit full
+ * date in the title (YYYY-MM-DD / YYYY年M月D日) not after publication; else unknown (null, never guessed).
+ */
+export function eventOccurredAt(it: { occurred_at?: string | null; title?: string; published_at?: string | null }): { at: string | null; source: string | null } {
+  if (it.occurred_at && !Number.isNaN(Date.parse(it.occurred_at))) return { at: new Date(it.occurred_at).toISOString(), source: "connector" };
+  const m = String(it.title ?? "").match(/(20\d{2})(?:-|\/|年)(\d{1,2})(?:-|\/|月)(\d{1,2})日?/);
+  if (!m) return { at: null, source: null };
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return { at: null, source: null };
+  const at = new Date(Date.UTC(y, mo - 1, d));
+  if (at.getUTCDate() !== d) return { at: null, source: null };
+  if (it.published_at && at.getTime() > Date.parse(it.published_at) + 86400_000) return { at: null, source: null };
+  return { at: at.toISOString(), source: "title_date" };
+}
 const CHUNK = 1200;
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 type Scope = Pick<ExecutionContext, "tenant_id" | "workspace_id">;
 
 export class Engine {
   db: Db; fetcher: Fetcher; now: () => Date; extractor: Extractor = defaultExtractor;
-  articleReader: ArticleReader = defaultArticleReader; subtitles: SubtitleClient = subtitleClient(); ocr: OcrClient = ocrClient();
+  articleReader: ArticleReader = defaultArticleReader; subtitles: SubtitleClient = subtitleClient(); ocr: OcrClient = ocrClient(); asr: AsrClient = asrClient();
   connectorEnv: ConnectorEnv = connectorEnvFromProcess();
   /** Platform authorization hook: false ⇒ grant revoked (schedule is disabled). Errors propagate (fail closed, retry next tick). */
   authorize?: (sc: { tenant_id: string; workspace_id: string; grant_actor: string }, scope: string) => Promise<boolean>;
+  /**
+   * PRD §9.2 platform budget hook for scheduled windows. reserve: idempotent by key; throws an error with
+   * status 402 when the budget/quota denies the window. close: settle (succeeded) or release (nothing done).
+   */
+  budget?: {
+    reserve: (sc: { tenant_id: string; workspace_id: string; grant_actor: string }, key: string, amountMicro: number, refId: string) => Promise<{ reservation_id: string }>;
+    close: (sc: { tenant_id: string; workspace_id: string }, reservationId: string, outcome: "settle" | "release", actualMicro: number) => Promise<void>;
+  };
+  /** PRD §9.3 default per-tenant cap on concurrently leased/running collection jobs (flow_tenant_limits overrides). */
+  tenantMaxConcurrency = Math.max(1, Number(process.env.LOOM_TENANT_MAX_CONCURRENCY) || 4);
   constructor(db: Db, fetcher: Fetcher = defaultFetcher, now: () => Date = () => new Date()) {
     this.db = db; this.fetcher = fetcher; this.now = now;
   }
@@ -161,6 +190,7 @@ export class Engine {
       await q.query(`INSERT INTO flow_document_revisions (document_id, revision, tenant_id, content_hash, title, body, collected_by_run) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
         [d.id, rev, d.tenant_id, hash, title, text, `${tag}:${d.id}:${rev}`]);
       await this.indexChunks(q, { tenant_id: d.tenant_id, workspace_id: d.workspace_id }, d.source_id, d.id, rev, `${title}\n\n${text}`, d.published_at ? new Date(d.published_at).toISOString() : null);
+      await this.emit(q, d, `doc:${d.id}`, `doc:${d.id}:${rev}`, "document.revised", { document_id: d.id, revision: rev, previous_revision: d.current_revision, source_id: d.source_id, cause: tag });
       return { document_id: d.id, revision: rev, changed: true, chars: text.length, ...extra };
     });
   }
@@ -220,16 +250,17 @@ export class Engine {
       if (affected(u) && retry.some((m) => m.status === "stored")) {
         await this.db.tx((q) => this.emit(q, d, `media:${d.id}`, d.id, "media.stored", { document_id: d.id, stored: retry.filter((m) => m.status === "stored").map((m) => m.url) }));
         if (process.env.OCR_ENABLED === "true") await this.enqueueOcr(d, media);
+        if (process.env.ASR_ENABLED === "true") await this.enqueueAsr(d, media);
       }
     }
     return { documents: r.rows.length, stored, failed };
   }
 
-  private async enqueueOcr(d: { id: string; tenant_id: string; workspace_id: string }, media: MediaRef[]) {
+  private async enqueueOcr(d: { id: string; tenant_id: string; workspace_id: string }, media: MediaRef[], q: Q = this.db) {
     let n = 0;
     for (const m of media) {
       if (m.status !== "stored" || !isImage(m) || !SCOPED_MEDIA_KEY.test(m.url)) continue;
-      n += affected(await this.db.query(`INSERT INTO flow_media_ocr (tenant_id, workspace_id, document_id, object_key) VALUES ($1,$2,$3,$4) ON CONFLICT DO NOTHING`,
+      n += affected(await q.query(`INSERT INTO flow_media_ocr (tenant_id, workspace_id, document_id, object_key) VALUES ($1,$2,$3,$4) ON CONFLICT DO NOTHING`,
         [d.tenant_id, d.workspace_id, d.id, m.url]));
     }
     return n;
@@ -257,6 +288,64 @@ export class Engine {
         [t.tenant_id, t.document_id, t.object_key, status, code]);
       return { object_key: t.object_key, status, error: code };
     }
+  }
+
+  private async enqueueAsr(d: { id: string; tenant_id: string; workspace_id: string }, media: MediaRef[], q: Q = this.db) {
+    let n = 0;
+    for (const m of media) {
+      if (m.status !== "stored" || !isAudioVideo(m) || !SCOPED_MEDIA_KEY.test(m.url)) continue;
+      n += affected(await q.query(`INSERT INTO flow_media_asr (tenant_id, workspace_id, document_id, object_key) VALUES ($1,$2,$3,$4) ON CONFLICT DO NOTHING`,
+        [d.tenant_id, d.workspace_id, d.id, m.url]));
+    }
+    return n;
+  }
+
+  /** ASR one target: transcript appended as a new revision (marker per object), usage.recorded asr_seconds. */
+  private async runAsr(t: { tenant_id: string; workspace_id: string; document_id: string; object_key: string }, language?: string) {
+    const sc = { tenant_id: t.tenant_id, workspace_id: t.workspace_id };
+    try {
+      const out = await this.asr(t.object_key, sc, language);
+      const d = await this.currentDocument(sc, t.document_id);
+      const marker = `[转写: ${t.object_key}]`;
+      let rev = d.current_revision;
+      if (out.text.trim() && !String(d.body).includes(marker)) rev = (await this.addRevision(d, d.title, `${d.body}\n\n${marker}\n${out.text.trim()}`.slice(0, 400_000), "asr")).revision;
+      await this.db.tx(async (q) => {
+        await q.query(`UPDATE flow_media_asr SET status='succeeded', attempts=attempts+1, seconds=$4, language=$5, text_digest=$6, revision=$7, error=NULL, updated_at=now()
+            WHERE tenant_id=$1 AND document_id=$2 AND object_key=$3`, [t.tenant_id, t.document_id, t.object_key, out.seconds, out.language || null, out.digest, rev]);
+        await this.emit(q, sc, `asr:${t.document_id}`, t.document_id, "usage.recorded", { usage_type: "asr_seconds", quantity: out.seconds, document_id: t.document_id, object_key: t.object_key });
+      });
+      return { object_key: t.object_key, status: "succeeded", seconds: out.seconds, revision: rev };
+    } catch (e: any) {
+      const code = String(e?.code ?? e?.message ?? e).slice(0, 200);
+      const status = /_(unsupported)$/.test(code) ? "unsupported" : "failed";
+      await this.db.query(`UPDATE flow_media_asr SET status=$4, attempts=attempts+1, error=$5, updated_at=now() WHERE tenant_id=$1 AND document_id=$2 AND object_key=$3`,
+        [t.tenant_id, t.document_id, t.object_key, status, code]);
+      return { object_key: t.object_key, status, error: code };
+    }
+  }
+
+  /** On-demand ASR of a document's stored audio/video attachments (REST/agent). Succeeded targets are not re-run. */
+  async asrDocument(s: Scope, o: { document_id: string; language?: string }) {
+    if (o.language !== undefined && !/^[a-z]{2}(-[A-Za-z]{2,4})?$/.test(String(o.language))) throw new HttpError(400, "language must look like zh or en-US");
+    const d = await this.currentDocument(s, o.document_id);
+    const media: MediaRef[] = typeof d.media === "string" ? JSON.parse(d.media) : (d.media ?? []);
+    if (!media.some((m) => m.status === "stored" && isAudioVideo(m))) throw new HttpError(422, "asr_unsupported: document has no stored audio/video attachment");
+    if (!media.some((m) => m.status === "stored" && isAudioVideo(m) && SCOPED_MEDIA_KEY.test(m.url))) throw new HttpError(422, "asr_unsupported: attachment uses a legacy unscoped object key; run the media key migration first");
+    await this.enqueueAsr({ id: d.id, tenant_id: s.tenant_id, workspace_id: s.workspace_id }, media);
+    const due = (await this.db.query(`SELECT * FROM flow_media_asr WHERE tenant_id=$1 AND workspace_id=$2 AND document_id=$3 AND status IN ('queued','failed') AND attempts < $4 ORDER BY object_key`,
+      [s.tenant_id, s.workspace_id, d.id, ASR_MAX_ATTEMPTS])).rows;
+    const results = [];
+    for (const t of due as any[]) results.push(await this.runAsr(t, o.language));
+    const all = (await this.db.query(`SELECT object_key, status, attempts, seconds, language, revision, error FROM flow_media_asr WHERE tenant_id=$1 AND workspace_id=$2 AND document_id=$3 ORDER BY object_key`,
+      [s.tenant_id, s.workspace_id, d.id])).rows;
+    return { document_id: d.id, processed: results, targets: all };
+  }
+
+  /** Worker: queued and failed ASR targets with attempts left (system context). */
+  async asrTick(limit = 5) {
+    const due = (await this.db.query(`SELECT * FROM flow_media_asr WHERE status IN ('queued','failed') AND attempts < $1 ORDER BY updated_at LIMIT $2`, [ASR_MAX_ATTEMPTS, limit])).rows;
+    for (const t of due as any[]) await this.runAsr(t);
+    return due.length;
   }
 
   /** On-demand OCR of a document's stored images (REST/agent). Already-succeeded targets are not re-run. */
@@ -426,7 +515,9 @@ export class Engine {
     return { kind: "interval", cron: null, interval_seconds: Number(input.interval_seconds), timezone: tz, misfire_policy: misfire };
   }
 
-  async createSchedule(s: Scope, actor: string, policy: string, input: { source_ids: string[]; interval_seconds?: number; cron?: string; timezone?: string; misfire_policy?: string; start_at?: string }) {
+  async createSchedule(s: Scope, actor: string, policy: string, input: { source_ids: string[]; interval_seconds?: number; cron?: string; timezone?: string; misfire_policy?: string; start_at?: string; budget_micro_per_window?: number }) {
+    const budget = Number(input.budget_micro_per_window ?? 0);
+    if (!Number.isSafeInteger(budget) || budget < 0) throw new HttpError(400, "budget_micro_per_window must be a non-negative integer");
     const ids = [...new Set(input.source_ids ?? [])].sort();
     const spec = this.scheduleSpec(input);
     return this.db.tx(async (q) => {
@@ -434,9 +525,9 @@ export class Engine {
       const id = newId("sch_");
       const base = input.start_at ? new Date(input.start_at) : this.now();
       const start = spec.kind === "cron" ? nextCron(spec.cron!, spec.timezone, new Date(base.getTime() - 60_000)) : base;
-      await q.query(`INSERT INTO flow_schedules (id, tenant_id, workspace_id, source_ids, interval_seconds, next_run_at, grant_actor, policy_version, kind, cron, timezone, misfire_policy)
-                     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
-        [id, s.tenant_id, s.workspace_id, ids, spec.interval_seconds, start.toISOString(), actor, policy, spec.kind, spec.cron, spec.timezone, spec.misfire_policy]);
+      await q.query(`INSERT INTO flow_schedules (id, tenant_id, workspace_id, source_ids, interval_seconds, next_run_at, grant_actor, policy_version, kind, cron, timezone, misfire_policy, budget_micro_per_window)
+                     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+        [id, s.tenant_id, s.workspace_id, ids, spec.interval_seconds, start.toISOString(), actor, policy, spec.kind, spec.cron, spec.timezone, spec.misfire_policy, budget]);
       return (await q.query(`SELECT * FROM flow_schedules WHERE id=$1`, [id])).rows[0];
     });
   }
@@ -483,31 +574,50 @@ export class Engine {
    */
   async schedulerTick(limit = 50): Promise<number> {
     const now = this.now();
-    if (this.authorize) {
-      // Re-check the grant actor's ongoing authorization (outside the scan tx: it is a network call).
-      const due = await this.db.query(`SELECT id, tenant_id, workspace_id, grant_actor FROM flow_schedules WHERE enabled AND next_run_at <= $1 ORDER BY next_run_at LIMIT $2`, [now.toISOString(), limit]);
-      for (const sc of due.rows as any[]) {
-        if (!(await this.authorize(sc, "intel.collect"))) {
-          await this.db.query(`UPDATE flow_schedules SET enabled=false, disabled_reason='grant_revoked' WHERE id=$1 AND tenant_id=$2`, [sc.id, sc.tenant_id]);
+    // Admission (outside the scan tx: network calls): grant re-check, then a budget reservation per due window.
+    const reservations = new Map<string, string>();
+    if (this.authorize || this.budget) {
+      const due = (await this.db.query(`SELECT * FROM flow_schedules WHERE enabled AND next_run_at <= $1 ORDER BY next_run_at LIMIT $2`, [now.toISOString(), limit])).rows as any[];
+      for (const sc of due) {
+        if (this.authorize && !(await this.authorize(sc, "intel.collect"))) {
+          // Grant revoked: blocked (reason shown), never runs again until re-approved.
+          await this.blockSchedule(sc, "grant_revoked", true);
+          continue;
         }
+        if (this.budget && Number(sc.budget_micro_per_window) > 0) {
+          let denied = "";
+          for (const w of this.dueWindows(sc, now).run) {
+            const key = `${sc.tenant_id}:${sc.id}:${w.toISOString()}`;
+            try { reservations.set(key, (await this.budget.reserve(sc, `sched:${key}`, Number(sc.budget_micro_per_window), sc.id)).reservation_id); }
+            catch (e: any) { if (Number(e?.status) === 402) { denied = String(e?.message ?? "budget_denied").slice(0, 200); break; } throw e; }
+          }
+          if (denied) {
+            // Budget denied: this window is skipped (blocked, shown); the next window is admitted again (retry).
+            await this.blockSchedule(sc, "budget_insufficient", false, this.dueWindows(sc, now).next);
+            continue;
+          }
+        }
+        if (sc.state === "blocked") await this.db.query(`UPDATE flow_schedules SET state='active', blocked_reason=NULL, blocked_at=NULL WHERE id=$1 AND tenant_id=$2`, [sc.id, sc.tenant_id]);
       }
     }
     return this.db.tx(async (q) => {
       // Single scheduler: only the holder of this xact lock scans due windows.
       const lock = await q.query(`SELECT pg_try_advisory_xact_lock(7314001) AS ok`);
       if (!lock.rows[0]?.ok) return 0;
-      const due = await q.query(`SELECT * FROM flow_schedules WHERE enabled AND next_run_at <= $1 ORDER BY next_run_at LIMIT $2 FOR UPDATE SKIP LOCKED`, [now.toISOString(), limit]);
+      const due = await q.query(`SELECT * FROM flow_schedules WHERE enabled AND state='active' AND next_run_at <= $1 ORDER BY next_run_at LIMIT $2 FOR UPDATE SKIP LOCKED`, [now.toISOString(), limit]);
       let created = 0;
       for (const sc of due.rows as any[]) {
         const { run: windows, next } = this.dueWindows(sc, now);
         for (const w of windows) {
           const scheduledAt = w.toISOString();
           const key = `${sc.tenant_id}:${sc.id}:${scheduledAt}`;
+          // A budgeted window without a reservation is not admitted (fail closed).
+          if (this.budget && Number(sc.budget_micro_per_window) > 0 && !reservations.has(key)) continue;
           const op = newId("op_");
           for (const sid of sc.source_ids as string[]) {
-            const r = await q.query(`INSERT INTO flow_collection_runs (id, operation_id, tenant_id, workspace_id, source_id, idempotency_key, request_hash, schedule_id, scheduled_at)
-               SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9 WHERE EXISTS (SELECT 1 FROM flow_sources WHERE id=$5 AND tenant_id=$3 AND status='active' AND (backoff_until IS NULL OR backoff_until <= $10))
-               ON CONFLICT DO NOTHING`, [newId("job_"), op, sc.tenant_id, sc.workspace_id, sid, key, sha(key), sc.id, scheduledAt, now.toISOString()]);
+            const r = await q.query(`INSERT INTO flow_collection_runs (id, operation_id, tenant_id, workspace_id, source_id, idempotency_key, request_hash, schedule_id, scheduled_at, budget_reservation_id)
+               SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$11 WHERE EXISTS (SELECT 1 FROM flow_sources WHERE id=$5 AND tenant_id=$3 AND status='active' AND (backoff_until IS NULL OR backoff_until <= $10))
+               ON CONFLICT DO NOTHING`, [newId("job_"), op, sc.tenant_id, sc.workspace_id, sid, key, sha(key), sc.id, scheduledAt, now.toISOString(), reservations.get(key) ?? null]);
             created += affected(r);
           }
         }
@@ -515,6 +625,40 @@ export class Engine {
       }
       return created;
     });
+  }
+
+  /** PRD §12.2: schedule → blocked with a visible reason, plus a schedule.blocked event (platform notifies). */
+  private async blockSchedule(sc: any, reason: string, disable: boolean, next?: Date) {
+    await this.db.tx(async (q) => {
+      const u = await q.query(`UPDATE flow_schedules SET state='blocked', blocked_reason=$3, blocked_at=$4,
+          enabled = CASE WHEN $5 THEN false ELSE enabled END, disabled_reason = CASE WHEN $5 THEN $3 ELSE disabled_reason END,
+          next_run_at = coalesce($6::timestamptz, next_run_at)
+          WHERE id=$1 AND tenant_id=$2 AND (state<>'blocked' OR blocked_reason IS DISTINCT FROM $3 OR $6::timestamptz IS NOT NULL) RETURNING id`,
+        [sc.id, sc.tenant_id, reason, this.now().toISOString(), disable, next ? next.toISOString() : null]);
+      if (affected(u)) await this.emit(q, sc, `sch:${sc.id}`, `sch:${sc.id}`, "schedule.blocked", { schedule_id: sc.id, reason, title: `schedule ${sc.id} blocked: ${reason}` });
+    });
+  }
+
+  /** Settles (succeeded/partial) or releases (failed/cancelled) window reservations once all of an operation's jobs are terminal. */
+  async closeBudgets(limit = 50) {
+    if (!this.budget) return 0;
+    const r = (await this.db.query(`SELECT r.operation_id, r.tenant_id, r.workspace_id, r.budget_reservation_id, array_agg(r.status) AS sts FROM flow_collection_runs r
+        WHERE r.budget_reservation_id IS NOT NULL AND r.budget_closed_at IS NULL GROUP BY r.operation_id, r.tenant_id, r.workspace_id, r.budget_reservation_id LIMIT $1`, [limit])).rows as any[];
+    let n = 0;
+    for (const x of r) {
+      const sts: string[] = Array.isArray(x.sts) ? x.sts : String(x.sts).replace(/[{}]/g, "").split(",");
+      if (sts.some((st) => ACTIVE_JOB_STATES.includes(st))) continue;
+      const ok = sts.some((st) => st === "succeeded" || st === "partial");
+      await this.budget.close(x, x.budget_reservation_id, ok ? "settle" : "release", 0);
+      await this.db.query(`UPDATE flow_collection_runs SET budget_closed_at=now() WHERE operation_id=$1 AND tenant_id=$2`, [x.operation_id, x.tenant_id]);
+      n++;
+    }
+    return n;
+  }
+
+  async setTenantConcurrency(tenantId: string, max: number) {
+    if (!(Number.isInteger(max) && max > 0)) throw new HttpError(400, "max_concurrent_jobs must be a positive integer");
+    await this.db.query(`INSERT INTO flow_tenant_limits (tenant_id, max_concurrent_jobs) VALUES ($1,$2) ON CONFLICT (tenant_id) DO UPDATE SET max_concurrent_jobs=EXCLUDED.max_concurrent_jobs, updated_at=now()`, [tenantId, max]);
   }
 
   /**
@@ -527,9 +671,20 @@ export class Engine {
     return this.db.tx(async (q) => {
       await q.query(`UPDATE flow_collection_runs SET status='cancelled', finished_at=$1, lease_owner=NULL, fencing_token=fencing_token+1
           WHERE status='cancel_requested' AND (lease_expires_at IS NULL OR lease_expires_at < $1)`, [now.toISOString()]);
-      const r = await q.query(`SELECT id FROM flow_collection_runs
-          WHERE status='queued' OR (status='retry_wait' AND retry_at <= $1) OR (status IN ('leased','running') AND lease_expires_at < $1)
-          ORDER BY created_at LIMIT 1 FOR UPDATE SKIP LOCKED`, [now.toISOString()]);
+      // PRD §9.3 fair queue: among tenants under their concurrency cap, the one with the fewest live
+      // (leased/running, unexpired) jobs goes first; within a tenant, oldest first.
+      const cand = await q.query(`WITH live AS (SELECT tenant_id, count(*)::int AS n FROM flow_collection_runs
+            WHERE status IN ('leased','running') AND lease_expires_at >= $1 GROUP BY tenant_id)
+          SELECT r.id FROM flow_collection_runs r LEFT JOIN live l ON l.tenant_id=r.tenant_id LEFT JOIN flow_tenant_limits t ON t.tenant_id=r.tenant_id
+          WHERE (r.status='queued' OR (r.status='retry_wait' AND r.retry_at <= $1) OR (r.status IN ('leased','running') AND r.lease_expires_at < $1))
+            AND coalesce(l.n,0) < coalesce(t.max_concurrent_jobs, $2)
+          ORDER BY coalesce(l.n,0), r.created_at, r.id LIMIT 20`, [now.toISOString(), this.tenantMaxConcurrency]);
+      let r: any = { rows: [] };
+      for (const c of cand.rows as any[]) {
+        r = await q.query(`SELECT id FROM flow_collection_runs WHERE id=$1 AND (status='queued' OR (status='retry_wait' AND retry_at <= $2) OR (status IN ('leased','running') AND lease_expires_at < $2))
+            FOR UPDATE SKIP LOCKED`, [c.id, now.toISOString()]);
+        if (r.rows[0]) break;
+      }
       if (!r.rows[0]) return null;
       const u = await q.query(`UPDATE flow_collection_runs SET status='leased', lease_owner=$2, lease_expires_at=$3, heartbeat_at=$4, retry_at=NULL,
           fencing_token=fencing_token+1, attempts=attempts+1 WHERE id=$1 RETURNING *`,
@@ -621,11 +776,18 @@ export class Engine {
           if (Number.isFinite(mid) && (!Number.isFinite(maxMsg) || mid > maxMsg)) maxMsg = mid;
         }
         mediaUnsupported += (it.media ?? []).filter((m) => m.status !== "stored").length;
-        const ins = await q.query(`INSERT INTO flow_documents (id, tenant_id, workspace_id, source_id, external_id, url, title, published_at, media)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (tenant_id, source_id, external_id) DO NOTHING RETURNING id`,
-          [newId("doc_"), run.tenant_id, run.workspace_id, src.id, it.external_id, it.url ?? "", it.title ?? "", it.published_at, JSON.stringify(it.media ?? [])]);
+        const occ = eventOccurredAt(it);
+        const ins = await q.query(`INSERT INTO flow_documents (id, tenant_id, workspace_id, source_id, external_id, url, title, published_at, media, event_occurred_at, event_occurred_at_source)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT (tenant_id, source_id, external_id) DO NOTHING RETURNING id`,
+          [newId("doc_"), run.tenant_id, run.workspace_id, src.id, it.external_id, it.url ?? "", it.title ?? "", it.published_at, JSON.stringify(it.media ?? []), occ.at, occ.source]);
         let docId: string, rev = 1;
-        if (ins.rows[0]) { docId = ins.rows[0].id; created++; }
+        if (ins.rows[0]) {
+          docId = ins.rows[0].id; created++;
+          // PRD §6.2 media_fetch → extract: stored attachments of a new document queue their OCR/ASR jobs in the same commit.
+          const dm = { id: docId, tenant_id: run.tenant_id, workspace_id: run.workspace_id };
+          if (process.env.OCR_ENABLED === "true") await this.enqueueOcr(dm, it.media ?? [], q);
+          if (process.env.ASR_ENABLED === "true") await this.enqueueAsr(dm, it.media ?? [], q);
+        }
         else {
           const d = (await q.query(`SELECT d.id, d.current_revision, r.content_hash FROM flow_documents d
               JOIN flow_document_revisions r ON r.document_id=d.id AND r.revision=d.current_revision
@@ -633,6 +795,7 @@ export class Engine {
           if (!d || d.content_hash === hash) continue; // dedup: unchanged
           docId = d.id; rev = d.current_revision + 1; revised++;
           await q.query(`UPDATE flow_documents SET current_revision=$2, title=$3 WHERE id=$1`, [docId, rev, it.title ?? ""]);
+          await this.emit(q, run, run.operation_id, run.id, "document.revised", { document_id: docId, revision: rev, previous_revision: rev - 1, source_id: src.id, cause: "collection" });
         }
         await q.query(`INSERT INTO flow_document_revisions (document_id, revision, tenant_id, content_hash, title, body, collected_by_run)
             VALUES ($1,$2,$3,$4,$5,$6,$7)`, [docId, rev, run.tenant_id, hash, it.title ?? "", it.body ?? "", run.id]);
@@ -759,6 +922,7 @@ export class Engine {
     const full = `${r.title}\n\n${r.body}`, off = Math.max(Number(o.offset) || 0, 0), max = Math.min(Math.max(Number(o.max_chars) || 4000, 1), 20000);
     const text = full.slice(off, off + max);
     return { document_id: d.id, revision: rev, title: d.title, url: d.url, offset: off, text,
+      times: { published_at: d.published_at, event_occurred_at: d.event_occurred_at ?? null, event_occurred_at_source: d.event_occurred_at_source ?? null, collected_at: d.created_at },
       coverage: { total_chars: full.length, returned_chars: text.length, truncated: off + text.length < full.length, next_offset: off + text.length < full.length ? off + text.length : null } };
   }
 
@@ -869,9 +1033,20 @@ export class Engine {
     return { operation_id: op, status: operationStatus(st), jobs: r.rows.map((x: any) => ({ ...x, job_state: prdJobState(x.status) })) };
   }
 
+  /** Jobs view (PRD §5.1 任务): recent collection jobs with PRD job_state, source, schedule window and failure reason. */
+  async listJobs(s: Scope, o: { limit?: number; status?: string } = {}) {
+    const limit = Math.min(Math.max(Number(o.limit) || 50, 1), 200);
+    const r = await this.db.query(`SELECT r.id AS job_id, r.operation_id, r.source_id, s.title AS source_title, s.kind AS source_kind, r.schedule_id, r.scheduled_at, r.status,
+        r.items_new, r.items_revised, r.error, r.partial_reason, r.attempts, r.max_attempts, r.retry_at, r.created_at, r.finished_at
+        FROM flow_collection_runs r LEFT JOIN flow_sources s ON s.id=r.source_id AND s.tenant_id=r.tenant_id
+        WHERE r.tenant_id=$1 AND r.workspace_id=$2 AND ($3::text IS NULL OR r.status=$3) ORDER BY r.created_at DESC, r.id LIMIT $4`,
+      [s.tenant_id, s.workspace_id, o.status || null, limit]);
+    return r.rows.map((x: any) => ({ ...x, job_state: prdJobState(x.status) }));
+  }
+
   async listDocuments(s: Scope, opts: { q?: string; limit?: number; source_id?: string }) {
     const limit = Math.min(Math.max(Number(opts.limit) || 20, 1), 100);
-    return (await this.db.query(`SELECT d.id, d.source_id, d.title, d.url, d.published_at, d.current_revision FROM flow_documents d
+    return (await this.db.query(`SELECT d.id, d.source_id, d.title, d.url, d.published_at, d.event_occurred_at, d.event_occurred_at_source, d.created_at AS collected_at, d.current_revision FROM flow_documents d
         WHERE d.tenant_id=$1 AND d.workspace_id=$2 AND ($3::text IS NULL OR d.title ILIKE '%'||$3||'%') AND ($4::text IS NULL OR d.source_id=$4)
         ORDER BY d.published_at DESC NULLS LAST, d.id LIMIT $5`, [s.tenant_id, s.workspace_id, opts.q || null, opts.source_id || null, limit])).rows;
   }

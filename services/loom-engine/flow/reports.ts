@@ -192,7 +192,7 @@ export class Reports {
   async settle(id: string) { await this.inflight.get(id); }
 
   /** Single-depth child research for an agent run: fixed scope, budget and output shape; runs in-process. */
-  async startResearch(s: Scope, key: string, o: { parent_run_id: string; question: string; evidence_scope?: { source_ids?: string[]; document_ids?: string[]; from?: string; to?: string }; skill?: any }, opts: { async?: boolean } = {}) {
+  async startResearch(s: Scope, key: string, o: { parent_run_id: string; question: string; evidence_scope?: { source_ids?: string[]; document_ids?: string[]; from?: string; to?: string }; skill?: any; capability_snapshot_id?: string }, opts: { async?: boolean } = {}) {
     if (!key) throw new HttpError(400, "X-Idempotency-Key required");
     if (!o.parent_run_id || !String(o.question ?? "").trim()) throw new HttpError(400, "parent_run_id and question required");
     const prior = (await this.db.query(`SELECT * FROM flow_research_runs WHERE tenant_id=$1 AND idempotency_key=$2`, [s.tenant_id, key])).rows[0];
@@ -208,9 +208,9 @@ export class Reports {
         if (own.rows.length !== new Set(scope.source_ids).size) throw new HttpError(404, "source not found");
       }
       const rid = newId("rr_");
-      await q.query(`INSERT INTO flow_research_runs (id, tenant_id, workspace_id, parent_run_id, kind, question, skill, evidence_scope, budget, idempotency_key)
-          VALUES ($1,$2,$3,$4,'research',$5,$6,$7,$8,$9)`, [rid, s.tenant_id, s.workspace_id, o.parent_run_id, String(o.question).slice(0, 1000),
-        JSON.stringify(o.skill ?? {}), JSON.stringify(scope), JSON.stringify(RESEARCH_BUDGET), key]);
+      await q.query(`INSERT INTO flow_research_runs (id, tenant_id, workspace_id, parent_run_id, kind, question, skill, evidence_scope, budget, idempotency_key, capability_snapshot_id)
+          VALUES ($1,$2,$3,$4,'research',$5,$6,$7,$8,$9,$10)`, [rid, s.tenant_id, s.workspace_id, o.parent_run_id, String(o.question).slice(0, 1000),
+        JSON.stringify(o.skill ?? {}), JSON.stringify(scope), JSON.stringify(RESEARCH_BUDGET), key, o.capability_snapshot_id ?? null]);
       return rid;
     });
     const exec = async () => {
@@ -218,9 +218,12 @@ export class Reports {
         const out = await this.gather(s, null, `research:${id}`, { query: o.question, ...scope }, `research:${id}`);
         const u = await this.db.query(`UPDATE flow_research_runs SET status='succeeded', output=$2, finished_at=now() WHERE id=$1 AND status='running'`, [id, JSON.stringify(out)]);
         if (!affected(u)) return { id, status: "cancelled", replayed: false };
+        await this.db.tx((q) => this.e.emit(q, s, `research:${id}`, id, "research.completed", { research_run_id: id, parent_run_id: o.parent_run_id, status: "succeeded",
+          title: `research completed: ${String(o.question).slice(0, 120)}`, evidence: Array.isArray((out as any)?.evidence) ? (out as any).evidence.length : undefined }));
         return { id, status: "succeeded", output: out, replayed: false };
       } catch (err: any) {
-        await this.db.query(`UPDATE flow_research_runs SET status='failed', error=$2, finished_at=now() WHERE id=$1 AND status='running'`, [id, String(err?.message ?? err).slice(0, 500)]);
+        const f = await this.db.query(`UPDATE flow_research_runs SET status='failed', error=$2, finished_at=now() WHERE id=$1 AND status='running'`, [id, String(err?.message ?? err).slice(0, 500)]);
+        if (affected(f)) await this.db.tx((q) => this.e.emit(q, s, `research:${id}`, id, "research.completed", { research_run_id: id, parent_run_id: o.parent_run_id, status: "failed", error: String(err?.message ?? err).slice(0, 300) }));
         return { id, status: "failed", error: String(err?.message ?? err), replayed: false };
       }
     };

@@ -52,6 +52,21 @@ if (platformBase) {
     return true;
   };
 }
+// PRD §9.2: scheduled windows reserve budget with the platform ledger; settled/released when the operation ends.
+if (platformBase) {
+  engine.budget = {
+    reserve: async (sc, key, amount, refId) => {
+      const r = await platformCall("/api/internal/flow/budget/reserve", sc, { grant_actor: sc.grant_actor, workspace_id: sc.workspace_id, key, amount_micro: amount, ref_id: refId });
+      if (r.status === 402 || r.status === 403) throw Object.assign(new Error(`budget denied ${r.status}`), { status: 402 });
+      if (!r.ok) throw new Error(`budget reserve ${r.status}`);
+      return { reservation_id: ((await r.json()) as any).data?.reservation_id };
+    },
+    close: async (sc, id, outcome, actual) => {
+      const r = await platformCall("/api/internal/flow/budget/close", sc, { reservation_id: id, outcome, actual_micro: actual });
+      if (!r.ok) throw new Error(`budget close ${r.status}`);
+    },
+  };
+}
 // LLM brief summarization through the platform (non-blocking). 202: the platform
 // enqueued a model task; the brief window stays parked. Completion is pushed
 // (POST /v1/briefs/wake when the task finishes); the scheduler tick re-submits
@@ -92,7 +107,8 @@ if (runBriefs) {
 if (runEnrich) {
   // §6.4: attachments not stored during a run are retried separately (bounded attempts), never by re-collecting.
   // PRD §6.2: jobs whose commit outcome was unknown are settled from the outbox.
-  void loop("reconcile", Number(env("LOOM_RECONCILE_MS", "30000")), () => engine.reconcile());
+  void loop("reconcile", Number(env("LOOM_RECONCILE_MS", "30000")), async () => { await engine.reconcile(); await engine.closeBudgets(); });
   void loop("media-retry", Number(env("LOOM_MEDIA_RETRY_MS", "120000")), () => engine.retryMedia());
+  if (env("ASR_ENABLED", "false") === "true") void loop("asr", Number(env("LOOM_ASR_TICK_MS", "60000")), () => engine.asrTick());
   if (env("OCR_ENABLED", "false") === "true") void loop("ocr", Number(env("LOOM_OCR_TICK_MS", "30000")), () => engine.ocrTick());
 }

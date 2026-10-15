@@ -32,6 +32,28 @@ var statusByType = map[string]string{
 	"collection.completed": "succeeded",
 	"operation.failed":     "failed",
 	"schedule.blocked":     "blocked",
+	"research.completed":   "succeeded", // payload.status=failed overrides
+}
+
+// ProjectionStaleAfter: a non-terminal projection not updated for this long is reported sync_status=stale.
+const ProjectionStaleAfter = 15 * time.Minute
+
+// ProjectionSyncStatus reports whether a projection row can be trusted as current (PRD §12.1).
+func ProjectionSyncStatus(p model.FlowOperationProjection, now time.Time) string {
+	if (p.Status == "running" || p.Status == "queued" || p.Status == "blocked") && now.Sub(p.AsOf) > ProjectionStaleAfter {
+		return "stale"
+	}
+	if p.SyncStatus == "" {
+		return "synced"
+	}
+	return p.SyncStatus
+}
+
+// notifyTitles: engine events that also become in-app notifications (besides report.completed).
+var notifyTitles = map[string]string{
+	"research.completed": "研究任务已完成",
+	"schedule.blocked":   "采集计划已受阻",
+	"document.revised":   "已引用的文档出现新修订",
 }
 
 // ConsumeEvent applies an event exactly once per (consumerID, event_id) and
@@ -65,7 +87,34 @@ func ConsumeEvent(db *gorm.DB, consumerID string, e Event) (bool, error) {
 				return err
 			}
 		}
-		if e.Type == "report.completed" || e.Type == "operation.failed" || e.Type == "schedule.blocked" {
+		if t, ok := notifyTitles[e.Type]; ok {
+			var p struct {
+				Title            string `json:"title"`
+				Reason           string `json:"reason"`
+				DocumentID       string `json:"document_id"`
+				ResearchRunID    string `json:"research_run_id"`
+				ScheduleID       string `json:"schedule_id"`
+				PreviousRevision int64  `json:"previous_revision"`
+			}
+			_ = json.Unmarshal(e.Payload, &p)
+			ref := p.ResearchRunID + p.ScheduleID + p.DocumentID
+			title := t
+			if p.Reason != "" {
+				title += "：" + p.Reason
+			}
+			notify := true
+			if e.Type == "document.revised" {
+				// Only documents the platform has cited are worth a notice (citations keep their revision).
+				notify = citedDocument(tx, e.TenantID, p.DocumentID)
+			}
+			if notify {
+				if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&model.FlowNotification{ID: NewID("ntf_"), TenantID: e.TenantID,
+					WorkspaceID: e.WorkspaceID, EventID: e.EventID, Type: e.Type, Title: truncRunes(title, 280), RefID: ref, CreatedAt: time.Now().UTC()}).Error; err != nil {
+					return err
+				}
+			}
+		}
+		if e.Type == "report.completed" || e.Type == "operation.failed" || e.Type == "schedule.blocked" || e.Type == "research.completed" {
 			// External deliveries are created in the same inbox transaction: exactly once per event.
 			var p struct {
 				ReportID string `json:"report_id"`
@@ -102,6 +151,15 @@ func ConsumeEvent(db *gorm.DB, consumerID string, e Event) (bool, error) {
 		if !ok {
 			return nil
 		}
+		if e.Type == "research.completed" {
+			var p struct {
+				Status string `json:"status"`
+			}
+			_ = json.Unmarshal(e.Payload, &p)
+			if p.Status == "failed" {
+				status = "failed"
+			}
+		}
 		if status == "succeeded" || status == "failed" {
 			// waiting_external: a duplicate delivery never reaches here (inbox dedupe).
 			if err := markWaitsReady(tx, e.TenantID, e.OperationID, status); err != nil {
@@ -112,7 +170,7 @@ func ConsumeEvent(db *gorm.DB, consumerID string, e Event) (bool, error) {
 		err := tx.First(&p, "operation_id = ?", e.OperationID).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return tx.Create(&model.FlowOperationProjection{OperationID: e.OperationID, TenantID: e.TenantID,
-				WorkspaceID: e.WorkspaceID, JobID: e.JobID, Status: status, Sequence: e.Sequence, AsOf: e.OccurredAt}).Error
+				WorkspaceID: e.WorkspaceID, JobID: e.JobID, Status: status, Sequence: e.Sequence, AsOf: e.OccurredAt, SourceVersion: e.Sequence, SyncStatus: "synced"}).Error
 		}
 		if err != nil {
 			return err
@@ -123,7 +181,17 @@ func ConsumeEvent(db *gorm.DB, consumerID string, e Event) (bool, error) {
 		if e.Sequence <= p.Sequence {
 			return nil
 		}
-		return tx.Model(&p).Updates(map[string]any{"status": status, "sequence": e.Sequence, "as_of": e.OccurredAt, "job_id": e.JobID}).Error
+		return tx.Model(&p).Updates(map[string]any{"status": status, "sequence": e.Sequence, "as_of": e.OccurredAt, "job_id": e.JobID, "source_version": e.Sequence, "sync_status": "synced"}).Error
 	})
 	return applied, err
+}
+
+// citedDocument: a conversation of the tenant has the document in its evidence scope.
+func citedDocument(tx *gorm.DB, tenantID, documentID string) bool {
+	if documentID == "" {
+		return false
+	}
+	var n int64
+	tx.Model(&model.FlowAgentConversation{}).Where("tenant_id = ? AND evidence_scope LIKE ?", tenantID, "%\""+documentID+"\"%").Count(&n)
+	return n > 0
 }

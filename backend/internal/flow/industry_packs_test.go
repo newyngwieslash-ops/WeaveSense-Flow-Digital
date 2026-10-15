@@ -57,8 +57,9 @@ func industryPackFiles(t *testing.T) map[string][]byte {
 		m := map[string]any{
 			"id": p.ID, "version": p.Version, "name": p.Name, "kind": p.Kind,
 			"skills": skills, "required_tools": p.RequiredTools, "optional_connectors": p.OptionalConns,
-			"source": "backend/internal/flow/skillpacks/" + p.ID + ".json",
-			"note":   "generated from the embedded pack; edit the source and regenerate (see industry_packs_test.go)",
+			"mcp_requirements": nonNil(p.MCPRequirements),
+			"source":           "backend/internal/flow/skillpacks/" + p.ID + ".json",
+			"note":             "generated from the embedded pack; edit the source and regenerate (see industry_packs_test.go)",
 		}
 		if len(p.ReportSchema) > 0 {
 			var rs any
@@ -85,11 +86,13 @@ func industryPackFiles(t *testing.T) map[string][]byte {
 			var st any
 			_ = json.Unmarshal(p.SourceTemplates, &st)
 			out[p.ID+"/source-templates.json"] = enc(st)
+			m["source_templates"] = "source-templates.json"
 		}
 		if len(p.Glossary) > 0 {
 			var g any
 			_ = json.Unmarshal(p.Glossary, &g)
 			out[p.ID+"/glossary.json"] = enc(g)
+			m["glossary"] = "glossary.json"
 		}
 		out[p.ID+"/manifest.json"] = enc(m)
 	}
@@ -132,4 +135,11 @@ func TestIndustryPackExport(t *testing.T) {
 	if seen != len(want) {
 		t.Fatalf("industry-packs has %d files, want %d; run with -update-packs", seen, len(want))
 	}
+}
+
+func nonNil(v []string) []string {
+	if v == nil {
+		return []string{}
+	}
+	return v
 }

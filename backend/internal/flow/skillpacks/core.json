@@ -13,6 +13,18 @@
   "rss",
   "public-web"
  ],
+ "mcp_requirements": [],
+ "source_templates": [
+  {"title": "Generic RSS/Atom feed", "url": "https://example.com/feed.xml", "kind": "rss", "note": "replace with a real feed URL"},
+  {"title": "Allowlisted public web page", "url": "https://example.com/news", "kind": "public-web", "note": "the domain must be on the tenant allowlist"}
+ ],
+ "glossary": {
+  "source": "信息来源",
+  "evidence": "证据（带引用的文档片段）",
+  "citation": "引用",
+  "cross-source verification": "多源交叉验证",
+  "change analysis": "变化分析"
+ },
  "skills": [
   {
    "id": "source-evaluation",

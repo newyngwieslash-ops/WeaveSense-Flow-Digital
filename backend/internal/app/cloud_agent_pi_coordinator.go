@@ -510,6 +510,9 @@ func (s *Service) completeCloudAgentPiRun(userID, runID string) error {
 			}
 			if err == nil {
 				s.recordFlowAssistantReply(userID, runID)
+				if latest, readErr := s.repo.CloudAgent(userID, runID); readErr == nil {
+					s.recordCanvasRunUsage(latest)
+				}
 			}
 			return err
 		}

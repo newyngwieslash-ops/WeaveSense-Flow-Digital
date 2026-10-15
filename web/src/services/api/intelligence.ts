@@ -108,3 +108,53 @@ export const resolveMcpCall = (workspaceId: string, id: string, outcome: "succee
 export const startMcpOAuth = (workspaceId: string, id: string) => http.post<{ authorizeUrl: string }>(`/intelligence/mcp/connections/${encodeURIComponent(id)}/oauth/start`, {}, ws(workspaceId));
 export const getMcpOAuth = (workspaceId: string, id: string) => http.get<{ connected: boolean; expiresAt?: string; scope?: string }>(`/intelligence/mcp/connections/${encodeURIComponent(id)}/oauth`, ws(workspaceId));
 export const revokeMcpOAuth = (workspaceId: string, id: string) => http.post<{ revoked: boolean }>(`/intelligence/mcp/connections/${encodeURIComponent(id)}/oauth/revoke`, {}, ws(workspaceId));
+
+/** PRD §5.1 views: sources health, jobs, schedules, content library, keywords (term aliases). */
+export type SourceHealth = IntelSource & {
+    health: "healthy" | "degraded" | "backoff" | "never_run" | "paused" | "revoked" | string;
+    paused_reason?: string | null;
+    consecutive_failures?: number;
+    backoff_until?: string | null;
+    last_run?: { run_id: string; status: string; items_new: number; items_revised: number; error?: string | null; finished_at?: string | null } | null;
+};
+export type CollectionJob = {
+    job_id: string;
+    operation_id: string;
+    source_id: string;
+    source_title?: string | null;
+    source_kind?: string | null;
+    schedule_id?: string | null;
+    scheduled_at?: string | null;
+    status: string;
+    job_state: string;
+    items_new: number;
+    items_revised: number;
+    error?: string | null;
+    partial_reason?: string | null;
+    attempts: number;
+    created_at: string;
+    finished_at?: string | null;
+};
+export type CollectionSchedule = {
+    id: string;
+    source_ids: string[];
+    kind: "interval" | "cron";
+    interval_seconds?: number | null;
+    cron?: string | null;
+    timezone: string;
+    next_run_at: string;
+    enabled: boolean;
+    state?: "active" | "blocked" | "disabled";
+    blocked_reason?: string | null;
+    disabled_reason?: string | null;
+    budget_micro_per_window?: number;
+};
+export type LibraryDocument = { id: string; source_id: string; title: string; url: string; published_at?: string | null; event_occurred_at?: string | null; collected_at?: string; current_revision: number };
+export type TermAlias = { term: string; alias: string; created_by?: string; created_at?: string };
+export const listSourcesHealth = (workspaceId: string) => http.get<SourceHealth[]>("/intelligence/sources/health", ws(workspaceId));
+export const listJobs = (workspaceId: string, status?: string) => http.get<CollectionJob[]>("/intelligence/collection-runs", { ...ws(workspaceId), params: status ? { status } : {} });
+export const listSchedules = (workspaceId: string) => http.get<CollectionSchedule[]>("/intelligence/schedules", ws(workspaceId));
+export const listDocuments = (workspaceId: string, q?: string) => http.get<LibraryDocument[]>("/intelligence/documents", { ...ws(workspaceId), params: q ? { q } : {} });
+export const listTerms = (workspaceId: string) => http.get<{ builtin_version: string; builtin_groups: number; builtin: string[][]; custom: TermAlias[] }>("/intelligence/terms", ws(workspaceId));
+export const addTerm = (workspaceId: string, term: string, alias: string) => http.post<{ added: number }>("/intelligence/terms", { items: [{ term, alias }] }, ws(workspaceId));
+export const deleteTerm = (workspaceId: string, term: string, alias: string) => http.post<{ deleted: number }>("/intelligence/terms/delete", { term, alias }, ws(workspaceId));

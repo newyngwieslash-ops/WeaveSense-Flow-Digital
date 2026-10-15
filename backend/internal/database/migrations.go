@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const CurrentSchemaVersion int64 = 65
+const CurrentSchemaVersion int64 = 66
 
 const baselineSchemaChecksum = "sha256:open-ai-canvas-schema-v1-20260830"
 const schemaMigrationAppliedAtIndexChecksum = "sha256:schema-migrations-applied-at-index-v2-20260830"
@@ -247,6 +247,14 @@ var schemaMigrations = []migration{
 	}},
 	{version: 65, name: "flow_rls_capability_provider", checksum: "sha256:flow-rls-capability-provider-v65-20261015", apply: func(tx *gorm.DB) error {
 		// §10.3 FORCE RLS on capability snapshots (tenant) and provider accounts (system only).
+		return applyFlowRLS(tx)
+	}},
+	{version: 66, name: "flow_topics_rls_gaps9", checksum: "sha256:flow-topics-rls-gaps9-v66-20261015", apply: func(tx *gorm.DB) error {
+		// §5.2 saved research topics; §10.3 FORCE RLS on topics, event inbox,
+		// operation projections, billing accounts and skill run pins.
+		if err := tx.AutoMigrate(&model.FlowTopic{}); err != nil {
+			return err
+		}
 		return applyFlowRLS(tx)
 	}},
 }

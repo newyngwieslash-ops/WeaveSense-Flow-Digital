@@ -44,6 +44,30 @@ func TestFlowRLSPostgres(t *testing.T) {
 	if !forced {
 		t.Fatal("RLS not forced on flow_notifications")
 	}
+	for _, tbl := range append(append([]string{}, flowRLSTables...), flowSystemOnlyTables...) {
+		if !db.Migrator().HasTable(tbl) {
+			continue // e.g. flow_mcp_usages: listed defensively, never created
+		}
+		var f bool
+		db.Raw("SELECT relforcerowsecurity FROM pg_class WHERE oid = ?::regclass", tbl).Scan(&f)
+		if !f {
+			t.Fatalf("RLS not forced on %s", tbl)
+		}
+	}
+	for _, tn := range []string{"tn_a", "tn_b"} {
+		if err := db.Create(&model.FlowTopic{ID: "tp_" + tn, TenantID: tn, WorkspaceID: "ws", Title: "t"}).Error; err != nil {
+			t.Fatal(err)
+		}
+	}
+	db.Transaction(func(tx *gorm.DB) error {
+		tx.Exec("SELECT set_config('app.tenant_ids', 'tn_a', true)")
+		var n int64
+		tx.Model(&model.FlowTopic{}).Count(&n)
+		if n != 1 {
+			t.Fatalf("tenant a sees %d topics", n)
+		}
+		return nil
+	})
 	for _, tn := range []string{"tn_a", "tn_b"} {
 		if err := db.Create(&model.FlowNotification{ID: "n_" + tn, TenantID: tn, WorkspaceID: "ws", EventID: "ev_" + tn, Type: "x", CreatedAt: time.Now()}).Error; err != nil {
 			t.Fatal(err)

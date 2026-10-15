@@ -177,6 +177,14 @@ func researchSynthesis(t Tools, ctx context.Context, ss SubjectScope, callID str
 			scope.DocumentIDs = append(scope.DocumentIDs, e.DocumentID)
 		}
 	}
+	// PRD §9.2: the gateway model must be in the run's frozen model route.
+	if t.RunID != "" {
+		if g, ok := t.Model.(*OpenAICompatGateway); ok {
+			if err := CheckRunModel(t.DB, t.RunID, g.Model); err != nil {
+				return nil, err
+			}
+		}
+	}
 	b := Billing{DB: t.DB}
 	parentKey := fmt.Sprint(args["parent_run_id"])
 	parent, err := b.Reserve(ss.Scope.TenantID, "run:"+parentKey, "agent_run", parentKey, RunBudgetMicro)

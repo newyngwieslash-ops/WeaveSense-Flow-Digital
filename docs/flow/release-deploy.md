@@ -117,3 +117,8 @@ deploy/flow/backup/restore.sh /backups/intel/flow-<ts>.dump "$NEW_INTEL_DATABASE
 - **Upgrading an existing `.env.flow`:** add `COMPOSE_PROFILES=core` (or `core,telegram,extract,...`). Without it no service starts.
 - With `--profile` on the command line, Compose ignores `COMPOSE_PROFILES`; always include `--profile core`, e.g. `--profile core --profile telegram`.
 - Optional: telegram, wechat, subtitles, extract, research, monitoring. `docker compose config` validates every profile combination (checked on the build box).
+
+## Cutover from a legacy Loom instance (§13.4)
+- Each source has exactly one scheduler. Import legacy sources paused (`legacy-import.ts` default), stop the legacy instance's cron/tick for those sources, then activate them in Flow. Never run paid collection or advance the same account cursor from both systems.
+- Shadow reads or offline comparison are allowed (legacy read-only, Flow paused).
+- Rollback: first stop the Flow scheduler (`loom-scheduler`, or disable the schedules), then restart the legacy instance from its verified cursors. Do not replay external actions whose outcome is unknown (`reconciliation_required`); reconcile them first.

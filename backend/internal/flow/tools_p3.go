@@ -178,6 +178,14 @@ func researchSynthesis(t Tools, ctx context.Context, ss SubjectScope, callID str
 			scope.DocumentIDs = append(scope.DocumentIDs, e.DocumentID)
 		}
 	}
+	// PRD §9.2: the gateway model must be in the run's frozen model route.
+	if t.RunID != "" {
+		if g, ok := t.Model.(*OpenAICompatGateway); ok {
+			if err := CheckRunModel(t.DB, t.RunID, g.Model); err != nil {
+				return nil, err
+			}
+		}
+	}
 	b := Billing{DB: t.DB}
 	parentKey := fmt.Sprint(args["parent_run_id"])
 	parent, err := b.Reserve(ss.Scope.TenantID, "run:"+parentKey, "agent_run", parentKey, RunBudgetMicro)
@@ -225,4 +233,31 @@ func SettleRunBudget(db *gorm.DB, tenantID, runID string) error {
 func researchExecutorLimit() int {
 	n, _ := strconv.Atoi(os.Getenv("FLOW_MAX_CONCURRENT_RESEARCH_PER_TENANT"))
 	return n
+}
+
+// CancelResearchChildren propagates a parent run's cancellation to its child
+// research in Loom Engine (queued and running children). Idempotent.
+func CancelResearchChildren(ctx context.Context, eng EngineCaller, scope Scope, userID, parentRunID, reason string) ([]string, error) {
+	if eng == nil || parentRunID == "" {
+		return nil, nil
+	}
+	body, _ := json.Marshal(map[string]any{"parent_run_id": parentRunID, "reason": reason})
+	status, out, err := eng.Do(ctx, scope, Actor{Type: "user", ID: userID}, http.MethodPost, "/v1/research-runs/cancel-children", "cancel-children:"+parentRunID, body)
+	if err != nil {
+		return nil, err
+	}
+	if status >= 300 {
+		return nil, fmt.Errorf("loom engine: cancel children HTTP %d", status)
+	}
+	var r struct {
+		Cancelled []string `json:"cancelled"`
+		Data      *struct {
+			Cancelled []string `json:"cancelled"`
+		} `json:"data"`
+	}
+	_ = json.Unmarshal(out, &r)
+	if r.Data != nil {
+		return r.Data.Cancelled, nil
+	}
+	return r.Cancelled, nil
 }

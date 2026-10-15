@@ -2,6 +2,7 @@ package flow
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -67,6 +68,14 @@ func TestRunChainIntelAdapterDrivesScopeContextToolsExecAndUsage(t *testing.T) {
 	tc, err := chain.Context.TurnContext(tools.DB, conv, ss)
 	if err != nil || len(tc.Recent) == 0 {
 		t.Fatalf("context: %+v %v", tc, err)
+	}
+	// §9.2 fail-closed: a run without a frozen snapshot cannot execute tools.
+	if _, err := chain.Exec.Execute(context.Background(), tools.DB, ToolCall{Conv: conv, Subject: ss, UserID: "u_alice", RunID: "run_nosnap", CallID: "c0", Name: "intel_search_documents", Args: map[string]any{"query": "lithium"}}); !errors.Is(err, ErrNoCapabilitySnapshot) {
+		t.Fatalf("run without snapshot must be rejected, got %v", err)
+	}
+	if _, err := FreezeCapabilitySnapshot(tools.DB, CapabilityInput{TenantID: ss.Scope.TenantID, RunID: "run_1", SubjectKind: SubjectWorkspace,
+		Tools: chain.Tools.Tools(ToolRequest{SubjectKind: SubjectWorkspace})}, time.Now()); err != nil {
+		t.Fatal(err)
 	}
 	r, err := chain.Exec.Execute(context.Background(), tools.DB, ToolCall{Conv: conv, Subject: ss, UserID: "u_alice", RunID: "run_1", CallID: "c1", Name: "intel_search_documents", Args: map[string]any{"query": "lithium"}})
 	if err != nil || r.Status != "succeeded" {

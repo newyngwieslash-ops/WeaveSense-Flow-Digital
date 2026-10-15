@@ -131,18 +131,30 @@ func decodeCapability(s model.FlowCapabilitySnapshot) (capabilityContent, error)
 // ErrToolNotInSnapshot: the call names a tool that was not in the run's frozen tool table.
 var ErrToolNotInSnapshot = errors.New("flow: tool is not in this run's capability snapshot")
 
-// CheckRunTool enforces the frozen tool table (runs without a snapshot are unchecked).
-func CheckRunTool(db *gorm.DB, runID, name string) error {
+// ErrNoCapabilitySnapshot: the run carries no frozen snapshot. Checks fail
+// closed — a run without a snapshot never bypasses tool/model enforcement.
+var ErrNoCapabilitySnapshot = errors.New("flow: run has no capability snapshot")
+
+// ErrModelNotInSnapshot: the call targets a model outside the run's frozen model route.
+var ErrModelNotInSnapshot = errors.New("flow: model is not in this run's capability snapshot")
+
+func runContent(db *gorm.DB, runID string) (capabilityContent, error) {
 	snap, err := RunCapability(db, runID)
 	if err != nil {
-		return nil
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return capabilityContent{}, ErrNoCapabilitySnapshot
+		}
+		return capabilityContent{}, err
 	}
-	c, err := decodeCapability(snap)
+	return decodeCapability(snap)
+}
+
+// CheckRunTool enforces the frozen tool table (fail-closed: no snapshot or an
+// empty frozen table rejects every tool).
+func CheckRunTool(db *gorm.DB, runID, name string) error {
+	c, err := runContent(db, runID)
 	if err != nil {
 		return err
-	}
-	if len(c.ToolNames) == 0 {
-		return nil // nothing frozen (e.g. a run admitted without a tool table)
 	}
 	for _, n := range c.ToolNames {
 		if n == name {
@@ -150,6 +162,38 @@ func CheckRunTool(db *gorm.DB, runID, name string) error {
 		}
 	}
 	return ErrToolNotInSnapshot
+}
+
+// FrozenModels lists every model identifier of the run's frozen model route.
+func FrozenModels(route map[string]any) []string {
+	out := []string{}
+	add := func(v any) {
+		if s, ok := v.(string); ok && s != "" {
+			out = append(out, s)
+		}
+	}
+	for _, k := range []string{"channel_model_key", "model", "logical_model_id"} {
+		add(route[k])
+	}
+	if mg, ok := route["flow_model_gateway"].(map[string]any); ok {
+		add(mg["model"])
+	}
+	return out
+}
+
+// CheckRunModel enforces the frozen model route (§9.2): a model call must
+// target a model of the run's snapshot. Fail-closed like CheckRunTool.
+func CheckRunModel(db *gorm.DB, runID, modelID string) error {
+	c, err := runContent(db, runID)
+	if err != nil {
+		return err
+	}
+	for _, m := range FrozenModels(c.ModelRoute) {
+		if m == modelID {
+			return nil
+		}
+	}
+	return ErrModelNotInSnapshot
 }
 
 // RunPriceBook is the run's frozen price book, or the current one.

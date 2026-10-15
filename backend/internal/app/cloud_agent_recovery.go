@@ -34,6 +34,14 @@ func (s *Service) finishCloudAgentCleanup(ctx context.Context, run *model.CloudA
 		}
 		run = refreshed
 	}
+	// Cancel propagation (§9.4 / A15): child research of an intel run is cancelled
+	// in the engine before the parent's cleanup commits; failures keep the
+	// cleanup pending so the scheduler retries.
+	if decodeErr == nil && run.Status == "cancelled" {
+		if err := s.cancelFlowResearchChildren(ctx, run.UserID, run.ID, state.Request); err != nil {
+			return err
+		}
+	}
 	seen := map[string]bool{}
 	for _, id := range []string{run.ID, activeID, mediaID} {
 		if id == "" || seen[id] {

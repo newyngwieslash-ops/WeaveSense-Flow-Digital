@@ -114,9 +114,9 @@ func TestSynthesizeDropsInvalidCitationsAndUnknownOutcome(t *testing.T) {
 	b := Billing{DB: db}
 	tenant := model.PersonalTenantID("u_alice")
 	fund(t, b, "u_alice", 5_000_000)
-	ev := []ResolvedEvidence{{EvidenceID: "ev1", DocumentID: "d1", SourceID: "s1", Revision: 1}}
+	ev := []ResolvedEvidence{{EvidenceID: "ev1", DocumentID: "d1", SourceID: "s1", Revision: 1, Quote: "lithium supply ok"}}
 	gw := fakeGW{cost: 1234, text: `{"body":"b","claims":[
-	 {"text":"ok","kind":"source_statement","citations":[{"evidence_id":"ev1","revision":1}]},
+	 {"text":"lithium supply ok","kind":"source_statement","citations":[{"evidence_id":"ev1","revision":1}]},
 	 {"text":"bad","kind":"source_statement","citations":[{"evidence_id":"ev_fake","revision":1}]}]}`}
 	out, err := Synthesize(context.Background(), gw, b, SynthesisRequest{TenantID: tenant, Key: "k1", Purpose: "brief", Question: "q",
 		Evidence: ev, Scope: MaterialScope{SourceIDs: []string{"s1"}}})

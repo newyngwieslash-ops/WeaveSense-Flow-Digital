@@ -79,6 +79,10 @@ func (s *Service) validateCloudAgentPiModelRequest(userID, runID string, request
 	if expected != "" && request.ModelID != expected {
 		return false, fmt.Errorf("Pi 模型标识与运行配置不一致: got %q, want %q", request.ModelID, expected)
 	}
+	// PRD §9.2: the model must be part of the run's frozen capability snapshot.
+	if err := s.checkRunModel(userID, runID, request.ModelID); err != nil {
+		return false, fmt.Errorf("模型不在本次运行的能力快照内: %w", err)
+	}
 	return compactionSummary, nil
 }
 

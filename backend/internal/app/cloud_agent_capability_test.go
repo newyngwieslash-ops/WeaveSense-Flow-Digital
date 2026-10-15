@@ -2,6 +2,8 @@ package app
 
 import (
 	"encoding/json"
+	"errors"
+	"strings"
 	"testing"
 
 	"yingce/backend/internal/flow"
@@ -67,5 +69,46 @@ func TestRunCapabilitySnapshotAndCanvasUsageLedger(t *testing.T) {
 	l := lines[0]
 	if l.UsageType != flow.UsageCanvasMedia || l.CostMicro != 4000 || l.Status != "recorded" || l.PriceVersion != snap.PriceVersion {
 		t.Fatalf("usage line: %+v", l)
+	}
+}
+
+// PRD §9.2: the frozen model route is enforced (fail-closed), and a run whose
+// snapshot cannot be frozen never starts.
+func TestRunCapabilityEnforcesModelRouteAndFailsClosed(t *testing.T) {
+	s, db, _, conv := flowTestSetup(t)
+	if err := db.AutoMigrate(&model.FlowUsageRecord{}, &model.FlowCapabilitySnapshot{}, &model.FlowRunCapability{}, &model.FlowSkillInstall{}, &model.FlowSkillRunPin{}); err != nil {
+		t.Fatal(err)
+	}
+	run, err := s.CreateCloudAgentRun("user", flowRunRequest(conv, "cap-model-1"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := flow.CheckRunModel(db, run.ID, "text-test"); err != nil {
+		t.Fatalf("frozen model must pass: %v", err)
+	}
+	if err := flow.CheckRunModel(db, run.ID, "other-model"); !errors.Is(err, flow.ErrModelNotInSnapshot) {
+		t.Fatalf("model outside snapshot must be rejected: %v", err)
+	}
+	if _, err := s.validateCloudAgentPiModelRequest("user", run.ID, cloudAgentPiModelRequest{Purpose: "step", ModelID: "text-test"}); err != nil && strings.Contains(err.Error(), "能力快照") {
+		t.Fatalf("frozen model rejected by Pi bridge: %v", err)
+	}
+	// A run with no snapshot never bypasses enforcement.
+	if err := flow.CheckRunModel(db, "run-without-snapshot", "text-test"); !errors.Is(err, flow.ErrNoCapabilitySnapshot) {
+		t.Fatalf("no snapshot must fail closed: %v", err)
+	}
+	if err := flow.CheckRunTool(db, "run-without-snapshot", "intel_search_documents"); !errors.Is(err, flow.ErrNoCapabilitySnapshot) {
+		t.Fatalf("no snapshot must fail closed (tools): %v", err)
+	}
+	// Freeze failure fails the run: drop the snapshot table.
+	if err := db.Migrator().DropTable(&model.FlowRunCapability{}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.CreateCloudAgentRun("user", flowRunRequest(conv, "cap-model-2"), ""); err == nil {
+		t.Fatal("a run whose capability snapshot cannot be frozen must not start")
+	}
+	var failed int64
+	db.Model(&model.CloudAgentExecution{}).Where("status = ?", "failed").Count(&failed)
+	if failed == 0 {
+		t.Fatal("the unfrozen run must be recorded as failed")
 	}
 }

@@ -133,6 +133,61 @@ export class Reports {
   }
 
   /**
+   * §9.4 Reviewer: a fixed host step (not a free sub-agent) that checks a producer
+   * draft against the evidence it cites. For every claim it verifies
+   *   - support: each citation resolves in this tenant/workspace at the cited revision,
+   *     and the claim's content overlaps the cited quotes (source_statement ≥ 50%;
+   *     cross_source_verified: ≥2 distinct sources, each sharing claim terms);
+   *   - conflict: cited evidence from different sources carries diverging numbers
+   *     of the same unit, or a cited revision has since been superseded;
+   *   - uncertainty: model_inference claims are kept but flagged uncertain.
+   * Unsupported claims are rejected (removed from the accepted set, with a reason).
+   */
+  async review(s: Scope, claims: any[], q?: Q) {
+    const ids = claims.flatMap((c: any) => (c.citations ?? []).map((x: any) => String(x.evidence_id)));
+    const ev = new Map((await this.resolveEvidence(s, ids, q)).map((x) => [x.evidence_id, x]));
+    const accepted: any[] = []; const rejected: any[] = []; const flagged: any[] = [];
+    for (const [idx, c] of claims.entries()) {
+      const flags: string[] = [];
+      const cites = (c.citations ?? []).map((x: any) => ({ x, e: ev.get(String(x.evidence_id)) }));
+      let reason = "";
+      if (!CLAIM_KINDS.includes(c.kind)) reason = "invalid claim kind";
+      else if (cites.some((k: any) => !k.e || Number(k.x.revision) !== k.e.revision)) reason = "citation not found at cited revision";
+      else if (c.kind !== "model_inference" && !cites.length) reason = "claim has no citation";
+      else if (c.kind === "source_statement" && supportRatio(c.text, cites.map((k: any) => k.e.quote)) < 0.5) reason = "claim not supported by cited evidence";
+      else if (c.kind === "cross_source_verified") {
+        if (new Set(cites.map((k: any) => k.e.source_id)).size < 2) reason = "cross_source_verified needs evidence from ≥2 sources";
+        else if (cites.some((k: any) => supportRatio(c.text, [k.e.quote]) === 0)) reason = "a cited source does not support the claim";
+      }
+      if (reason) { rejected.push({ idx, text: String(c.text ?? "").slice(0, 300), kind: c.kind, reason }); continue; }
+      if (c.kind === "model_inference") flags.push("uncertain");
+      if (cites.some((k: any) => k.e.current_revision > k.e.revision)) flags.push("stale_revision");
+      const facts = cites.map((k: any) => ({ src: k.e.source_id, n: numericFacts(k.e.quote) }));
+      outer: for (let i = 0; i < facts.length; i++) for (let j = i + 1; j < facts.length; j++) {
+        if (facts[i].src === facts[j].src) continue;
+        for (const a of facts[i].n) for (const b of facts[j].n) if (a.unit === b.unit && a.value !== b.value) { flags.push("conflict"); break outer; }
+      }
+      if (flags.length) flagged.push({ idx, flags });
+      accepted.push(flags.length ? { ...c, review_flags: flags } : c);
+    }
+    const verdict = rejected.length ? "rejected_claims" : flagged.length ? "flagged" : "passed";
+    return { claims: accepted, review: { reviewer: "host_reviewer_v1", verdict, checked: claims.length, accepted: accepted.length, rejected, flagged } };
+  }
+
+  /** Cancel propagation: a cancelled parent run cancels all its queued/running child research. */
+  async cancelChildren(s: Scope, parentRunId: string, reason = "parent_cancelled") {
+    if (!parentRunId) throw new HttpError(400, "parent_run_id required");
+    const r = await this.db.query(`UPDATE flow_research_runs SET status='cancelled', cancel_reason=$4, finished_at=now()
+        WHERE tenant_id=$1 AND workspace_id=$2 AND parent_run_id=$3 AND status IN ('queued','running') RETURNING id`,
+      [s.tenant_id, s.workspace_id, parentRunId, String(reason).slice(0, 200)]);
+    const ids = r.rows.map((x: any) => x.id);
+    for (const id of ids) {
+      await this.db.tx((q) => this.e.emit(q, s, `research:${id}`, id, "research.completed", { research_run_id: id, parent_run_id: parentRunId, status: "cancelled", reason: String(reason).slice(0, 200) }));
+    }
+    return { parent_run_id: parentRunId, cancelled: ids };
+  }
+
+  /**
    * §8.3 intel_compare_evidence: structured, read-only comparison of evidence items (no model call).
    * Groups by source, extracts numeric facts, flags stale revisions, shared terms and numeric divergences.
    */
@@ -215,7 +270,12 @@ export class Reports {
     });
     const exec = async () => {
       try {
-        const out = await this.gather(s, null, `research:${id}`, { query: o.question, ...scope }, `research:${id}`);
+        // Producer draft (extractive, fixed budget) → host Reviewer (§9.4).
+        const draft = await this.gather(s, null, `research:${id}`, { query: o.question, ...scope }, `research:${id}`);
+        const cur = (await this.db.query(`SELECT status FROM flow_research_runs WHERE id=$1`, [id])).rows[0];
+        if (cur?.status !== "running") return { id, status: cur?.status ?? "cancelled", replayed: false };
+        const reviewed = await this.review(s, draft.claims);
+        const out = { ...draft, claims: reviewed.claims, draft: { claims: draft.claims }, review: reviewed.review };
         const u = await this.db.query(`UPDATE flow_research_runs SET status='succeeded', output=$2, finished_at=now() WHERE id=$1 AND status='running'`, [id, JSON.stringify(out)]);
         if (!affected(u)) return { id, status: "cancelled", replayed: false };
         await this.db.tx((q) => this.e.emit(q, s, `research:${id}`, id, "research.completed", { research_run_id: id, parent_run_id: o.parent_run_id, status: "succeeded",
@@ -329,9 +389,14 @@ export class Reports {
           }
           this.pendingSummaries.delete(key);
           if (out && Array.isArray(out.claims) && out.claims.length) {
-            claims = out.claims;
-            body = [out.body, ...notes].filter(Boolean).join("\n");
-            summarizedBy = "model_gateway";
+            // Model draft → host Reviewer before it can become the brief.
+            const reviewed = await this.review(s, out.claims);
+            g.coverage.review = reviewed.review;
+            if (reviewed.claims.length) {
+              claims = reviewed.claims;
+              body = [out.body, ...notes].filter(Boolean).join("\n");
+              summarizedBy = "model_gateway";
+            } // nothing survived review: keep the extractive brief (review recorded in coverage)
           }
         } catch (err: any) {
           if (err?.status === 403) {
@@ -373,4 +438,23 @@ export function numericFacts(text: string) {
     if (out.length >= 10) break;
   }
   return out;
+}
+
+const STOP = new Set(["the", "and", "for", "with", "that", "this", "from", "are", "was", "has", "have", "report", "reports", "sources", "independent"]);
+/** Claim terms: latin words (≥3 chars) and CJK bigrams, lowercased. */
+export function claimTerms(text: string) {
+  const t = String(text ?? "").toLowerCase();
+  const out = new Set<string>();
+  for (const w of t.match(/[a-z][a-z0-9-]{2,}/g) ?? []) if (!STOP.has(w)) out.add(w);
+  for (const run of t.match(/[\u4e00-\u9fff]+/g) ?? []) for (let i = 0; i + 1 < run.length; i++) out.add(run.slice(i, i + 2));
+  for (const n of t.match(/\d+(?:\.\d+)?/g) ?? []) out.add(n);
+  return out;
+}
+/** Fraction of the claim's terms found in the cited quotes. */
+export function supportRatio(claim: string, quotes: string[]) {
+  const c = claimTerms(claim);
+  if (!c.size) return 0;
+  const q = claimTerms(quotes.join(" "));
+  let hit = 0; for (const t of c) if (q.has(t)) hit++;
+  return hit / c.size;
 }

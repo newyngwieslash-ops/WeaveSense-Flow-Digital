@@ -490,7 +490,7 @@ What runs through the canvas chain:
 
 ## Round 7: remaining PRD gaps (2026-10-15, Asia/Shanghai)
 
-Branch `gaps6-engine`; the PR number and merge SHA are recorded in `docs/verification/receipts-2026-10-15.md` after merge.
+PR #40, branch `gaps6-engine`, merge `6a10e3dc`.
 
 What it closes:
 - §12 budgets:

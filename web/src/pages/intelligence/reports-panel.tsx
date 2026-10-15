@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Button, Card, Collapse, List, Tag, Typography } from "antd";
+import { Alert, Button, Card, Collapse, List, Space, Tag, Typography, message } from "antd";
 
-import { getReport, listBriefSchedules, listReports, type BriefSchedule, type ReportDetail, type ReportSummary } from "@/services/api/intelligence";
+import { exportReport, getReport, listBriefSchedules, listReports, type BriefSchedule, type ReportDetail, type ReportSummary } from "@/services/api/intelligence";
 
 const KIND_LABEL: Record<string, { color: string; label: string }> = {
     source_statement: { color: "blue", label: "source statement" },
@@ -61,7 +61,22 @@ export function ReportsPanel({ workspaceId }: { workspaceId?: string }) {
                     )}
                 />
             </Card>
-            <Card size="small" title={detail?.title ?? "Report"}>
+            <Card
+                size="small"
+                title={detail?.title ?? "Report"}
+                extra={
+                    detail &&
+                    workspaceId && (
+                        <Space size={4}>
+                            {(["md", "html", "json"] as const).map((f) => (
+                                <Button key={f} size="small" onClick={() => void exportReport(workspaceId, detail.id, f).catch(() => void message.error("导出失败"))}>
+                                    导出 {f.toUpperCase()}
+                                </Button>
+                            ))}
+                        </Space>
+                    )
+                }
+            >
                 {!detail ? (
                     <Typography.Text type="secondary">Select a report</Typography.Text>
                 ) : (

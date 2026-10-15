@@ -6,6 +6,9 @@ import { ReportsPanel } from "./reports-panel";
 import { SourcesPanel } from "./sources-panel";
 import { JobsView, KeywordsView, LibraryView, OverviewView, PacksView } from "./views";
 import { WorkspaceAdminPanel } from "./workspace-admin-panel";
+import { ApprovalDetails, credits } from "./plan-card";
+import { TopicsPanel } from "./topics-panel";
+import { MonitorEditor } from "./monitor-editor";
 
 /** PRD §5.1 navigation: 总览/信源/关键词/内容库/专题/报告/任务/行业包/连接设置. */
 export const INTEL_VIEWS = [
@@ -60,6 +63,7 @@ export default function IntelligencePage() {
     const [runId, setRunId] = useState<string>();
     const [streaming, setStreaming] = useState("");
     const [approval, setApproval] = useState<AgentApproval>();
+    const [editingMonitor, setEditingMonitor] = useState<IntelMonitor>();
     const unsubscribe = useRef<(() => void) | undefined>(undefined);
     useEffect(() => () => unsubscribe.current?.(), []);
 
@@ -198,35 +202,47 @@ export default function IntelligencePage() {
         <>
             {nav}
             <div style={{ display: "grid", gridTemplateColumns: "240px 1fr 320px", gap: 16, padding: 16 }}>
-                <Card size="small" title="Conversations">
-                    <Select style={{ width: "100%", marginBottom: 8 }} value={workspaceId} onChange={setWorkspaceId} options={workspaces.map((w) => ({ value: w.id, label: w.name }))} />
-                    <Button
-                        block
-                        onClick={() => {
-                            setActive(undefined);
-                            setMessages([]);
-                        }}
-                    >
-                        New
-                    </Button>
-                    <List
-                        size="small"
-                        dataSource={conversations}
-                        renderItem={(c) => (
-                            <List.Item
-                                style={{ cursor: "pointer", fontWeight: c.id === active?.id ? 600 : 400 }}
-                                onClick={() => {
-                                    setActive(c);
-                                    void refreshMessages(c);
-                                }}
-                            >
-                                {c.subjectKind === "canvas" && <Tag color="purple">canvas</Tag>}
-                                {c.subjectKind === "topic" && <Tag color="gold">topic</Tag>}
-                                {c.title || c.id}
-                            </List.Item>
-                        )}
+                <Space direction="vertical" style={{ width: "100%" }}>
+                    <Card size="small" title="Conversations">
+                        <Select style={{ width: "100%", marginBottom: 8 }} value={workspaceId} onChange={setWorkspaceId} options={workspaces.map((w) => ({ value: w.id, label: w.name }))} />
+                        <Button
+                            block
+                            onClick={() => {
+                                setActive(undefined);
+                                setMessages([]);
+                            }}
+                        >
+                            New
+                        </Button>
+                        <List
+                            size="small"
+                            dataSource={conversations}
+                            renderItem={(c) => (
+                                <List.Item
+                                    style={{ cursor: "pointer", fontWeight: c.id === active?.id ? 600 : 400 }}
+                                    onClick={() => {
+                                        setActive(c);
+                                        void refreshMessages(c);
+                                    }}
+                                >
+                                    {c.subjectKind === "canvas" && <Tag color="purple">canvas</Tag>}
+                                    {c.subjectKind === "topic" && <Tag color="gold">topic</Tag>}
+                                    {c.title || c.id}
+                                </List.Item>
+                            )}
+                        />
+                    </Card>
+                    <TopicsPanel
+                        workspaceId={workspaceId}
+                        onOpen={(t) =>
+                            void createConversation({ kind: "topic", id: t.id }, t.title).then(async (conv) => {
+                                setActive(conv);
+                                setConversations(await listConversations());
+                                await refreshMessages(conv);
+                            })
+                        }
                     />
-                </Card>
+                </Space>
                 <Card size="small" title="Intelligence chat">
                     <div style={{ minHeight: 320, maxHeight: 520, overflow: "auto" }}>
                         {messages.length === 0 ? (
@@ -267,8 +283,8 @@ export default function IntelligencePage() {
                     </Space.Compact>
                     {approval && (
                         <Card size="small" style={{ marginTop: 8 }} title={`Approval needed: ${approval.call.function.name}`}>
-                            <Typography.Paragraph style={{ whiteSpace: "pre-wrap" }}>{approval.call.function.arguments}</Typography.Paragraph>
-                            <Space>
+                            <ApprovalDetails workspaceId={workspaceId} tool={approval.call.function.name} rawArgs={approval.call.function.arguments} />
+                            <Space style={{ marginTop: 8 }}>
                                 <Button type="primary" onClick={() => void decideRun(true)}>
                                     Approve
                                 </Button>
@@ -298,17 +314,31 @@ export default function IntelligencePage() {
                         dataSource={monitors}
                         locale={{ emptyText: "No monitors yet" }}
                         renderItem={(m) => (
-                            <List.Item>
+                            <List.Item
+                                actions={[
+                                    <Button key="edit" size="small" type="link" onClick={() => setEditingMonitor(m)}>
+                                        编辑
+                                    </Button>,
+                                ]}
+                            >
                                 <div>
                                     <div>{m.name}</div>
                                     <Typography.Text type="secondary">
-                                        every {Math.round(m.interval_seconds / 60)} min · {m.timezone} · {m.keywords.join(", ")}
+                                        every {Math.round(m.interval_seconds / 60)} min · {m.timezone} · {m.keywords.join(", ")} · 上限 {credits(m.budget_micro_per_window)}
                                     </Typography.Text>
                                 </div>
                             </List.Item>
                         )}
                     />
                 </Card>
+                <MonitorEditor
+                    workspaceId={workspaceId}
+                    monitor={editingMonitor}
+                    onClose={(changed) => {
+                        setEditingMonitor(undefined);
+                        if (changed) refreshMonitors();
+                    }}
+                />
             </div>
         </>
     );

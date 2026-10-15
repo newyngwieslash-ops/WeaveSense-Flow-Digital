@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import { Button, Card, Input, List, Select, Space, Table, Tag, Typography, message } from "antd";
+import { Button, Card, Input, List, Select, Space, Table, Tag, Tooltip, Typography, message } from "antd";
 
 import { EmptyState } from "@/components/ui/product/empty-state/empty-state";
 import {
     addTerm,
     deleteTerm,
+    downloadMedia,
     installSkills,
     listDocuments,
     listJobs,
@@ -16,6 +17,7 @@ import {
     listTerms,
     type CollectionJob,
     type CollectionSchedule,
+    type ExtractionCompleteness,
     type IntelMonitor,
     type LibraryDocument,
     type ReportSummary,
@@ -28,7 +30,35 @@ import {
 import { classifyEmpty, EMPTY_REASON_TEXT } from "./empty-reason";
 
 const fmt = (t?: string | null) => (t ? new Date(t).toLocaleString() : "—");
-const JOB_COLOR: Record<string, string> = { succeeded: "green", partial: "gold", failed: "red", cancelled: "default", retry_wait: "orange", pending: "blue", leased: "blue", running: "processing" };
+/** Jobs still needing work or attention (PRD §5 总览 待处理任务). */
+const PENDING_STATES = new Set(["queued", "pending", "leased", "running", "retry_wait", "cancel_requested", "reconciliation_required"]);
+const EXTRACTION_LABEL: Record<string, { color: string; text: string }> = {
+    full_text: { color: "green", text: "全文" },
+    feed_summary: { color: "gold", text: "摘要" },
+    title_only: { color: "red", text: "仅标题" },
+};
+function ExtractionTag({ e }: { e?: ExtractionCompleteness }) {
+    if (!e) return <>—</>;
+    const l = EXTRACTION_LABEL[e.level] ?? { color: "default", text: e.level };
+    return (
+        <Tooltip title={`方式 ${e.method} · ${e.body_chars} 字 · 附件 ${e.media_stored}/${e.media_total}`}>
+            <Tag color={l.color}>{l.text}</Tag>
+            {e.media_missing > 0 && <Tag color="orange">缺附件 {e.media_missing}</Tag>}
+        </Tooltip>
+    );
+}
+const JOB_COLOR: Record<string, string> = {
+    succeeded: "green",
+    partial: "gold",
+    failed: "red",
+    cancelled: "default",
+    cancel_requested: "volcano",
+    retry_wait: "orange",
+    reconciliation_required: "magenta",
+    pending: "blue",
+    leased: "blue",
+    running: "processing",
+};
 
 function useWorkspaceData<T>(workspaceId: string | undefined, load: (ws: string) => Promise<T>, empty: T) {
     const [data, setData] = useState<T>(empty);
@@ -53,6 +83,7 @@ export function OverviewView({ workspaceId }: { workspaceId?: string }) {
     const reason = EMPTY_REASON_TEXT[classifyEmpty({ sources, jobs, schedules })];
     const failing = sources.filter((s) => s.health === "backoff" || s.health === "degraded" || s.status === "paused");
     const next = schedules.filter((s) => s.enabled).sort((a, b) => a.next_run_at.localeCompare(b.next_run_at))[0];
+    const pendingJobs = jobs.filter((j) => PENDING_STATES.has(j.job_state) || PENDING_STATES.has(j.status));
     return (
         <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, padding: 16 }}>
             <Card size="small" title="最新材料">
@@ -61,6 +92,17 @@ export function OverviewView({ workspaceId }: { workspaceId?: string }) {
             <Space direction="vertical" style={{ width: "100%" }}>
                 <Card size="small" title="下次执行">
                     {next ? `${fmt(next.next_run_at)} · ${next.kind === "cron" ? next.cron : `每 ${Math.round((next.interval_seconds ?? 0) / 60)} 分钟`}` : "没有启用的计划"}
+                </Card>
+                <Card size="small" title={`待处理任务（${pendingJobs.length}）`}>
+                    {pendingJobs.length === 0
+                        ? "无"
+                        : pendingJobs.slice(0, 8).map((j) => (
+                              <div key={j.job_id}>
+                                  <Tag color={JOB_COLOR[j.job_state]}>{j.job_state}</Tag>
+                                  {j.source_title || j.source_id}
+                                  {j.retry_at ? <Typography.Text type="secondary"> · 重试 {fmt(j.retry_at)}</Typography.Text> : null}
+                              </div>
+                          ))}
                 </Card>
                 <Card size="small" title="失败 / 暂停的来源">
                     {failing.length === 0
@@ -185,10 +227,34 @@ export function LibraryView({ workspaceId }: { workspaceId?: string }) {
                     pagination={false}
                     columns={[
                         { title: "标题", dataIndex: "title", render: (t: string, d: LibraryDocument) => <a href={d.url}>{t || d.url}</a> },
+                        {
+                            title: "来源",
+                            render: (_: unknown, d: LibraryDocument) =>
+                                d.source_kind ? (
+                                    <>
+                                        <Tag>{d.source_kind}</Tag>
+                                        {d.source_title || d.source_id}
+                                    </>
+                                ) : (
+                                    d.source_id
+                                ),
+                        },
                         { title: "发布时间", dataIndex: "published_at", render: fmt },
                         { title: "事件时间", dataIndex: "event_occurred_at", render: fmt },
                         { title: "采集时间", dataIndex: "collected_at", render: fmt },
+                        { title: "提取完整度", render: (_: unknown, d: LibraryDocument) => <ExtractionTag e={d.extraction} /> },
                         { title: "修订", dataIndex: "current_revision" },
+                        {
+                            title: "附件",
+                            render: (_: unknown, d: LibraryDocument) =>
+                                (d.media_objects ?? [])
+                                    .filter((m) => m.object_key)
+                                    .map((m, i) => (
+                                        <Button key={m.object_key} size="small" type="link" onClick={() => workspaceId && void downloadMedia(workspaceId, d.id, m.object_key as string).catch(() => void message.error("下载失败或无权访问"))}>
+                                            {m.type} {i + 1}
+                                        </Button>
+                                    )),
+                        },
                     ]}
                 />
             )}

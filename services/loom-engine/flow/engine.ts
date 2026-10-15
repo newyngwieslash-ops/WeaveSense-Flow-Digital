@@ -1144,7 +1144,12 @@ export class Engine {
         LEFT JOIN flow_document_revisions r ON r.document_id=d.id AND r.revision=d.current_revision AND r.tenant_id=d.tenant_id
         WHERE d.tenant_id=$1 AND d.workspace_id=$2 AND ($3::text IS NULL OR d.title ILIKE '%'||$3||'%') AND ($4::text IS NULL OR d.source_id=$4)
         ORDER BY d.published_at DESC NULLS LAST, d.id LIMIT $5`, [s.tenant_id, s.workspace_id, opts.q || null, opts.source_id || null, limit])).rows;
-    return rows.map(({ media, body_chars, extraction, ...d }: any) => ({ ...d, extraction: extractionCompleteness(extraction, Number(body_chars) || 0, typeof media === "string" ? JSON.parse(media) : (media ?? [])) }));
+    return rows.map(({ media, body_chars, extraction, ...d }: any) => {
+      const m: MediaRef[] = typeof media === "string" ? JSON.parse(media) : (media ?? []);
+      // §10.4 only object keys and status are listed; bytes come through the verified /v1/media download.
+      return { ...d, extraction: extractionCompleteness(extraction, Number(body_chars) || 0, m),
+        media_objects: m.map((x) => ({ object_key: x.status === "stored" ? x.url : null, type: x.type, status: x.status })) };
+    });
   }
 
   async getRevision(s: Scope, docId: string, rev: number) {

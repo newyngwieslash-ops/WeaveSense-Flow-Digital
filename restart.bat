@@ -58,12 +58,15 @@ call :gen_secret SECRET4
 call :gen_secret SECRET5
 call :gen_secret SECRET6
 if not defined SECRET1 goto err_nosecretgen
-call :replace_in_env "POSTGRES_SUPERUSER_PASSWORD=change-me" "POSTGRES_SUPERUSER_PASSWORD=%SECRET1%"
-call :replace_in_env "PLATFORM_DB_PASSWORD=change-me" "PLATFORM_DB_PASSWORD=%SECRET2%"
-call :replace_in_env "INTEL_DB_PASSWORD=change-me" "INTEL_DB_PASSWORD=%SECRET3%"
-call :replace_in_env "REDIS_PASSWORD=change-me" "REDIS_PASSWORD=%SECRET4%"
-call :replace_in_env "MINIO_ROOT_PASSWORD=change-me-min-8-chars" "MINIO_ROOT_PASSWORD=%SECRET5%"
-call :replace_in_env "FLOW_INTERNAL_JWT_SIGNING_KEY=change-me-32-bytes-min" "FLOW_INTERNAL_JWT_SIGNING_KEY=%SECRET6%%SECRET1%%SECRET2%"
+call :replace_in_env "POSTGRES_SUPERUSER_PASSWORD=change-me" "POSTGRES_SUPERUSER_PASSWORD=%SECRET1%" || goto err_envwrite
+call :replace_in_env "PLATFORM_DB_PASSWORD=change-me" "PLATFORM_DB_PASSWORD=%SECRET2%" || goto err_envwrite
+call :replace_in_env "INTEL_DB_PASSWORD=change-me" "INTEL_DB_PASSWORD=%SECRET3%" || goto err_envwrite
+call :replace_in_env "REDIS_PASSWORD=change-me" "REDIS_PASSWORD=%SECRET4%" || goto err_envwrite
+call :replace_in_env "MINIO_ROOT_PASSWORD=change-me-min-8-chars" "MINIO_ROOT_PASSWORD=%SECRET5%" || goto err_envwrite
+call :replace_in_env "FLOW_INTERNAL_JWT_SIGNING_KEY=change-me-32-bytes-min" "FLOW_INTERNAL_JWT_SIGNING_KEY=%SECRET6%%SECRET1%%SECRET2%" || goto err_envwrite
+rem Post-bootstrap guard: a drifted needle or silent no-op must never leave
+rem placeholder secrets behind (the platform would boot with a short JWT key).
+findstr /c:"change-me" "%ENV_FILE%" >nul 2>&1 && goto env_has_placeholder
 call :log "step 1: %ENV_FILE% bootstrapped with random secrets"
 goto env_ready
 
@@ -86,6 +89,21 @@ where docker >nul 2>&1
 if errorlevel 1 goto err_nodocker
 docker info >nul 2>&1
 if errorlevel 1 goto err_nodaemon
+
+rem Compose must still publish the fixed port (design guard: no silent move).
+set "CFG_OUT=%TEMP%\flow-compose-config.txt"
+del "%CFG_OUT%" >nul 2>&1
+call :compose config >"%CFG_OUT%" 2>nul
+set "PORT_MAPPED="
+for /f "tokens=2 delims=: " %%P in ('findstr /c:"published:" "%CFG_OUT%" 2^>nul') do (
+  if "%%~P"=="%PORT%" set "PORT_MAPPED=1"
+)
+del "%CFG_OUT%" >nul 2>&1
+if not defined PORT_MAPPED goto err_portconfig
+
+rem curl is the readiness probe; missing it would just time out confusingly.
+where curl.exe >nul 2>&1
+if errorlevel 1 goto err_nocurl
 
 rem ---------- [2/5] port guard ----------
 echo [2/5] Checking port %PORT% ...
@@ -140,13 +158,21 @@ if not errorlevel 1 goto ready
 call :sleep 3
 set /a WAITED+=3
 if %WAITED% LSS 60 goto wait_health_loop
-echo [WARN] Proceeding anyway; platform may still be migrating. Check docker compose logs platform.
-call :log "step 4: web up but health not ready after grace period - proceeding"
+echo [WARN] Proceeding WITHOUT a ready platform (web serves, health never turned ready).
+echo         Check: docker compose -f %COMPOSE_FILE% --env-file %ENV_FILE% logs platform
+call :log "step 4: DEGRADED - web up but health not ready after grace period; proceeding"
+goto degraded_open
 
 :ready
 echo [5/5] Ready after %WAITED%s. Opening browser...
 call :log "step 5: ready after %WAITED%s"
 start "" "http://127.0.0.1:%PORT%/"
+goto post_open
+
+:degraded_open
+start "" "http://127.0.0.1:%PORT%/"
+
+:post_open
 echo.
 echo   Stack:    weavesense-flow  (compose project)
 echo   URL:      http://127.0.0.1:%PORT%/
@@ -181,7 +207,7 @@ if not defined PORT_OWNER_PID exit /b 0
 if "%APP_WAS_RUNNING%"=="1" exit /b 0
 for /f "usebackq delims=" %%N in (`docker ps --filter "publish=%PORT%" --format "{{.Names}}" 2^>nul`) do set "OTHER_CONTAINER=%%N"
 if defined OTHER_CONTAINER exit /b 0
-for /f "tokens=1 delims=," %%N in ('tasklist /fi "PID eq %PORT_OWNER_PID%" /fo csv /nh 2^>nul') do set "PORT_OWNER_NAME=%%~N"
+for /f "tokens=1 delims=," %%N in ('tasklist /fi "PID eq %PORT_OWNER_PID%" /fo csv /nh 2^>nul') do if /i not "%%~N"=="INFO:" if not defined PORT_OWNER_NAME set "PORT_OWNER_NAME=%%~N"
 exit /b 0
 
 :gen_secret
@@ -194,8 +220,8 @@ exit /b 0
 
 :replace_in_env
 rem %1 = <needle>  %2 = <replacement>. One PowerShell call per line; file is small.
-powershell -NoProfile -Command "$f='%ENV_FILE%';$t=Get-Content $f -Raw;$t=$t.Replace('%~1','%~2');Set-Content -Path $f -Value $t -NoNewline -Encoding ascii" >nul 2>&1
-if errorlevel 1 goto err_envwrite
+powershell -NoProfile -Command "$f='%ENV_FILE%';$t=Get-Content $f -Raw;$t=$t.Replace('%~1','%~2');Set-Content -Path $f -Value $t -NoNewline -Encoding UTF8" >nul 2>&1
+if errorlevel 1 exit /b 1
 exit /b 0
 
 :compose
@@ -238,6 +264,20 @@ goto fail
 echo [ERROR] Docker engine is not running. Start Docker Desktop, then retry.
 echo         Volumes and data were not touched.
 call :log "FATAL docker engine not ready"
+goto fail
+
+:err_nocurl
+echo [ERROR] curl.exe not found in PATH (built into Windows since 1803).
+echo         Install curl or update Windows; the readiness probe needs it.
+call :log "FATAL curl.exe missing"
+goto fail
+
+:err_portconfig
+echo [ERROR] %COMPOSE_FILE% no longer publishes port %PORT%.
+echo         This launcher starts the app on the fixed port %PORT%; refusing to
+echo         start it somewhere else. Update FLOW_HTTP_PORT here and the compose
+echo         ports mapping together if %PORT% is really being changed.
+call :log "FATAL compose no longer publishes %PORT%"
 goto fail
 
 :err_portbusy

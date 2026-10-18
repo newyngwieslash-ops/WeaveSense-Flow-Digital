@@ -4,10 +4,10 @@
 
 Add a root `restart.bat` aligned with `docs/flow/local-acceptance.md` sections 2-4:
 
-1. **Env bootstrap**: when `.env.flow` is absent, copy `.env.flow.example` and replace the six `change-me` placeholders (POSTGRES_SUPERUSER_PASSWORD, PLATFORM_DB_PASSWORD, INTEL_DB_PASSWORD, REDIS_PASSWORD, MINIO_ROOT_PASSWORD, FLOW_INTERNAL_JWT_SIGNING_KEY) with random values from `openssl`/PowerShell. Never touch an existing `.env.flow`.
+1. **Env bootstrap**: when `.env.flow` is absent, copy `.env.flow.example` and replace the six `change-me` placeholders (POSTGRES_SUPERUSER_PASSWORD, PLATFORM_DB_PASSWORD, INTEL_DB_PASSWORD, REDIS_PASSWORD, MINIO_ROOT_PASSWORD, FLOW_INTERNAL_JWT_SIGNING_KEY) with random values from `openssl`/PowerShell. Never touch an existing `.env.flow` that is already placeholder-free; reject an existing file that still contains any `change-me` (a short JWT key silently disables the engine proxy). After bootstrap, re-scan for leftover placeholders and abort if any survive.
 2. **Port guard** (pattern reused from `services/loom-engine/restart.bat`): parse `docker compose config` output to confirm `published: 8088` still exists; abort with an error instead of silently starting on another port.
 3. **Start**: `docker compose -f docker-compose.flow.yml --env-file .env.flow up -d --build`; on build failure retry with `--no-build` using existing local images (same behavior as the loom-engine script).
-4. **Readiness wait**: poll `curl http://127.0.0.1:8088/api/health` (platform `/api/health` must return `"ready":true`; 10 minute cap), then open the browser.
+4. **Readiness wait**: poll `curl http://127.0.0.1:8088/api/health` (platform `/api/health` must return `"ready":true`; 10 minute cap), then open the browser. If the web serves but health never turns ready within a 60s grace, proceed with a clearly labelled DEGRADED warning instead of a misleading "ready" message. `curl.exe` presence is pre-checked with a clear error.
 5. **Optional smoke**: `restart.bat smoke` additionally runs `deploy/flow/smoke.sh` via Git Bash after readiness; default double-click does not run it.
 
 ## Key decisions

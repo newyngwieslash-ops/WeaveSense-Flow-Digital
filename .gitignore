@@ -83,3 +83,4 @@ backend/tmp_*
 # WeaveSense-Flow: versioned docs and env template
 !docs/flow/
 !.env.flow.example
+.comet/

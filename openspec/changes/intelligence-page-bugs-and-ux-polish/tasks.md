@@ -7,4 +7,4 @@
 
 ## 2. 情报工作台跨视图 Agent 侧栏、中文 UI 与 UI-Kit 组件对齐
 
-- [ ] 2.1 在 `web/src/pages/intelligence/index.tsx` 中提供跨 9 个子视图可达的「情报助手 & 监控」侧栏/抽屉（`AppDrawer`），并将对话、监控、审批卡片文案统一为中文；在 `web/src/pages/intelligence/{sources-panel,reports-panel,topics-panel,monitor-editor,workspace-admin-panel,mcp,plan-card}.tsx` 中完成中文化、修正 Telegram 媒体提示、统一成员角色选项（`admin`/`editor`/`viewer`），并将 `antd` `Alert`/`Badge`/`Modal` 替换为 `Callout`/`StatusBadge`/`AppModal`；在 `web/test/intelligence-gaps9.test.ts` 补充 UI-Kit 导入契约断言，运行 `cd web && bun test test/intelligence-gaps9.test.ts && bun run build` 验证通过
+- [x] 2.1 在 `web/src/pages/intelligence/index.tsx` 中提供跨 9 个子视图可达的「情报助手 & 监控」侧栏/抽屉（`AppDrawer`），并将对话、监控、审批卡片文案统一为中文；在 `web/src/pages/intelligence/{sources-panel,reports-panel,topics-panel,monitor-editor,workspace-admin-panel,mcp,plan-card}.tsx` 中完成中文化、修正 Telegram 媒体提示、统一成员角色选项（`admin`/`editor`/`viewer`），并将 `antd` `Alert`/`Badge`/`Modal` 替换为 `Callout`/`StatusBadge`/`AppModal`；在 `web/test/intelligence-gaps9.test.ts` 补充 UI-Kit 导入契约断言，运行 `cd web && bun test test/intelligence-gaps9.test.ts && bun run build` 验证通过

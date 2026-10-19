@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, Card, Input, List, Select, Space, Tabs, Tag, Typography, message } from "antd";
 import { Link, useNavigate, useParams } from "react-router";
+import { AppDrawer } from "@/components/ui/product/app-drawer/app-drawer";
 import { EmptyState } from "@/components/ui/product/empty-state/empty-state";
+import { useUserStore } from "@/stores/use-user-store";
 import { ReportsPanel } from "./reports-panel";
 import { SourcesPanel } from "./sources-panel";
 import { JobsView, KeywordsView, LibraryView, OverviewView, PacksView } from "./views";
@@ -52,6 +54,7 @@ export default function IntelligencePage() {
     const params = useParams();
     const navigate = useNavigate();
     const view = intelView(params.view);
+    const userId = useUserStore((s) => s.user?.id);
     const [workspaces, setWorkspaces] = useState<IntelWorkspace[]>([]);
     const [workspaceId, setWorkspaceId] = useState<string>();
     const [conversations, setConversations] = useState<FlowConversation[]>(cachedConversations);
@@ -64,16 +67,20 @@ export default function IntelligencePage() {
     const [streaming, setStreaming] = useState("");
     const [approval, setApproval] = useState<AgentApproval>();
     const [editingMonitor, setEditingMonitor] = useState<IntelMonitor>();
+    const [agentDrawerOpen, setAgentDrawerOpen] = useState(false);
     const unsubscribe = useRef<(() => void) | undefined>(undefined);
     useEffect(() => () => unsubscribe.current?.(), []);
 
     useEffect(() => {
+        setConversations(cachedConversations());
+        setActive(undefined);
+        setMessages([]);
         void listIntelWorkspaces().then((list) => {
             setWorkspaces(list);
             setWorkspaceId((current) => current ?? list[0]?.id);
         });
         void listConversations().then(setConversations);
-    }, []);
+    }, [userId]);
 
     const refreshMonitors = useCallback(() => {
         if (workspaceId)
@@ -93,15 +100,15 @@ export default function IntelligencePage() {
             await op();
         } catch (e) {
             const status = (e as { status?: number }).status;
-            void message.error(status === 409 ? "The message changed elsewhere; reloaded." : "Update failed");
+            void message.error(status === 409 ? "该消息已在其他位置更新，已重新加载" : "更新失败");
         }
         if (active) await refreshMessages(active);
     };
 
     const ensureConversation = async () => {
         if (active) return active;
-        if (!workspaceId) throw new Error("no workspace");
-        const conv = await createConversation({ kind: "intelligence_workspace", id: workspaceId }, text.slice(0, 60) || "Intelligence chat");
+        if (!workspaceId) throw new Error("未选择工作区");
+        const conv = await createConversation({ kind: "intelligence_workspace", id: workspaceId }, text.slice(0, 60) || "情报助手对话");
         setActive(conv);
         setConversations(await listConversations());
         return conv;
@@ -144,7 +151,7 @@ export default function IntelligencePage() {
             });
         } catch (err) {
             setRunId(undefined);
-            void message.error(err instanceof Error ? err.message : "agent run failed");
+            void message.error(err instanceof Error ? err.message : "智能体运行失败");
         }
     };
 
@@ -158,7 +165,7 @@ export default function IntelligencePage() {
         const conv = await ensureConversation();
         const result = await callTool(conv.id, newCallId(), name, args);
         if (result.status === "waiting_approval") setPending((p) => [...p, result]);
-        if (result.status === "failed") void message.error(result.error || "tool failed");
+        if (result.status === "failed") void message.error(result.error || "工具调用失败");
         await refreshMessages(conv);
         return result;
     };
@@ -166,15 +173,159 @@ export default function IntelligencePage() {
     const decide = (r: ToolResult) => {
         // Manual tool calls no longer approve outside the agent: apply_monitor is approved via the Pi run chain.
         setPending((p) => p.filter((x) => x !== r));
-        void message.info("Ask the agent to create the monitor; approval happens in the agent run.");
+        void message.info("请在对话中让情报助手创建监控，并在运行过程中完成审批。");
     };
+
+    const conversationsCard = (
+        <Card size="small" title="会话列表">
+            <Select style={{ width: "100%", marginBottom: 8 }} value={workspaceId} onChange={setWorkspaceId} options={workspaces.map((w) => ({ value: w.id, label: w.name }))} />
+            <Button
+                block
+                onClick={() => {
+                    setActive(undefined);
+                    setMessages([]);
+                }}
+            >
+                新建会话
+            </Button>
+            <List
+                size="small"
+                dataSource={conversations}
+                locale={{ emptyText: "暂无会话" }}
+                renderItem={(c) => (
+                    <List.Item
+                        style={{ cursor: "pointer", fontWeight: c.id === active?.id ? 600 : 400 }}
+                        onClick={() => {
+                            setActive(c);
+                            void refreshMessages(c);
+                        }}
+                    >
+                        {c.subjectKind === "canvas" && <Tag color="purple">画布</Tag>}
+                        {c.subjectKind === "topic" && <Tag color="gold">专题</Tag>}
+                        {c.title || c.id}
+                    </List.Item>
+                )}
+            />
+        </Card>
+    );
+
+    const chatCard = (
+        <Card size="small" title="情报助手对话">
+            <div style={{ minHeight: 320, maxHeight: 520, overflow: "auto" }}>
+                {messages.length === 0 ? (
+                    <EmptyState title="围绕已采集情报提问或发起研究" />
+                ) : (
+                    messages.map((m) => (
+                        <div key={m.id} style={{ marginBottom: 8 }}>
+                            <Tag>{m.toolName || m.role}</Tag>
+                            <Typography.Text
+                                style={{ whiteSpace: "pre-wrap" }}
+                                editable={active && (m.role === "user" || m.role === "assistant") ? { onChange: (v) => void mutateMessage(() => editMessage(active.id, m.id, v, m.revision ?? 0)) } : false}
+                            >
+                                {m.content.slice(0, 2000)}
+                            </Typography.Text>
+                            {active && (m.role === "user" || m.role === "assistant") && (
+                                <Button size="small" type="link" danger onClick={() => void mutateMessage(() => deleteMessage(active.id, m.id))}>
+                                    删除
+                                </Button>
+                            )}
+                        </div>
+                    ))
+                )}
+                {streaming && (
+                    <div style={{ marginBottom: 8 }}>
+                        <Tag color="blue">assistant</Tag>
+                        <Typography.Text style={{ whiteSpace: "pre-wrap" }}>{streaming}</Typography.Text>
+                    </div>
+                )}
+            </div>
+            <Space.Compact style={{ width: "100%" }}>
+                <Input value={text} onChange={(e) => setText(e.target.value)} onPressEnter={() => void send()} placeholder="输入问题或指令…" />
+                <Button type="primary" loading={!!runId} onClick={() => void send()}>
+                    发送
+                </Button>
+                <Button onClick={() => void runTool("intel_search_documents", { query: text })} disabled={!text.trim()}>
+                    检索
+                </Button>
+            </Space.Compact>
+            {approval && (
+                <Card size="small" style={{ marginTop: 8 }} title={`待审批：${approval.call.function.name}`}>
+                    <ApprovalDetails workspaceId={workspaceId} tool={approval.call.function.name} rawArgs={approval.call.function.arguments} />
+                    <Space style={{ marginTop: 8 }}>
+                        <Button type="primary" onClick={() => void decideRun(true)}>
+                            批准
+                        </Button>
+                        <Button danger onClick={() => void decideRun(false)}>
+                            拒绝
+                        </Button>
+                    </Space>
+                </Card>
+            )}
+            {pending.map((p) => (
+                <Card key={p.callId} size="small" style={{ marginTop: 8 }} title={`需在助手运行中审批：${p.tool}`}>
+                    <Button onClick={() => decide(p)}>知道了</Button>
+                </Card>
+            ))}
+        </Card>
+    );
+
+    const monitorsCard = (
+        <Card
+            size="small"
+            title="监控列表"
+            extra={
+                <Button size="small" onClick={refreshMonitors}>
+                    刷新
+                </Button>
+            }
+        >
+            <List
+                size="small"
+                dataSource={monitors}
+                locale={{ emptyText: "暂无监控" }}
+                renderItem={(m) => (
+                    <List.Item
+                        actions={[
+                            <Button key="edit" size="small" type="link" onClick={() => setEditingMonitor(m)}>
+                                编辑
+                            </Button>,
+                        ]}
+                    >
+                        <div>
+                            <div>{m.name}</div>
+                            <Typography.Text type="secondary">
+                                每 {Math.round(m.interval_seconds / 60)} 分钟 · {m.timezone} · {m.keywords.join(", ")} · 上限 {credits(m.budget_micro_per_window)}
+                            </Typography.Text>
+                        </div>
+                    </List.Item>
+                )}
+            />
+        </Card>
+    );
 
     const nav = (
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 16px 0" }}>
             <Select style={{ width: 200 }} value={workspaceId} onChange={setWorkspaceId} options={workspaces.map((w) => ({ value: w.id, label: w.name }))} />
-            <Tabs activeKey={view} onChange={(k) => void navigate(k === "overview" ? "/intelligence" : `/intelligence/${k}`)} items={INTEL_VIEWS.map((v) => ({ key: v.key, label: v.label }))} />
+            <Tabs style={{ flex: 1, minWidth: 0 }} activeKey={view} onChange={(k) => void navigate(k === "overview" ? "/intelligence" : `/intelligence/${k}`)} items={INTEL_VIEWS.map((v) => ({ key: v.key, label: v.label }))} />
+            {view !== "topics" && (
+                <Button onClick={() => setAgentDrawerOpen(true)}>
+                    情报助手{monitors.length ? ` · 监控 (${monitors.length})` : ""}
+                </Button>
+            )}
         </div>
     );
+
+    const monitorEditorModal = (
+        <MonitorEditor
+            workspaceId={workspaceId}
+            monitor={editingMonitor}
+            onClose={(changed) => {
+                setEditingMonitor(undefined);
+                if (changed) refreshMonitors();
+            }}
+        />
+    );
+
     if (view !== "topics") {
         return (
             <>
@@ -194,6 +345,14 @@ export default function IntelligencePage() {
                         <WorkspaceAdminPanel workspaceId={workspaceId} onWorkspacesChanged={() => void listIntelWorkspaces().then(setWorkspaces)} />
                     </>
                 )}
+                <AppDrawer open={agentDrawerOpen} onClose={() => setAgentDrawerOpen(false)} title="情报助手与监控" width={480}>
+                    <Space direction="vertical" style={{ width: "100%" }} size={12}>
+                        {conversationsCard}
+                        {chatCard}
+                        {monitorsCard}
+                    </Space>
+                </AppDrawer>
+                {monitorEditorModal}
             </>
         );
     }
@@ -203,35 +362,7 @@ export default function IntelligencePage() {
             {nav}
             <div style={{ display: "grid", gridTemplateColumns: "240px 1fr 320px", gap: 16, padding: 16 }}>
                 <Space direction="vertical" style={{ width: "100%" }}>
-                    <Card size="small" title="Conversations">
-                        <Select style={{ width: "100%", marginBottom: 8 }} value={workspaceId} onChange={setWorkspaceId} options={workspaces.map((w) => ({ value: w.id, label: w.name }))} />
-                        <Button
-                            block
-                            onClick={() => {
-                                setActive(undefined);
-                                setMessages([]);
-                            }}
-                        >
-                            New
-                        </Button>
-                        <List
-                            size="small"
-                            dataSource={conversations}
-                            renderItem={(c) => (
-                                <List.Item
-                                    style={{ cursor: "pointer", fontWeight: c.id === active?.id ? 600 : 400 }}
-                                    onClick={() => {
-                                        setActive(c);
-                                        void refreshMessages(c);
-                                    }}
-                                >
-                                    {c.subjectKind === "canvas" && <Tag color="purple">canvas</Tag>}
-                                    {c.subjectKind === "topic" && <Tag color="gold">topic</Tag>}
-                                    {c.title || c.id}
-                                </List.Item>
-                            )}
-                        />
-                    </Card>
+                    {conversationsCard}
                     <TopicsPanel
                         workspaceId={workspaceId}
                         onOpen={(t) =>
@@ -243,102 +374,9 @@ export default function IntelligencePage() {
                         }
                     />
                 </Space>
-                <Card size="small" title="Intelligence chat">
-                    <div style={{ minHeight: 320, maxHeight: 520, overflow: "auto" }}>
-                        {messages.length === 0 ? (
-                            <EmptyState title="Ask about collected materials" />
-                        ) : (
-                            messages.map((m) => (
-                                <div key={m.id} style={{ marginBottom: 8 }}>
-                                    <Tag>{m.toolName || m.role}</Tag>
-                                    <Typography.Text
-                                        style={{ whiteSpace: "pre-wrap" }}
-                                        editable={active && (m.role === "user" || m.role === "assistant") ? { onChange: (v) => void mutateMessage(() => editMessage(active.id, m.id, v, m.revision ?? 0)) } : false}
-                                    >
-                                        {m.content.slice(0, 2000)}
-                                    </Typography.Text>
-                                    {active && (m.role === "user" || m.role === "assistant") && (
-                                        <Button size="small" type="link" danger onClick={() => void mutateMessage(() => deleteMessage(active.id, m.id))}>
-                                            Delete
-                                        </Button>
-                                    )}
-                                </div>
-                            ))
-                        )}
-                        {streaming && (
-                            <div style={{ marginBottom: 8 }}>
-                                <Tag color="blue">assistant</Tag>
-                                <Typography.Text style={{ whiteSpace: "pre-wrap" }}>{streaming}</Typography.Text>
-                            </div>
-                        )}
-                    </div>
-                    <Space.Compact style={{ width: "100%" }}>
-                        <Input value={text} onChange={(e) => setText(e.target.value)} onPressEnter={() => void send()} placeholder="Message" />
-                        <Button type="primary" loading={!!runId} onClick={() => void send()}>
-                            Send
-                        </Button>
-                        <Button onClick={() => void runTool("intel_search_documents", { query: text })} disabled={!text.trim()}>
-                            Search
-                        </Button>
-                    </Space.Compact>
-                    {approval && (
-                        <Card size="small" style={{ marginTop: 8 }} title={`Approval needed: ${approval.call.function.name}`}>
-                            <ApprovalDetails workspaceId={workspaceId} tool={approval.call.function.name} rawArgs={approval.call.function.arguments} />
-                            <Space style={{ marginTop: 8 }}>
-                                <Button type="primary" onClick={() => void decideRun(true)}>
-                                    Approve
-                                </Button>
-                                <Button danger onClick={() => void decideRun(false)}>
-                                    Reject
-                                </Button>
-                            </Space>
-                        </Card>
-                    )}
-                    {pending.map((p) => (
-                        <Card key={p.callId} size="small" style={{ marginTop: 8 }} title={`Needs agent approval: ${p.tool}`}>
-                            <Button onClick={() => decide(p)}>Dismiss</Button>
-                        </Card>
-                    ))}
-                </Card>
-                <Card
-                    size="small"
-                    title="Monitors"
-                    extra={
-                        <Button size="small" onClick={refreshMonitors}>
-                            Refresh
-                        </Button>
-                    }
-                >
-                    <List
-                        size="small"
-                        dataSource={monitors}
-                        locale={{ emptyText: "No monitors yet" }}
-                        renderItem={(m) => (
-                            <List.Item
-                                actions={[
-                                    <Button key="edit" size="small" type="link" onClick={() => setEditingMonitor(m)}>
-                                        编辑
-                                    </Button>,
-                                ]}
-                            >
-                                <div>
-                                    <div>{m.name}</div>
-                                    <Typography.Text type="secondary">
-                                        every {Math.round(m.interval_seconds / 60)} min · {m.timezone} · {m.keywords.join(", ")} · 上限 {credits(m.budget_micro_per_window)}
-                                    </Typography.Text>
-                                </div>
-                            </List.Item>
-                        )}
-                    />
-                </Card>
-                <MonitorEditor
-                    workspaceId={workspaceId}
-                    monitor={editingMonitor}
-                    onClose={(changed) => {
-                        setEditingMonitor(undefined);
-                        if (changed) refreshMonitors();
-                    }}
-                />
+                {chatCard}
+                {monitorsCard}
+                {monitorEditorModal}
             </div>
         </>
     );

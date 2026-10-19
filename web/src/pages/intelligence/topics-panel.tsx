@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Button, Card, Form, Input, List, Modal, Select, Tag, message } from "antd";
+import { Button, Card, Form, Input, List, Select, Tag, message } from "antd";
+import { AppModal } from "@/components/ui/product/app-modal/app-modal";
 
 import { createTopic, listSources, listTopics, updateTopic, type IntelSource, type IntelTopic, type TopicInput } from "@/services/api/intelligence";
 
@@ -76,7 +77,7 @@ export function TopicsPanel({ workspaceId, onOpen }: { workspaceId?: string; onO
                     </List.Item>
                 )}
             />
-            <Modal open={!!editing} title={editing === "new" ? "新建专题" : "编辑专题"} onOk={() => void save()} onCancel={() => setEditing(undefined)} okText="保存" cancelText="取消">
+            <AppModal open={!!editing} title={editing === "new" ? "新建专题" : "编辑专题"} onOk={() => void save()} onCancel={() => setEditing(undefined)} okText="保存" cancelText="取消">
                 <Form form={form} layout="vertical">
                     <Form.Item name="title" label="标题" rules={[{ required: true, max: 200 }]}>
                         <Input />
@@ -94,7 +95,7 @@ export function TopicsPanel({ workspaceId, onOpen }: { workspaceId?: string; onO
                         <Input.TextArea rows={3} />
                     </Form.Item>
                 </Form>
-            </Modal>
+            </AppModal>
         </Card>
     );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { App, Form, Input, InputNumber, Modal, Select, message } from "antd";
+import { App, Form, Input, InputNumber, Select, message } from "antd";
+import { AppModal } from "@/components/ui/product/app-modal/app-modal";
 
 import { updateMonitor, type IntelMonitor, type MonitorUpdate } from "@/services/api/intelligence";
 
@@ -61,7 +62,7 @@ export function MonitorEditor({ workspaceId, monitor, onClose }: { workspaceId?:
         }
     };
     return (
-        <Modal open={!!monitor} title={`编辑监控：${monitor?.name ?? ""}`} confirmLoading={saving} onOk={() => void submit()} onCancel={() => onClose(false)} okText="保存" cancelText="取消">
+        <AppModal open={!!monitor} title={`编辑监控：${monitor?.name ?? ""}`} confirmLoading={saving} onOk={() => void submit()} onCancel={() => onClose(false)} okText="保存" cancelText="取消">
             <Form form={form} layout="vertical">
                 <Form.Item name="keywords" label="关键词" rules={[{ required: true }]}>
                     <Select mode="tags" />
@@ -76,6 +77,6 @@ export function MonitorEditor({ workspaceId, monitor, onClose }: { workspaceId?:
                     <Input />
                 </Form.Item>
             </Form>
-        </Modal>
+        </AppModal>
     );
 }

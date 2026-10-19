@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Badge, Button, Card, Input, List, Select, Space, Tag, Typography, message } from "antd";
+import { Button, Card, Input, List, Select, Space, Tag, Typography, message } from "antd";
+import { StatusBadge } from "@/components/ui/base/badges";
 
 import {
     acceptInvite,
@@ -78,32 +79,33 @@ export function WorkspaceAdminPanel({ workspaceId, onWorkspacesChanged }: { work
     const installedIds = new Set(installed.map((i) => `${i.skillId}@${i.version}`));
 
     return (
-        <Space direction="vertical" style={{ width: "100%" }}>
+        <Space direction="vertical" style={{ width: "100%", padding: "0 16px 16px" }}>
             <Card
                 size="small"
                 title={
-                    <Badge count={unread} offset={[12, 0]}>
-                        Notifications
-                    </Badge>
+                    <Space size={8}>
+                        <span>站内通知</span>
+                        <StatusBadge tone={unread > 0 ? "warning" : "neutral"} size="sm" label={unread > 0 ? `${unread} 条未读` : "全部已读"} />
+                    </Space>
                 }
                 extra={
-                    <Button size="small" disabled={!unread} onClick={() => run(() => markNotificationRead(workspaceId, "all"), "All read")}>
-                        Mark all read
+                    <Button size="small" disabled={!unread} onClick={() => run(() => markNotificationRead(workspaceId, "all"), "已全部标为已读")}>
+                        全部标为已读
                     </Button>
                 }
             >
                 <List
                     size="small"
                     dataSource={notes.slice(0, 20)}
-                    locale={{ emptyText: "No notifications" }}
+                    locale={{ emptyText: "暂无通知" }}
                     renderItem={(n) => (
                         <List.Item
                             actions={
                                 n.readAt
                                     ? []
                                     : [
-                                          <a key="r" onClick={() => run(() => markNotificationRead(workspaceId, n.id), "Marked read")}>
-                                              mark read
+                                          <a key="r" onClick={() => run(() => markNotificationRead(workspaceId, n.id), "已标为已读")}>
+                                              标为已读
                                           </a>,
                                       ]
                             }
@@ -117,15 +119,16 @@ export function WorkspaceAdminPanel({ workspaceId, onWorkspacesChanged }: { work
                     )}
                 />
             </Card>
-            <Card size="small" title="Skill packs">
+            <Card size="small" title="技能包">
                 <List
                     size="small"
                     dataSource={packs}
+                    locale={{ emptyText: "暂无可用技能包" }}
                     renderItem={(p) => (
                         <List.Item
                             actions={[
-                                <Button key="i" size="small" onClick={() => run(() => installSkills(workspaceId, { packId: p.id }), `Installed ${p.name}`)}>
-                                    Install pack
+                                <Button key="i" size="small" onClick={() => run(() => installSkills(workspaceId, { packId: p.id }), `已安装 ${p.name}`)}>
+                                    安装技能包
                                 </Button>,
                             ]}
                         >
@@ -142,32 +145,32 @@ export function WorkspaceAdminPanel({ workspaceId, onWorkspacesChanged }: { work
                     )}
                 />
             </Card>
-            <Card size="small" title="Billing">
+            <Card size="small" title="计费与预算预留">
                 {account ? (
                     <Space direction="vertical" style={{ width: "100%" }}>
                         <Space wrap>
-                            <Tag color={account.kind === "shared" ? "purple" : "default"}>{account.kind} account</Tag>
-                            <span>Monthly quota: {account.monthlyQuotaMicro ? credits(account.monthlyQuotaMicro) : "unlimited"}</span>
+                            <Tag color={account.kind === "shared" ? "purple" : "default"}>{account.kind === "shared" ? "团队共享账户" : "个人账户"}</Tag>
+                            <span>月度配额：{account.monthlyQuotaMicro ? `${credits(account.monthlyQuotaMicro)} 积分` : "不限额"}</span>
                         </Space>
                         <List
                             size="small"
                             dataSource={reservations.slice(0, 10)}
-                            locale={{ emptyText: "No reservations" }}
+                            locale={{ emptyText: "暂无预算预留记录" }}
                             renderItem={(r) => (
                                 <List.Item>
                                     <Space wrap>
                                         <Tag color={r.status === "unknown" ? "orange" : r.status === "reserved" ? "blue" : "default"}>{r.status}</Tag>
                                         <span>{r.purpose}</span>
                                         <span>
-                                            reserved {credits(r.reservedMicro)} · used {credits(r.consumedMicro)}
+                                            预留 {credits(r.reservedMicro)} · 实耗 {credits(r.consumedMicro)}
                                         </span>
                                         {r.status === "unknown" && (
                                             <>
-                                                <Button size="small" onClick={() => void run(() => resolveReservation(workspaceId!, r.id, "succeeded"), "Charged")}>
-                                                    Mark executed
+                                                <Button size="small" onClick={() => void run(() => resolveReservation(workspaceId!, r.id, "succeeded"), "已确认扣费")}>
+                                                    标记已执行
                                                 </Button>
-                                                <Button size="small" onClick={() => void run(() => resolveReservation(workspaceId!, r.id, "not_executed"), "Released")}>
-                                                    Mark not executed
+                                                <Button size="small" onClick={() => void run(() => resolveReservation(workspaceId!, r.id, "not_executed"), "已释放预留")}>
+                                                    标记未执行
                                                 </Button>
                                             </>
                                         )}
@@ -177,14 +180,14 @@ export function WorkspaceAdminPanel({ workspaceId, onWorkspacesChanged }: { work
                         />
                     </Space>
                 ) : (
-                    <Typography.Text type="secondary">Billing unavailable</Typography.Text>
+                    <Typography.Text type="secondary">暂无计费账户信息</Typography.Text>
                 )}
             </Card>
-            <Card size="small" title={`Members (${members.length})`}>
+            <Card size="small" title={`工作区成员（${members.length}）`}>
                 <List
                     size="small"
                     dataSource={members}
-                    locale={{ emptyText: "No members" }}
+                    locale={{ emptyText: "暂无成员" }}
                     renderItem={(m) => (
                         <List.Item>
                             <Space wrap>
@@ -194,13 +197,13 @@ export function WorkspaceAdminPanel({ workspaceId, onWorkspacesChanged }: { work
                                 ) : (
                                     <Select
                                         size="small"
-                                        style={{ width: 120 }}
-                                        value={m.role}
-                                        onChange={(role: "admin" | "member" | "viewer") => void run(() => setMemberRole(workspaceId!, m.userId, role), "Role updated")}
+                                        style={{ width: 150 }}
+                                        value={m.role === "member" ? "editor" : m.role}
+                                        onChange={(role: "admin" | "editor" | "viewer") => void run(() => setMemberRole(workspaceId!, m.userId, role), "成员角色已更新")}
                                         options={[
-                                            { value: "admin", label: "admin" },
-                                            { value: "member", label: "member" },
-                                            { value: "viewer", label: "viewer" },
+                                            { value: "admin", label: "管理员 (admin)" },
+                                            { value: "editor", label: "编辑者 (editor)" },
+                                            { value: "viewer", label: "只读 (viewer)" },
                                         ]}
                                     />
                                 )}
@@ -209,10 +212,10 @@ export function WorkspaceAdminPanel({ workspaceId, onWorkspacesChanged }: { work
                     )}
                 />
             </Card>
-            <Card size="small" title="Organization & invites">
+            <Card size="small" title="组织与成员邀请">
                 <Space direction="vertical" style={{ width: "100%" }}>
                     <Space.Compact style={{ width: "100%" }}>
-                        <Input placeholder="New organization name" value={orgName} onChange={(e) => setOrgName(e.target.value)} />
+                        <Input placeholder="新组织名称" value={orgName} onChange={(e) => setOrgName(e.target.value)} />
                         <Button
                             disabled={!orgName.trim()}
                             onClick={() =>
@@ -220,30 +223,39 @@ export function WorkspaceAdminPanel({ workspaceId, onWorkspacesChanged }: { work
                                     await createOrganization(orgName.trim());
                                     setOrgName("");
                                     onWorkspacesChanged?.();
-                                }, "Organization created")
+                                }, "组织已创建")
                             }
                         >
-                            Create
+                            创建组织
                         </Button>
                     </Space.Compact>
                     <Space.Compact style={{ width: "100%" }}>
-                        <Input placeholder="Invitee email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} />
-                        <Select value={inviteRole} onChange={setInviteRole} style={{ width: 110 }} options={["viewer", "editor", "admin"].map((r) => ({ value: r, label: r }))} />
+                        <Input placeholder="受邀人邮箱" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} />
+                        <Select
+                            value={inviteRole}
+                            onChange={setInviteRole}
+                            style={{ width: 150 }}
+                            options={[
+                                { value: "viewer", label: "只读 (viewer)" },
+                                { value: "editor", label: "编辑者 (editor)" },
+                                { value: "admin", label: "管理员 (admin)" },
+                            ]}
+                        />
                         <Button
                             disabled={!inviteEmail.trim()}
                             onClick={() =>
                                 run(async () => {
                                     const r = await createInvite(workspaceId, inviteEmail.trim(), inviteRole);
                                     setInviteToken(r.token);
-                                }, "Invite created")
+                                }, "邀请令已生成")
                             }
                         >
-                            Invite
+                            生成邀请
                         </Button>
                     </Space.Compact>
                     {inviteToken && <Typography.Text copyable>{inviteToken}</Typography.Text>}
                     <Space.Compact style={{ width: "100%" }}>
-                        <Input placeholder="Invite token" value={acceptToken} onChange={(e) => setAcceptToken(e.target.value)} />
+                        <Input placeholder="输入邀请令加入工作区" value={acceptToken} onChange={(e) => setAcceptToken(e.target.value)} />
                         <Button
                             disabled={!acceptToken.trim()}
                             onClick={() =>
@@ -251,10 +263,10 @@ export function WorkspaceAdminPanel({ workspaceId, onWorkspacesChanged }: { work
                                     await acceptInvite(acceptToken.trim());
                                     setAcceptToken("");
                                     onWorkspacesChanged?.();
-                                }, "Joined workspace")
+                                }, "已加入工作区")
                             }
                         >
-                            Accept
+                            接受邀请
                         </Button>
                     </Space.Compact>
                 </Space>

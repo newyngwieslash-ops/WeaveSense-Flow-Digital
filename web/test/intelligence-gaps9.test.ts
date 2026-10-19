@@ -75,4 +75,26 @@ describe("intelligence audit-8 UI helpers", () => {
             });
         }
     });
+    test("intelligence pages use UI-Kit components (AppDrawer/AppModal/Callout/StatusBadge) and accurate Chinese copy", async () => {
+        const dir = `${import.meta.dir}/../src/pages/intelligence`;
+        const files = ["index.tsx", "sources-panel.tsx", "reports-panel.tsx", "topics-panel.tsx", "monitor-editor.tsx", "workspace-admin-panel.tsx", "mcp.tsx", "plan-card.tsx"];
+        for (const f of files) {
+            const text = await Bun.file(`${dir}/${f}`).text();
+            const antdImport = /import\s*\{([^}]+)\}\s*from\s*["']antd["']/.exec(text)?.[1] ?? "";
+            const specs = antdImport.split(",").map((s) => s.trim());
+            expect(specs).not.toContain("Alert");
+            expect(specs).not.toContain("Badge");
+            expect(specs).not.toContain("Modal");
+            expect(specs).not.toContain("Drawer");
+        }
+        const indexSrc = await Bun.file(`${dir}/index.tsx`).text();
+        expect(indexSrc).toContain("AppDrawer");
+        expect(indexSrc).toContain("情报助手");
+        const sourcesSrc = await Bun.file(`${dir}/sources-panel.tsx`).text();
+        expect(sourcesSrc).not.toContain("Text only: media attachments");
+        expect(sourcesSrc).toContain("支持公开频道消息与受管大小内的媒体附件采集");
+        const adminSrc = await Bun.file(`${dir}/workspace-admin-panel.tsx`).text();
+        expect(adminSrc).toContain("StatusBadge");
+        expect(adminSrc).toContain('value: "editor"');
+    });
 });

@@ -5,6 +5,14 @@ description: 当前项目已实现功能的手工验证清单与未确认边界
 
 # 待测试
 
+## 情报工作台会话缓存隔离、成员角色回显与中文 UI 体验优化
+
+- 已修复：情报会话本地热启动缓存按当前登录用户 ID 隔离（`flow.conversations.cache.v1:${userId}`），未登录时不读写共享缓存，避免切换账号闪现上一用户会话标题。
+- 已修复：后端 `ListMembers` 结合当前工作区 `WorkspaceMembership.Role` 投影工作区角色（`owner` / `admin` / `editor` / `viewer`），`SetMemberRole` 支持 `admin` / `editor` / `member` / `viewer`，修正设置 `viewer` 后刷新仍显示 `member` 的问题。
+- 已优化：`/intelligence` 除「专题」三栏外，其余 8 个子视图顶部导航栏新增「情报助手 · 监控」按钮，点击打开 `AppDrawer` 随时对话、审批与查看监控；全量完成情报页英文文案中文化、修正 Telegram 媒体附件提示，并将裸 `antd` `Alert` / `Badge` / `Modal` 统一替换为 `Callout` / `StatusBadge` / `AppModal`。
+- [x] 验证：`cd backend && go test ./internal/flow -run TestP7MembersRoleEditing`、`cd web && bun test test/intelligence-gaps9.test.ts test/intelligence-empty-reason.test.ts`、`bun run lint`、`bun run build` 均通过。
+- [ ] 用户验收：在浏览器切换账号验证会话列表不串数据；在「连接设置」修改成员为 `viewer` / `editor` 后刷新确认角色回显一致；在总览、信源、报告等子视图点击右上角「情报助手」打开抽屉验证对话与监控操作。
+
 ## 系统模型「拉取模型」弹窗搜索
 
 - 已实现：后台「模型与资源 → 系统模型」点「拉取模型」后的选择弹窗新增搜索框（按模型标识做大小写不敏感的子串匹配，自动聚焦、可一键清空），因为部分上游端点会返回几百个模型。

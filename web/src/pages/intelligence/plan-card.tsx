@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Alert, Descriptions, Tag, Typography } from "antd";
+import { Descriptions, Tag, Typography } from "antd";
+import { Callout } from "@/components/ui/product/callout/callout";
 
 import { getMonitorPreview, type MonitorPlan } from "@/services/api/intelligence";
 
@@ -24,7 +25,13 @@ export function MonitorPlanView({ plan }: { plan: MonitorPlan }) {
     const est = plan.cost_estimate;
     return (
         <>
-            {!!plan.expansion?.length && <Alert type="warning" showIcon style={{ marginBottom: 8 }} message="此变更扩大了已批准的范围，需要重新决策" description={plan.expansion.map((x) => EXPANSION_LABEL[x] ?? x).join("、")} />}
+            {!!plan.expansion?.length && (
+                <div style={{ marginBottom: 8 }}>
+                    <Callout tone="warning" title="此变更扩大了已批准的范围，需要重新决策">
+                        {plan.expansion.map((x) => EXPANSION_LABEL[x] ?? x).join("、")}
+                    </Callout>
+                </div>
+            )}
             <Descriptions size="small" column={1} bordered>
                 <Descriptions.Item label="名称">{plan.name}</Descriptions.Item>
                 <Descriptions.Item label="关键词">

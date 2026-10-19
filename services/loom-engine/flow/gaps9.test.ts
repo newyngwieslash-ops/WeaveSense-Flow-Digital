@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { pgliteDb, migrate } from "./db.ts";
 import { Engine, type FeedItem } from "./engine.ts";
 import { Reports } from "./reports.ts";
-import { derivedTick, hashEmbedder, downloadMedia, presignGet, monitorExpansion, snippetHash } from "./gaps9.ts";
+import { derivedTick, hashEmbedder, downloadMedia, downloadRawResponse, presignGet, presignPut, monitorExpansion, snippetHash } from "./gaps9.ts";
 
 const A = { tenant_id: "tn_a", workspace_id: "ws_a" };
 const B = { tenant_id: "tn_b", workspace_id: "ws_b" };
@@ -91,18 +91,44 @@ test("§7.3 evidence stores snippet hash + URL; tampered quote or moved URL fail
   await assert.rejects(rp.saveReport(A, "u", "r3", { title: "x", claims: [{ text: "t", kind: "source_statement", citations: [cite] }] }), (e: any) => e.status === 422 && /url mismatch/.test(e.message));
 });
 
-test("§6.3 raw item + digest per revision and per run; §5 content library shows source and extraction completeness", async () => {
+test("§6.3 raw item + digest per revision and per run; raw HTTP response byte archiving; §5 content library shows source and extraction completeness", async () => {
   const { db, eng, s1, collect } = await setup();
-  feeds = { "https://one.example/f": [item("1", "lithium")] };
+  const bucket = new Map<string, { bytes: Buffer; content_type: string }>();
+  eng.objectStorePut = async (key, bytes, content_type) => { bucket.set(key, { bytes, content_type }); };
+  eng.objectStore = async (key) => {
+    const v = bucket.get(key);
+    if (!v) throw Object.assign(new Error("not found"), { status: 404 });
+    return v;
+  };
+  const rawXml = `<?xml version="1.0"?><rss><channel><item><guid>1</guid><title>Doc 1</title><description>lithium</description></item></channel></rss>`;
+  eng.fetcher = async () => ({
+    items: [item("1", "lithium")],
+    collector: "rss",
+    mode: "fixture",
+    raw_response: { status: 200, content_type: "application/rss+xml; charset=utf-8", headers: { etag: `"v1"` }, body: rawXml },
+  });
   await collect(s1, "c1");
   const rv = (await db.query(`SELECT raw_item, raw_digest, extraction FROM flow_document_revisions`)).rows[0];
   const raw = typeof rv.raw_item === "string" ? JSON.parse(rv.raw_item) : rv.raw_item;
   assert.equal(raw.external_id, "1");
   assert.match(rv.raw_digest, /^[0-9a-f]{64}$/);
   assert.equal(rv.extraction, "feed");
-  const run = (await db.query(`SELECT raw_digest, raw_items FROM flow_collection_runs`)).rows[0];
+  const run = (await db.query(`SELECT id, raw_digest, raw_items, raw_response_key, raw_response_sha256, raw_response_bytes FROM flow_collection_runs`)).rows[0];
   assert.match(run.raw_digest, /^[0-9a-f]{64}$/);
   assert.equal(run.raw_items, 1);
+  assert.match(run.raw_response_key, /^tenants\/tn_a\/workspaces\/ws_a\/raw-runs\//);
+  assert.equal(run.raw_response_bytes, Buffer.byteLength(rawXml));
+  const dl: any = await downloadRawResponse(db, eng.objectStore, A, { run_id: run.id });
+  assert.equal(Buffer.from(dl.data_base64, "base64").toString("utf8"), rawXml);
+  assert.equal(dl.sha256, run.raw_response_sha256);
+  assert.equal(dl.content_type, "application/rss+xml; charset=utf-8");
+  // Cross-tenant download must be 404
+  await assert.rejects(downloadRawResponse(db, eng.objectStore, B, { run_id: run.id }), (e: any) => e.status === 404);
+  // Tampered bytes in object storage must fail SHA-256 verification with 502
+  bucket.set(run.raw_response_key, { bytes: Buffer.from("<rss>tampered</rss>"), content_type: "application/rss+xml" });
+  await assert.rejects(downloadRawResponse(db, eng.objectStore, A, { run_id: run.id }), (e: any) => e.status === 502);
+  const putUrl = presignPut({ endpoint: "minio:9000", bucket: "flow-intel", key: run.raw_response_key, accessKey: "ak", secretKey: "sk", now: new Date("2026-10-13T00:00:00Z") });
+  assert.match(putUrl, /^http:\/\/minio:9000\/flow-intel\/tenants\/tn_a\/workspaces\/ws_a\/raw-runs\/.*X-Amz-Signature=[0-9a-f]{64}$/);
   const [d]: any = await eng.listDocuments(A, {});
   assert.equal(d.source_title !== undefined && d.source_kind, "rss");
   assert.equal(d.extraction.level, "feed_summary");

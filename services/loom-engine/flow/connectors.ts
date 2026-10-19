@@ -32,9 +32,12 @@ export const scopedMediaKey = (sc: MediaScope, legacyKey: string) => `tenants/${
 const SCOPE_ID = /^[A-Za-z0-9_-]{1,64}$/;
 export type ConnectorItem = FeedItem & { media?: MediaRef[]; /** PRD §7.2 event-occurrence time when the connector knows it. */ occurred_at?: string | null };
 export type FeedValidators = { etag: string; last_modified: string; identity: string };
+export type RawHttpResponse = { status: number; content_type?: string; headers?: Record<string, string>; body: string | Buffer };
 export type ConnectorBatch = { items: ConnectorItem[]; collector: string; provider?: string; mode: "live" | "fixture";
   /** RSS only: conditional-request state to persist with the cursor, 304 flag, entries rejected by the parser. */
-  feed_validators?: FeedValidators; not_modified?: boolean; rejected_entries?: number };
+  feed_validators?: FeedValidators; not_modified?: boolean; rejected_entries?: number;
+  /** §6.3 raw HTTP response payload captured by the connector before normalization. */
+  raw_response?: RawHttpResponse };
 export type SourceRow = { id: string; kind: string; url: string; config: any; tenant_id?: string; workspace_id?: string; last_external_id?: string | null; feed_validators?: FeedValidators | null };
 
 const MEDIA_REASON = "preview link only; media is downloaded by the Telethon worker";
@@ -117,25 +120,30 @@ export async function fetchTelegram(env: ConnectorEnv, src: SourceRow): Promise<
   if (!/^[A-Za-z0-9_]{4,64}$/.test(handle)) throw new Error("telegram: invalid channel handle");
   const minId = Number.isFinite(telegramMessageId(src.last_external_id ?? "")) ? telegramMessageId(src.last_external_id!) : 0;
   const mode = env.mode ?? "live";
-  let raw: any[]; let collector: string;
+  let raw: any[]; let collector: string; let rawResponse: RawHttpResponse;
   if (env.telegramWorkerUrl) {
     const f = env.fetchImpl ?? fetch;
     const res = await f(`${env.telegramWorkerUrl.replace(/\/$/, "")}/v1/history`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ channel: handle, min_id: String(minId), limit: 80 }), signal: AbortSignal.timeout(60_000) });
-    const body: any = await res.json().catch(() => ({}));
+    const rawText = typeof (res as any).text === "function" ? await res.text().catch(() => "") : JSON.stringify(await res.json().catch(() => ({})));
+    let body: any = {};
+    try { body = JSON.parse(rawText); } catch {}
     if (body.flood_wait) throw new Error(`telegram: FloodWait ${body.flood_wait}s`);
     if (!res.ok || body.error) throw new Error(`telegram: ${body.error || `worker HTTP ${res.status}`}`);
     raw = body.items ?? []; collector = "telethon";
+    rawResponse = { status: res.status ?? 200, content_type: res.headers?.get?.("content-type") ?? "application/json", body: rawText };
   } else {
     const get = env.fetchPublicText ?? (async (u: string) => (await import("../src/lib/server/http.ts")).fetchText(u, 12000));
-    raw = parseTelegramHtml(await get(`https://t.me/s/${encodeURIComponent(handle)}`), handle); collector = "t.me/s";
+    const html = await get(`https://t.me/s/${encodeURIComponent(handle)}`);
+    raw = parseTelegramHtml(html, handle); collector = "t.me/s";
+    rawResponse = { status: 200, content_type: "text/html; charset=utf-8", body: html };
   }
   const fresh = raw.map((x) => toItem(x, "telegram"))
     .filter((x) => Number.isFinite(telegramMessageId(x.external_id)) && telegramMessageId(x.external_id) > minId)
     .sort((a, b) => telegramMessageId(a.external_id) - telegramMessageId(b.external_id));
   await storeTelegramMedia(env, fresh, Date.now, src.tenant_id && src.workspace_id ? { tenant_id: src.tenant_id, workspace_id: src.workspace_id } : undefined);
-  return { items: fresh.map(noteMissing), collector, mode };
+  return { items: fresh.map(noteMissing), collector, mode, raw_response: rawResponse };
 }
 
 const WECHAT_PROVIDERS = ["", "primary", "dajiala", "mixed"];
@@ -157,7 +165,13 @@ export async function fetchWechat(env: ConnectorEnv, src: SourceRow): Promise<Co
   const text = await res.text();
   if (text.length > WECHAT_MAX_CHARS) throw new Error("wechat: feed too large");
   const items = parseFeedXml(text, src.id, "wechat" as any).map((x) => noteMissing(toItem(x, "wechat")));
-  return { items, collector: "wechat_gateway", provider: provider || "primary", mode: env.mode ?? "live" };
+  return {
+    items,
+    collector: "wechat_gateway",
+    provider: provider || "primary",
+    mode: env.mode ?? "live",
+    raw_response: { status: res.status, content_type: res.headers.get("content-type") ?? "application/atom+xml", body: text },
+  };
 }
 
 export function connectorEnvFromProcess(): ConnectorEnv {

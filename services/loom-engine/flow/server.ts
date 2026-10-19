@@ -5,7 +5,7 @@ import { verify, requireScope, AuthError, type ExecutionContext } from "./auth.t
 import { Engine, HttpError } from "./engine.ts";
 import { Reports } from "./reports.ts";
 import { withTenant } from "./db.ts";
-import { downloadMedia, listDerivedJobs, getAnalysis } from "./gaps9.ts";
+import { downloadMedia, downloadRawResponse, listDerivedJobs, getAnalysis } from "./gaps9.ts";
 
 export interface ServerConfig {
   signingKey: string;
@@ -124,6 +124,10 @@ export function handler(engine: Engine, cfg: ServerConfig) {
           return res.end(got.bytes);
         }
         return send(res, 200, got);
+      }
+      if (m === "GET" && (mm = p.match(/^\/v1\/collection-runs\/([\w-]+)\/raw-response$/))) {
+        requireScope(ctx, "intel.operations.read");
+        return send(res, 200, await downloadRawResponse(engine.db, engine.objectStore, ctx, { run_id: mm[1] }));
       }
       if (m === "GET" && p === "/v1/derived-jobs") { requireScope(ctx, "intel.operations.read"); return send(res, 200, await listDerivedJobs(engine.db, ctx, url.searchParams.get("document_id") ?? undefined)); }
       if (m === "GET" && (mm = p.match(/^\/v1\/documents\/([\w-]+)\/analysis$/))) { requireScope(ctx, "intel.documents.read"); return send(res, 200, await getAnalysis(engine.db, ctx, mm[1])); }

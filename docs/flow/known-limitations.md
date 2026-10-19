@@ -30,29 +30,24 @@
 
 ---
 
-## 2. 采集保存的是规范化条目 + digest，不是原始 HTTP 响应字节
+## 2. ~~采集保存的是规范化条目 + digest，不是原始 HTTP 响应字节~~（已升级：连接器原始 HTTP 响应字节归档 + Scoped 完整性校验下载）
 
-**分类：** 做法不同（deviation D）。PRD §6.3 要求可追溯的原始响应；当前保存的是连接器解析后的条目 JSON（上限 64 KiB）及其全文 sha256，以及整次 run 的 batch digest。Feed 的原始 HTTP body 不落库。
+**状态：** 已完成（OpenSpec 变更 `raw-http-response-archive`）。在保留每个修订 `raw_item`（64 KiB 规范化条目）与 `raw_digest` 的基础上，新增了连接器层原始 HTTP 响应字节捕获、按租户/工作区前缀的对象存储归档以及带 SHA-256 完整性校验的下载接口（PRD §6.3）。
 
 **当前行为：**
-- 每个文档修订写入 `raw_item`（规范化 connector item 的 JSON，过大则截断为 head + size）和 `raw_digest`（完整 canonical JSON 的 sha256）。
-- 每次采集 run 写入 `raw_digest`（各条目 digest 列表的摘要）和 `raw_items`（条目数）。
-- RSS / Telegram / WeChat 等连接器在入库前已解析为统一 item 结构；HTTP 原始字节在连接器层即丢弃。
+- RSS / Atom（`rss.ts`）、Telegram（`connectors.ts` Telethon JSON / `t.me/s` HTML）、WeChat（Atom 网关 XML）连接器在抓取时保留原始 HTTP 状态码、响应头、`Content-Type` 与原始响应体（`raw_response`）。
+- 每次采集 run 在 `flow_collection_runs` 中记录 `raw_response_sha256`、`raw_response_bytes`、`raw_response_meta`；当配置对象存储写入器（`objectStorePut` / MinIO）时，将原始字节归档至 `tenants/{tenant_id}/workspaces/{workspace_id}/raw-runs/{source_id}/{run_id}` 并记录 `raw_response_key`。
+- `GET /v1/collection-runs/:id/raw-response`（`downloadRawResponse`）先校验租户/工作区归属与前缀（跨租户返回 404，不触达对象存储），再校验对象存储返回字节的 SHA-256 与 `raw_response_sha256` 一致（被篡改则返回 502）。
 
 **相关代码路径：**
 | 路径 | 作用 |
 |---|---|
-| `services/loom-engine/flow/gaps9.ts` → `RAW_ITEM_MAX`、`rawItem` | 64 KiB 上限与 digest |
-| `services/loom-engine/flow/engine.ts` → `execute` 入库路径 | `INSERT INTO flow_document_revisions (... raw_item, raw_digest ...)`；更新 `flow_collection_runs.raw_digest` / `raw_items` |
-| 引擎迁移 `0016`（及后续） | `raw_item` / `raw_digest` 列 |
-| `services/loom-engine/flow/gaps9.test.ts` | §6.3 修订与 run digest 断言 |
-| 各连接器（如 `connectors.ts`、RSS/Telegram/WeChat 实现） | 产出规范化 `ConnectorItem`，不回传原始字节 |
-
-**建议本地后续步骤：**
-1. 若需合规/审计级原始响应：在连接器层把 HTTP status、headers、body（或压缩归档）写入对象存储，DB 只存 `object_key` + sha256。
-2. 与现有 Telegram 媒体路径对齐：`tenants/{tenant}/workspaces/{workspace}/...`，并走同一套 RLS / 下载鉴权。
-3. 注意体积与保留策略（TTL、按租户配额）；默认仍可只保留 digest，原始字节按需开启。
-4. 补测试：原始对象可按权限下载；篡改 body 后 digest 不匹配应失败。
+| `services/loom-engine/src/lib/server/rss.ts`、`services/loom-engine/flow/connectors.ts` | 捕获原始 HTTP 响应体与元数据 |
+| `services/loom-engine/flow/migrations/0017_raw_response_archive.sql` | `raw_response_key` / `raw_response_sha256` / `raw_response_bytes` / `raw_response_meta` 列 |
+| `services/loom-engine/flow/gaps9.ts` → `presignPut`、`archiveRawResponse`、`downloadRawResponse` | 对象存储归档与带鉴权完整性校验下载 |
+| `services/loom-engine/flow/engine.ts` → `execute` | 采集入库时归档原始响应并写入 `flow_collection_runs` |
+| `services/loom-engine/flow/server.ts` | `GET /v1/collection-runs/:id/raw-response` |
+| `services/loom-engine/flow/gaps9.test.ts` | §6.3 原始 HTTP 响应归档、跨租户 404 与篡改 502 测试 |
 
 ---
 

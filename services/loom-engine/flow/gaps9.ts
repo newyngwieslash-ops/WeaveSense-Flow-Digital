@@ -449,3 +449,100 @@ export async function downloadMedia(
   return { object_key: key, content_type: m.content_type || got.content_type, size: got.bytes.length, sha256: digest,
     expected_sha256: m.sha256 ?? null, filename, data_base64: got.bytes.toString("base64") };
 }
+
+// ---------- §6.3 raw HTTP response byte archiving & scoped download ----------
+export type ObjectStorePut = (key: string, bytes: Buffer, contentType: string) => Promise<void>;
+
+/** SigV4 presigned PUT against the private S3/MinIO bucket. */
+export function presignPut(o: { endpoint: string; bucket: string; key: string; accessKey: string; secretKey: string; region?: string; now?: Date; expires?: number }) {
+  const region = o.region ?? "us-east-1", now = o.now ?? new Date();
+  const amz = now.toISOString().replace(/[-:]|\.\d{3}/g, ""), day = amz.slice(0, 8);
+  const base = /^https?:\/\//.test(o.endpoint) ? o.endpoint : `http://${o.endpoint}`;
+  const u = new URL(base);
+  const path = `/${o.bucket}/${o.key.split("/").map(encodeURIComponent).join("/")}`;
+  const scope = `${day}/${region}/s3/aws4_request`;
+  const q = new URLSearchParams({ "X-Amz-Algorithm": "AWS4-HMAC-SHA256", "X-Amz-Credential": `${o.accessKey}/${scope}`, "X-Amz-Date": amz,
+    "X-Amz-Expires": String(o.expires ?? 60), "X-Amz-SignedHeaders": "host" });
+  const qs = [...q.entries()].sort(([a], [b]) => (a < b ? -1 : 1)).map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join("&");
+  const canon = ["PUT", path, qs, `host:${u.host}`, "", "host", "UNSIGNED-PAYLOAD"].join("\n");
+  const sts = ["AWS4-HMAC-SHA256", amz, scope, sha(canon)].join("\n");
+  const h = (k: Buffer | string, d: string) => createHmac("sha256", k).update(d).digest();
+  const sig = createHmac("sha256", h(h(h(h(`AWS4${o.secretKey}`, day), region), "s3"), "aws4_request")).update(sts).digest("hex");
+  return `${u.protocol}//${u.host}${path}?${qs}&X-Amz-Signature=${sig}`;
+}
+
+export function objectStoreWriterFromEnv(env = process.env, fetchImpl: typeof fetch = fetch): ObjectStorePut | null {
+  const endpoint = env.MINIO_ENDPOINT, bucket = env.MINIO_BUCKET, accessKey = env.MINIO_ACCESS_KEY, secretKey = env.MINIO_SECRET_KEY;
+  if (!endpoint || !bucket || !accessKey || !secretKey) return null;
+  return async (key, bytes, contentType) => {
+    const res = await fetchImpl(presignPut({ endpoint, bucket, key, accessKey, secretKey, region: env.MINIO_REGION }), {
+      method: "PUT",
+      headers: { "Content-Type": contentType || "application/octet-stream", "Content-Length": String(bytes.length) },
+      body: new Uint8Array(bytes),
+      redirect: "error",
+      signal: AbortSignal.timeout(60_000),
+    });
+    if (!res.ok) throw new HttpError(502, `object store put failed (HTTP ${res.status})`);
+  };
+}
+
+export const scopedRawRunKey = (s: Scope, sourceId: string, runId: string) =>
+  `tenants/${s.tenant_id}/workspaces/${s.workspace_id}/raw-runs/${sourceId}/${runId}`;
+
+export async function archiveRawResponse(
+  s: Scope,
+  sourceId: string,
+  runId: string,
+  raw: { status?: number; content_type?: string; headers?: Record<string, string>; body: string | Buffer },
+  put?: ObjectStorePut | null,
+) {
+  const bytes = Buffer.isBuffer(raw.body) ? raw.body : Buffer.from(String(raw.body ?? ""), "utf8");
+  const digest = createHash("sha256").update(bytes).digest("hex");
+  const contentType = raw.content_type || "application/octet-stream";
+  const key = scopedRawRunKey(s, sourceId, runId);
+  let storedKey: string | null = null;
+  if (put) {
+    await put(key, bytes, contentType);
+    storedKey = key;
+  }
+  const meta = {
+    status: raw.status ?? 200,
+    content_type: contentType,
+    headers: raw.headers ?? {},
+  };
+  return { object_key: storedKey, sha256: digest, bytes: bytes.length, meta };
+}
+
+export async function downloadRawResponse(
+  db: Db,
+  store: ObjectStore | null,
+  s: Scope,
+  o: { run_id: string },
+) {
+  const r = (await db.query(
+    `SELECT id, source_id, raw_response_key, raw_response_sha256, raw_response_bytes, raw_response_meta FROM flow_collection_runs WHERE tenant_id=$1 AND workspace_id=$2 AND id=$3`,
+    [s.tenant_id, s.workspace_id, String(o.run_id ?? "")],
+  )).rows[0];
+  if (!r || !r.raw_response_key) throw new HttpError(404, "raw response not found");
+  const key = String(r.raw_response_key);
+  const prefix = `tenants/${s.tenant_id}/workspaces/${s.workspace_id}/raw-runs/`;
+  if (!key.startsWith(prefix) || key.includes("..")) throw new HttpError(404, "raw response not found");
+  if (!store) throw new HttpError(503, "object storage not configured");
+  const got = await store(key);
+  const digest = createHash("sha256").update(got.bytes).digest("hex");
+  if (r.raw_response_sha256 && digest !== r.raw_response_sha256) {
+    throw new HttpError(502, "raw response integrity check failed");
+  }
+  const meta = typeof r.raw_response_meta === "string" ? JSON.parse(r.raw_response_meta) : (r.raw_response_meta ?? {});
+  return {
+    run_id: r.id,
+    source_id: r.source_id,
+    object_key: key,
+    content_type: meta.content_type || got.content_type || "application/octet-stream",
+    size: got.bytes.length,
+    sha256: digest,
+    meta,
+    data_base64: got.bytes.toString("base64"),
+  };
+}
+

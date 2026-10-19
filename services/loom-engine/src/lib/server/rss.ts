@@ -9,7 +9,13 @@ export { parseFeedXml } from "./rss-parser.ts";
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
 export type FeedValidators = { etag: string; last_modified: string; identity: string };
-export type FeedFetch = { items: NormalizedItem[]; not_modified: boolean; rejected_entries: number; validators: FeedValidators };
+export type FeedFetch = {
+  items: NormalizedItem[];
+  not_modified: boolean;
+  rejected_entries: number;
+  validators: FeedValidators;
+  raw_response?: { status: number; content_type: string; headers: Record<string, string>; body: string };
+};
 
 /** Validators are only reusable for the same URL, platform and parser semantics. */
 export function feedValidatorIdentity(feedUrl: string, platform: string): string {
@@ -45,8 +51,18 @@ export async function fetchFeed(
   }
   const stats = { rejected_entries: 0 };
   const items = parseFeedXml(result.text ?? "", sourceId, platform as import("@/lib/platforms").PlatformId, { feedUrl: result.url, stats });
-  return { items, not_modified: false, rejected_entries: stats.rejected_entries,
-    validators: { etag: result.headers.etag ?? "", last_modified: result.headers["last-modified"] ?? "", identity } };
+  return {
+    items,
+    not_modified: false,
+    rejected_entries: stats.rejected_entries,
+    validators: { etag: result.headers.etag ?? "", last_modified: result.headers["last-modified"] ?? "", identity },
+    raw_response: {
+      status: result.status,
+      content_type: result.headers["content-type"] ?? "application/xml; charset=utf-8",
+      headers: result.headers,
+      body: result.text ?? "",
+    },
+  };
 }
 
 /**

@@ -49,7 +49,7 @@ export const connectorFetcher = (env: ConnectorEnv): Fetcher => async (url, sour
   // (If-None-Match / If-Modified-Since from the validators stored with the cursor).
   const { fetchFeed } = await import("../src/lib/server/rss.ts");
   const r = await fetchFeed(url, sourceId, "rss", src?.feed_validators ?? null);
-  return { items: r.items, collector: "rss", mode: "live", feed_validators: r.validators, not_modified: r.not_modified, rejected_entries: r.rejected_entries };
+  return { items: r.items, collector: "rss", mode: "live", feed_validators: r.validators, not_modified: r.not_modified, rejected_entries: r.rejected_entries, raw_response: r.raw_response };
 };
 /** A13 failure classes: auth ⇒ pause; rate_limited/transient ⇒ backoff; permanent ⇒ record only. */
 export function classifyFailure(error: string): "auth" | "rate_limited" | "transient" | "permanent" {
@@ -84,7 +84,7 @@ export type Extractor = (url: string) => Promise<string>;
 const defaultExtractor: Extractor = async (url) => (await import("../src/lib/server/http.ts")).fetchText(url, 15000);
 
 import { HttpError } from "./errors.ts";
-import { rawItem, snippetHash, enqueueDerived, extractionCompleteness, extractionMethodFor, costEstimate, monitorExpansion, type PriceHint, type ObjectStore, objectStoreFromEnv } from "./gaps9.ts";
+import { rawItem, snippetHash, enqueueDerived, extractionCompleteness, extractionMethodFor, costEstimate, monitorExpansion, archiveRawResponse, objectStoreWriterFromEnv, type PriceHint, type ObjectStore, type ObjectStorePut, objectStoreFromEnv } from "./gaps9.ts";
 import { nextCron, checkTimezone } from "./cron.ts";
 export { HttpError };
 
@@ -116,6 +116,8 @@ export class Engine {
   connectorEnv: ConnectorEnv = connectorEnvFromProcess();
   /** §10.4 private bucket reader for verified media downloads (null = not configured). */
   objectStore: ObjectStore | null = objectStoreFromEnv();
+  /** §6.3 private bucket writer for raw HTTP response archiving (null = not configured). */
+  objectStorePut: ObjectStorePut | null = objectStoreWriterFromEnv();
   /** Platform authorization hook: false ⇒ grant revoked (schedule is disabled). Errors propagate (fail closed, retry next tick). */
   authorize?: (sc: { tenant_id: string; workspace_id: string; grant_actor: string }, scope: string) => Promise<boolean>;
   /**
@@ -755,10 +757,15 @@ export class Engine {
     const feedValidators = cursor?.feed_validator_identity ? { etag: cursor.feed_etag ?? "", last_modified: cursor.feed_last_modified ?? "", identity: cursor.feed_validator_identity } : null;
     let items: ConnectorItem[]; let meta: { collector: string; provider?: string; mode: string } = { collector: "rss", mode: "live" };
     let feed: ConnectorBatch | null = null;
+    let rawArchived: { object_key: string | null; sha256: string; bytes: number; meta: any } | null = null;
     try {
       const got = await this.fetcher(src.url, src.id, { ...src, config: typeof src.config === "string" ? JSON.parse(src.config) : (src.config ?? {}), last_external_id: cursor?.last_external_id ?? null, feed_validators: feedValidators });
       if (Array.isArray(got)) items = got;
       else { items = got.items; meta = { collector: got.collector, provider: got.provider, mode: got.mode }; feed = got; }
+      const rawResp = feed?.raw_response ?? (this.objectStorePut ? { status: 200, content_type: "application/json", body: JSON.stringify(items) } : null);
+      if (rawResp) {
+        rawArchived = await archiveRawResponse(run, src.id, run.id, rawResp, this.objectStorePut);
+      }
     } catch (e: any) {
       return this.fail(run, String(e?.message ?? e));
     }
@@ -827,9 +834,11 @@ export class Engine {
       const reasons = [(feed?.rejected_entries ?? 0) > 0 ? `rejected_entries=${feed!.rejected_entries}` : "", mediaUnsupported > 0 ? `media_not_stored=${mediaUnsupported}` : ""].filter(Boolean);
       const final = reasons.length ? "partial" : "succeeded";
       await q.query(`UPDATE flow_collection_runs SET status=$8, items_new=$2, items_revised=$3, finished_at=now(), lease_owner=NULL, collector=$4, provider=$5,
-          items_rejected=$6, not_modified=$7, partial_reason=$9, raw_digest=$10, raw_items=$11 WHERE id=$1`,
+          items_rejected=$6, not_modified=$7, partial_reason=$9, raw_digest=$10, raw_items=$11,
+          raw_response_key=$12, raw_response_sha256=$13, raw_response_bytes=$14, raw_response_meta=$15 WHERE id=$1`,
         [run.id, created, revised, meta.collector, meta.provider ?? null, feed?.rejected_entries ?? 0, feed?.not_modified ?? false, final, reasons.join(",") || null,
-         sha(JSON.stringify(items.map((i) => rawItem(i).digest))), items.length]);
+         sha(JSON.stringify(items.map((i) => rawItem(i).digest))), items.length,
+         rawArchived?.object_key ?? null, rawArchived?.sha256 ?? null, rawArchived?.bytes ?? null, rawArchived ? JSON.stringify(rawArchived.meta) : null]);
       if (src.kind !== "rss" && items.length) {
         await q.query(`INSERT INTO flow_connector_samples (id, tenant_id, workspace_id, kind, source_id, run_id, collector, provider, mode, items, media_unsupported, sample)
             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) ON CONFLICT (run_id) DO NOTHING`,

@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test";
 
 import { expansionFromError } from "../src/pages/intelligence/monitor-editor";
 import { credits } from "../src/pages/intelligence/plan-card";
+import { cachedConversations, conversationCacheKey, writeCachedConversations, type FlowConversation } from "../src/services/api/intelligence";
+import { useUserStore } from "../src/stores/use-user-store";
 
 describe("intelligence audit-8 UI helpers", () => {
     test("re-approval expansion is parsed from the server 409 message", () => {
@@ -11,5 +13,66 @@ describe("intelligence audit-8 UI helpers", () => {
     test("micro-credits render as credits", () => {
         expect(credits(1_500_000)).toContain("1.5");
         expect(credits(undefined)).toBe("—");
+    });
+    test("conversation warm-start cache is isolated per logged-in user and never shared when logged out", () => {
+        const store = new Map<string, string>();
+        const prevStorage = globalThis.localStorage;
+        Object.defineProperty(globalThis, "localStorage", {
+            configurable: true,
+            value: {
+                getItem: (k: string) => store.get(k) ?? null,
+                setItem: (k: string, v: string) => {
+                    store.set(k, v);
+                },
+                removeItem: (k: string) => {
+                    store.delete(k);
+                },
+                clear: () => store.clear(),
+            },
+        });
+        try {
+            useUserStore.getState().clearSession();
+            expect(conversationCacheKey()).toBeNull();
+            const aliceConv: FlowConversation = {
+                id: "c_alice",
+                title: "Alice secret topic",
+                subjectKind: "intelligence_workspace",
+                subjectId: "ws_1",
+                workspaceId: "ws_1",
+                updatedAt: "2026-10-19T00:00:00Z",
+                lastSeq: 1,
+            };
+            writeCachedConversations([aliceConv]);
+            expect(store.size).toBe(0);
+            expect(cachedConversations()).toEqual([]);
+
+            useUserStore.getState().setUser({
+                id: "u_alice",
+                username: "alice",
+                displayName: "Alice",
+                role: "user",
+                status: "active",
+            });
+            writeCachedConversations([aliceConv]);
+            expect(cachedConversations().map((c) => c.id)).toEqual(["c_alice"]);
+
+            useUserStore.getState().setUser({
+                id: "u_bob",
+                username: "bob",
+                displayName: "Bob",
+                role: "user",
+                status: "active",
+            });
+            expect(cachedConversations()).toEqual([]);
+
+            useUserStore.getState().clearSession();
+            expect(cachedConversations()).toEqual([]);
+        } finally {
+            useUserStore.getState().clearSession();
+            Object.defineProperty(globalThis, "localStorage", {
+                configurable: true,
+                value: prevStorage,
+            });
+        }
     });
 });

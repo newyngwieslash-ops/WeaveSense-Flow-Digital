@@ -1,3 +1,4 @@
+import { useUserStore } from "@/stores/use-user-store";
 import { http } from "./request";
 
 export type AgentSubject = { kind: "canvas" | "intelligence_workspace" | "topic"; id: string };
@@ -19,23 +20,36 @@ export type IntelMonitor = {
     version?: number;
 };
 
-const CACHE_KEY = "flow.conversations.cache.v1";
+const CACHE_KEY_PREFIX = "flow.conversations.cache.v1";
 
-export const listIntelWorkspaces = () => http.get<IntelWorkspace[]>("/intelligence/workspaces");
+export function conversationCacheKey(userId: string | null | undefined = useUserStore.getState().user?.id): string | null {
+    const id = userId?.trim();
+    return id ? `${CACHE_KEY_PREFIX}:${id}` : null;
+}
 
-/** Server directory is authoritative; localStorage is only a warm-start cache. */
-export async function listConversations(): Promise<FlowConversation[]> {
-    const list = await http.get<FlowConversation[]>("/agent/conversations");
+export function writeCachedConversations(list: FlowConversation[], userId?: string | null): void {
+    const key = conversationCacheKey(userId);
+    if (!key) return;
     try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify(list));
+        localStorage.setItem(key, JSON.stringify(list));
     } catch {
         /* cache is optional */
     }
+}
+
+export const listIntelWorkspaces = () => http.get<IntelWorkspace[]>("/intelligence/workspaces");
+
+/** Server directory is authoritative; localStorage is only a user-scoped warm-start cache. */
+export async function listConversations(userId?: string | null): Promise<FlowConversation[]> {
+    const list = await http.get<FlowConversation[]>("/agent/conversations");
+    writeCachedConversations(list, userId);
     return list;
 }
-export function cachedConversations(): FlowConversation[] {
+export function cachedConversations(userId?: string | null): FlowConversation[] {
+    const key = conversationCacheKey(userId);
+    if (!key) return [];
     try {
-        return JSON.parse(localStorage.getItem(CACHE_KEY) || "[]") as FlowConversation[];
+        return JSON.parse(localStorage.getItem(key) || "[]") as FlowConversation[];
     } catch {
         return [];
     }

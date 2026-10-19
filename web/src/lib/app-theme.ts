@@ -451,6 +451,13 @@ export function getWorkspaceAntThemeConfig(): ThemeConfig {
             Message: { borderRadiusLG: 14, contentPadding: "10px 18px" },
             Notification: { borderRadiusLG: 18 },
             Tooltip: { borderRadius: 8 },
+            // Tag 的 defaultBg 由 FastColor(colorFillTertiary).onBackground(colorBgContainer) 预计算：
+            // 该主题未注入 --ant-color-bg-container，FastColor 解析不到色值会回退成 #000（黑块遮字）。
+            // 显式给 CSS 变量色，让明暗主题都跟随用户表面色。
+            Tag: {
+                defaultBg: "var(--user-surface-muted)",
+                defaultColor: "var(--user-ink)",
+            },
         },
     };
 }

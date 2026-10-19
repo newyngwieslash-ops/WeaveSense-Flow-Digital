@@ -137,23 +137,42 @@ test("§6.4 embed and analyze are separate jobs, once per content hash; embeddin
   assert.equal(await derivedTick(db, hashEmbedder(16)), 0, "frequent ticks do not re-spend");
 });
 
-test("§5.2/§10.3 report export (md/html/json) is tenant-scoped (A02)", async () => {
+test("§5.2/§10.3 report export (md/html/json/pdf/docx) is tenant-scoped (A02)", async () => {
   const { eng, rp, s1, collect } = await setup();
   feeds = { "https://one.example/f": [item("1", "cobalt output falls 10 percent")] };
   await collect(s1, "c1");
   const r: any = await rp.startResearch(A, "k1", { parent_run_id: "run_r", question: "cobalt" });
-  const saved: any = await rp.saveReport(A, "u", "rep", { title: "Cobalt <weekly>", body: "summary", claims: [{ text: "Cobalt fell", kind: "source_statement", citations: [r.output.claims[0].citations[0]] }] });
+  const saved: any = await rp.saveReport(A, "u", "rep", { title: "Cobalt 钴周报 <weekly>", body: "钴产量摘要 summary", claims: [{ text: "Cobalt 产量下降 10%", kind: "source_statement", citations: [r.output.claims[0].citations[0]] }] });
   const md: any = await rp.exportReport(A, saved.report_id, "md");
   assert.equal(md.content_type, "text/markdown; charset=utf-8");
-  assert.match(md.content, /^# Cobalt <weekly>/);
-  assert.match(md.content, /\*\*\[source_statement\]\*\* Cobalt fell/);
+  assert.match(md.content, /^# Cobalt 钴周报 <weekly>/);
+  assert.match(md.content, /\*\*\[source_statement\]\*\* Cobalt 产量下降 10%/);
   assert.match(md.content, /rev 1 · evidence ev_/);
   const html: any = await rp.exportReport(A, saved.report_id, "html");
-  assert.match(html.content, /<h1>Cobalt &lt;weekly&gt;<\/h1>/);
+  assert.match(html.content, /<h1>Cobalt 钴周报 &lt;weekly&gt;<\/h1>/);
   const js: any = await rp.exportReport(A, saved.report_id, "json");
   assert.equal(JSON.parse(js.content).id, saved.report_id);
+  const pdf: any = await rp.exportReport(A, saved.report_id, "pdf");
+  assert.equal(pdf.content_type, "application/pdf");
+  assert.match(pdf.filename, /\.pdf$/);
+  const pdfBuf = Buffer.from(pdf.content_base64, "base64");
+  assert.equal(pdfBuf.subarray(0, 8).toString("ascii"), "%PDF-1.7");
+  assert.match(pdfBuf.toString("utf8"), /Cobalt 钴周报 <weekly>/);
+  assert.match(pdfBuf.toString("utf8"), /STSong-Light/);
+  assert.match(pdfBuf.toString("utf8"), /%%EOF\s*$/);
+  const docx: any = await rp.exportReport(A, saved.report_id, "docx");
+  assert.equal(docx.content_type, "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+  assert.match(docx.filename, /\.docx$/);
+  const docxBuf = Buffer.from(docx.content_base64, "base64");
+  assert.equal(docxBuf.readUInt32LE(0), 0x04034b50, "ZIP local file header PK\\x03\\x04");
+  const docxStr = docxBuf.toString("utf8");
+  assert.match(docxStr, /word\/document\.xml/);
+  assert.match(docxStr, /Cobalt 钴周报 &lt;weekly&gt;/);
+  assert.match(docxStr, /\[source_statement\] Cobalt 产量下降 10%/);
   await assert.rejects(rp.exportReport(A, saved.report_id, "exe"), (e: any) => e.status === 400);
   await assert.rejects(rp.exportReport(B, saved.report_id, "md"), (e: any) => e.status === 404, "A02: guessed foreign report id is not exportable");
+  await assert.rejects(rp.exportReport(B, saved.report_id, "pdf"), (e: any) => e.status === 404);
+  await assert.rejects(rp.exportReport(B, saved.report_id, "docx"), (e: any) => e.status === 404);
   void eng;
 });
 

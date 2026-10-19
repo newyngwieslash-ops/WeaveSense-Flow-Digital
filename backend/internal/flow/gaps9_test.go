@@ -116,7 +116,14 @@ func TestGaps9RoutesForwardAndRender(t *testing.T) {
 			w.WriteHeader(404)
 			_, _ = w.Write([]byte(`{"code":404,"data":null,"msg":"report not found"}`))
 		case strings.HasSuffix(r.URL.Path, "/export"):
-			_, _ = w.Write([]byte(`{"code":0,"data":{"filename":"周报.md","content_type":"text/markdown; charset=utf-8","content":"# 周报"},"msg":"ok"}`))
+			switch r.URL.Query().Get("format") {
+			case "pdf":
+				_, _ = w.Write([]byte(`{"code":0,"data":{"filename":"周报.pdf","content_type":"application/pdf","content_base64":"JVBERi0xLjcK"},"msg":"ok"}`))
+			case "docx":
+				_, _ = w.Write([]byte(`{"code":0,"data":{"filename":"周报.docx","content_type":"application/vnd.openxmlformats-officedocument.wordprocessingml.document","content_base64":"UEsDBBQAAAA="},"msg":"ok"}`))
+			default:
+				_, _ = w.Write([]byte(`{"code":0,"data":{"filename":"周报.md","content_type":"text/markdown; charset=utf-8","content":"# 周报"},"msg":"ok"}`))
+			}
 		case r.URL.Path == "/v1/media":
 			_, _ = w.Write([]byte(`{"code":0,"data":{"filename":"chan_9","content_type":"image/png","sha256":"abc","data_base64":"UE5HREFUQQ=="},"msg":"ok"}`))
 		default:
@@ -166,7 +173,15 @@ func TestGaps9RoutesForwardAndRender(t *testing.T) {
 	if got[len(got)-1].uri != "/v1/reports/rpt_1/export?format=md" {
 		t.Fatalf("export forwarded as %s", got[len(got)-1].uri)
 	}
-	if w := do("GET", "/api/intelligence/reports/rpt_foreign/export", "", ""); w.Code != 404 {
+	wPdf := do("GET", "/api/intelligence/reports/rpt_1/export?format=pdf", "", "")
+	if wPdf.Code != 200 || !strings.HasPrefix(wPdf.Body.String(), "%PDF-1.7") || wPdf.Header().Get("Content-Type") != "application/pdf" {
+		t.Fatalf("pdf export: %d %q %v", wPdf.Code, wPdf.Body.String(), wPdf.Header())
+	}
+	wDocx := do("GET", "/api/intelligence/reports/rpt_1/export?format=docx", "", "")
+	if wDocx.Code != 200 || !strings.HasPrefix(wDocx.Body.String(), "PK\x03\x04") || !strings.Contains(wDocx.Header().Get("Content-Type"), "wordprocessingml.document") {
+		t.Fatalf("docx export: %d %q %v", wDocx.Code, wDocx.Body.String(), wDocx.Header())
+	}
+	if w := do("GET", "/api/intelligence/reports/rpt_foreign/export?format=pdf", "", ""); w.Code != 404 {
 		t.Fatalf("A02: foreign report export must be 404, got %d", w.Code)
 	}
 	w = do("GET", "/api/intelligence/media?document_id=doc_1&object_key=tenants/x/workspaces/y/telegram/c/9", "", "")

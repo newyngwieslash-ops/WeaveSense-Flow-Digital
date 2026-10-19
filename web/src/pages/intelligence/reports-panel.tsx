@@ -68,8 +68,8 @@ export function ReportsPanel({ workspaceId }: { workspaceId?: string }) {
                 extra={
                     detail &&
                     workspaceId && (
-                        <Space size={4}>
-                            {(["md", "html", "json"] as const).map((f) => (
+                        <Space size={4} wrap>
+                            {(["md", "html", "json", "pdf", "docx"] as const).map((f) => (
                                 <Button key={f} size="small" onClick={() => void exportReport(workspaceId, detail.id, f).catch(() => void message.error("导出失败"))}>
                                     导出 {f.toUpperCase()}
                                 </Button>

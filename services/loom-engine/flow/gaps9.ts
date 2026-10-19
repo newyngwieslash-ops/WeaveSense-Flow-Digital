@@ -2,6 +2,7 @@
 // extraction completeness, embed/analyze jobs, monitor plan/budget/re-approval,
 // evidence snippet hash + URL, report export and scoped media download.
 import { createHash, createHmac, randomBytes } from "node:crypto";
+import { crc32 } from "node:zlib";
 import { affected, type Db, type Q } from "./db.ts";
 import { HttpError } from "./errors.ts";
 
@@ -156,12 +157,183 @@ export function monitorExpansion(old: any, next: any): string[] {
 }
 
 // ---------- §5.2 report export ----------
+function buildZipStore(entries: { name: string; data: Buffer }[]): Buffer {
+  const locals: Buffer[] = [];
+  const centrals: Buffer[] = [];
+  let offset = 0;
+  for (const e of entries) {
+    const nameBuf = Buffer.from(e.name, "utf8");
+    const sum = crc32(e.data) >>> 0;
+    const local = Buffer.alloc(30 + nameBuf.length);
+    local.writeUInt32LE(0x04034b50, 0);
+    local.writeUInt16LE(20, 4);
+    local.writeUInt16LE(0x0800, 6); // UTF-8 filename flag
+    local.writeUInt16LE(0, 8); // store (uncompressed)
+    local.writeUInt32LE(0, 10);
+    local.writeUInt32LE(sum, 14);
+    local.writeUInt32LE(e.data.length, 18);
+    local.writeUInt32LE(e.data.length, 22);
+    local.writeUInt16LE(nameBuf.length, 26);
+    local.writeUInt16LE(0, 28);
+    nameBuf.copy(local, 30);
+    locals.push(local, e.data);
+
+    const central = Buffer.alloc(46 + nameBuf.length);
+    central.writeUInt32LE(0x02014b50, 0);
+    central.writeUInt16LE(20, 4);
+    central.writeUInt16LE(20, 6);
+    central.writeUInt16LE(0x0800, 8);
+    central.writeUInt16LE(0, 10);
+    central.writeUInt32LE(0, 12);
+    central.writeUInt32LE(sum, 16);
+    central.writeUInt32LE(e.data.length, 20);
+    central.writeUInt32LE(e.data.length, 24);
+    central.writeUInt16LE(nameBuf.length, 28);
+    central.writeUInt16LE(0, 30);
+    central.writeUInt16LE(0, 32);
+    central.writeUInt16LE(0, 34);
+    central.writeUInt16LE(0, 36);
+    central.writeUInt32LE(0, 38);
+    central.writeUInt32LE(offset, 42);
+    nameBuf.copy(central, 46);
+    centrals.push(central);
+    offset += local.length + e.data.length;
+  }
+  const cdBuf = Buffer.concat(centrals);
+  const eocd = Buffer.alloc(22);
+  eocd.writeUInt32LE(0x06054b50, 0);
+  eocd.writeUInt16LE(0, 4);
+  eocd.writeUInt16LE(0, 6);
+  eocd.writeUInt16LE(entries.length, 8);
+  eocd.writeUInt16LE(entries.length, 10);
+  eocd.writeUInt32LE(cdBuf.length, 12);
+  eocd.writeUInt32LE(offset, 16);
+  eocd.writeUInt16LE(0, 20);
+  return Buffer.concat([...locals, cdBuf, eocd]);
+}
+
+function renderDocxBuffer(r: any, esc: (s: string) => string, cite: (x: any, i: number) => string): Buffer {
+  const p = (text: string, opts: { bold?: boolean; sizeHalfPt?: number; indentTwips?: number } = {}) => {
+    const rPr = [
+      `<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:eastAsia="Microsoft YaHei" w:cs="Calibri"/>`,
+      opts.bold ? `<w:b/>` : "",
+      opts.sizeHalfPt ? `<w:sz w:val="${opts.sizeHalfPt}"/><w:szCs w:val="${opts.sizeHalfPt}"/>` : "",
+    ].join("");
+    const pPr = opts.indentTwips ? `<w:pPr><w:ind w:left="${opts.indentTwips}"/></w:pPr>` : "";
+    return `<w:p>${pPr}<w:r><w:rPr>${rPr}</w:rPr><w:t xml:space="preserve">${esc(text)}</w:t></w:r></w:p>`;
+  };
+  const paras: string[] = [
+    p(String(r.title || "Report"), { bold: true, sizeHalfPt: 36 }),
+    p(`report_id: ${r.id} · kind: ${r.kind} · created_at: ${new Date(r.created_at ?? Date.now()).toISOString()}`, { sizeHalfPt: 20 }),
+  ];
+  if (r.body) {
+    for (const line of String(r.body).split(/\r?\n/)) paras.push(p(line, { sizeHalfPt: 22 }));
+  }
+  paras.push(p("Claims", { bold: true, sizeHalfPt: 28 }));
+  for (const c of r.claims ?? []) {
+    paras.push(p(`${(c.idx ?? 0) + 1}. [${c.kind}] ${c.text}`, { bold: true, sizeHalfPt: 22 }));
+    (c.citations ?? []).forEach((x: any, i: number) => {
+      paras.push(p(`- ${cite(x, i)}`, { sizeHalfPt: 20, indentTwips: 360 }));
+      if (x.quote) paras.push(p(`> ${String(x.quote).replace(/\r?\n/g, " ")}`, { sizeHalfPt: 18, indentTwips: 720 }));
+    });
+  }
+  paras.push(p("Coverage", { bold: true, sizeHalfPt: 28 }));
+  for (const line of JSON.stringify(r.coverage ?? {}, null, 2).split("\n")) {
+    paras.push(p(line, { sizeHalfPt: 18, indentTwips: 240 }));
+  }
+  const docXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+    `<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>` +
+    paras.join("") +
+    `<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/></w:sectPr>` +
+    `</w:body></w:document>`;
+  const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+    `<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">` +
+    `<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>` +
+    `<Default Extension="xml" ContentType="application/xml"/>` +
+    `<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>` +
+    `</Types>`;
+  const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+    `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">` +
+    `<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>` +
+    `</Relationships>`;
+  return buildZipStore([
+    { name: "[Content_Types].xml", data: Buffer.from(contentTypes, "utf8") },
+    { name: "_rels/.rels", data: Buffer.from(rels, "utf8") },
+    { name: "word/document.xml", data: Buffer.from(docXml, "utf8") },
+  ]);
+}
+
+function renderPdfBuffer(lines: string[]): Buffer {
+  const wrapped: string[] = [];
+  for (const raw of lines) {
+    const s = String(raw ?? "");
+    if (s.length <= 80) { wrapped.push(s); continue; }
+    for (let i = 0; i < s.length; i += 80) wrapped.push(s.slice(i, i + 80));
+  }
+  const perPage = 42;
+  const pageChunks: string[][] = [];
+  for (let i = 0; i < Math.max(1, wrapped.length); i += perPage) {
+    pageChunks.push(wrapped.slice(i, i + perPage));
+  }
+  const pdfEsc = (s: string) => s.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+  const utf16Hex = (s: string) => {
+    let out = "FEFF";
+    for (let i = 0; i < s.length; i++) out += s.charCodeAt(i).toString(16).toUpperCase().padStart(4, "0");
+    return out;
+  };
+  const objs: string[] = [];
+  // 1: Catalog, 2: Pages, 3: Helvetica (ASCII), 4: Type0 STSong-Light (CJK UniGB-UTF16-H), 5: CIDFont
+  const pageObjNums: number[] = [];
+  for (let p = 0; p < pageChunks.length; p++) pageObjNums.push(6 + p * 2);
+  objs.push(`<< /Type /Catalog /Pages 2 0 R >>`);
+  objs.push(`<< /Type /Pages /Kids [ ${pageObjNums.map((n) => `${n} 0 R`).join(" ")} ] /Count ${pageObjNums.length} >>`);
+  objs.push(`<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>`);
+  objs.push(`<< /Type /Font /Subtype /Type0 /BaseFont /STSong-Light /Encoding /UniGB-UTF16-H /DescendantFonts [ 5 0 R ] >>`);
+  objs.push(`<< /Type /Font /Subtype /CIDFontType0 /BaseFont /STSong-Light /CIDSystemInfo << /Registry (Adobe) /Ordering (GB1) /Supplement 4 >> /DW 1000 /W [ 1 95 500 ] >>`);
+  for (let p = 0; p < pageChunks.length; p++) {
+    const pageNum = 6 + p * 2;
+    const streamNum = pageNum + 1;
+    const ops: string[] = [];
+    let y = 790;
+    for (const ln of pageChunks[p]) {
+      const sz = ln.startsWith("# ") ? 15 : ln.startsWith("## ") ? 13 : 10;
+      if (/^[\x20-\x7e]*$/.test(ln)) {
+        ops.push(`BT /F1 ${sz} Tf 48 ${y} Td (${pdfEsc(ln)}) Tj ET`);
+      } else {
+        ops.push(`BT /F2 ${sz} Tf 48 ${y} Td <${utf16Hex(ln)}> Tj ET % ${ln.replace(/[\r\n]+/g, " ")}`);
+      }
+      y -= sz + 6;
+    }
+    const streamData = ops.join("\n");
+    const streamBytes = Buffer.byteLength(streamData, "utf8");
+    objs.push(`<< /Type /Page /Parent 2 0 R /MediaBox [ 0 0 595 842 ] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${streamNum} 0 R >>`);
+    objs.push(`<< /Length ${streamBytes} >>\nstream\n${streamData}\nendstream`);
+  }
+  const chunks: Buffer[] = [Buffer.from("%PDF-1.7\n%\xE2\xE3\xCF\xD3\n", "binary")];
+  const offsets: number[] = [0];
+  let pos = chunks[0].length;
+  for (let i = 0; i < objs.length; i++) {
+    offsets.push(pos);
+    const b = Buffer.from(`${i + 1} 0 obj\n${objs[i]}\nendobj\n`, "utf8");
+    chunks.push(b);
+    pos += b.length;
+  }
+  const xrefPos = pos;
+  const xrefLines = [`xref\n0 ${objs.length + 1}\n0000000000 65535 f \n`];
+  for (let i = 1; i <= objs.length; i++) {
+    xrefLines.push(`${String(offsets[i]).padStart(10, "0")} 00000 n \n`);
+  }
+  xrefLines.push(`trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xrefPos}\n%%EOF\n`);
+  chunks.push(Buffer.from(xrefLines.join(""), "utf8"));
+  return Buffer.concat(chunks);
+}
+
 export function renderReport(r: any, format: string) {
   const safe = String(r.title || "report").replace(/[^\p{L}\p{N}_-]+/gu, "_").slice(0, 80);
   if (format === "json") return { filename: `${safe}.json`, content_type: "application/json", content: JSON.stringify(r, null, 2) };
   const esc = (s: string) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
   const cite = (x: any, i: number) => `[${i + 1}] ${x.title ?? x.document_id} · rev ${x.revision} · evidence ${x.evidence_id}${x.url ? ` · ${x.url}` : ""}${x.snippet_hash ? ` · sha256:${String(x.snippet_hash).slice(0, 12)}` : ""}`;
-  if (format === "md") {
+  const mdLines = () => {
     const lines = [`# ${r.title}`, "", `- report_id: ${r.id}`, `- kind: ${r.kind}`, `- created_at: ${new Date(r.created_at).toISOString()}`, ""];
     if (r.body) lines.push(r.body, "");
     lines.push("## Claims", "");
@@ -170,14 +342,26 @@ export function renderReport(r: any, format: string) {
       (c.citations ?? []).forEach((x: any, i: number) => lines.push(`   - ${cite(x, i)}`, ...(x.quote ? [`     > ${String(x.quote).replace(/\n/g, " ")}`] : [])));
     }
     lines.push("", "## Coverage", "", "```json", JSON.stringify(r.coverage ?? {}, null, 2), "```", "");
-    return { filename: `${safe}.md`, content_type: "text/markdown; charset=utf-8", content: lines.join("\n") };
+    return lines;
+  };
+  if (format === "md") {
+    return { filename: `${safe}.md`, content_type: "text/markdown; charset=utf-8", content: mdLines().join("\n") };
   }
   if (format === "html") {
     const claims = (r.claims ?? []).map((c: any) => `<li><b>[${esc(c.kind)}]</b> ${esc(c.text)}<ul>${(c.citations ?? []).map((x: any, i: number) => `<li>${esc(cite(x, i))}${x.quote ? `<blockquote>${esc(x.quote)}</blockquote>` : ""}</li>`).join("")}</ul></li>`).join("");
     return { filename: `${safe}.html`, content_type: "text/html; charset=utf-8",
       content: `<!doctype html><html><head><meta charset="utf-8"><title>${esc(r.title)}</title></head><body><h1>${esc(r.title)}</h1><p>${esc(r.id)} · ${esc(r.kind)}</p>${r.body ? `<div style="white-space:pre-wrap">${esc(r.body)}</div>` : ""}<h2>Claims</h2><ol>${claims}</ol><h2>Coverage</h2><pre>${esc(JSON.stringify(r.coverage ?? {}, null, 2))}</pre></body></html>` };
   }
-  throw new HttpError(400, "format must be md, html or json");
+  if (format === "pdf") {
+    const buf = renderPdfBuffer(mdLines());
+    return { filename: `${safe}.pdf`, content_type: "application/pdf", content_base64: buf.toString("base64"), content: buf.toString("utf8") };
+  }
+  if (format === "docx") {
+    const buf = renderDocxBuffer(r, esc, cite);
+    return { filename: `${safe}.docx`, content_type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      content_base64: buf.toString("base64"), content: buf.toString("utf8") };
+  }
+  throw new HttpError(400, "format must be md, html, json, pdf or docx");
 }
 
 // ---------- §10.4 scoped media download (verify, then proxy) ----------

@@ -90,7 +90,7 @@ export class Reports {
       .map((r: any) => ({ ...r, coverage: json(r.coverage) }));
   }
 
-  /** §5.2 report export (md | html | json), scoped like getReport (foreign ids are 404). */
+  /** §5.2 report export (md | html | json | pdf | docx), scoped like getReport (foreign ids are 404). */
   async exportReport(s: Scope, id: string, format: string) {
     const r: any = await this.getReport(s, id);
     for (const c of r.claims) for (const x of c.citations) { delete x.chunk_text; }

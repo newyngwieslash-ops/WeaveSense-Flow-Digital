@@ -96,5 +96,8 @@ describe("intelligence audit-8 UI helpers", () => {
         const adminSrc = await Bun.file(`${dir}/workspace-admin-panel.tsx`).text();
         expect(adminSrc).toContain("StatusBadge");
         expect(adminSrc).toContain('value: "editor"');
+        const reportsSrc = await Bun.file(`${dir}/reports-panel.tsx`).text();
+        expect(reportsSrc).toContain('"pdf"');
+        expect(reportsSrc).toContain('"docx"');
     });
 });

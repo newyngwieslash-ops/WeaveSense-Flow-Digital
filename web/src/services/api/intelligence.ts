@@ -266,7 +266,8 @@ async function saveBlob(url: string, workspaceId: string, params: Record<string,
     URL.revokeObjectURL(href);
     return name;
 }
+export type ReportExportFormat = "md" | "html" | "json" | "pdf" | "docx";
 /** PRD §5.2 report export (scoped; foreign ids are 404). */
-export const exportReport = (workspaceId: string, id: string, format: "md" | "html" | "json") => saveBlob(`/intelligence/reports/${encodeURIComponent(id)}/export`, workspaceId, { format }, `report.${format}`);
+export const exportReport = (workspaceId: string, id: string, format: ReportExportFormat) => saveBlob(`/intelligence/reports/${encodeURIComponent(id)}/export`, workspaceId, { format }, `report.${format}`);
 /** PRD §10.4 verified media download (the server checks scope + reference, then proxies the private object). */
 export const downloadMedia = (workspaceId: string, documentId: string, objectKey: string) => saveBlob("/intelligence/media", workspaceId, { document_id: documentId, object_key: objectKey }, "attachment");

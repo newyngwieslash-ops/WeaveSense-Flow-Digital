@@ -217,18 +217,28 @@ func registerGaps9Routes(g *gin.RouterGroup, db *gorm.DB, client EngineClient, c
 		}
 		var env struct {
 			Data struct {
-				Filename    string `json:"filename"`
-				ContentType string `json:"content_type"`
-				Content     string `json:"content"`
+				Filename      string `json:"filename"`
+				ContentType   string `json:"content_type"`
+				Content       string `json:"content"`
+				ContentBase64 string `json:"content_base64"`
 			} `json:"data"`
 		}
 		if st != http.StatusOK || json.Unmarshal(out, &env) != nil {
 			c.Data(st, "application/json", out)
 			return
 		}
+		payload := []byte(env.Data.Content)
+		if env.Data.ContentBase64 != "" {
+			b, err := base64.StdEncoding.DecodeString(env.Data.ContentBase64)
+			if err != nil {
+				reply(c, http.StatusBadGateway, nil, "invalid export payload")
+				return
+			}
+			payload = b
+		}
 		c.Header("Content-Disposition", contentDisposition(env.Data.Filename))
 		c.Header("X-Content-Type-Options", "nosniff")
-		c.Data(http.StatusOK, env.Data.ContentType, []byte(env.Data.Content))
+		c.Data(http.StatusOK, env.Data.ContentType, payload)
 	})
 	// §10.4 media download: the engine verifies tenant/workspace, that the document
 	// references the key and that it was stored, then proxies the private object.

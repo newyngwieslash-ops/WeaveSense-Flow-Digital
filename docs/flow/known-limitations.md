@@ -6,32 +6,27 @@
 
 ---
 
-## 1. 报告导出仅支持 Markdown / HTML / JSON（无 PDF / DOCX）
+## 1. 报告导出支持 Markdown / HTML / JSON / PDF / DOCX（已补齐）
 
-**分类：** 做法不同（deviation D）。PRD §5.2 / §10.3 要求可导出报告；未强制指定格式。当前实现提供三种文本格式，不生成 PDF 或 DOCX。
+**状态：** 已在本地通过 OpenSpec `report-export-pdf-docx` 补齐（PRD §5.2 / §10.3）。
 
 **当前行为：**
-- 接口：`GET /api/intelligence/reports/:id/export?format=md|html|json`（平台代理）；引擎侧 `GET /v1/reports/:id/export`。
-- 前端报告面板只提供 `md` / `html` / `json` 三个按钮。
-- `format` 为其他值时返回 400：`format must be md, html or json`。
+- 接口：`GET /api/intelligence/reports/:id/export?format=md|html|json|pdf|docx`（平台代理）；引擎侧 `GET /v1/reports/:id/export`。
+- 前端报告面板提供 `MD` / `HTML` / `JSON` / `PDF` / `DOCX` 五个导出按钮。
+- `pdf` 使用内置 CJK `STSong-Light` (`UniGB-UTF16-H`) 与 `Helvetica` 渲染标准 `%PDF-1.7` 文档；`docx` 生成标准 OpenXML (`.docx`) ZIP 包（含 `word/document.xml` 中文字体与分级论断、引用链及摘录）；平台侧通过 `content_base64` 无损解码回传二进制流。
+- `format` 为其他值时返回 400：`format must be md, html, json, pdf or docx`。
 - 跨租户/跨工作区的报告 id 导出为 404（A02）。
 
 **相关代码路径：**
 | 路径 | 作用 |
 |---|---|
-| `services/loom-engine/flow/gaps9.ts` → `renderReport` | 渲染 md / html / json |
+| `services/loom-engine/flow/gaps9.ts` → `renderReport` | 渲染 md / html / json / pdf / docx |
 | `services/loom-engine/flow/reports.ts` → `exportReport` | 按 scope 取报告后调用 `renderReport` |
 | `services/loom-engine/flow/server.ts` | `GET /v1/reports/:id/export` |
-| `backend/internal/flow/gaps9.go`（及路由注册） | 平台转发导出 |
-| `web/src/services/api/intelligence.ts` → `exportReport` | 前端类型限定为 `"md" \| "html" \| "json"` |
+| `backend/internal/flow/gaps9.go`（及路由注册） | 平台转发导出（支持 `content_base64` 二进制解码） |
+| `web/src/services/api/intelligence.ts` → `exportReport` | 前端类型支持 `"md" \| "html" \| "json" \| "pdf" \| "docx"` |
 | `web/src/pages/intelligence/reports-panel.tsx` | 导出按钮 |
-| `services/loom-engine/flow/gaps9.test.ts` | 导出与跨租户 404 测试 |
-
-**建议本地后续步骤：**
-1. 选定库：例如服务端用 Chromium/Puppeteer 或 `md-to-pdf` 出 PDF；用 `docx` / pandoc 出 DOCX。
-2. 在 `renderReport` 增加 `pdf` / `docx` 分支，或抽独立 worker，避免 Loom Engine 主进程拉起重型依赖。
-3. 扩展前端类型与按钮；为大体积附件考虑异步任务 + 下载链接（可复用媒体下载的权限模型）。
-4. 补测试：格式合法性、跨租户 404、中文标题与引用列表渲染。
+| `services/loom-engine/flow/gaps9.test.ts`、`backend/internal/flow/gaps9_test.go` | 导出与跨租户 404 测试 |
 
 ---
 

@@ -59,7 +59,7 @@ async function hasTable(legacy: Q, t: string) {
 }
 const asArr = (v: any) => (Array.isArray(v) ? v : typeof v === "string" ? (() => { try { return JSON.parse(v); } catch { return []; } })() : []);
 
-export async function importLegacy(legacy: Q, target: Db, s: Scope, opts: { apply?: boolean; activate?: boolean; batch?: number; copyObject?: CopyObject } = {}): Promise<ImportReport> {
+export async function importLegacy(legacy: Q, target: Db, s: Scope, opts: { apply?: boolean; activate?: boolean; batch?: number; copyObject?: CopyObject; importKeywords?: boolean } = {}): Promise<ImportReport> {
   if (!s.tenant_id || !s.workspace_id) throw new Error("tenant_id and workspace_id required");
   const engine = new Engine(target);
   const imp = newId("imp_");
@@ -97,11 +97,11 @@ export async function importLegacy(legacy: Q, target: Db, s: Scope, opts: { appl
       const pub = it.published_at ? new Date(it.published_at).toISOString() : null;
       const newIdv = await target.tx(async (q) => {
         const ins = await q.query(`INSERT INTO flow_documents (id, tenant_id, workspace_id, source_id, external_id, url, title, published_at)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (tenant_id, source_id, external_id) DO NOTHING RETURNING id`,
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (tenant_id, workspace_id, source_id, external_id) DO NOTHING RETURNING id`,
           [newId("doc_"), s.tenant_id, s.workspace_id, sid, String(it.external_id), it.url ?? "", it.title ?? "", pub]);
         if (!ins.rows[0]) {
           // Same document already collected by Flow: map to it instead of duplicating.
-          return (await q.query(`SELECT id FROM flow_documents WHERE tenant_id=$1 AND source_id=$2 AND external_id=$3`, [s.tenant_id, sid, String(it.external_id)])).rows[0].id as string;
+          return (await q.query(`SELECT id FROM flow_documents WHERE tenant_id=$1 AND workspace_id=$2 AND source_id=$3 AND external_id=$4`, [s.tenant_id, s.workspace_id, sid, String(it.external_id)])).rows[0].id as string;
         }
         const id = ins.rows[0].id as string;
         await q.query(`INSERT INTO flow_document_revisions (document_id, revision, tenant_id, content_hash, title, body, collected_by_run) VALUES ($1,1,$2,$3,$4,$5,$6)`,
@@ -192,9 +192,28 @@ export async function importLegacy(legacy: Q, target: Db, s: Scope, opts: { appl
 
   const kw = await legacy.query(`SELECT to_regclass('keywords') IS NOT NULL AS ok`).catch(() => ({ rows: [{ ok: false }] }));
   if (kw.rows[0]?.ok) {
+    const importedSources = [...srcMap.values()];
     for (const k of (await legacy.query(`SELECT id, phrase FROM keywords ORDER BY id`)).rows as any[]) {
       const prev = await mapped(target, s, "keywords", k.id);
-      await add({ table: "keywords", old_id: k.id, new_id: null, status: "skipped", reason: `keyword "${String(k.phrase).slice(0, 80)}": re-create as a monitor (preview + approval)` }, prev !== undefined);
+      const phrase = String(k.phrase ?? "").trim().slice(0, 80);
+      if (opts.importKeywords) {
+        if (prev !== undefined) {
+          entries.push({ table: "keywords", old_id: k.id, new_id: prev, status: prev ? "imported" : "skipped", reason: "already mapped" });
+          continue;
+        }
+        if (!phrase || !importedSources.length) {
+          await add({ table: "keywords", old_id: k.id, new_id: null, status: "skipped", reason: !phrase ? "empty keyword phrase" : "no imported sources for monitor preview" }, false);
+          continue;
+        }
+        if (!opts.apply) {
+          entries.push({ table: "keywords", old_id: k.id, new_id: null, status: "imported", reason: "dry run (monitor preview)" });
+          continue;
+        }
+        const pv = await engine.previewMonitor(s, { name: phrase, keywords: [phrase], source_ids: importedSources, interval_seconds: 3600, timezone: "Asia/Shanghai" });
+        await add({ table: "keywords", old_id: k.id, new_id: pv.preview_id, status: "imported", reason: "imported as monitor preview (pending approval)" }, false);
+        continue;
+      }
+      await add({ table: "keywords", old_id: k.id, new_id: null, status: "skipped", reason: `keyword "${phrase}": re-create as a monitor (preview + approval)` }, prev !== undefined);
     }
   }
   const counts: ImportReport["counts"] = {};
@@ -204,12 +223,12 @@ export async function importLegacy(legacy: Q, target: Db, s: Scope, opts: { appl
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const [tenant, workspace, ...flags] = process.argv.slice(2);
-  if (!tenant || !workspace) { console.error("usage: legacy-import.ts <tenant_id> <workspace_id> [--apply] [--activate]"); process.exit(2); }
+  if (!tenant || !workspace) { console.error("usage: legacy-import.ts <tenant_id> <workspace_id> [--apply] [--activate] [--import-keywords]"); process.exit(2); }
   const { pgDb, migrate } = await import("../db.ts");
   const legacy = await pgDb(process.env.LEGACY_DATABASE_URL ?? "");
   const target = await pgDb(process.env.DATABASE_URL ?? "");
   await migrate(target);
-  const rep = await importLegacy(legacy, target, { tenant_id: tenant, workspace_id: workspace }, { apply: flags.includes("--apply"), activate: flags.includes("--activate") });
+  const rep = await importLegacy(legacy, target, { tenant_id: tenant, workspace_id: workspace }, { apply: flags.includes("--apply"), activate: flags.includes("--activate"), importKeywords: flags.includes("--import-keywords") });
   for (const e of rep.entries) console.log(JSON.stringify(e));
   console.error(JSON.stringify({ import_id: rep.import_id, dry_run: rep.dry_run, counts: rep.counts }));
   await legacy.close(); await target.close();

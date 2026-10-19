@@ -321,3 +321,27 @@ func TestP7CanvasConversationsMirroredIntoDirectory(t *testing.T) {
 		t.Fatal("leaked to other user")
 	}
 }
+
+func TestPRDOperationStatus(t *testing.T) {
+	cases := map[string]string{
+		"queued":                  "queued",
+		"pending":                 "queued",
+		"leased":                  "running",
+		"running":                 "running",
+		"cancel_requested":        "running",
+		"reconciliation_required": "running",
+		"retry_wait":              "retrying",
+		"retrying":                "retrying",
+		"succeeded":               "completed",
+		"completed":               "completed",
+		"partial":                 "partial",
+		"cancelled":               "cancelled",
+		"failed":                  "failed",
+	}
+	for in, want := range cases {
+		if got := PRDOperationStatus(in); got != want {
+			t.Fatalf("PRDOperationStatus(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+

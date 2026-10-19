@@ -53,6 +53,28 @@ func ProjectionSyncStatus(p model.FlowOperationProjection, now time.Time) string
 	return p.SyncStatus
 }
 
+// PRDOperationStatus maps internal operation/job statuses onto the PRD §5.2
+// 7-state user-facing operation status set:
+// queued / running / retrying / completed / partial / failed / cancelled.
+func PRDOperationStatus(status string) string {
+	switch status {
+	case "succeeded", "completed":
+		return "completed"
+	case "retry_wait", "retrying":
+		return "retrying"
+	case "leased", "running", "cancel_requested", "reconciliation_required":
+		return "running"
+	case "queued", "pending":
+		return "queued"
+	case "partial":
+		return "partial"
+	case "cancelled":
+		return "cancelled"
+	default:
+		return "failed"
+	}
+}
+
 // notifyTitles: engine events that also become in-app notifications (besides report.completed).
 var notifyTitles = map[string]string{
 	"research.completed": "研究任务已完成",

@@ -79,6 +79,19 @@ export function operationStatus(st: string[]): string {
   return "failed";
 }
 
+/** PRD §5.2 canonical 7-state operation status names. */
+export const PRD_OPERATION_STATUSES = ["queued", "running", "retrying", "completed", "partial", "failed", "cancelled"] as const;
+
+export function prdOperationStatus(status: string): (typeof PRD_OPERATION_STATUSES)[number] {
+  if (status === "succeeded" || status === "completed") return "completed";
+  if (status === "retry_wait" || status === "retrying") return "retrying";
+  if (status === "leased" || status === "running" || status === "cancel_requested" || status === "reconciliation_required") return "running";
+  if (status === "queued" || status === "pending") return "queued";
+  if (status === "partial") return "partial";
+  if (status === "cancelled") return "cancelled";
+  return "failed";
+}
+
 export const defaultFetcher: Fetcher = (url, sourceId, src) => connectorFetcher(connectorEnvFromProcess())(url, sourceId, src);
 export type Extractor = (url: string) => Promise<string>;
 const defaultExtractor: Extractor = async (url) => (await import("../src/lib/server/http.ts")).fetchText(url, 15000);
@@ -794,7 +807,7 @@ export class Engine {
         mediaUnsupported += (it.media ?? []).filter((m) => m.status !== "stored").length;
         const occ = eventOccurredAt(it);
         const ins = await q.query(`INSERT INTO flow_documents (id, tenant_id, workspace_id, source_id, external_id, url, title, published_at, media, event_occurred_at, event_occurred_at_source)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT (tenant_id, source_id, external_id) DO NOTHING RETURNING id`,
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT (tenant_id, workspace_id, source_id, external_id) DO NOTHING RETURNING id`,
           [newId("doc_"), run.tenant_id, run.workspace_id, src.id, it.external_id, it.url ?? "", it.title ?? "", it.published_at, JSON.stringify(it.media ?? []), occ.at, occ.source]);
         let docId: string, rev = 1;
         if (ins.rows[0]) {
@@ -807,7 +820,7 @@ export class Engine {
         else {
           const d = (await q.query(`SELECT d.id, d.current_revision, r.content_hash FROM flow_documents d
               JOIN flow_document_revisions r ON r.document_id=d.id AND r.revision=d.current_revision
-              WHERE d.tenant_id=$1 AND d.source_id=$2 AND d.external_id=$3`, [run.tenant_id, src.id, it.external_id])).rows[0];
+              WHERE d.tenant_id=$1 AND d.workspace_id=$2 AND d.source_id=$3 AND d.external_id=$4`, [run.tenant_id, run.workspace_id, src.id, it.external_id])).rows[0];
           if (!d || d.content_hash === hash) continue; // dedup: unchanged
           docId = d.id; rev = d.current_revision + 1; revised++;
           await q.query(`UPDATE flow_documents SET current_revision=$2, title=$3 WHERE id=$1`, [docId, rev, it.title ?? ""]);
@@ -1192,18 +1205,20 @@ export class Engine {
         FROM flow_collection_runs WHERE tenant_id=$1 AND workspace_id=$2 AND operation_id=$3 ORDER BY id`, [s.tenant_id, s.workspace_id, op]);
     if (!r.rows.length) throw new HttpError(404, "operation not found");
     const st = r.rows.map((x: any) => x.status);
-    return { operation_id: op, status: operationStatus(st), jobs: r.rows.map((x: any) => ({ ...x, job_state: prdJobState(x.status) })) };
+    const status = operationStatus(st);
+    return { operation_id: op, status, prd_status: prdOperationStatus(status), jobs: r.rows.map((x: any) => ({ ...x, job_state: prdJobState(x.status), prd_status: prdOperationStatus(x.status) })) };
   }
 
   /** Jobs view (PRD §5.1 任务): recent collection jobs with PRD job_state, source, schedule window and failure reason. */
   async listJobs(s: Scope, o: { limit?: number; status?: string } = {}) {
     const limit = Math.min(Math.max(Number(o.limit) || 50, 1), 200);
+    const filterStatus = o.status === "completed" ? "succeeded" : o.status === "retrying" ? "retry_wait" : o.status === "pending" ? "queued" : (o.status || null);
     const r = await this.db.query(`SELECT r.id AS job_id, r.operation_id, r.source_id, s.title AS source_title, s.kind AS source_kind, r.schedule_id, r.scheduled_at, r.status,
         r.items_new, r.items_revised, r.error, r.partial_reason, r.attempts, r.max_attempts, r.retry_at, r.created_at, r.finished_at
         FROM flow_collection_runs r LEFT JOIN flow_sources s ON s.id=r.source_id AND s.tenant_id=r.tenant_id
         WHERE r.tenant_id=$1 AND r.workspace_id=$2 AND ($3::text IS NULL OR r.status=$3) ORDER BY r.created_at DESC, r.id LIMIT $4`,
-      [s.tenant_id, s.workspace_id, o.status || null, limit]);
-    return r.rows.map((x: any) => ({ ...x, job_state: prdJobState(x.status) }));
+      [s.tenant_id, s.workspace_id, filterStatus, limit]);
+    return r.rows.map((x: any) => ({ ...x, job_state: prdJobState(x.status), prd_status: prdOperationStatus(x.status) }));
   }
 
   async listDocuments(s: Scope, opts: { q?: string; limit?: number; source_id?: string }) {

@@ -3,9 +3,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { pgliteDb, migrate } from "./db.ts";
-import { Engine, type FeedItem } from "./engine.ts";
+import { Engine, prdOperationStatus, PRD_OPERATION_STATUSES, type FeedItem } from "./engine.ts";
 import { Reports } from "./reports.ts";
 import { derivedTick, hashEmbedder, openaiEmbedder, embedderFromEnv, downloadMedia, downloadRawResponse, presignGet, presignPut, monitorExpansion, snippetHash } from "./gaps9.ts";
+import { importLegacy } from "./tools/legacy-import.ts";
 
 const A = { tenant_id: "tn_a", workspace_id: "ws_a" };
 const B = { tenant_id: "tn_b", workspace_id: "ws_b" };
@@ -293,5 +294,49 @@ test("§10.4 media download: verify scope + reference first, then proxy from the
   assert.equal(streamed.sha256, bigSha);
   assert.equal(Buffer.isBuffer(streamed.bytes), true);
   assert.equal("data_base64" in streamed, false);
+});
+
+test("§5.2 / §6.3 / §7.2 / §13.3: 7-state prd_status, composite FKs, and opt-in legacy keyword import", async () => {
+  const { db, eng, s1, collect } = await setup();
+  feeds["https://one.example/f"] = [item("k-1", "储能电池招标公告")];
+  const req = await eng.requestCollection(A, "c3-op-1", { source_ids: [s1.id] });
+  const opQueued: any = await eng.getOperation(A, req.operation_id);
+  assert.equal(opQueued.prd_status, "queued");
+  assert.equal(opQueued.jobs[0].prd_status, "queued");
+  await collect(s1, "c3-op-1");
+  const opDone: any = await eng.getOperation(A, req.operation_id);
+  assert.equal(opDone.status, "succeeded");
+  assert.equal(opDone.prd_status, "completed");
+  assert.equal(opDone.jobs[0].prd_status, "completed");
+  assert.deepEqual(PRD_OPERATION_STATUSES, ["queued", "running", "retrying", "completed", "partial", "failed", "cancelled"]);
+  assert.equal(prdOperationStatus("retry_wait"), "retrying");
+  assert.equal(prdOperationStatus("leased"), "running");
+  assert.equal(prdOperationStatus("cancel_requested"), "running");
+  const completedJobs = await eng.listJobs(A, { status: "completed" });
+  assert.equal(completedJobs.length, 1);
+  assert.equal(completedJobs[0].prd_status, "completed");
+
+  // §7.2 composite scope foreign key blocks cross-workspace/cross-tenant parent reference
+  await assert.rejects(
+    db.query(`INSERT INTO flow_documents (id, tenant_id, workspace_id, source_id, external_id, url, title) VALUES ('doc_bad','tn_a','ws_other',$1,'ext_bad','https://x','bad')`, [s1.id]),
+    /foreign key|violates/i,
+  );
+
+  // §13.3 opt-in legacy keyword import creates monitor preview and maps old_id -> preview_id
+  const legacy = await pgliteDb();
+  await legacy.query(`CREATE TABLE sources (id text primary key, platform text not null, name text not null, handle text not null default '', url text not null default '',
+      feed_url text not null default '', enabled boolean not null default true, adapter text not null default 'rss', created_at timestamptz not null default now())`);
+  await legacy.query(`CREATE TABLE items (id text primary key, source_id text not null, platform text not null, external_id text not null, title text not null default '',
+      body text not null default '', url text not null default '', published_at timestamptz)`);
+  await legacy.query(`CREATE TABLE keywords (id text primary key, phrase text not null)`);
+  await legacy.query(`INSERT INTO sources (id, platform, name, feed_url, adapter) VALUES ('ls1','rss','Feed','https://legacy.example/rss.xml','rss')`);
+  await legacy.query(`INSERT INTO keywords VALUES ('kw1','固态电池')`);
+  const rep = await importLegacy(legacy, db, A, { apply: true, importKeywords: true });
+  assert.deepEqual(rep.counts.keywords, { imported: 1 });
+  const kwEntry = rep.entries.find((e) => e.table === "keywords" && e.old_id === "kw1");
+  assert.ok(kwEntry?.new_id?.startsWith("mpv_"));
+  const pv = await eng.getMonitorPreview(A, kwEntry!.new_id!);
+  assert.deepEqual(pv.keywords, ["固态电池"]);
+  await legacy.close();
 });
 

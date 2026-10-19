@@ -83,29 +83,22 @@
 
 ---
 
-## 4. 平台代理的媒体下载单文件上限 25 MiB
+## 4. ~~平台代理的媒体下载单文件上限 25 MiB~~（已升级：流式透传最高 512 MiB + 短时 Scoped 预签名 URL）
 
-**分类：** 做法不同 / 工程约束。PRD §10.4 要求先鉴权再下载对象存储中的媒体；当前由平台代理字节（不向浏览器签发桶 URL），单文件上限 `MEDIA_DOWNLOAD_MAX = 25 * 1024 * 1024`，超限返回 413。
+**状态：** 已完成（OpenSpec 变更 `media-download-streaming-presign`）。PRD §10.4 先鉴权再下载的契约在保持不变的前提下，消除了 Go 平台 4 MiB JSON 缓冲截断与 25 MiB Base64 内存膨胀限制，同时支持短时 Scoped SigV4 预签名 URL 发牌模式。
 
 **当前行为：**
-- `GET /api/intelligence/media?document_id&object_key`：校验租户/工作区前缀、文档引用且 `status=stored`，再对内部 MinIO 做 SigV4 预签名 GET，校验 sha256 后 base64 返回。
+- `GET /api/intelligence/media?document_id&object_key`（默认代理模式）：Go 平台通过 `EngineClient.DoStream` 携带 `X-Flow-Accept-Stream: 1` 请求引擎 `/v1/media`，引擎校验租户/工作区前缀、文档引用且 `status=stored`、SHA-256 完整性后，直接以二进制流（`X-Flow-Media-Stream: 1`，上限 `MEDIA_STREAM_MAX = 512 MiB`，可通过 `MEDIA_DOWNLOAD_MAX_BYTES` 调整）透传至客户端；同时保留对旧版 JSON `data_base64`（25 MiB 上限）响应的向后兼容。
+- `GET /api/intelligence/media?document_id&object_key&mode=presign&expires=60`（短时预签名模式）：先执行完全一致的租户/工作区与文档引用鉴权（未授权/路径穿越一律返回 404，绝不签发 URL），通过后返回短时（15~300 秒，默认 60 秒）SigV4 预签名 GET URL（优先使用 `MINIO_PUBLIC_ENDPOINT`），供大文件直连下载。
 - `Cache-Control: private, no-store`；跨工作区/未存储/路径穿越 → 404，从不触达对象存储。
-- Content-Length 或实际字节数超过 25 MiB → `413 object too large to proxy`。
 
 **相关代码路径：**
 | 路径 | 作用 |
 |---|---|
-| `services/loom-engine/flow/gaps9.ts` → `MEDIA_DOWNLOAD_MAX`、`objectStoreFromEnv`、`downloadMedia`、`presignGet` | 上限、代理读取、鉴权 |
-| `services/loom-engine/flow/server.ts` | `GET` 媒体下载路由 |
-| `backend/internal/flow/gaps9.go`（及路由） | 平台代理到引擎并回传字节 |
-| `services/loom-engine/flow/gaps9.test.ts` | 跨租户/完整性/路径穿越 |
-| `docs/flow/pending-acceptance.md` Round 9 | 真实 MinIO 验收待办 |
-
-**建议本地后续步骤：**
-1. 大文件改为短时、scoped 的预签名 URL（或分块/Range），浏览器直连对象存储，平台只做鉴权发牌。
-2. 若仍走代理：提高上限或改为流式透传（勿整文件进内存 / base64）。
-3. 在真实 MinIO 上验收：本工作区可下、外工作区 404、超限 413（见 pending-acceptance）。
-4. 与 Telegram 媒体 key 迁移、对象恢复（A18）流程一起做集成演练。
+| `services/loom-engine/flow/gaps9.ts` → `MEDIA_STREAM_MAX`、`authorizeMedia`、`downloadMedia`、`presignGet` | 鉴权、512 MiB 流式读取与短时预签名 |
+| `services/loom-engine/flow/server.ts` | `GET /v1/media` 二进制流式与 `mode=presign` 响应 |
+| `backend/internal/flow/client.go`、`backend/internal/flow/gaps9.go` | `DoStream` 流式透传与 `mode=presign` 转发 |
+| `services/loom-engine/flow/gaps9.test.ts`、`backend/internal/flow/gaps9_test.go` | >25 MiB 流式下载、短时预签名与跨租户 404 测试 |
 
 ---
 

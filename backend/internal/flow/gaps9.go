@@ -241,13 +241,63 @@ func registerGaps9Routes(g *gin.RouterGroup, db *gorm.DB, client EngineClient, c
 		c.Data(http.StatusOK, env.Data.ContentType, payload)
 	})
 	// §10.4 media download: the engine verifies tenant/workspace, that the document
-	// references the key and that it was stored, then proxies the private object.
+	// references the key and that it was stored, then streams/proxies the private object
+	// or issues a short-lived scoped presigned URL (mode=presign).
 	g.GET("/media", func(c *gin.Context) {
 		q := url.Values{"document_id": {c.Query("document_id")}, "object_key": {c.Query("object_key")}}
-		_, st, out, ok := call(c, http.MethodGet, "/v1/media?"+q.Encode(), "", nil)
+		if mode := c.Query("mode"); mode != "" {
+			q.Set("mode", mode)
+		}
+		if exp := c.Query("expires"); exp != "" {
+			q.Set("expires", exp)
+		}
+		if c.Query("mode") == "presign" {
+			_, st, out, ok := call(c, http.MethodGet, "/v1/media?"+q.Encode(), "", nil)
+			if !ok {
+				return
+			}
+			if st == http.StatusOK {
+				c.Header("Cache-Control", "private, no-store")
+			}
+			c.Data(st, "application/json", out)
+			return
+		}
+		s, u, ok := scoped(c)
 		if !ok {
 			return
 		}
+		resp, err := client.DoStream(c.Request.Context(), s, Actor{Type: "user", ID: u.ID}, http.MethodGet, "/v1/media?"+q.Encode(), map[string]string{
+			"X-Flow-Accept-Stream": "1",
+		})
+		if err != nil {
+			reply(c, http.StatusBadGateway, nil, "loom engine unavailable")
+			return
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode == http.StatusOK && resp.Header.Get("X-Flow-Media-Stream") == "1" {
+			fname, err := url.PathUnescape(resp.Header.Get("X-Flow-Filename"))
+			if err != nil || fname == "" {
+				fname = "media"
+			}
+			ct := resp.Header.Get("Content-Type")
+			if ct == "" {
+				ct = "application/octet-stream"
+			}
+			c.Header("Content-Disposition", contentDisposition(fname))
+			c.Header("X-Content-Type-Options", "nosniff")
+			c.Header("Cache-Control", "private, no-store")
+			if sha := resp.Header.Get("X-Flow-Sha256"); sha != "" {
+				c.Header("X-Content-SHA256", sha)
+			}
+			if cl := resp.Header.Get("Content-Length"); cl != "" {
+				c.Header("Content-Length", cl)
+			}
+			c.Header("Content-Type", ct)
+			c.Status(http.StatusOK)
+			_, _ = io.Copy(c.Writer, io.LimitReader(resp.Body, 512<<20))
+			return
+		}
+		out, _ := io.ReadAll(io.LimitReader(resp.Body, 36<<20))
 		var env struct {
 			Data struct {
 				ContentType string `json:"content_type"`
@@ -256,8 +306,8 @@ func registerGaps9Routes(g *gin.RouterGroup, db *gorm.DB, client EngineClient, c
 				Data        string `json:"data_base64"`
 			} `json:"data"`
 		}
-		if st != http.StatusOK || json.Unmarshal(out, &env) != nil {
-			c.Data(st, "application/json", out)
+		if resp.StatusCode != http.StatusOK || json.Unmarshal(out, &env) != nil {
+			c.Data(resp.StatusCode, "application/json", out)
 			return
 		}
 		b, err := base64.StdEncoding.DecodeString(env.Data.Data)

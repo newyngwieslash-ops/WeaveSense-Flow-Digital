@@ -76,3 +76,32 @@ func (e EngineClient) Do(ctx context.Context, scope Scope, actor Actor, method, 
 	out, err := io.ReadAll(io.LimitReader(resp.Body, 4<<20))
 	return resp.StatusCode, out, err
 }
+
+// DoStream opens a scoped request to Loom Engine and returns the raw HTTP response
+// so callers (such as §10.4 media streaming) can stream bytes without buffering or Base64 overhead.
+func (e EngineClient) DoStream(ctx context.Context, scope Scope, actor Actor, method, path string, headers map[string]string) (*http.Response, error) {
+	tok, err := Sign(e.Cfg.SigningKey, ExecutionContext{Issuer: e.Cfg.Issuer, Audience: e.Cfg.Audience,
+		TenantID: scope.TenantID, WorkspaceID: scope.WorkspaceID, Actor: actor, Scopes: ScopesForRole(scope.Role),
+		CapabilitySnapshotID: capabilityFromCtx(ctx), PolicyVersion: "policy_v1"}, time.Now(), e.Cfg.TTL)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequestWithContext(ctx, method, e.Cfg.EngineURL+path, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+tok)
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+	hc := e.HTTP
+	if hc == nil {
+		hc = &http.Client{Timeout: 120 * time.Second}
+	}
+	resp, err := hc.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("loom engine: %w", err)
+	}
+	return resp, nil
+}
+

@@ -203,4 +203,30 @@ test("§10.4 media download: verify scope + reference first, then proxy from the
   await assert.rejects(downloadMedia(db, null, A, { document_id: d.id, object_key: key }), (e: any) => e.status === 503);
   const url = presignGet({ endpoint: "minio:9000", bucket: "flow-intel", key, accessKey: "ak", secretKey: "sk", now: new Date("2026-10-13T00:00:00Z") });
   assert.match(url, /^http:\/\/minio:9000\/flow-intel\/tenants\/tn_a\/workspaces\/ws_a\/telegram\/chan\/9\?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=ak%2F20261013%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261013T000000Z&X-Amz-Expires=60&X-Amz-SignedHeaders=host&X-Amz-Signature=[0-9a-f]{64}$/);
+  // Scoped presign mode: verifies scope + document reference without fetching bytes, signs short-lived URL
+  const presignEnv = { MINIO_ENDPOINT: "minio:9000", MINIO_PUBLIC_ENDPOINT: "https://s3.example.com", MINIO_BUCKET: "flow-intel", MINIO_ACCESS_KEY: "ak", MINIO_SECRET_KEY: "sk" };
+  const signed: any = await downloadMedia(db, null, A, { document_id: d.id, object_key: key, mode: "presign", expires: 45, presign_env: presignEnv, now: new Date("2026-10-13T00:00:00Z") });
+  assert.equal(signed.mode, "presign");
+  assert.equal(signed.expires_in, 45);
+  assert.equal(signed.expected_sha256, sha);
+  assert.match(signed.presigned_url, /^https:\/\/s3\.example\.com\/flow-intel\/tenants\/tn_a\/workspaces\/ws_a\/telegram\/chan\/9\?.*X-Amz-Expires=45/);
+  for (const [sc, k] of [[B, key], [A, "tenants/tn_b/workspaces/ws_b/telegram/chan/9"], [A, "tenants/tn_a/workspaces/ws_a/telegram/chan/10"], [A, "tenants/tn_a/workspaces/ws_a/../ws_x/a"]] as const) {
+    await assert.rejects(downloadMedia(db, null, sc, { document_id: d.id, object_key: k, mode: "presign", presign_env: presignEnv }), (e: any) => e.status === 404);
+  }
+  // Streaming mode supports > 25 MiB without base64 bloat, while legacy non-streaming rejects > 25 MiB with 413
+  const bigKey = "tenants/tn_a/workspaces/ws_a/telegram/chan/big";
+  const bigBytes = Buffer.alloc(26 * 1024 * 1024, 0x41);
+  const bigSha = (await import("node:crypto")).createHash("sha256").update(bigBytes).digest("hex");
+  await db.query(`UPDATE flow_documents SET media=$1::jsonb WHERE id=$2`, [
+    JSON.stringify([{ url: bigKey, type: "video", status: "stored", reason: "", content_type: "video/mp4", sha256: bigSha }]),
+    d.id,
+  ]);
+  const bigStore = async () => ({ bytes: bigBytes, content_type: "video/mp4" });
+  await assert.rejects(downloadMedia(db, bigStore, A, { document_id: d.id, object_key: bigKey }), (e: any) => e.status === 413);
+  const streamed: any = await downloadMedia(db, bigStore, A, { document_id: d.id, object_key: bigKey, stream: true });
+  assert.equal(streamed.size, 26 * 1024 * 1024);
+  assert.equal(streamed.sha256, bigSha);
+  assert.equal(Buffer.isBuffer(streamed.bytes), true);
+  assert.equal("data_base64" in streamed, false);
 });
+

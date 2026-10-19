@@ -125,7 +125,21 @@ func TestGaps9RoutesForwardAndRender(t *testing.T) {
 				_, _ = w.Write([]byte(`{"code":0,"data":{"filename":"周报.md","content_type":"text/markdown; charset=utf-8","content":"# 周报"},"msg":"ok"}`))
 			}
 		case r.URL.Path == "/v1/media":
-			_, _ = w.Write([]byte(`{"code":0,"data":{"filename":"chan_9","content_type":"image/png","sha256":"abc","data_base64":"UE5HREFUQQ=="},"msg":"ok"}`))
+			switch r.URL.Query().Get("mode") {
+			case "presign":
+				_, _ = w.Write([]byte(`{"code":0,"data":{"mode":"presign","object_key":"tenants/x/workspaces/y/telegram/c/9","presigned_url":"https://s3.example.com/flow-intel/tenants/x/workspaces/y/telegram/c/9?X-Amz-Expires=45","expires_in":45},"msg":"ok"}`))
+			default:
+				if r.URL.Query().Get("object_key") == "tenants/x/workspaces/y/telegram/c/stream" && r.Header.Get("X-Flow-Accept-Stream") == "1" {
+					w.Header().Set("Content-Type", "video/mp4")
+					w.Header().Set("X-Flow-Media-Stream", "1")
+					w.Header().Set("X-Flow-Filename", "chan_stream.mp4")
+					w.Header().Set("X-Flow-Sha256", "def456")
+					w.WriteHeader(200)
+					_, _ = w.Write([]byte("MP4STREAMBYTES"))
+					return
+				}
+				_, _ = w.Write([]byte(`{"code":0,"data":{"filename":"chan_9","content_type":"image/png","sha256":"abc","data_base64":"UE5HREFUQQ=="},"msg":"ok"}`))
+			}
 		default:
 			_, _ = w.Write([]byte(`{"code":0,"data":{},"msg":"ok"}`))
 		}
@@ -190,6 +204,14 @@ func TestGaps9RoutesForwardAndRender(t *testing.T) {
 	}
 	if !strings.HasPrefix(got[len(got)-1].uri, "/v1/media?document_id=doc_1&object_key=tenants") {
 		t.Fatalf("media forwarded as %s", got[len(got)-1].uri)
+	}
+	wStream := do("GET", "/api/intelligence/media?document_id=doc_1&object_key=tenants/x/workspaces/y/telegram/c/stream", "", "")
+	if wStream.Code != 200 || wStream.Body.String() != "MP4STREAMBYTES" || wStream.Header().Get("Content-Type") != "video/mp4" || wStream.Header().Get("X-Content-SHA256") != "def456" || !strings.Contains(wStream.Header().Get("Content-Disposition"), "chan_stream.mp4") {
+		t.Fatalf("media stream: %d %q %v", wStream.Code, wStream.Body.String(), wStream.Header())
+	}
+	wPresign := do("GET", "/api/intelligence/media?document_id=doc_1&object_key=tenants/x/workspaces/y/telegram/c/9&mode=presign&expires=45", "", "")
+	if wPresign.Code != 200 || !strings.Contains(wPresign.Body.String(), `"presigned_url":"https://s3.example.com`) || wPresign.Header().Get("Cache-Control") != "private, no-store" {
+		t.Fatalf("media presign: %d %q %v", wPresign.Code, wPresign.Body.String(), wPresign.Header())
 	}
 }
 

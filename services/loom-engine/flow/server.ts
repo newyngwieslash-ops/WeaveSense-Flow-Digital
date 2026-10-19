@@ -103,7 +103,27 @@ export function handler(engine: Engine, cfg: ServerConfig) {
       }
       if (m === "GET" && p === "/v1/media") {
         requireScope(ctx, "intel.documents.read");
-        return send(res, 200, await downloadMedia(engine.db, engine.objectStore, ctx, { document_id: url.searchParams.get("document_id") ?? "", object_key: url.searchParams.get("object_key") ?? "" }));
+        const mode = url.searchParams.get("mode") === "presign" ? "presign" : "proxy";
+        const wantStream = mode === "proxy" && (url.searchParams.get("stream") === "1" || req.headers["x-flow-accept-stream"] === "1");
+        const got: any = await downloadMedia(engine.db, engine.objectStore, ctx, {
+          document_id: url.searchParams.get("document_id") ?? "",
+          object_key: url.searchParams.get("object_key") ?? "",
+          mode,
+          stream: wantStream,
+          expires: Number(url.searchParams.get("expires")) || undefined,
+        });
+        if (wantStream && Buffer.isBuffer(got.bytes)) {
+          res.writeHead(200, {
+            "content-type": got.content_type || "application/octet-stream",
+            "content-length": String(got.bytes.length),
+            "cache-control": "private, no-store",
+            "x-flow-media-stream": "1",
+            "x-flow-filename": encodeURIComponent(got.filename),
+            "x-flow-sha256": got.sha256,
+          });
+          return res.end(got.bytes);
+        }
+        return send(res, 200, got);
       }
       if (m === "GET" && p === "/v1/derived-jobs") { requireScope(ctx, "intel.operations.read"); return send(res, 200, await listDerivedJobs(engine.db, ctx, url.searchParams.get("document_id") ?? undefined)); }
       if (m === "GET" && (mm = p.match(/^\/v1\/documents\/([\w-]+)\/analysis$/))) { requireScope(ctx, "intel.documents.read"); return send(res, 200, await getAnalysis(engine.db, ctx, mm[1])); }

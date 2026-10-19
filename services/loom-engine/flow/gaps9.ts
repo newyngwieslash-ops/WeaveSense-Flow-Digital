@@ -364,11 +364,12 @@ export function renderReport(r: any, format: string) {
   throw new HttpError(400, "format must be md, html, json, pdf or docx");
 }
 
-// ---------- §10.4 scoped media download (verify, then proxy) ----------
+// ---------- §10.4 scoped media download (verify, then stream/proxy or short-lived scoped presign) ----------
 export type ObjectStore = (key: string) => Promise<{ bytes: Buffer; content_type: string }>;
 export const MEDIA_DOWNLOAD_MAX = 25 * 1024 * 1024;
+export const MEDIA_STREAM_MAX = 512 * 1024 * 1024;
 
-/** SigV4 presigned GET against the private S3/MinIO bucket (internal endpoint; never handed to the browser). */
+/** SigV4 presigned GET against the private S3/MinIO bucket. */
 export function presignGet(o: { endpoint: string; bucket: string; key: string; accessKey: string; secretKey: string; region?: string; now?: Date; expires?: number }) {
   const region = o.region ?? "us-east-1", now = o.now ?? new Date();
   const amz = now.toISOString().replace(/[-:]|\.\d{3}/g, ""), day = amz.slice(0, 8);
@@ -386,22 +387,21 @@ export function presignGet(o: { endpoint: string; bucket: string; key: string; a
   return `${u.protocol}//${u.host}${path}?${qs}&X-Amz-Signature=${sig}`;
 }
 
-export function objectStoreFromEnv(env = process.env, fetchImpl: typeof fetch = fetch): ObjectStore | null {
+export function objectStoreFromEnv(env = process.env, fetchImpl: typeof fetch = fetch, maxBytes = Number(env.MEDIA_DOWNLOAD_MAX_BYTES) || MEDIA_STREAM_MAX): ObjectStore | null {
   const endpoint = env.MINIO_ENDPOINT, bucket = env.MINIO_BUCKET, accessKey = env.MINIO_ACCESS_KEY, secretKey = env.MINIO_SECRET_KEY;
   if (!endpoint || !bucket || !accessKey || !secretKey) return null;
   return async (key) => {
-    const res = await fetchImpl(presignGet({ endpoint, bucket, key, accessKey, secretKey, region: env.MINIO_REGION }), { redirect: "error", signal: AbortSignal.timeout(60_000) });
+    const res = await fetchImpl(presignGet({ endpoint, bucket, key, accessKey, secretKey, region: env.MINIO_REGION }), { redirect: "error", signal: AbortSignal.timeout(120_000) });
     if (res.status === 404) throw new HttpError(404, "object not found");
     if (!res.ok) throw new HttpError(502, "object store unavailable");
-    if (Number(res.headers.get("content-length") ?? 0) > MEDIA_DOWNLOAD_MAX) throw new HttpError(413, "object too large to proxy");
+    if (Number(res.headers.get("content-length") ?? 0) > maxBytes) throw new HttpError(413, "object too large to proxy");
     const bytes = Buffer.from(await res.arrayBuffer());
-    if (bytes.length > MEDIA_DOWNLOAD_MAX) throw new HttpError(413, "object too large to proxy");
+    if (bytes.length > maxBytes) throw new HttpError(413, "object too large to proxy");
     return { bytes, content_type: res.headers.get("content-type") ?? "application/octet-stream" };
   };
 }
 
-/** Authorises (document in caller's tenant/workspace, key referenced by it and inside the scoped prefix), then proxies. */
-export async function downloadMedia(db: Db, store: ObjectStore | null, s: Scope, o: { document_id: string; object_key: string }) {
+export async function authorizeMedia(db: Db, s: Scope, o: { document_id: string; object_key: string }) {
   const key = String(o.object_key ?? "");
   const prefix = `tenants/${s.tenant_id}/workspaces/${s.workspace_id}/`;
   if (!key.startsWith(prefix) || key.includes("..")) throw new HttpError(404, "object not found");
@@ -410,9 +410,42 @@ export async function downloadMedia(db: Db, store: ObjectStore | null, s: Scope,
   const media: any[] = typeof d.media === "string" ? JSON.parse(d.media) : (d.media ?? []);
   const m = media.find((x) => x.url === key && x.status === "stored");
   if (!m) throw new HttpError(404, "object not found");
+  return { key, m, filename: key.split("/").slice(-2).join("_") };
+}
+
+/** Authorises (document in caller's tenant/workspace, key referenced by it and inside the scoped prefix), then streams/proxies or signs a short-lived scoped URL. */
+export async function downloadMedia(
+  db: Db,
+  store: ObjectStore | null,
+  s: Scope,
+  o: { document_id: string; object_key: string; mode?: "proxy" | "presign"; stream?: boolean; expires?: number; presign_env?: Record<string, string | undefined>; now?: Date },
+) {
+  const { key, m, filename } = await authorizeMedia(db, s, o);
+  if (o.mode === "presign") {
+    const env = o.presign_env ?? process.env;
+    const endpoint = env.MINIO_PUBLIC_ENDPOINT || env.MINIO_ENDPOINT, bucket = env.MINIO_BUCKET, accessKey = env.MINIO_ACCESS_KEY, secretKey = env.MINIO_SECRET_KEY;
+    if (!endpoint || !bucket || !accessKey || !secretKey) throw new HttpError(503, "object storage not configured");
+    const expires = Math.min(300, Math.max(15, Number(o.expires) || 60));
+    return {
+      mode: "presign" as const,
+      object_key: key,
+      content_type: m.content_type || "application/octet-stream",
+      expected_sha256: m.sha256 ?? null,
+      filename,
+      presigned_url: presignGet({ endpoint, bucket, key, accessKey, secretKey, region: env.MINIO_REGION, now: o.now, expires }),
+      expires_in: expires,
+    };
+  }
   if (!store) throw new HttpError(503, "object storage not configured");
   const got = await store(key);
-  if (m.sha256 && createHash("sha256").update(got.bytes).digest("hex") !== m.sha256) throw new HttpError(502, "object integrity check failed");
-  return { object_key: key, content_type: m.content_type || got.content_type, size: got.bytes.length, sha256: createHash("sha256").update(got.bytes).digest("hex"),
-    expected_sha256: m.sha256 ?? null, filename: key.split("/").slice(-2).join("_"), data_base64: got.bytes.toString("base64") };
+  const maxCap = o.stream ? MEDIA_STREAM_MAX : MEDIA_DOWNLOAD_MAX;
+  if (got.bytes.length > maxCap) throw new HttpError(413, "object too large to proxy");
+  const digest = createHash("sha256").update(got.bytes).digest("hex");
+  if (m.sha256 && digest !== m.sha256) throw new HttpError(502, "object integrity check failed");
+  if (o.stream) {
+    return { object_key: key, content_type: m.content_type || got.content_type, size: got.bytes.length, sha256: digest,
+      expected_sha256: m.sha256 ?? null, filename, bytes: got.bytes };
+  }
+  return { object_key: key, content_type: m.content_type || got.content_type, size: got.bytes.length, sha256: digest,
+    expected_sha256: m.sha256 ?? null, filename, data_base64: got.bytes.toString("base64") };
 }

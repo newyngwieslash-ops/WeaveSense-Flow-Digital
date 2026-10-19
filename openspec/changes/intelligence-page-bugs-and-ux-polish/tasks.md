@@ -3,7 +3,7 @@
 ## 1. 会话缓存按用户隔离与工作区成员角色一致性
 
 - [x] 1.1 在 `web/src/services/api/intelligence.ts` 中将 `listConversations` 与 `cachedConversations` 的 `localStorage` 缓存键改为按当前登录用户 ID 隔离（未登录时不读写共享缓存），并在 `web/test/intelligence-gaps9.test.ts` 补充多账号切换缓存隔离与空用户测试，运行 `cd web && bun test test/intelligence-gaps9.test.ts` 验证通过
-- [ ] 1.2 在 `backend/internal/flow/p7.go` 中修复 `ListMembers`（结合当前工作区 `WorkspaceMembership.Role` 返回 `owner`/`admin`/`editor`/`viewer`）与 `SetMemberRole`（支持 `admin`/`editor`/`member`/`viewer`），在 `backend/internal/flow/p7_test.go` 补充 `viewer` 与 `editor` 回显断言并运行 `cd backend && go test ./internal/flow -run TestP7MembersRoleEditing` 验证通过
+- [x] 1.2 在 `backend/internal/flow/p7.go` 中修复 `ListMembers`（结合当前工作区 `WorkspaceMembership.Role` 返回 `owner`/`admin`/`editor`/`viewer`）与 `SetMemberRole`（支持 `admin`/`editor`/`member`/`viewer`），在 `backend/internal/flow/p7_test.go` 补充 `viewer` 与 `editor` 回显断言并运行 `cd backend && go test ./internal/flow -run TestP7MembersRoleEditing` 验证通过
 
 ## 2. 情报工作台跨视图 Agent 侧栏、中文 UI 与 UI-Kit 组件对齐
 

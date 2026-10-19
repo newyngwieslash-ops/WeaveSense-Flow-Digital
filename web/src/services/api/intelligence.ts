@@ -121,9 +121,9 @@ export const createOrganization = (name: string) => http.post<{ tenant: { id: st
 export const createInvite = (workspaceId: string, email: string, role: string) => http.post<{ invite: { id: string; email: string; role: string; expiresAt: string }; token: string }>("/intelligence/invites", { email, role }, ws(workspaceId));
 export const acceptInvite = (token: string) => http.post<{ tenantId: string; workspaceId: string; role: string }>("/intelligence/invites/accept", { token });
 
-export type OrgMember = { userId: string; email: string; name: string; role: "owner" | "admin" | "member"; status: string; joinedAt: string };
+export type OrgMember = { userId: string; email: string; name: string; role: "owner" | "admin" | "editor" | "member" | "viewer"; status: string; joinedAt: string };
 export const listMembers = (workspaceId: string) => http.get<{ members: OrgMember[]; canManage: boolean }>("/intelligence/members", ws(workspaceId));
-export const setMemberRole = (workspaceId: string, userId: string, role: "admin" | "member" | "viewer") => http.patch<{ ok: boolean }>(`/intelligence/members/${encodeURIComponent(userId)}`, { role }, ws(workspaceId));
+export const setMemberRole = (workspaceId: string, userId: string, role: "admin" | "editor" | "member" | "viewer") => http.patch<{ ok: boolean }>(`/intelligence/members/${encodeURIComponent(userId)}`, { role }, ws(workspaceId));
 export const resolveReservation = (workspaceId: string, id: string, outcome: "succeeded" | "not_executed", costMicro?: number) =>
     http.post<BudgetReservation>(`/intelligence/billing/reservations/${encodeURIComponent(id)}/resolve`, { outcome, costMicro }, ws(workspaceId));
 

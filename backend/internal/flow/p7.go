@@ -187,23 +187,48 @@ func ListMembers(db *gorm.DB, scope Scope) ([]MemberView, error) {
 	if err := db.Where("tenant_id = ? AND status = ?", scope.TenantID, "active").Order("created_at").Find(&ms).Error; err != nil {
 		return nil, err
 	}
+	wsRoles := make(map[string]string, len(ms))
+	if scope.WorkspaceID != "" {
+		var wms []model.WorkspaceMembership
+		if err := db.Where("workspace_id = ?", scope.WorkspaceID).Find(&wms).Error; err == nil {
+			for _, wm := range wms {
+				wsRoles[wm.UserID] = wm.Role
+			}
+		}
+	}
 	out := make([]MemberView, 0, len(ms))
 	for _, m := range ms {
 		var u model.User
 		db.Select("id", "email", "display_name").First(&u, "id = ?", m.UserID)
-		out = append(out, MemberView{UserID: m.UserID, Email: u.Email, Name: u.DisplayName, Role: m.Role, Status: m.Status, JoinedAt: m.CreatedAt.UTC().Format(time.RFC3339)})
+		role := m.Role
+		if m.Role != "owner" {
+			if wsRole := wsRoles[m.UserID]; wsRole != "" {
+				role = wsRole
+			} else if m.Role == "member" {
+				role = "editor"
+			}
+		}
+		out = append(out, MemberView{UserID: m.UserID, Email: u.Email, Name: u.DisplayName, Role: role, Status: m.Status, JoinedAt: m.CreatedAt.UTC().Format(time.RFC3339)})
 	}
 	return out, nil
 }
 
 // SetMemberRole changes a member's tenant role (admin|member) and the matching
-// workspace role (admin→admin, member→editor). Owners cannot be changed and
+// workspace role (admin→admin, editor/member→editor, viewer→viewer). Owners cannot be changed and
 // the last admin cannot demote themselves away.
 func SetMemberRole(db *gorm.DB, scope Scope, userID, role string) error {
 	if scope.Role != "admin" {
 		return ErrForbidden
 	}
-	if role != "admin" && role != "member" && role != "viewer" {
+	var tenantRole, wsRole string
+	switch role {
+	case "admin":
+		tenantRole, wsRole = "admin", "admin"
+	case "editor", "member":
+		tenantRole, wsRole = "member", "editor"
+	case "viewer":
+		tenantRole, wsRole = "member", "viewer"
+	default:
 		return ErrInvalid
 	}
 	return db.Transaction(func(tx *gorm.DB) error {
@@ -213,10 +238,6 @@ func SetMemberRole(db *gorm.DB, scope Scope, userID, role string) error {
 		}
 		if m.Role == "owner" {
 			return ErrForbidden
-		}
-		tenantRole, wsRole := role, map[string]string{"admin": "admin", "member": "editor", "viewer": "viewer"}[role]
-		if role == "viewer" {
-			tenantRole = "member"
 		}
 		if m.Role == "admin" && tenantRole != "admin" {
 			var n int64

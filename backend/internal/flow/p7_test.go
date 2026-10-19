@@ -28,14 +28,44 @@ func TestP7MembersRoleEditing(t *testing.T) {
 	if err != nil || len(ms) != 2 {
 		t.Fatalf("members %v %v", ms, err)
 	}
+	roleOf := func(uid string) string {
+		list, err := ListMembers(db, admin)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, m := range list {
+			if m.UserID == uid {
+				return m.Role
+			}
+		}
+		return ""
+	}
+	if got := roleOf("u_alice"); got != "owner" {
+		t.Fatalf("want owner role for u_alice, got %q", got)
+	}
+	if got := roleOf("u_bob"); got != "editor" {
+		t.Fatalf("want initial editor role for u_bob, got %q", got)
+	}
 	if err := SetMemberRole(db, admin, "u_bob", "viewer"); err != nil {
 		t.Fatal(err)
+	}
+	if got := roleOf("u_bob"); got != "viewer" {
+		t.Fatalf("want viewer role projected by ListMembers, got %q", got)
 	}
 	if err := AuthorizeGrant(db, "user:u_bob", tn.ID, ws.ID, "intel.reports.write"); err == nil {
 		t.Fatal("viewer must lose write scope")
 	}
+	if err := SetMemberRole(db, admin, "u_bob", "editor"); err != nil {
+		t.Fatal(err)
+	}
+	if got := roleOf("u_bob"); got != "editor" {
+		t.Fatalf("want editor role projected by ListMembers, got %q", got)
+	}
 	if err := SetMemberRole(db, admin, "u_bob", "admin"); err != nil {
 		t.Fatal(err)
+	}
+	if got := roleOf("u_bob"); got != "admin" {
+		t.Fatalf("want admin role projected by ListMembers, got %q", got)
 	}
 	bob, _ := ResolveScope(db, "u_bob", ws.ID)
 	if bob.Role != "admin" {
@@ -48,6 +78,9 @@ func TestP7MembersRoleEditing(t *testing.T) {
 		t.Fatal("invalid role accepted")
 	}
 	_ = SetMemberRole(db, admin, "u_bob", "member")
+	if got := roleOf("u_bob"); got != "editor" {
+		t.Fatalf("want legacy member role mapped to editor, got %q", got)
+	}
 	bob, _ = ResolveScope(db, "u_bob", ws.ID)
 	if err := SetMemberRole(db, bob, "u_alice", "admin"); !errors.Is(err, ErrForbidden) {
 		t.Fatal("non-admin edited roles")

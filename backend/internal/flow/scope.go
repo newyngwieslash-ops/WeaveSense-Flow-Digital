@@ -66,7 +66,7 @@ func ListWorkspaces(db *gorm.DB, userID string) ([]model.Workspace, error) {
 func ScopesForRole(role string) []string {
 	read := []string{"intel.sources.read", "intel.documents.read", "intel.operations.read"}
 	switch role {
-	case "admin", "editor":
+	case "owner", "admin", "editor", "analyst":
 		return append(read, "intel.sources.write", "intel.monitors.write", "intel.schedules.write", "intel.collect", "intel.reports.write", "intel.research", "intel.mcp.use")
 	}
 	return read

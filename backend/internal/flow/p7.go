@@ -214,10 +214,10 @@ func ListMembers(db *gorm.DB, scope Scope) ([]MemberView, error) {
 }
 
 // SetMemberRole changes a member's tenant role (admin|member) and the matching
-// workspace role (admin→admin, editor/member→editor, viewer→viewer). Owners cannot be changed and
+// workspace role (admin→admin, editor/member→editor, analyst→analyst, viewer→viewer). Owners cannot be changed and
 // the last admin cannot demote themselves away.
 func SetMemberRole(db *gorm.DB, scope Scope, userID, role string) error {
-	if scope.Role != "admin" {
+	if scope.Role != "admin" && scope.Role != "owner" {
 		return ErrForbidden
 	}
 	var tenantRole, wsRole string
@@ -226,6 +226,8 @@ func SetMemberRole(db *gorm.DB, scope Scope, userID, role string) error {
 		tenantRole, wsRole = "admin", "admin"
 	case "editor", "member":
 		tenantRole, wsRole = "member", "editor"
+	case "analyst":
+		tenantRole, wsRole = "member", "analyst"
 	case "viewer":
 		tenantRole, wsRole = "member", "viewer"
 	default:

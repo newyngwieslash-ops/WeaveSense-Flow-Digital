@@ -45,7 +45,7 @@ type WorkspaceMembership struct {
 	ID          string    `json:"id" gorm:"primaryKey;size:40"`
 	WorkspaceID string    `json:"workspaceId" gorm:"size:40;uniqueIndex:ux_flow_ws_membership"`
 	UserID      string    `json:"userId" gorm:"size:36;uniqueIndex:ux_flow_ws_membership;index"`
-	Role        string    `json:"role" gorm:"size:16"` // admin | editor | viewer
+	Role        string    `json:"role" gorm:"size:16"` // admin | editor | analyst | viewer
 	CreatedAt   time.Time `json:"createdAt"`
 }
 

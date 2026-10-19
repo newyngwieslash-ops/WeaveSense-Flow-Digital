@@ -81,7 +81,26 @@ func TestP7MembersRoleEditing(t *testing.T) {
 	if got := roleOf("u_bob"); got != "editor" {
 		t.Fatalf("want legacy member role mapped to editor, got %q", got)
 	}
+	// PRD §10.1: analyst role is supported for SetMemberRole, CreateInvite, ListMembers, and AuthorizeGrant.
+	if err := SetMemberRole(db, admin, "u_bob", "analyst"); err != nil {
+		t.Fatalf("SetMemberRole analyst: %v", err)
+	}
+	if got := roleOf("u_bob"); got != "analyst" {
+		t.Fatalf("want analyst role projected by ListMembers, got %q", got)
+	}
+	if err := AuthorizeGrant(db, "user:u_bob", tn.ID, ws.ID, "intel.research"); err != nil {
+		t.Fatalf("analyst must hold intel.research scope: %v", err)
+	}
+	if err := AuthorizeGrant(db, "user:u_bob", tn.ID, ws.ID, "intel.reports.write"); err != nil {
+		t.Fatalf("analyst must hold intel.reports.write scope: %v", err)
+	}
+	if _, _, err := CreateInvite(db, admin, "u_alice", "carol@x", "analyst", time.Hour); err != nil {
+		t.Fatalf("CreateInvite analyst: %v", err)
+	}
 	bob, _ = ResolveScope(db, "u_bob", ws.ID)
+	if bob.Role != "analyst" {
+		t.Fatalf("want ResolveScope role analyst, got %q", bob.Role)
+	}
 	if err := SetMemberRole(db, bob, "u_alice", "admin"); !errors.Is(err, ErrForbidden) {
 		t.Fatal("non-admin edited roles")
 	}

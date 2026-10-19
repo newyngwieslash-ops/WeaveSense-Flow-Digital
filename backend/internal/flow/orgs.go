@@ -44,7 +44,7 @@ func hashToken(tok string) string {
 
 // CreateInvite (workspace admin of an organization tenant) returns the one-time token.
 func CreateInvite(db *gorm.DB, scope Scope, inviterID, email, role string, ttl time.Duration) (model.FlowInvite, string, error) {
-	if scope.Role != "admin" {
+	if scope.Role != "admin" && scope.Role != "owner" {
 		return model.FlowInvite{}, "", ErrForbidden
 	}
 	var t model.Tenant
@@ -52,7 +52,7 @@ func CreateInvite(db *gorm.DB, scope Scope, inviterID, email, role string, ttl t
 		return model.FlowInvite{}, "", errors.New("flow: invites are only for organization tenants")
 	}
 	switch role {
-	case "admin", "editor", "viewer":
+	case "admin", "editor", "analyst", "viewer":
 	default:
 		return model.FlowInvite{}, "", errors.New("flow: invalid role")
 	}

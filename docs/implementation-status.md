@@ -43,6 +43,7 @@ Round 9 additions (2026-10-15, audit-8 gaps; details in `docs/flow/delivery-repo
 | §6.4 / §7.3 embed / analyze jobs & hybrid vector search | done (`none`/`hash`/`openai` embedders + optional hybrid FTS + cosine similarity search) | `gaps9.ts derivedTick/openaiEmbedder`, `engine.ts searchDocuments` | `gaps9.test.ts` |
 | §11.1 cancel/retry projection | done | `events.go` | `TestProjectionCancelAndRetryEvents` |
 | §11.3 manual command outbox + async dispatcher | done (`flow_command_outbox` v67 + `CommandDispatcher` + `RunCommandDispatcher`) | `command_outbox.go`, `routes.go`, `routes_contract.go`, `tools.go` | `command_outbox_test.go` |
+| §10.1 workspace roles (`owner/admin/analyst/editor/viewer`) | done (`analyst` supported in `CreateInvite`, `SetMemberRole`, `ListMembers`, `ScopesForRole`) | `scope.go`, `orgs.go`, `p7.go` | `TestP7MembersRoleEditing` |
 | §8.3 cost basis | done | `zz_cost_basis.go` | `TestEveryToolHasCostBasis` |
 
 ## Known deviations

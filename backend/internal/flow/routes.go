@@ -101,11 +101,57 @@ func RegisterRoutes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc) {
 		}
 	}
 	proxy := func(method, enginePath string) gin.HandlerFunc { return proxyWith(method, enginePath, nil) }
+	proxyCommand := func(command, method, enginePath string) gin.HandlerFunc {
+		return func(c *gin.Context) {
+			db := reqDB(c, db)
+			if !cfg.Enabled() {
+				reply(c, http.StatusServiceUnavailable, nil, "loom engine not configured")
+				return
+			}
+			s, u, ok := scoped(c)
+			if !ok {
+				return
+			}
+			body, _ := io.ReadAll(io.LimitReader(c.Request.Body, 1<<20))
+			dispatcher := CommandDispatcher{DB: db, Engine: client}
+			row, replayed, err := dispatcher.Enqueue(c.Request.Context(), CommandInput{
+				Scope:          s,
+				Actor:          Actor{Type: "user", ID: u.ID},
+				Command:        command,
+				Method:         method,
+				Path:           enginePath,
+				IdempotencyKey: c.GetHeader("X-Idempotency-Key"),
+				Payload:        body,
+			})
+			if errors.Is(err, ErrCommandConflict) {
+				reply(c, http.StatusConflict, nil, err.Error())
+				return
+			}
+			if err != nil {
+				reply(c, http.StatusInternalServerError, nil, "command outbox error")
+				return
+			}
+			if strings.EqualFold(c.GetHeader("X-Flow-Outbox-Mode"), "async") {
+				reply(c, http.StatusAccepted, gin.H{"operation_id": row.OperationID, "outbox_id": row.ID, "status": row.Status, "accepted": true, "replayed": replayed}, "accepted")
+				return
+			}
+			if replayed && (row.Status == "dispatched" || row.Status == "failed") && row.ResponseStatus > 0 {
+				c.Data(row.ResponseStatus, "application/json", []byte(row.ResponseBody))
+				return
+			}
+			dispatched, derr := dispatcher.DispatchOne(c.Request.Context(), row.ID)
+			if derr != nil && dispatched.ResponseStatus == 0 {
+				reply(c, http.StatusBadGateway, gin.H{"operation_id": dispatched.OperationID, "outbox_id": dispatched.ID, "status": dispatched.Status}, "loom engine unavailable")
+				return
+			}
+			c.Data(dispatched.ResponseStatus, "application/json", []byte(dispatched.ResponseBody))
+		}
+	}
 	g.GET("/sources", proxy(http.MethodGet, "/v1/sources"))
 	g.POST("/sources", proxy(http.MethodPost, "/v1/sources"))
 	g.GET("/schedules", proxy(http.MethodGet, "/v1/schedules"))
 	g.POST("/schedules", proxy(http.MethodPost, "/v1/schedules"))
-	g.POST("/collection-runs", proxy(http.MethodPost, "/v1/collection-runs"))
+	g.POST("/collection-runs", proxyCommand("collection.request", http.MethodPost, "/v1/collection-runs"))
 	g.GET("/collection-runs", proxy(http.MethodGet, "/v1/collection-runs"))
 	g.GET("/documents", proxy(http.MethodGet, "/v1/documents"))
 	g.GET("/operations/:id", proxy(http.MethodGet, "/v1/operations/:id"))
@@ -117,7 +163,7 @@ func RegisterRoutes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc) {
 	g.GET("/reports", proxy(http.MethodGet, "/v1/reports"))
 	g.GET("/reports/:id", proxy(http.MethodGet, "/v1/reports/:id"))
 	g.GET("/brief-schedules", proxy(http.MethodGet, "/v1/brief-schedules"))
-	registerContractRoutes(g, proxy, proxyWith)
+	registerContractRoutes(g, proxy, proxyWith, proxyCommand)
 	registerGaps9Routes(g, db, client, cfg, scoped)
 	g.GET("/skills", func(c *gin.Context) {
 		db := reqDB(c, db)

@@ -12,6 +12,7 @@ import (
 
 type proxyFunc func(method, enginePath string) gin.HandlerFunc
 type proxyWithFunc func(method, enginePath string, mutate func(body []byte, u *model.User, idem string) ([]byte, error)) gin.HandlerFunc
+type proxyCommandFunc func(command, method, enginePath string) gin.HandlerFunc
 
 // directApproval marks a REST monitor save as approved by the signed-in user's own request
 // (the agent path gets its approval_id from the approval card instead).
@@ -30,13 +31,13 @@ func directApproval(body []byte, u *model.User, idem string) ([]byte, error) {
 }
 
 // registerContractRoutes adds the PRD §11.1 routes that were only reachable through agent tools.
-func registerContractRoutes(g *gin.RouterGroup, proxy proxyFunc, proxyWith proxyWithFunc) {
+func registerContractRoutes(g *gin.RouterGroup, proxy proxyFunc, proxyWith proxyWithFunc, proxyCommand proxyCommandFunc) {
 	g.GET("/sources/health", proxy(http.MethodGet, "/v1/sources/health"))
 	g.PATCH("/sources/:id", proxy(http.MethodPatch, "/v1/sources/:id"))
 	g.POST("/monitors", proxyWith(http.MethodPost, "/v1/monitors", directApproval))
 	g.GET("/documents/:id/revisions", proxy(http.MethodGet, "/v1/documents/:id/revisions"))
 	g.GET("/documents/:id/revisions/:rev", proxy(http.MethodGet, "/v1/documents/:id/revisions/:rev"))
-	g.POST("/research-runs", proxy(http.MethodPost, "/v1/research-runs?async=1"))
+	g.POST("/research-runs", proxyCommand("research.request", http.MethodPost, "/v1/research-runs?async=1"))
 	g.GET("/research-runs/:id", proxy(http.MethodGet, "/v1/research-runs/:id"))
 	g.POST("/research-runs/:id/cancel", proxy(http.MethodPost, "/v1/research-runs/:id/cancel"))
 	g.POST("/operations/:id/cancel", proxy(http.MethodPost, "/v1/operations/:id/cancel"))

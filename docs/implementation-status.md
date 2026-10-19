@@ -34,14 +34,15 @@ Round 9 additions (2026-10-15, audit-8 gaps; details in `docs/flow/delivery-repo
 | PRD section | Status | Code | Evidence |
 |---|---|---|---|
 | §5.2 saved topics | done | `flow/topics.go`, `intel_save_topic`, `topics-panel.tsx` | `TestSavedTopicsCRUDAndTool` |
-| §5.2 / §10.3 report export (md/html/json) | done (no PDF/DOCX) | `gaps9.ts renderReport`, `gaps9.go` | `gaps9.test.ts`, `TestGaps9RoutesForwardAndRender` |
-| §10.4 verified media download | done (proxy, 25 MiB cap); **not run against a real MinIO** | `gaps9.ts downloadMedia/presignGet` | `gaps9.test.ts` |
-| §10.3 RLS on topics, event inbox, projections, billing accounts, skill pins | done (v66) | `flow_rls.go` | `TestFlowRLSPostgres` (PG17 non-superuser) |
+| §5.2 / §10.3 report export (md/html/json/pdf/docx) | done (incl. PDF `%PDF-1.7` CJK & OpenXML DOCX) | `gaps9.ts renderReport`, `gaps9.go` | `gaps9.test.ts`, `TestGaps9RoutesForwardAndRender` |
+| §10.4 verified media download | done (streaming proxy up to 512 MiB + short-lived scoped `presign` mode); **not run against a real MinIO** | `gaps9.ts downloadMedia/presignGet`, `gaps9.go` | `gaps9.test.ts`, `TestGaps9MediaStreamAndPresignModes` |
+| §10.3 RLS on topics, event inbox, projections, billing accounts, skill pins, command outbox | done (v66–v67) | `flow_rls.go` | `TestFlowRLSPostgres` (PG17 non-superuser) |
 | §5.1 structured plan, cost estimate, budget, re-approval | done | `engine.ts`, `plan-card.tsx`, `monitor-editor.tsx` | `gaps9.test.ts`, Go route tests |
 | §7.3 snippet hash + URL | done | engine `0016`, `reports.ts`, `citations.go` | `gaps9.test.ts`, `TestCitationSnippetHashAndURL` |
-| §6.3 raw item + digest | done (normalised item, not raw bytes) | `engine.ts execute` | `gaps9.test.ts` |
-| §6.4 embed / analyze jobs | done (lexical analyze; embed none/hash) | `gaps9.ts derivedTick` | `gaps9.test.ts` |
+| §6.3 raw item + digest + raw HTTP response archive | done (normalised item + gzipped raw HTTP bytes in object store `0017_raw_response_archive.sql`) | `engine.ts execute`, `gaps9.ts archiveRawResponse/downloadRawResponse` | `gaps9.test.ts` |
+| §6.4 / §7.3 embed / analyze jobs & hybrid vector search | done (`none`/`hash`/`openai` embedders + optional hybrid FTS + cosine similarity search) | `gaps9.ts derivedTick/openaiEmbedder`, `engine.ts searchDocuments` | `gaps9.test.ts` |
 | §11.1 cancel/retry projection | done | `events.go` | `TestProjectionCancelAndRetryEvents` |
+| §11.3 manual command outbox + async dispatcher | done (`flow_command_outbox` v67 + `CommandDispatcher` + `RunCommandDispatcher`) | `command_outbox.go`, `routes.go`, `routes_contract.go`, `tools.go` | `command_outbox_test.go` |
 | §8.3 cost basis | done | `zz_cost_basis.go` | `TestEveryToolHasCostBasis` |
 
 ## Known deviations

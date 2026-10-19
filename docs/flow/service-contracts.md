@@ -41,7 +41,7 @@ Scheduled executions re-check the durable grant (membership, connection, budget)
 Command acceptance and Job creation happen in one intel-DB transaction; response `202 {status:"accepted", job_id}`.
 
 ## 4. Outbox / Inbox
-- Manual: platform tx creates operation + reservation + outbox row → dispatcher → Engine inbox (dedupe on `idempotency_key`) → Job.
+- Manual: platform tx creates operation (`flow_operation_projections`) + reservation (`flow_budget_reservations`, optional) + outbox row (`flow_command_outbox`) → `CommandDispatcher` (`DispatchOne` / `DispatchDue` / `RunCommandDispatcher`, plus optional `X-Flow-Outbox-Mode: async` 202 queue mode) → Engine inbox (dedupe on `idempotency_key`) → Job.
 - Scheduled: Engine claims windows (lease + fencing token) and requests a platform grant; no platform-side scanner.
 - Completion: business result and outbox event committed in the same tx. Platform consumes, dedupes on `consumer_id + event_id`, updates projections, settles, notifies.
 

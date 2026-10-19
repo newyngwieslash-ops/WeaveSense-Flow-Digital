@@ -341,7 +341,31 @@ func (t Tools) execute(ctx context.Context, row model.FlowAgentToolCall, spec To
 	if spec.Class == "write" {
 		key = idem
 	}
-	status, out, err := t.Engine.Do(cctx, ss.Scope, Actor{Type: "user", ID: userID}, method, path, key, payload)
+	var status int
+	var out []byte
+	var err error
+	if spec.Name == "intel_collect_once" || spec.Name == "intel_start_research" {
+		cmdName := "collection.request"
+		if spec.Name == "intel_start_research" {
+			cmdName = "research.request"
+		}
+		dispatcher := CommandDispatcher{DB: t.DB, Engine: t.Engine, Now: t.Now}
+		dispatched, _, derr := dispatcher.EnqueueAndDispatch(cctx, CommandInput{
+			Scope:          ss.Scope,
+			Actor:          Actor{Type: "user", ID: userID},
+			Command:        cmdName,
+			Method:         method,
+			Path:           path,
+			IdempotencyKey: key,
+			Payload:        payload,
+		})
+		status, out, err = dispatched.ResponseStatus, []byte(dispatched.ResponseBody), derr
+		if status > 0 && status < 500 {
+			err = nil
+		}
+	} else {
+		status, out, err = t.Engine.Do(cctx, ss.Scope, Actor{Type: "user", ID: userID}, method, path, key, payload)
+	}
 	result := ToolResult{CallID: row.CallID, Tool: row.ToolName}
 	switch {
 	case err != nil:

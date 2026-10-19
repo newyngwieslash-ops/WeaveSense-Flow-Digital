@@ -11,6 +11,7 @@ var flowRLSTables = []string{
 	"flow_usage_records", "flow_notification_targets", "flow_notification_deliveries",
 	"flow_mcp_secrets", "flow_capability_snapshots", "flow_run_capabilities",
 	"flow_topics", "flow_event_inbox", "flow_operation_projections", "flow_billing_accounts", "flow_skill_run_pins",
+	"flow_command_outbox",
 }
 
 // flowSystemOnlyTables are platform-wide tables with no tenant_id (managed

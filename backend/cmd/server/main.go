@@ -159,6 +159,9 @@ func run(ctx context.Context) error {
 	flow.RegisterMetricsRoute(r, db)
 	go flow.RunNotifier(context.Background(), flow.Notifier{DB: db, Mail: flow.SMTPMailerFromEnv(), BaseURL: os.Getenv("FLOW_PUBLIC_BASE_URL")}, 10*time.Second)
 	go flow.RunBillingMaintenance(context.Background(), db, 15*time.Minute)
+	if flowCfg.Enabled() {
+		go flow.RunCommandDispatcher(context.Background(), flow.CommandDispatcher{DB: db, Engine: flow.EngineClient{Cfg: flowCfg}}, 2*time.Second)
+	}
 	go svc.RunFlowAutoContinue(context.Background(), 5*time.Second)
 	r.NoRoute(handler.SystemProxyNoRouteHandler(svc))
 

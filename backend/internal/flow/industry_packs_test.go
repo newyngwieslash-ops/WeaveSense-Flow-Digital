@@ -122,6 +122,7 @@ func TestIndustryPackExport(t *testing.T) {
 		seen++
 		rel, _ := filepath.Rel(root, path)
 		got, _ := os.ReadFile(path)
+		got = bytes.ReplaceAll(got, []byte("\r\n"), []byte("\n"))
 		if exp, ok := want[filepath.ToSlash(rel)]; !ok {
 			t.Errorf("stale file industry-packs/%s", rel)
 		} else if !bytes.Equal(got, exp) {

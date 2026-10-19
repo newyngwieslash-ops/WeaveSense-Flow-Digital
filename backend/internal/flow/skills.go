@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"embed"
 	"encoding/hex"
@@ -86,6 +87,7 @@ func SkillPacks() ([]SkillPack, error) {
 				packsErr = err
 				return
 			}
+			raw = bytes.ReplaceAll(raw, []byte("\r\n"), []byte("\n"))
 			var p SkillPack
 			if err := json.Unmarshal(raw, &p); err != nil {
 				packsErr = err

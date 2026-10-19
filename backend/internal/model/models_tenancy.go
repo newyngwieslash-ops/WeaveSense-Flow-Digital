@@ -90,3 +90,39 @@ type FlowOperationProjection struct {
 }
 
 func (FlowOperationProjection) TableName() string { return "flow_operation_projections" }
+
+// FlowCommandOutbox persists manual platform → Engine commands (collection/research)
+// in the same transaction as the platform operation projection and optional budget reservation,
+// then dispatches them idempotently to Loom Engine (PRD §11.3).
+type FlowCommandOutbox struct {
+	ID                 string     `json:"id" gorm:"primaryKey;size:40"`
+	OperationID        string     `json:"operationId" gorm:"size:64;index"`
+	TenantID           string     `json:"tenantId" gorm:"size:40;not null;uniqueIndex:ux_flow_cmd_outbox_idem,priority:1;index:ix_flow_cmd_outbox_due,priority:1"`
+	WorkspaceID        string     `json:"workspaceId" gorm:"size:40;not null;index"`
+	ActorType          string     `json:"actorType" gorm:"size:32;not null"`
+	ActorID            string     `json:"actorId" gorm:"size:64;not null"`
+	ActorRole          string     `json:"actorRole" gorm:"size:32"`
+	Command            string     `json:"command" gorm:"size:64;not null"` // collection.request | research.request
+	Method             string     `json:"method" gorm:"size:16;not null"`
+	Path               string     `json:"path" gorm:"size:240;not null"`
+	IdempotencyKey     string     `json:"idempotencyKey" gorm:"size:160;not null;uniqueIndex:ux_flow_cmd_outbox_idem,priority:2"`
+	ForwardIdemHeader  string     `json:"forwardIdemHeader" gorm:"size:160"`
+	RequestHash        string     `json:"requestHash" gorm:"size:64;not null"`
+	Payload            string     `json:"payload" gorm:"type:text"`
+	ReservationID      string     `json:"reservationId,omitempty" gorm:"size:40;index"`
+	CapabilitySnapshot string     `json:"capabilitySnapshot,omitempty" gorm:"size:64"`
+	Status             string     `json:"status" gorm:"size:32;not null;index:ix_flow_cmd_outbox_due,priority:2"` // pending | dispatching | dispatched | retry_wait | failed | reconciliation_required
+	Attempts           int        `json:"attempts" gorm:"not null;default:0"`
+	MaxAttempts        int        `json:"maxAttempts" gorm:"not null;default:5"`
+	NextAttemptAt      time.Time  `json:"nextAttemptAt" gorm:"index:ix_flow_cmd_outbox_due,priority:3"`
+	LeaseUntil         *time.Time `json:"leaseUntil,omitempty"`
+	ResponseStatus     int        `json:"responseStatus"`
+	ResponseBody       string     `json:"responseBody" gorm:"type:text"`
+	EngineOperationID  string     `json:"engineOperationId,omitempty" gorm:"size:64"`
+	LastError          string     `json:"lastError,omitempty" gorm:"size:500"`
+	CreatedAt          time.Time  `json:"createdAt"`
+	UpdatedAt          time.Time  `json:"updatedAt"`
+}
+
+func (FlowCommandOutbox) TableName() string { return "flow_command_outbox" }
+

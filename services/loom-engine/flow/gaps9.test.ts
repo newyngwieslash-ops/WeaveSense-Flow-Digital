@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { pgliteDb, migrate } from "./db.ts";
 import { Engine, type FeedItem } from "./engine.ts";
 import { Reports } from "./reports.ts";
-import { derivedTick, hashEmbedder, downloadMedia, downloadRawResponse, presignGet, presignPut, monitorExpansion, snippetHash } from "./gaps9.ts";
+import { derivedTick, hashEmbedder, openaiEmbedder, embedderFromEnv, downloadMedia, downloadRawResponse, presignGet, presignPut, monitorExpansion, snippetHash } from "./gaps9.ts";
 
 const A = { tenant_id: "tn_a", workspace_id: "ws_a" };
 const B = { tenant_id: "tn_b", workspace_id: "ws_b" };
@@ -161,6 +161,45 @@ test("§6.4 embed and analyze are separate jobs, once per content hash; embeddin
   const vec = (await db.query(`SELECT provider, dims, array_length(vector, 1) AS n FROM flow_document_embeddings WHERE revision=2`)).rows[0];
   assert.deepEqual([vec.provider, vec.dims, vec.n], ["hash-16", 16, 16]);
   assert.equal(await derivedTick(db, hashEmbedder(16)), 0, "frequent ticks do not re-spend");
+  // OpenAI-compatible HTTP embedder + hybrid vector search (semantic recall, provider isolation & cross-tenant isolation)
+  const seenCalls: { url: string; body: any }[] = [];
+  const oai = embedderFromEnv(
+    { EMBED_PROVIDER: "openai", EMBED_BASE_URL: "https://emb.example/v1", EMBED_API_KEY: "sk-test", EMBED_MODEL: "bge-m3", EMBED_DIMS: "4" },
+    (async (url: any, init: any) => {
+      const b = JSON.parse(String(init?.body ?? "{}"));
+      seenCalls.push({ url: String(url), body: b });
+      const data = (b.input as string[]).map((txt: string, idx: number) => ({
+        index: idx,
+        embedding: /cathode|正极|battery/i.test(txt) ? [3, 4, 0, 0] : [0, 0, 1, 0],
+      }));
+      return new Response(JSON.stringify({ data }), { status: 200, headers: { "content-type": "application/json" } });
+    }) as any,
+  )!;
+  assert.equal(oai.name, "openai:bge-m3");
+  assert.equal(oai.dims, 4);
+  feeds = { "https://one.example/f": [item("1", "lithium price up 12% in Q3 (revised)"), item("2", "LFP cathode capacity expands rapidly")] };
+  await collect(s1, "c4");
+  assert.equal(await derivedTick(db, oai), 2);
+  assert.equal(seenCalls[0].url, "https://emb.example/v1/embeddings");
+  assert.equal(seenCalls[0].body.model, "bge-m3");
+  // Without vector search, querying "正极材料" does not match English "LFP cathode capacity expands rapidly"
+  const ftsOnly = await eng.searchDocuments(A, { query: "正极材料", vector: false });
+  assert.equal(ftsOnly.items.length, 0);
+  // With hybrid vector search enabled on oai embedder, semantic similarity recalls item("2")
+  eng.embedder = oai;
+  const hybrid = await eng.searchDocuments(A, { query: "正极材料", vector: true });
+  assert.equal(hybrid.vector_used, true);
+  assert.equal(hybrid.embed_provider, "openai:bge-m3");
+  assert.equal(hybrid.items.length, 1);
+  assert.match(hybrid.items[0].snippet, /LFP cathode/);
+  assert.ok(hybrid.items[0].vector_score > 0.99);
+  // Cross-tenant isolation: tenant B never sees tenant A's vector embeddings
+  const foreignHybrid = await eng.searchDocuments(B, { query: "正极材料", vector: true });
+  assert.equal(foreignHybrid.items.length, 0);
+  // Provider/model switch isolation: switching to a different model does not mix old provider vectors
+  eng.embedder = hashEmbedder(16);
+  const switchedModel = await eng.searchDocuments(A, { query: "正极材料", vector: true });
+  assert.equal(switchedModel.items.length, 0);
 });
 
 test("§5.2/§10.3 report export (md/html/json/pdf/docx) is tenant-scoped (A02)", async () => {

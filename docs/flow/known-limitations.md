@@ -51,30 +51,21 @@
 
 ---
 
-## 3. Embed 作业已接线，但仅有 `none` / `hash` 提供者；未用于检索（向量检索为 PRD 可选项）
+## 3. ~~Embed 作业已接线，但仅有 `none` / `hash` 提供者；未用于检索~~（已升级：OpenAI 兼容 HTTP Embedding 提供者 + 可选混合向量检索）
 
-**分类：** 可选能力未完整落地。PRD §6.4 要求可排队的 embed/analyze 派生作业；§7.3 向量检索为可选项。当前作业队列与表结构齐全，嵌入提供者只有 `none`（跳过）和 `hash`（本地特征哈希）；向量**不参与**文档检索。
+**状态：** 已完成（OpenSpec 变更 `embedding-provider-hybrid-search`）。PRD §6.4 派生 embed 作业与 §7.3 可选向量检索已完整打通，支持 `none`（默认跳过）、`hash`（本地特征哈希）与 `openai`（真实 OpenAI 兼容 `/v1/embeddings`）三种提供者，并在 `Engine.searchDocuments` 中支持 FTS + 向量余弦相似度混合检索。
 
 **当前行为：**
-- 采集/ enrichment 提交时按 content hash 入队 `flow_derived_jobs`（`embed` 与 `analyze`）。
-- `derivedTick` 循环处理队列：`EMBED_PROVIDER=none`（默认）将 embed 记为 `skipped`；`hash` 写入 `flow_document_embeddings`。
-- Analyze 为词法分析（语言、数字事实、监控关键词命中），不调用模型。
-- 搜索仍走现有 FTS / 过滤路径，不读 embedding 表。
+- 采集/enrichment 提交时按 content hash 入队 `flow_derived_jobs`（`embed` 与 `analyze`），内容未变绝不重复计费。
+- `embedderFromEnv` 支持 `EMBED_PROVIDER=openai`（读取 `EMBED_BASE_URL`、`EMBED_API_KEY`、`EMBED_MODEL`、`EMBED_DIMS`），调用 `/v1/embeddings` 并对返回向量执行 L2 归一化后写入 `flow_document_embeddings`（`provider` 记为 `openai:<model>`）。
+- `Engine.searchDocuments` 默认保持纯 FTS/子串检索（符合 PRD「向量检索为可选项」）；当传入 `vector: true` 或设置环境变量 `VECTOR_SEARCH_ENABLED=true` 且配置有效 `embedder` 时，自动按 `tenant_id`、`workspace_id`、`current_revision` 与当前 `embedder.name` 过滤向量并计算余弦相似度，以 `rank = fts_rank + vector_score * 0.5` 做混合排序，同时严格隔离跨租户与旧模型向量。
 
 **相关代码路径：**
 | 路径 | 作用 |
 |---|---|
-| `services/loom-engine/flow/gaps9.ts` → `embedderFromEnv`、`hashEmbedder`、`enqueueDerived`、`derivedTick` | 提供者与作业循环 |
-| `services/loom-engine/flow/main.ts` | `EMBED_PROVIDER` 启动 `derived` 循环 |
-| `flow_derived_jobs` / `flow_document_embeddings` 表 | 作业与向量存储 |
-| `services/loom-engine/flow/gaps9.test.ts` | embed/analyze 幂等与 hash 写入 |
-| `.env.flow.example`（若有 `EMBED_PROVIDER`） | 环境变量说明 |
-
-**建议本地后续步骤：**
-1. 实现真实提供者（如 OpenAI / 本地 sentence-transformers），在 `embedderFromEnv` 增加分支，配置 `EMBED_PROVIDER`、模型名、维度、API 密钥。
-2. 检索侧增加可选向量路径（pgvector 或外部索引），与现有 FTS 做混合排序；默认关闭以符合「可选项」。
-3. 按 content hash 去重，避免重复计费；为失败重试与预算预留接现有 billing。
-4. 验收：换模型后旧向量是否重建、跨租户向量不可见。
+| `services/loom-engine/flow/gaps9.ts` → `embedderFromEnv`、`openaiEmbedder`、`hashEmbedder`、`cosineSimilarity`、`derivedTick` | 提供者、L2 归一化与派生作业循环 |
+| `services/loom-engine/flow/engine.ts` → `searchDocuments` | FTS + 可选混合向量检索与排序 |
+| `services/loom-engine/flow/gaps9.test.ts` | `openaiEmbedder`、混合检索语义召回、跨模型与跨租户隔离测试 |
 
 ---
 

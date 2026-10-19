@@ -84,7 +84,7 @@ export type Extractor = (url: string) => Promise<string>;
 const defaultExtractor: Extractor = async (url) => (await import("../src/lib/server/http.ts")).fetchText(url, 15000);
 
 import { HttpError } from "./errors.ts";
-import { rawItem, snippetHash, enqueueDerived, extractionCompleteness, extractionMethodFor, costEstimate, monitorExpansion, archiveRawResponse, objectStoreWriterFromEnv, type PriceHint, type ObjectStore, type ObjectStorePut, objectStoreFromEnv } from "./gaps9.ts";
+import { rawItem, snippetHash, enqueueDerived, extractionCompleteness, extractionMethodFor, costEstimate, monitorExpansion, archiveRawResponse, objectStoreWriterFromEnv, embedderFromEnv, cosineSimilarity, type Embedder, type PriceHint, type ObjectStore, type ObjectStorePut, objectStoreFromEnv } from "./gaps9.ts";
 import { nextCron, checkTimezone } from "./cron.ts";
 export { HttpError };
 
@@ -118,6 +118,9 @@ export class Engine {
   objectStore: ObjectStore | null = objectStoreFromEnv();
   /** §6.3 private bucket writer for raw HTTP response archiving (null = not configured). */
   objectStorePut: ObjectStorePut | null = objectStoreWriterFromEnv();
+  /** §6.4 / §7.3 optional embedding provider and hybrid vector search toggle. */
+  embedder: Embedder | null = (() => { try { return embedderFromEnv(); } catch { return null; } })();
+  vectorSearchEnabled = process.env.VECTOR_SEARCH_ENABLED === "true";
   /** Platform authorization hook: false ⇒ grant revoked (schedule is disabled). Errors propagate (fail closed, retry next tick). */
   authorize?: (sc: { tenant_id: string; workspace_id: string; grant_actor: string }, scope: string) => Promise<boolean>;
   /**
@@ -911,24 +914,82 @@ export class Engine {
     }
   }
 
-  /** Full-text search over current revisions; filters by time window and sources. */
-  async searchDocuments(s: Scope, o: { query: string; source_ids?: string[]; from?: string; to?: string; limit?: number; offset?: number }) {
+  /** Full-text search over current revisions (with optional hybrid vector + FTS ranking); filters by time window and sources. */
+  async searchDocuments(s: Scope, o: { query: string; source_ids?: string[]; from?: string; to?: string; limit?: number; offset?: number; vector?: boolean; min_vector_score?: number }) {
     if (!o.query?.trim()) throw new HttpError(400, "query required");
     const limit = Math.min(Math.max(Number(o.limit) || 10, 1), 50), offset = Math.max(Number(o.offset) || 0, 0);
     // §7.3: expand with industry dictionary + workspace aliases. The original query keeps FTS-or-substring;
     // alias variants that are Latin-only match through FTS tokens (no loose substring like "AI" in "said").
     const exp = expandQuery(o.query, await this.termGroups(s));
     const fts = exp.variants, sub = exp.variants.filter((v, i) => i === 0 || /[^\x00-\x7f]/.test(v));
-    const r = await this.db.query(`SELECT c.document_id, c.revision, c.chunk_index, c.char_start, c.char_end, c.source_id, c.published_at, d.title, d.url,
+    const useVector = Boolean((o.vector ?? this.vectorSearchEnabled) && this.embedder);
+    if (!useVector) {
+      const r = await this.db.query(`SELECT c.document_id, c.revision, c.chunk_index, c.char_start, c.char_end, c.source_id, c.published_at, d.title, d.url,
+            (SELECT max(ts_rank(c.tsv, plainto_tsquery('simple', v))) FROM unnest($3::text[]) v) AS rank, left(c.text, 300) AS snippet
+          FROM flow_document_chunks c JOIN flow_documents d ON d.id=c.document_id AND d.current_revision=c.revision
+          WHERE c.tenant_id=$1 AND c.workspace_id=$2 AND (EXISTS (SELECT 1 FROM unnest($3::text[]) v WHERE c.tsv @@ plainto_tsquery('simple', v))
+            OR EXISTS (SELECT 1 FROM unnest($9::text[]) v WHERE c.text ILIKE '%'||v||'%'))
+            AND ($4::text[] IS NULL OR c.source_id = ANY($4::text[]))
+            AND ($5::timestamptz IS NULL OR c.published_at >= $5) AND ($6::timestamptz IS NULL OR c.published_at < $6)
+          ORDER BY rank DESC, c.published_at DESC NULLS LAST, c.document_id, c.chunk_index LIMIT $7 OFFSET $8`,
+        [s.tenant_id, s.workspace_id, fts, o.source_ids?.length ? o.source_ids : null, o.from || null, o.to || null, limit + 1, offset, sub]);
+      return { items: r.rows.slice(0, limit), next_offset: r.rows.length > limit ? offset + limit : null, expanded_terms: exp.matched };
+    }
+    const ftsRows = (await this.db.query(`SELECT c.document_id, c.revision, c.chunk_index, c.char_start, c.char_end, c.source_id, c.published_at, d.title, d.url,
           (SELECT max(ts_rank(c.tsv, plainto_tsquery('simple', v))) FROM unnest($3::text[]) v) AS rank, left(c.text, 300) AS snippet
         FROM flow_document_chunks c JOIN flow_documents d ON d.id=c.document_id AND d.current_revision=c.revision
         WHERE c.tenant_id=$1 AND c.workspace_id=$2 AND (EXISTS (SELECT 1 FROM unnest($3::text[]) v WHERE c.tsv @@ plainto_tsquery('simple', v))
-          OR EXISTS (SELECT 1 FROM unnest($9::text[]) v WHERE c.text ILIKE '%'||v||'%'))
+          OR EXISTS (SELECT 1 FROM unnest($7::text[]) v WHERE c.text ILIKE '%'||v||'%'))
           AND ($4::text[] IS NULL OR c.source_id = ANY($4::text[]))
           AND ($5::timestamptz IS NULL OR c.published_at >= $5) AND ($6::timestamptz IS NULL OR c.published_at < $6)
-        ORDER BY rank DESC, c.published_at DESC NULLS LAST, c.document_id, c.chunk_index LIMIT $7 OFFSET $8`,
-      [s.tenant_id, s.workspace_id, fts, o.source_ids?.length ? o.source_ids : null, o.from || null, o.to || null, limit + 1, offset, sub]);
-    return { items: r.rows.slice(0, limit), next_offset: r.rows.length > limit ? offset + limit : null, expanded_terms: exp.matched };
+        ORDER BY rank DESC, c.published_at DESC NULLS LAST, c.document_id, c.chunk_index LIMIT 200`,
+      [s.tenant_id, s.workspace_id, fts, o.source_ids?.length ? o.source_ids : null, o.from || null, o.to || null, sub])).rows as any[];
+    const [qVec] = await this.embedder!.embed([o.query]);
+    const embRows = (await this.db.query(`SELECT c.document_id, c.revision, c.chunk_index, c.char_start, c.char_end, c.source_id, c.published_at, d.title, d.url,
+          left(c.text, 300) AS snippet, e.vector
+        FROM flow_document_embeddings e
+        JOIN flow_documents d ON d.id=e.document_id AND d.current_revision=e.revision AND d.tenant_id=e.tenant_id
+        JOIN flow_document_chunks c ON c.document_id=e.document_id AND c.revision=e.revision AND c.chunk_index=e.chunk_index AND c.tenant_id=e.tenant_id
+        WHERE e.tenant_id=$1 AND e.workspace_id=$2 AND e.provider=$3 AND e.dims=$4
+          AND ($5::text[] IS NULL OR c.source_id = ANY($5::text[]))
+          AND ($6::timestamptz IS NULL OR c.published_at >= $6) AND ($7::timestamptz IS NULL OR c.published_at < $7)
+        LIMIT 500`,
+      [s.tenant_id, s.workspace_id, this.embedder!.name, this.embedder!.dims, o.source_ids?.length ? o.source_ids : null, o.from || null, o.to || null])).rows as any[];
+    const merged = new Map<string, any>();
+    for (const row of ftsRows) {
+      const k = `${row.document_id}:${row.revision}:${row.chunk_index}`;
+      merged.set(k, { ...row, fts_rank: Number(row.rank) || 0, vector_score: 0, rank: Number(row.rank) || 0 });
+    }
+    const minScore = o.min_vector_score ?? 0.05;
+    for (const row of embRows) {
+      const vec = Array.isArray(row.vector) ? row.vector.map(Number) : [];
+      const sim = cosineSimilarity(qVec ?? [], vec);
+      const k = `${row.document_id}:${row.revision}:${row.chunk_index}`;
+      const existing = merged.get(k);
+      if (existing) {
+        const vs = Math.max(0, sim);
+        existing.vector_score = vs;
+        existing.rank = existing.fts_rank + vs * 0.5;
+      } else if (sim >= minScore) {
+        const { vector: _v, ...rest } = row;
+        merged.set(k, { ...rest, fts_rank: 0, vector_score: sim, rank: sim * 0.5 });
+      }
+    }
+    const sorted = [...merged.values()].sort((a, b) => {
+      if (b.rank !== a.rank) return b.rank - a.rank;
+      const pa = a.published_at ? Date.parse(a.published_at) : 0;
+      const pb = b.published_at ? Date.parse(b.published_at) : 0;
+      if (pb !== pa) return pb - pa;
+      if (a.document_id !== b.document_id) return a.document_id < b.document_id ? -1 : 1;
+      return a.chunk_index - b.chunk_index;
+    });
+    return {
+      items: sorted.slice(offset, offset + limit),
+      next_offset: sorted.length > offset + limit ? offset + limit : null,
+      expanded_terms: exp.matched,
+      vector_used: true,
+      embed_provider: this.embedder!.name,
+    };
   }
 
   /** Chunked read with coverage info so the agent knows what it has not seen. */

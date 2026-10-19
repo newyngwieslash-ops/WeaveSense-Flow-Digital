@@ -49,10 +49,21 @@ export async function enqueueDerived(q: Q, s: Scope, documentId: string, revisio
 
 /** Pluggable embedding provider. Vector search is optional (PRD §7.3), so the default is "none" (job skipped, recorded). */
 export type Embedder = { name: string; dims: number; embed: (texts: string[]) => Promise<number[][]> };
-export function embedderFromEnv(env = process.env): Embedder | null {
+export function embedderFromEnv(env = process.env, fetchImpl: typeof fetch = fetch): Embedder | null {
   const p = env.EMBED_PROVIDER ?? "none";
   if (p === "none" || !p) return null;
   if (p === "hash") return hashEmbedder(Number(env.EMBED_DIMS) || 64);
+  if (p === "openai" || p === "http") {
+    const apiKey = env.EMBED_API_KEY ?? "";
+    if (!apiKey) throw new Error("EMBED_API_KEY is required when EMBED_PROVIDER=openai");
+    return openaiEmbedder({
+      baseUrl: env.EMBED_BASE_URL || "https://api.openai.com",
+      apiKey,
+      model: env.EMBED_MODEL || "text-embedding-3-small",
+      dims: Number(env.EMBED_DIMS) || 1536,
+      fetchImpl,
+    });
+  }
   throw new Error(`unknown EMBED_PROVIDER ${p}`);
 }
 /** Deterministic local feature-hashing embedder (no network, no cost): for tests and offline deployments. */
@@ -63,6 +74,49 @@ export function hashEmbedder(dims = 64): Embedder {
     const n = Math.hypot(...v) || 1;
     return v.map((x) => x / n);
   }) };
+}
+/** Real OpenAI-compatible HTTP embeddings provider (POST /v1/embeddings). */
+export function openaiEmbedder(o: { baseUrl?: string; apiKey: string; model?: string; dims?: number; fetchImpl?: typeof fetch }): Embedder {
+  const model = o.model || "text-embedding-3-small";
+  const dims = o.dims || 1536;
+  const f = o.fetchImpl ?? fetch;
+  const base = (o.baseUrl || "https://api.openai.com").replace(/\/+$/, "");
+  const endpoint = base.endsWith("/embeddings") ? base : base.endsWith("/v1") ? `${base}/embeddings` : `${base}/v1/embeddings`;
+  return {
+    name: `openai:${model}`,
+    dims,
+    embed: async (texts) => {
+      if (!texts.length) return [];
+      const res = await f(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${o.apiKey}` },
+        body: JSON.stringify({ model, input: texts, dimensions: dims }),
+        signal: AbortSignal.timeout(30_000),
+      });
+      if (!res.ok) throw new HttpError(502, `embedding provider HTTP ${res.status}`);
+      const body: any = await res.json().catch(() => ({}));
+      const items: any[] = Array.isArray(body?.data) ? [...body.data].sort((a, b) => (a.index ?? 0) - (b.index ?? 0)) : [];
+      if (items.length !== texts.length) throw new HttpError(502, `embedding provider returned ${items.length}/${texts.length} vectors`);
+      return items.map((it) => {
+        const raw: number[] = Array.isArray(it.embedding) ? it.embedding.map(Number) : [];
+        if (raw.length !== dims) throw new HttpError(502, `embedding dims mismatch: expected ${dims}, got ${raw.length}`);
+        const n = Math.hypot(...raw) || 1;
+        return raw.map((x) => x / n);
+      });
+    },
+  };
+}
+export function cosineSimilarity(a: number[], b: number[]): number {
+  if (!a.length || a.length !== b.length) return 0;
+  let dot = 0, na = 0, nb = 0;
+  for (let i = 0; i < a.length; i++) {
+    const x = Number(a[i]) || 0, y = Number(b[i]) || 0;
+    dot += x * y;
+    na += x * x;
+    nb += y * y;
+  }
+  const denom = Math.sqrt(na) * Math.sqrt(nb);
+  return denom > 0 ? dot / denom : 0;
 }
 
 const ANALYZE_MAX_ATTEMPTS = 3;

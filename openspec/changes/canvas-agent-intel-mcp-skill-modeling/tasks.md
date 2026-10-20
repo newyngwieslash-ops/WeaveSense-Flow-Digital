@@ -7,5 +7,5 @@
 
 ## 2. 后端注册 `skill` 画布节点能力与前端数据流求值支持
 
-- [x] 2.1 在 `backend/internal/canvas/capability/builtin.go` 中注册 `skill` 节点能力（含 `skillId`、`skillName`、`skillCategory`、`skillOutputMode` 与 `content` 补丁字段），并在 `backend/internal/app/cloud_agent_tools.go` 完善 `fromHandleId` / `toHandleId` 端口描述，通过 `go test ./internal/canvas/capability/... ./internal/app -run "TestCloudAgentCanvas|TestCloudAgentToolSchemaStaysCompact"` 验证
-- [x] 2.2 在前端 `web/src/lib/canvas/dataflow-engine.ts` 中支持 `CanvasNodeType.Skill` 节点参与低代码数据流求值（组合上游记录与技能模板向后透传），并在 `web/test/canvas-dataflow.test.ts` 补齐 `data-source -> logic -> skill -> downstream` 单测，通过 `cd web && bun test test/canvas-dataflow.test.ts` 与 `bun run build` 验证
+- [x] 2.1 在 `backend/internal/canvas/capability/builtin.go` 与 `descriptor.go` 中注册 `skill` 节点能力（含 `skillId`、`skillName`、`skillDescription` 与 `content` 补丁字段），并在 `backend/internal/app/cloud_agent_tools.go` 完善 `fromHandleId` / `toHandleId` 端口描述，通过 `go test ./internal/canvas/capability/... ./internal/app -run "TestCloudAgentCanvas|TestCloudAgentToolSchemaStaysCompact"` 验证
+- [x] 2.2 在前端 `web/src/lib/canvas/dataflow-evaluator.ts`、`canvas-resource-references.ts` 与 `canvas-node-generation.ts` 中支持 `CanvasNodeType.Skill` 节点参与低代码数据流求值（组合上游记录与技能模板向后透传并传递空分支门控），并在 `web/test/canvas-dataflow.test.ts` 补齐 `data-source -> logic -> skill -> downstream` 单测，通过 `cd web && bun test test/canvas-dataflow.test.ts` 与 `bun run build` 验证

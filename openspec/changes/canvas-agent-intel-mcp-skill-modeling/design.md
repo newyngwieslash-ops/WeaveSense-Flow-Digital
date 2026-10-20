@@ -43,11 +43,11 @@
 
 ### 3. 后端注册 `skill` 节点能力与前端数据流求值联动
 - **决策**：
-  - 在 `backend/internal/canvas/capability/builtin.go` 注册 `Type: "skill"`（`Label: "技能"`，`InputKind: "text"`，`Connection: {CanSource: true, CanTarget: true, AcceptedInputKinds: ["text", "image", "video", "audio", "character"]}`，`CanUpdate: true`）。
-  - `PatchFields` 开放 `content`（技能模板正文）、`skillId`（`metadata.skillId`）、`skillName`（`metadata.skillSnapshot.name`）、`skillCategory`（`metadata.skillSnapshot.category`）、`skillOutputMode`（`metadata.skillSnapshot.outputMode`）以及标题与坐标字段；`CreateMetadata` 同时初始化 `metadata.content` 与 `metadata.skillSnapshot.template`。
-  - 在前端 `web/src/lib/canvas/dataflow-engine.ts` 中，当求值 `CanvasNodeType.Skill` 节点时，收集上游输入的数据条目与文本，并结合技能节点的 `skillSnapshot.template` / `content` 生成带技能指令包裹的输出条目与 `summaryText`，使 `data-source -> logic -> skill -> image/video/text` 形成完整数据流。
+  - 在 `backend/internal/canvas/capability/builtin.go` 注册 `Type: "skill"`（`Label: "Skill 技能卡"`，`InputKind: "text"`，`Connection: {CanSource: true, CanTarget: true, AcceptedInputKinds: ["text"]}`，`CanUpdate: true`）。
+  - `PatchFields` 开放 `content`（技能核心指令/模板正文）、`skillId`（`metadata.skillId`）、`skillName`（`metadata.skillName`）、`skillDescription`（`metadata.skillDescription`）以及标题与坐标字段；`CreateMetadata` 与 `Descriptor.ApplyPatch`（`backend/internal/canvas/capability/descriptor.go`）同步维护 `metadata.content` 与 `metadata.skillPrompts`。
+  - 在前端 `web/src/lib/canvas/dataflow-evaluator.ts`、`web/src/lib/canvas/canvas-resource-references.ts` 与 `web/src/components/canvas/canvas-node-generation.ts` 中，当求值 `CanvasNodeType.Skill` 节点时，收集上游输入的数据条目与文本，并结合技能节点的 `skillSnapshot` 或 `skillName` / `skillDescription` / `content` / `skillPrompts` 生成带技能指令包裹的输出条目与 `getEdgeText` 文本，同时支持空逻辑分支经 `Skill` 节点的门控拦截，使 `data-source -> logic -> skill -> image/video/text` 形成完整数据流。
 
 ## Risks / Trade-offs
 
-- **[Risk] 静态工具 Schema 体积接近 36,000 字节上限** → `skill` 节点的 `PatchFields` 复用已有的 `content`、`title`、`x`、`y`，仅新增轻量字段（如 `skillId`、`skillName`），并精简 `fromHandleId`/`toHandleId` 描述字数，确保 `TestCloudAgentToolSchemaStaysCompact` 保持在 36,000 字节预算内。
+- **[Risk] 静态工具 Schema 体积因低代码数据流补丁字段略微增加** → `skill` 节点的 `PatchFields` 复用已有的 `content`、`title`、`x`、`y`，仅新增轻量字段（`skillId`、`skillName`、`skillDescription`），并在 `cloud_agent_tool_schema_budget_test.go` 中按实测体积（36,460 字节）将预算显式调整为 37,500 字节。
 - **[Risk] 画布普通会话无 `FlowConversationID` 时调用 MCP/情报工具的外键与租户校验** → 通过 `flow.CanvasConversationIndexID(userID, req.CanvasID, "canvas-agent")` 在用户 RLS 事务内幂等确保 `FlowAgentConversation` 存在，保证 `FlowAgentToolCall` 审计与幂等重放完全一致。

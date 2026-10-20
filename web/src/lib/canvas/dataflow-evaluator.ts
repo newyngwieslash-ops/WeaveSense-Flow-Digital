@@ -960,7 +960,12 @@ export function findBlockedLogicBranchInput(
     while (expanded) {
         expanded = false;
         for (const conn of connections) {
-            if (targetIds.has(conn.toNodeId) && !targetIds.has(conn.fromNodeId) && nodeById.get(conn.fromNodeId)?.type === CanvasNodeType.Skill) {
+            if (
+                targetIds.has(conn.toNodeId) &&
+                !targetIds.has(conn.fromNodeId) &&
+                nodeById.get(conn.fromNodeId)?.type === CanvasNodeType.Skill &&
+                !evaluation.getEdgeItems(conn.fromNodeId, conn.fromHandleId).active
+            ) {
                 targetIds.add(conn.fromNodeId);
                 expanded = true;
             }

@@ -77,7 +77,17 @@ describe("intelligence audit-8 UI helpers", () => {
     });
     test("intelligence pages use UI-Kit components (AppDrawer/AppModal/Callout/StatusBadge) and accurate Chinese copy", async () => {
         const dir = `${import.meta.dir}/../src/pages/intelligence`;
-        const files = ["index.tsx", "sources-panel.tsx", "reports-panel.tsx", "topics-panel.tsx", "monitor-editor.tsx", "workspace-admin-panel.tsx", "mcp.tsx", "plan-card.tsx"];
+        const files = [
+            "index.tsx",
+            "views.tsx",
+            "sources-panel.tsx",
+            "reports-panel.tsx",
+            "topics-panel.tsx",
+            "monitor-editor.tsx",
+            "workspace-admin-panel.tsx",
+            "mcp.tsx",
+            "plan-card.tsx",
+        ];
         for (const f of files) {
             const text = await Bun.file(`${dir}/${f}`).text();
             const antdImport = /import\s*\{([^}]+)\}\s*from\s*["']antd["']/.exec(text)?.[1] ?? "";
@@ -90,12 +100,21 @@ describe("intelligence audit-8 UI helpers", () => {
         const indexSrc = await Bun.file(`${dir}/index.tsx`).text();
         expect(indexSrc).toContain("AppDrawer");
         expect(indexSrc).toContain("情报助手");
+        expect(indexSrc).toContain("onOpenAgent={() => setAgentDrawerOpen(true)}");
+        expect(indexSrc).toContain("onEditMonitor={setEditingMonitor}");
+        const viewsSrc = await Bun.file(`${dir}/views.tsx`).text();
+        expect(viewsSrc).toContain("JOB_LABEL");
+        expect(viewsSrc).toContain("credits(s.budget_micro_per_window)");
+        expect(viewsSrc).toContain("唤起情报助手");
         const sourcesSrc = await Bun.file(`${dir}/sources-panel.tsx`).text();
         expect(sourcesSrc).not.toContain("Text only: media attachments");
         expect(sourcesSrc).toContain("支持公开频道消息与受管大小内的媒体附件采集");
+        expect(sourcesSrc).toContain("SOURCE_STATUS_LABEL");
         const adminSrc = await Bun.file(`${dir}/workspace-admin-panel.tsx`).text();
         expect(adminSrc).toContain("StatusBadge");
         expect(adminSrc).toContain('value: "editor"');
+        expect(adminSrc).toContain("RESERVATION_STATUS_LABEL");
+        expect(adminSrc).toContain("ROLE_LABEL");
         const reportsSrc = await Bun.file(`${dir}/reports-panel.tsx`).text();
         expect(reportsSrc).toContain('"pdf"');
         expect(reportsSrc).toContain('"docx"');

@@ -2,19 +2,44 @@ import { useCallback, useEffect, useState } from "react";
 import { Button, Card, Collapse, List, Space, Tag, Typography, message } from "antd";
 import { Callout } from "@/components/ui/product/callout/callout";
 
-import { exportReport, getReport, listBriefSchedules, listReports, type BriefSchedule, type ReportDetail, type ReportSummary } from "@/services/api/intelligence";
+import { exportReport, getReport, listBriefSchedules, listReports, type BriefSchedule, type ReportCoverage, type ReportDetail, type ReportExportFormat, type ReportSummary } from "@/services/api/intelligence";
+import { buildReportHandoffDraft, CanvasHandoffModal, type CanvasHandoffDraft } from "./canvas-handoff-modal";
 
-const KIND_LABEL: Record<string, { color: string; label: string }> = {
+export const KIND_LABEL: Record<string, { color: string; label: string }> = {
     source_statement: { color: "blue", label: "信源陈述" },
     cross_source_verified: { color: "green", label: "跨源印证" },
     model_inference: { color: "orange", label: "模型推断" },
 };
 
+export const REPORT_EXPORT_FORMATS: readonly ReportExportFormat[] = ["md", "html", "json", "pdf", "docx"];
+
+export function formatCoverageNotices(cov?: ReportCoverage): string[] {
+    if (!cov) return [];
+    return [
+        cov.source_failures?.length ? `采集失败信源：${cov.source_failures.map((f) => `${f.source_id} (${f.error})`).join("、")}` : "",
+        cov.truncated ? "部分材料因预算或读取窗口上限被截断。" : "",
+        cov.conflicting_evidence?.length ? `已修订文档（可能存在冲突证据）：${cov.conflicting_evidence.map((c) => `${c.document_id}@r${c.revision}`).join("、")}` : "",
+    ].filter(Boolean);
+}
+
 /** P3: reports list/detail with expandable evidence per claim, and brief schedules. */
-export function ReportsPanel({ workspaceId }: { workspaceId?: string }) {
-    const [reports, setReports] = useState<ReportSummary[]>([]);
-    const [briefs, setBriefs] = useState<BriefSchedule[]>([]);
-    const [detail, setDetail] = useState<ReportDetail>();
+export function ReportsPanel({
+    workspaceId,
+    initialReports = [],
+    initialBriefs = [],
+    initialDetail,
+    onNavigate,
+}: {
+    workspaceId?: string;
+    initialReports?: ReportSummary[];
+    initialBriefs?: BriefSchedule[];
+    initialDetail?: ReportDetail;
+    onNavigate?: (url: string) => void;
+}) {
+    const [reports, setReports] = useState<ReportSummary[]>(initialReports);
+    const [briefs, setBriefs] = useState<BriefSchedule[]>(initialBriefs);
+    const [detail, setDetail] = useState<ReportDetail | undefined>(initialDetail);
+    const [handoffDraft, setHandoffDraft] = useState<CanvasHandoffDraft>();
 
     const refresh = useCallback(() => {
         if (!workspaceId) return;
@@ -30,7 +55,7 @@ export function ReportsPanel({ workspaceId }: { workspaceId?: string }) {
     const open = (id: string) => {
         if (workspaceId) void getReport(workspaceId, id).then(setDetail);
     };
-    const cov = detail?.coverage;
+    const coverageNotices = formatCoverageNotices(detail?.coverage);
 
     return (
         <div style={{ display: "grid", gridTemplateColumns: "320px 1fr 320px", gap: 16, padding: "0 16px 16px" }}>
@@ -69,7 +94,10 @@ export function ReportsPanel({ workspaceId }: { workspaceId?: string }) {
                     detail &&
                     workspaceId && (
                         <Space size={4} wrap>
-                            {(["md", "html", "json", "pdf", "docx"] as const).map((f) => (
+                            <Button type="primary" size="small" onClick={() => setHandoffDraft(buildReportHandoffDraft(detail))}>
+                                投送到画布
+                            </Button>
+                            {REPORT_EXPORT_FORMATS.map((f) => (
                                 <Button key={f} size="small" onClick={() => void exportReport(workspaceId, detail.id, f).catch(() => void message.error("导出失败"))}>
                                     导出 {f.toUpperCase()}
                                 </Button>
@@ -87,16 +115,10 @@ export function ReportsPanel({ workspaceId }: { workspaceId?: string }) {
                                 技能 {detail.skill.id}@{detail.skill.version} · {detail.skill.hash?.slice(0, 12)}
                             </Typography.Paragraph>
                         )}
-                        {!!(cov?.source_failures?.length || cov?.truncated || cov?.conflicting_evidence?.length) && (
+                        {coverageNotices.length > 0 && (
                             <div style={{ marginBottom: 8 }}>
                                 <Callout tone="warning" title="覆盖范围缺口提醒">
-                                    {[
-                                        cov?.source_failures?.length ? `采集失败信源：${cov.source_failures.map((f) => `${f.source_id} (${f.error})`).join("、")}` : "",
-                                        cov?.truncated ? "部分材料因预算或读取窗口上限被截断。" : "",
-                                        cov?.conflicting_evidence?.length ? `已修订文档（可能存在冲突证据）：${cov.conflicting_evidence.map((c) => `${c.document_id}@r${c.revision}`).join("、")}` : "",
-                                    ]
-                                        .filter(Boolean)
-                                        .join(" ")}
+                                    {coverageNotices.join(" ")}
                                 </Callout>
                             </div>
                         )}
@@ -148,6 +170,7 @@ export function ReportsPanel({ workspaceId }: { workspaceId?: string }) {
                     )}
                 />
             </Card>
+            <CanvasHandoffModal workspaceId={workspaceId} draft={handoffDraft} onClose={() => setHandoffDraft(undefined)} onNavigate={onNavigate} />
         </div>
     );
 }

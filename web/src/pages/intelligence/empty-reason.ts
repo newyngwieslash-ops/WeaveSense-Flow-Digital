@@ -19,11 +19,15 @@ export function classifyEmpty(input: { sources: SourceHealth[]; jobs: Collection
     const live = sources.filter((s) => s.status !== "revoked");
     if (live.length === 0) return "no_sources";
     if (live.some((s) => s.paused_reason === "credential_invalid") || schedules.some((s) => s.state === "blocked" && s.blocked_reason === "grant_revoked")) return "permission_invalid";
-    if (jobs.some((j) => ACTIVE.has(j.status))) return "queued";
+    if (jobs.some((j) => ACTIVE.has(j.status) || ACTIVE.has(j.job_state))) return "queued";
     if (schedules.some((s) => s.state === "blocked" && s.blocked_reason === "budget_insufficient")) return "budget_blocked";
     const active = live.filter((s) => s.status === "active");
     if (active.length > 0 && active.every((s) => s.health === "backoff" || s.health === "degraded" || s.last_run?.status === "failed")) return "source_failed";
-    if (jobs.some((j) => j.status === "succeeded" || j.status === "partial") || live.some((s) => s.last_run && (s.last_run.status === "succeeded" || s.last_run.status === "partial"))) return "zero_new";
+    if (
+        jobs.some((j) => j.status === "succeeded" || j.status === "partial" || j.job_state === "succeeded" || j.job_state === "partial") ||
+        live.some((s) => s.last_run && (s.last_run.status === "succeeded" || s.last_run.status === "partial"))
+    )
+        return "zero_new";
     return "not_run";
 }
 

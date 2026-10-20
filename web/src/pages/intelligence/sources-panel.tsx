@@ -3,17 +3,40 @@ import { Button, Card, Input, List, Select, Space, Tag, Typography, message } fr
 
 import { createSource, listConnectorSamples, listSources, revokeSource, type ConnectorSample, type IntelSource, type SourceKind } from "@/services/api/intelligence";
 
-const KIND_HINT: Record<SourceKind, string> = {
+export const KIND_HINT: Record<SourceKind, string> = {
     rss: "订阅源 URL（https://…）",
     telegram: "公开频道句柄或 t.me 链接",
     wechat: "微信网关源 ID（已在公众号采集网关配置）",
 };
+export const SOURCE_STATUS_LABEL: Record<string, string> = {
+    active: "启用中",
+    paused: "已暂停",
+    revoked: "已停用",
+};
+
+export function buildSourceInput(kind: SourceKind, rawValue: string): { kind: SourceKind; url?: string; config?: Record<string, unknown> } | undefined {
+    const v = rawValue.trim();
+    if (!v) return undefined;
+    if (kind === "rss") return { kind, url: v };
+    if (kind === "telegram") return { kind, config: { handle: v } };
+    return { kind, config: { gateway_source_id: v } };
+}
 
 /** P4: sources of type rss / telegram / wechat, revoke, and connector acceptance samples. */
-export function SourcesPanel({ workspaceId }: { workspaceId?: string }) {
-    const [sources, setSources] = useState<IntelSource[]>([]);
-    const [samples, setSamples] = useState<ConnectorSample[]>([]);
-    const [kind, setKind] = useState<SourceKind>("rss");
+export function SourcesPanel({
+    workspaceId,
+    initialSources = [],
+    initialSamples = [],
+    initialKind = "rss",
+}: {
+    workspaceId?: string;
+    initialSources?: IntelSource[];
+    initialSamples?: ConnectorSample[];
+    initialKind?: SourceKind;
+}) {
+    const [sources, setSources] = useState<IntelSource[]>(initialSources);
+    const [samples, setSamples] = useState<ConnectorSample[]>(initialSamples);
+    const [kind, setKind] = useState<SourceKind>(initialKind);
     const [value, setValue] = useState("");
 
     const refresh = useCallback(() => {
@@ -28,9 +51,9 @@ export function SourcesPanel({ workspaceId }: { workspaceId?: string }) {
     useEffect(refresh, [refresh]);
 
     const add = async () => {
-        if (!workspaceId || !value.trim()) return;
-        const v = value.trim();
-        const input = kind === "rss" ? { kind, url: v } : kind === "telegram" ? { kind, config: { handle: v } } : { kind, config: { gateway_source_id: v } };
+        if (!workspaceId) return;
+        const input = buildSourceInput(kind, value);
+        if (!input) return;
         try {
             await createSource(workspaceId, input);
             setValue("");
@@ -78,7 +101,7 @@ export function SourcesPanel({ workspaceId }: { workspaceId?: string }) {
                         >
                             <div>
                                 <Tag>{s.kind}</Tag>
-                                {s.title || s.url} {s.status !== "active" && <Tag color="red">{s.status}</Tag>}
+                                {s.title || s.url} {s.status !== "active" && <Tag color="red">{SOURCE_STATUS_LABEL[s.status] ?? s.status}</Tag>}
                                 {s.last_error && <Typography.Text type="danger"> · {s.last_error}</Typography.Text>}
                             </div>
                         </List.Item>

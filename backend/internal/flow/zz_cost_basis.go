@@ -22,6 +22,7 @@ var toolCostBasis = map[string]string{
 	"intel_transcribe_document": "extract: per transcript fetch (usage_type=extract)",
 	"intel_ocr_document":        "ocr: per page/image (usage_type=ocr)",
 	"intel_asr_document":        "asr: per audio minute (usage_type=asr)",
+	"intel_handoff_to_canvas":   "free: platform canvas write (no model or provider cost)",
 }
 
 func init() {

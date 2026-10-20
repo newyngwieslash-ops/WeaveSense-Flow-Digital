@@ -23,21 +23,57 @@ import {
 } from "@/services/api/intelligence";
 
 const credits = (micro: number) => (micro / 1_000_000).toFixed(2);
+export const RESERVATION_STATUS_LABEL: Record<string, string> = {
+    reserved: "已预留",
+    settled: "已结算",
+    released: "已释放",
+    unknown: "结果未决",
+};
+export const ROLE_LABEL: Record<string, string> = {
+    owner: "所有者 (owner)",
+    admin: "管理员 (admin)",
+    editor: "编辑者 (editor)",
+    member: "编辑者 (editor)",
+    viewer: "只读 (viewer)",
+};
+
+export function normalizeEditableRole(role: OrgMember["role"]): "admin" | "editor" | "viewer" {
+    if (role === "admin" || role === "viewer") return role;
+    return "editor";
+}
+
+export type WorkspaceAdminInitialData = {
+    notes?: FlowNotification[];
+    packs?: SkillPack[];
+    installed?: SkillInstall[];
+    account?: BillingAccount;
+    reservations?: BudgetReservation[];
+    members?: OrgMember[];
+    canManage?: boolean;
+};
 
 /** P5: notifications, skill pack install, billing/reservations and org invites for the active workspace. */
-export function WorkspaceAdminPanel({ workspaceId, onWorkspacesChanged }: { workspaceId?: string; onWorkspacesChanged?: () => void }) {
-    const [notes, setNotes] = useState<FlowNotification[]>([]);
-    const [packs, setPacks] = useState<SkillPack[]>([]);
-    const [installed, setInstalled] = useState<SkillInstall[]>([]);
-    const [account, setAccount] = useState<BillingAccount>();
-    const [reservations, setReservations] = useState<BudgetReservation[]>([]);
+export function WorkspaceAdminPanel({
+    workspaceId,
+    onWorkspacesChanged,
+    initialData,
+}: {
+    workspaceId?: string;
+    onWorkspacesChanged?: () => void;
+    initialData?: WorkspaceAdminInitialData;
+}) {
+    const [notes, setNotes] = useState<FlowNotification[]>(initialData?.notes ?? []);
+    const [packs, setPacks] = useState<SkillPack[]>(initialData?.packs ?? []);
+    const [installed, setInstalled] = useState<SkillInstall[]>(initialData?.installed ?? []);
+    const [account, setAccount] = useState<BillingAccount | undefined>(initialData?.account);
+    const [reservations, setReservations] = useState<BudgetReservation[]>(initialData?.reservations ?? []);
     const [orgName, setOrgName] = useState("");
     const [inviteEmail, setInviteEmail] = useState("");
     const [inviteRole, setInviteRole] = useState("editor");
     const [inviteToken, setInviteToken] = useState("");
     const [acceptToken, setAcceptToken] = useState("");
-    const [members, setMembers] = useState<OrgMember[]>([]);
-    const [canManage, setCanManage] = useState(false);
+    const [members, setMembers] = useState<OrgMember[]>(initialData?.members ?? []);
+    const [canManage, setCanManage] = useState(initialData?.canManage ?? false);
 
     const refresh = useCallback(() => {
         if (!workspaceId) return;
@@ -159,7 +195,9 @@ export function WorkspaceAdminPanel({ workspaceId, onWorkspacesChanged }: { work
                             renderItem={(r) => (
                                 <List.Item>
                                     <Space wrap>
-                                        <Tag color={r.status === "unknown" ? "orange" : r.status === "reserved" ? "blue" : "default"}>{r.status}</Tag>
+                                        <Tag color={r.status === "unknown" ? "orange" : r.status === "reserved" ? "blue" : "default"}>
+                                            {RESERVATION_STATUS_LABEL[r.status] ?? r.status}
+                                        </Tag>
                                         <span>{r.purpose}</span>
                                         <span>
                                             预留 {credits(r.reservedMicro)} · 实耗 {credits(r.consumedMicro)}
@@ -193,12 +231,12 @@ export function WorkspaceAdminPanel({ workspaceId, onWorkspacesChanged }: { work
                             <Space wrap>
                                 <span>{m.name || m.email || m.userId}</span>
                                 {m.role === "owner" || !canManage ? (
-                                    <Tag>{m.role}</Tag>
+                                    <Tag>{ROLE_LABEL[m.role] ?? m.role}</Tag>
                                 ) : (
                                     <Select
                                         size="small"
                                         style={{ width: 150 }}
-                                        value={m.role === "member" ? "editor" : m.role}
+                                        value={normalizeEditableRole(m.role)}
                                         onChange={(role: "admin" | "editor" | "viewer") => void run(() => setMemberRole(workspaceId!, m.userId, role), "成员角色已更新")}
                                         options={[
                                             { value: "admin", label: "管理员 (admin)" },

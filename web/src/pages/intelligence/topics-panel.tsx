@@ -3,12 +3,24 @@ import { Button, Card, Form, Input, List, Select, Tag, message } from "antd";
 import { AppModal } from "@/components/ui/product/app-modal/app-modal";
 
 import { createTopic, listSources, listTopics, updateTopic, type IntelSource, type IntelTopic, type TopicInput } from "@/services/api/intelligence";
+import { buildTopicHandoffDraft, CanvasHandoffModal, type CanvasHandoffDraft } from "./canvas-handoff-modal";
 
 /** PRD §5.2 可保存专题: list, create and edit saved research topics; opening one starts a topic-scoped conversation. */
-export function TopicsPanel({ workspaceId, onOpen }: { workspaceId?: string; onOpen?: (t: IntelTopic) => void }) {
-    const [topics, setTopics] = useState<IntelTopic[]>([]);
+export function TopicsPanel({
+    workspaceId,
+    onOpen,
+    initialTopics = [],
+    onNavigate,
+}: {
+    workspaceId?: string;
+    onOpen?: (t: IntelTopic) => void;
+    initialTopics?: IntelTopic[];
+    onNavigate?: (url: string) => void;
+}) {
+    const [topics, setTopics] = useState<IntelTopic[]>(initialTopics);
     const [sources, setSources] = useState<IntelSource[]>([]);
     const [editing, setEditing] = useState<IntelTopic | "new">();
+    const [handoffDraft, setHandoffDraft] = useState<CanvasHandoffDraft>();
     const [form] = Form.useForm<{ title: string; question: string; keywords: string[]; sourceIds: string[]; notes: string }>();
     const refresh = useCallback(() => {
         if (!workspaceId) return;
@@ -56,6 +68,9 @@ export function TopicsPanel({ workspaceId, onOpen }: { workspaceId?: string; onO
                 renderItem={(t) => (
                     <List.Item
                         actions={[
+                            <Button key="handoff" size="small" type="link" onClick={() => setHandoffDraft(buildTopicHandoffDraft(t))}>
+                                投送到画布
+                            </Button>,
                             <Button key="edit" size="small" type="link" onClick={() => open(t)}>
                                 编辑
                             </Button>,
@@ -96,6 +111,7 @@ export function TopicsPanel({ workspaceId, onOpen }: { workspaceId?: string; onO
                     </Form.Item>
                 </Form>
             </AppModal>
+            <CanvasHandoffModal workspaceId={workspaceId} draft={handoffDraft} onClose={() => setHandoffDraft(undefined)} onNavigate={onNavigate} />
         </Card>
     );
 }

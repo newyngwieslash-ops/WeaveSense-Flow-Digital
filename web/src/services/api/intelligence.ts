@@ -248,9 +248,9 @@ export const updateMonitor = (workspaceId: string, id: string, input: MonitorUpd
         },
     );
 
-function fileNameFrom(headers: unknown, fallback: string) {
+export function fileNameFrom(headers: unknown, fallback: string) {
     const h = headers as Record<string, string | undefined> | undefined;
-    const cd = h?.["content-disposition"] ?? "";
+    const cd = h?.["content-disposition"] ?? h?.["Content-Disposition"] ?? "";
     const star = /filename\*=UTF-8''([^;]+)/i.exec(cd);
     if (star) return decodeURIComponent(star[1]);
     return /filename="([^"]+)"/i.exec(cd)?.[1] ?? fallback;
@@ -271,3 +271,37 @@ export type ReportExportFormat = "md" | "html" | "json" | "pdf" | "docx";
 export const exportReport = (workspaceId: string, id: string, format: ReportExportFormat) => saveBlob(`/intelligence/reports/${encodeURIComponent(id)}/export`, workspaceId, { format }, `report.${format}`);
 /** PRD §10.4 verified media download (the server checks scope + reference, then proxies the private object). */
 export const downloadMedia = (workspaceId: string, documentId: string, objectKey: string) => saveBlob("/intelligence/media", workspaceId, { document_id: documentId, object_key: objectKey }, "attachment");
+
+export type CanvasHandoffKind = "report" | "brief" | "topic" | "document" | "analysis";
+export type CanvasHandoffCitation = {
+    document_id: string;
+    title?: string;
+    url?: string;
+    snippet?: string;
+    char_start?: number;
+    char_end?: number;
+};
+export type CanvasHandoffInput = {
+    canvasId?: string;
+    canvasTitle?: string;
+    kind: CanvasHandoffKind;
+    sourceId?: string;
+    title: string;
+    content: string;
+    citations?: CanvasHandoffCitation[];
+    agentPrompt?: string;
+    openAgent?: boolean;
+};
+export type CanvasHandoffResult = {
+    canvas_id: string;
+    canvas_title: string;
+    node_id: string;
+    node_title: string;
+    conversation_id: string;
+    canvas_url: string;
+    created_canvas: boolean;
+    revision: number;
+};
+export const handoffToCanvas = (workspaceId: string, input: CanvasHandoffInput) =>
+    http.post<CanvasHandoffResult>("/intelligence/canvas-handoff", input, ws(workspaceId));
+

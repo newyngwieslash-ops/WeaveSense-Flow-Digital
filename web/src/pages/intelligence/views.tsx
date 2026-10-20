@@ -28,11 +28,13 @@ import {
 } from "@/services/api/intelligence";
 
 import { classifyEmpty, EMPTY_REASON_TEXT } from "./empty-reason";
+import { credits } from "./plan-card";
+import { buildDocumentHandoffDraft, CanvasHandoffModal, type CanvasHandoffDraft } from "./canvas-handoff-modal";
 
 const fmt = (t?: string | null) => (t ? new Date(t).toLocaleString() : "—");
 /** Jobs still needing work or attention (PRD §5 总览 待处理任务). */
 const PENDING_STATES = new Set(["queued", "pending", "leased", "running", "retry_wait", "cancel_requested", "reconciliation_required"]);
-const EXTRACTION_LABEL: Record<string, { color: string; text: string }> = {
+export const EXTRACTION_LABEL: Record<string, { color: string; text: string }> = {
     full_text: { color: "green", text: "全文" },
     feed_summary: { color: "gold", text: "摘要" },
     title_only: { color: "red", text: "仅标题" },
@@ -56,8 +58,34 @@ const JOB_COLOR: Record<string, string> = {
     retry_wait: "orange",
     reconciliation_required: "magenta",
     pending: "blue",
+    queued: "blue",
     leased: "blue",
     running: "processing",
+};
+export const JOB_LABEL: Record<string, string> = {
+    queued: "排队中",
+    pending: "待处理",
+    leased: "已领取",
+    running: "运行中",
+    retry_wait: "等待重试",
+    succeeded: "已完成",
+    partial: "部分完成",
+    failed: "失败",
+    cancel_requested: "取消中",
+    cancelled: "已取消",
+    reconciliation_required: "待对账",
+};
+export const HEALTH_LABEL: Record<string, string> = {
+    healthy: "正常",
+    backoff: "退避重试",
+    degraded: "降级",
+    paused: "已暂停",
+    never_run: "未运行",
+};
+export const SCHEDULE_STATE_LABEL: Record<string, string> = {
+    active: "启用中",
+    disabled: "已停用",
+    blocked: "受阻",
 };
 
 function useWorkspaceData<T>(workspaceId: string | undefined, load: (ws: string) => Promise<T>, empty: T) {
@@ -73,13 +101,21 @@ function useWorkspaceData<T>(workspaceId: string | undefined, load: (ws: string)
     return [data, refresh] as const;
 }
 
+export type OverviewInitialData = {
+    sources?: SourceHealth[];
+    jobs?: CollectionJob[];
+    schedules?: CollectionSchedule[];
+    docs?: LibraryDocument[];
+    reports?: ReportSummary[];
+};
+
 /** PRD §5.1 总览: latest materials, next runs, failing sources, budget/blocked schedules, reports; empty list says why. */
-export function OverviewView({ workspaceId }: { workspaceId?: string }) {
-    const [sources] = useWorkspaceData<SourceHealth[]>(workspaceId, listSourcesHealth, []);
-    const [jobs] = useWorkspaceData<CollectionJob[]>(workspaceId, (ws) => listJobs(ws), []);
-    const [schedules] = useWorkspaceData<CollectionSchedule[]>(workspaceId, listSchedules, []);
-    const [docs] = useWorkspaceData<LibraryDocument[]>(workspaceId, (ws) => listDocuments(ws), []);
-    const [reports] = useWorkspaceData<ReportSummary[]>(workspaceId, listReports, []);
+export function OverviewView({ workspaceId, initialData }: { workspaceId?: string; initialData?: OverviewInitialData }) {
+    const [sources] = useWorkspaceData<SourceHealth[]>(workspaceId, listSourcesHealth, initialData?.sources ?? []);
+    const [jobs] = useWorkspaceData<CollectionJob[]>(workspaceId, (ws) => listJobs(ws), initialData?.jobs ?? []);
+    const [schedules] = useWorkspaceData<CollectionSchedule[]>(workspaceId, listSchedules, initialData?.schedules ?? []);
+    const [docs] = useWorkspaceData<LibraryDocument[]>(workspaceId, (ws) => listDocuments(ws), initialData?.docs ?? []);
+    const [reports] = useWorkspaceData<ReportSummary[]>(workspaceId, listReports, initialData?.reports ?? []);
     const reason = EMPTY_REASON_TEXT[classifyEmpty({ sources, jobs, schedules })];
     const failing = sources.filter((s) => s.health === "backoff" || s.health === "degraded" || s.status === "paused");
     const next = schedules.filter((s) => s.enabled).sort((a, b) => a.next_run_at.localeCompare(b.next_run_at))[0];
@@ -98,7 +134,7 @@ export function OverviewView({ workspaceId }: { workspaceId?: string }) {
                         ? "无"
                         : pendingJobs.slice(0, 8).map((j) => (
                               <div key={j.job_id}>
-                                  <Tag color={JOB_COLOR[j.job_state]}>{j.job_state}</Tag>
+                                  <Tag color={JOB_COLOR[j.job_state]}>{JOB_LABEL[j.job_state] ?? j.job_state}</Tag>
                                   {j.source_title || j.source_id}
                                   {j.retry_at ? <Typography.Text type="secondary"> · 重试 {fmt(j.retry_at)}</Typography.Text> : null}
                               </div>
@@ -109,7 +145,7 @@ export function OverviewView({ workspaceId }: { workspaceId?: string }) {
                         ? "无"
                         : failing.map((s) => (
                               <div key={s.id}>
-                                  <Tag color="red">{s.health}</Tag>
+                                  <Tag color="red">{HEALTH_LABEL[s.health] ?? s.health}</Tag>
                                   {s.title || s.url}
                               </div>
                           ))}
@@ -121,7 +157,7 @@ export function OverviewView({ workspaceId }: { workspaceId?: string }) {
                               .filter((s) => s.state === "blocked")
                               .map((s) => (
                                   <div key={s.id}>
-                                      <Tag color="orange">blocked</Tag>
+                                      <Tag color="orange">{SCHEDULE_STATE_LABEL.blocked}</Tag>
                                       {s.blocked_reason}
                                   </div>
                               ))}
@@ -134,10 +170,29 @@ export function OverviewView({ workspaceId }: { workspaceId?: string }) {
     );
 }
 
+export type KeywordsInitialData = {
+    monitors?: IntelMonitor[];
+    terms?: { builtin_version: string; builtin_groups: number; builtin: string[][]; custom: TermAlias[] };
+};
+
 /** PRD §5.1 关键词: monitor keywords plus the term dictionary (built-in groups + workspace aliases). */
-export function KeywordsView({ workspaceId }: { workspaceId?: string }) {
-    const [monitors] = useWorkspaceData<IntelMonitor[]>(workspaceId, listMonitors, []);
-    const [terms, refresh] = useWorkspaceData(workspaceId, listTerms, { builtin_version: "", builtin_groups: 0, builtin: [] as string[][], custom: [] as TermAlias[] });
+export function KeywordsView({
+    workspaceId,
+    onOpenAgent,
+    onEditMonitor,
+    initialData,
+}: {
+    workspaceId?: string;
+    onOpenAgent?: () => void;
+    onEditMonitor?: (m: IntelMonitor) => void;
+    initialData?: KeywordsInitialData;
+}) {
+    const [monitors] = useWorkspaceData<IntelMonitor[]>(workspaceId, listMonitors, initialData?.monitors ?? []);
+    const [terms, refresh] = useWorkspaceData(
+        workspaceId,
+        listTerms,
+        initialData?.terms ?? { builtin_version: "", builtin_groups: 0, builtin: [] as string[][], custom: [] as TermAlias[] },
+    );
     const [term, setTerm] = useState("");
     const [alias, setAlias] = useState("");
     const add = async () => {
@@ -153,13 +208,33 @@ export function KeywordsView({ workspaceId }: { workspaceId?: string }) {
     };
     return (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, padding: 16 }}>
-            <Card size="small" title="监控关键词">
+            <Card
+                size="small"
+                title="监控关键词"
+                extra={
+                    onOpenAgent && (
+                        <Button size="small" onClick={onOpenAgent}>
+                            唤起情报助手
+                        </Button>
+                    )
+                }
+            >
                 <List
                     size="small"
                     dataSource={monitors}
-                    locale={{ emptyText: "还没有监控；在对话里让 Agent 创建" }}
+                    locale={{ emptyText: "暂无监控；可点击右上角「唤起情报助手」在对话中创建" }}
                     renderItem={(m) => (
-                        <List.Item>
+                        <List.Item
+                            actions={
+                                onEditMonitor
+                                    ? [
+                                          <Button key="edit" size="small" type="link" onClick={() => onEditMonitor(m)}>
+                                              编辑
+                                          </Button>,
+                                      ]
+                                    : []
+                            }
+                        >
                             <div>
                                 <div>{m.name}</div>
                                 {m.keywords.map((k) => (
@@ -200,11 +275,20 @@ export function KeywordsView({ workspaceId }: { workspaceId?: string }) {
 }
 
 /** PRD §5.1 内容库: collected documents with published / event / collected times, searchable. */
-export function LibraryView({ workspaceId }: { workspaceId?: string }) {
+export function LibraryView({
+    workspaceId,
+    initialData,
+    onNavigate,
+}: {
+    workspaceId?: string;
+    initialData?: { docs?: LibraryDocument[]; sources?: SourceHealth[]; jobs?: CollectionJob[] };
+    onNavigate?: (url: string) => void;
+}) {
     const [q, setQ] = useState("");
-    const [docs, setDocs] = useState<LibraryDocument[]>([]);
-    const [sources] = useWorkspaceData<SourceHealth[]>(workspaceId, listSourcesHealth, []);
-    const [jobs] = useWorkspaceData<CollectionJob[]>(workspaceId, (ws) => listJobs(ws), []);
+    const [docs, setDocs] = useState<LibraryDocument[]>(initialData?.docs ?? []);
+    const [handoffDraft, setHandoffDraft] = useState<CanvasHandoffDraft>();
+    const [sources] = useWorkspaceData<SourceHealth[]>(workspaceId, listSourcesHealth, initialData?.sources ?? []);
+    const [jobs] = useWorkspaceData<CollectionJob[]>(workspaceId, (ws) => listJobs(ws), initialData?.jobs ?? []);
     const load = useCallback(() => {
         if (workspaceId)
             void listDocuments(workspaceId, q || undefined)
@@ -255,18 +339,33 @@ export function LibraryView({ workspaceId }: { workspaceId?: string }) {
                                         </Button>
                                     )),
                         },
+                        {
+                            title: "操作",
+                            render: (_: unknown, d: LibraryDocument) => (
+                                <Button size="small" type="link" onClick={() => setHandoffDraft(buildDocumentHandoffDraft(d))}>
+                                    投送到画布
+                                </Button>
+                            ),
+                        },
                     ]}
                 />
             )}
+            <CanvasHandoffModal workspaceId={workspaceId} draft={handoffDraft} onClose={() => setHandoffDraft(undefined)} onNavigate={onNavigate} />
         </Card>
     );
 }
 
 /** PRD §5.1 任务: collection jobs (PRD job states) and schedules (incl. blocked reason, window budget). */
-export function JobsView({ workspaceId }: { workspaceId?: string }) {
+export function JobsView({
+    workspaceId,
+    initialData,
+}: {
+    workspaceId?: string;
+    initialData?: { jobs?: CollectionJob[]; schedules?: CollectionSchedule[] };
+}) {
     const [status, setStatus] = useState<string>();
-    const [jobs, refresh] = useWorkspaceData<CollectionJob[]>(workspaceId, (ws) => listJobs(ws, status), []);
-    const [schedules] = useWorkspaceData<CollectionSchedule[]>(workspaceId, listSchedules, []);
+    const [jobs, refresh] = useWorkspaceData<CollectionJob[]>(workspaceId, (ws) => listJobs(ws, status), initialData?.jobs ?? []);
+    const [schedules] = useWorkspaceData<CollectionSchedule[]>(workspaceId, listSchedules, initialData?.schedules ?? []);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(refresh, [status]);
     return (
@@ -277,11 +376,11 @@ export function JobsView({ workspaceId }: { workspaceId?: string }) {
                 extra={
                     <Select
                         allowClear
-                        placeholder="状态"
+                        placeholder="按状态筛选"
                         style={{ width: 160 }}
                         value={status}
                         onChange={setStatus}
-                        options={["queued", "running", "retry_wait", "succeeded", "partial", "failed", "cancelled", "reconciliation_required"].map((v) => ({ value: v, label: v }))}
+                        options={["queued", "running", "retry_wait", "succeeded", "partial", "failed", "cancelled", "reconciliation_required"].map((v) => ({ value: v, label: JOB_LABEL[v] ?? v }))}
                     />
                 }
             >
@@ -293,7 +392,7 @@ export function JobsView({ workspaceId }: { workspaceId?: string }) {
                     locale={{ emptyText: "没有采集任务" }}
                     columns={[
                         { title: "信源", render: (_: unknown, j: CollectionJob) => j.source_title || j.source_id },
-                        { title: "状态", dataIndex: "job_state", render: (s: string) => <Tag color={JOB_COLOR[s]}>{s}</Tag> },
+                        { title: "状态", dataIndex: "job_state", render: (s: string) => <Tag color={JOB_COLOR[s]}>{JOB_LABEL[s] ?? s}</Tag> },
                         { title: "新增/修订", render: (_: unknown, j: CollectionJob) => `${j.items_new}/${j.items_revised}` },
                         { title: "计划窗口", dataIndex: "scheduled_at", render: fmt },
                         { title: "原因", render: (_: unknown, j: CollectionJob) => j.error || j.partial_reason || "" },
@@ -306,16 +405,19 @@ export function JobsView({ workspaceId }: { workspaceId?: string }) {
                     size="small"
                     dataSource={schedules}
                     locale={{ emptyText: "没有计划" }}
-                    renderItem={(s) => (
-                        <List.Item>
-                            <div>
-                                <Tag color={s.state === "blocked" ? "orange" : s.enabled ? "green" : "default"}>{s.state ?? (s.enabled ? "active" : "disabled")}</Tag>
-                                {s.kind === "cron" ? s.cron : `每 ${Math.round((s.interval_seconds ?? 0) / 60)} 分钟`} · {s.timezone} · 下次 {fmt(s.next_run_at)}
-                                {s.blocked_reason && <Typography.Text type="warning"> · {s.blocked_reason}</Typography.Text>}
-                                {!!s.budget_micro_per_window && <Typography.Text type="secondary"> · 每窗预算 {s.budget_micro_per_window}</Typography.Text>}
-                            </div>
-                        </List.Item>
-                    )}
+                    renderItem={(s) => {
+                        const rawState = s.state ?? (s.enabled ? "active" : "disabled");
+                        return (
+                            <List.Item>
+                                <div>
+                                    <Tag color={s.state === "blocked" ? "orange" : s.enabled ? "green" : "default"}>{SCHEDULE_STATE_LABEL[rawState] ?? rawState}</Tag>
+                                    {s.kind === "cron" ? s.cron : `每 ${Math.round((s.interval_seconds ?? 0) / 60)} 分钟`} · {s.timezone} · 下次 {fmt(s.next_run_at)}
+                                    {s.blocked_reason && <Typography.Text type="warning"> · {s.blocked_reason}</Typography.Text>}
+                                    {!!s.budget_micro_per_window && <Typography.Text type="secondary"> · 每窗预算 {credits(s.budget_micro_per_window)}</Typography.Text>}
+                                </div>
+                            </List.Item>
+                        );
+                    }}
                 />
             </Card>
         </div>
@@ -323,8 +425,14 @@ export function JobsView({ workspaceId }: { workspaceId?: string }) {
 }
 
 /** PRD §5.1 行业包: packs with their skills, source templates and install state. */
-export function PacksView({ workspaceId }: { workspaceId?: string }) {
-    const [data, refresh] = useWorkspaceData(workspaceId, listSkills, { packs: [] as SkillPack[], installed: [] as SkillInstall[] });
+export function PacksView({
+    workspaceId,
+    initialData,
+}: {
+    workspaceId?: string;
+    initialData?: { packs: SkillPack[]; installed: SkillInstall[] };
+}) {
+    const [data, refresh] = useWorkspaceData(workspaceId, listSkills, initialData ?? { packs: [] as SkillPack[], installed: [] as SkillInstall[] });
     const installed = new Set(data.installed.map((i) => i.packId));
     return (
         <Card size="small" style={{ margin: 16 }} title="行业包">

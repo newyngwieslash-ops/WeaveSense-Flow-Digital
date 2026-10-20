@@ -11,6 +11,7 @@ import { WorkspaceAdminPanel } from "./workspace-admin-panel";
 import { ApprovalDetails, credits } from "./plan-card";
 import { TopicsPanel } from "./topics-panel";
 import { MonitorEditor } from "./monitor-editor";
+import { extractHandoffCanvasUrl } from "./canvas-handoff-modal";
 
 /** PRD §5.1 navigation: 总览/信源/关键词/内容库/专题/报告/任务/行业包/连接设置. */
 export const INTEL_VIEWS = [
@@ -199,6 +200,23 @@ export default function IntelligencePage() {
                             setActive(c);
                             void refreshMessages(c);
                         }}
+                        actions={
+                            c.subjectKind === "canvas" && c.subjectId
+                                ? [
+                                      <Button
+                                          key="canvas"
+                                          size="small"
+                                          type="link"
+                                          onClick={(e) => {
+                                              e.stopPropagation();
+                                              void navigate(`/canvas/${encodeURIComponent(c.subjectId)}?agent=1`);
+                                          }}
+                                      >
+                                          打开画布
+                                      </Button>,
+                                  ]
+                                : []
+                        }
                     >
                         {c.subjectKind === "canvas" && <Tag color="purple">画布</Tag>}
                         {c.subjectKind === "topic" && <Tag color="gold">专题</Tag>}
@@ -215,26 +233,34 @@ export default function IntelligencePage() {
                 {messages.length === 0 ? (
                     <EmptyState title="围绕已采集情报提问或发起研究" />
                 ) : (
-                    messages.map((m) => (
-                        <div key={m.id} style={{ marginBottom: 8 }}>
-                            <Tag>{m.toolName || m.role}</Tag>
-                            <Typography.Text
-                                style={{ whiteSpace: "pre-wrap" }}
-                                editable={active && (m.role === "user" || m.role === "assistant") ? { onChange: (v) => void mutateMessage(() => editMessage(active.id, m.id, v, m.revision ?? 0)) } : false}
-                            >
-                                {m.content.slice(0, 2000)}
-                            </Typography.Text>
-                            {active && (m.role === "user" || m.role === "assistant") && (
-                                <Button size="small" type="link" danger onClick={() => void mutateMessage(() => deleteMessage(active.id, m.id))}>
-                                    删除
-                                </Button>
-                            )}
-                        </div>
-                    ))
+                    messages.map((m) => {
+                        const handoff = extractHandoffCanvasUrl(m);
+                        return (
+                            <div key={m.id} style={{ marginBottom: 8 }}>
+                                <Tag>{m.toolName || (m.role === "user" ? "用户" : m.role === "assistant" ? "助手" : m.role)}</Tag>
+                                <Typography.Text
+                                    style={{ whiteSpace: "pre-wrap" }}
+                                    editable={active && (m.role === "user" || m.role === "assistant") ? { onChange: (v) => void mutateMessage(() => editMessage(active.id, m.id, v, m.revision ?? 0)) } : false}
+                                >
+                                    {m.content.slice(0, 2000)}
+                                </Typography.Text>
+                                {handoff && (
+                                    <Button size="small" type="link" onClick={() => void navigate(handoff.canvasUrl)}>
+                                        打开画布继续创作 →
+                                    </Button>
+                                )}
+                                {active && (m.role === "user" || m.role === "assistant") && (
+                                    <Button size="small" type="link" danger onClick={() => void mutateMessage(() => deleteMessage(active.id, m.id))}>
+                                        删除
+                                    </Button>
+                                )}
+                            </div>
+                        );
+                    })
                 )}
                 {streaming && (
                     <div style={{ marginBottom: 8 }}>
-                        <Tag color="blue">assistant</Tag>
+                        <Tag color="blue">助手</Tag>
                         <Typography.Text style={{ whiteSpace: "pre-wrap" }}>{streaming}</Typography.Text>
                     </div>
                 )}
@@ -332,9 +358,9 @@ export default function IntelligencePage() {
                 {nav}
                 {view === "overview" && <OverviewView workspaceId={workspaceId} />}
                 {view === "sources" && <SourcesPanel workspaceId={workspaceId} />}
-                {view === "keywords" && <KeywordsView workspaceId={workspaceId} />}
-                {view === "library" && <LibraryView workspaceId={workspaceId} />}
-                {view === "reports" && <ReportsPanel workspaceId={workspaceId} />}
+                {view === "keywords" && <KeywordsView workspaceId={workspaceId} onOpenAgent={() => setAgentDrawerOpen(true)} onEditMonitor={setEditingMonitor} />}
+                {view === "library" && <LibraryView workspaceId={workspaceId} onNavigate={(url) => void navigate(url)} />}
+                {view === "reports" && <ReportsPanel workspaceId={workspaceId} onNavigate={(url) => void navigate(url)} />}
                 {view === "jobs" && <JobsView workspaceId={workspaceId} />}
                 {view === "packs" && <PacksView workspaceId={workspaceId} />}
                 {view === "connections" && (
@@ -365,6 +391,7 @@ export default function IntelligencePage() {
                     {conversationsCard}
                     <TopicsPanel
                         workspaceId={workspaceId}
+                        onNavigate={(url) => void navigate(url)}
                         onOpen={(t) =>
                             void createConversation({ kind: "topic", id: t.id }, t.title).then(async (conv) => {
                                 setActive(conv);

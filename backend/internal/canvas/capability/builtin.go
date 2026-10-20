@@ -156,6 +156,31 @@ func BuiltinRegistry() *Registry {
 				return map[string]any{"content": content, "status": "idle", "logic": map[string]any{"operator": "if_else", "fieldPath": "score", "comparator": "gt", "compareValue": "80", "matchKey": "id"}}
 			},
 		},
+		{
+			Type: "skill", Version: "1", Label: "Skill 技能卡", DefaultWidth: 360, DefaultHeight: 280,
+			Purpose:     "承载技能模板与结构化提示词规约，可接收上游数据源或逻辑分支数据，组合输出给下游生成节点。",
+			GoodFor:     []string{"在数据流中挂接特定技能提示词模板", "串联数据源/逻辑节点与下游生成节点"},
+			NotIdealFor: []string{"直接替代图片或视频生成节点"},
+			Tradeoffs:   []string{"作为技能指令与上游数据的汇聚转换节点，本身不产生计费媒体产物"},
+			InputKind:   "text",
+			Connection:  ConnectionPolicy{CanSource: true, CanTarget: true, AcceptedInputKinds: []string{"text"}},
+			CanUpdate:   true,
+			SummaryFields: []string{"content", "skillId", "skillName", "skillDescription"}, DetailFields: []string{"content", "skillId", "skillName", "skillDescription", "skillPrompts"},
+			PatchFields: func() map[string]PatchField {
+				fields := editableNodeFields("metadata.content", "技能指令", "技能核心指令或提示词模板")
+				fields["skillId"] = PatchField{Path: "metadata.skillId", Kind: patchKindString, Label: "技能ID", Order: 25, Description: "关联技能标识", MaxRunes: 120}
+				fields["skillName"] = PatchField{Path: "metadata.skillName", Kind: patchKindString, Label: "技能名称", Order: 26, Description: "技能显示名称", MaxRunes: 120}
+				fields["skillDescription"] = PatchField{Path: "metadata.skillDescription", Kind: patchKindString, Label: "技能说明", Order: 27, Description: "技能用途简述", MaxRunes: 500}
+				return fields
+			}(),
+			CreateMetadata: func(content string) map[string]any {
+				prompts := []any{}
+				if content != "" {
+					prompts = []any{content}
+				}
+				return map[string]any{"content": content, "status": "idle", "skillName": "Skill 节点", "skillDescription": "", "skillPrompts": prompts}
+			},
+		},
 	})
 	if err != nil {
 		panic(err)

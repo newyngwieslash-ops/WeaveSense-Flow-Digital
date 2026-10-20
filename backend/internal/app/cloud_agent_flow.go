@@ -29,12 +29,36 @@ func (s *Service) ConfigureFlowModel(g flow.ModelGateway) { s.flowModel = g }
 // ConfigureFlowMCP enables the MCP gateway for intelligence agent runs.
 func (s *Service) ConfigureFlowMCP(g *flow.MCPGateway) { s.flowMCP = g }
 
+// canvasReadIntelTool lists read-only intelligence lookup tools allowed inside canvas sessions.
+func canvasReadIntelTool(name string) bool {
+	return name == "intel_search_documents" || name == "intel_read_document" || name == "intel_list_sources"
+}
+
+// cloudAgentFlowScope resolves the tenant/workspace/role scope for either an
+// intelligence conversation or a standalone canvas run.
+func (s *Service) cloudAgentFlowScope(userID string, req CloudAgentRequest) (ss flow.SubjectScope, err error) {
+	if req.FlowConversationID != "" || cloudAgentIntelSubject(req) {
+		_, ss, err = s.cloudAgentFlowConversation(userID, req)
+		return ss, err
+	}
+	if strings.TrimSpace(req.CanvasID) == "" {
+		return flow.SubjectScope{}, NotFound("画布不存在")
+	}
+	if terr := s.inFlowUser(userID, func(db *gorm.DB) error {
+		ss, err = flow.ResolveSubject(db, userID, flow.AgentSubject{Kind: flow.SubjectCanvas, ID: req.CanvasID})
+		return nil
+	}); terr != nil && err == nil {
+		err = terr
+	}
+	return ss, err
+}
+
 // flowMCPToolsFor snapshots the approved MCP tools visible to the run's workspace.
 func (s *Service) flowMCPToolsFor(userID string, req CloudAgentRequest) []map[string]any {
 	if s.flowMCP == nil || req.PermissionMode == "read_only" {
 		return nil
 	}
-	_, ss, err := s.cloudAgentFlowConversation(userID, req)
+	ss, err := s.cloudAgentFlowScope(userID, req)
 	if err != nil {
 		return nil
 	}
@@ -44,6 +68,33 @@ func (s *Service) flowMCPToolsFor(userID string, req CloudAgentRequest) []map[st
 		}
 	}
 	return nil
+}
+
+// flowCanvasIntelToolsFor snapshots read-only intelligence lookup tools for a canvas run.
+func (s *Service) flowCanvasIntelToolsFor(userID string, req CloudAgentRequest) []map[string]any {
+	if s.flowEngine == nil {
+		return nil
+	}
+	ss, err := s.cloudAgentFlowScope(userID, req)
+	if err != nil {
+		return nil
+	}
+	roleScopes := map[string]bool{}
+	for _, sc := range flow.ScopesForRole(ss.Scope.Role) {
+		roleScopes[sc] = true
+	}
+	out := []map[string]any{}
+	for _, spec := range flow.Catalog {
+		if !canvasReadIntelTool(spec.Name) || !roleScopes[spec.Scope] {
+			continue
+		}
+		out = append(out, map[string]any{"type": "function", "function": map[string]any{
+			"name": spec.Name, "description": spec.Description, "parameters": spec.Parameters}})
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
 }
 
 // cloudAgentCanvasMirror: a canvas run continued from the intelligence page.
@@ -107,6 +158,28 @@ func (s *Service) inFlowUser(userID string, fn func(db *gorm.DB) error) error {
 }
 
 func (s *Service) cloudAgentFlowConversationIn(db *gorm.DB, userID string, req CloudAgentRequest) (model.FlowAgentConversation, flow.SubjectScope, error) {
+	if req.FlowConversationID == "" && !cloudAgentIntelSubject(req) && strings.TrimSpace(req.CanvasID) != "" {
+		ss, err := flow.ResolveSubject(db, userID, flow.AgentSubject{Kind: flow.SubjectCanvas, ID: req.CanvasID})
+		if err != nil {
+			return model.FlowAgentConversation{}, ss, NotFound("画布不存在或无权访问")
+		}
+		convID := flow.CanvasConversationIndexID(userID, req.CanvasID, "canvas-agent")
+		var conv model.FlowAgentConversation
+		if err := db.First(&conv, "id = ? AND user_id = ?", convID, userID).Error; err != nil {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return conv, ss, err
+			}
+			conv = model.FlowAgentConversation{
+				ID: convID, TenantID: ss.Scope.TenantID, WorkspaceID: ss.Scope.WorkspaceID,
+				UserID: userID, SubjectKind: flow.SubjectCanvas, SubjectID: req.CanvasID,
+				Title: "Canvas Agent", EvidenceScope: "{}", ConfirmedPlans: "[]",
+			}
+			if err := db.Create(&conv).Error; err != nil {
+				return conv, ss, err
+			}
+		}
+		return conv, ss, nil
+	}
 	conv, ss, err := flow.Conversations{DB: db}.Get(userID, req.FlowConversationID)
 	if err != nil {
 		return conv, ss, NotFound("情报会话不存在或无权访问")
@@ -234,7 +307,9 @@ func (s *Service) advanceCloudAgentIntelTool(run *model.CloudAgentExecution, sta
 	switch {
 	case !allowed:
 		toolErr = BadAuthRequest("工具未获本轮权限授权")
-	case s.flowEngine == nil:
+	case flow.IsMCPToolName(call.Function.Name) && s.flowMCP == nil:
+		toolErr = BadAuthRequest("MCP 网关未配置")
+	case !flow.IsMCPToolName(call.Function.Name) && call.Function.Name != "intel_list_sources" && s.flowEngine == nil:
 		toolErr = BadAuthRequest("情报引擎未配置")
 	default:
 		approvalID := ""
@@ -283,7 +358,7 @@ func (s *Service) executeIntelToolIn(db *gorm.DB, userID, runID string, req Clou
 			return nil, BadAuthRequest("工具参数不是合法 JSON")
 		}
 	}
-	r, err := s.agentRunChain(runID, req).Exec.Execute(context.Background(), db, flow.ToolCall{Conv: conv, Subject: ss, UserID: userID, RunID: runID,
+	r, err := s.flowRunChain(runID, req).Exec.Execute(context.Background(), db, flow.ToolCall{Conv: conv, Subject: ss, UserID: userID, RunID: runID,
 		CallID: call.ID, Name: call.Function.Name, Args: args, ApprovalID: approvalID})
 	if err != nil {
 		if errors.Is(err, flow.ErrForbidden) || errors.Is(err, flow.ErrNotFound) {

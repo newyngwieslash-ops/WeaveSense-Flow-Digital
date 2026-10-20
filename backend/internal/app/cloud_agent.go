@@ -57,6 +57,9 @@ type CloudAgentRequest struct {
 	// FlowMCPTools is the server-built snapshot of approved MCP tools for this
 	// run (never accepted from clients; cleared in validation).
 	FlowMCPTools []map[string]any `json:"flowMcpTools,omitempty"`
+	// FlowIntelTools is the server-built snapshot of read-only intelligence lookup
+	// tools exposed to canvas runs (never accepted from clients; cleared in validation).
+	FlowIntelTools []map[string]any `json:"flowIntelTools,omitempty"`
 }
 
 const cloudAgentMaxStepsLimit = 9999
@@ -124,6 +127,7 @@ func validateCloudAgentRequest(req *CloudAgentRequest) error {
 		return BadAuthRequest("请求不能为空")
 	}
 	req.FlowMCPTools = nil
+	req.FlowIntelTools = nil
 	// IDs and protocol selectors are identifiers, not free-form text. Keep their
 	// validation in one place so byte/rune and Unicode handling cannot drift.
 	if cloudAgentIntelSubject(*req) {
@@ -414,6 +418,8 @@ func (s *Service) CreateCloudAgentRun(userID string, req CloudAgentRequest, pare
 			}
 			return nil, err
 		}
+		req.FlowMCPTools = s.flowMCPToolsFor(userID, req)
+		req.FlowIntelTools = s.flowCanvasIntelToolsFor(userID, req)
 	}
 	// Resolve and freeze the effective preference document before idempotency
 	// lookup. A retry without an explicit revision must still refer to the same

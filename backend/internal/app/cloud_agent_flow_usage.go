@@ -87,6 +87,10 @@ func (s *Service) freezeRunCapability(userID, runID string, req CloudAgentReques
 		if mg := flow.ModelGatewayFromEnv(); mg != nil {
 			in.ModelRoute["flow_model_gateway"] = map[string]any{"model": mg.Model, "micro_per_1k_tokens": mg.MicroPer1KTok}
 		}
+	} else if len(req.FlowMCPTools) > 0 || len(req.FlowIntelTools) > 0 || req.FlowConversationID != "" {
+		if ss, err := s.cloudAgentFlowScope(userID, req); err == nil {
+			in.TenantID, in.WorkspaceID = ss.Scope.TenantID, ss.Scope.WorkspaceID
+		}
 	}
 	var err error
 	// Transient lock contention (concurrent admissions) is retried; any other

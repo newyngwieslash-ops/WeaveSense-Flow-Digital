@@ -356,4 +356,24 @@ func TestBuiltinDataflowAndLogicCapabilities(t *testing.T) {
 	if logicMeta["operator"] != "intersect" || logicMeta["matchKey"] != "id" {
 		t.Fatalf("logic metadata patch failed: %#v", logicMeta)
 	}
+
+	skill, ok := registry.Resolve("skill")
+	if !ok || !skill.CanUpdate || !skill.Connection.CanSource || !skill.Connection.CanTarget {
+		t.Fatalf("skill capability invalid: %#v", skill)
+	}
+	skillNode := map[string]any{"title": "旧技能", "metadata": skill.Metadata("初始技能指令")}
+	if err := skill.ApplyPatch(skillNode, map[string]any{
+		"title":            "电影感分镜技能",
+		"content":          "输出高反差电影镜头提示词",
+		"skillId":          "cinematic-shot",
+		"skillName":        "电影感分镜",
+		"skillDescription": "强化镜头光影与构图",
+	}); err != nil {
+		t.Fatalf("skill patch failed: %v", err)
+	}
+	skillMeta := skillNode["metadata"].(map[string]any)
+	prompts, _ := skillMeta["skillPrompts"].([]any)
+	if skillNode["title"] != "电影感分镜技能" || skillMeta["content"] != "输出高反差电影镜头提示词" || skillMeta["skillId"] != "cinematic-shot" || skillMeta["skillName"] != "电影感分镜" || skillMeta["skillDescription"] != "强化镜头光影与构图" || len(prompts) != 1 || prompts[0] != "输出高反差电影镜头提示词" {
+		t.Fatalf("skill metadata patch failed: %#v", skillNode)
+	}
 }

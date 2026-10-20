@@ -425,7 +425,7 @@ export function buildCanvasNodeMentionReferenceMap(nodes: CanvasNodeData[], conn
 /** 批次关系属于分组，不是媒体输入；展示与提交共用这一份输入顺序解析。 */
 function buildCanvasResourceInputResolver(nodes: CanvasNodeData[], connections: CanvasConnection[]) {
     const nodeById = new Map(nodes.map((node) => [node.id, node]));
-    const hasDataflowNodes = nodes.some((node) => node.type === CanvasNodeType.DataSource || node.type === CanvasNodeType.Logic);
+    const hasDataflowNodes = nodes.some((node) => node.type === CanvasNodeType.DataSource || node.type === CanvasNodeType.Logic || node.type === CanvasNodeType.Skill);
     const dataflow = hasDataflowNodes ? evaluateCanvasDataflow(nodes, connections) : null;
     const resourceInputsByTargetId = new Map<string, CanvasNodeData[]>();
     const configTargetBySourceId = new Map<string, string>();
@@ -434,9 +434,20 @@ function buildCanvasResourceInputResolver(nodes: CanvasNodeData[], connections: 
         const target = nodeById.get(connection.toNodeId);
         if (!rawSource || !target) continue;
         let source: CanvasNodeData | null = rawSource;
-        if (dataflow && (rawSource.type === CanvasNodeType.DataSource || rawSource.type === CanvasNodeType.Logic)) {
+        if (dataflow && (rawSource.type === CanvasNodeType.DataSource || rawSource.type === CanvasNodeType.Logic || rawSource.type === CanvasNodeType.Skill)) {
             const edgeText = dataflow.getEdgeText(rawSource.id, connection.fromHandleId);
-            source = edgeText ? { ...rawSource, metadata: { ...rawSource.metadata, content: edgeText } } : null;
+            source = edgeText
+                ? {
+                      ...rawSource,
+                      metadata: {
+                          ...rawSource.metadata,
+                          content: edgeText,
+                          ...(rawSource.type === CanvasNodeType.Skill
+                              ? { skillSnapshot: undefined, skillName: undefined, skillDescription: undefined, skillPrompts: undefined }
+                              : {}),
+                      },
+                  }
+                : null;
         }
         if (source && isResourceNode(source) && target.metadata?.batchRootId !== source.id) {
             const inputs = resourceInputsByTargetId.get(target.id) || [];
@@ -507,16 +518,27 @@ export function collectUpstreamVideoNodes(nodeId: string, nodes: CanvasNodeData[
  * 扩展节点经 CanvasNodeGraphContext 复用它，不要另写一份取上游的逻辑。
  */
 export function getContextResourceNodes(nodeId: string, nodes: CanvasNodeData[], connections: CanvasConnection[]) {
-    const hasDataflowNodes = nodes.some((node) => node.type === CanvasNodeType.DataSource || node.type === CanvasNodeType.Logic);
+    const hasDataflowNodes = nodes.some((node) => node.type === CanvasNodeType.DataSource || node.type === CanvasNodeType.Logic || node.type === CanvasNodeType.Skill);
     const dataflow = hasDataflowNodes ? evaluateCanvasDataflow(nodes, connections) : null;
     return connections
         .filter((connection) => connection.toNodeId === nodeId)
         .map((connection) => {
             const raw = nodes.find((node) => node.id === connection.fromNodeId);
             if (!raw) return undefined;
-            if (dataflow && (raw.type === CanvasNodeType.DataSource || raw.type === CanvasNodeType.Logic)) {
+            if (dataflow && (raw.type === CanvasNodeType.DataSource || raw.type === CanvasNodeType.Logic || raw.type === CanvasNodeType.Skill)) {
                 const edgeText = dataflow.getEdgeText(raw.id, connection.fromHandleId);
-                return edgeText ? { ...raw, metadata: { ...raw.metadata, content: edgeText } } : undefined;
+                return edgeText
+                    ? {
+                          ...raw,
+                          metadata: {
+                              ...raw.metadata,
+                              content: edgeText,
+                              ...(raw.type === CanvasNodeType.Skill
+                                  ? { skillSnapshot: undefined, skillName: undefined, skillDescription: undefined, skillPrompts: undefined }
+                                  : {}),
+                          },
+                      }
+                    : undefined;
             }
             return raw;
         })

@@ -5,7 +5,7 @@ import type { ReferenceImage } from "@/types/image";
 import type { ReferenceAudio, ReferenceVideo } from "@/types/media";
 import { CanvasNodeType, type CanvasConnection, type CanvasGenerationMode, type CanvasNodeData } from "@/types/canvas";
 import { getGenerationResourceNodes, getContextResourceNodes, getMentionResourceNodes } from "@/lib/canvas/canvas-resource-references";
-import { findBlockedLogicBranchInput } from "@/lib/canvas/dataflow-evaluator";
+import { findBlockedLogicBranchInput, formatSkillNodePrompt } from "@/lib/canvas/dataflow-evaluator";
 import { canvasNodeVideoPreviewUrl, canvasVideoAssetPreviewUrl } from "@/lib/canvas/canvas-media-preview";
 import { isNeutralColorGrade, resolveCanvasColorGradeReference } from "@/lib/canvas/canvas-color-grade";
 import { getNodeGenerationMode, getNodeResourceKind } from "@/lib/canvas/node-registry";
@@ -675,11 +675,7 @@ function stringField(value: unknown) {
 }
 
 function readSkillInput(node: CanvasNodeData) {
-    const skill = node.metadata?.skillSnapshot;
-    if (!skill) return node.metadata?.content || "";
-    return [`【技能：${skill.name}】`, skill.description ? `用途：${skill.description}` : "", `执行模板：\n${skill.template}`, skill.outputContract ? `输出约束：\n${skill.outputContract}` : "", "请严格执行该技能，只输出结果，不要输出解释性套话。"]
-        .filter(Boolean)
-        .join("\n\n");
+    return formatSkillNodePrompt(node);
 }
 
 function generationLabel(type: NodeGenerationInput["type"] | "drawing", index: number) {

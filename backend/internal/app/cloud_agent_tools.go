@@ -261,8 +261,8 @@ func compileCanvasAgentTools(req CloudAgentRequest, includeProfileTool bool) []m
 			"patch":        cloudAgentPatchSchema(),
 			"fromNodeId":   str("连线来源节点ID"),
 			"toNodeId":     str("连线目标节点ID"),
-			"fromHandleId": str("分镜来源 handle：row:<rowId> 或 storyboard:context"),
-			"toHandleId":   str("分镜目标 handle：row:<rowId> 或 storyboard:context"),
+			"fromHandleId": str("来源端口：分镜 row:<rowId>/storyboard:context，逻辑分支 true/false"),
+			"toHandleId":   str("目标端口：分镜 row:<rowId>/storyboard:context，集合运算 input_a/input_b"),
 			"x":            map[string]any{"type": "number"},
 			"y":            map[string]any{"type": "number"},
 		}
@@ -304,6 +304,10 @@ func compileCanvasAgentTools(req CloudAgentRequest, includeProfileTool bool) []m
 			"snapshotHash":          str("可省略：省略时用当前画布内容快照"), "nodeId": str("可续用的未提交媒体草稿ID；无草稿时才使用新唯一ID"), "title": str("媒体节点名称"), "sourceNodeId": str("仅文本/镜头提示词节点ID；不要填媒体节点"), "referenceNodeIds": map[string]any{"type": "array", "maxItems": 16, "items": str("画布媒体参考节点ID，按引用顺序")}, "referenceTransientIds": map[string]any{"type": "array", "maxItems": 4, "items": str("由 image_annotation_render 返回的临时参考图ID")},
 		}, "mode", "prompt", "nodeId", "title", "referenceNodeIds")
 		cloudAgentRequireExplicitMediaModelSelection(tools[len(tools)-1])
+	}
+	tools = append(tools, req.FlowIntelTools...)
+	if req.PermissionMode != "read_only" {
+		tools = append(tools, req.FlowMCPTools...)
 	}
 	return tools
 }

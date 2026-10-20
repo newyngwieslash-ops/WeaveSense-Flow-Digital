@@ -326,9 +326,41 @@ export function parseDataSourceNode(node: CanvasNodeData): { items: CanvasDataIt
     return { items: lines, format };
 }
 
+export function formatSkillNodePrompt(node: CanvasNodeData): string {
+    const skill = node.metadata?.skillSnapshot;
+    if (skill) {
+        return [
+            `【技能：${skill.name}】`,
+            skill.description ? `用途：${skill.description}` : "",
+            `执行模板：\n${skill.template}`,
+            skill.outputContract ? `输出约束：\n${skill.outputContract}` : "",
+            "请严格执行该技能，只输出结果，不要输出解释性套话。",
+        ]
+            .filter(Boolean)
+            .join("\n\n");
+    }
+    const name = (node.metadata?.skillName || "").trim();
+    const description = (node.metadata?.skillDescription || "").trim();
+    const prompts = (node.metadata?.skillPrompts || []).map((p) => String(p).trim()).filter(Boolean);
+    const content = (node.metadata?.content || node.metadata?.prompt || "").trim();
+    const body = content || prompts.join("\n");
+    if (!name && !description) return body;
+    return [
+        `【技能：${name || node.title || "Skill 节点"}】`,
+        description ? `用途：${description}` : "",
+        body ? `执行模板：\n${body}` : "",
+    ]
+        .filter(Boolean)
+        .join("\n\n");
+}
+
 export function extractNodeItems(node: CanvasNodeData): { items: CanvasDataItem[]; format?: CanvasDataSourceFormat; error?: string } {
     if (node.type === CanvasNodeType.DataSource) {
         return parseDataSourceNode(node);
+    }
+    if (node.type === CanvasNodeType.Skill) {
+        const formatted = formatSkillNodePrompt(node);
+        return { items: formatted ? [formatted] : [], format: "txt" };
     }
     if (node.type === CanvasNodeType.Script) {
         const rows = node.metadata?.storyboard?.rows || [];
@@ -773,6 +805,78 @@ export function evaluateCanvasDataflow(nodes: CanvasNodeData[], connections: Can
             return evaluated;
         }
 
+        if (node.type === CanvasNodeType.Skill) {
+            const incoming = incomingByTarget.get(nodeId) || [];
+            if (incoming.length > 0) {
+                const inputA: CanvasDataItem[] = [];
+                let cyclicUpstream = false;
+                let hasLogicOrSkillUpstream = false;
+                let anyActiveUpstream = false;
+
+                incoming.forEach((conn) => {
+                    const upstreamRes = evaluateNode(conn.fromNodeId);
+                    if (upstreamRes.cycleDetected) cyclicUpstream = true;
+                    const sourceNode = nodeById.get(conn.fromNodeId);
+                    if (sourceNode?.type === CanvasNodeType.Logic || sourceNode?.type === CanvasNodeType.Skill) {
+                        hasLogicOrSkillUpstream = true;
+                    }
+                    const items = readEdgeItemsInternal(conn);
+                    if (items.length > 0) anyActiveUpstream = true;
+                    inputA.push(...items);
+                });
+
+                if (cyclicUpstream || results.get(nodeId)?.cycleDetected) {
+                    const cycleRes: DataflowNodeResult = {
+                        nodeId,
+                        inputA,
+                        inputB: [],
+                        outputItems: [],
+                        trueItems: [],
+                        falseItems: [],
+                        detectedKeys: collectDetectedKeys(inputA),
+                        cycleDetected: true,
+                        error: "检测到循环连线，已中止求值",
+                    };
+                    visitState.set(nodeId, "visited");
+                    results.set(nodeId, cycleRes);
+                    return cycleRes;
+                }
+
+                if (hasLogicOrSkillUpstream && !anyActiveUpstream) {
+                    const emptyRes: DataflowNodeResult = {
+                        nodeId,
+                        inputA: [],
+                        inputB: [],
+                        outputItems: [],
+                        trueItems: [],
+                        falseItems: [],
+                        detectedKeys: [],
+                    };
+                    visitState.set(nodeId, "visited");
+                    results.set(nodeId, emptyRes);
+                    return emptyRes;
+                }
+
+                const skillPrompt = formatSkillNodePrompt(node);
+                const upstreamText = formatDataItemsForPrompt(inputA);
+                const combined = [skillPrompt, upstreamText ? `【上游输入数据】\n${upstreamText}` : ""].filter(Boolean).join("\n\n");
+                const outputItems: CanvasDataItem[] = combined ? [combined] : inputA;
+                const skillRes: DataflowNodeResult = {
+                    nodeId,
+                    format: "txt",
+                    inputA,
+                    inputB: [],
+                    outputItems,
+                    trueItems: outputItems,
+                    falseItems: [],
+                    detectedKeys: collectDetectedKeys(inputA),
+                };
+                visitState.set(nodeId, "visited");
+                results.set(nodeId, skillRes);
+                return skillRes;
+            }
+        }
+
         const parsed = extractNodeItems(node);
         const nodeResult: DataflowNodeResult = {
             nodeId,
@@ -791,7 +895,7 @@ export function evaluateCanvasDataflow(nodes: CanvasNodeData[], connections: Can
     };
 
     for (const node of nodes) {
-        if (node.type === CanvasNodeType.DataSource || node.type === CanvasNodeType.Logic) {
+        if (node.type === CanvasNodeType.DataSource || node.type === CanvasNodeType.Logic || node.type === CanvasNodeType.Skill) {
             evaluateNode(node.id);
         }
     }
@@ -845,11 +949,21 @@ export function findBlockedLogicBranchInput(
     const nodeById = new Map(nodes.map((node) => [node.id, node]));
     const evaluation = evaluateCanvasDataflow(nodes, connections);
 
-    // 覆盖“生成节点 -> 配置节点 <- 逻辑节点”以及直接连线“生成节点 <- 逻辑节点”两种拓扑
+    // 覆盖“生成节点 -> 配置节点 <- 逻辑节点”、“生成节点 <- Skill 节点 <- 逻辑节点”以及直接连线“生成节点 <- 逻辑节点”等拓扑
     const targetIds = new Set<string>([nodeId]);
     for (const conn of connections) {
         if (conn.fromNodeId === nodeId && nodeById.get(conn.toNodeId)?.type === CanvasNodeType.Config) {
             targetIds.add(conn.toNodeId);
+        }
+    }
+    let expanded = true;
+    while (expanded) {
+        expanded = false;
+        for (const conn of connections) {
+            if (targetIds.has(conn.toNodeId) && !targetIds.has(conn.fromNodeId) && nodeById.get(conn.fromNodeId)?.type === CanvasNodeType.Skill) {
+                targetIds.add(conn.fromNodeId);
+                expanded = true;
+            }
         }
     }
 

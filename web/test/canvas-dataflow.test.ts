@@ -277,4 +277,87 @@ describe("canvas low-code dataflow & logic evaluator", () => {
         expect(logicNodeHandleAtY(branchNode, "source", topY + 4, 40)).toBe("true");
         expect(logicNodeHandleAtY(branchNode, "source", bottomY - 4, 40)).toBe("false");
     });
+
+    it("evaluates data-source -> logic -> skill -> image pipeline and gates empty branch through skill", () => {
+        const source = makeNode({
+            id: "ds-intel",
+            type: CanvasNodeType.DataSource,
+            metadata: {
+                dataSource: {
+                    format: "json",
+                    rawText: JSON.stringify([
+                        { id: "doc_1", title: "固态电池量产突破", score: 92 },
+                    ]),
+                },
+            },
+        });
+        const logicNode = makeNode({
+            id: "logic-filter",
+            title: "高优情报分流",
+            type: CanvasNodeType.Logic,
+            metadata: {
+                logic: {
+                    operator: "if_else",
+                    fieldPath: "score",
+                    comparator: "gt",
+                    compareValue: "85",
+                },
+            },
+        });
+        const trueSkillNode = makeNode({
+            id: "skill-true",
+            title: "分镜视觉提炼",
+            type: CanvasNodeType.Skill,
+            metadata: {
+                content: "将输入情报转化为赛博朋克风格实验室特写镜头提示词",
+                skillName: "分镜视觉提炼",
+                skillDescription: "提炼高张力商业分镜画面",
+                skillPrompts: ["将输入情报转化为赛博朋克风格实验室特写镜头提示词"],
+            },
+        });
+        const falseSkillNode = makeNode({
+            id: "skill-false",
+            title: "次要情报摘要",
+            type: CanvasNodeType.Skill,
+            metadata: {
+                content: "生成简短文字海报背景",
+                skillName: "次要情报摘要",
+            },
+        });
+        const trueImage = makeNode({
+            id: "img-from-skill-true",
+            type: CanvasNodeType.Image,
+            metadata: { prompt: "生成主视觉海报" },
+        });
+        const falseImage = makeNode({
+            id: "img-from-skill-false",
+            type: CanvasNodeType.Image,
+            metadata: { prompt: "生成备选海报" },
+        });
+
+        const nodes = [source, logicNode, trueSkillNode, falseSkillNode, trueImage, falseImage];
+        const connections: CanvasConnection[] = [
+            { id: "c1", fromNodeId: "ds-intel", toNodeId: "logic-filter" },
+            { id: "c2", fromNodeId: "logic-filter", fromHandleId: "true", toNodeId: "skill-true" },
+            { id: "c3", fromNodeId: "skill-true", toNodeId: "img-from-skill-true" },
+            { id: "c4", fromNodeId: "logic-filter", fromHandleId: "false", toNodeId: "skill-false" },
+            { id: "c5", fromNodeId: "skill-false", toNodeId: "img-from-skill-false" },
+        ];
+
+        const evalResult = evaluateCanvasDataflow(nodes, connections);
+        const skillTrueText = evalResult.getEdgeText("skill-true");
+        expect(skillTrueText).toContain("【技能：分镜视觉提炼】");
+        expect(skillTrueText).toContain("将输入情报转化为赛博朋克风格实验室特写镜头提示词");
+        expect(skillTrueText).toContain("固态电池量产突破");
+
+        const trueContext = buildNodeGenerationContext("img-from-skill-true", nodes, connections, "生成主视觉海报", []);
+        expect(trueContext.prompt).toContain("【技能：分镜视觉提炼】");
+        expect(trueContext.prompt).toContain("固态电池量产突破");
+
+        // False branch (0 items) -> falseSkillNode -> falseImage must be gated
+        expect(evalResult.getEdgeItems("skill-false").active).toBe(false);
+        const blocked = findBlockedLogicBranchInput("img-from-skill-false", nodes, connections);
+        expect(blocked).not.toBeNull();
+        expect(blocked?.reason).toContain("False 分支当前未命中");
+    });
 });

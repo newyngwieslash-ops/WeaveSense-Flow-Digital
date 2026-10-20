@@ -248,6 +248,10 @@ export type CanvasNodeMetadata = {
     dataSource?: CanvasDataSourceConfig;
     /** 低代码逻辑与集合运算节点配置（支持 If/Else、交集、并集、差集、过滤、提取）。 */
     logic?: CanvasLogicConfig;
+    /** Skill 节点轻量配置（支持 Agent 通过 canvas_apply_ops 创建或更新技能节点）。 */
+    skillName?: string;
+    skillDescription?: string;
+    skillPrompts?: string[];
     generationSpec?: GenerationSpec;
     /** Namespaced extension ownership for nodes contributed by a unified plugin. */
     pluginId?: string;

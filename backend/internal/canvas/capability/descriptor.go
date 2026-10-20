@@ -187,6 +187,16 @@ func (d Descriptor) ApplyPatch(node map[string]any, patch map[string]any) error 
 				ds["rawText"] = value
 			}
 		}
+		if d.Type == "skill" && field.Path == "metadata.content" {
+			metadata, _ := node["metadata"].(map[string]any)
+			if metadata != nil {
+				if text, ok := value.(string); ok && strings.TrimSpace(text) != "" {
+					metadata["skillPrompts"] = []any{text}
+				} else {
+					metadata["skillPrompts"] = []any{}
+				}
+			}
+		}
 	}
 	return nil
 }

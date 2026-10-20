@@ -271,6 +271,15 @@ func applyCloudAgentStoryboardConnection(nodes []map[string]any, fromNodeID, toN
 	if from == nil || to == nil {
 		return BadAuthRequest("分镜连线端点不存在")
 	}
+	if stringValue(from["type"]) == "logic" && (fromHandleID == "true" || fromHandleID == "false") {
+		fromHandleID = ""
+	}
+	if stringValue(to["type"]) == "logic" && (toHandleID == "input_a" || toHandleID == "input_b") {
+		toHandleID = ""
+	}
+	if fromHandleID == "" && toHandleID == "" {
+		return nil
+	}
 	scriptNode, linkedNode, handleID := from, to, fromHandleID
 	scriptIsSource := true
 	if handleID == "" {

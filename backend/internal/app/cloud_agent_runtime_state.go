@@ -124,9 +124,11 @@ func validateCloudAgentRuntime(run *model.CloudAgentExecution, state *cloudAgent
 	if (state.Request.CanvasID == "" && !cloudAgentIntelSubject(state.Request)) || state.Request.Prompt == "" || state.Request.PermissionMode == "" {
 		return errors.New("Agent runtime request is incomplete")
 	}
+	mcpTools, intelTools := state.Request.FlowMCPTools, state.Request.FlowIntelTools
 	if err := validateCloudAgentRequest(&state.Request); err != nil {
 		return fmt.Errorf("invalid Agent runtime request: %w", err)
 	}
+	state.Request.FlowMCPTools, state.Request.FlowIntelTools = mcpTools, intelTools
 	if err := validateCloudAgentPolicySnapshotStructure(state.Policy); err != nil {
 		return err
 	}

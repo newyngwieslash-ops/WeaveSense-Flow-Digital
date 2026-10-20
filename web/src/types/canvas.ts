@@ -39,6 +39,8 @@ export enum CanvasNodeType {
     ColorGrade = "colorgrade",
     MediaConversion = "media-conversion",
     BatchTable = "batch-table",
+    DataSource = "data-source",
+    Logic = "logic",
 }
 
 /** Runtime IDs contributed by plugins share the persisted node type field. */
@@ -208,6 +210,26 @@ export type CanvasBatchTableData = {
     aiGenerated?: boolean;
 };
 
+export type CanvasDataSourceFormat = "json" | "csv" | "txt" | "markdown" | "intel";
+
+export type CanvasDataSourceConfig = {
+    format: CanvasDataSourceFormat;
+    rawText?: string;
+    fileName?: string;
+};
+
+export type CanvasLogicOperator = "if_else" | "intersect" | "union" | "difference" | "filter" | "json_extract";
+
+export type CanvasLogicComparator = "contains" | "not_contains" | "equals" | "not_equals" | "gt" | "lt" | "is_empty" | "not_empty" | "regex";
+
+export type CanvasLogicConfig = {
+    operator: CanvasLogicOperator;
+    fieldPath?: string;
+    comparator?: CanvasLogicComparator;
+    compareValue?: string;
+    matchKey?: string;
+};
+
 export type CanvasSkillSnapshot = {
     id: string;
     name: string;
@@ -222,6 +244,10 @@ export type CanvasSkillSnapshot = {
 
 export type CanvasNodeMetadata = {
     /** Credential-free editable generation contract; submitted recipes live with tasks. */
+    /** 低代码数据源节点配置（支持 JSON/CSV/TXT/Markdown/情报结构化输入）。 */
+    dataSource?: CanvasDataSourceConfig;
+    /** 低代码逻辑与集合运算节点配置（支持 If/Else、交集、并集、差集、过滤、提取）。 */
+    logic?: CanvasLogicConfig;
     generationSpec?: GenerationSpec;
     /** Namespaced extension ownership for nodes contributed by a unified plugin. */
     pluginId?: string;

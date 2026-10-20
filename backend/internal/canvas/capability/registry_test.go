@@ -327,3 +327,33 @@ func TestRegistryResolveUnknownTypeFailsClosed(t *testing.T) {
 		t.Fatal("unknown generation mode resolved")
 	}
 }
+
+func TestBuiltinDataflowAndLogicCapabilities(t *testing.T) {
+	registry := BuiltinRegistry()
+	ds, ok := registry.Resolve("data-source")
+	if !ok || !ds.CanUpdate || !ds.Connection.CanSource || !ds.Connection.CanTarget {
+		t.Fatalf("data-source capability invalid: %#v", ds)
+	}
+	dsNode := map[string]any{"metadata": ds.Metadata(`[{"id":"1"}]`)}
+	if err := ds.ApplyPatch(dsNode, map[string]any{"content": `[{"id":"2"}]`, "format": "csv"}); err != nil {
+		t.Fatalf("data-source patch failed: %v", err)
+	}
+	meta := dsNode["metadata"].(map[string]any)
+	dsMeta := meta["dataSource"].(map[string]any)
+	if meta["content"] != `[{"id":"2"}]` || dsMeta["rawText"] != `[{"id":"2"}]` || dsMeta["format"] != "csv" {
+		t.Fatalf("data-source metadata out of sync: %#v", meta)
+	}
+
+	logic, ok := registry.Resolve("logic")
+	if !ok || !logic.CanUpdate || !logic.Connection.CanSource || !logic.Connection.CanTarget {
+		t.Fatalf("logic capability invalid: %#v", logic)
+	}
+	logicNode := map[string]any{"metadata": logic.Metadata("")}
+	if err := logic.ApplyPatch(logicNode, map[string]any{"operator": "intersect", "matchKey": "id"}); err != nil {
+		t.Fatalf("logic patch failed: %v", err)
+	}
+	logicMeta := logicNode["metadata"].(map[string]any)["logic"].(map[string]any)
+	if logicMeta["operator"] != "intersect" || logicMeta["matchKey"] != "id" {
+		t.Fatalf("logic metadata patch failed: %#v", logicMeta)
+	}
+}

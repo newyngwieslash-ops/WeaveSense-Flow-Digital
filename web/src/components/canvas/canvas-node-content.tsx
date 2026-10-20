@@ -28,6 +28,8 @@ import { PanoramaNodeContent } from "./nodes/panorama-node";
 import { SvgNodeContent } from "./nodes/svg-node";
 import { ArtCritiqueNodeContent } from "./nodes/ai-art-critique-node";
 import { MediaConversionNodeContent } from "./nodes/media-conversion-node";
+import { DataSourceNodeContent } from "./nodes/data-source-node";
+import { LogicNodeContent } from "./nodes/logic-node";
 import { MEDIA_CONVERSION_NODE_TYPE } from "@/lib/media-conversion/contracts";
 import { AudioNodeContent, EmptyImageContent, ImageNodeContent, VideoNodeContent } from "./canvas-node-media-content";
 import { ErrorContent, LoadingContent, UnknownNodeContent } from "./canvas-node-status-content";
@@ -180,6 +182,8 @@ const nodeContentRenderers: Partial<Record<string, (props: CanvasNodeContentProp
     [CanvasNodeType.Compare]: CompareNodeContent,
     [CanvasNodeType.Chart]: ChartNodeContent,
     [CanvasNodeType.ColorGrade]: ColorGradeNodeContent,
+    [CanvasNodeType.DataSource]: DataSourceNodeContent,
+    [CanvasNodeType.Logic]: LogicNodeContent,
 };
 
 function DrawingContent({ node, theme, drawingProjectId }: CanvasNodeContentProps) {

@@ -25,6 +25,7 @@ import { canvasAppearanceBaseTheme, canvasAppearanceForTheme, DEFAULT_CANVAS_BAC
 import { canvasThemes, type CanvasBackgroundMode } from "@/lib/canvas-theme";
 import { filterCanvasDisplayConnections, persistCanvasHideNodeConnections, readCanvasHideNodeConnections } from "@/lib/canvas/canvas-connection-visibility";
 import { summarizeCanvasContext } from "@/lib/canvas/canvas-context-summary";
+import { evaluateCanvasDataflow } from "@/lib/canvas/dataflow-evaluator";
 import { refreshCanvasCharacterReferenceNodes } from "@/lib/canvas/canvas-character-reference";
 import { useAssetStore } from "@/stores/use-asset-store";
 import { flushCanvasStorePersistence } from "@/stores/canvas/use-canvas-store";
@@ -171,6 +172,7 @@ import {
     type ViewportTransform,
 } from "@/types/canvas";
 import { ART_CRITIQUE_NODE_TYPE } from "@/lib/art-critique/contracts";
+import { buildIntelHandoffAgentPrefill } from "@/pages/intelligence/canvas-handoff-modal";
 import { copyImageToSystemClipboard } from "./canvas-clipboard";
 
 const CanvasPrevisWorkbench = lazy(() => import("@/components/canvas/previs/canvas-previs-workbench").then((module) => ({ default: module.CanvasPrevisWorkbench })));
@@ -212,6 +214,7 @@ function CanvasViewportPage() {
     const didInitialCenterRef = useRef(false);
     const toolbarHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const assetHandoffRef = useRef("");
+    const intelHandoffRef = useRef("");
 
     const effectiveConfig = useEffectiveConfig();
     const assets = useAssetStore((state) => state.assets);
@@ -537,7 +540,13 @@ function CanvasViewportPage() {
     // 扩展节点（对比/图表/调色）要读自己的上游才能渲染，经 Context 下发；
     // 取上游复用 canvas-resource-references 的实现，别在这里另写一份。必须 memo——
     // 每帧新对象会让所有节点跟着重渲染，错题本里多条崩溃都出在画布高频更新。
-    const nodeGraphContext = useMemo<CanvasNodeGraphContextValue>(() => ({ getUpstreamNodes: (nodeId: string) => getContextResourceNodes(nodeId, nodes, connections) }), [connections, nodes]);
+    const nodeGraphContext = useMemo<CanvasNodeGraphContextValue>(
+        () => ({
+            getUpstreamNodes: (nodeId: string) => getContextResourceNodes(nodeId, nodes, connections),
+            dataflow: evaluateCanvasDataflow(nodes, connections),
+        }),
+        [connections, nodes],
+    );
 
     const { applyGenerationTaskResult, bindGenerationTask, finishGenerationRequest, openNodeTaskDetails, runningNodeId, setRunningNodeId, setTaskDetail, startGenerationRequest, taskDetail, taskDetailLoading, taskDetailLogs } = useCanvasGeneration({
         projectId,
@@ -822,6 +831,34 @@ function CanvasViewportPage() {
             assetHandoffRef.current = "";
         });
     }, [assets, assetsHydrated, handleProjectAssetsInsert, message, nodesRef, projectId, projectLoaded, searchParams, setSearchParams, updateProject]);
+
+    useEffect(() => {
+        if (!projectLoaded) return;
+        const plan = buildIntelHandoffAgentPrefill({ searchParams, references: agentMentionReferences });
+        if (!plan) return;
+        if (plan.intelNodeId && !nodes.some((node) => node.id === plan.intelNodeId)) return;
+
+        const handoffKey = `${projectId}:${plan.intelNodeId}:${plan.wantAgent ? "1" : "0"}:${plan.prefillText}`;
+        if (intelHandoffRef.current === handoffKey) return;
+        intelHandoffRef.current = handoffKey;
+
+        if (plan.intelNodeId) {
+            const selection = new Set([plan.intelNodeId]);
+            selectedNodeIdsRef.current = selection;
+            setSelectedNodeIds(selection);
+            bringNodeToFront(plan.intelNodeId);
+        }
+        if (plan.wantAgent) {
+            if (plan.prefillText) {
+                setAgentPrefillRequest((current) => ({
+                    id: (current?.id ?? 0) + 1,
+                    text: plan.prefillText,
+                }));
+            }
+            openAgent();
+        }
+        setSearchParams(plan.cleanedSearchParams, { replace: true });
+    }, [agentMentionReferences, bringNodeToFront, nodes, openAgent, projectId, projectLoaded, searchParams, setSearchParams]);
 
     const {
         angleNodeId,
@@ -1139,7 +1176,7 @@ function CanvasViewportPage() {
             } else if (node.type === ART_CRITIQUE_NODE_TYPE) {
                 setDialogNodeId(null);
                 setArtCritiqueNodeId(node.id);
-            } else if (node.type === CanvasNodeType.Panorama) {
+            } else if (node.type === CanvasNodeType.Panorama || node.type === CanvasNodeType.DataSource || node.type === CanvasNodeType.Logic) {
                 // 全景节点是纯查看器，没有可编辑提示词，不弹提示词面板。
                 setDialogNodeId(null);
             } else {
@@ -1170,6 +1207,8 @@ function CanvasViewportPage() {
                 node.type === CanvasNodeType.Script ||
                 node.type === CanvasNodeType.Drawing ||
                 node.type === CanvasNodeType.Panorama ||
+                node.type === CanvasNodeType.DataSource ||
+                node.type === CanvasNodeType.Logic ||
                 node.type === ART_CRITIQUE_NODE_TYPE ||
                 (node.metadata?.workflowKind === "character" && node.metadata.characterAssetId)
             ) {
@@ -2176,7 +2215,7 @@ function CanvasViewportPage() {
 
     const renderCanvasNodePanel = useCallback(
         (panelNode: CanvasNodeData) => {
-            if (panelNode.type === CanvasNodeType.Script || panelNode.type === CanvasNodeType.Drawing) return null;
+            if (panelNode.type === CanvasNodeType.Script || panelNode.type === CanvasNodeType.Drawing || panelNode.type === CanvasNodeType.DataSource || panelNode.type === CanvasNodeType.Logic) return null;
             return panelNode.type === CanvasNodeType.Config ? (
                 <CanvasConfigComposer
                     value={panelNode.metadata?.composerContent ?? panelNode.metadata?.prompt ?? ""}

@@ -175,7 +175,9 @@ export function useCanvasNodeOperations({
                 type !== CanvasNodeType.Audio &&
                 type !== CanvasNodeType.Frame &&
                 type !== CanvasNodeType.Drawing &&
-                type !== CanvasNodeType.MediaConversion
+                type !== CanvasNodeType.MediaConversion &&
+                type !== CanvasNodeType.DataSource &&
+                type !== CanvasNodeType.Logic
             )
                 setDialogNodeId(node.id);
         },

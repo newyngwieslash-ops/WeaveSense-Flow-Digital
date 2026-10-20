@@ -4,6 +4,7 @@ import { canvasNodeVideoPreviewUrl, canvasVideoAssetPreviewUrl } from "@/lib/can
 import { nodeGenerationPrompt } from "@/lib/canvas/generation-contract";
 import { writeCanvasNodePrompt } from "@/lib/canvas/canvas-node-prompt";
 import { getNodeResourceKind } from "@/lib/canvas/node-registry";
+import { evaluateCanvasDataflow } from "@/lib/canvas/dataflow-evaluator";
 import type { Skill } from "@/services/api/skills";
 import type { Asset, AssetCategory } from "@/stores/use-asset-store";
 import { CanvasNodeType, type CanvasConnection, type CanvasNodeData, type CanvasNodeTypeId } from "@/types/canvas";
@@ -424,19 +425,26 @@ export function buildCanvasNodeMentionReferenceMap(nodes: CanvasNodeData[], conn
 /** 批次关系属于分组，不是媒体输入；展示与提交共用这一份输入顺序解析。 */
 function buildCanvasResourceInputResolver(nodes: CanvasNodeData[], connections: CanvasConnection[]) {
     const nodeById = new Map(nodes.map((node) => [node.id, node]));
+    const hasDataflowNodes = nodes.some((node) => node.type === CanvasNodeType.DataSource || node.type === CanvasNodeType.Logic);
+    const dataflow = hasDataflowNodes ? evaluateCanvasDataflow(nodes, connections) : null;
     const resourceInputsByTargetId = new Map<string, CanvasNodeData[]>();
     const configTargetBySourceId = new Map<string, string>();
     for (const connection of connections) {
-        const source = nodeById.get(connection.fromNodeId);
+        const rawSource = nodeById.get(connection.fromNodeId);
         const target = nodeById.get(connection.toNodeId);
-        if (!source || !target) continue;
-        if (isResourceNode(source) && target.metadata?.batchRootId !== source.id) {
+        if (!rawSource || !target) continue;
+        let source: CanvasNodeData | null = rawSource;
+        if (dataflow && (rawSource.type === CanvasNodeType.DataSource || rawSource.type === CanvasNodeType.Logic)) {
+            const edgeText = dataflow.getEdgeText(rawSource.id, connection.fromHandleId);
+            source = edgeText ? { ...rawSource, metadata: { ...rawSource.metadata, content: edgeText } } : null;
+        }
+        if (source && isResourceNode(source) && target.metadata?.batchRootId !== source.id) {
             const inputs = resourceInputsByTargetId.get(target.id) || [];
             inputs.push(source);
             resourceInputsByTargetId.set(target.id, inputs);
         }
-        if (target.type === CanvasNodeType.Config && !configTargetBySourceId.has(source.id)) {
-            configTargetBySourceId.set(source.id, target.id);
+        if (target.type === CanvasNodeType.Config && !configTargetBySourceId.has(rawSource.id)) {
+            configTargetBySourceId.set(rawSource.id, target.id);
         }
     }
 
@@ -499,9 +507,19 @@ export function collectUpstreamVideoNodes(nodeId: string, nodes: CanvasNodeData[
  * 扩展节点经 CanvasNodeGraphContext 复用它，不要另写一份取上游的逻辑。
  */
 export function getContextResourceNodes(nodeId: string, nodes: CanvasNodeData[], connections: CanvasConnection[]) {
+    const hasDataflowNodes = nodes.some((node) => node.type === CanvasNodeType.DataSource || node.type === CanvasNodeType.Logic);
+    const dataflow = hasDataflowNodes ? evaluateCanvasDataflow(nodes, connections) : null;
     return connections
         .filter((connection) => connection.toNodeId === nodeId)
-        .map((connection) => nodes.find((node) => node.id === connection.fromNodeId))
+        .map((connection) => {
+            const raw = nodes.find((node) => node.id === connection.fromNodeId);
+            if (!raw) return undefined;
+            if (dataflow && (raw.type === CanvasNodeType.DataSource || raw.type === CanvasNodeType.Logic)) {
+                const edgeText = dataflow.getEdgeText(raw.id, connection.fromHandleId);
+                return edgeText ? { ...raw, metadata: { ...raw.metadata, content: edgeText } } : undefined;
+            }
+            return raw;
+        })
         .filter((node): node is CanvasNodeData => Boolean(node && isResourceNode(node)));
 }
 
@@ -557,7 +575,7 @@ function labelResourceNodes(nodes: CanvasNodeData[], active: boolean) {
                 text:
                     node.metadata?.workflowKind === "character"
                         ? node.metadata.characterPrompt
-                        : node.type === CanvasNodeType.Text
+                        : node.type === CanvasNodeType.Text || node.type === CanvasNodeType.DataSource || node.type === CanvasNodeType.Logic
                           ? node.metadata?.content || node.metadata?.prompt
                           : node.type === CanvasNodeType.Skill
                             ? skillResourceText(node)

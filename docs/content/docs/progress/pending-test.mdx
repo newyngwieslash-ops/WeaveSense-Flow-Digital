@@ -5,6 +5,14 @@ description: 当前项目已实现功能的手工验证清单与未确认边界
 
 # 待测试
 
+## 画布低代码数据流与逻辑门（数据源 + If/Else 分支 + 集合交并差）
+
+- 已实现：新增独立节点类型 `data-source`（支持 JSON、CSV、Markdown、TXT、情报条目多格式解析、本地文件导入与源码/条目预览切换）和 `logic`（支持 `if_else` 条件分支、`intersect` 交集、`union` 并集、`difference` 差集、`filter` 条件过滤、`json_extract` 点路径字段提取）。
+- 已实现：纯前端拓扑 DAG 实时响应式求值（`evaluateCanvasDataflow`），含三色 DFS 环路检测、`input_a` / `input_b` 双输入端口与 `true` / `false` 双输出端口几何锚点对齐；下游媒体/文本生成节点按连线端口动态注入分支数据，并在连接的所有逻辑分支均未命中（0 条数据）时自动门控拦截生成。
+- 已实现：后端 `BuiltinRegistry`、`cloud_agent_layout` 与 `validateCloudAgentStoryboardHandle` 同步注册 `data-source` 与 `logic` 节点能力及 `true`/`false`/`input_a`/`input_b` 端口，支持画布 Pi Agent 创建、配置与连线。
+- [x] 验证：`cd web && bun test test/canvas-dataflow.test.ts`、`bun run lint`、`bun run build` 及 `cd backend && go test ./internal/canvas/capability/... ./internal/app -run "TestCloudAgentCanvas|TestIntelHandoff"` 均通过。
+- [ ] 用户验收：在画布「+」菜单或连线浮层创建「数据源」与「逻辑与集合」节点，验证 JSON/CSV/MD/TXT 切换与本地文件导入、双输入端口（A/B）交并差集、If/Else 双输出端口（T/F）连线至下游图片/文本生成节点的实时条数预览与未命中分支拦截。
+
 ## 情报工作台会话缓存隔离、成员角色回显与中文 UI 体验优化
 
 - 已修复：情报会话本地热启动缓存按当前登录用户 ID 隔离（`flow.conversations.cache.v1:${userId}`），未登录时不读写共享缓存，避免切换账号闪现上一用户会话标题。

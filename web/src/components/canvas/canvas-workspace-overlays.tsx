@@ -1,6 +1,6 @@
 import { motion, useReducedMotion } from "motion/react";
 import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
-import { Clapperboard, Image as ImageIcon, List, Music2, Pencil, Table2, Video, WandSparkles, Workflow as WorkflowIcon } from "lucide-react";
+import { Clapperboard, Database, GitBranch, Image as ImageIcon, List, Music2, Pencil, Table2, Video, WandSparkles, Workflow as WorkflowIcon } from "lucide-react";
 
 import { useCanvasOverlayLayer } from "@/components/canvas/canvas-overlay-layer";
 import { canvasThemes } from "@/lib/canvas-theme";
@@ -199,11 +199,11 @@ export function CanvasConnectionCreateMenu({
     containerRef: RefObject<HTMLDivElement | null>;
     canCreateDrawing: boolean;
     getDisabledReason: (
-        type: CanvasNodeType.Image | CanvasNodeType.Text | CanvasNodeType.Script | CanvasNodeType.BatchTable | CanvasNodeType.Video | CanvasNodeType.Audio | CanvasNodeType.Drawing | CanvasNodeType.Config | CanvasNodeType.MediaConversion,
+        type: CanvasNodeType.Image | CanvasNodeType.Text | CanvasNodeType.Script | CanvasNodeType.BatchTable | CanvasNodeType.Video | CanvasNodeType.Audio | CanvasNodeType.Drawing | CanvasNodeType.Config | CanvasNodeType.MediaConversion | CanvasNodeType.DataSource | CanvasNodeType.Logic,
         provider?: "runninghub",
     ) => string;
     onCreate: (
-        type: CanvasNodeType.Image | CanvasNodeType.Text | CanvasNodeType.Script | CanvasNodeType.BatchTable | CanvasNodeType.Video | CanvasNodeType.Audio | CanvasNodeType.Drawing | CanvasNodeType.Config | CanvasNodeType.MediaConversion,
+        type: CanvasNodeType.Image | CanvasNodeType.Text | CanvasNodeType.Script | CanvasNodeType.BatchTable | CanvasNodeType.Video | CanvasNodeType.Audio | CanvasNodeType.Drawing | CanvasNodeType.Config | CanvasNodeType.MediaConversion | CanvasNodeType.DataSource | CanvasNodeType.Logic,
         provider?: "runninghub",
     ) => void;
     onClose: () => void;
@@ -360,6 +360,24 @@ export function CanvasConnectionCreateMenu({
                     description="本地处理图片或视频"
                     disabledReason={getDisabledReason(CanvasNodeType.MediaConversion)}
                     onClick={() => onCreate(CanvasNodeType.MediaConversion)}
+                />
+                <ConnectionCreateOption
+                    expanded={activeOption === "数据源"}
+                    motionEnabled={!reducedMotion}
+                    icon={<Database className="size-4" />}
+                    title="数据源"
+                    description="接入 JSON、CSV、Markdown、TXT 或情报条目"
+                    disabledReason={getDisabledReason(CanvasNodeType.DataSource)}
+                    onClick={() => onCreate(CanvasNodeType.DataSource)}
+                />
+                <ConnectionCreateOption
+                    expanded={activeOption === "逻辑与集合"}
+                    motionEnabled={!reducedMotion}
+                    icon={<GitBranch className="size-4" />}
+                    title="逻辑与集合"
+                    description="If/Else 分支、交集、并集、差集与过滤"
+                    disabledReason={getDisabledReason(CanvasNodeType.Logic)}
+                    onClick={() => onCreate(CanvasNodeType.Logic)}
                 />
             </div>
         </motion.div>

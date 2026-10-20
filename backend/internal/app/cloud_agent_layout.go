@@ -65,7 +65,7 @@ func cloudAgentLayoutLane(nodeType string) (string, bool) {
 		return "audio", true
 	case "image":
 		return "image", true
-	case "text", "markdown", "script", "batch-table":
+	case "text", "markdown", "script", "batch-table", "data-source", "logic":
 		return "text", true
 	default:
 		// 背板 / 文件夹是容器，插件节点也不参与几何整理。

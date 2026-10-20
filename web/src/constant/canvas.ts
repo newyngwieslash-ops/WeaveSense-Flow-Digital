@@ -28,6 +28,8 @@ export const NODE_DEFAULT_SIZE = {
     [CanvasNodeType.ColorGrade]: { width: 420, height: 360, title: "调色" },
     [CanvasNodeType.MediaConversion]: { width: 480, height: 460, title: "转换" },
     [CanvasNodeType.BatchTable]: { width: 1280, height: 560, title: "批量创作表" },
+    [CanvasNodeType.DataSource]: { width: 420, height: 340, title: "数据源" },
+    [CanvasNodeType.Logic]: { width: 420, height: 320, title: "逻辑与集合" },
 } satisfies Record<CanvasNodeType, { width: number; height: number; title: string }>;
 
 export const NODE_SPECS = {
@@ -104,6 +106,31 @@ export const NODE_SPECS = {
         metadata: { status: "idle" },
     },
     [CanvasNodeType.MediaConversion]: { ...NODE_DEFAULT_SIZE[CanvasNodeType.MediaConversion], metadata: { status: "idle" } },
+    [CanvasNodeType.DataSource]: {
+        ...NODE_DEFAULT_SIZE[CanvasNodeType.DataSource],
+        metadata: {
+            content: '[\n  { "id": "1", "title": "示例条目 A", "score": 90 },\n  { "id": "2", "title": "示例条目 B", "score": 65 }\n]',
+            status: "idle",
+            dataSource: {
+                format: "json",
+                rawText: '[\n  { "id": "1", "title": "示例条目 A", "score": 90 },\n  { "id": "2", "title": "示例条目 B", "score": 65 }\n]',
+            },
+        },
+    },
+    [CanvasNodeType.Logic]: {
+        ...NODE_DEFAULT_SIZE[CanvasNodeType.Logic],
+        metadata: {
+            content: "",
+            status: "idle",
+            logic: {
+                operator: "if_else",
+                fieldPath: "score",
+                comparator: "gt",
+                compareValue: "80",
+                matchKey: "id",
+            },
+        },
+    },
     [CanvasNodeType.BatchTable]: {
         ...NODE_DEFAULT_SIZE[CanvasNodeType.BatchTable],
         metadata: {

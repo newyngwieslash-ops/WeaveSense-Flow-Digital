@@ -7,6 +7,7 @@ import type { PendingConnectionCreate } from "@/components/canvas/canvas-workspa
 import { getNodeSpec } from "@/constant/canvas";
 import { batchSourceRestriction, buildBatchConnectionCreateRequest, hasBatchConnectionCandidate, planBatchConnections, type CanvasBatchConnectionPreview } from "@/lib/canvas/canvas-batch-connection";
 import { batchReferenceHandleAtY } from "@/lib/canvas/canvas-batch-table";
+import { logicNodeHandleAtY } from "@/lib/canvas/dataflow-evaluator";
 import { connectedNodeCenterFromEdgeDrop } from "@/lib/canvas/canvas-connected-node-placement";
 import { canvasConnectionError, connectionInputSummary } from "@/lib/canvas/canvas-connection-policy";
 import { audioModelForConnectionInput } from "@/lib/model-selection";
@@ -242,7 +243,7 @@ export function useCanvasConnectionController({
 
     const createConnectedNode = useCallback(
         async (
-            type: CanvasNodeType.Image | CanvasNodeType.Text | CanvasNodeType.Script | CanvasNodeType.BatchTable | CanvasNodeType.Video | CanvasNodeType.Audio | CanvasNodeType.Drawing | CanvasNodeType.Config | CanvasNodeType.MediaConversion,
+            type: CanvasNodeType.Image | CanvasNodeType.Text | CanvasNodeType.Script | CanvasNodeType.BatchTable | CanvasNodeType.Video | CanvasNodeType.Audio | CanvasNodeType.Drawing | CanvasNodeType.Config | CanvasNodeType.MediaConversion | CanvasNodeType.DataSource | CanvasNodeType.Logic,
             pending: PendingConnectionCreate,
             workflowProvider?: "runninghub",
         ) => {
@@ -353,7 +354,7 @@ export function useCanvasConnectionController({
                 setSelectedNodeIds(new Set([newNode.id]));
                 setSelectedConnectionId(null);
                 if (nodeType === CanvasNodeType.Script) setDialogNodeId(null);
-                else if (nodeType !== CanvasNodeType.Text && nodeType !== CanvasNodeType.BatchTable && nodeType !== CanvasNodeType.Audio && nodeType !== CanvasNodeType.MediaConversion) setDialogNodeId(newNode.id);
+                else if (nodeType !== CanvasNodeType.Text && nodeType !== CanvasNodeType.BatchTable && nodeType !== CanvasNodeType.Audio && nodeType !== CanvasNodeType.MediaConversion && nodeType !== CanvasNodeType.DataSource && nodeType !== CanvasNodeType.Logic) setDialogNodeId(newNode.id);
                 const skippedCount = batchPlan.skipped.length;
                 const duplicateCount = batchPlan.duplicates.length;
                 const suffix = skippedCount || duplicateCount ? `，跳过 ${skippedCount + duplicateCount} 个` : "";
@@ -420,7 +421,7 @@ export function useCanvasConnectionController({
             setSelectedConnectionId(null);
             if (nodeType === CanvasNodeType.Drawing) setDrawingNodeId(newNode.id);
             else if (nodeType === CanvasNodeType.Script) setDialogNodeId(null);
-            else if (nodeType !== CanvasNodeType.Text && nodeType !== CanvasNodeType.BatchTable && nodeType !== CanvasNodeType.Audio && nodeType !== CanvasNodeType.MediaConversion) setDialogNodeId(newNode.id);
+            else if (nodeType !== CanvasNodeType.Text && nodeType !== CanvasNodeType.BatchTable && nodeType !== CanvasNodeType.Audio && nodeType !== CanvasNodeType.MediaConversion && nodeType !== CanvasNodeType.DataSource && nodeType !== CanvasNodeType.Logic) setDialogNodeId(newNode.id);
             closeConnectionCreateMenu();
             setConnecting(null);
         },
@@ -446,7 +447,7 @@ export function useCanvasConnectionController({
 
     const getConnectionCreateDisabledReason = useCallback(
         (
-            type: CanvasNodeType.Image | CanvasNodeType.Text | CanvasNodeType.Script | CanvasNodeType.BatchTable | CanvasNodeType.Video | CanvasNodeType.Audio | CanvasNodeType.Drawing | CanvasNodeType.Config | CanvasNodeType.MediaConversion,
+            type: CanvasNodeType.Image | CanvasNodeType.Text | CanvasNodeType.Script | CanvasNodeType.BatchTable | CanvasNodeType.Video | CanvasNodeType.Audio | CanvasNodeType.Drawing | CanvasNodeType.Config | CanvasNodeType.MediaConversion | CanvasNodeType.DataSource | CanvasNodeType.Logic,
             pending: PendingConnectionCreate,
             workflowProvider?: "runninghub",
         ) => {
@@ -489,7 +490,14 @@ export function useCanvasConnectionController({
                 .reverse()
                 .forEach((node) => {
                     const scrollTop = scriptScrollTopById[node.id] || 0;
-                    const targetHandleId = node.type === CanvasNodeType.Script ? storyboardHandleAtY(node, world.y, scrollTop) : node.type === CanvasNodeType.BatchTable ? batchReferenceHandleAtY(node, world.y, handleRadius) : undefined;
+                    const targetHandleId =
+                        node.type === CanvasNodeType.Script
+                            ? storyboardHandleAtY(node, world.y, scrollTop)
+                            : node.type === CanvasNodeType.BatchTable
+                              ? batchReferenceHandleAtY(node, world.y, handleRadius)
+                              : node.type === CanvasNodeType.Logic
+                                ? logicNodeHandleAtY(node, current.handleType === "source" ? "target" : "source", world.y, handleRadius)
+                                : undefined;
                     if ((node.type === CanvasNodeType.Script || node.type === CanvasNodeType.BatchTable) && !targetHandleId) return;
                     // Ordinary nodes expose one centered input/output port. Only
                     // storyboard rows have a meaningful vertical target position.
@@ -537,7 +545,14 @@ export function useCanvasConnectionController({
                 .reverse()
                 .forEach((node) => {
                     const scrollTop = scriptScrollTopById[node.id] || 0;
-                    const targetHandleId = node.type === CanvasNodeType.Script ? storyboardHandleAtY(node, world.y, scrollTop) : node.type === CanvasNodeType.BatchTable ? batchReferenceHandleAtY(node, world.y, handleRadius) : undefined;
+                    const targetHandleId =
+                        node.type === CanvasNodeType.Script
+                            ? storyboardHandleAtY(node, world.y, scrollTop)
+                            : node.type === CanvasNodeType.BatchTable
+                              ? batchReferenceHandleAtY(node, world.y, handleRadius)
+                              : node.type === CanvasNodeType.Logic
+                                ? logicNodeHandleAtY(node, current.handleType === "source" ? "target" : "source", world.y, handleRadius)
+                                : undefined;
                     if ((node.type === CanvasNodeType.Script || node.type === CanvasNodeType.BatchTable) && !targetHandleId) return;
                     const targetAnchorRatio = undefined;
                     const anchor = getConnectionTargetAnchor(node, current, targetHandleId, scrollTop);

@@ -1,4 +1,4 @@
-import { ChartColumn, Clapperboard, Code, Columns2, FileText, Globe, Image as ImageIcon, Music2, PanelTop, Palette, Pencil, Settings2, Shapes, Sparkles, Table2, Type, Video, WandSparkles } from "lucide-react";
+import { ChartColumn, Clapperboard, Code, Columns2, Database, FileText, GitBranch, Globe, Image as ImageIcon, Music2, PanelTop, Palette, Pencil, Settings2, Shapes, Sparkles, Table2, Type, Video, WandSparkles } from "lucide-react";
 
 import { NODE_SPECS } from "@/constant/canvas";
 import { MEDIA_NODE_MIN_SIZE } from "@/lib/canvas/canvas-node-size";
@@ -155,6 +155,23 @@ const BUILTIN_NODE_TRAITS = {
         inputKind: "text",
     },
     [CanvasNodeType.BatchTable]: { label: "批量创作表", icon: <Table2 />, minSize: { width: 1080, height: 420 }, showInCreateMenu: true, acceptsInputKind: "image", inputKind: "text", resourceKind: () => null },
+    [CanvasNodeType.DataSource]: {
+        label: "数据源",
+        icon: <Database />,
+        minSize: { width: 320, height: 240 },
+        showInCreateMenu: true,
+        resourceKind: (node: CanvasNodeData) => (node.metadata?.dataSource?.rawText || node.metadata?.content ? "text" : null),
+        inputKind: "text",
+    },
+    [CanvasNodeType.Logic]: {
+        label: "逻辑与集合",
+        icon: <GitBranch />,
+        minSize: { width: 340, height: 240 },
+        showInCreateMenu: true,
+        acceptsInputKind: ["text", "image", "video", "audio"],
+        resourceKind: () => "text",
+        inputKind: "text",
+    },
     [CanvasNodeType.MediaConversion]: {
         label: "转换",
         icon: <WandSparkles />,

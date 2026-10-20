@@ -5,6 +5,7 @@ import type { ReferenceImage } from "@/types/image";
 import type { ReferenceAudio, ReferenceVideo } from "@/types/media";
 import { CanvasNodeType, type CanvasConnection, type CanvasGenerationMode, type CanvasNodeData } from "@/types/canvas";
 import { getGenerationResourceNodes, getContextResourceNodes, getMentionResourceNodes } from "@/lib/canvas/canvas-resource-references";
+import { findBlockedLogicBranchInput } from "@/lib/canvas/dataflow-evaluator";
 import { canvasNodeVideoPreviewUrl, canvasVideoAssetPreviewUrl } from "@/lib/canvas/canvas-media-preview";
 import { isNeutralColorGrade, resolveCanvasColorGradeReference } from "@/lib/canvas/canvas-color-grade";
 import { getNodeGenerationMode, getNodeResourceKind } from "@/lib/canvas/node-registry";
@@ -70,6 +71,10 @@ export type NodeGenerationInput = {
 };
 
 export function buildNodeGenerationContext(nodeId: string, nodes: CanvasNodeData[], connections: CanvasConnection[], prompt: string, assets: Asset[], promptOnly = false): NodeGenerationContext {
+    const blockedLogic = findBlockedLogicBranchInput(nodeId, nodes, connections);
+    if (blockedLogic) {
+        throw new Error(`逻辑节点「${blockedLogic.node.title || blockedLogic.node.id}」${blockedLogic.reason}，已跳过下游生成`);
+    }
     const pendingConversion = findPendingMediaConversionInput(nodeId, nodes, connections);
     if (pendingConversion) {
         const status = pendingConversion.metadata?.mediaConversion?.status;
@@ -639,7 +644,7 @@ export async function hydrateNodeGenerationContext(
 }
 
 function readNodeTextInput(node: CanvasNodeData) {
-    if (node.type === CanvasNodeType.Text) return node.metadata?.content || node.metadata?.prompt || "";
+    if (node.type === CanvasNodeType.Text || node.type === CanvasNodeType.DataSource || node.type === CanvasNodeType.Logic) return node.metadata?.content || node.metadata?.prompt || "";
     if (node.type === CanvasNodeType.Skill) return readSkillInput(node);
     return nodeGenerationPrompt(node);
 }

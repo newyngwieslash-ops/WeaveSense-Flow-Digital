@@ -199,6 +199,18 @@ func validateCloudAgentStoryboardHandle(node map[string]any, handleID, side stri
 	if side == "来源" {
 		field = "fromHandleId"
 	}
+	if stringValue(node["type"]) == "logic" {
+		if side == "来源" {
+			if handleID == "true" || handleID == "false" {
+				return nil
+			}
+			return cloudAgentFieldError(field, "invalid_handle", "逻辑节点的 fromHandleId 只能是 true 或 false（或省略）")
+		}
+		if handleID == "input_a" || handleID == "input_b" {
+			return nil
+		}
+		return cloudAgentFieldError(field, "invalid_handle", "逻辑节点的 toHandleId 只能是 input_a 或 input_b（或省略）")
+	}
 	if stringValue(node["type"]) != "script" {
 		message := "toHandleId 只能填写在分镜目标节点；若要指定镜头输出，请使用分镜→图片/视频，并将 row:<真实rowId> 填入分镜来源的 fromHandleId"
 		if side == "来源" {

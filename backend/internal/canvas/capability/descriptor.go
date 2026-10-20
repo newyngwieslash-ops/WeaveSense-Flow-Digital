@@ -176,6 +176,17 @@ func (d Descriptor) ApplyPatch(node map[string]any, patch map[string]any) error 
 			target = child
 		}
 		target[parts[len(parts)-1]] = value
+		if d.Type == "data-source" && field.Path == "metadata.content" {
+			metadata, _ := node["metadata"].(map[string]any)
+			if metadata != nil {
+				ds, ok := metadata["dataSource"].(map[string]any)
+				if !ok {
+					ds = map[string]any{"format": "json"}
+					metadata["dataSource"] = ds
+				}
+				ds["rawText"] = value
+			}
+		}
 	}
 	return nil
 }

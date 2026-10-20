@@ -5,6 +5,7 @@ import { canvasThemes } from "@/lib/canvas-theme";
 import { useActiveTheme } from "@/stores/canvas/use-canvas-theme-store";
 import { STORYBOARD_HEADER_HEIGHT, STORYBOARD_ROW_HEIGHT, storyboardTableHeight } from "@/lib/canvas/canvas-storyboard-layout";
 import { batchReferenceHandleY } from "@/lib/canvas/canvas-batch-table";
+import { logicNodeHandleY } from "@/lib/canvas/dataflow-evaluator";
 import type { CanvasConnection, CanvasNodeData, ConnectionHandle, Position } from "@/types/canvas";
 
 export const ConnectionPath = React.memo(
@@ -189,6 +190,8 @@ export function activeConnectionPath(node: CanvasNodeData | undefined, handle: C
  * 垂直中心，避免同一个节点因鼠标落点产生漂移的“伪端口”。
  */
 export function connectionHandleY(node: CanvasNodeData, handleId?: string, scrollTop = 0) {
+    const logicY = logicNodeHandleY(node, handleId);
+    if (logicY !== undefined) return logicY;
     const batchY = batchReferenceHandleY(node, handleId);
     if (batchY !== undefined) return batchY;
     if (handleId === "storyboard:context") return node.position.y + node.height - (node.metadata?.storyboardComposerHeight || 104) / 2;

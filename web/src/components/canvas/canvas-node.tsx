@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { AlertCircle, BookOpenCheck, CheckCircle2, ChevronRight, Clapperboard, Copy, Download, Image as ImageIcon, Lock, Maximize2, Music2, Pencil, RefreshCw, ScanSearch, Settings2, Star, Trash2, Type, UserRound, Video, WandSparkles } from "lucide-react";
+import { AlertCircle, BookOpenCheck, CheckCircle2, ChevronRight, Clapperboard, Copy, Database, Download, GitBranch, Image as ImageIcon, Lock, Maximize2, Music2, Pencil, RefreshCw, ScanSearch, Settings2, Star, Trash2, Type, UserRound, Video, WandSparkles } from "lucide-react";
+import { isLogicDualInput, isLogicDualOutput, LOGIC_PORT_BOTTOM_RATIO, LOGIC_PORT_TOP_RATIO } from "@/lib/canvas/dataflow-evaluator";
 
 import { useCanvasNodeActions } from "./canvas-node-action-context";
 import { CanvasImageLayerControls } from "./canvas-image-layer-controls";
@@ -415,10 +416,58 @@ export const CanvasNode = React.memo(function CanvasNode({
             </div>
 
             {(showChrome || forceInputVisible) && !readOnly && data.type !== CanvasNodeType.Script && data.type !== CanvasNodeType.BatchTable ? (
-                <ConnectionSideRail side="left" scale={scale} theme={theme} visible={hovered || forceInputVisible} onPointerDown={(event, anchorRatio) => onConnectStart(event, data.id, "target", undefined, anchorRatio)} />
+                isLogicDualInput(data) ? (
+                    <>
+                        <LogicPortRail
+                            side="left"
+                            badge="A"
+                            title="集合输入端口 A"
+                            topRatio={LOGIC_PORT_TOP_RATIO}
+                            scale={scale}
+                            theme={theme}
+                            onPointerDown={(event) => onConnectStart(event, data.id, "target", "input_a", LOGIC_PORT_TOP_RATIO)}
+                        />
+                        <LogicPortRail
+                            side="left"
+                            badge="B"
+                            title="集合输入端口 B"
+                            topRatio={LOGIC_PORT_BOTTOM_RATIO}
+                            scale={scale}
+                            theme={theme}
+                            onPointerDown={(event) => onConnectStart(event, data.id, "target", "input_b", LOGIC_PORT_BOTTOM_RATIO)}
+                        />
+                    </>
+                ) : (
+                    <ConnectionSideRail side="left" scale={scale} theme={theme} visible={hovered || forceInputVisible} onPointerDown={(event, anchorRatio) => onConnectStart(event, data.id, "target", undefined, anchorRatio)} />
+                )
             ) : null}
             {showChrome && !readOnly && data.type !== CanvasNodeType.Script && data.type !== CanvasNodeType.Config && showOutputConnection ? (
-                <ConnectionSideRail side="right" scale={scale} theme={theme} visible={hovered} onPointerDown={(event, anchorRatio) => onConnectStart(event, data.id, "source", undefined, anchorRatio)} />
+                isLogicDualOutput(data) ? (
+                    <>
+                        <LogicPortRail
+                            side="right"
+                            badge="T"
+                            title="True 分支输出端口"
+                            color="#22c55e"
+                            topRatio={LOGIC_PORT_TOP_RATIO}
+                            scale={scale}
+                            theme={theme}
+                            onPointerDown={(event) => onConnectStart(event, data.id, "source", "true", LOGIC_PORT_TOP_RATIO)}
+                        />
+                        <LogicPortRail
+                            side="right"
+                            badge="F"
+                            title="False 分支输出端口"
+                            color="#f59e0b"
+                            topRatio={LOGIC_PORT_BOTTOM_RATIO}
+                            scale={scale}
+                            theme={theme}
+                            onPointerDown={(event) => onConnectStart(event, data.id, "source", "false", LOGIC_PORT_BOTTOM_RATIO)}
+                        />
+                    </>
+                ) : (
+                    <ConnectionSideRail side="right" scale={scale} theme={theme} visible={hovered} onPointerDown={(event, anchorRatio) => onConnectStart(event, data.id, "source", undefined, anchorRatio)} />
+                )
             ) : null}
         </div>
     );
@@ -719,6 +768,8 @@ function nodeTypeIcon(node: CanvasNodeData) {
     if (type === CanvasNodeType.Script) return Clapperboard;
     if (type === CanvasNodeType.Config) return Settings2;
     if (type === CanvasNodeType.Skill) return BookOpenCheck;
+    if (type === CanvasNodeType.DataSource) return Database;
+    if (type === CanvasNodeType.Logic) return GitBranch;
     if (type === ART_CRITIQUE_NODE_TYPE) return ScanSearch;
     return Type;
 }
@@ -759,6 +810,55 @@ function NodeStatusBadge({ status }: { status: "loading" | "success" | "error" }
             <CheckCircle2 className="size-3" strokeWidth={2} />
             <span className="text-[var(--fs-micro)] font-medium leading-none">完成</span>
         </div>
+    );
+}
+
+function LogicPortRail({
+    side,
+    badge,
+    title,
+    color,
+    topRatio,
+    scale,
+    theme,
+    onPointerDown,
+}: {
+    side: "left" | "right";
+    badge: string;
+    title: string;
+    color?: string;
+    topRatio: number;
+    scale: number;
+    theme: CanvasTheme;
+    onPointerDown: (event: React.PointerEvent) => void;
+}) {
+    const inverseScale = 1 / Math.max(scale, 0.05);
+    const pinSize = Math.max(20, 8 * inverseScale);
+    const strokeColor = color || theme.accent.primary;
+
+    return (
+        <button
+            type="button"
+            data-canvas-connection-rail={side}
+            title={title}
+            aria-label={title}
+            className="pointer-events-auto absolute z-[var(--node-z-overlay)] flex -translate-y-1/2 items-center justify-center rounded-full font-mono font-bold shadow-sm transition-transform hover:scale-110"
+            style={{
+                top: `${topRatio * 100}%`,
+                width: pinSize,
+                height: pinSize,
+                fontSize: Math.max(10, 4.5 * inverseScale),
+                ...(side === "left" ? { left: -pinSize / 2 } : { right: -pinSize / 2 }),
+                background: theme.spatial.elevated,
+                border: `1.5px solid ${strokeColor}`,
+                color: strokeColor,
+                cursor: "crosshair",
+            }}
+            onPointerDown={onPointerDown}
+            onMouseDown={(event) => event.stopPropagation()}
+        >
+            {badge}
+        </button>
     );
 }
 

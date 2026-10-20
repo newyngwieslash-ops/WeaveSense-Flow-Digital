@@ -114,6 +114,48 @@ func BuiltinRegistry() *Registry {
 				return map[string]any{"status": "idle", "workflowKind": "script", "storyboard": map[string]any{"rows": []any{}, "visibleColumns": []any{"shotNumber", "durationSeconds", "videoMotionPrompt", "dialogue", "assets"}, "referenceNodeIds": []any{}}}
 			},
 		},
+		{
+			Type: "data-source", Version: "1", Label: "数据源", DefaultWidth: 420, DefaultHeight: 340,
+			Purpose:     "承载结构化数据源（JSON、CSV、TXT、Markdown、情报条目），供下游逻辑与集合节点运算或驱动媒体生成。",
+			GoodFor:     []string{"结构化 JSON/CSV 数据输入", "情报条目集合输入", "驱动逻辑分支与集合运算"},
+			NotIdealFor: []string{"直接生成图片或视频", "长篇小说排版展示"},
+			Tradeoffs:   []string{"支持按条目解析与字段提取", "不直接发起模型生成任务"},
+			InputKind:   "text",
+			Connection:  ConnectionPolicy{CanSource: true, CanTarget: true, AcceptedInputKinds: []string{"text"}},
+			CanUpdate:   true,
+			SummaryFields: []string{"content", "dataSource"}, DetailFields: []string{"content", "dataSource"},
+			PatchFields: func() map[string]PatchField {
+				fields := editableNodeFields("metadata.content", "数据源内容", "JSON / CSV / Markdown / TXT 原始文本")
+				fields["format"] = PatchField{Path: "metadata.dataSource.format", Kind: patchKindString, Label: "数据格式", Order: 25, Description: "json | csv | txt | markdown | intel", MaxRunes: 32}
+				return fields
+			}(),
+			CreateMetadata: func(content string) map[string]any {
+				return map[string]any{"content": content, "status": "idle", "dataSource": map[string]any{"format": "json", "rawText": content}}
+			},
+		},
+		{
+			Type: "logic", Version: "1", Label: "逻辑与集合", DefaultWidth: 400, DefaultHeight: 320,
+			Purpose:     "对上游数据源或节点执行 If/Else 条件分支（True/False 双端口输出）、交集（A ∩ B）、并集（A ∪ B）、差集（A − B）、条件过滤或 JSON 字段提取。",
+			GoodFor:     []string{"If/Else 条件分流（fromHandleId 支持 true / false）", "多路数据交集、并集、差集（toHandleId 支持 input_a / input_b）", "按字段条件过滤或提取下游提示词数据"},
+			NotIdealFor: []string{"承载静态长文档", "直接替代模型生成节点"},
+			Tradeoffs:   []string{"纯前端声明式实时求值，不执行任意代码", "当连接至下游生成节点的逻辑分支为空（0 条命中）时，会自动门控拦截下游生成"},
+			InputKind:   "text",
+			Connection:  ConnectionPolicy{CanSource: true, CanTarget: true, AcceptedInputKinds: []string{"audio", "character", "image", "text", "video"}},
+			CanUpdate:   true,
+			SummaryFields: []string{"content", "logic"}, DetailFields: []string{"content", "logic"},
+			PatchFields: func() map[string]PatchField {
+				fields := titleAndPositionPatchFields()
+				fields["operator"] = PatchField{Path: "metadata.logic.operator", Kind: patchKindString, Label: "运算类型", Order: 20, Description: "if_else | intersect | union | difference | filter | json_extract", MaxRunes: 32}
+				fields["fieldPath"] = PatchField{Path: "metadata.logic.fieldPath", Kind: patchKindString, Label: "字段路径", Order: 21, Description: "点路径字段名，如 score 或 meta.tag", MaxRunes: 120}
+				fields["comparator"] = PatchField{Path: "metadata.logic.comparator", Kind: patchKindString, Label: "比较符", Order: 22, Description: "contains | not_contains | equals | not_equals | gt | lt | not_empty | is_empty | regex", MaxRunes: 32}
+				fields["compareValue"] = PatchField{Path: "metadata.logic.compareValue", Kind: patchKindString, Label: "比较值", Order: 23, Description: "条件比较目标值", MaxRunes: 500}
+				fields["matchKey"] = PatchField{Path: "metadata.logic.matchKey", Kind: patchKindString, Label: "匹配键", Order: 24, Description: "集合交集/并集/差集的去重匹配字段名，如 id 或 title", MaxRunes: 120}
+				return fields
+			}(),
+			CreateMetadata: func(content string) map[string]any {
+				return map[string]any{"content": content, "status": "idle", "logic": map[string]any{"operator": "if_else", "fieldPath": "score", "comparator": "gt", "compareValue": "80", "matchKey": "id"}}
+			},
+		},
 	})
 	if err != nil {
 		panic(err)

@@ -12,6 +12,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"yingce/backend/internal/model"
@@ -87,6 +88,177 @@ type MCPGateway struct {
 	Now           func() time.Time
 	// KEK unwraps tenant-saved "secret:" credentials (default: FLOW_SECRETS_KEK).
 	KEK func() (SecretKEK, error)
+	// PolicyVersion is an optional runtime policy version folded into MCPToolCacheKey.
+	PolicyVersion int
+	// ToolCache overrides the process-wide scoped MCP tool cache when non-nil.
+	ToolCache *MCPToolListCache
+}
+
+// MCPToolCacheKey scopes cached MCP tool lists and rendered agent tool definitions
+// by (tenant_id, connection_id, secret_ref, schema_hash, policy_version) per PRD §9.3.
+// Any change to tenant, connection, credential reference, approved schema hash, or
+// permission/connection version produces a distinct key and never shares cache entries.
+type MCPToolCacheKey struct {
+	TenantID      string `json:"tenant_id"`
+	ConnectionID  string `json:"connection_id"`
+	SecretRef     string `json:"secret_ref"`
+	SchemaHash    string `json:"schema_hash"`
+	PolicyVersion int    `json:"policy_version"`
+}
+
+type mcpToolCacheEntry struct {
+	agentTools []map[string]any
+	discovered []MCPToolInfo
+	expiresAt  time.Time
+}
+
+// MCPToolListCache is a concurrency-safe in-memory cache keyed by MCPToolCacheKey.
+type MCPToolListCache struct {
+	mu      sync.RWMutex
+	ttl     time.Duration
+	entries map[MCPToolCacheKey]mcpToolCacheEntry
+	hits    int64
+	misses  int64
+}
+
+func NewMCPToolListCache(ttl time.Duration) *MCPToolListCache {
+	if ttl <= 0 {
+		ttl = 5 * time.Minute
+	}
+	return &MCPToolListCache{
+		ttl:     ttl,
+		entries: make(map[MCPToolCacheKey]mcpToolCacheEntry),
+	}
+}
+
+var defaultMCPToolCache = NewMCPToolListCache(5 * time.Minute)
+
+func (g MCPGateway) toolCache() *MCPToolListCache {
+	if g.ToolCache != nil {
+		return g.ToolCache
+	}
+	return defaultMCPToolCache
+}
+
+// CacheKey builds the PRD §9.3 composite key (tenant_id, connection_id, secret_ref, schema_hash, policy_version).
+func (g MCPGateway) CacheKey(c model.FlowMCPConnection, policyVersion int) MCPToolCacheKey {
+	pv := c.Version
+	if g.PolicyVersion > 0 {
+		pv = g.PolicyVersion*1000000 + pv
+	}
+	if policyVersion > 0 {
+		pv = policyVersion*1000 + pv
+	}
+	return MCPToolCacheKey{
+		TenantID:      c.TenantID,
+		ConnectionID:  c.ID,
+		SecretRef:     c.CredentialRef,
+		SchemaHash:    c.SchemaHash,
+		PolicyVersion: pv,
+	}
+}
+
+func cloneAgentTools(in []map[string]any) []map[string]any {
+	if in == nil {
+		return nil
+	}
+	raw, _ := json.Marshal(in)
+	var out []map[string]any
+	_ = json.Unmarshal(raw, &out)
+	return out
+}
+
+func cloneDiscoveredTools(in []MCPToolInfo) []MCPToolInfo {
+	if in == nil {
+		return nil
+	}
+	raw, _ := json.Marshal(in)
+	var out []MCPToolInfo
+	_ = json.Unmarshal(raw, &out)
+	return out
+}
+
+func (c *MCPToolListCache) getAgentTools(key MCPToolCacheKey, now time.Time) ([]map[string]any, bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if key.TenantID == "" || key.ConnectionID == "" || key.SchemaHash == "" {
+		c.misses++
+		return nil, false
+	}
+	e, ok := c.entries[key]
+	if !ok || !now.Before(e.expiresAt) || e.agentTools == nil {
+		if ok && !now.Before(e.expiresAt) {
+			delete(c.entries, key)
+		}
+		c.misses++
+		return nil, false
+	}
+	c.hits++
+	return cloneAgentTools(e.agentTools), true
+}
+
+func (c *MCPToolListCache) setAgentTools(key MCPToolCacheKey, tools []map[string]any, now time.Time) {
+	if key.TenantID == "" || key.ConnectionID == "" || key.SchemaHash == "" {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	e := c.entries[key]
+	e.agentTools = cloneAgentTools(tools)
+	e.expiresAt = now.Add(c.ttl)
+	c.entries[key] = e
+}
+
+func (c *MCPToolListCache) getDiscovered(key MCPToolCacheKey, now time.Time) ([]MCPToolInfo, bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if key.TenantID == "" || key.ConnectionID == "" {
+		c.misses++
+		return nil, false
+	}
+	e, ok := c.entries[key]
+	if !ok || !now.Before(e.expiresAt) || e.discovered == nil {
+		if ok && !now.Before(e.expiresAt) {
+			delete(c.entries, key)
+		}
+		c.misses++
+		return nil, false
+	}
+	c.hits++
+	return cloneDiscoveredTools(e.discovered), true
+}
+
+func (c *MCPToolListCache) setDiscovered(key MCPToolCacheKey, tools []MCPToolInfo, now time.Time) {
+	if key.TenantID == "" || key.ConnectionID == "" {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	e := c.entries[key]
+	e.discovered = cloneDiscoveredTools(tools)
+	e.expiresAt = now.Add(c.ttl)
+	c.entries[key] = e
+}
+
+func (c *MCPToolListCache) invalidateConnection(tenantID, connectionID string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for k := range c.entries {
+		if k.TenantID == tenantID && k.ConnectionID == connectionID {
+			delete(c.entries, k)
+		}
+	}
+}
+
+func (c *MCPToolListCache) Stats() (hits, misses int64, size int) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.hits, c.misses, len(c.entries)
+}
+
+// InvalidateCache evicts all cached tool lists for (tenantID, connectionID).
+func (g MCPGateway) InvalidateCache(tenantID, connectionID string) {
+	g.toolCache().invalidateConnection(tenantID, connectionID)
 }
 
 func (g MCPGateway) secrets() MCPSecrets { return MCPSecrets{DB: g.DB, KEK: g.KEK} }
@@ -293,7 +465,27 @@ func (g MCPGateway) Discover(ctx context.Context, scope Scope, id string) ([]MCP
 	for _, t := range m {
 		out = append(out, t)
 	}
+	g.toolCache().setDiscovered(g.CacheKey(c, 0), out, g.now())
 	return out, nil
+}
+
+// DiscoverCached returns discovered tools from the composite-key cache when valid,
+// falling back to live Discover on a cache miss.
+func (g MCPGateway) DiscoverCached(ctx context.Context, scope Scope, id string, policyVersion int) ([]MCPToolInfo, bool, error) {
+	c, err := g.get(scope, id)
+	if err != nil {
+		return nil, false, err
+	}
+	key := g.CacheKey(c, policyVersion)
+	if cached, ok := g.toolCache().getDiscovered(key, g.now()); ok {
+		return cached, true, nil
+	}
+	tools, err := g.Discover(ctx, scope, id)
+	if err != nil {
+		return nil, false, err
+	}
+	g.toolCache().setDiscovered(key, tools, g.now())
+	return tools, false, nil
 }
 
 // Approve (operator) freezes the allow-list and each allowed tool's schema hash.
@@ -331,6 +523,7 @@ func (g MCPGateway) Approve(ctx context.Context, scope Scope, id, operatorID str
 		"status_reason": "", "approved_by": operatorID, "version": c.Version + 1, "updated_at": g.now()}).Error; err != nil {
 		return MCPConnectionView{}, err
 	}
+	g.InvalidateCache(c.TenantID, c.ID)
 	c, _ = g.get(scope, id)
 	return g.View(c), nil
 }
@@ -340,7 +533,9 @@ func (g MCPGateway) Revoke(scope Scope, id, reason string) error {
 	if err != nil {
 		return err
 	}
-	return g.DB.Model(&c).Updates(map[string]any{"status": "revoked", "status_reason": reason, "updated_at": g.now()}).Error
+	err = g.DB.Model(&c).Updates(map[string]any{"status": "revoked", "status_reason": reason, "version": c.Version + 1, "updated_at": g.now()}).Error
+	g.InvalidateCache(c.TenantID, c.ID)
+	return err
 }
 
 func redact(s, secret string) string {
@@ -403,7 +598,8 @@ func (g MCPGateway) execute(ctx context.Context, scope Scope, actorID, connID, t
 		return "", false, fmt.Errorf("mcp list tools failed: %s", redact(err.Error(), secret))
 	}
 	if lt, ok := live[tool]; !ok || lt.Hash != ap.Hash {
-		g.DB.Model(&c).Updates(map[string]any{"status": "needs_reapproval", "status_reason": "schema changed for tool " + tool, "updated_at": g.now()})
+		g.DB.Model(&c).Updates(map[string]any{"status": "needs_reapproval", "status_reason": "schema changed for tool " + tool, "version": c.Version + 1, "updated_at": g.now()})
+		g.InvalidateCache(c.TenantID, c.ID)
 		g.usage(c, tool, actorID, "blocked_schema_drift", start, 0, 0)
 		return "", false, ErrMCPSchemaDrift
 	}
@@ -448,22 +644,37 @@ func (g MCPGateway) execute(ctx context.Context, scope Scope, actorID, connID, t
 }
 
 // AgentTools renders approved tools of approved connections as Pi function tools.
-// Schemas come from the approval snapshot, never from the live server.
+// Schemas come from the approval snapshot, never from the live server, and are
+// cached by (tenant_id, connection_id, secret_ref, schema_hash, policy_version) per PRD §9.3.
 func (g MCPGateway) AgentTools(scope Scope) []map[string]any {
+	return g.AgentToolsForPolicy(scope, 0)
+}
+
+func (g MCPGateway) AgentToolsForPolicy(scope Scope, policyVersion int) []map[string]any {
 	var rows []model.FlowMCPConnection
 	g.DB.Where("tenant_id = ? AND workspace_id = ? AND status = ?", scope.TenantID, scope.WorkspaceID, "approved").Order("created_at").Find(&rows)
 	out := []map[string]any{}
+	now := g.now()
+	cache := g.toolCache()
 	for _, c := range rows {
+		key := g.CacheKey(c, policyVersion)
+		if cached, ok := cache.getAgentTools(key, now); ok {
+			out = append(out, cached...)
+			continue
+		}
 		v := g.View(c)
+		connTools := make([]map[string]any, 0, len(v.AllowedTools))
 		for _, name := range v.AllowedTools {
 			ap := v.Approved[name]
 			params := ap.InputSchema
 			if params == nil {
 				params = map[string]any{"type": "object"}
 			}
-			out = append(out, map[string]any{"type": "function", "function": map[string]any{
+			connTools = append(connTools, map[string]any{"type": "function", "function": map[string]any{
 				"name": MCPAgentToolName(c.Slug, name), "description": "[MCP " + c.Name + "] " + ap.Description, "parameters": params}})
 		}
+		cache.setAgentTools(key, connTools, now)
+		out = append(out, connTools...)
 	}
 	return out
 }

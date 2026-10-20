@@ -197,3 +197,75 @@ func TestMCPCreateValidation(t *testing.T) {
 		}
 	}
 }
+
+
+func TestMCPToolCacheCompositeKeyAndInvalidation(t *testing.T) {
+	tools, m, _, ss, conn := setupMCP(t, MCPCostRule{})
+	cache := NewMCPToolListCache(0)
+	tools.MCP.ToolCache = cache
+
+	var current model.FlowMCPConnection
+	if err := tools.DB.First(&current, "id = ?", conn.ID).Error; err != nil {
+		t.Fatal(err)
+	}
+	key := tools.MCP.CacheKey(current, 1)
+	if key.TenantID != ss.Scope.TenantID || key.ConnectionID != conn.ID || key.SecretRef != conn.CredentialRef || key.SchemaHash == "" || key.PolicyVersion == 0 {
+		t.Fatalf("unexpected composite cache key: %+v", key)
+	}
+
+	// First call misses and populates cache; second call hits cache.
+	first := tools.MCP.AgentToolsForPolicy(ss.Scope, 1)
+	hits1, misses1, size1 := cache.Stats()
+	if len(first) != 1 || hits1 != 0 || misses1 != 1 || size1 != 1 {
+		t.Fatalf("expected initial cache miss & populate: len=%d hits=%d misses=%d size=%d", len(first), hits1, misses1, size1)
+	}
+	second := tools.MCP.AgentToolsForPolicy(ss.Scope, 1)
+	hits2, misses2, _ := cache.Stats()
+	if len(second) != 1 || hits2 != 1 || misses2 != 1 {
+		t.Fatalf("expected cache hit on same composite key: hits=%d misses=%d", hits2, misses2)
+	}
+
+	// Different policy_version produces a distinct composite key (miss, not shared).
+	_ = tools.MCP.AgentToolsForPolicy(ss.Scope, 2)
+	hits3, misses3, size3 := cache.Stats()
+	if hits3 != 1 || misses3 != 2 || size3 != 2 {
+		t.Fatalf("expected distinct key for policy_version=2: hits=%d misses=%d size=%d", hits3, misses3, size3)
+	}
+
+	// DiscoverCached caches discovered tool list and hits on second call.
+	disc1, cached1, err := tools.MCP.DiscoverCached(context.Background(), ss.Scope, conn.ID, 1)
+	if err != nil || cached1 || len(disc1) < 2 {
+		t.Fatalf("expected live discover on first call: err=%v cached=%v len=%d", err, cached1, len(disc1))
+	}
+	disc2, cached2, err := tools.MCP.DiscoverCached(context.Background(), ss.Scope, conn.ID, 1)
+	if err != nil || !cached2 || len(disc2) != len(disc1) {
+		t.Fatalf("expected cached discover on second call: err=%v cached=%v", err, cached2)
+	}
+
+	// Schema drift invalidates the connection's cached entries immediately.
+	m.mu.Lock()
+	m.description = "Changed description triggers drift"
+	m.mu.Unlock()
+	if _, _, err := tools.MCP.Execute(context.Background(), ss.Scope, "u_alice", conn.ID, "lookup", map[string]any{"q": "x"}); !errors.Is(err, ErrMCPSchemaDrift) {
+		t.Fatalf("expected schema drift error, got %v", err)
+	}
+	_, _, sizeAfterDrift := cache.Stats()
+	if sizeAfterDrift != 0 {
+		t.Fatalf("expected cache eviction on schema drift, size=%d", sizeAfterDrift)
+	}
+
+	// Re-approve and verify Revoke also invalidates cache.
+	if _, err := tools.MCP.Approve(context.Background(), ss.Scope, conn.ID, "op_admin", []string{"lookup"}); err != nil {
+		t.Fatal(err)
+	}
+	_ = tools.MCP.AgentToolsForPolicy(ss.Scope, 1)
+	if _, _, sz := cache.Stats(); sz == 0 {
+		t.Fatal("expected cache entry after re-approval")
+	}
+	if err := tools.MCP.Revoke(ss.Scope, conn.ID, "revoked in test"); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, sz := cache.Stats(); sz != 0 {
+		t.Fatalf("expected cache eviction on revoke, size=%d", sz)
+	}
+}

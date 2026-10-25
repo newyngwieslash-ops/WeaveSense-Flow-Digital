@@ -23,17 +23,7 @@ export function buildSourceInput(kind: SourceKind, rawValue: string): { kind: So
 }
 
 /** P4: sources of type rss / telegram / wechat, revoke, and connector acceptance samples. */
-export function SourcesPanel({
-    workspaceId,
-    initialSources = [],
-    initialSamples = [],
-    initialKind = "rss",
-}: {
-    workspaceId?: string;
-    initialSources?: IntelSource[];
-    initialSamples?: ConnectorSample[];
-    initialKind?: SourceKind;
-}) {
+export function SourcesPanel({ workspaceId, initialSources = [], initialSamples = [], initialKind = "rss" }: { workspaceId?: string; initialSources?: IntelSource[]; initialSamples?: ConnectorSample[]; initialKind?: SourceKind }) {
     const [sources, setSources] = useState<IntelSource[]>(initialSources);
     const [samples, setSamples] = useState<ConnectorSample[]>(initialSamples);
     const [kind, setKind] = useState<SourceKind>(initialKind);
@@ -119,8 +109,7 @@ export function SourcesPanel({
                                 <Tag>{s.kind}</Tag>
                                 <Tag color={s.mode === "live" ? "green" : "default"}>{s.mode === "live" ? "实采" : "样本"}</Tag>
                                 采集 {s.items} 条（通过 {s.collector}
-                                {s.provider ? ` / ${s.provider}` : ""}）
-                                {s.media_unsupported > 0 && <Tag color="gold">{s.media_unsupported} 个超限/不支持附件</Tag>}
+                                {s.provider ? ` / ${s.provider}` : ""}）{s.media_unsupported > 0 && <Tag color="gold">{s.media_unsupported} 个超限/不支持附件</Tag>}
                                 <div>
                                     <Typography.Text type="secondary">{new Date(s.recorded_at).toLocaleString()}</Typography.Text>
                                 </div>

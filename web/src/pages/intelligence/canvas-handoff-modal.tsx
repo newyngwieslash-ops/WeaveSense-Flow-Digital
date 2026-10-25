@@ -2,15 +2,7 @@ import { useEffect, useState } from "react";
 import { Button, Checkbox, Form, Input, Radio, Select, Space, Tag, Typography, message } from "antd";
 import { AppModal } from "@/components/ui/product/app-modal/app-modal";
 import { canvasResourceMentionToken, type CanvasResourceReference } from "@/lib/canvas/canvas-resource-references";
-import {
-    handoffToCanvas,
-    type CanvasHandoffCitation,
-    type CanvasHandoffKind,
-    type CanvasHandoffResult,
-    type IntelTopic,
-    type LibraryDocument,
-    type ReportDetail,
-} from "@/services/api/intelligence";
+import { handoffToCanvas, type CanvasHandoffCitation, type CanvasHandoffKind, type CanvasHandoffResult, type IntelTopic, type LibraryDocument, type ReportDetail } from "@/services/api/intelligence";
 import { listRemoteCanvasProjects, type RemoteUserDataSummary } from "@/services/api/user-data";
 import { KIND_LABEL } from "./reports-panel";
 
@@ -130,10 +122,7 @@ export function extractHandoffCanvasUrl(msg: { toolName?: string; content: strin
     return null;
 }
 
-export function buildIntelHandoffAgentPrefill(options: {
-    searchParams: URLSearchParams;
-    references: CanvasResourceReference[];
-}): {
+export function buildIntelHandoffAgentPrefill(options: { searchParams: URLSearchParams; references: CanvasResourceReference[] }): {
     intelNodeId: string;
     wantAgent: boolean;
     prefillText: string;
@@ -245,16 +234,7 @@ export function CanvasHandoffModal({
     };
 
     return (
-        <AppModal
-            open={!!draft}
-            title="投送到画布继续创作"
-            onOk={() => void submit()}
-            onCancel={onClose}
-            confirmLoading={submitting}
-            okText="确认投送并打开画布"
-            cancelText="取消"
-            width={600}
-        >
+        <AppModal open={!!draft} title="投送到画布继续创作" onOk={() => void submit()} onCancel={onClose} confirmLoading={submitting} okText="确认投送并打开画布" cancelText="取消" width={600}>
             {draft && (
                 <Form layout="vertical">
                     <div style={{ marginBottom: 12 }}>
@@ -275,12 +255,7 @@ export function CanvasHandoffModal({
                         </Form.Item>
                     ) : (
                         <Form.Item label="选择已有画布">
-                            <Select
-                                value={selectedCanvasId}
-                                onChange={setSelectedCanvasId}
-                                placeholder="选择目标画布"
-                                options={canvases.map((c) => ({ value: c.id, label: c.title || c.id }))}
-                            />
+                            <Select value={selectedCanvasId} onChange={setSelectedCanvasId} placeholder="选择目标画布" options={canvases.map((c) => ({ value: c.id, label: c.title || c.id }))} />
                         </Form.Item>
                     )}
                     <Form.Item label="画布文本节点标题">
@@ -296,12 +271,7 @@ export function CanvasHandoffModal({
                     </Form.Item>
                     {openAgent && (
                         <Form.Item label="画布 Pi Agent 预填创作指令">
-                            <Input.TextArea
-                                rows={2}
-                                value={agentPrompt}
-                                onChange={(e) => setAgentPrompt(e.target.value)}
-                                placeholder="例如：基于该情报节点拆解分镜脚本与视觉画面节点"
-                            />
+                            <Input.TextArea rows={2} value={agentPrompt} onChange={(e) => setAgentPrompt(e.target.value)} placeholder="例如：基于该情报节点拆解分镜脚本与视觉画面节点" />
                             <Typography.Text type="secondary" style={{ fontSize: 12 }}>
                                 进入画布后将自动关联 @情报节点 并填入上述指令，供你确认后发起分镜或视觉生成。
                             </Typography.Text>

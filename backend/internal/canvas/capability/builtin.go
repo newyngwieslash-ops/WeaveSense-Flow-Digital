@@ -116,13 +116,13 @@ func BuiltinRegistry() *Registry {
 		},
 		{
 			Type: "data-source", Version: "1", Label: "数据源", DefaultWidth: 420, DefaultHeight: 340,
-			Purpose:     "承载结构化数据源（JSON、CSV、TXT、Markdown、情报条目），供下游逻辑与集合节点运算或驱动媒体生成。",
-			GoodFor:     []string{"结构化 JSON/CSV 数据输入", "情报条目集合输入", "驱动逻辑分支与集合运算"},
-			NotIdealFor: []string{"直接生成图片或视频", "长篇小说排版展示"},
-			Tradeoffs:   []string{"支持按条目解析与字段提取", "不直接发起模型生成任务"},
-			InputKind:   "text",
-			Connection:  ConnectionPolicy{CanSource: true, CanTarget: true, AcceptedInputKinds: []string{"text"}},
-			CanUpdate:   true,
+			Purpose:       "承载结构化数据源（JSON、CSV、TXT、Markdown、情报条目），供下游逻辑与集合节点运算或驱动媒体生成。",
+			GoodFor:       []string{"结构化 JSON/CSV 数据输入", "情报条目集合输入", "驱动逻辑分支与集合运算"},
+			NotIdealFor:   []string{"直接生成图片或视频", "长篇小说排版展示"},
+			Tradeoffs:     []string{"支持按条目解析与字段提取", "不直接发起模型生成任务"},
+			InputKind:     "text",
+			Connection:    ConnectionPolicy{CanSource: true, CanTarget: true, AcceptedInputKinds: []string{"text"}},
+			CanUpdate:     true,
 			SummaryFields: []string{"content", "dataSource"}, DetailFields: []string{"content", "dataSource"},
 			PatchFields: func() map[string]PatchField {
 				fields := editableNodeFields("metadata.content", "数据源内容", "JSON / CSV / Markdown / TXT 原始文本")
@@ -135,13 +135,13 @@ func BuiltinRegistry() *Registry {
 		},
 		{
 			Type: "logic", Version: "1", Label: "逻辑与集合", DefaultWidth: 400, DefaultHeight: 320,
-			Purpose:     "对上游数据源或节点执行 If/Else 条件分支（True/False 双端口输出）、交集（A ∩ B）、并集（A ∪ B）、差集（A − B）、条件过滤或 JSON 字段提取。",
-			GoodFor:     []string{"If/Else 条件分流（fromHandleId 支持 true / false）", "多路数据交集、并集、差集（toHandleId 支持 input_a / input_b）", "按字段条件过滤或提取下游提示词数据"},
-			NotIdealFor: []string{"承载静态长文档", "直接替代模型生成节点"},
-			Tradeoffs:   []string{"纯前端声明式实时求值，不执行任意代码", "当连接至下游生成节点的逻辑分支为空（0 条命中）时，会自动门控拦截下游生成"},
-			InputKind:   "text",
-			Connection:  ConnectionPolicy{CanSource: true, CanTarget: true, AcceptedInputKinds: []string{"audio", "character", "image", "text", "video"}},
-			CanUpdate:   true,
+			Purpose:       "对上游数据源或节点执行 If/Else 条件分支（True/False 双端口输出）、交集（A ∩ B）、并集（A ∪ B）、差集（A − B）、条件过滤或 JSON 字段提取。",
+			GoodFor:       []string{"If/Else 条件分流（fromHandleId 支持 true / false）", "多路数据交集、并集、差集（toHandleId 支持 input_a / input_b）", "按字段条件过滤或提取下游提示词数据"},
+			NotIdealFor:   []string{"承载静态长文档", "直接替代模型生成节点"},
+			Tradeoffs:     []string{"纯前端声明式实时求值，不执行任意代码", "当连接至下游生成节点的逻辑分支为空（0 条命中）时，会自动门控拦截下游生成"},
+			InputKind:     "text",
+			Connection:    ConnectionPolicy{CanSource: true, CanTarget: true, AcceptedInputKinds: []string{"audio", "character", "image", "text", "video"}},
+			CanUpdate:     true,
 			SummaryFields: []string{"content", "logic"}, DetailFields: []string{"content", "logic"},
 			PatchFields: func() map[string]PatchField {
 				fields := titleAndPositionPatchFields()
@@ -158,13 +158,13 @@ func BuiltinRegistry() *Registry {
 		},
 		{
 			Type: "skill", Version: "1", Label: "Skill 技能卡", DefaultWidth: 360, DefaultHeight: 280,
-			Purpose:     "承载技能模板与结构化提示词规约，可接收上游数据源或逻辑分支数据，组合输出给下游生成节点。",
-			GoodFor:     []string{"在数据流中挂接特定技能提示词模板", "串联数据源/逻辑节点与下游生成节点"},
-			NotIdealFor: []string{"直接替代图片或视频生成节点"},
-			Tradeoffs:   []string{"作为技能指令与上游数据的汇聚转换节点，本身不产生计费媒体产物"},
-			InputKind:   "text",
-			Connection:  ConnectionPolicy{CanSource: true, CanTarget: true, AcceptedInputKinds: []string{"text"}},
-			CanUpdate:   true,
+			Purpose:       "承载技能模板与结构化提示词规约，可接收上游数据源或逻辑分支数据，组合输出给下游生成节点。",
+			GoodFor:       []string{"在数据流中挂接特定技能提示词模板", "串联数据源/逻辑节点与下游生成节点"},
+			NotIdealFor:   []string{"直接替代图片或视频生成节点"},
+			Tradeoffs:     []string{"作为技能指令与上游数据的汇聚转换节点，本身不产生计费媒体产物"},
+			InputKind:     "text",
+			Connection:    ConnectionPolicy{CanSource: true, CanTarget: true, AcceptedInputKinds: []string{"text"}},
+			CanUpdate:     true,
 			SummaryFields: []string{"content", "skillId", "skillName", "skillDescription"}, DetailFields: []string{"content", "skillId", "skillName", "skillDescription", "skillPrompts"},
 			PatchFields: func() map[string]PatchField {
 				fields := editableNodeFields("metadata.content", "技能指令", "技能核心指令或提示词模板")

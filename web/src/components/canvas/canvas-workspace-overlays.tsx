@@ -199,11 +199,33 @@ export function CanvasConnectionCreateMenu({
     containerRef: RefObject<HTMLDivElement | null>;
     canCreateDrawing: boolean;
     getDisabledReason: (
-        type: CanvasNodeType.Image | CanvasNodeType.Text | CanvasNodeType.Script | CanvasNodeType.BatchTable | CanvasNodeType.Video | CanvasNodeType.Audio | CanvasNodeType.Drawing | CanvasNodeType.Config | CanvasNodeType.MediaConversion | CanvasNodeType.DataSource | CanvasNodeType.Logic,
+        type:
+            | CanvasNodeType.Image
+            | CanvasNodeType.Text
+            | CanvasNodeType.Script
+            | CanvasNodeType.BatchTable
+            | CanvasNodeType.Video
+            | CanvasNodeType.Audio
+            | CanvasNodeType.Drawing
+            | CanvasNodeType.Config
+            | CanvasNodeType.MediaConversion
+            | CanvasNodeType.DataSource
+            | CanvasNodeType.Logic,
         provider?: "runninghub",
     ) => string;
     onCreate: (
-        type: CanvasNodeType.Image | CanvasNodeType.Text | CanvasNodeType.Script | CanvasNodeType.BatchTable | CanvasNodeType.Video | CanvasNodeType.Audio | CanvasNodeType.Drawing | CanvasNodeType.Config | CanvasNodeType.MediaConversion | CanvasNodeType.DataSource | CanvasNodeType.Logic,
+        type:
+            | CanvasNodeType.Image
+            | CanvasNodeType.Text
+            | CanvasNodeType.Script
+            | CanvasNodeType.BatchTable
+            | CanvasNodeType.Video
+            | CanvasNodeType.Audio
+            | CanvasNodeType.Drawing
+            | CanvasNodeType.Config
+            | CanvasNodeType.MediaConversion
+            | CanvasNodeType.DataSource
+            | CanvasNodeType.Logic,
         provider?: "runninghub",
     ) => void;
     onClose: () => void;

@@ -1,13 +1,4 @@
-import {
-    CanvasNodeType,
-    type CanvasConnection,
-    type CanvasDataSourceConfig,
-    type CanvasDataSourceFormat,
-    type CanvasLogicComparator,
-    type CanvasLogicConfig,
-    type CanvasLogicOperator,
-    type CanvasNodeData,
-} from "@/types/canvas";
+import { CanvasNodeType, type CanvasConnection, type CanvasDataSourceConfig, type CanvasDataSourceFormat, type CanvasLogicComparator, type CanvasLogicConfig, type CanvasLogicOperator, type CanvasNodeData } from "@/types/canvas";
 
 export type CanvasDataItem = Record<string, unknown> | string | number | boolean;
 
@@ -329,13 +320,7 @@ export function parseDataSourceNode(node: CanvasNodeData): { items: CanvasDataIt
 export function formatSkillNodePrompt(node: CanvasNodeData): string {
     const skill = node.metadata?.skillSnapshot;
     if (skill) {
-        return [
-            `【技能：${skill.name}】`,
-            skill.description ? `用途：${skill.description}` : "",
-            `执行模板：\n${skill.template}`,
-            skill.outputContract ? `输出约束：\n${skill.outputContract}` : "",
-            "请严格执行该技能，只输出结果，不要输出解释性套话。",
-        ]
+        return [`【技能：${skill.name}】`, skill.description ? `用途：${skill.description}` : "", `执行模板：\n${skill.template}`, skill.outputContract ? `输出约束：\n${skill.outputContract}` : "", "请严格执行该技能，只输出结果，不要输出解释性套话。"]
             .filter(Boolean)
             .join("\n\n");
     }
@@ -345,13 +330,7 @@ export function formatSkillNodePrompt(node: CanvasNodeData): string {
     const content = (node.metadata?.content || node.metadata?.prompt || "").trim();
     const body = content || prompts.join("\n");
     if (!name && !description) return body;
-    return [
-        `【技能：${name || node.title || "Skill 节点"}】`,
-        description ? `用途：${description}` : "",
-        body ? `执行模板：\n${body}` : "",
-    ]
-        .filter(Boolean)
-        .join("\n\n");
+    return [`【技能：${name || node.title || "Skill 节点"}】`, description ? `用途：${description}` : "", body ? `执行模板：\n${body}` : ""].filter(Boolean).join("\n\n");
 }
 
 export function extractNodeItems(node: CanvasNodeData): { items: CanvasDataItem[]; format?: CanvasDataSourceFormat; error?: string } {
@@ -439,7 +418,10 @@ export function readDataItemField(item: CanvasDataItem, fieldPath?: string): unk
     if (!item || typeof item !== "object") {
         return item;
     }
-    const segments = cleanPath.split(".").map((s) => s.trim()).filter(Boolean);
+    const segments = cleanPath
+        .split(".")
+        .map((s) => s.trim())
+        .filter(Boolean);
     let cursor: unknown = item;
     for (const seg of segments) {
         if (cursor === null || cursor === undefined || typeof cursor !== "object") return undefined;
@@ -471,30 +453,17 @@ export function itemIdentityKey(item: CanvasDataItem, matchKey?: string): string
     return String(item).trim();
 }
 
-export function evaluateLogicCondition(
-    item: CanvasDataItem,
-    comparator: CanvasLogicComparator = "contains",
-    fieldPath?: string,
-    compareValue = "",
-): { matched: boolean; error?: string } {
+export function evaluateLogicCondition(item: CanvasDataItem, comparator: CanvasLogicComparator = "contains", fieldPath?: string, compareValue = ""): { matched: boolean; error?: string } {
     const rawValue = readDataItemField(item, fieldPath);
     const actualStr = itemScalarString(rawValue).trim();
     const targetStr = compareValue.trim();
 
     if (comparator === "is_empty") {
-        const empty =
-            rawValue === null ||
-            rawValue === undefined ||
-            actualStr === "" ||
-            (Array.isArray(rawValue) && rawValue.length === 0);
+        const empty = rawValue === null || rawValue === undefined || actualStr === "" || (Array.isArray(rawValue) && rawValue.length === 0);
         return { matched: empty };
     }
     if (comparator === "not_empty") {
-        const empty =
-            rawValue === null ||
-            rawValue === undefined ||
-            actualStr === "" ||
-            (Array.isArray(rawValue) && rawValue.length === 0);
+        const empty = rawValue === null || rawValue === undefined || actualStr === "" || (Array.isArray(rawValue) && rawValue.length === 0);
         return { matched: !empty };
     }
     if (comparator === "contains") {
@@ -542,12 +511,7 @@ export function evaluateLogicCondition(
     return { matched: false };
 }
 
-export function evaluateSetOperation(
-    operator: "intersect" | "union" | "difference",
-    itemsA: CanvasDataItem[],
-    itemsB: CanvasDataItem[],
-    matchKey?: string,
-): CanvasDataItem[] {
+export function evaluateSetOperation(operator: "intersect" | "union" | "difference", itemsA: CanvasDataItem[], itemsB: CanvasDataItem[], matchKey?: string): CanvasDataItem[] {
     const keysB = new Set(itemsB.map((item) => itemIdentityKey(item, matchKey)).filter(Boolean));
     const seen = new Set<string>();
     const result: CanvasDataItem[] = [];
@@ -938,11 +902,7 @@ export function evaluateCanvasDataflow(nodes: CanvasNodeData[], connections: Can
  * 若某个目标节点连接了至少一个逻辑节点，且所有连入的逻辑分支均为空（0 条命中）或报错，
  * 则拦截下游 AI 生成并给出明确原因。
  */
-export function findBlockedLogicBranchInput(
-    nodeId: string,
-    nodes: CanvasNodeData[],
-    connections: CanvasConnection[],
-): { node: CanvasNodeData; reason: string } | null {
+export function findBlockedLogicBranchInput(nodeId: string, nodes: CanvasNodeData[], connections: CanvasConnection[]): { node: CanvasNodeData; reason: string } | null {
     const hasLogicOrDataSource = nodes.some((node) => node.type === CanvasNodeType.Logic || node.type === CanvasNodeType.DataSource);
     if (!hasLogicOrDataSource) return null;
 
@@ -960,21 +920,14 @@ export function findBlockedLogicBranchInput(
     while (expanded) {
         expanded = false;
         for (const conn of connections) {
-            if (
-                targetIds.has(conn.toNodeId) &&
-                !targetIds.has(conn.fromNodeId) &&
-                nodeById.get(conn.fromNodeId)?.type === CanvasNodeType.Skill &&
-                !evaluation.getEdgeItems(conn.fromNodeId, conn.fromHandleId).active
-            ) {
+            if (targetIds.has(conn.toNodeId) && !targetIds.has(conn.fromNodeId) && nodeById.get(conn.fromNodeId)?.type === CanvasNodeType.Skill && !evaluation.getEdgeItems(conn.fromNodeId, conn.fromHandleId).active) {
                 targetIds.add(conn.fromNodeId);
                 expanded = true;
             }
         }
     }
 
-    const logicEdges = connections.filter(
-        (conn) => targetIds.has(conn.toNodeId) && nodeById.get(conn.fromNodeId)?.type === CanvasNodeType.Logic,
-    );
+    const logicEdges = connections.filter((conn) => targetIds.has(conn.toNodeId) && nodeById.get(conn.fromNodeId)?.type === CanvasNodeType.Logic);
     if (!logicEdges.length) return null;
 
     let anyActive = false;
@@ -993,9 +946,7 @@ export function findBlockedLogicBranchInput(
         if (edgeStatus.active) {
             anyActive = true;
         } else if (!firstBlocked) {
-            const reason = edgeStatus.isConditionalBranch
-                ? `${edgeStatus.branchLabel || "True"} 分支当前未命中（0 条数据）`
-                : "当前运算结果为空（0 条数据）";
+            const reason = edgeStatus.isConditionalBranch ? `${edgeStatus.branchLabel || "True"} 分支当前未命中（0 条数据）` : "当前运算结果为空（0 条数据）";
             firstBlocked = { node: logicNode, reason };
         }
     }

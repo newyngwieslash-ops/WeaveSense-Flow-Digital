@@ -104,4 +104,3 @@ func (e EngineClient) DoStream(ctx context.Context, scope Scope, actor Actor, me
 	}
 	return resp, nil
 }
-

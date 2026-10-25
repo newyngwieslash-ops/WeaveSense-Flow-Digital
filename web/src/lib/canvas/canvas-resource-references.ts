@@ -442,9 +442,7 @@ function buildCanvasResourceInputResolver(nodes: CanvasNodeData[], connections: 
                       metadata: {
                           ...rawSource.metadata,
                           content: edgeText,
-                          ...(rawSource.type === CanvasNodeType.Skill
-                              ? { skillSnapshot: undefined, skillName: undefined, skillDescription: undefined, skillPrompts: undefined }
-                              : {}),
+                          ...(rawSource.type === CanvasNodeType.Skill ? { skillSnapshot: undefined, skillName: undefined, skillDescription: undefined, skillPrompts: undefined } : {}),
                       },
                   }
                 : null;
@@ -533,9 +531,7 @@ export function getContextResourceNodes(nodeId: string, nodes: CanvasNodeData[],
                           metadata: {
                               ...raw.metadata,
                               content: edgeText,
-                              ...(raw.type === CanvasNodeType.Skill
-                                  ? { skillSnapshot: undefined, skillName: undefined, skillDescription: undefined, skillPrompts: undefined }
-                                  : {}),
+                              ...(raw.type === CanvasNodeType.Skill ? { skillSnapshot: undefined, skillName: undefined, skillDescription: undefined, skillPrompts: undefined } : {}),
                           },
                       }
                     : undefined;

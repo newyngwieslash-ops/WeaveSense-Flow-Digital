@@ -198,7 +198,6 @@ func TestMCPCreateValidation(t *testing.T) {
 	}
 }
 
-
 func TestMCPToolCacheCompositeKeyAndInvalidation(t *testing.T) {
 	tools, m, _, ss, conn := setupMCP(t, MCPCostRule{})
 	cache := NewMCPToolListCache(0)

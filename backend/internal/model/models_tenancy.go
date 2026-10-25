@@ -125,4 +125,3 @@ type FlowCommandOutbox struct {
 }
 
 func (FlowCommandOutbox) TableName() string { return "flow_command_outbox" }
-

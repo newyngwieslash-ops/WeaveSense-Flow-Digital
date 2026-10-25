@@ -6,17 +6,7 @@ import { createTopic, listSources, listTopics, updateTopic, type IntelSource, ty
 import { buildTopicHandoffDraft, CanvasHandoffModal, type CanvasHandoffDraft } from "./canvas-handoff-modal";
 
 /** PRD §5.2 可保存专题: list, create and edit saved research topics; opening one starts a topic-scoped conversation. */
-export function TopicsPanel({
-    workspaceId,
-    onOpen,
-    initialTopics = [],
-    onNavigate,
-}: {
-    workspaceId?: string;
-    onOpen?: (t: IntelTopic) => void;
-    initialTopics?: IntelTopic[];
-    onNavigate?: (url: string) => void;
-}) {
+export function TopicsPanel({ workspaceId, onOpen, initialTopics = [], onNavigate }: { workspaceId?: string; onOpen?: (t: IntelTopic) => void; initialTopics?: IntelTopic[]; onNavigate?: (url: string) => void }) {
     const [topics, setTopics] = useState<IntelTopic[]>(initialTopics);
     const [sources, setSources] = useState<IntelSource[]>([]);
     const [editing, setEditing] = useState<IntelTopic | "new">();

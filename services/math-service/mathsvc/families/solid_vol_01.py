@@ -157,3 +157,9 @@ def hints(sol):
         {"level": 4, "kind": "partial_step", "text": "；".join(sol["steps"][0]["plain"]), "reveals_answer": False, "gated": True},
         {"level": 5, "kind": "full_solution", "text": "完整解答见讲解。", "reveals_answer": True, "gated": True},
     ]
+
+
+def explore(norm, sol):
+    return C.rotate_explore("长方体 ABCD‑A1B1C1D1，三条棱的长度分别以题目给出的单位标注。拖动或用方向键旋转观察。",
+                            {"id": "units", "prompt": "先预测：直接把三个数相乘，得到的结果能用吗？",
+                             "options": ["能，单位不影响", "不能，要先统一单位", "说不准"]})

@@ -19,6 +19,7 @@ from .. import fmt
 from ..errors import MathError
 from ..kernel import geometry_kernel as K
 from ..params import ParamError, exact_text, parse_exact
+from . import common as C
 
 FAMILY_ID = "SOLID-ANGLE-02"
 TITLE = "正四棱锥中线面角的正弦"
@@ -247,3 +248,9 @@ def hints(sol):
         {"level": 4, "kind": "partial_step", "text": "；".join(sol["steps"][1].get("plain", [])) if len(sol["steps"]) > 1 else "", "reveals_answer": False, "gated": True},
         {"level": 5, "kind": "full_solution", "text": "完整解答见讲解。", "reveals_answer": True, "gated": True},
     ]
+
+
+def explore(norm, sol):
+    return C.rotate_explore("正四棱锥 P‑ABCD，O 为底面中心，E 为所给点。虚线 BE 是所求直线，阴影是平面 PAC。拖动或用方向键旋转观察。",
+                            {"id": "foot", "prompt": "先预测：点 B 到平面 PAC 的垂足落在哪里？",
+                             "options": ["底面中心 O", "点 A", "棱 PC 上", "说不准"]})

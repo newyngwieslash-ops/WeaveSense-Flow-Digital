@@ -173,3 +173,25 @@ def hints(sol):
         {"level": 4, "kind": "partial_step", "text": "；".join(sol["steps"][2]["plain"]), "reveals_answer": False, "gated": True},
         {"level": 5, "kind": "full_solution", "text": "完整解答见讲解。", "reveals_answer": True, "gated": True},
     ]
+
+
+def explore(norm, sol):
+    import math
+    a, b, c = float(norm["_exact"]["a"]), float(norm["_exact"]["b"]), float(sol["_exact"]["c"])
+
+    def frame(deg):
+        t = math.radians(deg)
+        dx, dy = math.cos(t), math.sin(t)
+        # Points F + s(dx, dy) on x²/a² + y²/b² = 1: quadratic in s.
+        qa = dx * dx / (a * a) + dy * dy / (b * b)
+        qb = 2 * c * dx / (a * a)
+        qc = c * c / (a * a) - 1
+        r = math.sqrt(qb * qb - 4 * qa * qc)
+        s1, s2 = (-qb + r) / (2 * qa), (-qb - r) / (2 * qa)
+        return {"A": (c + s1 * dx, s1 * dy), "B": (c + s2 * dx, s2 * dy)}, ""
+
+    return C.param_explore("theta", "弦 AB 的倾斜角", "°", [float(d) for d in range(0, 180, 5)], frame, 90.0,
+                           "椭圆中心 O，右焦点 F。拖动滑块让过 F 的直线绕 F 旋转，A、B 是直线与椭圆的两个交点。",
+                           {"id": "chord_extreme", "prompt": "先预测：弦 AB 绕 F 旋转一周的过程中，弦长最短出现在什么位置？",
+                            "options": ["弦与 x 轴垂直时", "弦与 x 轴重合时", "弦长始终不变", "说不准"]},
+                           "倾斜角取 0° 到 175°（每 5° 一帧）；0° 时直线与长轴重合，弦即长轴。")

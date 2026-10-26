@@ -52,6 +52,9 @@ const PluginsPage = lazy(() => import("@/pages/plugins"));
 const EagleLibraryPage = lazy(() => import("@/pages/plugins/eagle"));
 const TasksPage = lazy(() => import("@/pages/tasks"));
 const IntelligencePage = lazy(() => import("@/pages/intelligence"));
+const EduStudentHome = lazy(() => import("@/pages/edu/student").then((module) => ({ default: module.StudentHome })));
+const EduStudentAssignment = lazy(() => import("@/pages/edu/student").then((module) => ({ default: module.StudentAssignment })));
+const EduTeacherClassroom = lazy(() => import("@/pages/edu/teacher"));
 const McpConnectionsPage = lazy(() => import("@/pages/intelligence/mcp"));
 const ProjectsPage = lazy(loadProjectsPage);
 const ProjectDetailPage = lazy(loadProjectDetailPage);
@@ -128,6 +131,9 @@ export const router = createBrowserRouter([
                 ),
             },
             { path: "/assets", element: <RequireAuth>{deferred(<AssetsPage />)}</RequireAuth> },
+            { path: "/edu/learn", element: <RequireAuth>{deferred(<EduStudentHome />)}</RequireAuth> },
+            { path: "/edu/learn/:id", element: <RequireAuth>{deferred(<EduStudentAssignment />)}</RequireAuth> },
+            { path: "/edu/teach", element: <RequireAuth>{deferred(<EduTeacherClassroom />)}</RequireAuth> },
             { path: "/intelligence", element: <RequireAuth>{deferred(<IntelligencePage />)}</RequireAuth> },
             { path: "/intelligence/mcp", element: <RequireAuth>{deferred(<McpConnectionsPage />)}</RequireAuth> },
             { path: "/intelligence/:view", element: <RequireAuth>{deferred(<IntelligencePage />)}</RequireAuth> },

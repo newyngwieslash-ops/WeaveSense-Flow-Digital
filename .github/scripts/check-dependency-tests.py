@@ -37,6 +37,7 @@ REQUIRED = {
     ("edumath", "TestPGLedgerReconcileAndExport"),
     ("edumath", "TestReceiptContract"),
     ("edumath", "TestReceiptFailClosed"),
+    ("edumath", "TestFaultInjectionRecovery"),
     ("edumath", "TestPGAgentMathTools"),
 }
 

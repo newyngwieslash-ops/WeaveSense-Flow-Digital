@@ -29,6 +29,8 @@ func (h *API) Register(api *gin.RouterGroup) {
 	g := api.Group("/edu", Middleware(h.DB, h.User))
 	h.registerClasses(g)
 	h.registerLedger(g)
+	h.registerBudget(g)
+	h.registerCost(g)
 	g.GET("/me", h.me)
 	g.POST("/roles", h.bindRole)
 	g.POST("/problems", h.createProblem)

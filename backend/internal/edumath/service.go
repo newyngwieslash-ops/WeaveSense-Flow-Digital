@@ -245,6 +245,9 @@ func (s *Service) startJobWith(ctx context.Context, tx *gorm.DB, a Actor, kind, 
 	job := model.EduMathJob{PriceBook: string(frozen), ID: flow.NewID("emj_"), TenantID: a.TenantID, WorkspaceID: a.WorkspaceID, Kind: kind, IdemKey: idemKey, InputHash: inputHash,
 		ProblemRevisionID: revisionID, SourceJobID: sourceJob, Status: "queued", PriceVersion: pb.Version, BudgetMicro: JobBudgetMicro(),
 		Settlement: "open", CreatedBy: a.UserID, CreatedAt: now, UpdatedAt: now, Options: options}
+	if err := s.admitJob(tx, a, kind, job.BudgetMicro, unitPrice(pb) > 0); err != nil {
+		return model.EduMathJob{}, err
+	}
 	if unitPrice(pb) > 0 {
 		b := flow.Billing{DB: tx, Now: s.Now}
 		rsv, err := b.Reserve(a.TenantID, "edu:job:"+job.ID, "edu_math_job", job.ID, job.BudgetMicro)

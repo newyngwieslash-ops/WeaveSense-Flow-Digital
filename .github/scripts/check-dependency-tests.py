@@ -19,6 +19,7 @@ REQUIRED = {
     ("edumath", "TestPGEduTablesForceRLS"),
     ("edumath", "TestPGG1Chain"),
     ("edumath", "TestMCPProtocolWithGoSDK"),
+    ("edumath", "TestClassesInvitesConsentAuthorization"),
 }
 
 

@@ -18,6 +18,7 @@ var (
 	ErrNoRole    = errors.New("edumath: education role required")
 	ErrNotFound  = errors.New("edumath: not found")
 	ErrForbidden = errors.New("edumath: forbidden")
+	ErrConsent   = errors.New("edumath: guardian consent missing or withdrawn")
 )
 
 // Actor is the authenticated caller resolved for one request.
@@ -202,6 +203,9 @@ func studentCanAccessAssignment(tx *gorm.DB, tenantID, userID, assignmentID stri
 	rs, err := roles(tx, tenantID, userID)
 	if err != nil || !rs["student"] {
 		return as, pub, ErrNotFound
+	}
+	if !consentOK(tx, tenantID, userID) {
+		return as, pub, ErrConsent
 	}
 	var n int64
 	tx.Table("edu_enrollments e").Joins("JOIN edu_classes k ON k.id = e.class_id AND k.status = 'active' AND k.tenant_id = e.tenant_id").

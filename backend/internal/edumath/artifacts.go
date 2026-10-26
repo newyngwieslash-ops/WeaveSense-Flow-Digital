@@ -72,7 +72,16 @@ func canFetch(db *gorm.DB, art model.EduArtifact, userID string) bool {
 		return false
 	}
 	if rs["teacher"] || rs["reviewer"] || rs["org_admin"] {
-		return true // staff may preview the student projection
+		// Staff may preview the student projection of their own workspace's content.
+		var job model.EduMathJob
+		if db.First(&job, "id = ? AND tenant_id = ?", art.JobID, art.TenantID).Error != nil {
+			return false
+		}
+		var n int64
+		db.Model(&model.WorkspaceMembership{}).Where("workspace_id = ? AND user_id = ?", job.WorkspaceID, userID).Count(&n)
+		if n > 0 {
+			return true
+		}
 	}
 	// Student: the artifact must belong to a published lesson assigned to a class they are enrolled in.
 	var lessons []model.EduLessonRevision

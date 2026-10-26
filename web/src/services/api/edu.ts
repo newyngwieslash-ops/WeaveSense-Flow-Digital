@@ -59,8 +59,9 @@ export type LearningState = {
     hintLevels: number[];
     selfTest: null | { state: string; helpUsed: boolean; sawSolution: boolean; answerKey?: { plain: string } };
     review: null | { id: string; stage: number; dueAt: string; state: string };
+    predictions?: { promptId: string; choice: number }[];
 };
-export type HintBody = { level: number; kind: string; text?: string; beats?: { id: string; title: string; board?: string; say?: string }[]; answer?: { plain: string } };
+export type HintBody = { level: number; kind: string; text?: string; beats?: { id: string; title: string; board?: string | string[]; say?: string }[]; answer?: { plain: string } };
 
 export const RESULT_LABEL: Record<string, string> = {
     correct: "正确",

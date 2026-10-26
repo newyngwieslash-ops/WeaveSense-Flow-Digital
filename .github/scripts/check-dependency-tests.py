@@ -48,6 +48,8 @@ REQUIRED = {
     ("edumath", "TestPGScheduledLedgerReconcile"),
     ("edumath", "TestDeliveryCostReport"),
     ("edumath", "TestPGDeliveryCostReport"),
+    ("edumath", "TestContentIncidentChain"),
+    ("edumath", "TestPGContentIncidentChain"),
     ("edumath", "TestPGAgentMathTools"),
 }
 

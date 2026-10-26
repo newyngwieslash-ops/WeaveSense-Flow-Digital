@@ -499,7 +499,7 @@ func EduModels() []any {
 		&EduProblemRevision{}, &EduMathJob{}, &EduStageRun{}, &EduArtifact{}, &EduSolutionRevision{}, &EduLessonRevision{},
 		&EduReviewRecord{}, &EduPublication{}, &EduAssignment{}, &EduAuditEvent{}, &EduClassInvite{}, &EduConsentRecord{},
 		&EduAttempt{}, &EduHintUnlock{}, &EduSelfTest{}, &EduReviewItem{}, &EduHelpRequest{}, &EduHelpReply{},
-		&EduPrediction{}, &EduFigureInteraction{}, &EduVariantSet{}, &EduVariantReview{}, &EduAssignmentExtension{}, &EduLessonEdit{}, &EduLedgerAnomaly{}, &EduJobEvent{}, &EduMathEvent{}, &EduBudget{}, &EduBudgetAlert{}, &EduSupportCost{}, &EduContentIncident{}, &EduAssignmentMigration{}, &EduSourceAsset{}}
+		&EduPrediction{}, &EduFigureInteraction{}, &EduVariantSet{}, &EduVariantReview{}, &EduAssignmentExtension{}, &EduLessonEdit{}, &EduLedgerAnomaly{}, &EduJobEvent{}, &EduMathEvent{}, &EduBudget{}, &EduBudgetAlert{}, &EduSupportCost{}, &EduContentIncident{}, &EduAssignmentMigration{}, &EduSourceAsset{}, &EduRegrade{}}
 }
 
 // EduVariantSet is a finite set of numbers only variants of a lesson's problem (FR-M07, FR-T11, AC-22).
@@ -731,3 +731,25 @@ type EduSourceAsset struct {
 }
 
 func (EduSourceAsset) TableName() string { return "edu_source_assets" }
+
+// EduRegrade records one re-evaluation of a main answer against a reference
+// publication (DEV-025). The attempt keeps its original assignment and
+// response; old and new results, the reason and the student notice are kept.
+type EduRegrade struct {
+	ID               string     `json:"id" gorm:"primaryKey;size:40"`
+	TenantID         string     `json:"tenantId" gorm:"size:40;not null;index"`
+	BatchID          string     `json:"batchId" gorm:"size:40;not null;index"`
+	AssignmentID     string     `json:"assignmentId" gorm:"size:40;not null;index"`
+	AttemptID        string     `json:"attemptId" gorm:"size:40;not null;uniqueIndex:ux_edu_regrade,priority:1"`
+	RefPublicationID string     `json:"refPublicationId" gorm:"size:40;not null;uniqueIndex:ux_edu_regrade,priority:2"`
+	StudentUserID    string     `json:"studentUserId" gorm:"size:40;not null;index"`
+	OldResult        string     `json:"oldResult" gorm:"size:24;not null"`
+	NewResult        string     `json:"newResult" gorm:"size:24;not null"`
+	Grader           string     `json:"grader,omitempty" gorm:"size:40"`
+	Reason           string     `json:"reason" gorm:"size:200;not null"`
+	CreatedBy        string     `json:"createdBy" gorm:"size:40;not null"`
+	CreatedAt        time.Time  `json:"createdAt"`
+	NoticeSeenAt     *time.Time `json:"noticeSeenAt,omitempty"`
+}
+
+func (EduRegrade) TableName() string { return "edu_regrades" }

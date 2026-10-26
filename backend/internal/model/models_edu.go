@@ -274,9 +274,90 @@ type EduAssignment struct {
 	State         string    `json:"state" gorm:"size:16;not null"` // active | closed | withdrawn
 	CreatedBy     string    `json:"createdBy" gorm:"size:40"`
 	CreatedAt     time.Time `json:"createdAt"`
+	// Task policy (FR-S01..S08, AC-21). Times are stored in UTC and compared on the server.
+	StartsAt         *time.Time `json:"startsAt,omitempty"`
+	DueAt            *time.Time `json:"dueAt,omitempty"`
+	AllowLate        bool       `json:"allowLate" gorm:"not null;default:false"`
+	AnswerPolicy     string     `json:"answerPolicy" gorm:"size:24;not null;default:teacher_release"` // after_submission | after_due | teacher_release
+	AnswerReleasedAt *time.Time `json:"answerReleasedAt,omitempty"`
+	ApproxAllowed    bool       `json:"approxAllowed" gorm:"not null;default:false"`
+	UnitPolicy       string     `json:"unitPolicy" gorm:"size:16;not null;default:required"` // required | optional
 }
 
 func (EduAssignment) TableName() string { return "edu_assignments" }
+
+// EduAttempt is one student response. The first valid main attempt is frozen
+// (FirstValid); later attempts never overwrite it. Item: main | check.
+type EduAttempt struct {
+	ID            string    `json:"id" gorm:"primaryKey;size:40"`
+	TenantID      string    `json:"tenantId" gorm:"size:40;not null;index;uniqueIndex:ux_edu_attempt_key,priority:1"`
+	AssignmentID  string    `json:"assignmentId" gorm:"size:40;not null;index:ix_edu_attempt_as,priority:1"`
+	StudentUserID string    `json:"studentUserId" gorm:"size:40;not null;index:ix_edu_attempt_as,priority:2;uniqueIndex:ux_edu_attempt_key,priority:2"`
+	ClientKey     string    `json:"clientKey" gorm:"size:64;not null;uniqueIndex:ux_edu_attempt_key,priority:3"`
+	Item          string    `json:"item" gorm:"size:12;not null"` // main | check
+	Kind          string    `json:"kind" gorm:"size:12;not null"` // answer | no_idea
+	Response      string    `json:"response" gorm:"size:400"`
+	Valid         bool      `json:"valid"`
+	InvalidReason string    `json:"invalidReason,omitempty" gorm:"size:40"`
+	Result        string    `json:"result" gorm:"size:24"` // correct | correct_approx | incorrect | needs_exact | needs_teacher | undetermined | no_idea | invalid
+	Reason        string    `json:"reason,omitempty" gorm:"size:60"`
+	Grader        string    `json:"grader,omitempty" gorm:"size:40"`
+	FirstValid    bool      `json:"firstValid"`
+	Independent   bool      `json:"independent"`
+	HintLevel     int       `json:"hintLevel"` // highest hint level unlocked before this attempt
+	Late          bool      `json:"late"`
+	ReviewItemID  string    `json:"reviewItemId,omitempty" gorm:"size:40"`
+	TeacherResult string    `json:"teacherResult,omitempty" gorm:"size:24"`
+	TeacherNote   string    `json:"teacherNote,omitempty" gorm:"size:500"`
+	TeacherBy     string    `json:"teacherBy,omitempty" gorm:"size:40"`
+	CreatedAt     time.Time `json:"createdAt"`
+}
+
+func (EduAttempt) TableName() string { return "edu_attempts" }
+
+// EduHintUnlock records each hint level a student opened (FR-S05). Level 5 is the full solution.
+type EduHintUnlock struct {
+	ID            string    `json:"id" gorm:"primaryKey;size:40"`
+	TenantID      string    `json:"tenantId" gorm:"size:40;not null;index"`
+	AssignmentID  string    `json:"assignmentId" gorm:"size:40;not null;uniqueIndex:ux_edu_hint,priority:1"`
+	StudentUserID string    `json:"studentUserId" gorm:"size:40;not null;uniqueIndex:ux_edu_hint,priority:2"`
+	Level         int       `json:"level" gorm:"not null;uniqueIndex:ux_edu_hint,priority:3"`
+	CreatedAt     time.Time `json:"createdAt"`
+}
+
+func (EduHintUnlock) TableName() string { return "edu_hint_unlocks" }
+
+// EduSelfTest is the independent self-test on the check question (FR-S08).
+type EduSelfTest struct {
+	ID            string     `json:"id" gorm:"primaryKey;size:40"`
+	TenantID      string     `json:"tenantId" gorm:"size:40;not null;index"`
+	AssignmentID  string     `json:"assignmentId" gorm:"size:40;not null;uniqueIndex:ux_edu_selftest,priority:1"`
+	StudentUserID string     `json:"studentUserId" gorm:"size:40;not null;uniqueIndex:ux_edu_selftest,priority:2"`
+	State         string     `json:"state" gorm:"size:16;not null"` // started | submitted
+	HelpUsed      bool       `json:"helpUsed"`
+	SawSolution   bool       `json:"sawSolution"` // the main solution was opened before the self-test started
+	AttemptID     string     `json:"attemptId,omitempty" gorm:"size:40"`
+	StartedAt     time.Time  `json:"startedAt"`
+	SubmittedAt   *time.Time `json:"submittedAt,omitempty"`
+}
+
+func (EduSelfTest) TableName() string { return "edu_self_tests" }
+
+// EduReviewItem schedules spaced review (FR-S09): +1, +3, +7 days; completion needs a new attempt.
+type EduReviewItem struct {
+	ID            string    `json:"id" gorm:"primaryKey;size:40"`
+	TenantID      string    `json:"tenantId" gorm:"size:40;not null;index"`
+	AssignmentID  string    `json:"assignmentId" gorm:"size:40;not null;uniqueIndex:ux_edu_review_item,priority:1"`
+	StudentUserID string    `json:"studentUserId" gorm:"size:40;not null;uniqueIndex:ux_edu_review_item,priority:2;index"`
+	Reason        string    `json:"reason" gorm:"size:24;not null"` // incorrect | no_idea | heavy_hints
+	Stage         int       `json:"stage"`                          // 1, 2, 3
+	DueAt         time.Time `json:"dueAt" gorm:"index"`
+	State         string    `json:"state" gorm:"size:16;not null"` // pending | done
+	CreatedAt     time.Time `json:"createdAt"`
+	UpdatedAt     time.Time `json:"updatedAt"`
+}
+
+func (EduReviewItem) TableName() string { return "edu_review_items" }
 
 type EduAuditEvent struct {
 	ID        string    `json:"id" gorm:"primaryKey;size:40"`
@@ -294,5 +375,6 @@ func (EduAuditEvent) TableName() string { return "edu_audit_events" }
 func EduModels() []any {
 	return []any{&EduOrgPolicy{}, &EduRoleBinding{}, &EduClass{}, &EduTeachingAssignment{}, &EduEnrollment{}, &EduProblem{},
 		&EduProblemRevision{}, &EduMathJob{}, &EduStageRun{}, &EduArtifact{}, &EduSolutionRevision{}, &EduLessonRevision{},
-		&EduReviewRecord{}, &EduPublication{}, &EduAssignment{}, &EduAuditEvent{}, &EduClassInvite{}, &EduConsentRecord{}}
+		&EduReviewRecord{}, &EduPublication{}, &EduAssignment{}, &EduAuditEvent{}, &EduClassInvite{}, &EduConsentRecord{},
+		&EduAttempt{}, &EduHintUnlock{}, &EduSelfTest{}, &EduReviewItem{}}
 }

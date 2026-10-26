@@ -366,12 +366,38 @@ func (h *API) createAssignment(c *gin.Context) {
 		return
 	}
 	var in struct {
-		PublicationID string `json:"publicationId"`
-		Title         string `json:"title"`
+		PublicationID string     `json:"publicationId"`
+		Title         string     `json:"title"`
+		StartsAt      *time.Time `json:"startsAt"` // RFC 3339 with an explicit offset; stored in UTC
+		DueAt         *time.Time `json:"dueAt"`
+		AllowLate     bool       `json:"allowLate"`
+		AnswerPolicy  string     `json:"answerPolicy"`
+		ApproxAllowed bool       `json:"approxAllowed"`
+		UnitPolicy    string     `json:"unitPolicy"`
 	}
 	if c.ShouldBindJSON(&in) != nil || in.PublicationID == "" || len(in.Title) > 200 {
 		reply(c, 400, nil, "publicationId required")
 		return
+	}
+	if in.AnswerPolicy == "" {
+		in.AnswerPolicy = "teacher_release"
+	}
+	if in.UnitPolicy == "" {
+		in.UnitPolicy = "required"
+	}
+	if !map[string]bool{"after_submission": true, "after_due": true, "teacher_release": true}[in.AnswerPolicy] ||
+		(in.UnitPolicy != "required" && in.UnitPolicy != "optional") ||
+		(in.AnswerPolicy == "after_due" && in.DueAt == nil) ||
+		(in.StartsAt != nil && in.DueAt != nil && !in.DueAt.After(*in.StartsAt)) {
+		reply(c, 400, nil, "invalid assignment policy")
+		return
+	}
+	utc := func(t *time.Time) *time.Time {
+		if t == nil {
+			return nil
+		}
+		u := t.UTC()
+		return &u
 	}
 	var pub model.EduPublication
 	if tx.First(&pub, "id = ? AND tenant_id = ? AND state = ?", in.PublicationID, a.TenantID, "published").Error != nil {
@@ -386,7 +412,8 @@ func (h *API) createAssignment(c *gin.Context) {
 		h.fail(c, ErrNotFound)
 		return
 	}
-	as := model.EduAssignment{ID: flow.NewID("eas_"), TenantID: a.TenantID, ClassID: k.ID, PublicationID: pub.ID, Title: strings.TrimSpace(in.Title), State: "active", CreatedBy: a.UserID, CreatedAt: h.Svc.now()}
+	as := model.EduAssignment{ID: flow.NewID("eas_"), TenantID: a.TenantID, ClassID: k.ID, PublicationID: pub.ID, Title: strings.TrimSpace(in.Title), State: "active", CreatedBy: a.UserID, CreatedAt: h.Svc.now(),
+		StartsAt: utc(in.StartsAt), DueAt: utc(in.DueAt), AllowLate: in.AllowLate, AnswerPolicy: in.AnswerPolicy, ApproxAllowed: in.ApproxAllowed, UnitPolicy: in.UnitPolicy}
 	if err := tx.Create(&as).Error; err != nil {
 		h.fail(c, err)
 		return

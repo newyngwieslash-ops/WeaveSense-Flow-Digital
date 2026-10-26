@@ -45,6 +45,7 @@ func (h *API) Register(api *gin.RouterGroup) {
 	g.GET("/student/assignments", h.studentAssignments)
 	g.GET("/student/assignments/:id", h.studentAssignment)
 	g.GET("/files/:id", h.file)
+	h.registerLearning(g)
 }
 
 func (h *API) fail(c *gin.Context, err error) {

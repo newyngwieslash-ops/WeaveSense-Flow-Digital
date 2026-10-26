@@ -745,6 +745,10 @@ func (s *Service) Publish(tx *gorm.DB, a Actor, lessonID, lessonHash string) (mo
 	}
 	var existing model.EduPublication
 	if tx.First(&existing, "lesson_revision_id = ?", l.ID).Error == nil {
+		if existing.State != "published" {
+			// A withdrawn version is never republished nor used as a rollback target (DEV-027).
+			return existing, appErr(409, "POLICY_REVOKED", "withdrawn publication cannot be republished; publish a reviewed fix", "edit_revision")
+		}
 		if existing.LessonHash != lessonHash {
 			return existing, appErr(409, "REVISION_CONFLICT", "publication hash differs", "reload_revision")
 		}

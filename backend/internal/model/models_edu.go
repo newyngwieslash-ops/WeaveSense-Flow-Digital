@@ -492,7 +492,7 @@ func EduModels() []any {
 		&EduProblemRevision{}, &EduMathJob{}, &EduStageRun{}, &EduArtifact{}, &EduSolutionRevision{}, &EduLessonRevision{},
 		&EduReviewRecord{}, &EduPublication{}, &EduAssignment{}, &EduAuditEvent{}, &EduClassInvite{}, &EduConsentRecord{},
 		&EduAttempt{}, &EduHintUnlock{}, &EduSelfTest{}, &EduReviewItem{}, &EduHelpRequest{}, &EduHelpReply{},
-		&EduPrediction{}, &EduFigureInteraction{}, &EduVariantSet{}, &EduVariantReview{}, &EduAssignmentExtension{}, &EduLessonEdit{}, &EduLedgerAnomaly{}, &EduJobEvent{}, &EduMathEvent{}, &EduBudget{}, &EduBudgetAlert{}, &EduSupportCost{}}
+		&EduPrediction{}, &EduFigureInteraction{}, &EduVariantSet{}, &EduVariantReview{}, &EduAssignmentExtension{}, &EduLessonEdit{}, &EduLedgerAnomaly{}, &EduJobEvent{}, &EduMathEvent{}, &EduBudget{}, &EduBudgetAlert{}, &EduSupportCost{}, &EduContentIncident{}, &EduAssignmentMigration{}}
 }
 
 // EduVariantSet is a finite set of numbers only variants of a lesson's problem (FR-M07, FR-T11, AC-22).
@@ -656,3 +656,46 @@ type EduSupportCost struct {
 }
 
 func (EduSupportCost) TableName() string { return "edu_support_costs" }
+
+// EduContentIncident records a content error found after publication (DEV-027,
+// AC-34). A blocking incident withdraws the publication, suspends its
+// assignments and revokes student media in one transaction; the impact
+// snapshot lists everything derived from the revision.
+type EduContentIncident struct {
+	ID               string     `json:"id" gorm:"primaryKey;size:40"`
+	TenantID         string     `json:"tenantId" gorm:"size:40;not null;index"`
+	WorkspaceID      string     `json:"workspaceId" gorm:"size:40;not null"`
+	PublicationID    string     `json:"publicationId" gorm:"size:40;not null;index"`
+	LessonRevisionID string     `json:"lessonRevisionId" gorm:"size:40;not null;index"`
+	Severity         string     `json:"severity" gorm:"size:16;not null"` // blocking | minor
+	Reason           string     `json:"reason" gorm:"size:400;not null"`
+	State            string     `json:"state" gorm:"size:16;not null"` // open | resolved
+	ImpactJSON       string     `json:"-" gorm:"type:text"`
+	FixPublicationID string     `json:"fixPublicationId,omitempty" gorm:"size:40"`
+	ResolutionNote   string     `json:"resolutionNote,omitempty" gorm:"size:400"`
+	CreatedBy        string     `json:"createdBy" gorm:"size:64;not null"`
+	CreatedAt        time.Time  `json:"createdAt"`
+	ResolvedBy       string     `json:"resolvedBy,omitempty" gorm:"size:64"`
+	ResolvedAt       *time.Time `json:"resolvedAt,omitempty"`
+}
+
+func (EduContentIncident) TableName() string { return "edu_content_incidents" }
+
+// EduAssignmentMigration moves a class task to a new publication (DEV-025). The
+// old assignment and its attempts stay untouched in their original context.
+type EduAssignmentMigration struct {
+	ID               string    `json:"id" gorm:"primaryKey;size:40"`
+	TenantID         string    `json:"tenantId" gorm:"size:40;not null;index"`
+	FromAssignmentID string    `json:"fromAssignmentId" gorm:"size:40;not null;uniqueIndex"`
+	ToAssignmentID   string    `json:"toAssignmentId" gorm:"size:40;not null"`
+	FromPublication  string    `json:"fromPublicationId" gorm:"size:40;not null"`
+	ToPublication    string    `json:"toPublicationId" gorm:"size:40;not null"`
+	IncidentID       string    `json:"incidentId,omitempty" gorm:"size:40"`
+	Reason           string    `json:"reason" gorm:"size:400;not null"`
+	AffectedStudents int       `json:"affectedStudents"`
+	AttemptsKept     int       `json:"attemptsKept"`
+	CreatedBy        string    `json:"createdBy" gorm:"size:64;not null"`
+	CreatedAt        time.Time `json:"createdAt"`
+}
+
+func (EduAssignmentMigration) TableName() string { return "edu_assignment_migrations" }

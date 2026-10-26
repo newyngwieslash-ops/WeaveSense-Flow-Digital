@@ -380,7 +380,7 @@ func (h *API) getEditable(c *gin.Context) {
 		h.fail(c, err)
 		return
 	}
-	raw, _, err := h.Svc.Client.Artifact(ctx, a.TenantID, art.ServiceArtifactID, art.SHA256)
+	raw, _, err := h.Svc.Client.Artifact(ctx, a.TenantID, art)
 	if err != nil {
 		h.fail(c, fmt.Errorf("%w: lesson artifact", ErrContract))
 		return

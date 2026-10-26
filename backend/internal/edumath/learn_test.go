@@ -33,7 +33,7 @@ func publishG1(t *testing.T, h *harness) (string, teacherLesson) {
 	}
 	var ta model.EduArtifact
 	h.db.First(&ta, "id = ?", l.LessonArtifact)
-	b, _, err := h.svc.Client.Artifact(context.Background(), tenant, ta.ServiceArtifactID, ta.SHA256)
+	b, _, err := h.svc.Client.Artifact(context.Background(), tenant, ta)
 	if err != nil {
 		t.Fatal(err)
 	}

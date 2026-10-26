@@ -277,6 +277,17 @@ func (h *API) getJob(c *gin.Context) {
 	var stages []model.EduStageRun
 	tx.Where("job_id = ?", j.ID).Order("created_at").Find(&stages)
 	out["stageRuns"] = stages
+	// Artifact metadata only (no content, no links). For a job that did not
+	// succeed these are partial results (DEV-054): kept for audit, never
+	// materialized into revisions.
+	var arts []model.EduArtifact
+	tx.Where("job_id = ?", j.ID).Order("created_at").Find(&arts)
+	al := make([]gin.H, 0, len(arts))
+	for _, x := range arts {
+		al = append(al, gin.H{"id": x.ID, "kind": x.Kind, "audience": x.Audience, "mediaType": x.MediaType, "sha256": x.SHA256, "size": x.Size,
+			"partial": j.Status != "succeeded"})
+	}
+	out["artifacts"] = al
 	var sol model.EduSolutionRevision
 	if tx.First(&sol, "job_id = ?", j.ID).Error == nil {
 		out["solutionRevisionId"] = sol.ID
@@ -484,12 +495,12 @@ func (h *API) studentAssignment(c *gin.Context) {
 	}
 	ctx, cancel := ctx15(c)
 	defer cancel()
-	raw, _, err := h.Svc.Client.Artifact(ctx, a.TenantID, sa.ServiceArtifactID, sa.SHA256)
+	raw, _, err := h.Svc.Client.Artifact(ctx, a.TenantID, sa)
 	if err != nil {
 		h.fail(c, err)
 		return
 	}
-	teacher, _, err := h.Svc.Client.Artifact(ctx, a.TenantID, ta.ServiceArtifactID, ta.SHA256)
+	teacher, _, err := h.Svc.Client.Artifact(ctx, a.TenantID, ta)
 	if err != nil {
 		h.fail(c, err)
 		return
@@ -607,7 +618,7 @@ func (h *API) file(c *gin.Context) {
 	}
 	ctx, cancel := ctx15(c)
 	defer cancel()
-	data, ct, err := h.Svc.Client.Artifact(ctx, art.TenantID, art.ServiceArtifactID, art.SHA256)
+	data, ct, err := h.Svc.Client.Artifact(ctx, art.TenantID, art)
 	if err != nil {
 		h.fail(c, err)
 		return

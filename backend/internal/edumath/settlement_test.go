@@ -24,6 +24,8 @@ type scriptedService struct {
 	onCancel JobView // view returned by cancel
 	found    bool    // reconcile result
 	accept   bool    // POST /v1/jobs: accept (true) or drop the connection (false)
+	raw      []byte  // when set, GET /v1/jobs/{id} returns these bytes verbatim
+	artMode  string  // "", "truncate", "media": tamper with proxied artifact downloads
 	starts   atomic.Int64
 	cancels  atomic.Int64
 }
@@ -31,7 +33,18 @@ type scriptedService struct {
 func (s *scriptedService) set(f func(*scriptedService)) { s.mu.Lock(); f(s); s.mu.Unlock() }
 
 func sv(id, status string, seq int64, stages ...StageView) JobView {
-	v := JobView{SchemaVersion: JobSchema, JobID: id, Kind: "analyze", Status: status, Seq: seq, Stages: stages}
+	full := make([]StageView, 0, 3)
+	for _, name := range jobStages["analyze"] {
+		st := StageView{Name: name, Status: "pending"}
+		for _, x := range stages {
+			if x.Name == name {
+				st = x
+			}
+		}
+		full = append(full, st)
+	}
+	v := JobView{SchemaVersion: JobSchema, JobID: id, Kind: "analyze", Status: status, Seq: seq, Stages: full,
+		InputHash: "sha256:" + strings.Repeat("ab", 32)}
 	for _, st := range stages {
 		if st.ComputeMS > 0 {
 			v.Usage = append(v.Usage, UsageLine{Stage: st.Name, Unit: "compute_ms", Quantity: st.ComputeMS})
@@ -49,8 +62,26 @@ func newScripted(t *testing.T) (*scriptedService, string) {
 	s := &scriptedService{accept: true}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s.mu.Lock()
-		scripted, view, onCancel, found, accept := s.scripted, s.view, s.onCancel, s.found, s.accept
+		scripted, view, onCancel, found, accept, raw, artMode := s.scripted, s.view, s.onCancel, s.found, s.accept, s.raw, s.artMode
 		s.mu.Unlock()
+		if artMode != "" && strings.HasPrefix(r.URL.Path, "/v1/artifacts/") {
+			rec := httptest.NewRecorder()
+			proxy.ServeHTTP(rec, r)
+			body := rec.Body.Bytes()
+			for k, v := range rec.Header() {
+				w.Header()[k] = v
+			}
+			switch artMode {
+			case "truncate":
+				body = body[:len(body)/2]
+			case "media":
+				w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			}
+			w.Header().Set("Content-Length", fmt.Sprint(len(body)))
+			w.WriteHeader(rec.Code)
+			_, _ = w.Write(body)
+			return
+		}
 		isJob := strings.HasPrefix(r.URL.Path, "/v1/jobs") || r.URL.Path == "/v1/reconcile"
 		if r.Method == "POST" && r.URL.Path == "/v1/jobs" {
 			s.starts.Add(1)
@@ -80,6 +111,10 @@ func newScripted(t *testing.T) (*scriptedService, string) {
 				_ = json.NewEncoder(w).Encode(map[string]any{"found": false})
 			}
 		default:
+			if raw != nil {
+				_, _ = w.Write(raw)
+				return
+			}
 			_ = json.NewEncoder(w).Encode(view)
 		}
 	}))

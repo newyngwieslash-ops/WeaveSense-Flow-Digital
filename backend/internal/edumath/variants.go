@@ -104,7 +104,7 @@ func (s *Service) materializeVariantSet(ctx context.Context, tx *gorm.DB, job mo
 	if err := tx.First(&l, "job_id = ? AND tenant_id = ?", job.SourceJobID, job.TenantID).Error; err != nil {
 		return err
 	}
-	raw, _, err := s.Client.Artifact(ctx, job.TenantID, ta.ServiceArtifactID, ta.SHA256)
+	raw, _, err := s.Client.Artifact(ctx, job.TenantID, ta)
 	if err != nil {
 		return err
 	}

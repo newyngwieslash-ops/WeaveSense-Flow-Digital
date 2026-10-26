@@ -72,11 +72,11 @@ func TestSixFamiliesThroughPlatform(t *testing.T) {
 		h.db.First(&sa, "id = ?", l.StudentArtifact)
 		h.db.First(&ta, "id = ?", l.LessonArtifact)
 		ctx := context.Background()
-		stu, _, err := h.svc.Client.Artifact(ctx, tenant, sa.ServiceArtifactID, sa.SHA256)
+		stu, _, err := h.svc.Client.Artifact(ctx, tenant, sa)
 		if err != nil {
 			t.Fatal(err)
 		}
-		teacher, _, err := h.svc.Client.Artifact(ctx, tenant, ta.ServiceArtifactID, ta.SHA256)
+		teacher, _, err := h.svc.Client.Artifact(ctx, tenant, ta)
 		if err != nil {
 			t.Fatal(err)
 		}

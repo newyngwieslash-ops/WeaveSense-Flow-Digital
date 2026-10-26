@@ -92,6 +92,18 @@ class ServerTests(unittest.TestCase):
         st, _, _ = self.call("GET", "/v1/artifacts/" + aid, tenant="t9")
         self.assertEqual(st, 403)
 
+    def test_grade_endpoint(self):
+        body = {"expected": {"exact": "2*sqrt(22)/11"}, "response": "4/√22"}
+        st, _, _ = self.call("POST", "/v1/grade", body, sign=False)
+        self.assertEqual(st, 403)
+        st, raw, _ = self.call("POST", "/v1/grade", body)
+        self.assertEqual(st, 200, raw)
+        v = json.loads(raw)
+        self.assertEqual(v["result"], "correct")
+        self.assertNotIn("22", json.dumps({k: v[k] for k in ("result", "reason")}))
+        st, raw, _ = self.call("POST", "/v1/grade", {"response": "1"})
+        self.assertEqual(st, 400, raw)
+
     def test_mcp_protocol(self):
         init = self.mcp("initialize", {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "t", "version": "1"}})
         self.assertEqual(init["result"]["serverInfo"]["name"], "edu-math")

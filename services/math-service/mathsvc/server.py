@@ -15,7 +15,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from . import auth, catalog
 from .errors import MathError
-from .jobs import Store, Worker
+from .jobs import Store, Worker, isolated_stage
 
 MAX_BODY = 64 * 1024
 REQUEST_SCHEMA = "edu.math.request/1"
@@ -64,6 +64,14 @@ class App:
                                         str(body.get("request_id", ""))[:64], str(body.get("trace_id", ""))[:64])
         self.worker.wake.set()
         return job, created
+
+    def grade(self, body):
+        """Synchronous objective judging, run in the same isolated subprocess as job stages."""
+        out, ms = isolated_stage("grade", body if isinstance(body, dict) else {}, {}, 10)
+        if not out.get("ok"):
+            e = out["error"]
+            raise MathError(e.get("code", "INTERNAL"), e.get("message", "grade failed"))
+        return dict(out["result"], elapsed_ms=ms)
 
     def mcp_call(self, tenant, name, args, meta):
         if name in TOOL_KIND:
@@ -163,6 +171,8 @@ class Handler(BaseHTTPRequestHandler):
             m = re.fullmatch(r"/v1/jobs/(mj_[0-9a-f]{32})/cancel", self.path)
             if m:
                 return self._send(200, self.app.store.cancel(t, m.group(1)))
+            if self.path == "/v1/grade":
+                return self._send(200, self.app.grade(req))
             if self.path == "/v1/reconcile":
                 j = self.app.store.find_by_key(t, req.get("kind", ""), req.get("idempotency_key", ""))
                 return self._send(200, {"found": bool(j), "job": j})

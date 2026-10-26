@@ -27,6 +27,9 @@ def _public(d):
 
 def run_stage(stage, payload, prior):
     """prior: outputs of earlier stages of the same job (checkpoint)."""
+    if stage == "grade":
+        from .grade import grade
+        return grade(payload)
     problem = payload["problem"]
     mod = _fam(problem)
     if stage == "validate_input":

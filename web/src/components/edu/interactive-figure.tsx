@@ -275,7 +275,9 @@ export function useFigureUsage(report: (u: FigureUsage) => void) {
             rep.current(u);
         };
         const t = setInterval(flush, 15000);
-        return () => (clearInterval(t), flush());
+        const onHide = () => document.visibilityState === "hidden" && flush();
+        document.addEventListener("visibilitychange", onHide);
+        return () => (clearInterval(t), document.removeEventListener("visibilitychange", onHide), flush());
     }, []);
     return (k: keyof FigureUsage) => {
         acc.current[k] = Math.min(500, acc.current[k] + 1);

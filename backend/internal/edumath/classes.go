@@ -559,7 +559,7 @@ func (h *API) setPolicy(c *gin.Context) {
 		ReviewMode  string `json:"reviewMode"`
 		ConsentMode string `json:"consentMode"`
 		Reason      string `json:"reason"`
-		// EditReviewInherit: none (default) | pronunciation_only. Pending user decision (doc 07).
+		// EditReviewInherit: none (default) | pronunciation_only | presentation_only. Pending user decision (doc 07).
 		EditReviewInherit string `json:"editReviewInherit"`
 	}
 	if c.ShouldBindJSON(&in) != nil || (in.ReviewMode != "self_allowed" && in.ReviewMode != "second_reviewer") ||
@@ -570,8 +570,8 @@ func (h *API) setPolicy(c *gin.Context) {
 	if in.EditReviewInherit == "" {
 		in.EditReviewInherit = inheritNone
 	}
-	if in.EditReviewInherit != inheritNone && in.EditReviewInherit != inheritPronounce {
-		reply(c, 400, nil, "editReviewInherit must be none or pronunciation_only")
+	if in.EditReviewInherit != inheritNone && in.EditReviewInherit != inheritPronounce && in.EditReviewInherit != inheritPresent {
+		reply(c, 400, nil, "editReviewInherit must be none, pronunciation_only or presentation_only")
 		return
 	}
 	if in.ConsentMode == "not_applicable" && len(strings.TrimSpace(in.Reason)) < 4 {

@@ -87,8 +87,9 @@ main{max-width:980px;margin:0 auto;padding:24px}header{display:flex;justify-cont
 def page(lesson, audience):
     esc = html.escape
     fig = lesson["figure"]
+    labels = (lesson["meta"].get("layout") or {}).get("figure_labels", True) is not False
     if fig.get("kind") == "plane2d":
-        views = ['<div class="views">', '<input type="radio" name="v" id="v0" checked>', svg2d(fig).replace("<svg ", '<svg class="f0" ', 1), "</div>"]
+        views = ['<div class="views">', '<input type="radio" name="v" id="v0" checked>', svg2d(fig, labels=labels).replace("<svg ", '<svg class="f0" ', 1), "</div>"]
         return _page(lesson, audience, views)
     views = ['<div class="views">']
     for i, _ in enumerate(VIEWS):
@@ -96,7 +97,7 @@ def page(lesson, audience):
     for i, _ in enumerate(VIEWS):
         views.append('<label for="v%d">视角 %d</label>' % (i, i + 1))
     for i, (az, el) in enumerate(VIEWS):
-        views.append(svg(fig, az, el).replace("<svg ", '<svg class="f%d" ' % i, 1))
+        views.append(svg(fig, az, el, labels=labels).replace("<svg ", '<svg class="f%d" ' % i, 1))
     views.append("</div>")
     return _page(lesson, audience, views)
 
@@ -114,11 +115,17 @@ def _page(lesson, audience, views):
     if lesson.get("answer"):
         ans = '<p class="answer">答案：%s</p>' % esc(lesson["answer"]["plain"])
     badge = "教师预览（静音）" if audience == "teacher" else "学生视图（静音）"
+    lay = lesson["meta"].get("layout") or {}
+    css = CSS
+    if lay.get("font_scale") == "large":
+        css += "body{font-size:19px}.beat h3{font-size:20px}.beat p{line-height:1.9}"
+    if lay.get("columns") == "one":
+        css += ".grid{grid-template-columns:minmax(0,1fr)}"
     return ("<!doctype html><html lang=\"zh-CN\"><head><meta charset=\"utf-8\">"
             "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; img-src data:\">"
             "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>%s</title><style>%s</style></head><body><main>"
             "<header><h1>%s</h1><span class=\"badge\">%s</span></header>"
             "<section><p>%s</p></section><div class=\"grid\"><section>%s</section><section>%s%s</section></div>"
             "<section><h2>分级提示</h2><ol>%s</ol></section><footer><small>renderer %s · 无配音 · 无外部资源</small></footer></main></body></html>") % (
-        esc(lesson["meta"]["title"]), CSS, esc(lesson["meta"]["title"]), badge, esc(lesson["problem"]["text"]),
+        esc(lesson["meta"]["title"]), css, esc(lesson["meta"]["title"]), badge, esc(lesson["problem"]["text"]),
         "".join(views), "".join(beats), ans, hints, RENDERER_VERSION)

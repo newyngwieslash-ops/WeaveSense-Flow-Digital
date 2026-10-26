@@ -1,6 +1,7 @@
 package edumath
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -170,6 +171,43 @@ func runEdits(t *testing.T, h *harness) {
 	if c != 202 || r3.State != "ready_for_review" {
 		t.Fatalf("wording edit must need review: %d %+v", c, r3)
 	}
+	// Layout class (DEV-023): its own impact; pronunciation_only does not cover it, presentation_only does.
+	lay := []map[string]any{{"target": "layout", "field": "columns", "value": "one"}, {"target": "layout", "field": "font_scale", "value": "large"}}
+	if c, o, raw, _ := h.call("u_alice", "POST", lr+c2+"/edit-impact", map[string]any{"edits": lay}); c != 200 ||
+		strings.Join(toStrings(data(o)["impact"].(map[string]any)["classes"]), ",") != "layout" || data(o)["impact"].(map[string]any)["manualCheck"] != false ||
+		strings.Contains(strings.Join(toStrings(data(o)["impact"].(map[string]any)["invalidates"]), ","), "captions") {
+		t.Fatalf("layout impact: %d %s", c, raw)
+	}
+	if c, _, _, _ := h.call("u_alice", "POST", lr+c2+"/edit-impact", map[string]any{"edits": []map[string]any{{"target": "layout", "field": "color", "value": "red"}}}); c != 403 {
+		t.Fatalf("unknown layout field must be refused, got %d", c)
+	}
+	c, out, _ = save(c2, r2.LessonHash, "e-lay1", lay, true)
+	cl1, _ := child(out)
+	var rl1 model.EduLessonRevision
+	h.db.First(&rl1, "id = ?", cl1)
+	if c != 202 || rl1.State != "ready_for_review" || rl1.EditClasses != "layout" {
+		t.Fatalf("layout under pronunciation_only must need review: %d %+v", c, rl1)
+	}
+	if c, _, raw, _ := h.call("u_alice", "PUT", "/api/edu/policy", map[string]any{"reviewMode": "self_allowed", "consentMode": "guardian_required", "editReviewInherit": "presentation_only"}); c != 200 {
+		t.Fatalf("set presentation_only: %d %s", c, raw)
+	}
+	c, out, _ = save(c2, r2.LessonHash, "e-lay2", append(lay, map[string]any{"target": "pronunciation", "term": "锥", "reading": "zhuī"}), true)
+	cl2, _ := child(out)
+	var rl2 model.EduLessonRevision
+	h.db.First(&rl2, "id = ?", cl2)
+	if c != 202 || rl2.State != "approved" || rl2.ApprovalInheritedFrom != c1 && rl2.ApprovalInheritedFrom != c2 {
+		t.Fatalf("layout+pronunciation under presentation_only must inherit: %d %+v", c, rl2)
+	}
+	if c, o, raw, _ := h.call("u_alice", "GET", lr+cl2+"/editable", nil); c != 200 || data(o)["layout"].(map[string]any)["columns"] != "one" {
+		t.Fatalf("editable layout: %d %s", c, raw)
+	}
+	c, out, _ = save(c2, r2.LessonHash, "e-lay3", append(lay, other...), true)
+	cl3, _ := child(out)
+	var rl3 model.EduLessonRevision
+	h.db.First(&rl3, "id = ?", cl3)
+	if c != 202 || rl3.State != "ready_for_review" {
+		t.Fatalf("layout plus wording must need review: %d %+v", c, rl3)
+	}
 	h.db.Save(&model.EduOrgPolicy{TenantID: tenant, ReviewMode: "self_allowed", ConsentMode: "guardian_required", EditReviewInherit: "none"})
 	c, out, _ = save(c2, r2.LessonHash, "e-pron2", []map[string]any{{"target": "pronunciation", "term": "锥", "reading": "zhuī"}}, true)
 	c4, _ := child(out)
@@ -189,4 +227,13 @@ func runEdits(t *testing.T, h *harness) {
 	if n != 1 {
 		t.Fatalf("failed edit must be recorded as failed, got %d", n)
 	}
+}
+
+func toStrings(v any) []string {
+	out := []string{}
+	l, _ := v.([]any)
+	for _, x := range l {
+		out = append(out, fmt.Sprint(x))
+	}
+	return out
 }

@@ -224,9 +224,38 @@ class LessonEditJobTests(unittest.TestCase):
         v = self.edit([{"target": "beat", "id": self.base["beats"][0]["id"], "field": "say", "value": "x"}], key="t2", tenant="t2")
         self.assertEqual(v["status"], "failed")
 
+    def test_layout_edit_changes_preview_only(self):
+        v = self.edit([{"target": "layout", "field": "font_scale", "value": "large"},
+                       {"target": "layout", "field": "columns", "value": "one"},
+                       {"target": "layout", "field": "figure_labels", "value": False}], key="lay")
+        self.assertEqual(v["status"], "succeeded", v.get("error"))
+        lesson = v["_checkpoint"]["apply_edits"]["lesson"]
+        self.assertEqual(lesson["meta"]["layout"], {"font_scale": "large", "columns": "one", "figure_labels": False})
+        self.assertEqual(lesson["beats"], self.base["beats"])
+        self.assertEqual(lesson["answer"], self.base["answer"])
+        self.assertEqual(lesson["quality"]["edited_unverified"], [])
+        self.assertEqual(v["_checkpoint"]["apply_edits"]["impact"]["classes"], ["layout"])
+        self.assertFalse(v["_checkpoint"]["apply_edits"]["impact"]["manual_check"])
+        kinds = {r["kind"]: r for r in v["result_refs"]}
+        _, html = self.s.get_artifact("t1", kinds["preview_html"]["artifact_id"])
+        html = html.decode("utf-8")
+        self.assertIn("font-size:19px", html)
+        self.assertIn(".grid{grid-template-columns:minmax(0,1fr)}", html)
+        self.assertNotIn('font-size="14">', html)  # figure labels hidden
+        _, sd = self.s.get_artifact("t1", kinds["lesson_student"]["artifact_id"])
+        import json as _json
+        self.assertEqual(_json.loads(sd)["meta"]["layout"]["columns"], "one")
+        for bad in ({"target": "layout", "field": "font_scale", "value": "huge"}, {"target": "layout", "field": "figure_labels", "value": 0},
+                    {"target": "layout", "field": "color", "value": "red"}):
+            v = self.edit([bad], key="lay-bad-%s-%s" % (bad["field"], bad["value"]))
+            self.assertEqual(v["status"], "failed", bad)
+
     def test_impact_classes(self):
         from mathsvc import edits
         self.assertEqual(edits.impact([{"target": "pronunciation", "term": "棱", "reading": "léng"}])["invalidates"], ["captions", "media"])
         self.assertIn("review", edits.impact([{"target": "beat", "id": "s1", "field": "title", "value": "x"}])["invalidates"])
+        lay = edits.impact([{"target": "layout", "field": "columns", "value": "one"}])
+        self.assertEqual(lay["invalidates"], ["media", "preview", "review", "student_projection"])
+        self.assertNotIn("captions", lay["invalidates"])
         with self.assertRaises(MathError):
             edits.impact([])

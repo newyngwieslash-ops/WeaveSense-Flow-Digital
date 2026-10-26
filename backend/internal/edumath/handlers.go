@@ -24,7 +24,9 @@ type API struct {
 
 // Register mounts /api/edu/* on the given group (expects the group at /api).
 func (h *API) Register(api *gin.RouterGroup) {
+	api.POST("/edu-join", h.join) // outside the tenant-scoped middleware (see join)
 	g := api.Group("/edu", Middleware(h.DB, h.User))
+	h.registerClasses(g)
 	g.GET("/me", h.me)
 	g.POST("/roles", h.bindRole)
 	g.POST("/problems", h.createProblem)
@@ -50,6 +52,8 @@ func (h *API) fail(c *gin.Context, err error) {
 	switch {
 	case errors.As(err, &ae):
 		c.JSON(ae.Status, gin.H{"code": ae.Status, "data": gin.H{"error": gin.H{"code": ae.Code, "message": ae.Message, "next_action": ae.NextAction}}, "msg": ae.Message})
+	case errors.Is(err, ErrConsent):
+		c.JSON(http.StatusForbidden, gin.H{"code": 403, "data": gin.H{"error": gin.H{"code": "CONSENT_REQUIRED", "message": "guardian consent is missing or withdrawn", "next_action": "contact_institution"}}, "msg": "consent required"})
 	case errors.Is(err, ErrNotFound):
 		reply(c, http.StatusNotFound, nil, "not found")
 	case errors.Is(err, ErrNoRole), errors.Is(err, ErrForbidden):
@@ -106,7 +110,7 @@ func (h *API) me(c *gin.Context) {
 }
 
 // bindRole: tenant owner/admin or org_admin binds staff roles. Students join via
-// class invitations (FR-I01; next increment), never through this endpoint.
+// class invitations (POST /api/edu-join), never through this endpoint.
 func (h *API) bindRole(c *gin.Context) {
 	u, _ := c.Get("edumath.user")
 	user := u.(*model.User)
@@ -424,6 +428,10 @@ func (h *API) artifactURL(c *gin.Context) {
 func (h *API) studentAssignments(c *gin.Context) {
 	a, tx, ok := h.student(c)
 	if !ok {
+		return
+	}
+	if !consentOK(tx, a.TenantID, a.UserID) {
+		h.fail(c, ErrConsent)
 		return
 	}
 	var classIDs []string

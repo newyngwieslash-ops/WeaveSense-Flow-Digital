@@ -9,10 +9,14 @@ import "time"
 
 // EduOrgPolicy holds per-tenant education policies (FR-I04/I05).
 type EduOrgPolicy struct {
-	TenantID   string    `json:"tenantId" gorm:"primaryKey;size:40"`
-	ReviewMode string    `json:"reviewMode" gorm:"size:24;not null;default:self_allowed"` // self_allowed | second_reviewer
-	UpdatedBy  string    `json:"updatedBy" gorm:"size:40"`
-	UpdatedAt  time.Time `json:"updatedAt"`
+	TenantID   string `json:"tenantId" gorm:"primaryKey;size:40"`
+	ReviewMode string `json:"reviewMode" gorm:"size:24;not null;default:self_allowed"` // self_allowed | second_reviewer
+	// ConsentMode (FR-I05): guardian_required (default; empty is treated the same)
+	// blocks every student learning access until an org admin records consent with
+	// evidence; not_applicable is an explicit, audited admin decision (e.g. adults).
+	ConsentMode string    `json:"consentMode" gorm:"size:24;not null;default:guardian_required"`
+	UpdatedBy   string    `json:"updatedBy" gorm:"size:40"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
 func (EduOrgPolicy) TableName() string { return "edu_org_policies" }
@@ -66,6 +70,40 @@ type EduEnrollment struct {
 }
 
 func (EduEnrollment) TableName() string { return "edu_enrollments" }
+
+// EduClassInvite is a class join code. Only the SHA-256 of the secret is stored;
+// the code handed to students is "<id>.<secret>" and is shown once.
+type EduClassInvite struct {
+	ID         string    `json:"id" gorm:"primaryKey;size:40"`
+	TenantID   string    `json:"tenantId" gorm:"size:40;not null;index"`
+	ClassID    string    `json:"classId" gorm:"size:40;not null;index"`
+	SecretHash string    `json:"-" gorm:"size:80;not null"`
+	ExpiresAt  time.Time `json:"expiresAt"`
+	MaxUses    int       `json:"maxUses"`
+	Uses       int       `json:"uses"`
+	Status     string    `json:"status" gorm:"size:16;not null;default:active"` // active | revoked
+	CreatedBy  string    `json:"createdBy" gorm:"size:40"`
+	CreatedAt  time.Time `json:"createdAt"`
+}
+
+func (EduClassInvite) TableName() string { return "edu_class_invites" }
+
+// EduConsentRecord is the current guardian-consent state of one student in one
+// institution (history lives in edu_audit_events). Recorded by an org admin with
+// an evidence reference; a teacher's checkbox cannot create it (AC-04).
+type EduConsentRecord struct {
+	ID            string    `json:"id" gorm:"primaryKey;size:40"`
+	TenantID      string    `json:"tenantId" gorm:"size:40;not null;uniqueIndex:ux_edu_consent,priority:1"`
+	StudentUserID string    `json:"studentUserId" gorm:"size:40;not null;uniqueIndex:ux_edu_consent,priority:2"`
+	Kind          string    `json:"kind" gorm:"size:24;not null;uniqueIndex:ux_edu_consent,priority:3"` // guardian
+	Status        string    `json:"status" gorm:"size:16;not null"`                                     // granted | withdrawn
+	EvidenceRef   string    `json:"evidenceRef" gorm:"size:300;not null"`
+	RecordedBy    string    `json:"recordedBy" gorm:"size:40;not null"`
+	CreatedAt     time.Time `json:"createdAt"`
+	UpdatedAt     time.Time `json:"updatedAt"`
+}
+
+func (EduConsentRecord) TableName() string { return "edu_consent_records" }
 
 type EduProblem struct {
 	ID             string    `json:"id" gorm:"primaryKey;size:40"`
@@ -256,5 +294,5 @@ func (EduAuditEvent) TableName() string { return "edu_audit_events" }
 func EduModels() []any {
 	return []any{&EduOrgPolicy{}, &EduRoleBinding{}, &EduClass{}, &EduTeachingAssignment{}, &EduEnrollment{}, &EduProblem{},
 		&EduProblemRevision{}, &EduMathJob{}, &EduStageRun{}, &EduArtifact{}, &EduSolutionRevision{}, &EduLessonRevision{},
-		&EduReviewRecord{}, &EduPublication{}, &EduAssignment{}, &EduAuditEvent{}}
+		&EduReviewRecord{}, &EduPublication{}, &EduAssignment{}, &EduAuditEvent{}, &EduClassInvite{}, &EduConsentRecord{}}
 }

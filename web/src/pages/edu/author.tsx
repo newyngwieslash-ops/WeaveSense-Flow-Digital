@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { VariantSetPanel } from "@/components/edu/variant-set";
 import { edu, newClientKey, type EduScope } from "@/services/api/edu";
 import { listIntelWorkspaces, type IntelWorkspace } from "@/services/api/intelligence";
 
@@ -71,6 +72,8 @@ export default function TeacherAuthoring() {
     const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
     const [assign, setAssign] = useState({ classId: "", title: "", dueAt: "", answerPolicy: "teacher_release", unitPolicy: "required", approxAllowed: false, allowLate: false });
     const [msg, setMsg] = useState("");
+    const [pubs, setPubs] = useState<{ id: string; lessonRevisionId: string; title: string; familyId: string; createdAt: string }[]>([]);
+    const [variantSetId, setVariantSetId] = useState("");
     const aj = useJob(scope, analyzeJob);
     const lj = useJob(scope, lessonJob);
 
@@ -81,8 +84,12 @@ export default function TeacherAuthoring() {
         });
     }, []);
     useEffect(() => {
-        if (ws) void edu<{ id: string; name: string }[]>("get", "/classes", scope).then((r) => r.ok && setClasses(r.data));
-    }, [ws, scope]);
+        if (!ws) return;
+        void edu<{ id: string; name: string }[]>("get", "/classes", scope).then((r) => r.ok && setClasses(r.data));
+        void edu<typeof pubs>("get", "/publications", scope).then((r) => r.ok && setPubs(r.data));
+    }, [ws, scope, publicationId]);
+    // The variant set must come from the same lesson revision as the publication being assigned.
+    const variantLesson = pubs.find((p) => p.id === publicationId)?.lessonRevisionId || lesson?.id || "";
     useEffect(() => {
         if (aj?.solutionRevisionId) void edu<Solution>("get", `/solution-revisions/${aj.solutionRevisionId}`, scope).then((r) => r.ok && setSolution(r.data));
     }, [aj?.solutionRevisionId, scope]);
@@ -163,6 +170,7 @@ export default function TeacherAuthoring() {
             answerPolicy: assign.answerPolicy,
             approxAllowed: assign.approxAllowed,
             unitPolicy: assign.unitPolicy,
+            variantSetId: variantSetId || undefined,
         });
         setMsg(r.ok ? "已布置到班级" : `${r.code}：${r.message}`);
     };
@@ -263,8 +271,33 @@ export default function TeacherAuthoring() {
             </section>
 
             <section className={`${box} mt-4`}>
-                <h2 className="mb-2 font-semibold">4. 布置到班级</h2>
+                <h2 className="mb-2 font-semibold">4. 举一反三自测题组（可选）</h2>
+                {variantLesson ? (
+                    <VariantSetPanel scope={scope} lessonId={variantLesson} picked={variantSetId} onPick={setVariantSetId} />
+                ) : (
+                    <p className="text-sm text-stone-500">先生成讲解或选择已发布的讲解。不选题组时，学生自测使用讲解自带的一道同构题。</p>
+                )}
+            </section>
+
+            <section className={`${box} mt-4`}>
+                <h2 className="mb-2 font-semibold">5. 布置到班级</h2>
                 <div className="grid gap-2 text-sm md:grid-cols-2">
+                    <select
+                        className="h-9 rounded-md border px-2 md:col-span-2"
+                        value={publicationId}
+                        onChange={(e) => {
+                            setPublicationId(e.target.value);
+                            setVariantSetId("");
+                        }}
+                    >
+                        <option value="">选择已发布的讲解</option>
+                        {pubs.map((p) => (
+                            <option key={p.id} value={p.id}>
+                                {p.title || p.familyId}（{new Date(p.createdAt).toLocaleString()}）
+                            </option>
+                        ))}
+                    </select>
+                    {variantSetId ? <p className="md:col-span-2">自测使用已审核题组 {variantSetId.slice(-6)}，学生全部提交后才显示结果</p> : null}
                     <select className="h-9 rounded-md border px-2" value={assign.classId} onChange={(e) => setAssign({ ...assign, classId: e.target.value })}>
                         <option value="">选择班级</option>
                         {classes.map((c) => (

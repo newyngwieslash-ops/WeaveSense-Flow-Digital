@@ -115,8 +115,10 @@ func (h *API) lessonFor(c *gin.Context, tx *gorm.DB, tenantID string, pub model.
 	return t, nil
 }
 
-func (h *API) closedForWrites(as model.EduAssignment) (late bool, closed bool) {
-	if as.DueAt == nil || !h.Svc.now().After(*as.DueAt) {
+// closedForWrites uses the student's effective due time (assignment due or a later per student extension, AC-21).
+func (h *API) closedForWrites(tx *gorm.DB, as model.EduAssignment, userID string) (late bool, closed bool) {
+	due := h.effectiveDue(tx, as, userID)
+	if due == nil || !h.Svc.now().After(*due) {
 		return false, false
 	}
 	return true, !as.AllowLate
@@ -134,7 +136,9 @@ func (h *API) answerReleased(tx *gorm.DB, as model.EduAssignment, userID string)
 	}
 	switch as.AnswerPolicy {
 	case "after_due":
-		return as.DueAt != nil && !h.Svc.now().Before(*as.DueAt)
+		// Pending user decision (docs 05 question 10): release follows the student's own effective due time.
+		due := h.effectiveDue(tx, as, userID)
+		return due != nil && !h.Svc.now().Before(*due)
 	case "after_submission":
 		return hasValidMain(tx, as.TenantID, as.ID, userID)
 	}
@@ -193,19 +197,39 @@ func (h *API) submitAttempt(c *gin.Context) {
 	if in.Item == "" {
 		in.Item = "main"
 	}
-	if (in.Item != "main" && in.Item != "check") || (in.Kind != "answer" && in.Kind != "no_idea") || (in.Kind == "no_idea" && in.Item != "main") {
-		reply(c, 400, nil, "item must be main|check, kind answer|no_idea (no_idea only for main)")
+	// With an approved variant set attached, the set is the self-test unit and its item ids replace "check".
+	var setItems []gin.H
+	var setKeys map[string]answerKey
+	if as.VariantSetID != "" && in.Item != "main" {
+		var err error
+		if setItems, setKeys, err = studentVariantItems(tx, a.TenantID, as.VariantSetID); err != nil {
+			h.fail(c, err)
+			return
+		}
+	}
+	_, isSetItem := setKeys[in.Item]
+	itemOK := in.Item == "main" || (as.VariantSetID == "" && in.Item == "check") || isSetItem
+	if !itemOK || (in.Kind != "answer" && in.Kind != "no_idea") || (in.Kind == "no_idea" && in.Item != "main") {
+		reply(c, 400, nil, "item must be main, check or a self-test set item; kind answer|no_idea (no_idea only for main)")
 		return
 	}
-	late, closed := h.closedForWrites(as)
+	late, closed := h.closedForWrites(tx, as, a.UserID)
 	if closed {
 		h.fail(c, appErr(409, "ASSIGNMENT_CLOSED", "the due time has passed and late submission is off", "contact_teacher"))
 		return
 	}
 	var st model.EduSelfTest
-	if in.Item == "check" {
+	if in.Item != "main" {
 		if tx.First(&st, "tenant_id = ? AND assignment_id = ? AND student_user_id = ?", a.TenantID, as.ID, a.UserID).Error != nil || st.State != "started" {
 			h.fail(c, appErr(409, "SELFTEST_NOT_STARTED", "start the self-test before answering it; it can be submitted once", "start_selftest"))
+			return
+		}
+	}
+	if isSetItem {
+		var n int64
+		tx.Model(&model.EduAttempt{}).Where("tenant_id = ? AND assignment_id = ? AND student_user_id = ? AND item = ? AND valid = ?", a.TenantID, as.ID, a.UserID, in.Item, true).Count(&n)
+		if n > 0 {
+			h.fail(c, appErr(409, "ITEM_ALREADY_SUBMITTED", "each self-test item is submitted once", "next_item"))
 			return
 		}
 	}
@@ -244,6 +268,9 @@ func (h *API) submitAttempt(c *gin.Context) {
 		if in.Item == "check" {
 			exp = map[string]any{"exact": lesson.CheckAnswerKey.Exact, "plain": lesson.CheckAnswerKey.Plain}
 		}
+		if isSetItem {
+			exp = map[string]any{"exact": setKeys[in.Item].Exact, "plain": setKeys[in.Item].Plain}
+		}
 		ctx, cancel := ctx15(c)
 		g, gerr := h.Svc.Client.Grade(ctx, a.TenantID, map[string]any{"expected": exp, "response": at.Response,
 			"approx": map[string]any{"allowed": as.ApproxAllowed, "rel_tol": 1e-3}, "unit_policy": as.UnitPolicy})
@@ -275,6 +302,13 @@ func (h *API) submitAttempt(c *gin.Context) {
 				return err
 			}
 		}
+		if isSetItem && at.Valid && setDone(t, a.TenantID, as.ID, a.UserID, setItems) {
+			now := h.Svc.now()
+			if err := t.Model(&st).Updates(map[string]any{"state": "submitted", "submitted_at": now, "attempt_id": at.ID}).Error; err != nil {
+				return err
+			}
+			st.State = "submitted"
+		}
 		if in.Item == "main" && at.Valid {
 			return h.scheduleReview(t, a, as, at, rv)
 		}
@@ -290,7 +324,12 @@ func (h *API) submitAttempt(c *gin.Context) {
 		return
 	}
 	h.Svc.audit(tx, a, "attempt.submit", as.ID, at.ID+" item="+at.Item+" result="+at.Result)
-	reply(c, 201, gin.H{"attempt": at, "answerAvailable": h.answerReleased(tx, as, a.UserID)}, "ok")
+	if isSetItem && st.State != "submitted" {
+		// FR-S08 / AC-28: no correctness feedback until every item of the unit is submitted.
+		reply(c, 201, gin.H{"attempt": maskSetAttempt(at), "answerAvailable": false, "selfTestComplete": false}, "ok")
+		return
+	}
+	reply(c, 201, gin.H{"attempt": at, "answerAvailable": h.answerReleased(tx, as, a.UserID), "selfTestComplete": in.Item != "main" && st.State == "submitted"}, "ok")
 }
 
 var reviewGaps = []time.Duration{24 * time.Hour, 72 * time.Hour, 168 * time.Hour}
@@ -430,7 +469,7 @@ func (h *API) startSelfTest(c *gin.Context) {
 	if !ok {
 		return
 	}
-	if _, closed := h.closedForWrites(as); closed {
+	if _, closed := h.closedForWrites(tx, as, a.UserID); closed {
 		h.fail(c, appErr(409, "ASSIGNMENT_CLOSED", "the due time has passed and late submission is off", "contact_teacher"))
 		return
 	}
@@ -449,6 +488,15 @@ func (h *API) startSelfTest(c *gin.Context) {
 		if err := tx.Transaction(func(t *gorm.DB) error { return t.Create(&st).Error }); err != nil {
 			tx.First(&st, "tenant_id = ? AND assignment_id = ? AND student_user_id = ?", a.TenantID, as.ID, a.UserID)
 		}
+	}
+	if as.VariantSetID != "" {
+		items, _, err := studentVariantItems(tx, a.TenantID, as.VariantSetID)
+		if err != nil {
+			h.fail(c, err)
+			return
+		}
+		reply(c, 200, gin.H{"selfTest": st, "measurement": "set", "questions": items}, "ok")
+		return
 	}
 	q := gin.H{}
 	for _, k := range []string{"id", "prompt", "params", "answer_format", "unit"} {
@@ -470,13 +518,36 @@ func (h *API) learningState(c *gin.Context) {
 	hasST := tx.First(&st, "tenant_id = ? AND assignment_id = ? AND student_user_id = ?", a.TenantID, as.ID, a.UserID).Error == nil
 	var rv model.EduReviewItem
 	hasRV := tx.First(&rv, "tenant_id = ? AND assignment_id = ? AND student_user_id = ?", a.TenantID, as.ID, a.UserID).Error == nil
-	late, closed := h.closedForWrites(as)
+	late, closed := h.closedForWrites(tx, as, a.UserID)
 	out := gin.H{
 		"policy": gin.H{"startsAt": as.StartsAt, "dueAt": as.DueAt, "allowLate": as.AllowLate, "answerPolicy": as.AnswerPolicy,
 			"answerAvailable": h.answerReleased(tx, as, a.UserID), "late": late, "closed": closed, "unitPolicy": as.UnitPolicy, "approxAllowed": as.ApproxAllowed},
 		"attempts": ats, "hintLevels": unlockedLevels(tx, a.TenantID, as.ID, a.UserID), "selfTest": nil, "review": nil,
 	}
-	if hasST {
+	if as.VariantSetID != "" && (!hasST || st.State != "submitted") {
+		for i := range ats {
+			if ats[i].Item != "main" {
+				ats[i] = maskSetAttempt(ats[i])
+			}
+		}
+	}
+	if due := h.effectiveDue(tx, as, a.UserID); due != nil && (as.DueAt == nil || !due.Equal(*as.DueAt)) {
+		out["policy"].(gin.H)["extendedDueAt"] = due
+	}
+	if hasST && as.VariantSetID != "" {
+		stv := gin.H{"state": st.State, "helpUsed": st.HelpUsed, "sawSolution": st.SawSolution, "startedAt": st.StartedAt, "submittedAt": st.SubmittedAt, "measurement": "set"}
+		if items, keys, err := studentVariantItems(tx, a.TenantID, as.VariantSetID); err == nil {
+			stv["questions"] = items
+			if st.State == "submitted" {
+				ks := gin.H{}
+				for id, k := range keys {
+					ks[id] = gin.H{"plain": k.Plain, "latex": k.Latex}
+				}
+				stv["answerKeys"] = ks
+			}
+		}
+		out["selfTest"] = stv
+	} else if hasST {
 		stv := gin.H{"state": st.State, "helpUsed": st.HelpUsed, "sawSolution": st.SawSolution, "startedAt": st.StartedAt, "submittedAt": st.SubmittedAt}
 		if st.State == "submitted" { // the key is shown only after submission
 			if lesson, err := h.lessonFor(c, tx, a.TenantID, pub); err == nil {
@@ -557,6 +628,8 @@ func (h *API) progress(c *gin.Context) {
 		AssignmentID, Title, First, Check string
 		CheckIndependent                  bool
 		Attempts                          int
+		IsSet                             bool
+		Checks                            []model.EduAttempt
 	}
 	rows := map[string]*row{}
 	order := []string{}
@@ -568,7 +641,7 @@ func (h *API) progress(c *gin.Context) {
 			if err != nil {
 				continue
 			}
-			r = &row{AssignmentID: as.ID, Title: as.Title}
+			r = &row{AssignmentID: as.ID, Title: as.Title, IsSet: as.VariantSetID != ""}
 			rows[at.AssignmentID] = r
 			order = append(order, at.AssignmentID)
 		}
@@ -578,12 +651,27 @@ func (h *API) progress(c *gin.Context) {
 				r.First = statusLabel(effective(at))
 			}
 		} else {
-			r.Check, r.CheckIndependent = statusLabel(effective(at)), at.Independent
-			if at.Independent && r.Check != "pending_judgement" {
-				indep++
-				if r.Check == "correct" {
-					indepCorrect++
-				}
+			r.Checks = append(r.Checks, at)
+		}
+	}
+	// The self-test unit (one check question or a whole variant set) is one measurement (FR-S08).
+	for _, id := range order {
+		r := rows[id]
+		if len(r.Checks) == 0 {
+			continue
+		}
+		if r.IsSet {
+			var st model.EduSelfTest
+			if tx.First(&st, "tenant_id = ? AND assignment_id = ? AND student_user_id = ?", a.TenantID, id, a.UserID).Error != nil || st.State != "submitted" {
+				r.Check = "in_progress" // no correctness before the whole unit is submitted
+				continue
+			}
+		}
+		r.Check, r.CheckIndependent = unitLabel(r.Checks), unitIndependent(r.Checks)
+		if r.CheckIndependent && r.Check != "pending_judgement" {
+			indep++
+			if r.Check == "correct" {
+				indepCorrect++
 			}
 		}
 	}
@@ -679,4 +767,62 @@ func (h *API) releaseAnswer(c *gin.Context) {
 		h.Svc.audit(tx, a, "assignment.release_answer", as.ClassID, as.ID)
 	}
 	reply(c, 200, gin.H{"id": as.ID, "answerReleasedAt": as.AnswerReleasedAt}, "ok")
+}
+
+func setDone(tx *gorm.DB, tenantID, asID, userID string, items []gin.H) bool {
+	var done []string
+	tx.Model(&model.EduAttempt{}).Where("tenant_id = ? AND assignment_id = ? AND student_user_id = ? AND item <> ? AND valid = ?", tenantID, asID, userID, "main", true).
+		Distinct("item").Pluck("item", &done)
+	got := map[string]bool{}
+	for _, d := range done {
+		got[d] = true
+	}
+	for _, it := range items {
+		if !got[it["id"].(string)] {
+			return false
+		}
+	}
+	return true
+}
+
+// maskSetAttempt hides correctness of a set item until the whole unit is submitted (FR-S08).
+func maskSetAttempt(at model.EduAttempt) model.EduAttempt {
+	if at.Valid {
+		at.Result, at.Reason, at.Grader = "recorded", "", ""
+		at.TeacherResult, at.TeacherNote, at.TeacherBy = "", "", ""
+	}
+	return at
+}
+
+// unitLabel summarises a self-test unit: every item correct, some correct (partial), pending if any
+// item awaits judgement, otherwise incorrect. A single check question keeps its own label.
+func unitLabel(ats []model.EduAttempt) string {
+	if len(ats) == 1 {
+		return statusLabel(effective(ats[0]))
+	}
+	correct := 0
+	for _, at := range ats {
+		switch statusLabel(effective(at)) {
+		case "pending_judgement":
+			return "pending_judgement"
+		case "correct":
+			correct++
+		}
+	}
+	switch {
+	case correct == len(ats):
+		return "correct"
+	case correct > 0:
+		return "partial"
+	}
+	return "incorrect"
+}
+
+func unitIndependent(ats []model.EduAttempt) bool {
+	for _, at := range ats {
+		if !at.Independent {
+			return false
+		}
+	}
+	return len(ats) > 0
 }

@@ -162,6 +162,9 @@ type EduMathJob struct {
 	CreatedBy         string    `json:"createdBy" gorm:"size:40"`
 	CreatedAt         time.Time `json:"createdAt"`
 	UpdatedAt         time.Time `json:"updatedAt"`
+	// Options holds kind specific input that is not derivable from the revision (variant_set: {"count":n}),
+	// kept so a proven not executed submit can be resent under the same key with the same input.
+	Options string `json:"options,omitempty" gorm:"size:200"`
 }
 
 func (EduMathJob) TableName() string { return "edu_math_jobs" }
@@ -282,6 +285,9 @@ type EduAssignment struct {
 	AnswerReleasedAt *time.Time `json:"answerReleasedAt,omitempty"`
 	ApproxAllowed    bool       `json:"approxAllowed" gorm:"not null;default:false"`
 	UnitPolicy       string     `json:"unitPolicy" gorm:"size:16;not null;default:required"` // required | optional
+	// VariantSetID, when set, makes the approved variant set the self-test measurement unit (FR-S08, AC-22).
+	// Fixed at creation; never swapped on a live assignment (FR-T09).
+	VariantSetID string `json:"variantSetId,omitempty" gorm:"size:40"`
 }
 
 func (EduAssignment) TableName() string { return "edu_assignments" }
@@ -451,5 +457,64 @@ func EduModels() []any {
 		&EduProblemRevision{}, &EduMathJob{}, &EduStageRun{}, &EduArtifact{}, &EduSolutionRevision{}, &EduLessonRevision{},
 		&EduReviewRecord{}, &EduPublication{}, &EduAssignment{}, &EduAuditEvent{}, &EduClassInvite{}, &EduConsentRecord{},
 		&EduAttempt{}, &EduHintUnlock{}, &EduSelfTest{}, &EduReviewItem{}, &EduHelpRequest{}, &EduHelpReply{},
-		&EduPrediction{}, &EduFigureInteraction{}}
+		&EduPrediction{}, &EduFigureInteraction{}, &EduVariantSet{}, &EduVariantReview{}, &EduAssignmentExtension{}}
 }
+
+// EduVariantSet is a finite set of numbers only variants of a lesson's problem (FR-M07, FR-T11, AC-22).
+// Every item was independently re-solved and verified by the math service; it reaches students only after
+// a review bound to SetHash approves it and an assignment references it. AnswerKeys never leaves staff APIs.
+type EduVariantSet struct {
+	ID                string     `json:"id" gorm:"primaryKey;size:40"`
+	TenantID          string     `json:"tenantId" gorm:"size:40;not null;index"`
+	WorkspaceID       string     `json:"workspaceId" gorm:"size:40;not null"`
+	LessonRevisionID  string     `json:"lessonRevisionId" gorm:"size:40;not null;index"`
+	ProblemRevisionID string     `json:"problemRevisionId" gorm:"size:40;not null"`
+	JobID             string     `json:"jobId" gorm:"size:40;not null;uniqueIndex"`
+	ArtifactID        string     `json:"artifactId" gorm:"size:40"`
+	StudentArtifactID string     `json:"studentArtifactId" gorm:"size:40"`
+	SetHash           string     `json:"setHash" gorm:"size:80;not null"`
+	FamilyID          string     `json:"familyId" gorm:"size:40"`
+	Requested         int        `json:"requested"`
+	ItemCount         int        `json:"itemCount"`
+	ItemsJSON         string     `json:"-" gorm:"type:text"` // public item fields (prompt, params, change type, evidence)
+	AnswerKeysJSON    string     `json:"-" gorm:"type:text"` // teacher only
+	DroppedJSON       string     `json:"-" gorm:"type:text"`
+	State             string     `json:"state" gorm:"size:24;not null"` // ready_for_review | approved | rejected
+	BlockingErrors    string     `json:"blockingErrors,omitempty" gorm:"size:400"`
+	CreatedBy         string     `json:"createdBy" gorm:"size:40"`
+	CreatedAt         time.Time  `json:"createdAt"`
+	ReviewedAt        *time.Time `json:"reviewedAt,omitempty"`
+}
+
+func (EduVariantSet) TableName() string { return "edu_variant_sets" }
+
+// EduVariantReview binds a decision to the exact set hash (constraint 3).
+type EduVariantReview struct {
+	ID           string    `json:"id" gorm:"primaryKey;size:40"`
+	TenantID     string    `json:"tenantId" gorm:"size:40;not null;index"`
+	VariantSetID string    `json:"variantSetId" gorm:"size:40;not null;index"`
+	SetHash      string    `json:"setHash" gorm:"size:80;not null"`
+	ReviewerID   string    `json:"reviewerId" gorm:"size:40;not null"`
+	SelfReview   bool      `json:"selfReview"`
+	Decision     string    `json:"decision" gorm:"size:16;not null"`
+	Comment      string    `json:"comment" gorm:"size:1000"`
+	CreatedAt    time.Time `json:"createdAt"`
+}
+
+func (EduVariantReview) TableName() string { return "edu_variant_reviews" }
+
+// EduAssignmentExtension moves one student's due time (AC-21). Stored in UTC; the server computes
+// the effective due time for writes and for after_due answer release.
+type EduAssignmentExtension struct {
+	ID            string    `json:"id" gorm:"primaryKey;size:40"`
+	TenantID      string    `json:"tenantId" gorm:"size:40;not null;uniqueIndex:ux_edu_extension,priority:1"`
+	AssignmentID  string    `json:"assignmentId" gorm:"size:40;not null;uniqueIndex:ux_edu_extension,priority:2"`
+	StudentUserID string    `json:"studentUserId" gorm:"size:40;not null;uniqueIndex:ux_edu_extension,priority:3"`
+	DueAt         time.Time `json:"dueAt"`
+	Reason        string    `json:"reason" gorm:"size:200"`
+	CreatedBy     string    `json:"createdBy" gorm:"size:40"`
+	CreatedAt     time.Time `json:"createdAt"`
+	UpdatedAt     time.Time `json:"updatedAt"`
+}
+
+func (EduAssignmentExtension) TableName() string { return "edu_assignment_extensions" }

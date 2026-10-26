@@ -239,13 +239,19 @@ func (h *API) dashboard(c *gin.Context) {
 		hinted[x.StudentUserID] = true
 	}
 	main := map[string][]model.EduAttempt{}
-	check := map[string]model.EduAttempt{}
+	check := map[string][]model.EduAttempt{}
 	for _, at := range ats {
 		if at.Item == "main" {
 			main[at.StudentUserID] = append(main[at.StudentUserID], at)
 		} else {
-			check[at.StudentUserID] = at
+			check[at.StudentUserID] = append(check[at.StudentUserID], at)
 		}
+	}
+	submitted := map[string]bool{}
+	var sts []model.EduSelfTest
+	tx.Where("tenant_id = ? AND assignment_id = ? AND state = ?", as.TenantID, as.ID, "submitted").Find(&sts)
+	for _, st := range sts {
+		submitted[st.StudentUserID] = true
 	}
 	dist := map[string]int{"not_started": 0, "attempted": 0, "completed_independently": 0, "completed_after_hints": 0, "pending_teacher": 0}
 	selfIndep, selfCorrect := 0, 0
@@ -277,9 +283,10 @@ func (h *API) dashboard(c *gin.Context) {
 				dist["attempted"]++
 			}
 		}
-		if ck, ok := check[s]; ok && ck.Independent {
+		// One self-test unit per student, counted only once the whole unit is submitted.
+		if ck := check[s]; len(ck) > 0 && submitted[s] && unitIndependent(ck) {
 			selfIndep++
-			if r := effective(ck); r == "correct" || r == "correct_approx" {
+			if unitLabel(ck) == "correct" {
 				selfCorrect++
 			}
 		}

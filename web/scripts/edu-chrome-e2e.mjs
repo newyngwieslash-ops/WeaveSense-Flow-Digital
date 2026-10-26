@@ -275,6 +275,45 @@ async function run(cdp, base, api, seed) {
     }
     assert(summary && summary.figure.studentsKeyboardOrForm === 1 && summary.predictions.foot?.[0]?.count === 1, "E19 图形使用与预测以汇总形式到达教师端", JSON.stringify(summary));
 
+    // Variant set self-test (FR-S08): no result or key before the last item, results after.
+    const { setAssignmentId: sas, setItems, setMarkers } = seed;
+    const leaksSet = (t) => setMarkers.filter((m) => t.includes(m));
+    const before = cdp.bodies.length;
+    await cdp.send("Page.navigate", { url: `${base}/dev/edu-learn/${sas}?tenant=${encodeURIComponent(tenant)}` });
+    assert(await cdp.poll(`document.body.innerText.includes("开始自测")`, "set page"), "E22a 题组作业页挂载");
+    assert(await cdp.click(cdp.byText("开始自测"), "start set"), "E22b 开始题组自测");
+    assert(await cdp.poll(`!!${cdp.byTestId("set-self-test")} && document.querySelectorAll('[data-testid="set-self-test"] li').length === ${setItems}`, "set questions"), "E22 题组题目全部出现", `items=${setItems}`);
+    for (let i = 0; i < setItems; i++) {
+        await cdp.evaluate(`document.querySelector('[data-testid="set-self-test"] input').focus()`);
+        await cdp.send("Input.insertText", { text: "1" });
+        await cdp.click(cdp.byText("提交本题"), `set item ${i}`);
+        if (i < setItems - 1) {
+            assert(await cdp.poll(`document.body.innerText.includes("还剩 ${setItems - i - 1} 题")`, "set progress"), `E23.${i} 第 ${i + 1} 题后只显示已记录`);
+            await sleep(400);
+            const mid =
+                cdp.bodies
+                    .slice(before)
+                    .map((b) => b.body)
+                    .join("\n") +
+                "\n" +
+                (await cdp.evaluate("document.body.innerText"));
+            const graded = /"result":"(correct|incorrect|correct_approx|partial)"/.test(
+                cdp.bodies
+                    .slice(before)
+                    .filter((b) => b.url.includes("/attempts") || b.url.includes("/learning") || b.url.includes("/progress"))
+                    .map((b) => b.body)
+                    .join("\n"),
+            );
+            assert(leaksSet(mid).length === 0 && !graded, `E24.${i} 未全部提交前响应与页面不含题组答案或对错`, `leaks=${JSON.stringify(leaksSet(mid))} graded=${graded}`);
+        }
+    }
+    assert(await cdp.poll(`document.body.innerText.includes("已全部提交") && document.body.innerText.includes("参考答案")`, "set results"), "E25 全部提交后显示结果与参考答案");
+    const after = cdp.bodies
+        .slice(before)
+        .map((b) => b.body)
+        .join("\n");
+    assert(setMarkers.length > 0 && leaksSet(after).length > 0, "E25b 对照：提交后响应确实含题组答案，说明检查有效", `markers=${setMarkers.length}`);
+
     const bad = cdp.statuses.filter((s) => s.status >= 400 && !(s.status === 409 && s.url.includes("/hints")));
     assert(bad.length === 0, "E20 /api/edu 无意外错误响应", JSON.stringify(bad));
     assert(cdp.exceptions.length === 0, "E21 页面无未捕获异常", JSON.stringify(cdp.exceptions));

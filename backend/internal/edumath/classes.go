@@ -374,6 +374,7 @@ func (h *API) createAssignment(c *gin.Context) {
 		AnswerPolicy  string     `json:"answerPolicy"`
 		ApproxAllowed bool       `json:"approxAllowed"`
 		UnitPolicy    string     `json:"unitPolicy"`
+		VariantSetID  string     `json:"variantSetId"`
 	}
 	if c.ShouldBindJSON(&in) != nil || in.PublicationID == "" || len(in.Title) > 200 {
 		reply(c, 400, nil, "publicationId required")
@@ -412,8 +413,15 @@ func (h *API) createAssignment(c *gin.Context) {
 		h.fail(c, ErrNotFound)
 		return
 	}
+	if in.VariantSetID != "" {
+		if _, err := approvedVariantSetFor(tx, a, in.VariantSetID, pub); err != nil {
+			h.fail(c, err)
+			return
+		}
+	}
 	as := model.EduAssignment{ID: flow.NewID("eas_"), TenantID: a.TenantID, ClassID: k.ID, PublicationID: pub.ID, Title: strings.TrimSpace(in.Title), State: "active", CreatedBy: a.UserID, CreatedAt: h.Svc.now(),
-		StartsAt: utc(in.StartsAt), DueAt: utc(in.DueAt), AllowLate: in.AllowLate, AnswerPolicy: in.AnswerPolicy, ApproxAllowed: in.ApproxAllowed, UnitPolicy: in.UnitPolicy}
+		StartsAt: utc(in.StartsAt), DueAt: utc(in.DueAt), AllowLate: in.AllowLate, AnswerPolicy: in.AnswerPolicy, ApproxAllowed: in.ApproxAllowed, UnitPolicy: in.UnitPolicy,
+		VariantSetID: in.VariantSetID}
 	if err := tx.Create(&as).Error; err != nil {
 		h.fail(c, err)
 		return

@@ -28,7 +28,7 @@ export type EduMe = { userId: string; roles: EduRoleBinding[] };
 export type EduAttempt = {
     id: string;
     clientKey: string;
-    item: "main" | "check";
+    item: string; // main | check | a variant set item id (v1, v2, ...)
     kind: "answer" | "no_idea";
     response: string;
     valid: boolean;
@@ -54,10 +54,18 @@ export type StudentLesson = {
     beats: { id: string; title: string; locked?: boolean }[];
 };
 export type LearningState = {
-    policy: { startsAt?: string; dueAt?: string; allowLate: boolean; answerPolicy: string; answerAvailable: boolean; late: boolean; closed: boolean; unitPolicy: string; approxAllowed: boolean };
+    policy: { startsAt?: string; dueAt?: string; allowLate: boolean; answerPolicy: string; answerAvailable: boolean; late: boolean; closed: boolean; unitPolicy: string; approxAllowed: boolean; extendedDueAt?: string };
     attempts: EduAttempt[];
     hintLevels: number[];
-    selfTest: null | { state: string; helpUsed: boolean; sawSolution: boolean; answerKey?: { plain: string } };
+    selfTest: null | {
+        state: string;
+        helpUsed: boolean;
+        sawSolution: boolean;
+        answerKey?: { plain: string };
+        measurement?: "set";
+        questions?: { id: string; prompt: string; unit: string; answer_format: string }[];
+        answerKeys?: Record<string, { plain: string; latex: string }>;
+    };
     review: null | { id: string; stage: number; dueAt: string; state: string };
     predictions?: { promptId: string; choice: number }[];
 };
@@ -73,6 +81,7 @@ export const RESULT_LABEL: Record<string, string> = {
     no_idea: "暂时不会",
     undetermined: "暂未判定",
     partial: "部分正确",
+    recorded: "已记录，全部提交后显示结果",
     untested: "未作答",
     pending_judgement: "待老师判断",
 };

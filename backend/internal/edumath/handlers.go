@@ -48,6 +48,8 @@ func (h *API) Register(api *gin.RouterGroup) {
 	h.registerLearning(g)
 	h.registerHelp(g)
 	h.registerFigure(g)
+	h.registerVariants(g)
+	h.registerAdminLists(g)
 }
 
 func (h *API) fail(c *gin.Context, err error) {
@@ -280,6 +282,10 @@ func (h *API) getJob(c *gin.Context) {
 	var l model.EduLessonRevision
 	if tx.First(&l, "job_id = ?", j.ID).Error == nil {
 		out["lessonRevisionId"] = l.ID
+	}
+	var vs model.EduVariantSet
+	if tx.First(&vs, "job_id = ?", j.ID).Error == nil {
+		out["variantSetId"] = vs.ID
 	}
 	reply(c, 200, out, "ok")
 }

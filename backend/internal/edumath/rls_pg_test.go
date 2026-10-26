@@ -125,3 +125,9 @@ func TestPGFigurePredictionsAndUse(t *testing.T) {
 	db := pgTestDB(t)
 	runFigure(t, newHarnessDB(t, startMathService(t), db))
 }
+
+// TestPGVariantSetsAndExtensions runs variant sets, set self-tests and extensions on Postgres under FORCE RLS.
+func TestPGVariantSetsAndExtensions(t *testing.T) {
+	db := pgTestDB(t)
+	runVariants(t, newHarnessDB(t, startMathService(t), db))
+}

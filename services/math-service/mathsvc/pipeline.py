@@ -8,6 +8,7 @@ from .families import REGISTRY as FAMILIES
 
 ANALYZE_STAGES = ["validate_input", "solve", "verify"]
 LESSON_STAGES = ["compose_lesson", "project_student", "render_preview"]
+VARIANT_STAGES = ["generate_variants", "verify_variants"]
 
 
 def _fam(problem):
@@ -30,6 +31,12 @@ def run_stage(stage, payload, prior):
     if stage == "grade":
         from .grade import grade
         return grade(payload)
+    if stage == "generate_variants":
+        from . import variants
+        return variants.generate(payload)
+    if stage == "verify_variants":
+        from . import variants
+        return variants.verify(payload, prior)
     problem = payload["problem"]
     mod = _fam(problem)
     if stage == "validate_input":

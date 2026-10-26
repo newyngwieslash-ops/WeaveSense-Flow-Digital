@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router";
 
 import { stepKey, type FigureSpec } from "@/components/edu/figure-math";
 import { FigureBoundary, InteractiveFigure, PredictionPanel, useFigureUsage } from "@/components/edu/interactive-figure";
+import { SetSelfTest } from "@/components/edu/set-self-test";
 import { StepViewer } from "@/components/edu/step-viewer";
 import { clearOtherUsers, enqueue, flushQueue, readQueue, type PendingAttempt } from "@/lib/edu-offline-queue";
 import { edu, newClientKey, RESULT_LABEL, type EduAttempt, type EduMe, type HintBody, type LearningState, type StudentLesson } from "@/services/api/edu";
@@ -174,7 +175,7 @@ export function StudentAssignment() {
         reload();
     }, [id, scope, reload]);
 
-    const submit = async (item: "main" | "check", kind: "answer" | "no_idea", response: string) => {
+    const submit = async (item: string, kind: "answer" | "no_idea", response: string) => {
         setBusy(true);
         const clientKey = newClientKey();
         const body = { item, kind, response, clientKey, reviewItemId: item === "main" ? reviewItemId : undefined };
@@ -187,7 +188,7 @@ export function StudentAssignment() {
         if (!r.ok) return setMsg(errorText(r.code, r.message));
         setMsg(`已记录：${RESULT_LABEL[r.data.attempt.result] || r.data.attempt.result}`);
         if (item === "main") setAnswer("");
-        else setCheck("");
+        else if (item === "check") setCheck("");
         reload();
     };
 
@@ -200,9 +201,9 @@ export function StudentAssignment() {
     };
 
     const startSelfTest = async () => {
-        const r = await edu<{ question: { prompt?: string } }>("post", `/student/assignments/${id}/selftest/start`, scope, {});
+        const r = await edu<{ question?: { prompt?: string } }>("post", `/student/assignments/${id}/selftest/start`, scope, {});
         if (!r.ok) return setMsg(errorText(r.code, r.message));
-        setCheckPrompt(r.data.question.prompt || "");
+        setCheckPrompt(r.data.question?.prompt || "");
         reload();
     };
 
@@ -252,6 +253,7 @@ export function StudentAssignment() {
                     {p ? (
                         <p className="mt-2 text-xs text-stone-500">
                             {p.dueAt ? `截止 ${new Date(p.dueAt).toLocaleString()}；` : ""}
+                            {p.extendedDueAt ? `老师已为你延期至 ${new Date(p.extendedDueAt).toLocaleString()}；` : ""}
                             {p.unitPolicy === "required" ? "答案需带单位；" : ""}
                             {p.approxAllowed ? "允许近似值" : "请给出精确值"}
                             {p.closed ? "；已截止" : p.late ? "；已过截止时间，按迟交记录" : ""}
@@ -309,6 +311,8 @@ export function StudentAssignment() {
                     <button className={ghost} onClick={() => void startSelfTest()}>
                         开始自测
                     </button>
+                ) : state.selfTest.measurement === "set" ? (
+                    <SetSelfTest selfTest={state.selfTest} attempts={state.attempts} busy={busy} onSubmit={(item, response) => void submit(item, "answer", response)} />
                 ) : (
                     <>
                         {checkPrompt ? <p className="mb-2 whitespace-pre-wrap text-sm">{checkPrompt}</p> : null}

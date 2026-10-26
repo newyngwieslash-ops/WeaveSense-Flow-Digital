@@ -24,13 +24,14 @@ import uuid
 
 from . import catalog
 from .errors import MathError
-from .pipeline import ANALYZE_STAGES, LESSON_STAGES
+from .pipeline import ANALYZE_STAGES, LESSON_STAGES, VARIANT_STAGES
 
 SCHEMA_VERSION = "edu.math.job/1"
 TERMINAL = ("succeeded", "failed", "cancelled")
-STAGES = {"analyze": ANALYZE_STAGES, "lesson_build": LESSON_STAGES}
+STAGES = {"analyze": ANALYZE_STAGES, "lesson_build": LESSON_STAGES, "variant_set": VARIANT_STAGES}
 TIMEOUTS = {"validate_input": 5, "solve": catalog.LIMITS["solve_timeout_s"], "verify": catalog.LIMITS["verify_timeout_s"],
-            "compose_lesson": 10, "project_student": 5, "render_preview": catalog.LIMITS["render_timeout_s"]}
+            "compose_lesson": 10, "project_student": 5, "render_preview": catalog.LIMITS["render_timeout_s"],
+            "generate_variants": 5, "verify_variants": 30}
 
 
 def now():
@@ -289,4 +290,9 @@ class Worker:
         if stage == "render_preview":
             return [put(t, j, "preview_html", "teacher", "text/html; charset=utf-8", res["teacher_html"].encode("utf-8")),
                     put(t, j, "preview_html_student", "student", "text/html; charset=utf-8", res["student_html"].encode("utf-8"))]
+        if stage == "verify_variants":
+            from .variants import student_items
+            vs = res["variant_set"]
+            return [put(t, j, "variant_set", "teacher", "application/json", js(vs)),
+                    put(t, j, "variant_set_student", "student", "application/json", js({"items": student_items(vs)}))]
         return []

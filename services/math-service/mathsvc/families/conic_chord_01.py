@@ -134,6 +134,7 @@ def verify(norm, sol, seed=20261026):
                      {"endpoint_reachability": {"max": "attained", "min": "attained"}})
 
 
+PARAM_NAMES = ("a", "b")  # order of the entries in VARIANTS
 VARIANTS = [("2", "sqrt(3)"), ("3", "2"), ("5", "4"), ("4", "2")]
 
 

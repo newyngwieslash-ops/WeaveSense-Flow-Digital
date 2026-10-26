@@ -3,7 +3,7 @@
  * 按用户隔离，切换账号或退出时整体清除。重放沿用原 clientKey，服务端据此幂等去重，
  * 因此网络恢复后重复提交不会产生第二条记录。
  */
-export type PendingAttempt = { assignmentId: string; tenant: string; item: "main" | "check"; kind: "answer" | "no_idea"; response: string; clientKey: string; reviewItemId?: string; queuedAt: string };
+export type PendingAttempt = { assignmentId: string; tenant: string; item: string; kind: "answer" | "no_idea"; response: string; clientKey: string; reviewItemId?: string; queuedAt: string };
 type KV = Pick<Storage, "getItem" | "setItem" | "removeItem" | "key" | "length">;
 
 const PREFIX = "edu.pending.v1:";

@@ -204,6 +204,7 @@ def verify(norm, sol, seed=20261026):
             "manual_review": "required_for_pedagogy_and_presentation"}
 
 
+PARAM_NAMES = ("a", "h")  # order of the entries in VARIANTS
 VARIANTS = [("2", "2"), ("4", "2"), ("2", "3"), ("6", "3"), ("1", "1")]
 
 

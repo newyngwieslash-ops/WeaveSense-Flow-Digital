@@ -100,6 +100,7 @@ def verify(norm, sol, seed=20261026):
     return ck.report(FAMILY_ID, levels)
 
 
+PARAM_NAMES = ("e",)  # order of the entries in VARIANTS
 VARIANTS = ["2", "3", "4", "5"]
 
 

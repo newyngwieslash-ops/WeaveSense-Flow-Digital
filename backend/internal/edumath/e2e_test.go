@@ -332,7 +332,11 @@ func runG1(t *testing.T, h *harness) {
 		t.Fatalf("invite: %d %s", code, raw)
 	}
 	inviteCode := data(out)["code"].(string)
-	if code, _, _, _ := h.call("u_bob", "POST", "/api/edu-join", map[string]any{"code": inviteCode[:len(inviteCode)-1] + "0"}); code != 404 {
+	wrongLast := "0"
+	if strings.HasSuffix(inviteCode, "0") {
+		wrongLast = "1"
+	}
+	if code, _, _, _ := h.call("u_bob", "POST", "/api/edu-join", map[string]any{"code": inviteCode[:len(inviteCode)-1] + wrongLast}); code != 404 {
 		t.Fatalf("wrong secret must be 404, got %d", code)
 	}
 	code, out, raw, _ = h.call("u_bob", "POST", "/api/edu-join", map[string]any{"code": inviteCode})

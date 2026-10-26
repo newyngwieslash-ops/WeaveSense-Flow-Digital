@@ -33,6 +33,8 @@ REQUIRED = {
     ("edumath", "TestClassesInvitesConsentAuthorization"),
     ("edumath", "TestAgentMathTools"),
     ("edumath", "TestStageSettlementOutcomes"),
+    ("edumath", "TestLedgerReconcileAndExport"),
+    ("edumath", "TestPGLedgerReconcileAndExport"),
     ("edumath", "TestPGAgentMathTools"),
 }
 

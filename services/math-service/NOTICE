@@ -1,0 +1,23 @@
+WeaveSense-Flow math-service
+Copyright 2026 newyngwieslash-ops
+
+This component contains code adapted from edulab
+(https://github.com/wy51ai/edulab, fork https://github.com/newyngwieslash-ops/edulab-mine,
+baseline commit 805fdc5dd6bdf942290a7791924bf0ee08f26632), licensed under the
+Apache License, Version 2.0 (see LICENSE-edulab).
+
+Original NOTICE of edulab:
+  edulab
+  Copyright 2026 WY (@akokoi1)
+  https://github.com/wy51ai/edulab
+  This product includes software developed by WY (@akokoi1).
+
+Modifications (summary; per-file notes are in each file header):
+  - mathsvc/kernel/geometry_kernel.py: subset of skills/edu-solid-geometry/lib/geometry_kernel.py.
+    Removed CLI self-test and random-problem helpers; constructors reject string
+    input (no sympify of untrusted text); added type hints and docstrings.
+  - Lesson JSON (mathsvc/lesson.py) is a new versioned schema inspired by
+    skills/edu-math-video/lesson/reference/lesson-schema.md (scenes/beats/board),
+    extended with solution refs, hints, check questions and validation records.
+  - No edulab template HTML, fonts, images, CDN references or scripts are
+    redistributed by this service.

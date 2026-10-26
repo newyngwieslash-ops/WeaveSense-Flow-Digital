@@ -27,6 +27,7 @@ func (h *API) Register(api *gin.RouterGroup) {
 	api.POST("/edu-join", h.join) // outside the tenant-scoped middleware (see join)
 	g := api.Group("/edu", Middleware(h.DB, h.User))
 	h.registerClasses(g)
+	h.registerLedger(g)
 	g.GET("/me", h.me)
 	g.POST("/roles", h.bindRole)
 	g.POST("/problems", h.createProblem)

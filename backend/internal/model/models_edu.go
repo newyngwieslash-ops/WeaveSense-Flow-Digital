@@ -492,7 +492,7 @@ func EduModels() []any {
 		&EduProblemRevision{}, &EduMathJob{}, &EduStageRun{}, &EduArtifact{}, &EduSolutionRevision{}, &EduLessonRevision{},
 		&EduReviewRecord{}, &EduPublication{}, &EduAssignment{}, &EduAuditEvent{}, &EduClassInvite{}, &EduConsentRecord{},
 		&EduAttempt{}, &EduHintUnlock{}, &EduSelfTest{}, &EduReviewItem{}, &EduHelpRequest{}, &EduHelpReply{},
-		&EduPrediction{}, &EduFigureInteraction{}, &EduVariantSet{}, &EduVariantReview{}, &EduAssignmentExtension{}, &EduLessonEdit{}}
+		&EduPrediction{}, &EduFigureInteraction{}, &EduVariantSet{}, &EduVariantReview{}, &EduAssignmentExtension{}, &EduLessonEdit{}, &EduLedgerAnomaly{}}
 }
 
 // EduVariantSet is a finite set of numbers only variants of a lesson's problem (FR-M07, FR-T11, AC-22).
@@ -553,3 +553,23 @@ type EduAssignmentExtension struct {
 }
 
 func (EduAssignmentExtension) TableName() string { return "edu_assignment_extensions" }
+
+// EduLedgerAnomaly is one finding of the education ledger reconciliation (DEV-063):
+// a job whose platform ledger, stage runs and usage lines do not agree. Unique per
+// (tenant, job, kind); it carries an owner and a handling status until resolved.
+type EduLedgerAnomaly struct {
+	ID         string     `json:"id" gorm:"primaryKey;size:40"`
+	TenantID   string     `json:"tenantId" gorm:"size:40;not null;uniqueIndex:ux_edu_ledger_anom,priority:1;index"`
+	JobID      string     `json:"jobId" gorm:"size:40;not null;uniqueIndex:ux_edu_ledger_anom,priority:2"`
+	Kind       string     `json:"kind" gorm:"size:40;not null;uniqueIndex:ux_edu_ledger_anom,priority:3"`
+	Detail     string     `json:"detail" gorm:"size:400"`
+	Status     string     `json:"status" gorm:"size:24;not null;index"` // open | investigating | resolved
+	Owner      string     `json:"owner,omitempty" gorm:"size:40"`
+	Note       string     `json:"note,omitempty" gorm:"size:400"`
+	DetectedAt time.Time  `json:"detectedAt"`
+	LastSeenAt time.Time  `json:"lastSeenAt"`
+	ResolvedAt *time.Time `json:"resolvedAt,omitempty"`
+	ResolvedBy string     `json:"resolvedBy,omitempty" gorm:"size:40"`
+}
+
+func (EduLedgerAnomaly) TableName() string { return "edu_ledger_anomalies" }

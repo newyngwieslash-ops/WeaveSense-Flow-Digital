@@ -24,7 +24,8 @@ type API struct {
 
 // Register mounts /api/edu/* on the given group (expects the group at /api).
 func (h *API) Register(api *gin.RouterGroup) {
-	api.POST("/edu-join", h.join)             // outside the tenant-scoped middleware (see join)
+	api.POST("/edu-join", h.join) // outside the tenant-scoped middleware (see join)
+	api.POST("/edu-roster-claim", h.claimRoster)
 	api.POST("/edu-math-events", h.mathEvent) // service-signed push; no user session (see events.go)
 	g := api.Group("/edu", Middleware(h.DB, h.User))
 	h.registerClasses(g)
@@ -33,6 +34,9 @@ func (h *API) Register(api *gin.RouterGroup) {
 	h.registerCost(g)
 	h.registerIncidents(g)
 	h.registerSources(g)
+	h.registerRegrade(g)
+	h.registerCourses(g)
+	h.registerRoster(g)
 	g.GET("/me", h.me)
 	g.POST("/roles", h.bindRole)
 	g.POST("/roles/revoke", h.revokeRole)

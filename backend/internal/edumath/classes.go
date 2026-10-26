@@ -283,16 +283,11 @@ func (h *API) join(c *gin.Context) {
 		if res.RowsAffected != 1 {
 			return ErrNotFound
 		}
-		var rb model.EduRoleBinding
-		if tx.First(&rb, "tenant_id = ? AND user_id = ? AND role = ?", inv.TenantID, u.ID, "student").Error == nil {
-			if rb.Status != "active" {
-				return errBlocked // revoked by the institution; an invite cannot undo it
+		var err error
+		if enr, err = enrollStudent(tx, inv.TenantID, inv.ClassID, u.ID, "invite:"+inv.ID, now); err != nil {
+			if errors.Is(err, errEnrollBlocked) {
+				return errBlocked
 			}
-		} else if err := tx.Create(&model.EduRoleBinding{ID: flow.NewID("erb_"), TenantID: inv.TenantID, UserID: u.ID, Role: "student", Status: "active", CreatedBy: "invite:" + inv.ID, CreatedAt: now, UpdatedAt: now}).Error; err != nil {
-			return err
-		}
-		enr = model.EduEnrollment{ID: flow.NewID("een_"), TenantID: inv.TenantID, ClassID: inv.ClassID, StudentUserID: u.ID, Status: "active", CreatedAt: now, UpdatedAt: now}
-		if err := tx.Create(&enr).Error; err != nil {
 			return err
 		}
 		h.Svc.audit(tx, Actor{UserID: u.ID, TenantID: inv.TenantID}, "class.join", inv.ClassID, inv.ID)
@@ -306,6 +301,23 @@ func (h *API) join(c *gin.Context) {
 	default:
 		reply(c, 200, gin.H{"tenantId": inv.TenantID, "classId": inv.ClassID, "enrollmentId": enr.ID, "consentRequired": !consentOKSystem(h.DB, inv.TenantID, u.ID)}, "ok")
 	}
+}
+
+var errEnrollBlocked = errors.New("enrollment blocked")
+
+// enrollStudent grants the student role (unless the institution revoked it) and
+// an active enrollment. Never a workspace membership.
+func enrollStudent(tx *gorm.DB, tenantID, classID, userID, by string, now time.Time) (model.EduEnrollment, error) {
+	var rb model.EduRoleBinding
+	if tx.First(&rb, "tenant_id = ? AND user_id = ? AND role = ?", tenantID, userID, "student").Error == nil {
+		if rb.Status != "active" {
+			return model.EduEnrollment{}, errEnrollBlocked // revoked by the institution; a code cannot undo it
+		}
+	} else if err := tx.Create(&model.EduRoleBinding{ID: flow.NewID("erb_"), TenantID: tenantID, UserID: userID, Role: "student", Status: "active", CreatedBy: by, CreatedAt: now, UpdatedAt: now}).Error; err != nil {
+		return model.EduEnrollment{}, err
+	}
+	enr := model.EduEnrollment{ID: flow.NewID("een_"), TenantID: tenantID, ClassID: classID, StudentUserID: userID, Status: "active", CreatedAt: now, UpdatedAt: now}
+	return enr, tx.Create(&enr).Error
 }
 
 func consentOKSystem(db *gorm.DB, tenantID, userID string) bool {
@@ -330,7 +342,10 @@ func (h *API) roster(c *gin.Context) {
 	tx.Where("tenant_id = ? AND class_id = ?", a.TenantID, k.ID).Order("created_at").Find(&es)
 	out := []gin.H{}
 	for _, e := range es {
-		out = append(out, gin.H{"enrollmentId": e.ID, "studentUserId": e.StudentUserID, "status": e.Status, "consentOk": consentOK(tx, a.TenantID, e.StudentUserID)})
+		var re model.EduRosterEntry
+		tx.Select("external_ref", "display_name").Where("tenant_id = ? AND class_id = ? AND claimed_by = ?", a.TenantID, k.ID, e.StudentUserID).Limit(1).Find(&re)
+		out = append(out, gin.H{"enrollmentId": e.ID, "studentUserId": e.StudentUserID, "status": e.Status, "consentOk": consentOK(tx, a.TenantID, e.StudentUserID),
+			"externalRef": re.ExternalRef, "displayName": re.DisplayName})
 	}
 	reply(c, 200, out, "ok")
 }

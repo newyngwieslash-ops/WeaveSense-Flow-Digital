@@ -3,6 +3,7 @@ package edumath
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"yingce/backend/internal/model"
 )
@@ -246,5 +247,95 @@ func runIncidents(t *testing.T, h *harness) {
 	h.db.Model(&model.EduAuditEvent{}).Where("action IN ?", []string{"incident.open.minor", "incident.escalate", "incident.resolve", "assignment.migrate"}).Count(&audits)
 	if audits != 4 {
 		t.Fatalf("audit trail: %d", audits)
+	}
+
+	runRegrade(t, h, tenant, asA, pubID, fixPub)
+}
+
+// runRegrade (DEV-025): the old task's answers are re-evaluated against the fix.
+// The earlier wrong grades are simulated in the database (as if the withdrawn
+// key had accepted a wrong answer and rejected the right one); the regrade runs
+// the real grader against the fix publication's key.
+func runRegrade(t *testing.T, h *harness, tenant, asA, oldPub, fixPub string) {
+	stu := []string{"X-Edu-Tenant", tenant}
+	var wrong model.EduAttempt
+	h.db.Where("assignment_id = ? AND student_user_id = ? AND item = 'main'", asA, "u_bob").First(&wrong)
+	h.db.Model(&model.EduAttempt{}).Where("id = ?", wrong.ID).Update("result", "correct")
+	right := model.EduAttempt{ID: "eat_regrade_right", TenantID: tenant, AssignmentID: asA, StudentUserID: "u_bob", ClientKey: "bob-rg-0002", Item: "main",
+		Kind: "answer", Response: "2√22/11", Valid: true, Result: "incorrect", Grader: "old_key", CreatedAt: wrong.CreatedAt.Add(time.Minute)}
+	if err := h.db.Create(&right).Error; err != nil {
+		t.Fatal(err)
+	}
+	rg := "/api/edu/assignments/" + asA + "/regrade"
+	if c, _, _, _ := h.call("u_bob", "POST", rg, map[string]any{"reason": "x"}, stu...); c != 403 && c != 404 {
+		t.Fatalf("a student must not regrade, got %d", c)
+	}
+	if c, _, _, _ := h.call("u_carol", "POST", rg, map[string]any{"reason": "x"}); c != 403 && c != 404 {
+		t.Fatalf("another workspace must not regrade, got %d", c)
+	}
+	if c, _, _, _ := h.call("u_alice", "POST", rg, map[string]any{"reason": " "}); c != 400 {
+		t.Fatalf("regrade without reason must be 400, got %d", c)
+	}
+	if c, _, _, _ := h.call("u_alice", "POST", rg, map[string]any{"reason": "x", "publicationId": oldPub}); c != 409 {
+		t.Fatalf("a withdrawn reference must be 409, got %d", c)
+	}
+	reason := "答案应为2√22/11，原答案键错误"
+	c, out, raw, _ := h.call("u_alice", "POST", rg, map[string]any{"reason": reason})
+	pv := data(out)
+	if c != 200 || pv["confirmed"] != false || pv["refPublicationId"] != fixPub || len(pv["changed"].([]any)) != 2 || pv["affectedStudents"].(float64) != 1 {
+		t.Fatalf("regrade preview: %d %s", c, raw)
+	}
+	var still model.EduAttempt
+	h.db.First(&still, "id = ?", wrong.ID)
+	if still.Result != "correct" {
+		t.Fatalf("preview must not change results: %s", still.Result)
+	}
+	c, out, raw, _ = h.call("u_alice", "POST", rg, map[string]any{"reason": reason, "confirm": true})
+	if c != 201 || data(out)["written"].(float64) != 2 {
+		t.Fatalf("regrade: %d %s", c, raw)
+	}
+	var w2, r2 model.EduAttempt
+	h.db.First(&w2, "id = ?", wrong.ID)
+	h.db.First(&r2, "id = ?", right.ID)
+	if w2.Result != "incorrect" || !strings.HasPrefix(r2.Result, "correct") || w2.AssignmentID != asA || w2.Response != wrong.Response || w2.Reason != "regraded" {
+		t.Fatalf("regraded attempts: wrong=%+v right=%+v", w2, r2)
+	}
+	var recs []model.EduRegrade
+	h.db.Where("assignment_id = ?", asA).Order("created_at").Find(&recs)
+	if len(recs) != 2 || recs[0].Reason != reason || recs[0].RefPublicationID != fixPub {
+		t.Fatalf("regrade records: %+v", recs)
+	}
+	for _, r := range recs {
+		if (r.AttemptID == wrong.ID && (r.OldResult != "correct" || r.NewResult != "incorrect")) || (r.AttemptID == right.ID && r.OldResult != "incorrect") {
+			t.Fatalf("old/new results: %+v", r)
+		}
+	}
+	if c, out, _, _ := h.call("u_alice", "POST", rg, map[string]any{"reason": reason, "confirm": true}); c != 201 || data(out)["written"].(float64) != 0 {
+		t.Fatalf("regrade replay must write nothing: %d %v", c, out)
+	}
+	if c, o, _, _ := h.call("u_alice", "GET", "/api/edu/assignments/"+asA+"/regrades", nil); c != 200 || len(o["data"].([]any)) != 2 {
+		t.Fatalf("teacher regrade list: %d %v", c, o)
+	}
+	// Student notice: results changed, but no teacher reason (it may name the answer).
+	c, out, raw, _ = h.call("u_bob", "GET", "/api/edu/student/regrades", nil, stu...)
+	if c != 200 || len(out["data"].([]any)) != 2 || strings.Contains(string(raw), "2√22") || strings.Contains(string(raw), "答案应为") {
+		t.Fatalf("student notices: %d %s", c, raw)
+	}
+	nid := out["data"].([]any)[0].(map[string]any)["id"].(string)
+	if c, _, _, _ := h.call("u_carol", "POST", "/api/edu/student/regrades/"+nid+"/seen", nil, stu...); c == 200 {
+		t.Fatalf("another user must not ack a notice")
+	}
+	if c, _, raw, _ := h.call("u_bob", "POST", "/api/edu/student/regrades/"+nid+"/seen", nil, stu...); c != 200 {
+		t.Fatalf("ack: %d %s", c, raw)
+	}
+	var seen int64
+	h.db.Model(&model.EduRegrade{}).Where("notice_seen_at IS NOT NULL").Count(&seen)
+	if seen != 1 {
+		t.Fatalf("seen count %d", seen)
+	}
+	var audits int64
+	h.db.Model(&model.EduAuditEvent{}).Where("action = ?", "assignment.regrade").Count(&audits)
+	if audits != 2 {
+		t.Fatalf("regrade audit: %d", audits)
 	}
 }

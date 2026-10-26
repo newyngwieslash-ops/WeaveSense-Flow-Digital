@@ -52,6 +52,7 @@ type EduClass struct {
 	WorkspaceID string    `json:"workspaceId" gorm:"size:40;not null;index"`
 	Name        string    `json:"name" gorm:"size:120;not null"`
 	Status      string    `json:"status" gorm:"size:16;not null;default:active"`
+	CourseID    string    `json:"courseId,omitempty" gorm:"size:40;index"`
 	CreatedBy   string    `json:"createdBy" gorm:"size:40"`
 	CreatedAt   time.Time `json:"createdAt"`
 }
@@ -499,7 +500,7 @@ func EduModels() []any {
 		&EduProblemRevision{}, &EduMathJob{}, &EduStageRun{}, &EduArtifact{}, &EduSolutionRevision{}, &EduLessonRevision{},
 		&EduReviewRecord{}, &EduPublication{}, &EduAssignment{}, &EduAuditEvent{}, &EduClassInvite{}, &EduConsentRecord{},
 		&EduAttempt{}, &EduHintUnlock{}, &EduSelfTest{}, &EduReviewItem{}, &EduHelpRequest{}, &EduHelpReply{},
-		&EduPrediction{}, &EduFigureInteraction{}, &EduVariantSet{}, &EduVariantReview{}, &EduAssignmentExtension{}, &EduLessonEdit{}, &EduLedgerAnomaly{}, &EduJobEvent{}, &EduMathEvent{}, &EduBudget{}, &EduBudgetAlert{}, &EduSupportCost{}, &EduContentIncident{}, &EduAssignmentMigration{}, &EduSourceAsset{}}
+		&EduPrediction{}, &EduFigureInteraction{}, &EduVariantSet{}, &EduVariantReview{}, &EduAssignmentExtension{}, &EduLessonEdit{}, &EduLedgerAnomaly{}, &EduJobEvent{}, &EduMathEvent{}, &EduBudget{}, &EduBudgetAlert{}, &EduSupportCost{}, &EduContentIncident{}, &EduAssignmentMigration{}, &EduSourceAsset{}, &EduRegrade{}, &EduCourse{}, &EduCourseAlignment{}, &EduRosterEntry{}}
 }
 
 // EduVariantSet is a finite set of numbers only variants of a lesson's problem (FR-M07, FR-T11, AC-22).
@@ -731,3 +732,95 @@ type EduSourceAsset struct {
 }
 
 func (EduSourceAsset) TableName() string { return "edu_source_assets" }
+
+// EduRegrade records one re-evaluation of a main answer against a reference
+// publication (DEV-025). The attempt keeps its original assignment and
+// response; old and new results, the reason and the student notice are kept.
+type EduRegrade struct {
+	ID               string     `json:"id" gorm:"primaryKey;size:40"`
+	TenantID         string     `json:"tenantId" gorm:"size:40;not null;index"`
+	BatchID          string     `json:"batchId" gorm:"size:40;not null;index"`
+	AssignmentID     string     `json:"assignmentId" gorm:"size:40;not null;index"`
+	AttemptID        string     `json:"attemptId" gorm:"size:40;not null;uniqueIndex:ux_edu_regrade,priority:1"`
+	RefPublicationID string     `json:"refPublicationId" gorm:"size:40;not null;uniqueIndex:ux_edu_regrade,priority:2"`
+	StudentUserID    string     `json:"studentUserId" gorm:"size:40;not null;index"`
+	OldResult        string     `json:"oldResult" gorm:"size:24;not null"`
+	NewResult        string     `json:"newResult" gorm:"size:24;not null"`
+	Grader           string     `json:"grader,omitempty" gorm:"size:40"`
+	Reason           string     `json:"reason" gorm:"size:200;not null"`
+	CreatedBy        string     `json:"createdBy" gorm:"size:40;not null"`
+	CreatedAt        time.Time  `json:"createdAt"`
+	NoticeSeenAt     *time.Time `json:"noticeSeenAt,omitempty"`
+}
+
+func (EduRegrade) TableName() string { return "edu_regrades" }
+
+// EduCourse is a workspace's course configuration (DEV-014): textbook,
+// knowledge points, allowed methods, notation, language and how many revisions
+// to keep. Review, consent and edit-inheritance policies live in EduOrgPolicy
+// and limits in EduBudgetLimit.
+type EduCourse struct {
+	ID              string    `json:"id" gorm:"primaryKey;size:40"`
+	TenantID        string    `json:"tenantId" gorm:"size:40;not null;index"`
+	WorkspaceID     string    `json:"workspaceId" gorm:"size:40;not null;index"`
+	Name            string    `json:"name" gorm:"size:120;not null"`
+	Grade           string    `json:"grade" gorm:"size:40"`
+	Textbook        string    `json:"textbook" gorm:"size:120"`
+	TextbookEdition string    `json:"textbookEdition" gorm:"size:60"`
+	KnowledgePoints string    `json:"-" gorm:"type:text"` // JSON array
+	AllowedMethods  string    `json:"-" gorm:"type:text"` // JSON array
+	Notation        string    `json:"notation" gorm:"size:24;not null"`
+	Language        string    `json:"language" gorm:"size:12;not null"`
+	RetainRevisions int       `json:"retainRevisions"`
+	Version         int       `json:"version" gorm:"not null;default:1"`
+	Status          string    `json:"status" gorm:"size:16;not null;default:active"`
+	CreatedBy       string    `json:"createdBy" gorm:"size:40"`
+	UpdatedBy       string    `json:"updatedBy" gorm:"size:40"`
+	CreatedAt       time.Time `json:"createdAt"`
+	UpdatedAt       time.Time `json:"updatedAt"`
+}
+
+func (EduCourse) TableName() string { return "edu_courses" }
+
+// EduCourseAlignment links a lesson revision to course knowledge points. Only a
+// teacher-confirmed alignment may be shown as "教材已对齐"; a suggestion (from a
+// tool or an import) stays unconfirmed, and a change to the course's textbook or
+// knowledge points sends confirmed alignments back to suggested.
+type EduCourseAlignment struct {
+	ID               string     `json:"id" gorm:"primaryKey;size:40"`
+	TenantID         string     `json:"tenantId" gorm:"size:40;not null;index"`
+	CourseID         string     `json:"courseId" gorm:"size:40;not null;uniqueIndex:ux_edu_course_align,priority:1"`
+	LessonRevisionID string     `json:"lessonRevisionId" gorm:"size:40;not null;uniqueIndex:ux_edu_course_align,priority:2;index"`
+	KnowledgePoints  string     `json:"-" gorm:"type:text"`
+	State            string     `json:"state" gorm:"size:16;not null"` // suggested | confirmed | rejected
+	Note             string     `json:"note,omitempty" gorm:"size:200"`
+	SuggestedBy      string     `json:"suggestedBy" gorm:"size:60"`
+	ConfirmedBy      string     `json:"confirmedBy,omitempty" gorm:"size:40"`
+	ConfirmedAt      *time.Time `json:"confirmedAt,omitempty"`
+	CreatedAt        time.Time  `json:"createdAt"`
+	UpdatedAt        time.Time  `json:"updatedAt"`
+}
+
+func (EduCourseAlignment) TableName() string { return "edu_course_alignments" }
+
+// EduRosterEntry is one row of a minimal roster import (DEV-016): a
+// pseudonymous external reference and display name, plus a single-use claim
+// code (stored hashed) that binds a platform user to the class. It never grants
+// a workspace membership.
+type EduRosterEntry struct {
+	ID          string     `json:"id" gorm:"primaryKey;size:40"`
+	TenantID    string     `json:"tenantId" gorm:"size:40;not null;index"`
+	ClassID     string     `json:"classId" gorm:"size:40;not null;uniqueIndex:ux_edu_roster_ref,priority:1"`
+	ExternalRef string     `json:"externalRef" gorm:"size:40;not null;uniqueIndex:ux_edu_roster_ref,priority:2"`
+	DisplayName string     `json:"displayName" gorm:"size:80"`
+	State       string     `json:"state" gorm:"size:16;not null"` // pending | claimed | revoked
+	SecretHash  string     `json:"-" gorm:"size:80"`
+	ExpiresAt   time.Time  `json:"expiresAt"`
+	ClaimedBy   string     `json:"claimedBy,omitempty" gorm:"size:40;index"`
+	ClaimedAt   *time.Time `json:"claimedAt,omitempty"`
+	ImportBatch string     `json:"importBatch" gorm:"size:40;index"`
+	CreatedBy   string     `json:"createdBy" gorm:"size:40"`
+	CreatedAt   time.Time  `json:"createdAt"`
+}
+
+func (EduRosterEntry) TableName() string { return "edu_roster_entries" }

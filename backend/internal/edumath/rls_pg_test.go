@@ -106,3 +106,10 @@ func TestPGG1Chain(t *testing.T) {
 	db := pgTestDB(t)
 	runG1(t, newHarnessDB(t, startMathService(t), db))
 }
+
+// TestPGStudentLearningLoop runs the student learning loop on Postgres under FORCE RLS
+// (savepoints around unique-index inserts must not abort the request transaction).
+func TestPGStudentLearningLoop(t *testing.T) {
+	db := pgTestDB(t)
+	runLearning(t, newHarnessDB(t, startMathService(t), db))
+}

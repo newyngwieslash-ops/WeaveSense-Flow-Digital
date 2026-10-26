@@ -28,7 +28,14 @@ class ParamError(ValueError):
 _SQRT_SIGN = re.compile(r"√\s*(\d+)")
 
 
-def parse_exact(text):
+STRICT = {"text": MAX_TEXT, "nodes": MAX_NODES, "depth": MAX_DEPTH, "int": MAX_INT, "radicand": MAX_RADICAND}
+# Wider bounds for answer texts produced by this service itself (e.g. a volume in mm³);
+# still the same whitelist parser, never eval/sympify.
+LENIENT = {"text": 120, "nodes": 40, "depth": 10, "int": 10 ** 12, "radicand": 10 ** 8}
+
+
+def parse_exact(text, limits=None):
+    lim = limits or STRICT
     if isinstance(text, bool):
         raise ParamError("PARAMETER_LIMIT", "boolean is not a number")
     if isinstance(text, int):
@@ -36,8 +43,8 @@ def parse_exact(text):
     if not isinstance(text, str):
         raise ParamError("PARAMETER_LIMIT", "parameter must be a string or integer")
     s = text.strip()
-    if not s or len(s) > MAX_TEXT:
-        raise ParamError("PARAMETER_LIMIT", "parameter text empty or longer than %d" % MAX_TEXT)
+    if not s or len(s) > lim["text"]:
+        raise ParamError("PARAMETER_LIMIT", "parameter text empty or longer than %d" % lim["text"])
     s = _SQRT_SIGN.sub(r"sqrt(\1)", s)
     if not re.fullmatch(r"[0-9sqrt()+\-*/ ]+", s):
         raise ParamError("PARAMETER_LIMIT", "only integers, fractions and sqrt() are allowed")
@@ -46,23 +53,23 @@ def parse_exact(text):
     except SyntaxError:
         raise ParamError("PARAMETER_LIMIT", "cannot parse parameter")
     count = [0]
-    return sp.radsimp(_walk(tree.body, 0, count, False))
+    return sp.radsimp(_walk(tree.body, 0, count, False, lim))
 
 
-def _walk(node, depth, count, in_sqrt):
+def _walk(node, depth, count, in_sqrt, lim=STRICT):
     count[0] += 1
-    if count[0] > MAX_NODES or depth > MAX_DEPTH:
+    if count[0] > lim["nodes"] or depth > lim["depth"]:
         raise ParamError("PARAMETER_LIMIT", "expression too complex")
     if isinstance(node, ast.Constant) and type(node.value) is int:
-        if abs(node.value) > MAX_INT:
+        if abs(node.value) > lim["int"]:
             raise ParamError("PARAMETER_LIMIT", "integer out of range")
         return sp.Integer(node.value)
     if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.USub, ast.UAdd)):
-        v = _walk(node.operand, depth + 1, count, in_sqrt)
+        v = _walk(node.operand, depth + 1, count, in_sqrt, lim)
         return -v if isinstance(node.op, ast.USub) else v
     if isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Add, ast.Sub, ast.Mult, ast.Div)):
-        left = _walk(node.left, depth + 1, count, in_sqrt)
-        right = _walk(node.right, depth + 1, count, in_sqrt)
+        left = _walk(node.left, depth + 1, count, in_sqrt, lim)
+        right = _walk(node.right, depth + 1, count, in_sqrt, lim)
         if isinstance(node.op, ast.Add):
             return left + right
         if isinstance(node.op, ast.Sub):
@@ -76,9 +83,9 @@ def _walk(node, depth, count, in_sqrt):
             and len(node.args) == 1 and not node.keywords):
         if in_sqrt:
             raise ParamError("PARAMETER_LIMIT", "nested radicals are not supported")
-        rad = _walk(node.args[0], depth + 1, count, True)
-        if not rad.is_Rational or rad < 0 or abs(rad) > MAX_RADICAND:
-            raise ParamError("PARAMETER_LIMIT", "radicand must be a non-negative rational <= %d" % MAX_RADICAND)
+        rad = _walk(node.args[0], depth + 1, count, True, lim)
+        if not rad.is_Rational or rad < 0 or abs(rad) > lim["radicand"]:
+            raise ParamError("PARAMETER_LIMIT", "radicand must be a non-negative rational <= %d" % lim["radicand"])
         return sp.sqrt(rad)
     raise ParamError("PARAMETER_LIMIT", "unsupported syntax in parameter")
 

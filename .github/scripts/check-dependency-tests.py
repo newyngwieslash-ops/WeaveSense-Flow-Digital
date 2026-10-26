@@ -16,9 +16,11 @@ REQUIRED = {
     # Education math workbench: real math-service chain + edu tables under FORCE RLS.
     ("edumath", "TestG1SolidAngle02EndToEnd"),
     ("edumath", "TestSixFamiliesThroughPlatform"),
+    ("edumath", "TestStudentLearningLoop"),
     ("edumath", "TestWorkerRecoveryAndReconcile"),
     ("edumath", "TestPGEduTablesForceRLS"),
     ("edumath", "TestPGG1Chain"),
+    ("edumath", "TestPGStudentLearningLoop"),
     ("edumath", "TestMCPProtocolWithGoSDK"),
     ("edumath", "TestClassesInvitesConsentAuthorization"),
 }

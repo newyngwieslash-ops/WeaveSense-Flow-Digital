@@ -266,3 +266,35 @@ func (c Client) Artifact(ctx context.Context, tenant, artifactID, wantSHA string
 	}
 	return data, h.Get("Content-Type"), nil
 }
+
+// GradeResult is the objective judgement returned by the math service. It never
+// carries the expected answer.
+type GradeResult struct {
+	Result string `json:"result"`
+	Reason string `json:"reason"`
+	Grader string `json:"grader"`
+}
+
+var gradeResults = map[string]bool{"correct": true, "correct_approx": true, "incorrect": true, "needs_exact": true, "needs_teacher": true, "invalid": true}
+
+// Grade asks the service to judge one response against an expected answer (synchronous, isolated on the service side).
+func (c Client) Grade(ctx context.Context, tenant string, req map[string]any) (GradeResult, error) {
+	var g GradeResult
+	st, data, _, err := c.do(ctx, http.MethodPost, "/v1/grade", tenant, "platform", req)
+	if err != nil {
+		return g, err
+	}
+	if st != http.StatusOK {
+		var e struct {
+			Error *ServiceError `json:"error"`
+		}
+		if json.Unmarshal(data, &e) == nil && e.Error != nil {
+			return g, e.Error
+		}
+		return g, fmt.Errorf("%w: grade http %d", ErrContract, st)
+	}
+	if json.Unmarshal(data, &g) != nil || !gradeResults[g.Result] {
+		return g, fmt.Errorf("%w: grade result", ErrContract)
+	}
+	return g, nil
+}

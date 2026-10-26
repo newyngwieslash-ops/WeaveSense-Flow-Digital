@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { ClassAdmin, ExtensionPanel } from "@/components/edu/class-admin";
 import { edu, RESULT_LABEL, type EduAttempt } from "@/services/api/edu";
 import { listIntelWorkspaces, type IntelWorkspace } from "@/services/api/intelligence";
 
@@ -46,10 +47,11 @@ export default function TeacherClassroom() {
             setWs(l[0]?.id || "");
         });
     }, []);
-    useEffect(() => {
+    const loadClasses = useCallback(() => {
         if (!ws) return;
         void edu<EduClass[]>("get", "/classes", scope).then((r) => (r.ok ? setClasses(r.data) : setMsg(r.message)));
     }, [ws, scope]);
+    useEffect(loadClasses, [loadClasses]);
     useEffect(() => {
         if (!classId) return;
         void edu<EduAssignmentRow[]>("get", `/classes/${classId}/assignments`, scope).then((r) => r.ok && setAssignments(r.data));
@@ -109,6 +111,29 @@ export default function TeacherClassroom() {
                     </button>
                 ) : null}
             </div>
+
+            <details className={`${box} mb-4`}>
+                <summary className="cursor-pointer font-semibold">班级、邀请码与名册</summary>
+                <div className="mt-2">
+                    <ClassAdmin
+                        scope={scope}
+                        classId={classId}
+                        onCreated={(id) => {
+                            loadClasses();
+                            setClassId(id);
+                        }}
+                    />
+                </div>
+            </details>
+
+            {asId && classId ? (
+                <details className={`${box} mb-4`}>
+                    <summary className="cursor-pointer font-semibold">单个学生延期</summary>
+                    <div className="mt-2">
+                        <ExtensionPanel scope={scope} classId={classId} assignmentId={asId} dueAt={assignments.find((a) => a.id === asId)?.dueAt} />
+                    </div>
+                </details>
+            ) : null}
 
             {dash ? (
                 <section className={box}>

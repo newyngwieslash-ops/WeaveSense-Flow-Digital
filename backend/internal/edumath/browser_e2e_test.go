@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"yingce/backend/internal/model"
 )
 
 // TestServeBrowserE2E serves a seeded edumath API for the real Chrome E2E
@@ -36,6 +38,35 @@ func TestServeBrowserE2E(t *testing.T) {
 		t.Fatalf("join: %d %s", c, raw)
 	}
 	h.call("u_alice", "POST", "/api/edu/consents", map[string]any{"studentUserId": "u_bob", "status": "granted", "evidenceRef": "form-e2e-1"})
+
+	// A second assignment whose self-test is an approved variant set (AC-22, FR-S08).
+	var pub model.EduPublication
+	h.db.First(&pub, "id = ?", pubID)
+	_, out, raw, _ = h.call("u_alice", "POST", "/api/edu/lesson-revisions/"+pub.LessonRevisionID+"/variant-sets", map[string]any{"count": 3, "idempotencyKey": "e2e-vs"})
+	job := h.waitJob("u_alice", data(out)["id"].(string))
+	setID, _ := job["variantSetId"].(string)
+	if setID == "" {
+		t.Fatalf("variant set: %s %v", raw, job)
+	}
+	_, out, _, _ = h.call("u_alice", "GET", "/api/edu/variant-sets/"+setID, nil)
+	vs := data(out)
+	setMarkers := []string{}
+	for _, k := range vs["answerKeys"].(map[string]any) {
+		for _, f := range []string{"exact", "plain", "latex"} {
+			if m, _ := k.(map[string]any)[f].(string); len(m) >= 3 {
+				setMarkers = append(setMarkers, m)
+			}
+		}
+	}
+	h.db.Save(&model.EduOrgPolicy{TenantID: tenant, ReviewMode: "self_allowed"})
+	if c, _, raw, _ := h.call("u_alice", "POST", "/api/edu/variant-sets/"+setID+"/review", map[string]any{"setHash": vs["setHash"], "decision": "approved"}); c != 200 {
+		t.Fatalf("approve set: %d %s", c, raw)
+	}
+	_, out, raw, _ = h.call("u_alice", "POST", "/api/edu/classes/"+classID+"/assignments", map[string]any{"publicationId": pubID, "title": "题组自测", "answerPolicy": "teacher_release", "variantSetId": setID})
+	setAsID, _ := data(out)["id"].(string)
+	if setAsID == "" {
+		t.Fatalf("set assignment: %s", raw)
+	}
 
 	done := make(chan struct{})
 	mux := http.NewServeMux()
@@ -79,7 +110,8 @@ func TestServeBrowserE2E(t *testing.T) {
 			markers = append(markers, m)
 		}
 	}
-	ready, _ := json.Marshal(map[string]any{"ready": true, "assignmentId": asID, "tenant": tenant, "answerMarkers": markers})
+	ready, _ := json.Marshal(map[string]any{"ready": true, "assignmentId": asID, "tenant": tenant, "answerMarkers": markers,
+		"setAssignmentId": setAsID, "setItems": len(vs["items"].([]any)), "setMarkers": setMarkers})
 	fmt.Println("EDU_E2E_READY " + string(ready))
 	select {
 	case <-done:

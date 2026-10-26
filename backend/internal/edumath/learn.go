@@ -789,6 +789,7 @@ func setDone(tx *gorm.DB, tenantID, asID, userID string, items []gin.H) bool {
 func maskSetAttempt(at model.EduAttempt) model.EduAttempt {
 	if at.Valid {
 		at.Result, at.Reason, at.Grader = "recorded", "", ""
+		at.TeacherResult, at.TeacherNote, at.TeacherBy = "", "", ""
 	}
 	return at
 }

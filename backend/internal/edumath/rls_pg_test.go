@@ -113,3 +113,9 @@ func TestPGStudentLearningLoop(t *testing.T) {
 	db := pgTestDB(t)
 	runLearning(t, newHarnessDB(t, startMathService(t), db))
 }
+
+// TestPGHelpRequestsAndDashboard runs help requests and the dashboard on Postgres under FORCE RLS.
+func TestPGHelpRequestsAndDashboard(t *testing.T) {
+	db := pgTestDB(t)
+	runHelp(t, newHarnessDB(t, startMathService(t), db))
+}

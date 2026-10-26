@@ -359,6 +359,45 @@ type EduReviewItem struct {
 
 func (EduReviewItem) TableName() string { return "edu_review_items" }
 
+// EduHelpRequest is a private student request (FR-S11): a content error report,
+// "I don't understand", or a question to the class teacher. GroupKey merges
+// requests about the same assignment, kind and beat (FR-T13).
+type EduHelpRequest struct {
+	ID            string    `json:"id" gorm:"primaryKey;size:40"`
+	TenantID      string    `json:"tenantId" gorm:"size:40;not null;index;uniqueIndex:ux_edu_help_key,priority:1"`
+	ClassID       string    `json:"classId" gorm:"size:40;not null;index"`
+	AssignmentID  string    `json:"assignmentId" gorm:"size:40;not null;index"`
+	StudentUserID string    `json:"studentUserId" gorm:"size:40;not null;index;uniqueIndex:ux_edu_help_key,priority:2"`
+	ClientKey     string    `json:"clientKey" gorm:"size:64;not null;uniqueIndex:ux_edu_help_key,priority:3"`
+	Kind          string    `json:"kind" gorm:"size:24;not null"` // content_error | access_problem | dont_understand | ask_teacher
+	BeatID        string    `json:"beatId,omitempty" gorm:"size:40"`
+	Message       string    `json:"message" gorm:"size:500"`
+	GroupKey      string    `json:"groupKey" gorm:"size:120;not null;index"`
+	Priority      int       `json:"priority"`                      // 1 content/access, 2 learning question
+	State         string    `json:"state" gorm:"size:16;not null"` // open | answered
+	ReplyID       string    `json:"replyId,omitempty" gorm:"size:40"`
+	CreatedAt     time.Time `json:"createdAt"`
+	UpdatedAt     time.Time `json:"updatedAt"`
+}
+
+func (EduHelpRequest) TableName() string { return "edu_help_requests" }
+
+// EduHelpReply answers a group of requests, privately or as a public class note
+// (public notes must not contain personal identifiers).
+type EduHelpReply struct {
+	ID           string    `json:"id" gorm:"primaryKey;size:40"`
+	TenantID     string    `json:"tenantId" gorm:"size:40;not null;index"`
+	ClassID      string    `json:"classId" gorm:"size:40;not null;index"`
+	AssignmentID string    `json:"assignmentId" gorm:"size:40;not null;index"`
+	GroupKey     string    `json:"groupKey" gorm:"size:120;not null"`
+	Body         string    `json:"body" gorm:"size:2000;not null"`
+	Public       bool      `json:"public"`
+	AuthorID     string    `json:"authorId" gorm:"size:40;not null"`
+	CreatedAt    time.Time `json:"createdAt"`
+}
+
+func (EduHelpReply) TableName() string { return "edu_help_replies" }
+
 type EduAuditEvent struct {
 	ID        string    `json:"id" gorm:"primaryKey;size:40"`
 	TenantID  string    `json:"tenantId" gorm:"size:40;not null;index"`
@@ -376,5 +415,5 @@ func EduModels() []any {
 	return []any{&EduOrgPolicy{}, &EduRoleBinding{}, &EduClass{}, &EduTeachingAssignment{}, &EduEnrollment{}, &EduProblem{},
 		&EduProblemRevision{}, &EduMathJob{}, &EduStageRun{}, &EduArtifact{}, &EduSolutionRevision{}, &EduLessonRevision{},
 		&EduReviewRecord{}, &EduPublication{}, &EduAssignment{}, &EduAuditEvent{}, &EduClassInvite{}, &EduConsentRecord{},
-		&EduAttempt{}, &EduHintUnlock{}, &EduSelfTest{}, &EduReviewItem{}}
+		&EduAttempt{}, &EduHintUnlock{}, &EduSelfTest{}, &EduReviewItem{}, &EduHelpRequest{}, &EduHelpReply{}}
 }

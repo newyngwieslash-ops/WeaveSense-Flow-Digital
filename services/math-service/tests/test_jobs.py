@@ -157,3 +157,76 @@ class VariantSetJobTests(unittest.TestCase):
         v = self.run_set({"family_id": "SOLID-ANGLE-01", "params": {"e": "1"}})
         self.assertEqual(v["status"], "failed")
         self.assertEqual(v["error"]["code"], "VALIDATION_FAILED")
+
+
+class LessonEditJobTests(unittest.TestCase):
+    """FR-T05/FR-T06, AC-17/18: field level edits on an exact base hash; math kept, stale parts regenerated."""
+
+    def setUp(self):
+        self.dir = tempfile.mkdtemp()
+        self.s = Store(self.dir)
+        self.w = Worker(self.s)
+        a, _ = self.s.start("t1", "analyze", "a", PROB)
+        drain(self.w, a["job_id"])
+        lb, _ = self.s.start("t1", "lesson_build", "l", dict(PROB, analysis_job_id=a["job_id"]))
+        drain(self.w, lb["job_id"])
+        self.aj = a["job_id"]
+        v = self.s.get("t1", lb["job_id"])
+        self.lesson_ref = {r["kind"]: r for r in v["result_refs"]}["lesson"]
+        import json as _json
+        _, data = self.s.get_artifact("t1", self.lesson_ref["artifact_id"])
+        self.base = _json.loads(data)
+
+    def edit(self, edits, key="e", sha=None, tenant="t1"):
+        p = dict(PROB, analysis_job_id=self.aj, base_lesson_artifact_id=self.lesson_ref["artifact_id"],
+                 base_lesson_hash=sha or self.lesson_ref["sha256"], edits=edits)
+        j, _ = self.s.start(tenant, "lesson_edit", key, p)
+        drain(self.w, j["job_id"])
+        return self.s.get(tenant, j["job_id"], internal=True)
+
+    def test_wording_and_board_edit_creates_new_lesson_with_log(self):
+        import json as _json
+        b0 = self.base["beats"][0]["id"]
+        v = self.edit([{"target": "beat", "id": b0, "field": "say", "value": "先看底面。"},
+                       {"target": "beat", "id": b0, "field": "board", "value": ["连接 AC"]},
+                       {"target": "pronunciation", "term": "棱", "reading": "léng"}])
+        self.assertEqual(v["status"], "succeeded", v.get("error"))
+        lesson = v["_checkpoint"]["apply_edits"]["lesson"]
+        self.assertEqual(lesson["beats"][0]["say"], "先看底面。")
+        self.assertEqual(lesson["quality"]["edited_unverified"], [b0])
+        self.assertEqual(lesson["quality"]["math_text"], "teacher_edited_not_auto_verified")
+        self.assertEqual(lesson["meta"]["parent_lesson_hash"], self.lesson_ref["sha256"])
+        self.assertEqual(lesson["answer"], self.base["answer"])
+        self.assertEqual(lesson["pronunciations"], {"棱": "léng"})
+        imp = v["_checkpoint"]["apply_edits"]["impact"]
+        self.assertEqual(imp["classes"], ["pronunciation", "reasoning", "wording"])
+        self.assertTrue(imp["manual_check"])
+        kinds = {r["kind"]: r for r in v["result_refs"]}
+        self.assertEqual(set(kinds), {"lesson", "lesson_student", "preview_html", "preview_html_student"})
+        _, html = self.s.get_artifact("t1", kinds["preview_html"]["artifact_id"])
+        self.assertIn("连接 AC".encode(), html)  # the preview shows board lines; narration feeds captions and media
+        self.assertNotEqual(kinds["lesson"]["sha256"], self.lesson_ref["sha256"])
+        _, sd = self.s.get_artifact("t1", kinds["lesson_student"]["artifact_id"])
+        self.assertNotIn("连接 AC", sd.decode("utf-8"))  # beats stay locked for students
+        self.assertIsInstance(_json.loads(sd), dict)
+
+    def test_hint_leaking_the_answer_is_refused(self):
+        lv = next(h["level"] for h in self.base["hints"] if not h.get("gated"))
+        v = self.edit([{"target": "hint", "level": lv, "field": "text", "value": "答案是 " + self.base["answer"]["plain"]}], key="leak")
+        self.assertEqual(v["status"], "failed")
+        self.assertEqual(v["error"]["code"], "VALIDATION_FAILED")
+
+    def test_non_editable_targets_stale_hash_and_other_tenant_are_refused(self):
+        v = self.edit([{"target": "answer", "field": "plain", "value": "1"}], key="ans")
+        self.assertEqual((v["status"], v["error"]["code"]), ("failed", "POLICY_REVOKED"))
+        v = self.edit([{"target": "beat", "id": self.base["beats"][0]["id"], "field": "say", "value": "x"}], key="stale", sha="sha256:old")
+        self.assertEqual((v["status"], v["error"]["code"]), ("failed", "REVISION_CONFLICT"))
+        v = self.edit([{"target": "beat", "id": self.base["beats"][0]["id"], "field": "say", "value": "x"}], key="t2", tenant="t2")
+        self.assertEqual(v["status"], "failed")
+
+    def test_impact_classes(self):
+        from mathsvc import edits
+        self.assertEqual(edits.impact([{"target": "pronunciation", "term": "棱", "reading": "léng"}])["invalidates"], ["captions", "media"])
+        self.assertIn("review", edits.impact([{"target": "beat", "id": "s1", "field": "title", "value": "x"}])["invalidates"])
+        with self.assertRaises(MathError):
+            edits.impact([])

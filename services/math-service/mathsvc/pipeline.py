@@ -9,6 +9,7 @@ from .families import REGISTRY as FAMILIES
 ANALYZE_STAGES = ["validate_input", "solve", "verify"]
 LESSON_STAGES = ["compose_lesson", "project_student", "render_preview"]
 VARIANT_STAGES = ["generate_variants", "verify_variants"]
+EDIT_STAGES = ["apply_edits", "project_student", "render_preview"]
 
 
 def _fam(problem):
@@ -60,11 +61,15 @@ def run_stage(stage, payload, prior):
                 "report_hash": payload.get("report_hash", ""), "catalog_version": catalog.CATALOG_VERSION}
         lesson = L.compose(problem["family_id"], n, sol, src["report"], cq, refs)
         return {"lesson": lesson, "lesson_hash": L.canonical_hash(lesson)}
+    if stage == "apply_edits":
+        from . import edits
+        base = payload["base_lesson"]
+        lesson = edits.apply(base, payload["edits"], sol)
+        return {"lesson": lesson, "lesson_hash": L.canonical_hash(lesson), "impact": edits.impact(payload["edits"])}
+    lesson = (prior.get("compose_lesson") or prior.get("apply_edits"))["lesson"]
     if stage == "project_student":
-        lesson = prior["compose_lesson"]["lesson"]
         return {"student": L.student_projection(lesson, "none")}
     if stage == "render_preview":
-        lesson = prior["compose_lesson"]["lesson"]
         student = prior["project_student"]["student"]
         t_html = render.page(lesson, "teacher")
         s_html = render.page(student, "student")

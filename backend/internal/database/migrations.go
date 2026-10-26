@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const CurrentSchemaVersion int64 = 73
+const CurrentSchemaVersion int64 = 74
 
 const baselineSchemaChecksum = "sha256:open-ai-canvas-schema-v1-20260830"
 const schemaMigrationAppliedAtIndexChecksum = "sha256:schema-migrations-applied-at-index-v2-20260830"
@@ -302,6 +302,13 @@ var schemaMigrations = []migration{
 	}},
 	{version: 73, name: "edu_variant_sets_extensions_v73", checksum: "sha256:edu-variant-sets-extensions-v73-20261026", apply: func(tx *gorm.DB) error {
 		// docs/math-workbench: reviewed variant sets, per student extensions, job options (AC-21/22) + FORCE RLS.
+		if err := tx.AutoMigrate(model.EduModels()...); err != nil {
+			return err
+		}
+		return applyFlowRLS(tx)
+	}},
+	{version: 74, name: "edu_lesson_edits_v74", checksum: "sha256:edu-lesson-edits-v74-20261026", apply: func(tx *gorm.DB) error {
+		// docs/math-workbench: structured lesson edits with an optimistic head lock, lesson lineage, review inheritance rule (AC-17/18) + FORCE RLS.
 		if err := tx.AutoMigrate(model.EduModels()...); err != nil {
 			return err
 		}

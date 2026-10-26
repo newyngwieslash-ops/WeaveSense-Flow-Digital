@@ -24,14 +24,14 @@ import uuid
 
 from . import catalog
 from .errors import MathError
-from .pipeline import ANALYZE_STAGES, LESSON_STAGES, VARIANT_STAGES
+from .pipeline import ANALYZE_STAGES, EDIT_STAGES, LESSON_STAGES, VARIANT_STAGES
 
 SCHEMA_VERSION = "edu.math.job/1"
 TERMINAL = ("succeeded", "failed", "cancelled")
-STAGES = {"analyze": ANALYZE_STAGES, "lesson_build": LESSON_STAGES, "variant_set": VARIANT_STAGES}
+STAGES = {"analyze": ANALYZE_STAGES, "lesson_build": LESSON_STAGES, "variant_set": VARIANT_STAGES, "lesson_edit": EDIT_STAGES}
 TIMEOUTS = {"validate_input": 5, "solve": catalog.LIMITS["solve_timeout_s"], "verify": catalog.LIMITS["verify_timeout_s"],
             "compose_lesson": 10, "project_student": 5, "render_preview": catalog.LIMITS["render_timeout_s"],
-            "generate_variants": 5, "verify_variants": 30}
+            "generate_variants": 5, "verify_variants": 30, "apply_edits": 10}
 
 
 def now():
@@ -235,9 +235,11 @@ class Worker:
         with s.lock:
             s._update(jid, status="running", stage=nxt["name"], stages_json=json.dumps(stages))
         payload = json.loads(r["input_json"])
-        if r["kind"] == "lesson_build":
+        if r["kind"] in ("lesson_build", "lesson_edit"):
             try:
                 payload["analysis"] = self.analysis_of(r["tenant_id"], payload.get("analysis_job_id", ""))
+                if r["kind"] == "lesson_edit":
+                    payload["base_lesson"] = self.base_lesson_of(r["tenant_id"], payload.get("base_lesson_artifact_id", ""), payload.get("base_lesson_hash", ""))
             except MathError as e:
                 with s.lock:
                     s._update(jid, status="failed", error_json=json.dumps(e.to_dict()))
@@ -275,6 +277,13 @@ class Worker:
         ck = a["_checkpoint"]
         return {"solution": ck["solve"]["solution"], "report": ck["verify"]["report"], "input_hash": a["input_hash"]}
 
+    def base_lesson_of(self, tenant, aid, sha):
+        """The exact teacher lesson an edit starts from (same tenant, kind lesson, hash bound)."""
+        meta, data = self.store.get_artifact(tenant, aid)
+        if meta["kind"] != "lesson" or not sha or meta["sha256"] != sha:
+            raise MathError("REVISION_CONFLICT", "base lesson does not match the requested revision hash")
+        return json.loads(data)
+
     def _artifacts(self, r, stage, res):
         t, j = r["tenant_id"], r["job_id"]
         js = lambda o: json.dumps(o, ensure_ascii=False, sort_keys=True).encode("utf-8")  # noqa: E731
@@ -283,7 +292,7 @@ class Worker:
             return [put(t, j, "solution", "teacher", "application/json", js(res["solution"]))]
         if stage == "verify":
             return [put(t, j, "validation_report", "teacher", "application/json", js(res["report"]))]
-        if stage == "compose_lesson":
+        if stage in ("compose_lesson", "apply_edits"):
             return [put(t, j, "lesson", "teacher", "application/json", js(res["lesson"]))]
         if stage == "project_student":
             return [put(t, j, "lesson_student", "student", "application/json", js(res["student"]))]

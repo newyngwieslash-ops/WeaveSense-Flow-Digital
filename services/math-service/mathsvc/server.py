@@ -164,7 +164,7 @@ class Handler(BaseHTTPRequestHandler):
             req = json.loads(body or b"{}")
             if self.path == "/v1/jobs":
                 kind = req.get("kind")
-                if kind not in ("analyze", "lesson_build", "variant_set"):
+                if kind not in ("analyze", "lesson_build", "variant_set", "lesson_edit"):
                     raise MathError("UNSUPPORTED_FAMILY", "unknown job kind")
                 job, created = self.app.start_job(t, kind, req)
                 return self._send(202 if created else 200, job)

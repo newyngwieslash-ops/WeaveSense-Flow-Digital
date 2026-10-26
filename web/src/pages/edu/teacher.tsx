@@ -14,6 +14,7 @@ const ghost = "inline-flex h-8 items-center rounded-md border border-stone-300 p
 type EduClass = { id: string; name: string; status: string };
 type EduAssignmentRow = { id: string; title: string; state: string; answerPolicy: string; dueAt?: string; answerReleasedAt?: string };
 type Dashboard = { students: number; distribution: Record<string, number>; selfTest: { independent: number; independentCorrect: number }; help: { open: number; openReports: number }; note: string };
+type FigureSummary = { predictions: Record<string, { choice: number; text: string; count: number }[]>; figure: { studentsUsed: number; studentsKeyboardOrForm: number; fallbacks: number } };
 type HelpGroup = { groupKey: string; kind: string; beatId: string; priority: number; open: number; requests: { id: string; message: string; state: string; createdAt: string }[] };
 
 const DIST_LABEL: Record<string, string> = {
@@ -35,6 +36,7 @@ export default function TeacherClassroom() {
     const [asId, setAsId] = useState("");
     const [dash, setDash] = useState<Dashboard | null>(null);
     const [help, setHelp] = useState<HelpGroup[]>([]);
+    const [fig, setFig] = useState<FigureSummary | null>(null);
     const [attempts, setAttempts] = useState<EduAttempt[]>([]);
     const [msg, setMsg] = useState("");
 
@@ -57,6 +59,7 @@ export default function TeacherClassroom() {
         if (!asId) return;
         void edu<Dashboard>("get", `/assignments/${asId}/dashboard`, scope).then((r) => (r.ok ? setDash(r.data) : setMsg(r.message)));
         void edu<HelpGroup[]>("get", `/assignments/${asId}/help`, scope).then((r) => r.ok && setHelp(r.data));
+        void edu<FigureSummary>("get", `/assignments/${asId}/figure-summary`, scope).then((r) => setFig(r.ok ? r.data : null));
         void edu<{ attempts: EduAttempt[] }>("get", `/assignments/${asId}/attempts`, scope).then((r) => r.ok && setAttempts(r.data.attempts));
     }, [asId, scope]);
     useEffect(load, [load]);
@@ -122,6 +125,21 @@ export default function TeacherClassroom() {
                         独立自测 {dash.selfTest.independent} 人，其中正确 {dash.selfTest.independentCorrect}；待处理求助 {dash.help.open}，内容问题报告 {dash.help.openReports}
                     </p>
                     <p className="mt-1 text-xs text-stone-500">仅为统计分布，错因请对照学生作答核实。</p>
+                </section>
+            ) : null}
+
+            {fig && (fig.figure.studentsUsed > 0 || Object.keys(fig.predictions).length > 0) ? (
+                <section className={`${box} mt-4`}>
+                    <h2 className="mb-2 font-semibold">图形探索与课前预测</h2>
+                    {Object.entries(fig.predictions).map(([id, opts]) => (
+                        <p key={id} className="text-sm">
+                            预测分布：{opts.map((o) => `${o.text} ${o.count} 人`).join("；")}
+                        </p>
+                    ))}
+                    <p className="mt-1 text-sm">
+                        使用交互图形 {fig.figure.studentsUsed} 人，其中用键盘或数值输入 {fig.figure.studentsKeyboardOrForm} 人；图形降级 {fig.figure.fallbacks} 次
+                    </p>
+                    <p className="mt-1 text-xs text-stone-500">预测与使用次数只是学习记录，不代表掌握情况。</p>
                 </section>
             ) : null}
 

@@ -398,6 +398,41 @@ type EduHelpReply struct {
 
 func (EduHelpReply) TableName() string { return "edu_help_replies" }
 
+// EduPrediction is a student's qualitative prediction made before exploring an
+// interactive figure (FR-S05). The first choice is kept; it is learning
+// telemetry, never evidence of mastery or of mathematical correctness.
+type EduPrediction struct {
+	ID            string    `json:"id" gorm:"primaryKey;size:40"`
+	TenantID      string    `json:"tenantId" gorm:"size:40;not null;index;uniqueIndex:ux_edu_prediction,priority:1"`
+	AssignmentID  string    `json:"assignmentId" gorm:"size:40;not null;index;uniqueIndex:ux_edu_prediction,priority:2"`
+	StudentUserID string    `json:"studentUserId" gorm:"size:40;not null;index;uniqueIndex:ux_edu_prediction,priority:3"`
+	PromptID      string    `json:"promptId" gorm:"size:40;not null;uniqueIndex:ux_edu_prediction,priority:4"`
+	Choice        int       `json:"choice"`
+	ChoiceText    string    `json:"choiceText" gorm:"size:200"`
+	BeforeAttempt bool      `json:"beforeAttempt"`
+	CreatedAt     time.Time `json:"createdAt"`
+}
+
+func (EduPrediction) TableName() string { return "edu_predictions" }
+
+// EduFigureInteraction aggregates how a student used an interactive figure
+// (counts only, capped per report). It is never used as learning evidence.
+type EduFigureInteraction struct {
+	ID            string    `json:"id" gorm:"primaryKey;size:40"`
+	TenantID      string    `json:"tenantId" gorm:"size:40;not null;index;uniqueIndex:ux_edu_figure_use,priority:1"`
+	AssignmentID  string    `json:"assignmentId" gorm:"size:40;not null;index;uniqueIndex:ux_edu_figure_use,priority:2"`
+	StudentUserID string    `json:"studentUserId" gorm:"size:40;not null;index;uniqueIndex:ux_edu_figure_use,priority:3"`
+	Drags         int       `json:"drags"`
+	KeyPresses    int       `json:"keyPresses"`
+	FormInputs    int       `json:"formInputs"`
+	Resets        int       `json:"resets"`
+	Fallbacks     int       `json:"fallbacks"`
+	Reports       int       `json:"reports"`
+	UpdatedAt     time.Time `json:"updatedAt"`
+}
+
+func (EduFigureInteraction) TableName() string { return "edu_figure_interactions" }
+
 type EduAuditEvent struct {
 	ID        string    `json:"id" gorm:"primaryKey;size:40"`
 	TenantID  string    `json:"tenantId" gorm:"size:40;not null;index"`
@@ -415,5 +450,6 @@ func EduModels() []any {
 	return []any{&EduOrgPolicy{}, &EduRoleBinding{}, &EduClass{}, &EduTeachingAssignment{}, &EduEnrollment{}, &EduProblem{},
 		&EduProblemRevision{}, &EduMathJob{}, &EduStageRun{}, &EduArtifact{}, &EduSolutionRevision{}, &EduLessonRevision{},
 		&EduReviewRecord{}, &EduPublication{}, &EduAssignment{}, &EduAuditEvent{}, &EduClassInvite{}, &EduConsentRecord{},
-		&EduAttempt{}, &EduHintUnlock{}, &EduSelfTest{}, &EduReviewItem{}, &EduHelpRequest{}, &EduHelpReply{}}
+		&EduAttempt{}, &EduHintUnlock{}, &EduSelfTest{}, &EduReviewItem{}, &EduHelpRequest{}, &EduHelpReply{},
+		&EduPrediction{}, &EduFigureInteraction{}}
 }

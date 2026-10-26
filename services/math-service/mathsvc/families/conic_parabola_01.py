@@ -136,3 +136,20 @@ def hints(sol):
         {"level": 4, "kind": "partial_step", "text": "；".join(sol["steps"][1]["plain"]), "reveals_answer": False, "gated": True},
         {"level": 5, "kind": "full_solution", "text": "完整解答见讲解。", "reveals_answer": True, "gated": True},
     ]
+
+
+def explore(norm, sol):
+    p = float(norm["_exact"]["p"])
+
+    def frame(m):
+        # x = m y + p/2 meets y² = 2 p x at y = p m ± p√(m² + 1).
+        r = p * math.sqrt(m * m + 1)
+        ya, yb = p * m + r, p * m - r
+        return {"A": (ya * ya / (2 * p), ya), "B": (yb * yb / (2 * p), yb)}, ""
+
+    ms = [round(-3 + 0.25 * i, 2) for i in range(25)]
+    return C.param_explore("m", "直线 x = my + p/2 中的 m", "", ms, frame, 0.0,
+                           "过焦点 F 的直线写成 x = my + p/2，拖动滑块改变 m，A、B 是直线与抛物线的交点，观察向量 OA 与 OB。",
+                           {"id": "dot_product", "prompt": "先预测：直线绕焦点转动时，OA 与 OB 的数量积会怎样？",
+                            "options": ["随直线变化", "保持不变", "总是正数", "说不准"]},
+                           "m 取 −3 到 3；水平直线 y = 0 只与抛物线交于一点，不构成弦，因此不在参数范围内。")

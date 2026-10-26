@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
 
+import { stepKey, type FigureSpec } from "@/components/edu/figure-math";
+import { FigureBoundary, InteractiveFigure, PredictionPanel, useFigureUsage } from "@/components/edu/interactive-figure";
+import { StepViewer } from "@/components/edu/step-viewer";
 import { clearOtherUsers, enqueue, flushQueue, readQueue, type PendingAttempt } from "@/lib/edu-offline-queue";
 import { edu, newClientKey, RESULT_LABEL, type EduAttempt, type EduMe, type HintBody, type LearningState, type StudentLesson } from "@/services/api/edu";
 import { useUserStore } from "@/stores/use-user-store";
@@ -159,6 +162,8 @@ export function StudentAssignment() {
         void edu<LearningState>("get", `/student/assignments/${id}/learning`, scope).then((r) => (r.ok ? setState(r.data) : setMsg(r.message)));
     }, [id, scope]);
     const { pending, queue } = useOfflineFlush(tenant, reload);
+    const userId = useUserStore((s) => s.user?.id) || "";
+    const useFig = useFigureUsage((u) => void edu("post", `/student/assignments/${id}/figure-events`, scope, u));
 
     useEffect(() => {
         void edu<{ lesson: StudentLesson; preview: { url: string } }>("get", `/student/assignments/${id}`, scope).then((r) => {
@@ -207,6 +212,21 @@ export function StudentAssignment() {
         if (r.ok) setHelpText("");
     };
 
+    const predict = async (promptId: string, choice: number) => {
+        const r = await edu("post", `/student/assignments/${id}/predictions`, scope, { promptId, choice });
+        if (!r.ok) return setMsg(errorText(r.code, r.message));
+        reload();
+    };
+
+    const fig = lesson?.figure as FigureSpec | undefined;
+    const pred = fig?.explore?.prediction;
+    const chosen = pred ? state?.predictions?.find((x) => x.promptId === pred.id)?.choice : undefined;
+    const staticFigure = (
+        <div data-testid="figure-fallback">
+            {fig?.explore?.description ? <p className="text-sm">{fig.explore.description}</p> : null}
+            {previewUrl ? <iframe title="图形" src={previewUrl} sandbox="allow-scripts" className="mt-3 h-72 w-full rounded-md border" /> : null}
+        </div>
+    );
     const p = state?.policy;
     const levels = state?.hintLevels || [];
     const nextLevel = (levels.length ? Math.max(...levels) : 0) + 1;
@@ -217,7 +237,18 @@ export function StudentAssignment() {
             {lesson ? (
                 <section className={box}>
                     <p className="whitespace-pre-wrap leading-7">{lesson.problem.text}</p>
-                    {previewUrl ? <iframe title="图形" src={previewUrl} sandbox="allow-scripts" className="mt-3 h-72 w-full rounded-md border" /> : null}
+                    <div className="mt-3">
+                        {fig?.kind ? (
+                            <>
+                                {pred ? <PredictionPanel prompt={pred.prompt} options={pred.options} chosen={chosen} onChoose={(i) => void predict(pred.id, i)} disabled={!state} /> : null}
+                                <FigureBoundary fallback={staticFigure} onFallback={() => useFig("fallbacks")}>
+                                    <InteractiveFigure spec={fig} onUse={useFig} disabled={Boolean(pred) && chosen === undefined} />
+                                </FigureBoundary>
+                            </>
+                        ) : (
+                            staticFigure
+                        )}
+                    </div>
                     {p ? (
                         <p className="mt-2 text-xs text-stone-500">
                             {p.dueAt ? `截止 ${new Date(p.dueAt).toLocaleString()}；` : ""}
@@ -261,12 +292,7 @@ export function StudentAssignment() {
                         <div key={h.level} className="mb-2 text-sm">
                             <b>第 {h.level} 层</b>
                             {h.text ? <p className="whitespace-pre-wrap">{h.text}</p> : null}
-                            {h.beats?.map((b) => (
-                                <div key={b.id} className="mt-1">
-                                    <p className="font-medium">{b.title}</p>
-                                    <p className="whitespace-pre-wrap">{b.board || b.say}</p>
-                                </div>
-                            ))}
+                            {h.beats?.length ? <StepViewer beats={h.beats} storageKey={stepKey(userId, id)} /> : null}
                             {h.answer ? <p className="mt-1">答案：{h.answer.plain}</p> : null}
                         </div>
                     ))}

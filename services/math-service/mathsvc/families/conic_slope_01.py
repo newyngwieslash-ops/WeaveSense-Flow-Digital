@@ -137,3 +137,20 @@ def hints(sol):
         {"level": 4, "kind": "partial_step", "text": "；".join(sol["steps"][1]["plain"]), "reveals_answer": False, "gated": True},
         {"level": 5, "kind": "full_solution", "text": "完整解答见讲解。", "reveals_answer": True, "gated": True},
     ]
+
+
+def explore(norm, sol):
+    a, b = float(norm["_exact"]["a"]), float(norm["_exact"]["b"])
+
+    def frame(deg):
+        if deg % 180 == 0:
+            return None, "此时 A 或 B 与 P 重合，直线 PA 或 PB 不存在，不在题目考虑范围内。"
+        t = math.radians(deg)
+        x, y = a * math.cos(t), b * math.sin(t)
+        return {"P": (a, 0.0), "A": (x, y), "B": (-x, -y)}, ""
+
+    return C.param_explore("t", "点 A 的位置参数", "°", [float(d) for d in range(0, 360, 5)], frame, 120.0,
+                           "A 在椭圆上移动，B 始终是 A 关于原点的对称点，P 是右顶点。观察直线 PA 与 PB 的倾斜程度如何一起变化。",
+                           {"id": "slope_product", "prompt": "先预测：A 在椭圆上移动时，直线 PA 与 PB 斜率的乘积会怎样？",
+                            "options": ["随 A 变化", "保持不变", "有时不存在，其余时候随 A 变化", "说不准"]},
+                           "参数取 0° 到 355°（每 5° 一帧）；0° 与 180° 为退化位置。")

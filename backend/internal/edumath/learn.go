@@ -43,6 +43,16 @@ type teacherLesson struct {
 		RevealsAnswer bool   `json:"reveals_answer"`
 		Gated         bool   `json:"gated"`
 	} `json:"hints"`
+	Figure struct {
+		Explore *struct {
+			Mode       string `json:"mode"`
+			Prediction struct {
+				ID      string   `json:"id"`
+				Prompt  string   `json:"prompt"`
+				Options []string `json:"options"`
+			} `json:"prediction"`
+		} `json:"explore"`
+	} `json:"figure"`
 	CheckQuestion  map[string]any `json:"check_question"`
 	CheckAnswerKey struct {
 		Plain string `json:"plain"`
@@ -478,6 +488,9 @@ func (h *API) learningState(c *gin.Context) {
 	if hasRV {
 		out["review"] = rv
 	}
+	var preds []model.EduPrediction
+	tx.Where("tenant_id = ? AND assignment_id = ? AND student_user_id = ?", a.TenantID, as.ID, a.UserID).Order("created_at").Find(&preds)
+	out["predictions"] = preds
 	reply(c, 200, out, "ok")
 }
 

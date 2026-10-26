@@ -130,3 +130,27 @@ def plane_figure(points, curves, segments, extent):
     return {"kind": "plane2d", "extent": extent,
             "points": {k: {"xyz": [float(x), float(y), 0.0], "label": k} for k, (x, y) in points.items()},
             "curves": curves, "edges": [], "aux": [{"seg": s, "style": st, "role": r} for s, st, r in segments], "faces": []}
+
+
+# Interactive exploration (FR-S05, AC-25). Frames are sampled server-side over the
+# validated domain only, so the browser never evaluates math; degenerate samples
+# carry an explanation instead of geometry. No frame carries a measured target
+# quantity, and prediction prompts are qualitative and teacher-reviewed with the lesson.
+def rotate_explore(description, prediction):
+    return {"mode": "rotate", "reset": {"yaw": -35, "pitch": 22}, "limits": {"pitch": [-80, 80]},
+            "description": description, "prediction": prediction}
+
+
+def param_explore(name, label, unit, values, frame, default, description, prediction, note=""):
+    frames = []
+    for v in values:
+        pts, why = frame(v)
+        f = {"v": round(v, 4)}
+        if why:
+            f["degenerate"] = why
+        else:
+            f["points"] = {k: [round(x, 4), round(y, 4)] for k, (x, y) in pts.items()}
+        frames.append(f)
+    return {"mode": "param", "param": {"name": name, "label": label, "unit": unit, "default": default,
+                                       "min": values[0], "max": values[-1]},
+            "frames": frames, "description": description, "domain_note": note, "prediction": prediction}

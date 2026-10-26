@@ -119,3 +119,9 @@ func TestPGHelpRequestsAndDashboard(t *testing.T) {
 	db := pgTestDB(t)
 	runHelp(t, newHarnessDB(t, startMathService(t), db))
 }
+
+// TestPGFigurePredictionsAndUse runs prediction and figure-use recording on Postgres under FORCE RLS.
+func TestPGFigurePredictionsAndUse(t *testing.T) {
+	db := pgTestDB(t)
+	runFigure(t, newHarnessDB(t, startMathService(t), db))
+}

@@ -35,7 +35,7 @@ def compose(fam, norm, sol, report, cq, refs):
         "meta": {"family_id": fam, "title": mod.TITLE, "language": "zh-CN", "style": "standard",
                  "ai_generated": False, "generator": "deterministic-template", "refs": refs},
         "problem": {"text": mod.problem_text(norm), "params": norm["params"], "unit": norm["unit"]},
-        "figure": mod.figure(norm, sol),
+        "figure": _figure(mod, norm, sol),
         "beats": beats,
         "answer": {"plain": sol["answer"]["plain"], "latex": sol["answer"]["latex"], "exact": sol["answer"]["exact"],
                    "release": "after_teacher_release"},
@@ -48,6 +48,13 @@ def compose(fam, norm, sol, report, cq, refs):
     if problems:
         raise MathError("VALIDATION_FAILED", "presentation consistency failed", {"problems": problems})
     return lesson
+
+
+def _figure(mod, norm, sol):
+    fig = mod.figure(norm, sol)
+    if hasattr(mod, "explore"):
+        fig["explore"] = mod.explore(norm, sol)
+    return fig
 
 
 def _module(fam):

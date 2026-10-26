@@ -11,6 +11,7 @@
         "test:canvas": "bun test test/canvas-media-performance.test.ts test/canvas-node-title-interaction.test.ts test/canvas-spatial-index.test.ts",
         "test": "bun test",
         "test:previs:e2e": "bun scripts/previs-p0-chrome-e2e.mjs",
+        "test:edu:e2e": "bun scripts/edu-chrome-e2e.mjs",
         "start": "vite preview --host 0.0.0.0 --port 3000",
         "format": "prettier --write .",
         "format:check": "prettier --check .",

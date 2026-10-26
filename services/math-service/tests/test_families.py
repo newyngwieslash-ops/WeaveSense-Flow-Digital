@@ -152,6 +152,35 @@ class FamilyPipeline(unittest.TestCase):
                 self.assertIn("答案", L.visible_text(lp["render_preview"]["teacher_html"]))
                 self.assertNotIn("<script", lp["render_preview"]["student_html"])
 
+    def test_explore_specs_stay_in_domain_and_leak_nothing(self):
+        cases = [(fid, c[0][0]) for fid, c in GOLD.items()] + [("SOLID-ANGLE-02", prob("SOLID-ANGLE-02", {"a": "2", "h": "3"}))]
+        for fid, p in cases:
+            _, lp = run_all(p)
+            lesson = lp["compose_lesson"]["lesson"]
+            ex = lp["project_student"]["student"]["figure"].get("explore")
+            self.assertIsNotNone(ex, fid)
+            pred = ex["prediction"]
+            self.assertTrue(pred["id"] and pred["prompt"] and len(pred["options"]) >= 2, fid)
+            texts = "\n".join(L._strings(ex))
+            for m in L.answer_markers(lesson):
+                self.assertNotIn(m, texts, (fid, m))
+            if ex["mode"] == "param":
+                pr = ex["param"]
+                self.assertTrue(ex["frames"], fid)
+                self.assertTrue(any(f["v"] == pr["default"] and "points" in f for f in ex["frames"]), fid)
+                for f in ex["frames"]:
+                    self.assertTrue(pr["min"] <= f["v"] <= pr["max"], fid)
+                    if "degenerate" in f:
+                        self.assertNotIn("points", f)
+                        self.assertTrue(f["degenerate"])
+                    else:
+                        self.assertTrue(all(abs(x) < 1e6 and abs(y) < 1e6 for x, y in f["points"].values()), fid)
+                if fid == "CONIC-SLOPE-01":
+                    self.assertEqual(sorted(f["v"] for f in ex["frames"] if "degenerate" in f), [0.0, 180.0])
+            else:
+                self.assertEqual(ex["mode"], "rotate")
+                self.assertIn("yaw", ex["reset"])
+
     def test_plane_figure_renders_disabled_points(self):
         _, lp = run_all(prob("CONIC-SLOPE-01", {"a": "2", "b": "1"}))
         self.assertIn('aria-label="平面图形"', lp["render_preview"]["teacher_html"])

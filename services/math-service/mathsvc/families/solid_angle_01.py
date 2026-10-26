@@ -138,3 +138,9 @@ def hints(sol):
         {"level": 4, "kind": "partial_step", "text": "；".join(sol["steps"][1]["plain"]), "reveals_answer": False, "gated": True},
         {"level": 5, "kind": "full_solution", "text": "完整解答见讲解。", "reveals_answer": True, "gated": True},
     ]
+
+
+def explore(norm, sol):
+    return C.rotate_explore("正方体 ABCD‑A1B1C1D1，虚线是体对角线 A1C，点线 AC 是它在底面上的射影。拖动或用方向键旋转观察。",
+                            {"id": "projection", "prompt": "先预测：A1C 在底面 ABCD 上的射影是哪条线段？",
+                             "options": ["AC", "BD", "AB", "说不准"]})

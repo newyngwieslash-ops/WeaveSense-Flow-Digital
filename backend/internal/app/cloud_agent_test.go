@@ -620,7 +620,7 @@ func TestCloudAgentToolLoopPersistsApprovalAndAppliesCanvasWrite(t *testing.T) {
 func TestCloudAgentNodeTypesExposeExecutableAllowList(t *testing.T) {
 	result := cloudAgentNodeTypes()
 	nodes, ok := result["nodes"].([]map[string]any)
-	if !ok || len(nodes) != 10 {
+	if !ok || len(nodes) != 13 { // f0231e84 起新增 data-source / logic / skill 三种可执行节点
 		t.Fatalf("unexpected node registry: %#v", result)
 	}
 	var character map[string]any

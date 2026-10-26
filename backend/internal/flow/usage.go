@@ -39,10 +39,12 @@ const (
 	// Canvas agent runs (mirrored from the run's settled billing orders; see app.recordCanvasRunUsage).
 	UsageCanvasModelCalls = "canvas_model_calls"
 	UsageCanvasMedia      = "canvas_media_generations"
+	// Education math workbench: isolated math-service compute time per stage (docs/math-workbench).
+	UsageMathComputeMS = "math_compute_ms"
 )
 
 var UsageTypes = []string{UsageLLMInputTokens, UsageLLMOutputTokens, UsageOCRPages, UsageASRSeconds, UsagePaidSourceCalls, UsageMCPCalls, UsageStoredBytes, UsageNotifications,
-	UsageCanvasModelCalls, UsageCanvasMedia}
+	UsageCanvasModelCalls, UsageCanvasMedia, UsageMathComputeMS}
 
 func validUsageType(t string) bool {
 	for _, u := range UsageTypes {
@@ -66,6 +68,8 @@ var DefaultPriceBook = PriceBook{Version: "price_v1", UnitMicro: map[string]int6
 	UsageLLMInputTokens: 0, UsageLLMOutputTokens: 0, UsageOCRPages: 2000, UsageASRSeconds: 100,
 	UsagePaidSourceCalls: 0, UsageMCPCalls: 0, UsageStoredBytes: 0, UsageNotifications: 0,
 	UsageCanvasModelCalls: 0, UsageCanvasMedia: 0,
+	// Placeholder compute price pending product confirmation (docs/math-workbench/06-数学目录-限制-许可.md).
+	UsageMathComputeMS: 1,
 }}
 
 // CurrentPriceBook reads FLOW_PRICE_BOOK (JSON {"version","unit_micro"}) or returns the default.

@@ -15,6 +15,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"yingce/backend/internal/edumath"
 	"yingce/backend/internal/flow"
 	"yingce/backend/internal/model"
 
@@ -157,6 +158,12 @@ func run(ctx context.Context) error {
 	flow.RegisterNotifyRoutes(flowAPI, db, flowUser)
 	flow.RegisterTopicRoutes(flowAPI, db, flowUser)
 	flow.RegisterMetricsRoute(r, db)
+	// Education math workbench (docs/math-workbench): own middleware (students are
+	// not tenant members); disabled unless FLOW_MATH_SERVICE_URL/KEY are set.
+	if mathSvc := edumath.FromEnv(db); mathSvc != nil {
+		(&edumath.API{Svc: mathSvc, DB: db, User: flowUser}).Register(api)
+		go mathSvc.Run(context.Background(), 2*time.Second)
+	}
 	go flow.RunNotifier(context.Background(), flow.Notifier{DB: db, Mail: flow.SMTPMailerFromEnv(), BaseURL: os.Getenv("FLOW_PUBLIC_BASE_URL")}, 10*time.Second)
 	go flow.RunBillingMaintenance(context.Background(), db, 15*time.Minute)
 	if flowCfg.Enabled() {

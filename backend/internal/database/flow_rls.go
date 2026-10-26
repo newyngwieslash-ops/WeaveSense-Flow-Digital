@@ -12,6 +12,10 @@ var flowRLSTables = []string{
 	"flow_mcp_secrets", "flow_capability_snapshots", "flow_run_capabilities",
 	"flow_topics", "flow_event_inbox", "flow_operation_projections", "flow_billing_accounts", "flow_skill_run_pins",
 	"flow_command_outbox",
+	// Education math workbench (schema v68).
+	"edu_org_policies", "edu_role_bindings", "edu_classes", "edu_teaching_assignments", "edu_enrollments", "edu_problems",
+	"edu_problem_revisions", "edu_math_jobs", "edu_stage_runs", "edu_artifacts", "edu_solution_revisions", "edu_lesson_revisions",
+	"edu_review_records", "edu_publications", "edu_assignments", "edu_audit_events",
 }
 
 // flowSystemOnlyTables are platform-wide tables with no tenant_id (managed

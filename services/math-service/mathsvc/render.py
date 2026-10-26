@@ -9,7 +9,7 @@ Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; img-src 
 import html
 import math
 
-RENDERER_VERSION = "preview-svg/1.0.0"
+RENDERER_VERSION = "preview-svg/1.1.0"
 VIEWS = [(35, 20), (75, 20), (130, 25)]
 
 
@@ -46,6 +46,35 @@ def svg(fig, az, el, w=360, h=300, labels=True):
     return "".join(out)
 
 
+def svg2d(fig, w=360, h=300, labels=True):
+    """Plane figure: axes, sampled curves, segments, points, disabled points (hollow red)."""
+    ext = float(fig.get("extent") or 1)
+    scale = (min(w, h) * 0.46) / ext
+    cx, cy = w / 2, h / 2
+
+    def T(x, y):
+        return cx + x * scale, cy - y * scale
+    pts = {k: T(v["xyz"][0], v["xyz"][1]) for k, v in fig["points"].items()}
+    out = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" role="img" aria-label="平面图形">' % (w, h),
+           '<line x1="0" y1="%.1f" x2="%d" y2="%.1f" stroke="#cbd5e1"/><line x1="%.1f" y1="0" x2="%.1f" y2="%d" stroke="#cbd5e1"/>' % (cy, w, cy, cx, cx, h)]
+    for c in fig.get("curves", []):
+        poly = " ".join("%.1f,%.1f" % T(x, y) for x, y in c["pts"])
+        out.append('<polyline points="%s" fill="none" stroke="#1f2937" stroke-width="1.6"/>' % poly)
+    for ax in fig.get("aux", []):
+        a, b = ax["seg"]
+        dash = "6 4" if ax["style"] == "dashed" else "2 4"
+        color = "#dc2626" if ax["role"] == "line" else "#6b7280"
+        out.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" stroke-width="1.4" stroke-dasharray="%s"/>' % (pts[a] + pts[b] + (color, dash)))
+    for d in fig.get("disabled_points", []):
+        x, y = T(d["xy"][0], d["xy"][1])
+        out.append('<circle cx="%.1f" cy="%.1f" r="4" fill="#fff" stroke="#dc2626" stroke-width="1.5"><title>%s</title></circle>' % (x, y, html.escape(d["reason"])))
+    if labels:
+        for k, (x, y) in pts.items():
+            out.append('<circle cx="%.1f" cy="%.1f" r="2.4" fill="#111827"/><text x="%.1f" y="%.1f" font-size="14">%s</text>' % (x, y, x + 5, y - 5, html.escape(k)))
+    out.append("</svg>")
+    return "".join(out)
+
+
 CSS = """body{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif;margin:0;background:#f8fafc;color:#111827}
 main{max-width:980px;margin:0 auto;padding:24px}header{display:flex;justify-content:space-between;align-items:baseline}
 .badge{font-size:12px;padding:2px 8px;border-radius:10px;background:#fef3c7}.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
@@ -58,6 +87,9 @@ main{max-width:980px;margin:0 auto;padding:24px}header{display:flex;justify-cont
 def page(lesson, audience):
     esc = html.escape
     fig = lesson["figure"]
+    if fig.get("kind") == "plane2d":
+        views = ['<div class="views">', '<input type="radio" name="v" id="v0" checked>', svg2d(fig).replace("<svg ", '<svg class="f0" ', 1), "</div>"]
+        return _page(lesson, audience, views)
     views = ['<div class="views">']
     for i, _ in enumerate(VIEWS):
         views.append('<input type="radio" name="v" id="v%d"%s>' % (i, " checked" if i == 0 else ""))
@@ -66,6 +98,11 @@ def page(lesson, audience):
     for i, (az, el) in enumerate(VIEWS):
         views.append(svg(fig, az, el).replace("<svg ", '<svg class="f%d" ' % i, 1))
     views.append("</div>")
+    return _page(lesson, audience, views)
+
+
+def _page(lesson, audience, views):
+    esc = html.escape
     beats = []
     for b in lesson["beats"]:
         if b.get("locked"):

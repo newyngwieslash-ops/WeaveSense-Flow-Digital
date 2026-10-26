@@ -485,20 +485,57 @@ func (h *API) studentAssignment(c *gin.Context) {
 }
 
 // StudentLeak is the platform-side second guard: the projection must be the
-// student/none variant and must not contain any answer marker of the teacher lesson.
+// student/none variant, every explanation beat must be locked, there must be no
+// answer or answer key, and no answer marker of the teacher lesson may appear
+// in any string. A marker that already occurs in the public givens (problem
+// statement, given parameters, self-test prompt) carries no answer information
+// and is skipped, otherwise short integer answers would block every lesson.
 func StudentLeak(proj map[string]any, teacherLesson []byte) bool {
 	if proj["projection"] != "student" || proj["reveal"] != "none" {
 		return true
 	}
-	if _, ok := proj["answer"]; ok {
-		return true
+	for _, k := range []string{"answer", "check_answer_key"} {
+		if _, ok := proj[k]; ok {
+			return true
+		}
+	}
+	if beats, ok := proj["beats"].([]any); ok {
+		for _, b := range beats {
+			m, _ := b.(map[string]any)
+			if m == nil || m["locked"] != true || m["board"] != nil || m["say"] != nil {
+				return true
+			}
+		}
 	}
 	var t struct {
 		Answer         map[string]any `json:"answer"`
 		CheckAnswerKey map[string]any `json:"check_answer_key"`
+		Problem        struct {
+			Text   string            `json:"text"`
+			Params map[string]string `json:"params"`
+		} `json:"problem"`
+		CheckQuestion struct {
+			Prompt string            `json:"prompt"`
+			Params map[string]string `json:"params"`
+		} `json:"check_question"`
 	}
 	if json.Unmarshal(teacherLesson, &t) != nil {
 		return true
+	}
+	public := []string{t.Problem.Text, t.CheckQuestion.Prompt}
+	for _, v := range t.Problem.Params {
+		public = append(public, v)
+	}
+	for _, v := range t.CheckQuestion.Params {
+		public = append(public, v)
+	}
+	isPublic := func(m string) bool {
+		for _, g := range public {
+			if g != "" && strings.Contains(g, m) {
+				return true
+			}
+		}
+		return false
 	}
 	raw, _ := json.Marshal(proj)
 	var plain any
@@ -524,7 +561,7 @@ func StudentLeak(proj map[string]any, teacherLesson []byte) bool {
 	for _, src := range []map[string]any{t.Answer, t.CheckAnswerKey} {
 		for _, k := range []string{"plain", "exact", "latex"} {
 			m, _ := src[k].(string)
-			if m == "" {
+			if m == "" || isPublic(m) {
 				continue
 			}
 			for _, s := range texts {

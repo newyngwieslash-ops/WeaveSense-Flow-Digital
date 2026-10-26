@@ -42,6 +42,12 @@ REQUIRED = {
     ("edumath", "TestPGJobEventOutbox"),
     ("edumath", "TestMathEventPush"),
     ("edumath", "TestPGMathEventPush"),
+    ("edumath", "TestBudgetsAndFairness"),
+    ("edumath", "TestPGBudgetsAndFairness"),
+    ("edumath", "TestScheduledLedgerReconcile"),
+    ("edumath", "TestPGScheduledLedgerReconcile"),
+    ("edumath", "TestDeliveryCostReport"),
+    ("edumath", "TestPGDeliveryCostReport"),
     ("edumath", "TestPGAgentMathTools"),
 }
 

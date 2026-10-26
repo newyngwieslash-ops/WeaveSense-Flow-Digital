@@ -492,7 +492,7 @@ func EduModels() []any {
 		&EduProblemRevision{}, &EduMathJob{}, &EduStageRun{}, &EduArtifact{}, &EduSolutionRevision{}, &EduLessonRevision{},
 		&EduReviewRecord{}, &EduPublication{}, &EduAssignment{}, &EduAuditEvent{}, &EduClassInvite{}, &EduConsentRecord{},
 		&EduAttempt{}, &EduHintUnlock{}, &EduSelfTest{}, &EduReviewItem{}, &EduHelpRequest{}, &EduHelpReply{},
-		&EduPrediction{}, &EduFigureInteraction{}, &EduVariantSet{}, &EduVariantReview{}, &EduAssignmentExtension{}, &EduLessonEdit{}, &EduLedgerAnomaly{}, &EduJobEvent{}, &EduMathEvent{}}
+		&EduPrediction{}, &EduFigureInteraction{}, &EduVariantSet{}, &EduVariantReview{}, &EduAssignmentExtension{}, &EduLessonEdit{}, &EduLedgerAnomaly{}, &EduJobEvent{}, &EduMathEvent{}, &EduBudget{}, &EduBudgetAlert{}, &EduSupportCost{}}
 }
 
 // EduVariantSet is a finite set of numbers only variants of a lesson's problem (FR-M07, FR-T11, AC-22).
@@ -608,3 +608,51 @@ type EduMathEvent struct {
 }
 
 func (EduMathEvent) TableName() string { return "edu_math_events" }
+
+// EduBudget holds an organization's math-workbench spending and fairness limits
+// (DEV-064). Zero means no limit. Amounts are micro units of the platform ledger.
+type EduBudget struct {
+	TenantID            string    `json:"tenantId" gorm:"primaryKey;size:40"`
+	MonthlyMicro        int64     `json:"monthlyMicro"`
+	TeacherMonthlyMicro int64     `json:"teacherMonthlyMicro"`
+	MaxActiveJobs       int       `json:"maxActiveJobs"`
+	MaxActivePerTeacher int       `json:"maxActivePerTeacher"`
+	MaxRenderJobs       int       `json:"maxRenderJobs"`
+	AlertPercent        int       `json:"alertPercent"`
+	UpdatedBy           string    `json:"updatedBy" gorm:"size:64"`
+	UpdatedAt           time.Time `json:"updatedAt"`
+}
+
+func (EduBudget) TableName() string { return "edu_budgets" }
+
+// EduBudgetAlert is raised once per period, scope and level (warn | exhausted).
+type EduBudgetAlert struct {
+	ID         string    `json:"id" gorm:"primaryKey;size:40"`
+	TenantID   string    `json:"tenantId" gorm:"size:40;not null;uniqueIndex:ux_edu_budget_alert,priority:1"`
+	Period     string    `json:"period" gorm:"size:7;not null;uniqueIndex:ux_edu_budget_alert,priority:2"`
+	Scope      string    `json:"scope" gorm:"size:80;not null;uniqueIndex:ux_edu_budget_alert,priority:3"`
+	Level      string    `json:"level" gorm:"size:16;not null;uniqueIndex:ux_edu_budget_alert,priority:4"`
+	SpentMicro int64     `json:"spentMicro"`
+	LimitMicro int64     `json:"limitMicro"`
+	CreatedAt  time.Time `json:"createdAt"`
+}
+
+func (EduBudgetAlert) TableName() string { return "edu_budget_alerts" }
+
+// EduSupportCost is human support time attributed to a tenant and period for
+// full delivery cost accounting (DEV-065); RecordedBy and the optional subject
+// carry the attribution.
+type EduSupportCost struct {
+	ID         string    `json:"id" gorm:"primaryKey;size:40"`
+	TenantID   string    `json:"tenantId" gorm:"size:40;not null;index:ix_edu_support_cost,priority:1"`
+	Period     string    `json:"period" gorm:"size:7;not null;index:ix_edu_support_cost,priority:2"`
+	Category   string    `json:"category" gorm:"size:24;not null"`
+	Minutes    int       `json:"minutes"`
+	CostMicro  int64     `json:"costMicro"`
+	SubjectRef string    `json:"subjectRef" gorm:"size:80"`
+	Note       string    `json:"note" gorm:"size:200"`
+	RecordedBy string    `json:"recordedBy" gorm:"size:64;not null"`
+	CreatedAt  time.Time `json:"createdAt"`
+}
+
+func (EduSupportCost) TableName() string { return "edu_support_costs" }

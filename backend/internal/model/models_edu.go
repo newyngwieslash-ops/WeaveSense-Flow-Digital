@@ -500,7 +500,7 @@ func EduModels() []any {
 		&EduProblemRevision{}, &EduMathJob{}, &EduStageRun{}, &EduArtifact{}, &EduSolutionRevision{}, &EduLessonRevision{},
 		&EduReviewRecord{}, &EduPublication{}, &EduAssignment{}, &EduAuditEvent{}, &EduClassInvite{}, &EduConsentRecord{},
 		&EduAttempt{}, &EduHintUnlock{}, &EduSelfTest{}, &EduReviewItem{}, &EduHelpRequest{}, &EduHelpReply{},
-		&EduPrediction{}, &EduFigureInteraction{}, &EduVariantSet{}, &EduVariantReview{}, &EduAssignmentExtension{}, &EduLessonEdit{}, &EduLedgerAnomaly{}, &EduJobEvent{}, &EduMathEvent{}, &EduBudget{}, &EduBudgetAlert{}, &EduSupportCost{}, &EduContentIncident{}, &EduAssignmentMigration{}, &EduSourceAsset{}, &EduRegrade{}, &EduCourse{}, &EduCourseAlignment{}}
+		&EduPrediction{}, &EduFigureInteraction{}, &EduVariantSet{}, &EduVariantReview{}, &EduAssignmentExtension{}, &EduLessonEdit{}, &EduLedgerAnomaly{}, &EduJobEvent{}, &EduMathEvent{}, &EduBudget{}, &EduBudgetAlert{}, &EduSupportCost{}, &EduContentIncident{}, &EduAssignmentMigration{}, &EduSourceAsset{}, &EduRegrade{}, &EduCourse{}, &EduCourseAlignment{}, &EduRosterEntry{}}
 }
 
 // EduVariantSet is a finite set of numbers only variants of a lesson's problem (FR-M07, FR-T11, AC-22).
@@ -802,3 +802,25 @@ type EduCourseAlignment struct {
 }
 
 func (EduCourseAlignment) TableName() string { return "edu_course_alignments" }
+
+// EduRosterEntry is one row of a minimal roster import (DEV-016): a
+// pseudonymous external reference and display name, plus a single-use claim
+// code (stored hashed) that binds a platform user to the class. It never grants
+// a workspace membership.
+type EduRosterEntry struct {
+	ID          string     `json:"id" gorm:"primaryKey;size:40"`
+	TenantID    string     `json:"tenantId" gorm:"size:40;not null;index"`
+	ClassID     string     `json:"classId" gorm:"size:40;not null;uniqueIndex:ux_edu_roster_ref,priority:1"`
+	ExternalRef string     `json:"externalRef" gorm:"size:40;not null;uniqueIndex:ux_edu_roster_ref,priority:2"`
+	DisplayName string     `json:"displayName" gorm:"size:80"`
+	State       string     `json:"state" gorm:"size:16;not null"` // pending | claimed | revoked
+	SecretHash  string     `json:"-" gorm:"size:80"`
+	ExpiresAt   time.Time  `json:"expiresAt"`
+	ClaimedBy   string     `json:"claimedBy,omitempty" gorm:"size:40;index"`
+	ClaimedAt   *time.Time `json:"claimedAt,omitempty"`
+	ImportBatch string     `json:"importBatch" gorm:"size:40;index"`
+	CreatedBy   string     `json:"createdBy" gorm:"size:40"`
+	CreatedAt   time.Time  `json:"createdAt"`
+}
+
+func (EduRosterEntry) TableName() string { return "edu_roster_entries" }

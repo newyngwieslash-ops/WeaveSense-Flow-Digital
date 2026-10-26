@@ -18,11 +18,13 @@ REQUIRED = {
     ("edumath", "TestSixFamiliesThroughPlatform"),
     ("edumath", "TestStudentLearningLoop"),
     ("edumath", "TestHelpRequestsAndDashboard"),
+    ("edumath", "TestFigurePredictionsAndUse"),
     ("edumath", "TestWorkerRecoveryAndReconcile"),
     ("edumath", "TestPGEduTablesForceRLS"),
     ("edumath", "TestPGG1Chain"),
     ("edumath", "TestPGStudentLearningLoop"),
     ("edumath", "TestPGHelpRequestsAndDashboard"),
+    ("edumath", "TestPGFigurePredictionsAndUse"),
     ("edumath", "TestMCPProtocolWithGoSDK"),
     ("edumath", "TestClassesInvitesConsentAuthorization"),
 }

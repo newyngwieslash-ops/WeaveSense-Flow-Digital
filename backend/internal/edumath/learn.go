@@ -105,7 +105,7 @@ func (h *API) lessonFor(c *gin.Context, tx *gorm.DB, tenantID string, pub model.
 	}
 	ctx, cancel := ctx15(c)
 	defer cancel()
-	raw, _, err := h.Svc.Client.Artifact(ctx, tenantID, ta.ServiceArtifactID, ta.SHA256)
+	raw, _, err := h.Svc.Client.Artifact(ctx, tenantID, ta)
 	if err != nil {
 		return t, err
 	}

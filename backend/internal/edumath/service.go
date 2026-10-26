@@ -291,6 +291,12 @@ func (s *Service) Sync(ctx context.Context, tx *gorm.DB, job model.EduMathJob) (
 		return s.Reconcile(ctx, tx, job)
 	}
 	v, err := s.Client.GetJob(ctx, job.TenantID, job.ServiceJobID)
+	if errors.Is(err, ErrContract) {
+		// An invalid receipt is never applied; the last valid state stays and the
+		// defect is recorded where staff and the ledger can see it (DEV-053).
+		s.noteReceipt(tx, &job, err)
+		return job, nil
+	}
 	if err != nil {
 		return job, nil // keep last known state; poll again later
 	}
@@ -403,6 +409,8 @@ func (s *Service) apply(ctx context.Context, tx *gorm.DB, job model.EduMathJob, 
 	if v.Error != nil {
 		raw, _ := json.Marshal(v.Error)
 		upd["error_code"], upd["error_json"] = v.Error.Code, string(raw)
+	} else if job.ErrorCode == receiptInvalid {
+		upd["error_code"], upd["error_json"] = "", "" // a later valid receipt supersedes the noted defect
 	}
 	res := tx.Model(&model.EduMathJob{}).Where("id = ? AND seq <= ?", job.ID, v.Seq).Updates(upd)
 	if res.Error != nil {
@@ -423,7 +431,14 @@ func (s *Service) apply(ctx context.Context, tx *gorm.DB, job model.EduMathJob, 
 	}
 	if v.Status == "succeeded" {
 		if err := s.materialize(ctx, tx, job); err != nil {
-			return job, err
+			if !errors.Is(err, ErrContract) {
+				return job, err // transient (artifact fetch): retry on the next poll
+			}
+			// The service says succeeded but its artifacts fail verification
+			// (truncated, corrupt, wrong hash, size or type): fail closed. No
+			// revision is created from them; finished stages stay charged for the
+			// compute that ran (DEV-053, DEV-054).
+			return s.failReceipt(tx, job, err)
 		}
 	}
 	if (v.Status == "failed" || v.Status == "cancelled") && job.Kind == "lesson_edit" {
@@ -434,6 +449,35 @@ func (s *Service) apply(ctx context.Context, tx *gorm.DB, job model.EduMathJob, 
 	if v.Status == "succeeded" || v.Status == "failed" || v.Status == "cancelled" {
 		s.finishSettlement(tx, &job)
 	}
+	return job, nil
+}
+
+const receiptInvalid = "RECEIPT_INVALID"
+
+func receiptError(err error) string {
+	raw, _ := json.Marshal(ServiceError{Code: receiptInvalid, Message: strings.TrimPrefix(err.Error(), ErrContract.Error()+": "), NextAction: "contact_admin"})
+	return string(raw)
+}
+
+// noteReceipt records an invalid non-terminal receipt without changing state.
+func (s *Service) noteReceipt(tx *gorm.DB, job *model.EduMathJob, err error) {
+	job.ErrorCode, job.ErrorJSON = receiptInvalid, receiptError(err)
+	tx.Model(&model.EduMathJob{}).Where("id = ?", job.ID).Updates(map[string]any{"error_code": job.ErrorCode, "error_json": job.ErrorJSON})
+}
+
+// failReceipt ends a job whose terminal receipt cannot be verified.
+func (s *Service) failReceipt(tx *gorm.DB, job model.EduMathJob, err error) (model.EduMathJob, error) {
+	job.Status, job.ErrorCode, job.ErrorJSON = "failed", receiptInvalid, receiptError(err)
+	if e := tx.Model(&model.EduMathJob{}).Where("id = ?", job.ID).Updates(map[string]any{"status": job.Status, "error_code": job.ErrorCode,
+		"error_json": job.ErrorJSON, "updated_at": s.now()}).Error; e != nil {
+		return job, e
+	}
+	if job.Kind == "lesson_edit" {
+		if ed, e := s.editOf(tx, job); e == nil {
+			s.releaseEdit(tx, ed.ID, "failed")
+		}
+	}
+	s.finishSettlement(tx, &job)
 	return job, nil
 }
 
@@ -551,15 +595,17 @@ func (s *Service) materialize(ctx context.Context, tx *gorm.DB, job model.EduMat
 		if sa.ID == "" || ra.ID == "" {
 			return fmt.Errorf("%w: missing analysis artifacts", ErrContract)
 		}
-		raw, _, err := s.Client.Artifact(ctx, job.TenantID, sa.ServiceArtifactID, sa.SHA256)
+		raw, _, err := s.Client.Artifact(ctx, job.TenantID, sa)
 		if err != nil {
 			return err
 		}
 		var sol struct {
 			SolutionStatus string `json:"solution_status"`
 		}
-		_ = json.Unmarshal(raw, &sol)
-		rraw, _, err := s.Client.Artifact(ctx, job.TenantID, ra.ServiceArtifactID, ra.SHA256)
+		if json.Unmarshal(raw, &sol) != nil || sol.SolutionStatus == "" {
+			return fmt.Errorf("%w: solution artifact is not a solution", ErrContract)
+		}
+		rraw, _, err := s.Client.Artifact(ctx, job.TenantID, ra)
 		if err != nil {
 			return err
 		}
@@ -567,7 +613,9 @@ func (s *Service) materialize(ctx context.Context, tx *gorm.DB, job model.EduMat
 			MathState      string   `json:"math_state"`
 			EvidenceLevels []string `json:"evidence_levels"`
 		}
-		_ = json.Unmarshal(rraw, &rep)
+		if json.Unmarshal(rraw, &rep) != nil || rep.MathState == "" {
+			return fmt.Errorf("%w: validation report has no math state", ErrContract)
+		}
 		lv, _ := json.Marshal(rep.EvidenceLevels)
 		return tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&model.EduSolutionRevision{ID: flow.NewID("esv_"), TenantID: job.TenantID,
 			ProblemRevisionID: job.ProblemRevisionID, JobID: job.ID, SolutionArtifact: sa.ID, SolutionHash: sa.SHA256, ReportArtifact: ra.ID,

@@ -131,3 +131,9 @@ func TestPGVariantSetsAndExtensions(t *testing.T) {
 	db := pgTestDB(t)
 	runVariants(t, newHarnessDB(t, startMathService(t), db))
 }
+
+// TestPGLessonEdits runs structured edits, the head lock and review inheritance on Postgres under FORCE RLS.
+func TestPGLessonEdits(t *testing.T) {
+	db := pgTestDB(t)
+	runEdits(t, newHarnessDB(t, startMathService(t), db))
+}

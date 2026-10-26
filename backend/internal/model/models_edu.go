@@ -14,9 +14,13 @@ type EduOrgPolicy struct {
 	// ConsentMode (FR-I05): guardian_required (default; empty is treated the same)
 	// blocks every student learning access until an org admin records consent with
 	// evidence; not_applicable is an explicit, audited admin decision (e.g. adults).
-	ConsentMode string    `json:"consentMode" gorm:"size:24;not null;default:guardian_required"`
-	UpdatedBy   string    `json:"updatedBy" gorm:"size:40"`
-	UpdatedAt   time.Time `json:"updatedAt"`
+	ConsentMode string `json:"consentMode" gorm:"size:24;not null;default:guardian_required"`
+	// EditReviewInherit (FR-T06): none (default; empty is treated the same) makes every edited
+	// lesson revision go through review again; pronunciation_only lets a pronunciation-only edit
+	// of an approved revision inherit that approval (recorded, never shown as a new review).
+	EditReviewInherit string    `json:"editReviewInherit" gorm:"size:24;not null;default:none"`
+	UpdatedBy         string    `json:"updatedBy" gorm:"size:40"`
+	UpdatedAt         time.Time `json:"updatedAt"`
 }
 
 func (EduOrgPolicy) TableName() string { return "edu_org_policies" }
@@ -234,9 +238,35 @@ type EduLessonRevision struct {
 	BlockingErrors     string    `json:"blockingErrors,omitempty" gorm:"type:text"`
 	CreatedBy          string    `json:"createdBy" gorm:"size:40"`
 	CreatedAt          time.Time `json:"createdAt"`
+	// Lineage of structured edits (FR-T05/T06). Empty for revisions built by lesson_build.
+	ParentLessonRevisionID string `json:"parentLessonRevisionId,omitempty" gorm:"size:40;index"`
+	EditClasses            string `json:"editClasses,omitempty" gorm:"size:80"`
+	ApprovalInheritedFrom  string `json:"approvalInheritedFrom,omitempty" gorm:"size:40"`
 }
 
 func (EduLessonRevision) TableName() string { return "edu_lesson_revisions" }
+
+// EduLessonEdit is one structured edit request on an exact base revision and hash. HeadKey
+// is unique: a normal save takes "head:<base id>", so a second concurrent save of the same
+// base is refused with the first one's details (AC-17); "save as branch" takes its own key.
+// A failed or cancelled edit releases the head lazily when the next save arrives.
+type EduLessonEdit struct {
+	ID                     string    `json:"id" gorm:"primaryKey;size:40"`
+	TenantID               string    `json:"tenantId" gorm:"size:40;not null;index"`
+	BaseLessonRevisionID   string    `json:"baseLessonRevisionId" gorm:"size:40;not null;index"`
+	BaseLessonHash         string    `json:"baseLessonHash" gorm:"size:80;not null"`
+	JobID                  string    `json:"jobId" gorm:"size:40;uniqueIndex"`
+	HeadKey                string    `json:"-" gorm:"size:96;not null;uniqueIndex"`
+	Branch                 bool      `json:"branch"`
+	EditsJSON              string    `json:"-" gorm:"type:text;not null"`
+	Classes                string    `json:"classes" gorm:"size:80"`
+	State                  string    `json:"state" gorm:"size:16;not null"` // running | done | failed
+	ResultLessonRevisionID string    `json:"resultLessonRevisionId,omitempty" gorm:"size:40"`
+	CreatedBy              string    `json:"createdBy" gorm:"size:40"`
+	CreatedAt              time.Time `json:"createdAt"`
+}
+
+func (EduLessonEdit) TableName() string { return "edu_lesson_edits" }
 
 type EduReviewRecord struct {
 	ID               string    `json:"id" gorm:"primaryKey;size:40"`
@@ -248,6 +278,9 @@ type EduReviewRecord struct {
 	Decision         string    `json:"decision" gorm:"size:16;not null"` // approved | rejected
 	Comment          string    `json:"comment" gorm:"size:1000"`
 	CreatedAt        time.Time `json:"createdAt"`
+	// InheritedFrom is set only when an edit inherited the parent's approval under the explicit
+	// institution rule (pronunciation_only); it names the parent review record and is never a new review.
+	InheritedFrom string `json:"inheritedFrom,omitempty" gorm:"size:40"`
 }
 
 func (EduReviewRecord) TableName() string { return "edu_review_records" }
@@ -457,7 +490,7 @@ func EduModels() []any {
 		&EduProblemRevision{}, &EduMathJob{}, &EduStageRun{}, &EduArtifact{}, &EduSolutionRevision{}, &EduLessonRevision{},
 		&EduReviewRecord{}, &EduPublication{}, &EduAssignment{}, &EduAuditEvent{}, &EduClassInvite{}, &EduConsentRecord{},
 		&EduAttempt{}, &EduHintUnlock{}, &EduSelfTest{}, &EduReviewItem{}, &EduHelpRequest{}, &EduHelpReply{},
-		&EduPrediction{}, &EduFigureInteraction{}, &EduVariantSet{}, &EduVariantReview{}, &EduAssignmentExtension{}}
+		&EduPrediction{}, &EduFigureInteraction{}, &EduVariantSet{}, &EduVariantReview{}, &EduAssignmentExtension{}, &EduLessonEdit{}}
 }
 
 // EduVariantSet is a finite set of numbers only variants of a lesson's problem (FR-M07, FR-T11, AC-22).

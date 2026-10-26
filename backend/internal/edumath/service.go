@@ -324,6 +324,17 @@ func (s *Service) Reconcile(ctx context.Context, tx *gorm.DB, job model.EduMathJ
 		}
 		payload["analysis_job_id"], payload["solution_hash"], payload["report_hash"] = src.ServiceJobID, sol.SolutionHash, sol.ReportHash
 	}
+	if job.Kind == "lesson_edit" {
+		var sol model.EduSolutionRevision
+		var src model.EduMathJob
+		if tx.First(&src, "id = ?", job.SourceJobID).Error != nil || tx.First(&sol, "job_id = ?", job.SourceJobID).Error != nil {
+			return job, ErrNotFound
+		}
+		payload["analysis_job_id"], payload["solution_hash"], payload["report_hash"] = src.ServiceJobID, sol.SolutionHash, sol.ReportHash
+		if err := s.editPayload(tx, job, payload); err != nil {
+			return job, err
+		}
+	}
 	if job.Kind == "variant_set" {
 		var opt struct {
 			Count int `json:"count"`
@@ -393,6 +404,11 @@ func (s *Service) apply(ctx context.Context, tx *gorm.DB, job model.EduMathJob, 
 	if v.Status == "succeeded" {
 		if err := s.materialize(ctx, tx, job); err != nil {
 			return job, err
+		}
+	}
+	if (v.Status == "failed" || v.Status == "cancelled") && job.Kind == "lesson_edit" {
+		if ed, err := s.editOf(tx, job); err == nil {
+			s.releaseEdit(tx, ed.ID, "failed") // frees the head; no revision was created
 		}
 	}
 	if v.Status == "succeeded" || v.Status == "failed" || v.Status == "cancelled" {
@@ -515,6 +531,8 @@ func (s *Service) materialize(ctx context.Context, tx *gorm.DB, job model.EduMat
 			ReportHash: ra.SHA256, SolutionStatus: sol.SolutionStatus, MathState: rep.MathState, EvidenceLevels: string(lv), CreatedAt: s.now()}).Error
 	case "variant_set":
 		return s.materializeVariantSet(ctx, tx, job, arts)
+	case "lesson_edit":
+		return s.materializeEdit(tx, job, arts)
 	case "lesson_build":
 		var n int64
 		tx.Model(&model.EduLessonRevision{}).Where("job_id = ?", job.ID).Count(&n)

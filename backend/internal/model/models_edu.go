@@ -169,6 +169,8 @@ type EduMathJob struct {
 	// Options holds kind specific input that is not derivable from the revision (variant_set: {"count":n}),
 	// kept so a proven not executed submit can be resent under the same key with the same input.
 	Options string `json:"options,omitempty" gorm:"size:200"`
+	// PriceBook is the price book frozen when the job was accepted (JSON); every stage settles with it (DEV-061).
+	PriceBook string `json:"-" gorm:"type:text"`
 }
 
 func (EduMathJob) TableName() string { return "edu_math_jobs" }

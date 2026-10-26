@@ -32,6 +32,7 @@ REQUIRED = {
     ("edumath", "TestMCPProtocolWithGoSDK"),
     ("edumath", "TestClassesInvitesConsentAuthorization"),
     ("edumath", "TestAgentMathTools"),
+    ("edumath", "TestStageSettlementOutcomes"),
     ("edumath", "TestPGAgentMathTools"),
 }
 

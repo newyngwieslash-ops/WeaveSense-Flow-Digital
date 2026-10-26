@@ -4,9 +4,7 @@ input is JSON on stdin, output JSON on stdout. Pure functions of their input."""
 
 from . import catalog, lesson as L, render
 from .errors import MathError
-from .families import solid_angle_02
-
-FAMILIES = {solid_angle_02.FAMILY_ID: solid_angle_02}
+from .families import REGISTRY as FAMILIES
 
 ANALYZE_STAGES = ["validate_input", "solve", "verify"]
 LESSON_STAGES = ["compose_lesson", "project_student", "render_preview"]
@@ -47,7 +45,7 @@ def run_stage(stage, payload, prior):
     if src["solution"]["answer"]["exact"] != sol["answer"]["exact"]:
         raise MathError("REVISION_CONFLICT", "analysis solution does not match the problem revision")
     if stage == "compose_lesson":
-        cq = mod.check_question(n)
+        cq = mod.check_question(n, avoid=sol["answer"]["exact"])
         refs = {"problem_hash": payload.get("problem_hash", ""), "solution_hash": payload.get("solution_hash", ""),
                 "report_hash": payload.get("report_hash", ""), "catalog_version": catalog.CATALOG_VERSION}
         lesson = L.compose(problem["family_id"], n, sol, src["report"], cq, refs)
@@ -60,6 +58,6 @@ def run_stage(stage, payload, prior):
         student = prior["project_student"]["student"]
         t_html = render.page(lesson, "teacher")
         s_html = render.page(student, "student")
-        L.guard({"html": s_html}, L.answer_markers(lesson))
+        L.guard({"html": L.visible_text(s_html)}, L.answer_markers(lesson))
         return {"teacher_html": t_html, "student_html": s_html, "renderer": render.RENDERER_VERSION}
     raise MathError("INTERNAL", "unknown stage")

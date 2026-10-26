@@ -28,19 +28,14 @@ def compose(fam, norm, sol, report, cq, refs):
         beats.append({"id": st["id"], "title": st["title"], "board": st.get("plain", []), "board_latex": st.get("latex", []),
                       "say": "".join(st.get("plain", [])), "figure_focus": st.get("uses", []),
                       "reveals_answer": bool(st.get("reveals_answer")), "solution_step_ref": st["id"]})
-    hints = [
-        {"level": 1, "kind": "locate", "text": "先找出直线 BE 与平面 PAC 的位置关系，想想 B 到平面 PAC 的垂足在哪里。", "reveals_answer": False},
-        {"level": 2, "kind": "prerequisite", "text": "线面角的正弦等于直线方向向量与平面法向量夹角余弦的绝对值。", "reveals_answer": False},
-        {"level": 3, "kind": "method", "text": "以底面中心为原点建立坐标系，写出 B、E 的坐标，并找平面 PAC 的一个法向量。", "reveals_answer": False},
-        {"level": 4, "kind": "partial_step", "text": "；".join(sol["steps"][1].get("plain", [])) if len(sol["steps"]) > 1 else "", "reveals_answer": False, "gated": True},
-        {"level": 5, "kind": "full_solution", "text": "完整解答见讲解。", "reveals_answer": True, "gated": True},
-    ]
+    mod = _module(fam)
+    hints = mod.hints(sol)
     lesson = {
         "schema_version": SCHEMA, "composer_version": COMPOSER_VERSION,
-        "meta": {"family_id": fam, "title": "正四棱锥中线面角的正弦", "language": "zh-CN", "style": "standard",
+        "meta": {"family_id": fam, "title": mod.TITLE, "language": "zh-CN", "style": "standard",
                  "ai_generated": False, "generator": "deterministic-template", "refs": refs},
-        "problem": {"text": fam_text(norm), "params": norm["params"], "unit": norm["unit"]},
-        "figure": figure_of(sol),
+        "problem": {"text": mod.problem_text(norm), "params": norm["params"], "unit": norm["unit"]},
+        "figure": mod.figure(norm, sol),
         "beats": beats,
         "answer": {"plain": sol["answer"]["plain"], "latex": sol["answer"]["latex"], "exact": sol["answer"]["exact"],
                    "release": "after_teacher_release"},
@@ -55,14 +50,12 @@ def compose(fam, norm, sol, report, cq, refs):
     return lesson
 
 
-def fam_text(norm):
-    from .families import solid_angle_02
-    return solid_angle_02.problem_text(norm)
-
-
-def figure_of(sol):
-    from .families import solid_angle_02
-    return solid_angle_02.figure(sol)
+def _module(fam):
+    from .families import REGISTRY
+    mod = REGISTRY.get(fam)
+    if mod is None:
+        raise MathError("UNSUPPORTED_FAMILY", "unknown problem family")
+    return mod
 
 
 def presentation_check(lesson, sol):
@@ -87,7 +80,30 @@ def answer_markers(lesson):
     a = lesson["answer"]
     k = lesson.get("check_answer_key") or {}
     out = {a["plain"], a["latex"], a["exact"], k.get("plain", ""), k.get("latex", ""), k.get("exact", "")}
-    return sorted(m for m in out if m and len(m) >= 2)
+    public = public_givens(lesson)
+    return sorted(m for m in out if m and len(m) >= 2 and not any(m in g for g in public))
+
+
+def public_givens(lesson):
+    """Strings every student sees anyway (problem statement, given parameters,
+    the self-test prompt). A marker that already occurs there carries no
+    answer information, so it cannot be used to detect a leak."""
+    cq = lesson.get("check_question") or {}
+    out = [lesson["problem"]["text"], cq.get("prompt", "")]
+    out += [str(v) for v in lesson["problem"].get("params", {}).values()]
+    out += [str(v) for v in (cq.get("params") or {}).values()]
+    return [g for g in out if g]
+
+
+def visible_text(page_html):
+    """Human-visible text of a rendered page: style blocks and SVG geometry are
+    dropped (only SVG <text> labels are kept), tags removed, entities decoded."""
+    import html as _html
+    import re
+    s = re.sub(r"<style.*?</style>", " ", page_html, flags=re.S)
+    s = re.sub(r"<svg.*?</svg>", lambda m: " ".join(re.findall(r"<text[^>]*>([^<]*)</text>", m.group(0))), s, flags=re.S)
+    s = re.sub(r"<[^>]+>", " ", s)
+    return _html.unescape(s)
 
 
 def student_projection(lesson, reveal="none"):
@@ -109,7 +125,12 @@ def student_projection(lesson, reveal="none"):
         out["answer"] = lesson["answer"]
     else:
         out["beats"] = [{"id": b["id"], "title": b["title"], "locked": True} for b in lesson["beats"]]
-    guard(out, answer_markers(lesson) if reveal == "none" else [lesson["check_answer_key"]["plain"], lesson["check_answer_key"]["exact"]])
+    if reveal == "none":
+        guard(out, answer_markers(lesson))
+    else:
+        k = lesson["check_answer_key"]
+        pub = public_givens(lesson)
+        guard(out, [m for m in (k["plain"], k["exact"]) if m and not any(m in g for g in pub)])
     return out
 
 

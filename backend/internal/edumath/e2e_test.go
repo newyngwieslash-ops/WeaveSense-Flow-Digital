@@ -551,9 +551,24 @@ func TestStudentLeakGuard(t *testing.T) {
 		{"projection": "student", "reveal": "none", "answer": "x"},
 		{"projection": "teacher", "reveal": "none"},
 		{"projection": "student", "reveal": "none", "cq": "2√7/7"},
+		{"projection": "student", "reveal": "none", "check_answer_key": map[string]any{}},
+		{"projection": "student", "reveal": "none", "beats": []any{map[string]any{"id": "s1", "locked": true, "board": []any{"x"}}}},
+		{"projection": "student", "reveal": "none", "beats": []any{map[string]any{"id": "s1"}}},
 	} {
 		if !StudentLeak(bad, teacher) {
 			t.Fatalf("leak not caught: %v", bad)
 		}
+	}
+	// Integer answers: a marker that is part of the public givens is skipped,
+	// any other occurrence is still caught.
+	vol := []byte(`{"answer":{"plain":"60 cm³","exact":"60","latex":"60"},"check_answer_key":{"plain":"3","exact":"3"},` +
+		`"problem":{"text":"x²/4 + y²/3 = 1","params":{"a":"2"}},"check_question":{"prompt":"p","params":{}}}`)
+	clean := map[string]any{"projection": "student", "reveal": "none", "problem": map[string]any{"text": "x²/4 + y²/3 = 1"},
+		"beats": []any{map[string]any{"id": "s1", "title": "t", "locked": true}}}
+	if StudentLeak(clean, vol) {
+		t.Fatal("public given flagged as leak")
+	}
+	if !StudentLeak(map[string]any{"projection": "student", "reveal": "none", "hints": []any{"体积为 60"}}, vol) {
+		t.Fatal("integer answer leak not caught")
 	}
 }

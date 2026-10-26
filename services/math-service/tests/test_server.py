@@ -107,7 +107,7 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(nf["status"], "not_found")
         media = self.mcp("tools/call", {"name": "math_media_render_start", "arguments": {"lesson_artifact_id": "x"}})
         self.assertTrue(media["result"]["isError"])
-        bad = self.mcp("tools/call", {"name": "math_analyze_start", "arguments": {"problem": dict(PROB, family_id="CONIC-CHORD-01")}, "_meta": {"idempotency_key": "mcp-2"}})
+        bad = self.mcp("tools/call", {"name": "math_analyze_start", "arguments": {"problem": dict(PROB, family_id="HYPERBOLA-ECC-01")}, "_meta": {"idempotency_key": "mcp-2"}})
         j2 = json.loads(bad["result"]["content"][0]["text"])
         v = self.wait(j2["job_id"])
         self.assertEqual(v["error"]["code"], "UNSUPPORTED_FAMILY")

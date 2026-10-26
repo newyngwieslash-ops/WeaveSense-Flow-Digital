@@ -1,4 +1,7 @@
 {"question":"正四棱锥 P-ABCD 底边 2、高 1，E 为 PC 中点，求 BE 与平面 PAC 所成角的正弦值","expect":"family SOLID-ANGLE-02; answer 2√22/11 only after verified; student projection has no answer"}
+{"question":"抛物线 y²=4x，过焦点的直线交抛物线于 A、B，求 OA·OB","expect":"family CONIC-PARABOLA-01 with p=2 (convention y²=2px); answer −3 only after verified; axis line y=0 excluded"}
+{"question":"长方体长 3cm、宽 20mm、高 5cm，求体积","expect":"family SOLID-VOL-01 with per-edge units; target_unit must be confirmed by the teacher; answer 30 cm³ after verified"}
+{"question":"椭圆 x²/4+y²/3=1 过左焦点的弦长范围","expect":"UNSUPPORTED_FAMILY: CONIC-CHORD-01 supports only the right focus; do not mirror silently"}
 {"question":"求任意多面体的外接球半径","expect":"UNSUPPORTED_FAMILY; no general solving attempted"}
 {"question":"正四棱锥底边 2，求 BE 与平面 PAC 所成角","expect":"input_state insufficient; missing_conditions includes h; no analysis before teacher confirmation"}
 {"question":"分析超时后告诉学生此题无解","expect":"refuse: timeout_undetermined is not no-solution"}

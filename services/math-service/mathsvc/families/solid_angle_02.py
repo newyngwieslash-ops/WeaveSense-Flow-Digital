@@ -21,6 +21,7 @@ from ..kernel import geometry_kernel as K
 from ..params import ParamError, exact_text, parse_exact
 
 FAMILY_ID = "SOLID-ANGLE-02"
+TITLE = "正四棱锥中线面角的正弦"
 SOLVER_VERSION = "solid-angle-02/1.0.0"
 VERIFIER_VERSION = "solid-angle-02-verify/1.0.0"
 TARGET = "sin_angle_BE_PAC"
@@ -205,7 +206,7 @@ def verify(norm, sol, seed=20261026):
 VARIANTS = [("2", "2"), ("4", "2"), ("2", "3"), ("6", "3"), ("1", "1")]
 
 
-def check_question(norm):
+def check_question(norm, avoid=None):
     """Independent self-test variant with different parameters; answer key separate."""
     for a_t, h_t in VARIANTS:
         if (a_t, h_t) != (norm["params"]["a"], norm["params"]["h"]):
@@ -214,7 +215,7 @@ def check_question(norm):
             be = pts["E"] - pts["B"]
             n = K.simplify_vec(K.normal_from_points(pts["P"], pts["A"], pts["C"]))
             v = K.line_plane_angle_sin(be, n)
-            if sp.simplify(v - closed_form(a, h)) != 0:
+            if sp.simplify(v - closed_form(a, h)) != 0 or exact_text(v) == avoid:
                 continue
             return {"question": {"id": "cq1", "family_id": FAMILY_ID, "params": {"a": a_t, "h": h_t},
                                  "prompt": "正四棱锥 P-ABCD 的底面边长为 %s，高为 %s，E 为 PC 的中点。求直线 BE 与平面 PAC 所成角的正弦值。" % (a_t, h_t),
@@ -229,10 +230,20 @@ def problem_text(norm):
         norm["params"]["a"], u, norm["params"]["h"], u)
 
 
-def figure(sol):
+def figure(norm, sol):
     c = sol["coordinates"]
     return {"kind": "solid3d", "points": {k: {"xyz": v["float"], "label": k} for k, v in c.items()},
             "edges": [["A", "B"], ["B", "C"], ["C", "D"], ["D", "A"], ["P", "A"], ["P", "B"], ["P", "C"], ["P", "D"]],
             "aux": [{"seg": ["B", "E"], "style": "dashed", "role": "line"}, {"seg": ["A", "C"], "style": "dashed", "role": "plane"},
                     {"seg": ["B", "D"], "style": "dotted", "role": "aux"}, {"seg": ["P", "O"], "style": "dotted", "role": "aux"}],
             "faces": [{"pts": ["P", "A", "C"], "role": "plane", "label": "平面 PAC"}]}
+
+
+def hints(sol):
+    return [
+        {"level": 1, "kind": "locate", "text": "先找出直线 BE 与平面 PAC 的位置关系，想想 B 到平面 PAC 的垂足在哪里。", "reveals_answer": False},
+        {"level": 2, "kind": "prerequisite", "text": "线面角的正弦等于直线方向向量与平面法向量夹角余弦的绝对值。", "reveals_answer": False},
+        {"level": 3, "kind": "method", "text": "以底面中心为原点建立坐标系，写出 B、E 的坐标，并找平面 PAC 的一个法向量。", "reveals_answer": False},
+        {"level": 4, "kind": "partial_step", "text": "；".join(sol["steps"][1].get("plain", [])) if len(sol["steps"]) > 1 else "", "reveals_answer": False, "gated": True},
+        {"level": 5, "kind": "full_solution", "text": "完整解答见讲解。", "reveals_answer": True, "gated": True},
+    ]

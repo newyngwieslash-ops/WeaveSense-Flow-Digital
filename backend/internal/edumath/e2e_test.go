@@ -312,18 +312,51 @@ func runG1(t *testing.T, h *harness) {
 		t.Fatalf("tampered url must be 403, got %d", code)
 	}
 
-	// Student path: no access until enrolled in an active class with an active assignment.
-	now := time.Now().UTC()
-	h.db.Create(&model.EduRoleBinding{ID: "erb_s1", TenantID: tenant, UserID: "u_bob", Role: "student", Status: "active", CreatedAt: now})
-	h.db.Create(&model.EduClass{ID: "ecl_1", TenantID: tenant, WorkspaceID: model.PersonalWorkspaceID("u_alice"), Name: "高二(3)班", Status: "active", CreatedBy: "u_alice", CreatedAt: now})
-	h.db.Create(&model.EduTeachingAssignment{ID: "eta_1", TenantID: tenant, ClassID: "ecl_1", UserID: "u_alice", Status: "active", CreatedAt: now})
-	h.db.Create(&model.EduAssignment{ID: "eas_1", TenantID: tenant, ClassID: "ecl_1", PublicationID: pubID, Title: "线面角练习", State: "active", CreatedBy: "u_alice", CreatedAt: now})
+	// Student path (W1 APIs): class → invite → join → consent → assignment.
 	stu := []string{"X-Edu-Tenant", tenant}
-	if code, _, _, _ := h.call("u_bob", "GET", "/api/edu/student/assignments/eas_1", nil, stu...); code != 404 {
-		t.Fatalf("unenrolled student must get 404, got %d", code)
+	code, out, raw, _ = h.call("u_alice", "POST", "/api/edu/classes", map[string]any{"name": "高二(3)班"})
+	if code != 201 {
+		t.Fatalf("create class: %d %s", code, raw)
 	}
-	h.db.Create(&model.EduEnrollment{ID: "een_1", TenantID: tenant, ClassID: "ecl_1", StudentUserID: "u_bob", Status: "active", CreatedAt: now})
-	code, out, raw, _ = h.call("u_bob", "GET", "/api/edu/student/assignments/eas_1", nil, stu...)
+	classID := data(out)["id"].(string)
+	code, out, raw, _ = h.call("u_alice", "POST", "/api/edu/classes/"+classID+"/assignments", map[string]any{"publicationId": pubID, "title": "线面角练习"})
+	if code != 201 {
+		t.Fatalf("create assignment: %d %s", code, raw)
+	}
+	asID := data(out)["id"].(string)
+	if code, _, _, _ := h.call("u_bob", "GET", "/api/edu/student/assignments/"+asID, nil, stu...); code != 403 && code != 404 {
+		t.Fatalf("non-member must be refused, got %d", code)
+	}
+	code, out, raw, _ = h.call("u_alice", "POST", "/api/edu/classes/"+classID+"/invites", map[string]any{"ttlHours": 24, "maxUses": 30})
+	if code != 201 {
+		t.Fatalf("invite: %d %s", code, raw)
+	}
+	inviteCode := data(out)["code"].(string)
+	if code, _, _, _ := h.call("u_bob", "POST", "/api/edu-join", map[string]any{"code": inviteCode[:len(inviteCode)-1] + "0"}); code != 404 {
+		t.Fatalf("wrong secret must be 404, got %d", code)
+	}
+	code, out, raw, _ = h.call("u_bob", "POST", "/api/edu-join", map[string]any{"code": inviteCode})
+	if code != 200 || data(out)["consentRequired"] != true {
+		t.Fatalf("join: %d %s", code, raw)
+	}
+	enrollID := data(out)["enrollmentId"].(string)
+	var wsm int64
+	h.db.Model(&model.WorkspaceMembership{}).Where("user_id = ?", "u_bob").Where("workspace_id = ?", model.PersonalWorkspaceID("u_alice")).Count(&wsm)
+	if wsm != 0 {
+		t.Fatal("joining a class must never grant workspace membership")
+	}
+	// Guardian consent missing → blocked (FR-I05), even though enrolled.
+	code, out, _, _ = h.call("u_bob", "GET", "/api/edu/student/assignments/"+asID, nil, stu...)
+	if code != 403 || data(out)["error"].(map[string]any)["code"] != "CONSENT_REQUIRED" {
+		t.Fatalf("missing consent must block, got %d %v", code, out)
+	}
+	if code, _, _, _ := h.call("u_alice", "POST", "/api/edu/consents", map[string]any{"studentUserId": "u_bob", "status": "granted"}); code != 400 {
+		t.Fatalf("consent without evidence must be 400, got %d", code)
+	}
+	if code, _, raw, _ := h.call("u_alice", "POST", "/api/edu/consents", map[string]any{"studentUserId": "u_bob", "status": "granted", "evidenceRef": "form-2026-0001"}); code != 200 {
+		t.Fatalf("record consent: %d %s", code, raw)
+	}
+	code, out, raw, _ = h.call("u_bob", "GET", "/api/edu/student/assignments/"+asID, nil, stu...)
 	if code != 200 {
 		t.Fatalf("student view: %d %s", code, raw)
 	}
@@ -341,14 +374,33 @@ func runG1(t *testing.T, h *harness) {
 	if code, _, _, _ := h.call("u_bob", "GET", "/api/edu/jobs/"+jobID, nil); code != 403 {
 		t.Fatalf("student on staff endpoint must be 403, got %d", code)
 	}
+	if code, _, _, _ := h.call("u_bob", "GET", "/api/edu/classes/"+classID+"/roster", nil); code != 403 {
+		t.Fatalf("student reading roster must be 403, got %d", code)
+	}
 	bobTeacherURL, _ := h.svc.SignedURL(l.PreviewArtifact, "u_bob", time.Minute)
 	if code, _, _ := fetch(h, "", bobTeacherURL); code != 403 {
 		t.Fatalf("student fetching teacher artifact must be 403, got %d", code)
 	}
-	// Withdrawing the enrollment blocks new fetches of already-issued links.
-	h.db.Model(&model.EduEnrollment{}).Where("id = ?", "een_1").Update("status", "withdrawn")
+	// Consent withdrawal blocks already-issued links.
+	if code, _, raw, _ := h.call("u_alice", "POST", "/api/edu/consents", map[string]any{"studentUserId": "u_bob", "status": "withdrawn"}); code != 200 {
+		t.Fatalf("withdraw consent: %d %s", code, raw)
+	}
+	if code, _, _ := fetch(h, "", studentURL); code != 403 {
+		t.Fatalf("consent withdrawn must block fetch, got %d", code)
+	}
+	h.call("u_alice", "POST", "/api/edu/consents", map[string]any{"studentUserId": "u_bob", "status": "granted", "evidenceRef": "form-2026-0002"})
+	if code, _, _ := fetch(h, "", studentURL); code != 200 {
+		t.Fatalf("re-granted consent: %d", code)
+	}
+	// Withdrawing the enrollment blocks new fetches of already-issued links; the code cannot re-enroll.
+	if code, _, raw, _ := h.call("u_alice", "POST", "/api/edu/enrollments/"+enrollID+"/withdraw", nil); code != 200 {
+		t.Fatalf("withdraw: %d %s", code, raw)
+	}
 	if code, _, _ := fetch(h, "", studentURL); code != 403 {
 		t.Fatalf("withdrawn student must be blocked, got %d", code)
+	}
+	if code, _, _, _ := h.call("u_bob", "POST", "/api/edu-join", map[string]any{"code": inviteCode}); code != 403 {
+		t.Fatalf("withdrawn student re-joining by code must be 403, got %d", code)
 	}
 	// Expired links fail.
 	h.now.Store(time.Now().Add(6 * time.Minute).Unix())

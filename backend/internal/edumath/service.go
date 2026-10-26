@@ -240,8 +240,9 @@ func (s *Service) startJobWith(ctx context.Context, tx *gorm.DB, a Actor, kind, 
 		return model.EduMathJob{}, appErr(503, "PROVIDER_UNAVAILABLE", "math service is not configured", "contact_admin")
 	}
 	pb := flow.CurrentPriceBook()
+	frozen, _ := json.Marshal(pb)
 	now := s.now()
-	job := model.EduMathJob{ID: flow.NewID("emj_"), TenantID: a.TenantID, WorkspaceID: a.WorkspaceID, Kind: kind, IdemKey: idemKey, InputHash: inputHash,
+	job := model.EduMathJob{PriceBook: string(frozen), ID: flow.NewID("emj_"), TenantID: a.TenantID, WorkspaceID: a.WorkspaceID, Kind: kind, IdemKey: idemKey, InputHash: inputHash,
 		ProblemRevisionID: revisionID, SourceJobID: sourceJob, Status: "queued", PriceVersion: pb.Version, BudgetMicro: JobBudgetMicro(),
 		Settlement: "open", CreatedBy: a.UserID, CreatedAt: now, UpdatedAt: now, Options: options}
 	if unitPrice(pb) > 0 {
@@ -306,7 +307,26 @@ func (s *Service) Reconcile(ctx context.Context, tx *gorm.DB, job model.EduMathJ
 		return job, nil // still unknown; stays held
 	}
 	if found {
-		return s.apply(ctx, tx, job, v)
+		job, err = s.apply(ctx, tx, job, v)
+		if err == nil && job.CancelRequested && (job.Status == "queued" || job.Status == "running") {
+			// A cancel asked while the outcome was unknown is delivered now.
+			if cv, cerr := s.Client.CancelJob(ctx, job.TenantID, job.ServiceJobID); cerr == nil {
+				return s.apply(ctx, tx, job, cv)
+			}
+		}
+		return job, err
+	}
+	if job.CancelRequested {
+		// Proven not executed and cancelled meanwhile: never dispatch; return the whole hold (AC-41).
+		tx.Model(&job).Updates(map[string]any{"status": "cancelled", "updated_at": s.now()})
+		job.Status = "cancelled"
+		if job.Kind == "lesson_edit" {
+			if ed, err := s.editOf(tx, job); err == nil {
+				s.releaseEdit(tx, ed.ID, "failed")
+			}
+		}
+		s.finishSettlement(tx, &job)
+		return job, nil
 	}
 	// Proven not executed: resubmitting under the same key is safe.
 	var rev model.EduProblemRevision
@@ -420,7 +440,7 @@ func (s *Service) apply(ctx context.Context, tx *gorm.DB, job model.EduMathJob, 
 // settleStages charges each finished stage exactly once (unique (job, stage) row),
 // as a child of the job reservation; usage lines are recorded without a second charge.
 func (s *Service) settleStages(tx *gorm.DB, job *model.EduMathJob, v JobView) error {
-	pb := flow.CurrentPriceBook()
+	pb := JobPriceBook(*job)
 	unit := unitPrice(pb)
 	for _, u := range v.Usage {
 		var st StageView
@@ -466,26 +486,49 @@ func (s *Service) settleStages(tx *gorm.DB, job *model.EduMathJob, v JobView) er
 		}
 		if _, err := flow.RecordUsage(tx, flow.UsageInput{TenantID: job.TenantID, WorkspaceID: job.WorkspaceID, UsageType: flow.UsageMathComputeMS,
 			SubjectRef: "edu_job:" + job.ID + ":" + u.Stage, IdemKey: "edu:stage:" + job.ID + ":" + u.Stage, ReservationID: row.ReservationID,
-			Quantity: u.Quantity, CostMicro: row.CostMicro}, s.now()); err != nil {
+			Quantity: u.Quantity, CostMicro: row.CostMicro, Frozen: &pb}, s.now()); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-// finishSettlement closes the job's root reservation exactly once.
+// JobPriceBook returns the price book frozen on the job at acceptance. Rows from
+// before v75 carry none and fall back to the current book (documented in 07).
+func JobPriceBook(job model.EduMathJob) flow.PriceBook {
+	var pb flow.PriceBook
+	if job.PriceBook != "" && json.Unmarshal([]byte(job.PriceBook), &pb) == nil && pb.Version != "" {
+		return pb
+	}
+	return flow.CurrentPriceBook()
+}
+
+// finishSettlement closes the job's root reservation exactly once. A terminal job
+// with no charged stage (failed at validation, cancelled before running) is
+// "released": nothing was consumed and the whole hold is returned. Otherwise it
+// is "settled": the stage children are already consumed and the rest is refunded.
 func (s *Service) finishSettlement(tx *gorm.DB, job *model.EduMathJob) {
 	if job.Settlement != "open" {
 		return
 	}
-	res := tx.Model(&model.EduMathJob{}).Where("id = ? AND settlement = ?", job.ID, "open").Update("settlement", "settled")
+	var charged int64
+	tx.Model(&model.EduStageRun{}).Where("job_id = ?", job.ID).Select("COALESCE(SUM(cost_micro), 0)").Scan(&charged)
+	outcome := "settled"
+	if charged == 0 {
+		outcome = "released"
+	}
+	res := tx.Model(&model.EduMathJob{}).Where("id = ? AND settlement = ?", job.ID, "open").Update("settlement", outcome)
 	if res.Error != nil || res.RowsAffected == 0 {
 		return
 	}
-	job.Settlement = "settled"
+	job.Settlement = outcome
 	if job.ReservationID != "" {
 		b := flow.Billing{DB: tx, Now: s.Now}
-		_, _ = b.Settle(job.ReservationID, 0) // stage children already consumed; remainder refunded
+		if outcome == "released" {
+			_, _ = b.Release(job.ReservationID)
+		} else {
+			_, _ = b.Settle(job.ReservationID, 0) // stage children already consumed; remainder refunded
+		}
 	}
 }
 

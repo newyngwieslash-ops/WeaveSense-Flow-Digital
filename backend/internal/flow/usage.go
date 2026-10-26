@@ -102,6 +102,8 @@ type UsageInput struct {
 	CostMicro int64
 	// Charge: debit the cost now (reserve+settle under the idempotency key).
 	Charge bool
+	// Frozen: price with this book (e.g. a job's book frozen at acceptance); wins over RunID.
+	Frozen *PriceBook
 }
 
 // RecordUsage writes a usage line once per (tenant, idem key) with the frozen price version.
@@ -116,6 +118,9 @@ func RecordUsage(db *gorm.DB, in UsageInput, now time.Time) (model.FlowUsageReco
 	pb := CurrentPriceBook()
 	if in.RunID != "" {
 		pb = RunPriceBook(db, in.RunID)
+	}
+	if in.Frozen != nil && in.Frozen.Version != "" {
+		pb = *in.Frozen
 	}
 	unit := pb.UnitMicro[in.UsageType]
 	cost := in.Quantity * unit

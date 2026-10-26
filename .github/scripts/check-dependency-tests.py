@@ -38,6 +38,10 @@ REQUIRED = {
     ("edumath", "TestReceiptContract"),
     ("edumath", "TestReceiptFailClosed"),
     ("edumath", "TestFaultInjectionRecovery"),
+    ("edumath", "TestJobEventOutbox"),
+    ("edumath", "TestPGJobEventOutbox"),
+    ("edumath", "TestMathEventPush"),
+    ("edumath", "TestPGMathEventPush"),
     ("edumath", "TestPGAgentMathTools"),
 }
 

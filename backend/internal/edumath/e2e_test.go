@@ -55,7 +55,10 @@ func testDB(t *testing.T) *gorm.DB {
 
 // startMathService launches the real Python math service (services/math-service).
 // Skips when python/sympy are missing unless EDU_MATH_REQUIRE_SERVICE=1 (CI).
-func startMathService(t *testing.T) string {
+func startMathService(t *testing.T) string { return startMathServiceEnv(t) }
+
+// startMathServiceEnv starts the real math service with extra environment (KEY=VALUE).
+func startMathServiceEnv(t *testing.T, extra ...string) string {
 	t.Helper()
 	py := os.Getenv("MATH_PYTHON")
 	if py == "" {
@@ -74,6 +77,7 @@ func startMathService(t *testing.T) string {
 	cmd := exec.Command(py, "-m", "mathsvc.server")
 	cmd.Dir = root
 	cmd.Env = []string{"PATH=" + os.Getenv("PATH"), "MATH_SERVICE_KEY=" + testKey, "MATH_DATA_DIR=" + t.TempDir(), "MATH_LISTEN=" + addr}
+	cmd.Env = append(cmd.Env, extra...)
 	var logs bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &logs, &logs
 	if err := cmd.Start(); err != nil {

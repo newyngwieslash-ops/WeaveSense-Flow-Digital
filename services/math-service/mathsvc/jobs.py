@@ -66,6 +66,11 @@ class Store:
           artifact_id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, job_id TEXT NOT NULL, kind TEXT NOT NULL,
           audience TEXT NOT NULL, media_type TEXT NOT NULL, sha256 TEXT NOT NULL, size INTEGER NOT NULL,
           path TEXT NOT NULL, created_at REAL);
+        CREATE TABLE IF NOT EXISTS events(
+          event_id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, job_id TEXT NOT NULL, request_id TEXT,
+          seq INTEGER NOT NULL, status TEXT NOT NULL, created_at REAL NOT NULL,
+          delivered_at REAL, attempts INTEGER NOT NULL DEFAULT 0, next_at REAL NOT NULL DEFAULT 0);
+        CREATE INDEX IF NOT EXISTS ix_events_pending ON events(delivered_at, next_at);
         """)
 
     # ---- jobs ----
@@ -86,10 +91,17 @@ class Store:
             jid = "mj_" + uuid.uuid4().hex
             stages = [{"name": s, "status": "pending"} for s in STAGES[kind]]
             t = now()
-            self.db.execute("INSERT INTO jobs(job_id, operation_id, tenant_id, kind, idem_key, input_hash, input_json, request_id, trace_id,"
-                            " status, stage, seq, stages_json, checkpoint_json, created_at, updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                            (jid, "mop_" + uuid.uuid4().hex, tenant, kind, idem_key, h, raw, request_id, trace_id,
-                             "queued", STAGES[kind][0], 1, json.dumps(stages), "{}", t, t))
+            self.db.execute("BEGIN IMMEDIATE")
+            try:
+                self.db.execute("INSERT INTO jobs(job_id, operation_id, tenant_id, kind, idem_key, input_hash, input_json, request_id, trace_id,"
+                                " status, stage, seq, stages_json, checkpoint_json, created_at, updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                                (jid, "mop_" + uuid.uuid4().hex, tenant, kind, idem_key, h, raw, request_id, trace_id,
+                                 "queued", STAGES[kind][0], 1, json.dumps(stages), "{}", t, t))
+                self._event(jid)
+                self.db.execute("COMMIT")
+            except BaseException:
+                self.db.execute("ROLLBACK")
+                raise
             return self.get(tenant, jid), True
 
     def find_by_key(self, tenant, kind, idem_key):
@@ -135,9 +147,38 @@ class Store:
         return self.get(tenant, jid)
 
     def _update(self, jid, **cols):
+        """Update a job; a status write records its outbox event in the same transaction."""
         cols["updated_at"] = now()
         sets = ", ".join("%s=?" % k for k in cols) + ", seq=seq+1"
-        self.db.execute("UPDATE jobs SET %s WHERE job_id=?" % sets, list(cols.values()) + [jid])
+        self.db.execute("BEGIN IMMEDIATE")
+        try:
+            self.db.execute("UPDATE jobs SET %s WHERE job_id=?" % sets, list(cols.values()) + [jid])
+            if "status" in cols:
+                self._event(jid)
+            self.db.execute("COMMIT")
+        except BaseException:
+            self.db.execute("ROLLBACK")
+            raise
+
+    def _event(self, jid):
+        """Outbox row for the job's current (seq, status). Delivery is at least once."""
+        r = self.db.execute("SELECT tenant_id, request_id, seq, status FROM jobs WHERE job_id=?", (jid,)).fetchone()
+        self.db.execute("INSERT INTO events(event_id, tenant_id, job_id, request_id, seq, status, created_at) VALUES(?,?,?,?,?,?,?)",
+                        ("me_" + uuid.uuid4().hex, r[0], jid, r[1] or "", r[2], r[3], now()))
+
+    def pending_events(self, limit=50):
+        with self.lock:
+            cur = self.db.execute("SELECT event_id, tenant_id, job_id, request_id, seq, status, attempts FROM events"
+                                  " WHERE delivered_at IS NULL AND next_at<=? ORDER BY created_at, seq LIMIT ?", (now(), limit))
+            cols = [d[0] for d in cur.description]
+            return [dict(zip(cols, r)) for r in cur.fetchall()]
+
+    def mark_event(self, event_id, ok, attempts):
+        with self.lock:
+            if ok:
+                self.db.execute("UPDATE events SET delivered_at=?, attempts=? WHERE event_id=?", (now(), attempts, event_id))
+            else:
+                self.db.execute("UPDATE events SET attempts=?, next_at=? WHERE event_id=?", (attempts, now() + min(60, 2 ** attempts), event_id))
 
     def runnable(self):
         with self.lock:

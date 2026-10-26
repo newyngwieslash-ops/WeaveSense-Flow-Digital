@@ -223,6 +223,11 @@ def serve(key, data_dir, listen):
     host, port = listen.rsplit(":", 1)
     httpd = ThreadingHTTPServer((host, int(port)), Handler)
     threading.Thread(target=app.worker.loop, daemon=True).start()
+    url = os.environ.get("MATH_EVENT_URL", "")
+    if url:
+        from .events import Notifier
+        app.notifier = Notifier(app.store, url, key)
+        threading.Thread(target=app.notifier.loop, daemon=True).start()
     return httpd, app
 
 

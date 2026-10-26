@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { LessonEditor } from "@/components/edu/lesson-editor";
 import { VariantSetPanel } from "@/components/edu/variant-set";
 import { edu, newClientKey, type EduScope } from "@/services/api/edu";
 import { listIntelWorkspaces, type IntelWorkspace } from "@/services/api/intelligence";
@@ -93,17 +94,24 @@ export default function TeacherAuthoring() {
     useEffect(() => {
         if (aj?.solutionRevisionId) void edu<Solution>("get", `/solution-revisions/${aj.solutionRevisionId}`, scope).then((r) => r.ok && setSolution(r.data));
     }, [aj?.solutionRevisionId, scope]);
+    const openLesson = useCallback(
+        (id: string) => {
+            void edu<{ lesson: Lesson; publication?: { id: string } }>("get", `/lesson-revisions/${id}`, scope).then(async (r) => {
+                if (!r.ok) return;
+                setLesson(r.data.lesson);
+                setPublicationId(r.data.publication?.id || "");
+                setPreview("");
+                if (r.data.lesson.previewArtifactId) {
+                    const u = await edu<{ url: string }>("get", `/artifacts/${r.data.lesson.previewArtifactId}/url`, scope);
+                    if (u.ok) setPreview(u.data.url);
+                }
+            });
+        },
+        [scope],
+    );
     useEffect(() => {
-        if (!lj?.lessonRevisionId) return;
-        void edu<{ lesson: Lesson }>("get", `/lesson-revisions/${lj.lessonRevisionId}`, scope).then(async (r) => {
-            if (!r.ok) return;
-            setLesson(r.data.lesson);
-            if (r.data.lesson.previewArtifactId) {
-                const u = await edu<{ url: string }>("get", `/artifacts/${r.data.lesson.previewArtifactId}/url`, scope);
-                if (u.ok) setPreview(u.data.url);
-            }
-        });
-    }, [lj?.lessonRevisionId, scope]);
+        if (lj?.lessonRevisionId) openLesson(lj.lessonRevisionId);
+    }, [lj?.lessonRevisionId, openLesson]);
 
     const pickFamily = (f: string) => {
         setFamily(f);
@@ -266,6 +274,14 @@ export default function TeacherAuthoring() {
                                 {publicationId ? "已发布" : "发布"}
                             </button>
                         </div>
+                        {lesson.blockingErrors ? null : (
+                            <details className="mt-3">
+                                <summary className="cursor-pointer text-sm font-medium">修改讲解（生成新修订）</summary>
+                                <div className="mt-2">
+                                    <LessonEditor key={lesson.id} scope={scope} lessonId={lesson.id} onOpenRevision={openLesson} />
+                                </div>
+                            </details>
+                        )}
                     </>
                 ) : null}
             </section>

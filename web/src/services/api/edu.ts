@@ -6,7 +6,7 @@ import { apiClient } from "./request";
  * 学生请求携带 X-Edu-Tenant，教师请求携带 X-Workspace-Id；权限全部由服务端判定。
  */
 export type EduScope = { tenant?: string; workspace?: string };
-export type EduResult<T> = { ok: true; status: number; data: T } | { ok: false; status: number; code: string; message: string; offline?: boolean };
+export type EduResult<T> = { ok: true; status: number; data: T } | { ok: false; status: number; code: string; message: string; offline?: boolean; detail?: unknown };
 
 export async function edu<T>(method: "get" | "post" | "put", path: string, scope: EduScope, body?: unknown): Promise<EduResult<T>> {
     const headers: Record<string, string> = {};
@@ -17,7 +17,7 @@ export async function edu<T>(method: "get" | "post" | "put", path: string, scope
         const env = (res.data || {}) as { code?: number; data?: unknown; msg?: string };
         if (res.status < 400 && (env.code ?? 0) === 0) return { ok: true, status: res.status, data: env.data as T };
         const err = (env.data as { error?: { code?: string; message?: string } } | null)?.error;
-        return { ok: false, status: res.status, code: err?.code || `HTTP_${res.status}`, message: err?.message || env.msg || "请求失败" };
+        return { ok: false, status: res.status, code: err?.code || `HTTP_${res.status}`, message: err?.message || env.msg || "请求失败", detail: env.data };
     } catch {
         return { ok: false, status: 0, code: "NETWORK", message: "网络不可用", offline: true };
     }

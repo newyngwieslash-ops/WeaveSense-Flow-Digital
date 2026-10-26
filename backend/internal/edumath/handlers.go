@@ -49,6 +49,7 @@ func (h *API) Register(api *gin.RouterGroup) {
 	h.registerHelp(g)
 	h.registerFigure(g)
 	h.registerVariants(g)
+	h.registerEdits(g)
 	h.registerAdminLists(g)
 }
 

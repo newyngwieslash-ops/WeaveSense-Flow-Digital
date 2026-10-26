@@ -540,21 +540,30 @@ func (h *API) setPolicy(c *gin.Context) {
 		ReviewMode  string `json:"reviewMode"`
 		ConsentMode string `json:"consentMode"`
 		Reason      string `json:"reason"`
+		// EditReviewInherit: none (default) | pronunciation_only. Pending user decision (doc 07).
+		EditReviewInherit string `json:"editReviewInherit"`
 	}
 	if c.ShouldBindJSON(&in) != nil || (in.ReviewMode != "self_allowed" && in.ReviewMode != "second_reviewer") ||
 		(in.ConsentMode != "guardian_required" && in.ConsentMode != "not_applicable") {
 		reply(c, 400, nil, "reviewMode (self_allowed|second_reviewer) and consentMode (guardian_required|not_applicable) required")
 		return
 	}
+	if in.EditReviewInherit == "" {
+		in.EditReviewInherit = inheritNone
+	}
+	if in.EditReviewInherit != inheritNone && in.EditReviewInherit != inheritPronounce {
+		reply(c, 400, nil, "editReviewInherit must be none or pronunciation_only")
+		return
+	}
 	if in.ConsentMode == "not_applicable" && len(strings.TrimSpace(in.Reason)) < 4 {
 		reply(c, 400, nil, "reason required when consent is marked not applicable")
 		return
 	}
-	p := model.EduOrgPolicy{TenantID: a.TenantID, ReviewMode: in.ReviewMode, ConsentMode: in.ConsentMode, UpdatedBy: a.UserID, UpdatedAt: h.Svc.now()}
+	p := model.EduOrgPolicy{TenantID: a.TenantID, ReviewMode: in.ReviewMode, ConsentMode: in.ConsentMode, EditReviewInherit: in.EditReviewInherit, UpdatedBy: a.UserID, UpdatedAt: h.Svc.now()}
 	if err := tx.Save(&p).Error; err != nil {
 		h.fail(c, err)
 		return
 	}
-	h.Svc.audit(tx, a, "policy.set", a.TenantID, in.ReviewMode+"/"+in.ConsentMode+" "+in.Reason)
+	h.Svc.audit(tx, a, "policy.set", a.TenantID, in.ReviewMode+"/"+in.ConsentMode+"/"+in.EditReviewInherit+" "+in.Reason)
 	reply(c, http.StatusOK, p, "ok")
 }

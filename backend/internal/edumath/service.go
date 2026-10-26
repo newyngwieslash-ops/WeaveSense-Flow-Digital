@@ -219,6 +219,10 @@ func (s *Service) StartLessonBuild(ctx context.Context, tx *gorm.DB, a Actor, so
 }
 
 func (s *Service) startJob(ctx context.Context, tx *gorm.DB, a Actor, kind, idemKey, inputHash, revisionID, sourceJob string, payload map[string]any) (model.EduMathJob, error) {
+	return s.startJobWith(ctx, tx, a, kind, idemKey, inputHash, revisionID, sourceJob, "", payload)
+}
+
+func (s *Service) startJobWith(ctx context.Context, tx *gorm.DB, a Actor, kind, idemKey, inputHash, revisionID, sourceJob, options string, payload map[string]any) (model.EduMathJob, error) {
 	if !a.Has("teacher") {
 		return model.EduMathJob{}, ErrNoRole
 	}
@@ -239,7 +243,7 @@ func (s *Service) startJob(ctx context.Context, tx *gorm.DB, a Actor, kind, idem
 	now := s.now()
 	job := model.EduMathJob{ID: flow.NewID("emj_"), TenantID: a.TenantID, WorkspaceID: a.WorkspaceID, Kind: kind, IdemKey: idemKey, InputHash: inputHash,
 		ProblemRevisionID: revisionID, SourceJobID: sourceJob, Status: "queued", PriceVersion: pb.Version, BudgetMicro: JobBudgetMicro(),
-		Settlement: "open", CreatedBy: a.UserID, CreatedAt: now, UpdatedAt: now}
+		Settlement: "open", CreatedBy: a.UserID, CreatedAt: now, UpdatedAt: now, Options: options}
 	if unitPrice(pb) > 0 {
 		b := flow.Billing{DB: tx, Now: s.Now}
 		rsv, err := b.Reserve(a.TenantID, "edu:job:"+job.ID, "edu_math_job", job.ID, job.BudgetMicro)
@@ -319,6 +323,15 @@ func (s *Service) Reconcile(ctx context.Context, tx *gorm.DB, job model.EduMathJ
 			return job, ErrNotFound
 		}
 		payload["analysis_job_id"], payload["solution_hash"], payload["report_hash"] = src.ServiceJobID, sol.SolutionHash, sol.ReportHash
+	}
+	if job.Kind == "variant_set" {
+		var opt struct {
+			Count int `json:"count"`
+		}
+		if json.Unmarshal([]byte(job.Options), &opt) != nil || opt.Count < 1 {
+			return job, fmt.Errorf("%w: variant_set job options", ErrContract)
+		}
+		payload["count"] = opt.Count
 	}
 	v, err = s.Client.StartJob(ctx, job.TenantID, job.CreatedBy, job.Kind, "edu:"+job.ID, job.ID, payload)
 	if err != nil {
@@ -500,6 +513,8 @@ func (s *Service) materialize(ctx context.Context, tx *gorm.DB, job model.EduMat
 		return tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&model.EduSolutionRevision{ID: flow.NewID("esv_"), TenantID: job.TenantID,
 			ProblemRevisionID: job.ProblemRevisionID, JobID: job.ID, SolutionArtifact: sa.ID, SolutionHash: sa.SHA256, ReportArtifact: ra.ID,
 			ReportHash: ra.SHA256, SolutionStatus: sol.SolutionStatus, MathState: rep.MathState, EvidenceLevels: string(lv), CreatedAt: s.now()}).Error
+	case "variant_set":
+		return s.materializeVariantSet(ctx, tx, job, arts)
 	case "lesson_build":
 		var n int64
 		tx.Model(&model.EduLessonRevision{}).Where("job_id = ?", job.ID).Count(&n)
@@ -552,12 +567,7 @@ func (s *Service) Review(tx *gorm.DB, a Actor, lessonID, lessonHash, decision, c
 	if l.State != "ready_for_review" {
 		return model.EduReviewRecord{}, appErr(409, "REVISION_CONFLICT", "lesson revision is "+l.State, "reload_revision")
 	}
-	self := l.CreatedBy == a.UserID
-	mode := s.policy(tx, a.TenantID)
-	allowed := a.Has("reviewer") && !(self && mode == "second_reviewer")
-	if !allowed && self && a.Has("teacher") && mode == "self_allowed" {
-		allowed = true
-	}
+	self, mode, allowed := s.reviewAllowed(tx, a, l.CreatedBy)
 	if !allowed {
 		return model.EduReviewRecord{}, appErr(403, "POLICY_REVOKED", "review not permitted by the institution review policy ("+mode+")", "request_reviewer")
 	}

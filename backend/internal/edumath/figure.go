@@ -43,7 +43,7 @@ func (h *API) recordPrediction(c *gin.Context) {
 		reply(c, 200, gin.H{"prediction": prev, "replayed": true}, "ok")
 		return
 	}
-	if _, closed := h.closedForWrites(as); closed {
+	if _, closed := h.closedForWrites(tx, as, a.UserID); closed {
 		h.fail(c, appErr(http.StatusConflict, "ASSIGNMENT_CLOSED", "the assignment is closed", "contact_teacher"))
 		return
 	}

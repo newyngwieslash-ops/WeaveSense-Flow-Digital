@@ -52,7 +52,12 @@ func canFetch(db *gorm.DB, art model.EduArtifact, userID string) bool {
 	if art.RevokedAt != nil {
 		return false
 	}
-	rs, err := roles(db, art.TenantID, userID)
+	var owner model.EduMathJob
+	ws := ""
+	if db.Select("id", "workspace_id").First(&owner, "id = ? AND tenant_id = ?", art.JobID, art.TenantID).Error == nil {
+		ws = owner.WorkspaceID
+	}
+	rs, err := rolesIn(db, art.TenantID, userID, ws)
 	if err != nil {
 		return false
 	}

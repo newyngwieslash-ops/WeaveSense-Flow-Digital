@@ -50,6 +50,10 @@ REQUIRED = {
     ("edumath", "TestPGDeliveryCostReport"),
     ("edumath", "TestContentIncidentChain"),
     ("edumath", "TestPGContentIncidentChain"),
+    ("edumath", "TestRoleBindingScopeExpiry"),
+    ("edumath", "TestPGRoleBindingScopeExpiry"),
+    ("edumath", "TestSourceRights"),
+    ("edumath", "TestPGSourceRights"),
     ("edumath", "TestPGAgentMathTools"),
 }
 

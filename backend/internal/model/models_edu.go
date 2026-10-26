@@ -36,6 +36,12 @@ type EduRoleBinding struct {
 	CreatedBy   string    `json:"createdBy" gorm:"size:40"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
+	// ExpiresAt ends the binding without a revoke (DEV-013); nil means no end date.
+	// A non-empty WorkspaceID scopes a staff role to that workspace only.
+	ExpiresAt *time.Time `json:"expiresAt,omitempty" gorm:"index"`
+	RevokedBy string     `json:"revokedBy,omitempty" gorm:"size:40"`
+	RevokedAt *time.Time `json:"revokedAt,omitempty"`
+	Reason    string     `json:"reason,omitempty" gorm:"size:200"`
 }
 
 func (EduRoleBinding) TableName() string { return "edu_role_bindings" }
@@ -116,6 +122,7 @@ type EduProblem struct {
 	FamilyID       string    `json:"familyId" gorm:"size:40;not null"`
 	Title          string    `json:"title" gorm:"size:200"`
 	LatestRevision int       `json:"latestRevision"`
+	SourceAssetID  string    `json:"sourceAssetId,omitempty" gorm:"size:40;index"` // DEV-026 rights record; empty = not registered
 	CreatedBy      string    `json:"createdBy" gorm:"size:40"`
 	CreatedAt      time.Time `json:"createdAt"`
 	UpdatedAt      time.Time `json:"updatedAt"`
@@ -492,7 +499,7 @@ func EduModels() []any {
 		&EduProblemRevision{}, &EduMathJob{}, &EduStageRun{}, &EduArtifact{}, &EduSolutionRevision{}, &EduLessonRevision{},
 		&EduReviewRecord{}, &EduPublication{}, &EduAssignment{}, &EduAuditEvent{}, &EduClassInvite{}, &EduConsentRecord{},
 		&EduAttempt{}, &EduHintUnlock{}, &EduSelfTest{}, &EduReviewItem{}, &EduHelpRequest{}, &EduHelpReply{},
-		&EduPrediction{}, &EduFigureInteraction{}, &EduVariantSet{}, &EduVariantReview{}, &EduAssignmentExtension{}, &EduLessonEdit{}, &EduLedgerAnomaly{}, &EduJobEvent{}, &EduMathEvent{}, &EduBudget{}, &EduBudgetAlert{}, &EduSupportCost{}, &EduContentIncident{}, &EduAssignmentMigration{}}
+		&EduPrediction{}, &EduFigureInteraction{}, &EduVariantSet{}, &EduVariantReview{}, &EduAssignmentExtension{}, &EduLessonEdit{}, &EduLedgerAnomaly{}, &EduJobEvent{}, &EduMathEvent{}, &EduBudget{}, &EduBudgetAlert{}, &EduSupportCost{}, &EduContentIncident{}, &EduAssignmentMigration{}, &EduSourceAsset{}}
 }
 
 // EduVariantSet is a finite set of numbers only variants of a lesson's problem (FR-M07, FR-T11, AC-22).
@@ -699,3 +706,28 @@ type EduAssignmentMigration struct {
 }
 
 func (EduAssignmentMigration) TableName() string { return "edu_assignment_migrations" }
+
+// EduSourceAsset is the rights record of where a problem came from (DEV-026,
+// FR-D01). Its flags gate student distribution, derivatives, export and cross
+// organisation reuse; expiry and withdrawal take effect at access time.
+type EduSourceAsset struct {
+	ID              string     `json:"id" gorm:"primaryKey;size:40"`
+	TenantID        string     `json:"tenantId" gorm:"size:40;not null;index"`
+	WorkspaceID     string     `json:"workspaceId" gorm:"size:40;not null;index"`
+	Title           string     `json:"title" gorm:"size:200;not null"`
+	Kind            string     `json:"kind" gorm:"size:24;not null"` // teacher_original | textbook | exam | publisher | web | other
+	Attribution     string     `json:"attribution" gorm:"size:200"`
+	LicenseRef      string     `json:"licenseRef" gorm:"size:200"`
+	AllowStudent    bool       `json:"allowStudent" gorm:"not null;default:false"`
+	AllowDerivative bool       `json:"allowDerivative" gorm:"not null;default:false"`
+	AllowExport     bool       `json:"allowExport" gorm:"not null;default:false"`
+	AllowCrossOrg   bool       `json:"allowCrossOrg" gorm:"not null;default:false"`
+	ExpiresAt       *time.Time `json:"expiresAt,omitempty"`
+	State           string     `json:"state" gorm:"size:16;not null"` // active | withdrawn
+	WithdrawnReason string     `json:"withdrawnReason,omitempty" gorm:"size:200"`
+	CreatedBy       string     `json:"createdBy" gorm:"size:40;not null"`
+	CreatedAt       time.Time  `json:"createdAt"`
+	UpdatedAt       time.Time  `json:"updatedAt"`
+}
+
+func (EduSourceAsset) TableName() string { return "edu_source_assets" }

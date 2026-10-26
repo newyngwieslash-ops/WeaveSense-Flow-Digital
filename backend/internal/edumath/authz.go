@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -48,7 +49,8 @@ func eduTenantIDs(db *gorm.DB, userID string) ([]string, error) {
 		return nil, err
 	}
 	var edu []string
-	if err := db.Model(&model.EduRoleBinding{}).Where("user_id = ? AND status = ?", userID, "active").Distinct().Pluck("tenant_id", &edu).Error; err != nil {
+	if err := db.Model(&model.EduRoleBinding{}).Where("user_id = ? AND status = ? AND (expires_at IS NULL OR expires_at > ?)", userID, "active", time.Now().UTC()).
+		Distinct().Pluck("tenant_id", &edu).Error; err != nil {
 		return nil, err
 	}
 	seen := map[string]bool{}
@@ -132,8 +134,22 @@ func reply(c *gin.Context, status int, data any, msg string) {
 }
 
 func roles(tx *gorm.DB, tenantID, userID string) (map[string]bool, error) {
+	return rolesIn(tx, tenantID, userID, "")
+}
+
+// rolesIn returns the user's effective education roles: active, not expired
+// (DEV-013), and either tenant wide or scoped to workspaceID. With an empty
+// workspaceID only tenant wide bindings count, so a workspace scoped role never
+// leaks into another workspace.
+func rolesIn(tx *gorm.DB, tenantID, userID, workspaceID string) (map[string]bool, error) {
 	var rs []string
-	if err := tx.Model(&model.EduRoleBinding{}).Where("tenant_id = ? AND user_id = ? AND status = ?", tenantID, userID, "active").Pluck("role", &rs).Error; err != nil {
+	q := tx.Model(&model.EduRoleBinding{}).Where("tenant_id = ? AND user_id = ? AND status = ? AND (expires_at IS NULL OR expires_at > ?)", tenantID, userID, "active", time.Now().UTC())
+	if workspaceID == "" {
+		q = q.Where("(workspace_id IS NULL OR workspace_id = '')")
+	} else {
+		q = q.Where("(workspace_id IS NULL OR workspace_id = '' OR workspace_id = ?)", workspaceID)
+	}
+	if err := q.Pluck("role", &rs).Error; err != nil {
 		return nil, err
 	}
 	out := map[string]bool{}
@@ -150,7 +166,7 @@ func StaffActor(tx *gorm.DB, userID, workspaceID string) (Actor, error) {
 	if err != nil {
 		return Actor{}, ErrForbidden
 	}
-	rs, err := roles(tx, sc.TenantID, userID)
+	rs, err := rolesIn(tx, sc.TenantID, userID, sc.WorkspaceID)
 	if err != nil {
 		return Actor{}, err
 	}
@@ -219,6 +235,12 @@ func studentCanAccessAssignment(tx *gorm.DB, tenantID, userID, assignmentID stri
 		return as, pub, ErrNotFound
 	}
 	if err := tx.First(&pub, "id = ? AND tenant_id = ? AND state = ?", as.PublicationID, tenantID, "published").Error; err != nil {
+		return as, pub, ErrNotFound
+	}
+	// Source rights are checked at every student read (DEV-026): expiry or withdrawal stops access at once.
+	var l model.EduLessonRevision
+	if tx.Select("id", "problem_revision_id").First(&l, "id = ? AND tenant_id = ?", pub.LessonRevisionID, tenantID).Error != nil ||
+		rightsAllow(tx, tenantID, l.ProblemRevisionID, "student") != nil {
 		return as, pub, ErrNotFound
 	}
 	return as, pub, nil

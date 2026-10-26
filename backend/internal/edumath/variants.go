@@ -76,8 +76,11 @@ func (s *Service) StartVariantSet(ctx context.Context, tx *gorm.DB, a Actor, les
 	if err != nil {
 		return model.EduMathJob{}, err
 	}
-	if l.BlockingErrors != "" || l.State == "rejected" {
-		return model.EduMathJob{}, appErr(409, "VALIDATION_FAILED", "lesson revision has blocking errors; variants are not generated from it", "teacher_fix")
+	if l.BlockingErrors != "" || l.State == "rejected" || l.State == "withdrawn" {
+		return model.EduMathJob{}, appErr(409, "VALIDATION_FAILED", "lesson revision has blocking errors or was withdrawn; variants are not generated from it", "teacher_fix")
+	}
+	if err := rightsAllow(tx, a.TenantID, l.ProblemRevisionID, "derivative"); err != nil {
+		return model.EduMathJob{}, err
 	}
 	if count < 1 || count > maxVariantItems {
 		return model.EduMathJob{}, appErr(400, "PARAMETER_LIMIT", fmt.Sprintf("count must be 1..%d", maxVariantItems), "")

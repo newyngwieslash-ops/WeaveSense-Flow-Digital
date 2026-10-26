@@ -13,6 +13,12 @@ REQUIRED = {
     ("database", "TestFlowRLSPostgres"),
     ("flow", "TestRuntimeRLSBlocksUnfilteredHandlerQueries"),
     ("flow", "TestBackgroundWorkIsTenantScoped"),
+    # Education math workbench: real math-service chain + edu tables under FORCE RLS.
+    ("edumath", "TestG1SolidAngle02EndToEnd"),
+    ("edumath", "TestWorkerRecoveryAndReconcile"),
+    ("edumath", "TestPGEduTablesForceRLS"),
+    ("edumath", "TestPGG1Chain"),
+    ("edumath", "TestMCPProtocolWithGoSDK"),
 }
 
 

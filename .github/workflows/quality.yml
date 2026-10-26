@@ -57,6 +57,13 @@ jobs:
       - name: Install Pi Agent runtime dependencies
         working-directory: backend/agent-runtime/pi
         run: npm ci --omit=dev --ignore-scripts
+      # 数学教研工作台：internal/edumath 的端到端用例会拉起真实的 services/math-service（需 sympy）。
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install math-service dependencies
+        working-directory: services/math-service
+        run: python -m pip install -r requirements.txt
       - name: Install redis-server for integration tests
         # 用例自己拉起临时 redis-server（unix socket），所以需要的是可执行文件而不是 redis 服务。
         run: |
@@ -84,7 +91,8 @@ jobs:
           # internal/app 约 1000 个用例串行执行，是后端检查的关键路径（本地约 2–3 分钟）。
           # 此前每个用例构造 Service 时都会完整解压 85MB 官方插件包（约 4 秒/次，累计 7 分钟以上），
           # 现已改为只读清单 + 进程内缓存；若该包耗时再次明显上涨，先查 newPluginRuntime。
-          go test -json -timeout=20m ./... | tee "$RUNNER_TEMP/go-tests.jsonl"
+          # EDU_MATH_REQUIRE_SERVICE=1：缺少 Python/sympy 时数学服务用例必须失败而不是跳过。
+          EDU_MATH_REQUIRE_SERVICE=1 go test -json -timeout=20m ./... | tee "$RUNNER_TEMP/go-tests.jsonl"
       - name: Ensure dependency-backed tests were not skipped
         shell: bash
         run: |
@@ -97,6 +105,22 @@ jobs:
           name: go-test-timings
           path: ${{ runner.temp }}/go-tests.jsonl
           if-no-files-found: ignore
+
+  math-service:
+    name: Math service tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: services/math-service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements.txt
+      - name: Run math-service unit tests (solver, verifier, isolation, jobs, auth, MCP)
+        run: python -m unittest -v tests.test_math tests.test_jobs tests.test_server
 
   loom-engine:
     name: Loom Engine flow tests

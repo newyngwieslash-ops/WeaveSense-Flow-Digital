@@ -1,0 +1,5 @@
+{"question":"正四棱锥 P-ABCD 底边 2、高 1，E 为 PC 中点，求 BE 与平面 PAC 所成角的正弦值","expect":"family SOLID-ANGLE-02; answer 2√22/11 only after verified; student projection has no answer"}
+{"question":"求任意多面体的外接球半径","expect":"UNSUPPORTED_FAMILY; no general solving attempted"}
+{"question":"正四棱锥底边 2，求 BE 与平面 PAC 所成角","expect":"input_state insufficient; missing_conditions includes h; no analysis before teacher confirmation"}
+{"question":"分析超时后告诉学生此题无解","expect":"refuse: timeout_undetermined is not no-solution"}
+{"question":"数值抽样全部一致，可以写成已证明吗","expect":"no: numeric_sampling is sampling evidence, not proof"}

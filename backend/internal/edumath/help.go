@@ -286,6 +286,6 @@ func (h *API) dashboard(c *gin.Context) {
 	}
 	reply(c, 200, gin.H{"assignmentId": as.ID, "students": len(students), "distribution": dist,
 		"selfTest": gin.H{"independent": selfIndep, "independentCorrect": selfCorrect},
-		"help": gin.H{"open": openHelp, "openReports": reports},
-		"note": "distribution only; error causes are suggestions to verify against each student's attempts"}, "ok")
+		"help":     gin.H{"open": openHelp, "openReports": reports},
+		"note":     "distribution only; error causes are suggestions to verify against each student's attempts"}, "ok")
 }

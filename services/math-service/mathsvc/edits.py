@@ -12,6 +12,8 @@ Each edit carries an impact class that decides what becomes stale:
                                  listed in quality.edited_unverified for the reviewer
   wording       (title, say, hint text)  review, student projection, preview, media
   pronunciation (term readings)  media and captions only; preview is unchanged
+  layout        (font scale, columns, figure labels)  review, student projection,
+                                 preview, media; captions and the math are unchanged
 The math solution and its verification are kept: the stage re-solves the problem
 and refuses the edit when the base lesson no longer matches (REVISION_CONFLICT).
 """
@@ -31,6 +33,14 @@ IMPACT = {
     "reasoning": ["review", "student_projection", "preview", "media"],
     "wording": ["review", "student_projection", "preview", "media"],
     "pronunciation": ["media", "captions"],
+    "layout": ["review", "student_projection", "preview", "media"],
+}
+
+# Layout fields and their allowed values (first is the default).
+LAYOUT = {
+    "font_scale": ("normal", "large"),
+    "columns": ("two", "one"),
+    "figure_labels": (True, False),
 }
 
 
@@ -60,6 +70,8 @@ def classify(edit):
         return "wording"
     if t == "pronunciation":
         return "pronunciation"
+    if t == "layout" and edit.get("field") in LAYOUT:
+        return "layout"
     raise MathError("POLICY_REVOKED", "this part is not editable here; change the problem revision instead",
                     {"target": str(t)[:20], "field": str(edit.get("field"))[:20]})
 
@@ -83,6 +95,7 @@ def apply(base, edits, sol):
     beats = {b["id"]: b for b in out["beats"]}
     hints = {h["level"]: h for h in out["hints"]}
     pron = dict(out.get("pronunciations") or {})
+    layout = dict(out["meta"].get("layout") or {})
     log, unverified = [], set(out.get("quality", {}).get("edited_unverified", []))
     for e in edits:
         cls = classify(e)
@@ -106,6 +119,12 @@ def apply(base, edits, sol):
                 raise MathError("INPUT_AMBIGUOUS", "unknown hint level")
             h["text"] = _text(e.get("value"))
             log.append({"class": cls, "target": "hint", "level": h["level"], "field": "text"})
+        elif e["target"] == "layout":
+            v = e.get("value")
+            if not any(type(v) is type(x) and v == x for x in LAYOUT[e["field"]]):
+                raise MathError("INPUT_AMBIGUOUS", "layout %s must be one of %s" % (e["field"], list(LAYOUT[e["field"]])))
+            layout[e["field"]] = v
+            log.append({"class": cls, "target": "layout", "field": e["field"]})
         else:
             term = _text(e.get("term"), 20)
             reading = e.get("reading", "")
@@ -119,6 +138,8 @@ def apply(base, edits, sol):
     else:
         out.pop("pronunciations", None)
     meta = out["meta"]
+    if layout:
+        meta["layout"] = layout
     meta["edited_by_teacher"] = True
     meta["parent_lesson_hash"] = artifact_sha(base)
     meta["edit_log"] = log

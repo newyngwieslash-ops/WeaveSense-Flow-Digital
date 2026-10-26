@@ -42,12 +42,16 @@ const (
 	editStageMaxMS   = 10000 + 5000 + 30000 // apply_edits + project_student + render_preview timeouts
 	inheritNone      = "none"
 	inheritPronounce = "pronunciation_only"
+	inheritPresent   = "presentation_only" // pronunciation and/or layout edits
 )
+
+var layoutFields = map[string]bool{"font_scale": true, "columns": true, "figure_labels": true}
 
 var editImpact = map[string][]string{
 	"reasoning":     {"review", "student_projection", "preview", "media"},
 	"wording":       {"review", "student_projection", "preview", "media"},
 	"pronunciation": {"media", "captions"},
+	"layout":        {"review", "student_projection", "preview", "media"},
 }
 
 type lessonEditInput struct {
@@ -88,6 +92,8 @@ func classifyEdit(e lessonEditInput) (string, error) {
 		return "wording", nil
 	case e.Target == "pronunciation":
 		return "pronunciation", nil
+	case e.Target == "layout" && layoutFields[e.Field]:
+		return "layout", nil
 	}
 	return "", appErr(403, "POLICY_REVOKED", "this part is not editable here; change the problem revision instead", "new_problem_revision")
 }
@@ -124,14 +130,23 @@ func ImpactOf(edits []lessonEditInput) (EditImpact, error) {
 // EditReviewRule returns the institution's edit review inheritance rule (default none).
 func (s *Service) EditReviewRule(tx *gorm.DB, tenantID string) string {
 	var p model.EduOrgPolicy
-	if tx.First(&p, "tenant_id = ?", tenantID).Error == nil && p.EditReviewInherit == inheritPronounce {
-		return inheritPronounce
+	if tx.First(&p, "tenant_id = ?", tenantID).Error == nil && (p.EditReviewInherit == inheritPronounce || p.EditReviewInherit == inheritPresent) {
+		return p.EditReviewInherit
 	}
 	return inheritNone
 }
 
 func inheritsApproval(rule string, classes []string, parentState string) bool {
-	return rule == inheritPronounce && len(classes) == 1 && classes[0] == "pronunciation" && parentState == "approved"
+	if parentState != "approved" || len(classes) == 0 {
+		return false
+	}
+	for _, c := range classes {
+		ok := c == "pronunciation" && (rule == inheritPronounce || rule == inheritPresent) || c == "layout" && rule == inheritPresent
+		if !ok {
+			return false
+		}
+	}
+	return true
 }
 
 func editEstimate(pb flow.PriceBook) gin.H {
@@ -402,6 +417,7 @@ func (h *API) getEditable(c *gin.Context) {
 		Quality        json.RawMessage   `json:"quality"`
 		Meta           struct {
 			EditLog json.RawMessage `json:"edit_log"`
+			Layout  json.RawMessage `json:"layout"`
 		} `json:"meta"`
 	}
 	if json.Unmarshal(raw, &doc) != nil {
@@ -409,7 +425,7 @@ func (h *API) getEditable(c *gin.Context) {
 		return
 	}
 	reply(c, 200, gin.H{"lessonRevisionId": l.ID, "lessonHash": l.LessonHash, "state": l.State, "parentLessonRevisionId": l.ParentLessonRevisionID,
-		"beats": doc.Beats, "hints": doc.Hints, "pronunciations": doc.Pronunciations, "quality": doc.Quality, "editLog": doc.Meta.EditLog,
+		"beats": doc.Beats, "hints": doc.Hints, "pronunciations": doc.Pronunciations, "quality": doc.Quality, "editLog": doc.Meta.EditLog, "layout": doc.Meta.Layout,
 		"editReviewInherit": h.Svc.EditReviewRule(tx, a.TenantID), "latestRevisionId": h.Svc.latestHead(tx, l.ID),
 		"limits": gin.H{"maxEdits": maxLessonEdits, "maxText": 600, "maxBoardLines": 12, "maxLine": 200}}, "ok")
 }

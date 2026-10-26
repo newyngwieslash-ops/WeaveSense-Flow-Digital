@@ -121,7 +121,8 @@ def student_projection(lesson, reveal="none"):
         raise MathError("POLICY_REVOKED", "unknown reveal policy")
     out = {
         "schema_version": SCHEMA, "projection": "student", "reveal": reveal,
-        "meta": {k: lesson["meta"][k] for k in ("family_id", "title", "language", "style")},
+        "meta": dict({k: lesson["meta"][k] for k in ("family_id", "title", "language", "style")},
+                     **({"layout": lesson["meta"]["layout"]} if lesson["meta"].get("layout") else {})),
         "problem": lesson["problem"], "figure": lesson["figure"],
         "hints": [{"level": h["level"], "kind": h["kind"], "text": h["text"]} for h in lesson["hints"] if not h.get("gated")],
         "gated_hint_levels": [h["level"] for h in lesson["hints"] if h.get("gated")],

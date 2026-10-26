@@ -259,6 +259,9 @@ func (s *Service) startJobWith(ctx context.Context, tx *gorm.DB, a Actor, kind, 
 	if err := tx.Create(&job).Error; err != nil {
 		return job, err
 	}
+	if err := s.jobEvent(tx, job, "job.accepted", 0, kind); err != nil {
+		return job, err
+	}
 	s.audit(tx, a, "job.start", job.ID, kind)
 	v, err := s.Client.StartJob(ctx, a.TenantID, a.UserID, kind, "edu:"+job.ID, job.ID, payload)
 	if err != nil {
@@ -268,13 +271,16 @@ func (s *Service) startJobWith(ctx context.Context, tx *gorm.DB, a Actor, kind, 
 			raw, _ := json.Marshal(se)
 			job.ErrorJSON = string(raw)
 			tx.Model(&job).Updates(map[string]any{"status": job.Status, "error_code": job.ErrorCode, "error_json": job.ErrorJSON, "updated_at": s.now()})
+			if err := s.jobEvent(tx, job, "job.failed", 0, se.Code); err != nil {
+				return job, err
+			}
 			s.finishSettlement(tx, &job)
 			return job, nil
 		}
 		// Transport failure: the service may have accepted it. Reconcile by key, never resend blindly.
 		job.Status = "reconciliation_required"
 		tx.Model(&job).Updates(map[string]any{"status": job.Status, "updated_at": s.now()})
-		return job, nil
+		return job, s.jobEvent(tx, job, "job.reconciliation_required", 0, "submit outcome unknown")
 	}
 	return s.apply(ctx, tx, job, v)
 }
@@ -326,6 +332,9 @@ func (s *Service) Reconcile(ctx context.Context, tx *gorm.DB, job model.EduMathJ
 		// Proven not executed and cancelled meanwhile: never dispatch; return the whole hold (AC-41).
 		tx.Model(&job).Updates(map[string]any{"status": "cancelled", "updated_at": s.now()})
 		job.Status = "cancelled"
+		if err := s.jobEvent(tx, job, "job.cancelled", 0, "not executed"); err != nil {
+			return job, err
+		}
 		if job.Kind == "lesson_edit" {
 			if ed, err := s.editOf(tx, job); err == nil {
 				s.releaseEdit(tx, ed.ID, "failed")
@@ -381,6 +390,11 @@ func (s *Service) Cancel(ctx context.Context, tx *gorm.DB, a Actor, job model.Ed
 	if !a.Has("teacher") {
 		return job, ErrNoRole
 	}
+	if !job.CancelRequested {
+		if err := s.jobEvent(tx, job, "job.cancel_requested", 0, a.UserID); err != nil {
+			return job, err
+		}
+	}
 	tx.Model(&job).Updates(map[string]any{"cancel_requested": true, "updated_at": s.now()})
 	job.CancelRequested = true
 	if job.ServiceJobID == "" || job.Status == "succeeded" || job.Status == "failed" || job.Status == "cancelled" {
@@ -404,6 +418,7 @@ func (s *Service) apply(ctx context.Context, tx *gorm.DB, job model.EduMathJob, 
 	if v.Seq < job.Seq {
 		return job, nil
 	}
+	prev := job.Status
 	upd := map[string]any{"service_job_id": v.JobID, "operation_id": v.OperationID, "status": v.Status, "stage": v.Stage, "progress": v.Progress,
 		"seq": v.Seq, "updated_at": s.now()}
 	if v.Error != nil {
@@ -441,6 +456,15 @@ func (s *Service) apply(ctx context.Context, tx *gorm.DB, job model.EduMathJob, 
 			return s.failReceipt(tx, job, err)
 		}
 	}
+	if job.Status != prev {
+		detail := ""
+		if v.Error != nil {
+			detail = v.Error.Code
+		}
+		if err := s.jobEvent(tx, job, "job."+job.Status, v.Seq, detail); err != nil {
+			return job, err
+		}
+	}
 	if (v.Status == "failed" || v.Status == "cancelled") && job.Kind == "lesson_edit" {
 		if ed, err := s.editOf(tx, job); err == nil {
 			s.releaseEdit(tx, ed.ID, "failed") // frees the head; no revision was created
@@ -470,6 +494,9 @@ func (s *Service) failReceipt(tx *gorm.DB, job model.EduMathJob, err error) (mod
 	job.Status, job.ErrorCode, job.ErrorJSON = "failed", receiptInvalid, receiptError(err)
 	if e := tx.Model(&model.EduMathJob{}).Where("id = ?", job.ID).Updates(map[string]any{"status": job.Status, "error_code": job.ErrorCode,
 		"error_json": job.ErrorJSON, "updated_at": s.now()}).Error; e != nil {
+		return job, e
+	}
+	if e := s.jobEvent(tx, job, "job.failed", job.Seq, receiptInvalid); e != nil {
 		return job, e
 	}
 	if job.Kind == "lesson_edit" {
@@ -566,6 +593,7 @@ func (s *Service) finishSettlement(tx *gorm.DB, job *model.EduMathJob) {
 		return
 	}
 	job.Settlement = outcome
+	_ = s.jobEvent(tx, *job, "job."+outcome, 0, "")
 	if job.ReservationID != "" {
 		b := flow.Billing{DB: tx, Now: s.Now}
 		if outcome == "released" {

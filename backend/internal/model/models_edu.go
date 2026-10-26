@@ -492,7 +492,7 @@ func EduModels() []any {
 		&EduProblemRevision{}, &EduMathJob{}, &EduStageRun{}, &EduArtifact{}, &EduSolutionRevision{}, &EduLessonRevision{},
 		&EduReviewRecord{}, &EduPublication{}, &EduAssignment{}, &EduAuditEvent{}, &EduClassInvite{}, &EduConsentRecord{},
 		&EduAttempt{}, &EduHintUnlock{}, &EduSelfTest{}, &EduReviewItem{}, &EduHelpRequest{}, &EduHelpReply{},
-		&EduPrediction{}, &EduFigureInteraction{}, &EduVariantSet{}, &EduVariantReview{}, &EduAssignmentExtension{}, &EduLessonEdit{}, &EduLedgerAnomaly{}}
+		&EduPrediction{}, &EduFigureInteraction{}, &EduVariantSet{}, &EduVariantReview{}, &EduAssignmentExtension{}, &EduLessonEdit{}, &EduLedgerAnomaly{}, &EduJobEvent{}, &EduMathEvent{}}
 }
 
 // EduVariantSet is a finite set of numbers only variants of a lesson's problem (FR-M07, FR-T11, AC-22).
@@ -573,3 +573,38 @@ type EduLedgerAnomaly struct {
 }
 
 func (EduLedgerAnomaly) TableName() string { return "edu_ledger_anomalies" }
+
+// EduJobEvent is the platform outbox of job facts (DEV-057): written in the same
+// transaction as the state change it describes, numbered per job without gaps,
+// so a consumer that reads after its last seq after any restart or delay sees
+// every fact exactly once and in order.
+type EduJobEvent struct {
+	ID         string    `json:"id" gorm:"primaryKey;size:40"`
+	TenantID   string    `json:"tenantId" gorm:"size:40;not null;index"`
+	JobID      string    `json:"jobId" gorm:"size:40;not null;uniqueIndex:ux_edu_job_event_seq,priority:1"`
+	Seq        int64     `json:"seq" gorm:"not null;uniqueIndex:ux_edu_job_event_seq,priority:2"`
+	Type       string    `json:"type" gorm:"size:40;not null"` // job.accepted | job.<status> | job.settled | job.released
+	Status     string    `json:"status" gorm:"size:32"`
+	Settlement string    `json:"settlement" gorm:"size:16"`
+	ServiceSeq int64     `json:"serviceSeq"`
+	Detail     string    `json:"detail,omitempty" gorm:"size:200"`
+	CreatedAt  time.Time `json:"createdAt"`
+}
+
+func (EduJobEvent) TableName() string { return "edu_job_events" }
+
+// EduMathEvent is the inbox of signed completion events pushed by the math
+// service (DEV-056). The event id is the dedupe key; events are hints only and
+// the job is always re-read from the service before anything changes.
+type EduMathEvent struct {
+	ID           string    `json:"id" gorm:"primaryKey;size:40"` // service event id (me_…)
+	TenantID     string    `json:"tenantId" gorm:"size:40;not null;index"`
+	JobID        string    `json:"jobId" gorm:"size:40;index"`
+	ServiceJobID string    `json:"serviceJobId" gorm:"size:40"`
+	Seq          int64     `json:"seq"`
+	Status       string    `json:"status" gorm:"size:32"`
+	Result       string    `json:"result" gorm:"size:24"` // applied | stale | unknown_job | sync_failed
+	ReceivedAt   time.Time `json:"receivedAt"`
+}
+
+func (EduMathEvent) TableName() string { return "edu_math_events" }

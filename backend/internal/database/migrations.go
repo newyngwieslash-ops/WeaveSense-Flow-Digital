@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const CurrentSchemaVersion int64 = 76
+const CurrentSchemaVersion int64 = 77
 
 const baselineSchemaChecksum = "sha256:open-ai-canvas-schema-v1-20260830"
 const schemaMigrationAppliedAtIndexChecksum = "sha256:schema-migrations-applied-at-index-v2-20260830"
@@ -323,6 +323,13 @@ var schemaMigrations = []migration{
 	}},
 	{version: 76, name: "edu_ledger_anomalies_v76", checksum: "sha256:edu-ledger-anomalies-v76-20261026", apply: func(tx *gorm.DB) error {
 		// docs/math-workbench: ledger reconciliation findings with owner and handling status (DEV-063) + FORCE RLS.
+		if err := tx.AutoMigrate(model.EduModels()...); err != nil {
+			return err
+		}
+		return applyFlowRLS(tx)
+	}},
+	{version: 77, name: "edu_job_events_v77", checksum: "sha256:edu-job-events-v77-20261026", apply: func(tx *gorm.DB) error {
+		// docs/math-workbench: job event outbox (DEV-057) and signed math event inbox (DEV-056) + FORCE RLS.
 		if err := tx.AutoMigrate(model.EduModels()...); err != nil {
 			return err
 		}

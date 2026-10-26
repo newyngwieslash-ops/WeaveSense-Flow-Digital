@@ -266,6 +266,9 @@ func (s *Service) MigrateAssignment(tx *gorm.DB, a Actor, assignmentID, toPubID,
 		tx.First(&job, "id = ? AND tenant_id = ?", l.JobID, a.TenantID).Error != nil || job.WorkspaceID != k.WorkspaceID {
 		return nil, ErrNotFound
 	}
+	if err := rightsAllow(tx, a.TenantID, l.ProblemRevisionID, "student"); err != nil {
+		return nil, err
+	}
 	var students, attempts int64
 	tx.Model(&model.EduAttempt{}).Where("tenant_id = ? AND assignment_id = ?", a.TenantID, old.ID).Count(&attempts)
 	tx.Model(&model.EduAttempt{}).Where("tenant_id = ? AND assignment_id = ?", a.TenantID, old.ID).Distinct("student_user_id").Count(&students)

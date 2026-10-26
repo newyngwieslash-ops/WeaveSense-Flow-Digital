@@ -32,8 +32,11 @@ func (h *API) Register(api *gin.RouterGroup) {
 	h.registerBudget(g)
 	h.registerCost(g)
 	h.registerIncidents(g)
+	h.registerSources(g)
 	g.GET("/me", h.me)
 	g.POST("/roles", h.bindRole)
+	g.POST("/roles/revoke", h.revokeRole)
+	g.GET("/roles", h.listRoles)
 	g.POST("/problems", h.createProblem)
 	g.POST("/problems/:id/revisions", h.reviseProblem)
 	g.POST("/problem-revisions/:id/confirm", h.confirm)
@@ -123,40 +126,6 @@ func (h *API) me(c *gin.Context) {
 
 // bindRole: tenant owner/admin or org_admin binds staff roles. Students join via
 // class invitations (POST /api/edu-join), never through this endpoint.
-func (h *API) bindRole(c *gin.Context) {
-	u, _ := c.Get("edumath.user")
-	user := u.(*model.User)
-	var in struct {
-		TenantID, UserID, Role string
-	}
-	if c.ShouldBindJSON(&in) != nil {
-		reply(c, 400, nil, "invalid body")
-		return
-	}
-	tx := reqDB(c, h.DB)
-	if in.Role != "teacher" && in.Role != "reviewer" && in.Role != "org_admin" {
-		reply(c, 400, nil, "role must be teacher, reviewer or org_admin")
-		return
-	}
-	if !canManageRoles(tx, in.TenantID, user.ID) {
-		reply(c, 403, nil, "forbidden")
-		return
-	}
-	var m int64
-	tx.Model(&model.Membership{}).Where("tenant_id = ? AND user_id = ? AND status = ?", in.TenantID, in.UserID, "active").Count(&m)
-	if m == 0 && !(in.TenantID == model.PersonalTenantID(user.ID) && in.UserID == user.ID) {
-		reply(c, 400, nil, "staff roles require tenant membership")
-		return
-	}
-	b := model.EduRoleBinding{ID: flow.NewID("erb_"), TenantID: in.TenantID, UserID: in.UserID, Role: in.Role, Status: "active", CreatedBy: user.ID, CreatedAt: time.Now().UTC()}
-	if err := tx.Where("tenant_id = ? AND user_id = ? AND role = ?", in.TenantID, in.UserID, in.Role).FirstOrCreate(&b).Error; err != nil {
-		h.fail(c, err)
-		return
-	}
-	h.Svc.audit(tx, Actor{UserID: user.ID, TenantID: in.TenantID}, "role.bind", in.UserID, in.Role)
-	reply(c, 200, b, "ok")
-}
-
 func (h *API) createProblem(c *gin.Context) {
 	a, tx, ok := h.staff(c)
 	if !ok {

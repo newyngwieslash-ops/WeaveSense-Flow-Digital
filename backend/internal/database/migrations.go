@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const CurrentSchemaVersion int64 = 79
+const CurrentSchemaVersion int64 = 80
 
 const baselineSchemaChecksum = "sha256:open-ai-canvas-schema-v1-20260830"
 const schemaMigrationAppliedAtIndexChecksum = "sha256:schema-migrations-applied-at-index-v2-20260830"
@@ -344,6 +344,14 @@ var schemaMigrations = []migration{
 	}},
 	{version: 79, name: "edu_content_incidents_v79", checksum: "sha256:edu-content-incidents-v79-20261026", apply: func(tx *gorm.DB) error {
 		// docs/math-workbench: content incidents and withdrawal chain (DEV-027, AC-34), assignment migrations (DEV-025) + FORCE RLS.
+		if err := tx.AutoMigrate(model.EduModels()...); err != nil {
+			return err
+		}
+		return applyFlowRLS(tx)
+	}},
+	{version: 80, name: "edu_roles_sources_v80", checksum: "sha256:edu-roles-sources-v80-20261026", apply: func(tx *gorm.DB) error {
+		// docs/math-workbench: role binding expiry, workspace scope and revoke trail (DEV-013);
+		// source assets and rights records (DEV-026, edu_source_assets, edu_problems.source_asset_id).
 		if err := tx.AutoMigrate(model.EduModels()...); err != nil {
 			return err
 		}

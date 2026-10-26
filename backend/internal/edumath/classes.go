@@ -150,7 +150,7 @@ func (h *API) addTeacher(c *gin.Context) {
 		reply(c, 400, nil, "userId required")
 		return
 	}
-	rs, _ := roles(tx, a.TenantID, in.UserID)
+	rs, _ := rolesIn(tx, a.TenantID, in.UserID, k.WorkspaceID)
 	var m int64
 	tx.Model(&model.WorkspaceMembership{}).Where("workspace_id = ? AND user_id = ?", k.WorkspaceID, in.UserID).Count(&m)
 	if !rs["teacher"] || m == 0 {
@@ -411,6 +411,10 @@ func (h *API) createAssignment(c *gin.Context) {
 	if tx.First(&l, "id = ? AND tenant_id = ?", pub.LessonRevisionID, a.TenantID).Error != nil ||
 		tx.First(&job, "id = ? AND tenant_id = ?", l.JobID, a.TenantID).Error != nil || job.WorkspaceID != k.WorkspaceID {
 		h.fail(c, ErrNotFound)
+		return
+	}
+	if err := rightsAllow(tx, a.TenantID, l.ProblemRevisionID, "student"); err != nil {
+		h.fail(c, err)
 		return
 	}
 	if in.VariantSetID != "" {

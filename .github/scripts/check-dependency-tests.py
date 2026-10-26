@@ -31,6 +31,8 @@ REQUIRED = {
     ("edumath", "TestPGLessonEdits"),
     ("edumath", "TestMCPProtocolWithGoSDK"),
     ("edumath", "TestClassesInvitesConsentAuthorization"),
+    ("edumath", "TestAgentMathTools"),
+    ("edumath", "TestPGAgentMathTools"),
 }
 
 

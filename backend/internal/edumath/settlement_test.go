@@ -20,12 +20,16 @@ import (
 type scriptedService struct {
 	mu       sync.Mutex
 	scripted bool
-	view     JobView // view returned by GET /v1/jobs/{id}
-	onCancel JobView // view returned by cancel
-	found    bool    // reconcile result
-	accept   bool    // POST /v1/jobs: accept (true) or drop the connection (false)
-	raw      []byte  // when set, GET /v1/jobs/{id} returns these bytes verbatim
-	artMode  string  // "", "truncate", "media": tamper with proxied artifact downloads
+	view     JobView      // view returned by GET /v1/jobs/{id}
+	onCancel JobView      // view returned by cancel
+	found    bool         // reconcile result
+	accept   bool         // POST /v1/jobs: accept (true) or drop the connection (false)
+	raw      []byte       // when set, GET /v1/jobs/{id} returns these bytes verbatim
+	artMode  string       // "", "truncate", "media": tamper with proxied artifact downloads
+	down     bool         // every request: connection dropped before reaching the service
+	ackLost  bool         // POST /v1/jobs: forwarded to the real service, response dropped
+	dropCxl  bool         // cancel: forwarded to the real service, response dropped
+	real     atomic.Int64 // job submissions that reached the real service
 	starts   atomic.Int64
 	cancels  atomic.Int64
 }
@@ -63,7 +67,26 @@ func newScripted(t *testing.T) (*scriptedService, string) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s.mu.Lock()
 		scripted, view, onCancel, found, accept, raw, artMode := s.scripted, s.view, s.onCancel, s.found, s.accept, s.raw, s.artMode
+		down, ackLost, dropCxl := s.down, s.ackLost, s.dropCxl
 		s.mu.Unlock()
+		drop := func() {
+			hj, _ := w.(http.Hijacker)
+			conn, _, _ := hj.Hijack()
+			conn.Close()
+		}
+		if down {
+			drop()
+			return
+		}
+		isStart := r.Method == "POST" && r.URL.Path == "/v1/jobs"
+		if !scripted && isStart {
+			s.real.Add(1)
+		}
+		if !scripted && ((ackLost && isStart) || (dropCxl && strings.HasSuffix(r.URL.Path, "/cancel"))) {
+			proxy.ServeHTTP(httptest.NewRecorder(), r) // the service acts on it; the reply is lost
+			drop()
+			return
+		}
 		if artMode != "" && strings.HasPrefix(r.URL.Path, "/v1/artifacts/") {
 			rec := httptest.NewRecorder()
 			proxy.ServeHTTP(rec, r)

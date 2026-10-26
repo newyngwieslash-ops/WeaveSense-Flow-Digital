@@ -109,3 +109,51 @@ class JobTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class VariantSetJobTests(unittest.TestCase):
+    """FR-M07 / AC-22: each variant independently checked; answer keys stay teacher-audience."""
+
+    def setUp(self):
+        self.dir = tempfile.mkdtemp()
+        self.s = Store(self.dir)
+        self.w = Worker(self.s)
+
+    def run_set(self, problem, count=3):
+        j, _ = self.s.start("t1", "variant_set", "vk", {"problem": problem, "count": count, "problem_hash": "ph"})
+        drain(self.w, j["job_id"])
+        return self.s.get("t1", j["job_id"], internal=True)
+
+    def test_variant_set_items_verified_distinct_and_student_artifact_has_no_keys(self):
+        import json as _json
+        v = self.run_set(PROB["problem"])
+        self.assertEqual(v["status"], "succeeded")
+        vs = v["_checkpoint"]["verify_variants"]["variant_set"]
+        # sin depends only on h/a: (4,2) repeats the parent ratio and (1,1) repeats (2,2); fewer items, never padded.
+        self.assertEqual((vs["requested"], len(vs["items"])), (3, 2))
+        self.assertTrue(any(d["reason"] == "answer_reused" for d in vs["dropped"]))
+        answers = [it["answer_key"]["exact"] for it in vs["items"]]
+        self.assertEqual(len(set(answers)), 2)
+        self.assertNotIn(vs["parent"]["answer_exact"], answers)
+        for it in vs["items"]:
+            self.assertEqual(it["math_state"], "verified")
+            self.assertEqual((it["change_type"], it["transfer"]), ("numbers_only", "near"))
+            self.assertNotEqual(it["params"], {"a": "2", "h": "1"})
+        kinds = {r["kind"]: r for r in v["result_refs"]}
+        self.assertEqual(kinds["variant_set"]["audience"], "teacher")
+        self.assertEqual(kinds["variant_set_student"]["audience"], "student")
+        _, data = self.s.get_artifact("t1", kinds["variant_set_student"]["artifact_id"])
+        stu = _json.loads(data)
+        self.assertNotIn("answer_key", data.decode("utf-8"))
+        self.assertEqual([x["id"] for x in stu["items"]], ["v1", "v2"])
+
+    def test_variant_reusing_parent_answer_is_dropped_with_reason(self):
+        v = self.run_set({"family_id": "SOLID-VOL-01", "params": {"l": "3", "w": "4", "h": "5"}, "unit": "cm"}, count=4)
+        vs = v["_checkpoint"]["verify_variants"]["variant_set"]
+        self.assertTrue(any(d["reason"] == "answer_reused" for d in vs["dropped"]))
+        self.assertNotIn("60", [it["answer_key"]["exact"] for it in vs["items"]])
+
+    def test_family_with_constant_answer_fails_instead_of_faking_variants(self):
+        v = self.run_set({"family_id": "SOLID-ANGLE-01", "params": {"e": "1"}})
+        self.assertEqual(v["status"], "failed")
+        self.assertEqual(v["error"]["code"], "VALIDATION_FAILED")

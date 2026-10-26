@@ -115,6 +115,7 @@ def verify(norm, sol):
     return ck.report(FAMILY_ID, ["exact_instance", "conditions_checked"])
 
 
+PARAM_NAMES = EDGES  # order of the entries in VARIANTS
 VARIANTS = [("2", "3", "4"), ("5", "4", "3"), ("6", "2", "5"), ("3", "3", "7")]
 
 

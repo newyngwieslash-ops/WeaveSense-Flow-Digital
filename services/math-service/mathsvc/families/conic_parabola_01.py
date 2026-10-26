@@ -100,6 +100,7 @@ def verify(norm, sol, seed=20261026):
     return ck.report(FAMILY_ID, ["exact_instance", "conditions_checked", "symbolic_domain_identity", "numeric_sampling"])
 
 
+PARAM_NAMES = ("p",)  # order of the entries in VARIANTS
 VARIANTS = ["2", "4", "1", "6"]
 
 

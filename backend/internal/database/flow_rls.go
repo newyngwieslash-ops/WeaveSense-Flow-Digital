@@ -17,7 +17,7 @@ var flowRLSTables = []string{
 	"edu_problem_revisions", "edu_math_jobs", "edu_stage_runs", "edu_artifacts", "edu_solution_revisions", "edu_lesson_revisions",
 	"edu_review_records", "edu_publications", "edu_assignments", "edu_audit_events",
 	"edu_class_invites", "edu_consent_records",
-	"edu_attempts", "edu_hint_unlocks", "edu_self_tests", "edu_review_items",
+	"edu_attempts", "edu_hint_unlocks", "edu_self_tests", "edu_review_items", "edu_help_requests", "edu_help_replies",
 }
 
 // flowSystemOnlyTables are platform-wide tables with no tenant_id (managed

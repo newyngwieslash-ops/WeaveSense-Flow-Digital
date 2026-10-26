@@ -54,6 +54,8 @@ REQUIRED = {
     ("edumath", "TestPGRoleBindingScopeExpiry"),
     ("edumath", "TestSourceRights"),
     ("edumath", "TestPGSourceRights"),
+    ("edumath", "TestCourseConfig"),
+    ("edumath", "TestPGCourseConfig"),
     ("edumath", "TestPGAgentMathTools"),
 }
 

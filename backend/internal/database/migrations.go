@@ -357,8 +357,8 @@ var schemaMigrations = []migration{
 		}
 		return applyFlowRLS(tx)
 	}},
-	{version: 81, name: "edu_regrades_v81", checksum: "sha256:edu-regrades-v81-20261026", apply: func(tx *gorm.DB) error {
-		// docs/math-workbench: regrading with old and new results, reason and student notice (DEV-025).
+	{version: 81, name: "edu_regrades_courses_v81", checksum: "sha256:edu-regrades-courses-v81-20261026", apply: func(tx *gorm.DB) error {
+		// docs/math-workbench: regrading (DEV-025) and course configuration with teacher-confirmed alignment (DEV-014).
 		if err := tx.AutoMigrate(model.EduModels()...); err != nil {
 			return err
 		}

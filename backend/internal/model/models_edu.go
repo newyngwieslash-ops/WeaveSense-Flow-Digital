@@ -52,6 +52,7 @@ type EduClass struct {
 	WorkspaceID string    `json:"workspaceId" gorm:"size:40;not null;index"`
 	Name        string    `json:"name" gorm:"size:120;not null"`
 	Status      string    `json:"status" gorm:"size:16;not null;default:active"`
+	CourseID    string    `json:"courseId,omitempty" gorm:"size:40;index"`
 	CreatedBy   string    `json:"createdBy" gorm:"size:40"`
 	CreatedAt   time.Time `json:"createdAt"`
 }
@@ -499,7 +500,7 @@ func EduModels() []any {
 		&EduProblemRevision{}, &EduMathJob{}, &EduStageRun{}, &EduArtifact{}, &EduSolutionRevision{}, &EduLessonRevision{},
 		&EduReviewRecord{}, &EduPublication{}, &EduAssignment{}, &EduAuditEvent{}, &EduClassInvite{}, &EduConsentRecord{},
 		&EduAttempt{}, &EduHintUnlock{}, &EduSelfTest{}, &EduReviewItem{}, &EduHelpRequest{}, &EduHelpReply{},
-		&EduPrediction{}, &EduFigureInteraction{}, &EduVariantSet{}, &EduVariantReview{}, &EduAssignmentExtension{}, &EduLessonEdit{}, &EduLedgerAnomaly{}, &EduJobEvent{}, &EduMathEvent{}, &EduBudget{}, &EduBudgetAlert{}, &EduSupportCost{}, &EduContentIncident{}, &EduAssignmentMigration{}, &EduSourceAsset{}, &EduRegrade{}}
+		&EduPrediction{}, &EduFigureInteraction{}, &EduVariantSet{}, &EduVariantReview{}, &EduAssignmentExtension{}, &EduLessonEdit{}, &EduLedgerAnomaly{}, &EduJobEvent{}, &EduMathEvent{}, &EduBudget{}, &EduBudgetAlert{}, &EduSupportCost{}, &EduContentIncident{}, &EduAssignmentMigration{}, &EduSourceAsset{}, &EduRegrade{}, &EduCourse{}, &EduCourseAlignment{}}
 }
 
 // EduVariantSet is a finite set of numbers only variants of a lesson's problem (FR-M07, FR-T11, AC-22).
@@ -753,3 +754,51 @@ type EduRegrade struct {
 }
 
 func (EduRegrade) TableName() string { return "edu_regrades" }
+
+// EduCourse is a workspace's course configuration (DEV-014): textbook,
+// knowledge points, allowed methods, notation, language and how many revisions
+// to keep. Review, consent and edit-inheritance policies live in EduOrgPolicy
+// and limits in EduBudgetLimit.
+type EduCourse struct {
+	ID              string    `json:"id" gorm:"primaryKey;size:40"`
+	TenantID        string    `json:"tenantId" gorm:"size:40;not null;index"`
+	WorkspaceID     string    `json:"workspaceId" gorm:"size:40;not null;index"`
+	Name            string    `json:"name" gorm:"size:120;not null"`
+	Grade           string    `json:"grade" gorm:"size:40"`
+	Textbook        string    `json:"textbook" gorm:"size:120"`
+	TextbookEdition string    `json:"textbookEdition" gorm:"size:60"`
+	KnowledgePoints string    `json:"-" gorm:"type:text"` // JSON array
+	AllowedMethods  string    `json:"-" gorm:"type:text"` // JSON array
+	Notation        string    `json:"notation" gorm:"size:24;not null"`
+	Language        string    `json:"language" gorm:"size:12;not null"`
+	RetainRevisions int       `json:"retainRevisions"`
+	Version         int       `json:"version" gorm:"not null;default:1"`
+	Status          string    `json:"status" gorm:"size:16;not null;default:active"`
+	CreatedBy       string    `json:"createdBy" gorm:"size:40"`
+	UpdatedBy       string    `json:"updatedBy" gorm:"size:40"`
+	CreatedAt       time.Time `json:"createdAt"`
+	UpdatedAt       time.Time `json:"updatedAt"`
+}
+
+func (EduCourse) TableName() string { return "edu_courses" }
+
+// EduCourseAlignment links a lesson revision to course knowledge points. Only a
+// teacher-confirmed alignment may be shown as "教材已对齐"; a suggestion (from a
+// tool or an import) stays unconfirmed, and a change to the course's textbook or
+// knowledge points sends confirmed alignments back to suggested.
+type EduCourseAlignment struct {
+	ID               string     `json:"id" gorm:"primaryKey;size:40"`
+	TenantID         string     `json:"tenantId" gorm:"size:40;not null;index"`
+	CourseID         string     `json:"courseId" gorm:"size:40;not null;uniqueIndex:ux_edu_course_align,priority:1"`
+	LessonRevisionID string     `json:"lessonRevisionId" gorm:"size:40;not null;uniqueIndex:ux_edu_course_align,priority:2;index"`
+	KnowledgePoints  string     `json:"-" gorm:"type:text"`
+	State            string     `json:"state" gorm:"size:16;not null"` // suggested | confirmed | rejected
+	Note             string     `json:"note,omitempty" gorm:"size:200"`
+	SuggestedBy      string     `json:"suggestedBy" gorm:"size:60"`
+	ConfirmedBy      string     `json:"confirmedBy,omitempty" gorm:"size:40"`
+	ConfirmedAt      *time.Time `json:"confirmedAt,omitempty"`
+	CreatedAt        time.Time  `json:"createdAt"`
+	UpdatedAt        time.Time  `json:"updatedAt"`
+}
+
+func (EduCourseAlignment) TableName() string { return "edu_course_alignments" }

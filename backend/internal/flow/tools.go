@@ -234,6 +234,9 @@ func (t Tools) now() time.Time {
 func (t Tools) Invoke(ctx context.Context, conv model.FlowAgentConversation, ss SubjectScope, userID, callID, name string, args map[string]any, approvalID string) (ToolResult, error) {
 	spec, ok := FindTool(name)
 	if !ok {
+		spec, ok = t.mathSpec(ss.Scope, name)
+	}
+	if !ok {
 		spec, ok = t.mcpSpec(ss.Scope, name)
 	}
 	if !ok {
@@ -488,7 +491,7 @@ func IsTool(name string) bool {
 
 // mcpSpec synthesizes a spec for an approved MCP tool visible in this scope.
 func (t Tools) mcpSpec(scope Scope, name string) (ToolSpec, bool) {
-	if t.MCP == nil || !IsMCPToolName(name) {
+	if t.MCP == nil || !IsMCPToolName(name) || IsMathToolName(name) {
 		return ToolSpec{}, false
 	}
 	conn, tool, ok := t.MCP.ResolveAgentTool(scope, name)

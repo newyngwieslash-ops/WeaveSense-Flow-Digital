@@ -136,6 +136,13 @@ func run(ctx context.Context) error {
 	flowAPI := api.Group("", flow.TenantMiddleware(db, flowUser))
 	flow.RegisterRoutes(flowAPI, db, flowCfg, flowUser)
 	mcpGateway := &flow.MCPGateway{DB: db}
+	// FR-P04: exact internal MCP targets (endpoint plus exact tool list); the
+	// public-only egress policy for every other connection is unchanged.
+	if targets, err := flow.ParseInternalTargets(os.Getenv("FLOW_MCP_INTERNAL_TARGETS")); err != nil {
+		log.Fatalf("invalid FLOW_MCP_INTERNAL_TARGETS: %v", err)
+	} else {
+		mcpGateway.Internal = targets
+	}
 	svc.ConfigureFlowMCP(mcpGateway)
 	flow.RegisterMCPRoutes(flowAPI, db, mcpGateway, flowUser)
 	flow.RegisterMCPOAuthRoutes(flowAPI, db, mcpGateway, flowUser)
@@ -162,6 +169,7 @@ func run(ctx context.Context) error {
 	// not tenant members); disabled unless FLOW_MATH_SERVICE_URL/KEY are set.
 	if mathSvc := edumath.FromEnv(db); mathSvc != nil {
 		(&edumath.API{Svc: mathSvc, DB: db, User: flowUser}).Register(api)
+		mathSvc.ConfigureGateway(mcpGateway)
 		go mathSvc.Run(context.Background(), 2*time.Second)
 	}
 	go flow.RunNotifier(context.Background(), flow.Notifier{DB: db, Mail: flow.SMTPMailerFromEnv(), BaseURL: os.Getenv("FLOW_PUBLIC_BASE_URL")}, 10*time.Second)

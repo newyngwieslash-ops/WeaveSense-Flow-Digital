@@ -1,6 +1,6 @@
 {
   "id": "education-math",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "name": "数学教研与学习工作台（education-math）",
   "kind": "industry",
   "required_tools": [],
@@ -45,17 +45,17 @@
     },
     {
       "id": "edu-math-analysis",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "name": "数学分析与验证证据",
       "method": "通过平台作业调用隔离数学服务，按状态轮询；报告数学状态与证据层级，不自行计算或改写答案。",
       "steps": [
-        "仅对已确认修订调用 math_analyze_start（携带幂等键）；立即返回作业，不等待计算。",
-        "用 math_job_get 轮询；只采信更大的 seq；needs_confirmation 时回到教师确认。",
-        "若调用结果未知（OUTCOME_UNKNOWN/超时），先用 math_call_reconcile 按同一幂等键查询，禁止盲目重试付费或计算调用。",
+        "仅对已确认修订调用平台工具 mcp_platform_math_analyze_start（平台作业：预算预留、价格版本冻结、按阶段结算；工具调用即幂等键）；立即返回作业，不等待计算。",
+        "用 mcp_platform_math_job_wait 分段等待（每次至多 20 秒）；未完成时按返回的 resume 继续等待，等待不会重启或重复计费；needs_confirmation 时回到教师确认。",
+        "若状态为 reconciliation_required（调用结果未知），平台按同一幂等键对账，Agent 只继续等待，禁止重新发起付费或计算调用。",
         "汇报 math_state 与 evidence_levels：numeric_sampling 只能写作抽样一致，不能写作证明；timeout_undetermined 不能写作无解；manual_review 必须标注为人工复核。",
         "math_state 不是 verified 时不得进入课件生成，给出 next_action。"
       ],
-      "references": ["MCP tools: math_analyze_start, math_job_get, math_job_cancel, math_call_reconcile, math_artifact_get"],
+      "references": ["Platform tools: mcp_platform_math_analyze_start, mcp_platform_math_job_wait, mcp_platform_math_job_cancel", "Internal MCP target (read only): math_job_get, math_artifact_get"],
       "output_schema": {
         "type": "object",
         "required": ["job_id", "status"],
@@ -71,17 +71,17 @@
     },
     {
       "id": "edu-math-lesson-orchestration",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "name": "课件编排、静音预览与审核发布",
       "method": "基于已验证解答生成结构化课件和静音预览，交教师审核；发布与学生可见内容由平台事务和服务端投影决定。",
       "steps": [
-        "仅对 math_state=verified 的解答修订调用 math_lesson_build_start（幂等键）。",
+        "仅对 math_state=verified 的解答修订调用 mcp_platform_math_lesson_build_start（平台作业），再用 mcp_platform_math_job_wait 等待；课件内容不进入对话，由教师在备课页查看与审核，Agent 不能审核或发布。",
         "课件包含题目、图形、分步讲解、五级提示（4、5 级门控）、独立自测题；学生版由服务端投影生成，不含未释放答案与自测答案。",
         "预览为静态 HTML（无脚本、无外部资源），通过平台短时签名链接取件，不暴露服务端路径。",
         "提交审核时绑定 lesson_hash；机构策略要求第二审核人时不得自审；有阻断错误不得发布；发布后不可修改，修改产生新修订。",
         "配音（TTS）与 MP4 属于后续阶段，需要真实供应商凭据；未配置时如实报告 PROVIDER_UNAVAILABLE。"
       ],
-      "references": ["MCP tools: math_lesson_build_start, math_media_render_start, math_artifact_get", "docs/math-workbench/03-接口契约.md"],
+      "references": ["Platform tools: mcp_platform_math_lesson_build_start, mcp_platform_math_job_wait", "docs/math-workbench/03-接口契约.md"],
       "output_schema": {
         "type": "object",
         "required": ["lesson_revision_id", "state"],

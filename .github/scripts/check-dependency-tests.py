@@ -29,6 +29,8 @@ REQUIRED = {
     ("edumath", "TestPGVariantSetsAndExtensions"),
     ("edumath", "TestMCPProtocolWithGoSDK"),
     ("edumath", "TestClassesInvitesConsentAuthorization"),
+    ("edumath", "TestAgentMathTools"),
+    ("edumath", "TestPGAgentMathTools"),
 }
 
 

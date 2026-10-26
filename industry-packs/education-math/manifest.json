@@ -19,16 +19,16 @@
       "version": "0.1.0"
     },
     {
-      "hash": "1fecec9bd7cb366fac045647c974bbb0a677850e395b044016f8c3402ee22531",
+      "hash": "171e683067ef2c4c87ef24841fdad40d3d3d467da1cd5eb55d0b818ef8301d27",
       "id": "edu-math-analysis",
       "output_schema": "schemas/edu-math-analysis.json",
-      "version": "0.1.0"
+      "version": "0.2.0"
     },
     {
-      "hash": "f20671c01f51a181f3d149e8a024cce41da4f1cd673b1f631155d1d9b166ca72",
+      "hash": "3fdc6466b84507ee1c796e5573b71435158b9bed4d0ea91fa63bb74f0432bbd0",
       "id": "edu-math-lesson-orchestration",
       "output_schema": "schemas/edu-math-lesson-orchestration.json",
-      "version": "0.1.0"
+      "version": "0.2.0"
     },
     {
       "hash": "fb3b01b91b05ea881e2627b15a3ce91fc0c67c89c14cf254fd4461cc483da739",
@@ -39,5 +39,5 @@
   ],
   "source": "backend/internal/flow/skillpacks/education-math.json",
   "source_templates": "source-templates.json",
-  "version": "0.1.0"
+  "version": "0.2.0"
 }

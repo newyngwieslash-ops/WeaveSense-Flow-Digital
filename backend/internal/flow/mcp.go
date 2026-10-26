@@ -92,6 +92,14 @@ type MCPGateway struct {
 	PolicyVersion int
 	// ToolCache overrides the process-wide scoped MCP tool cache when non-nil.
 	ToolCache *MCPToolListCache
+	// Internal lists exact internal MCP targets (FR-P04; FLOW_MCP_INTERNAL_TARGETS).
+	Internal []InternalTarget
+	// Mint resolves "mint:<name>" credential refs (tenant-bound, short-lived).
+	Mint MintCredentials
+	// Math is the trusted platform adapter behind the mcp_platform_math_* agent
+	// tools (nil = not offered). It runs math work as platform jobs so the Go
+	// ledger reserves and settles them (constraint 6, FR-B01).
+	Math MathAgent
 }
 
 // MCPToolCacheKey scopes cached MCP tool lists and rendered agent tool definitions
@@ -318,8 +326,15 @@ func IsMCPToolName(name string) bool { return strings.HasPrefix(name, mcpToolPre
 
 func (g MCPGateway) Create(scope Scope, userID string, in MCPConnectionInput) (model.FlowMCPConnection, error) {
 	u, err := url.Parse(strings.TrimSpace(in.Endpoint))
-	if err != nil || u.Host == "" || u.User != nil || !(u.Scheme == "https" || (g.AllowInsecure && u.Scheme == "http")) {
+	target, internal := InternalTarget{}, false
+	if err == nil {
+		target, internal = g.internalTarget(u.String())
+	}
+	if err != nil || u.Host == "" || u.User != nil || !(u.Scheme == "https" || internal || (g.AllowInsecure && u.Scheme == "http")) {
 		return model.FlowMCPConnection{}, fmt.Errorf("%w: endpoint must be an https URL", ErrMCPInvalid)
+	}
+	if internal && target.CredentialRef != "" && in.CredentialRef != target.CredentialRef {
+		return model.FlowMCPConnection{}, fmt.Errorf("%w: this internal target requires credential ref %s", ErrMCPInvalid, target.CredentialRef)
 	}
 	if in.Transport == "" {
 		in.Transport = "streamable_http"
@@ -331,6 +346,10 @@ func (g MCPGateway) Create(scope Scope, userID string, in MCPConnectionInput) (m
 		// Tenant-saved credential: must exist in this same tenant/workspace.
 		if _, err := g.secrets().get(scope, id); err != nil {
 			return model.FlowMCPConnection{}, fmt.Errorf("%w: credential secret not found in this workspace", ErrMCPInvalid)
+		}
+	} else if strings.HasPrefix(in.CredentialRef, mintRefPrefix) {
+		if !internal || g.Mint == nil {
+			return model.FlowMCPConnection{}, fmt.Errorf("%w: minted credentials are only available for configured internal targets", ErrMCPInvalid)
 		}
 	} else if in.CredentialRef != "" && !strings.HasPrefix(in.CredentialRef, "env:FLOW_MCP_CRED_") && !strings.HasPrefix(in.CredentialRef, "oauth:FLOW_MCP_OAUTH_") && !strings.HasPrefix(in.CredentialRef, "oauthcode:FLOW_MCP_OAUTHCODE_") {
 		return model.FlowMCPConnection{}, fmt.Errorf("%w: credential ref must be secret:<id> or env:FLOW_MCP_CRED_*", ErrMCPInvalid)
@@ -397,7 +416,13 @@ func (h headerRT) RoundTrip(r *http.Request) (*http.Response, error) {
 func (g MCPGateway) session(ctx context.Context, c model.FlowMCPConnection) (*mcp.ClientSession, string, error) {
 	var secret string
 	var err error
-	if strings.HasPrefix(c.CredentialRef, oauthCodePrefix) {
+	target, internal := g.internalTarget(c.Endpoint)
+	if strings.HasPrefix(c.CredentialRef, mintRefPrefix) {
+		if !internal || g.Mint == nil {
+			return nil, "", fmt.Errorf("%w: minted credential without a configured internal target", ErrMCPInvalid)
+		}
+		secret, err = g.Mint(ctx, c.CredentialRef, c.TenantID)
+	} else if strings.HasPrefix(c.CredentialRef, oauthCodePrefix) {
 		secret, err = g.oauthCodeToken(ctx, c)
 	} else if strings.HasPrefix(c.CredentialRef, secretRefPrefix) {
 		secret, err = g.secrets().Resolve(c)
@@ -417,6 +442,12 @@ func (g MCPGateway) session(ctx context.Context, c model.FlowMCPConnection) (*mc
 		base = g.HTTP.Transport
 	}
 	hc := &http.Client{Transport: headerRT{base: base, secret: secret}, Timeout: time.Duration(c.TimeoutMS) * time.Millisecond}
+	if internal {
+		// FR-P04: exact target only; the global public-only policy is untouched.
+		hc = internalClient(target, secret, time.Duration(c.TimeoutMS)*time.Millisecond)
+	} else if strings.HasPrefix(c.Endpoint, "http:") && !g.AllowInsecure {
+		return nil, secret, fmt.Errorf("%w: endpoint is no longer an allowed internal target", ErrMCPInvalid)
+	}
 	client := mcp.NewClient(&mcp.Implementation{Name: "weavesense-flow-mcp-gateway", Version: "1"}, nil)
 	cs, err := client.Connect(ctx, &mcp.StreamableClientTransport{Endpoint: c.Endpoint, HTTPClient: hc, MaxRetries: -1, DisableStandaloneSSE: true}, nil)
 	if err != nil {
@@ -514,6 +545,9 @@ func (g MCPGateway) Approve(ctx context.Context, scope Scope, id, operatorID str
 		if !ok || !mcpToolNameRe.MatchString(name) {
 			return MCPConnectionView{}, fmt.Errorf("%w: tool %q not offered by server", ErrMCPInvalid, name)
 		}
+		if !g.internalToolAllowed(c.Endpoint, name) {
+			return MCPConnectionView{}, fmt.Errorf("%w: tool %q is not in the internal target's tool allowlist", ErrMCPInvalid, name)
+		}
 		approved[name] = MCPApprovedTool{Hash: t.Hash, Description: t.Description, InputSchema: t.InputSchema}
 	}
 	al, _ := json.Marshal(allowed)
@@ -572,7 +606,7 @@ func (g MCPGateway) execute(ctx context.Context, scope Scope, actorID, connID, t
 		return "", false, fmt.Errorf("%w (status %s)", ErrMCPNotApproved, c.Status)
 	}
 	ap, ok := v.Approved[tool]
-	if !ok {
+	if !ok || !g.internalToolAllowed(c.Endpoint, tool) {
 		return "", false, ErrMCPToolDenied
 	}
 	if v.CostRule.MaxCallsPerDay > 0 {
@@ -658,13 +692,18 @@ func (g MCPGateway) AgentToolsForPolicy(scope Scope, policyVersion int) []map[st
 	cache := g.toolCache()
 	for _, c := range rows {
 		key := g.CacheKey(c, policyVersion)
-		if cached, ok := cache.getAgentTools(key, now); ok {
+		// Internal targets are not cached: their deployment tool list is re-read every time.
+		_, internal := g.internalTarget(c.Endpoint)
+		if cached, ok := cache.getAgentTools(key, now); ok && !internal {
 			out = append(out, cached...)
 			continue
 		}
 		v := g.View(c)
 		connTools := make([]map[string]any, 0, len(v.AllowedTools))
 		for _, name := range v.AllowedTools {
+			if !g.internalToolAllowed(c.Endpoint, name) {
+				continue
+			}
 			ap := v.Approved[name]
 			params := ap.InputSchema
 			if params == nil {
@@ -673,10 +712,12 @@ func (g MCPGateway) AgentToolsForPolicy(scope Scope, policyVersion int) []map[st
 			connTools = append(connTools, map[string]any{"type": "function", "function": map[string]any{
 				"name": MCPAgentToolName(c.Slug, name), "description": "[MCP " + c.Name + "] " + ap.Description, "parameters": params}})
 		}
-		cache.setAgentTools(key, connTools, now)
+		if !internal {
+			cache.setAgentTools(key, connTools, now)
+		}
 		out = append(out, connTools...)
 	}
-	return out
+	return append(out, g.mathAgentTools(scope)...)
 }
 
 // ResolveAgentTool maps an agent tool name back to (connection, tool) in scope.

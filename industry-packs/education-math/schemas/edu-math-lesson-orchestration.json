@@ -1,0 +1,32 @@
+{
+  "properties": {
+    "blocking_errors": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "lesson_hash": {
+      "type": "string"
+    },
+    "lesson_revision_id": {
+      "type": "string"
+    },
+    "preview_url_issued": {
+      "type": "boolean"
+    },
+    "state": {
+      "enum": [
+        "ready_for_review",
+        "approved",
+        "rejected",
+        "superseded"
+      ]
+    }
+  },
+  "required": [
+    "lesson_revision_id",
+    "state"
+  ],
+  "type": "object"
+}

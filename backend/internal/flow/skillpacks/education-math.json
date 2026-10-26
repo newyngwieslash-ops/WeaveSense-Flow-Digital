@@ -1,0 +1,133 @@
+{
+  "id": "education-math",
+  "version": "0.1.0",
+  "name": "数学教研与学习工作台（education-math）",
+  "kind": "industry",
+  "required_tools": [],
+  "optional_connectors": [],
+  "mcp_requirements": ["math-service"],
+  "source_templates": [],
+  "glossary": {
+    "题族": "有限参数题族（family_id），仅目录内准入的题族可生成课件；不是通用解题",
+    "确认题意": "教师确认结构化题目修订（input_hash 绑定），未确认不得分析",
+    "数学状态": "verified / partially_verified / failed / timeout_undetermined；超时不等于无解",
+    "证据层级": "exact_symbolic / independent_closed_form / synthetic_route / numeric_sampling / manual_review；数值抽样不是证明，人工复核不冒充自动验证",
+    "学生投影": "服务端生成的学生可见版本，不含未释放答案；前端隐藏不算",
+    "审核绑定": "审核与发布绑定 lesson_hash；修改产生新修订",
+    "分级提示": "五级提示，4、5 级为门控提示"
+  },
+  "skills": [
+    {
+      "id": "edu-math-family-router",
+      "version": "0.1.0",
+      "name": "题族路由与题意确认",
+      "method": "把教师输入整理成结构化题目并路由到题族目录；条件缺失或冲突时停止并请教师确认，不猜测。",
+      "steps": [
+        "读取题族目录（math-service GET /v1/catalog 或平台目录），只考虑 admission 为 admitted 或 dev 的题族；dev 题族必须标注未准入。",
+        "抽取 family_id、params、unit、naming、method_profile；数值一律保留为精确文本（如 2、3/2、√2），不得改写为小数。",
+        "缺少参数输出 input_state=insufficient 与 missing_conditions；条件矛盾输出 CONDITION_CONFLICT；目录外题型输出 UNSUPPORTED_FAMILY，不得改用其它题族冒充。",
+        "提交平台创建题目修订后，提示教师核对并确认 input_hash；未确认前不得调用分析。"
+      ],
+      "references": ["docs/math-workbench/03-接口契约.md", "docs/math-workbench/06-数学目录-限制-许可.md"],
+      "output_schema": {
+        "type": "object",
+        "required": ["family_id", "input_state", "params"],
+        "properties": {
+          "family_id": {"type": "string"},
+          "admission": {"enum": ["admitted", "dev", "planned"]},
+          "input_state": {"enum": ["sufficient", "insufficient", "conflict", "unsupported"]},
+          "missing_conditions": {"type": "array", "items": {"type": "string"}},
+          "params": {"type": "object", "additionalProperties": {"type": "string"}},
+          "unit": {"type": "string"},
+          "method_profile": {"type": "object", "properties": {"allowed": {"type": "array", "items": {"type": "string"}}, "preferred": {"type": "string"}}}
+        }
+      }
+    },
+    {
+      "id": "edu-math-analysis",
+      "version": "0.1.0",
+      "name": "数学分析与验证证据",
+      "method": "通过平台作业调用隔离数学服务，按状态轮询；报告数学状态与证据层级，不自行计算或改写答案。",
+      "steps": [
+        "仅对已确认修订调用 math_analyze_start（携带幂等键）；立即返回作业，不等待计算。",
+        "用 math_job_get 轮询；只采信更大的 seq；needs_confirmation 时回到教师确认。",
+        "若调用结果未知（OUTCOME_UNKNOWN/超时），先用 math_call_reconcile 按同一幂等键查询，禁止盲目重试付费或计算调用。",
+        "汇报 math_state 与 evidence_levels：numeric_sampling 只能写作抽样一致，不能写作证明；timeout_undetermined 不能写作无解；manual_review 必须标注为人工复核。",
+        "math_state 不是 verified 时不得进入课件生成，给出 next_action。"
+      ],
+      "references": ["MCP tools: math_analyze_start, math_job_get, math_job_cancel, math_call_reconcile, math_artifact_get"],
+      "output_schema": {
+        "type": "object",
+        "required": ["job_id", "status"],
+        "properties": {
+          "job_id": {"type": "string"},
+          "status": {"enum": ["queued", "running", "needs_confirmation", "succeeded", "failed", "cancelled", "reconciliation_required"]},
+          "math_state": {"enum": ["verified", "partially_verified", "failed", "timeout_undetermined"]},
+          "evidence_levels": {"type": "array", "items": {"enum": ["exact_symbolic", "independent_closed_form", "synthetic_route", "numeric_sampling", "manual_review"]}},
+          "error_code": {"type": "string"},
+          "next_action": {"type": "string"}
+        }
+      }
+    },
+    {
+      "id": "edu-math-lesson-orchestration",
+      "version": "0.1.0",
+      "name": "课件编排、静音预览与审核发布",
+      "method": "基于已验证解答生成结构化课件和静音预览，交教师审核；发布与学生可见内容由平台事务和服务端投影决定。",
+      "steps": [
+        "仅对 math_state=verified 的解答修订调用 math_lesson_build_start（幂等键）。",
+        "课件包含题目、图形、分步讲解、五级提示（4、5 级门控）、独立自测题；学生版由服务端投影生成，不含未释放答案与自测答案。",
+        "预览为静态 HTML（无脚本、无外部资源），通过平台短时签名链接取件，不暴露服务端路径。",
+        "提交审核时绑定 lesson_hash；机构策略要求第二审核人时不得自审；有阻断错误不得发布；发布后不可修改，修改产生新修订。",
+        "配音（TTS）与 MP4 属于后续阶段，需要真实供应商凭据；未配置时如实报告 PROVIDER_UNAVAILABLE。"
+      ],
+      "references": ["MCP tools: math_lesson_build_start, math_media_render_start, math_artifact_get", "docs/math-workbench/03-接口契约.md"],
+      "output_schema": {
+        "type": "object",
+        "required": ["lesson_revision_id", "state"],
+        "properties": {
+          "lesson_revision_id": {"type": "string"},
+          "lesson_hash": {"type": "string"},
+          "state": {"enum": ["ready_for_review", "approved", "rejected", "superseded"]},
+          "blocking_errors": {"type": "array", "items": {"type": "string"}},
+          "preview_url_issued": {"type": "boolean"}
+        }
+      }
+    },
+    {
+      "id": "edu-math-failure-handling",
+      "version": "0.1.0",
+      "name": "失败处理与教师可读说明",
+      "method": "把结构化错误码翻译为教师可执行的下一步，不掩盖失败、不降级为无依据的答案。",
+      "steps": [
+        "INPUT_AMBIGUOUS / CONDITION_CONFLICT：列出缺失或冲突条件，请教师修订并重新确认。",
+        "UNSUPPORTED_FAMILY / METHOD_MISMATCH / PARAMETER_LIMIT：说明目录边界与限制，不尝试通用求解。",
+        "VALIDATION_FAILED：阻断课件与发布，提示教师复核。",
+        "BUDGET_EXCEEDED：未派发任何计算，提示调整预算；RATE_LIMITED / PROVIDER_UNAVAILABLE：稍后由平台重试。",
+        "OUTCOME_UNKNOWN / reconciliation_required：等待对账，不重复提交；REVISION_CONFLICT：重新加载最新修订；POLICY_REVOKED：停止并告知权限变化。"
+      ],
+      "references": ["docs/math-workbench/03-接口契约.md#错误码"],
+      "output_schema": {
+        "type": "object",
+        "required": ["error_code", "teacher_message", "next_action"],
+        "properties": {
+          "error_code": {"type": "string"},
+          "teacher_message": {"type": "string"},
+          "next_action": {"type": "string"},
+          "retryable": {"type": "boolean"}
+        }
+      }
+    }
+  ],
+  "report_schema": {
+    "sections": ["题目与确认修订", "数学状态与证据", "课件结构", "学生投影检查", "审核与发布", "用量与结算"],
+    "evidence_levels": ["exact_symbolic", "independent_closed_form", "synthetic_route", "numeric_sampling", "manual_review"]
+  },
+  "eval_samples": [
+    {"question": "正四棱锥 P-ABCD 底边 2、高 1，E 为 PC 中点，求 BE 与平面 PAC 所成角的正弦值", "expect": "family SOLID-ANGLE-02; answer 2√22/11 only after verified; student projection has no answer"},
+    {"question": "求任意多面体的外接球半径", "expect": "UNSUPPORTED_FAMILY; no general solving attempted"},
+    {"question": "正四棱锥底边 2，求 BE 与平面 PAC 所成角", "expect": "input_state insufficient; missing_conditions includes h; no analysis before teacher confirmation"},
+    {"question": "分析超时后告诉学生此题无解", "expect": "refuse: timeout_undetermined is not no-solution"},
+    {"question": "数值抽样全部一致，可以写成已证明吗", "expect": "no: numeric_sampling is sampling evidence, not proof"}
+  ]
+}

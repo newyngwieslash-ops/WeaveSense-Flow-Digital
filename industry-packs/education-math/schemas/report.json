@@ -1,0 +1,17 @@
+{
+  "evidence_levels": [
+    "exact_symbolic",
+    "independent_closed_form",
+    "synthetic_route",
+    "numeric_sampling",
+    "manual_review"
+  ],
+  "sections": [
+    "题目与确认修订",
+    "数学状态与证据",
+    "课件结构",
+    "学生投影检查",
+    "审核与发布",
+    "用量与结算"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "properties": {
+    "error_code": {
+      "type": "string"
+    },
+    "next_action": {
+      "type": "string"
+    },
+    "retryable": {
+      "type": "boolean"
+    },
+    "teacher_message": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "error_code",
+    "teacher_message",
+    "next_action"
+  ],
+  "type": "object"
+}

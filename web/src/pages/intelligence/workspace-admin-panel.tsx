@@ -53,15 +53,7 @@ export type WorkspaceAdminInitialData = {
 };
 
 /** P5: notifications, skill pack install, billing/reservations and org invites for the active workspace. */
-export function WorkspaceAdminPanel({
-    workspaceId,
-    onWorkspacesChanged,
-    initialData,
-}: {
-    workspaceId?: string;
-    onWorkspacesChanged?: () => void;
-    initialData?: WorkspaceAdminInitialData;
-}) {
+export function WorkspaceAdminPanel({ workspaceId, onWorkspacesChanged, initialData }: { workspaceId?: string; onWorkspacesChanged?: () => void; initialData?: WorkspaceAdminInitialData }) {
     const [notes, setNotes] = useState<FlowNotification[]>(initialData?.notes ?? []);
     const [packs, setPacks] = useState<SkillPack[]>(initialData?.packs ?? []);
     const [installed, setInstalled] = useState<SkillInstall[]>(initialData?.installed ?? []);
@@ -195,9 +187,7 @@ export function WorkspaceAdminPanel({
                             renderItem={(r) => (
                                 <List.Item>
                                     <Space wrap>
-                                        <Tag color={r.status === "unknown" ? "orange" : r.status === "reserved" ? "blue" : "default"}>
-                                            {RESERVATION_STATUS_LABEL[r.status] ?? r.status}
-                                        </Tag>
+                                        <Tag color={r.status === "unknown" ? "orange" : r.status === "reserved" ? "blue" : "default"}>{RESERVATION_STATUS_LABEL[r.status] ?? r.status}</Tag>
                                         <span>{r.purpose}</span>
                                         <span>
                                             预留 {credits(r.reservedMicro)} · 实耗 {credits(r.consumedMicro)}

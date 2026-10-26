@@ -1,13 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import {
-    buildDocumentHandoffDraft,
-    buildIntelHandoffAgentPrefill,
-    buildReportHandoffDraft,
-    buildTopicHandoffDraft,
-    extractHandoffCanvasUrl,
-} from "../src/pages/intelligence/canvas-handoff-modal";
+import { buildDocumentHandoffDraft, buildIntelHandoffAgentPrefill, buildReportHandoffDraft, buildTopicHandoffDraft, extractHandoffCanvasUrl } from "../src/pages/intelligence/canvas-handoff-modal";
 import { ApprovalDetails, MonitorPlanView } from "../src/pages/intelligence/plan-card";
 import { formatCoverageNotices, KIND_LABEL, REPORT_EXPORT_FORMATS, ReportsPanel } from "../src/pages/intelligence/reports-panel";
 import { buildSourceInput, KIND_HINT, SOURCE_STATUS_LABEL, SourcesPanel } from "../src/pages/intelligence/sources-panel";
@@ -90,11 +84,7 @@ describe("ReportsPanel helpers, export filename parsing, and rendering", () => {
             truncated: true,
             conflicting_evidence: [{ document_id: "doc_9", revision: 3, note: "updated" }],
         });
-        expect(notices).toEqual([
-            "采集失败信源：src_rss (timeout)、src_tg (403)",
-            "部分材料因预算或读取窗口上限被截断。",
-            "已修订文档（可能存在冲突证据）：doc_9@r3",
-        ]);
+        expect(notices).toEqual(["采集失败信源：src_rss (timeout)、src_tg (403)", "部分材料因预算或读取窗口上限被截断。", "已修订文档（可能存在冲突证据）：doc_9@r3"]);
     });
 
     test("fileNameFrom parses RFC 5987 UTF-8 filenames, quoted ASCII filenames, and fallbacks", () => {

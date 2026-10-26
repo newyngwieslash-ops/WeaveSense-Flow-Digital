@@ -176,23 +176,9 @@ export type KeywordsInitialData = {
 };
 
 /** PRD §5.1 关键词: monitor keywords plus the term dictionary (built-in groups + workspace aliases). */
-export function KeywordsView({
-    workspaceId,
-    onOpenAgent,
-    onEditMonitor,
-    initialData,
-}: {
-    workspaceId?: string;
-    onOpenAgent?: () => void;
-    onEditMonitor?: (m: IntelMonitor) => void;
-    initialData?: KeywordsInitialData;
-}) {
+export function KeywordsView({ workspaceId, onOpenAgent, onEditMonitor, initialData }: { workspaceId?: string; onOpenAgent?: () => void; onEditMonitor?: (m: IntelMonitor) => void; initialData?: KeywordsInitialData }) {
     const [monitors] = useWorkspaceData<IntelMonitor[]>(workspaceId, listMonitors, initialData?.monitors ?? []);
-    const [terms, refresh] = useWorkspaceData(
-        workspaceId,
-        listTerms,
-        initialData?.terms ?? { builtin_version: "", builtin_groups: 0, builtin: [] as string[][], custom: [] as TermAlias[] },
-    );
+    const [terms, refresh] = useWorkspaceData(workspaceId, listTerms, initialData?.terms ?? { builtin_version: "", builtin_groups: 0, builtin: [] as string[][], custom: [] as TermAlias[] });
     const [term, setTerm] = useState("");
     const [alias, setAlias] = useState("");
     const add = async () => {
@@ -275,15 +261,7 @@ export function KeywordsView({
 }
 
 /** PRD §5.1 内容库: collected documents with published / event / collected times, searchable. */
-export function LibraryView({
-    workspaceId,
-    initialData,
-    onNavigate,
-}: {
-    workspaceId?: string;
-    initialData?: { docs?: LibraryDocument[]; sources?: SourceHealth[]; jobs?: CollectionJob[] };
-    onNavigate?: (url: string) => void;
-}) {
+export function LibraryView({ workspaceId, initialData, onNavigate }: { workspaceId?: string; initialData?: { docs?: LibraryDocument[]; sources?: SourceHealth[]; jobs?: CollectionJob[] }; onNavigate?: (url: string) => void }) {
     const [q, setQ] = useState("");
     const [docs, setDocs] = useState<LibraryDocument[]>(initialData?.docs ?? []);
     const [handoffDraft, setHandoffDraft] = useState<CanvasHandoffDraft>();
@@ -356,13 +334,7 @@ export function LibraryView({
 }
 
 /** PRD §5.1 任务: collection jobs (PRD job states) and schedules (incl. blocked reason, window budget). */
-export function JobsView({
-    workspaceId,
-    initialData,
-}: {
-    workspaceId?: string;
-    initialData?: { jobs?: CollectionJob[]; schedules?: CollectionSchedule[] };
-}) {
+export function JobsView({ workspaceId, initialData }: { workspaceId?: string; initialData?: { jobs?: CollectionJob[]; schedules?: CollectionSchedule[] } }) {
     const [status, setStatus] = useState<string>();
     const [jobs, refresh] = useWorkspaceData<CollectionJob[]>(workspaceId, (ws) => listJobs(ws, status), initialData?.jobs ?? []);
     const [schedules] = useWorkspaceData<CollectionSchedule[]>(workspaceId, listSchedules, initialData?.schedules ?? []);
@@ -425,13 +397,7 @@ export function JobsView({
 }
 
 /** PRD §5.1 行业包: packs with their skills, source templates and install state. */
-export function PacksView({
-    workspaceId,
-    initialData,
-}: {
-    workspaceId?: string;
-    initialData?: { packs: SkillPack[]; installed: SkillInstall[] };
-}) {
+export function PacksView({ workspaceId, initialData }: { workspaceId?: string; initialData?: { packs: SkillPack[]; installed: SkillInstall[] } }) {
     const [data, refresh] = useWorkspaceData(workspaceId, listSkills, initialData ?? { packs: [] as SkillPack[], installed: [] as SkillInstall[] });
     const installed = new Set(data.installed.map((i) => i.packId));
     return (

@@ -1,6 +1,30 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { AlertCircle, BookOpenCheck, CheckCircle2, ChevronRight, Clapperboard, Copy, Database, Download, GitBranch, Image as ImageIcon, Lock, Maximize2, Music2, Pencil, RefreshCw, ScanSearch, Settings2, Star, Trash2, Type, UserRound, Video, WandSparkles } from "lucide-react";
+import {
+    AlertCircle,
+    BookOpenCheck,
+    CheckCircle2,
+    ChevronRight,
+    Clapperboard,
+    Copy,
+    Database,
+    Download,
+    GitBranch,
+    Image as ImageIcon,
+    Lock,
+    Maximize2,
+    Music2,
+    Pencil,
+    RefreshCw,
+    ScanSearch,
+    Settings2,
+    Star,
+    Trash2,
+    Type,
+    UserRound,
+    Video,
+    WandSparkles,
+} from "lucide-react";
 import { isLogicDualInput, isLogicDualOutput, LOGIC_PORT_BOTTOM_RATIO, LOGIC_PORT_TOP_RATIO } from "@/lib/canvas/dataflow-evaluator";
 
 import { useCanvasNodeActions } from "./canvas-node-action-context";
@@ -418,24 +442,8 @@ export const CanvasNode = React.memo(function CanvasNode({
             {(showChrome || forceInputVisible) && !readOnly && data.type !== CanvasNodeType.Script && data.type !== CanvasNodeType.BatchTable ? (
                 isLogicDualInput(data) ? (
                     <>
-                        <LogicPortRail
-                            side="left"
-                            badge="A"
-                            title="集合输入端口 A"
-                            topRatio={LOGIC_PORT_TOP_RATIO}
-                            scale={scale}
-                            theme={theme}
-                            onPointerDown={(event) => onConnectStart(event, data.id, "target", "input_a", LOGIC_PORT_TOP_RATIO)}
-                        />
-                        <LogicPortRail
-                            side="left"
-                            badge="B"
-                            title="集合输入端口 B"
-                            topRatio={LOGIC_PORT_BOTTOM_RATIO}
-                            scale={scale}
-                            theme={theme}
-                            onPointerDown={(event) => onConnectStart(event, data.id, "target", "input_b", LOGIC_PORT_BOTTOM_RATIO)}
-                        />
+                        <LogicPortRail side="left" badge="A" title="集合输入端口 A" topRatio={LOGIC_PORT_TOP_RATIO} scale={scale} theme={theme} onPointerDown={(event) => onConnectStart(event, data.id, "target", "input_a", LOGIC_PORT_TOP_RATIO)} />
+                        <LogicPortRail side="left" badge="B" title="集合输入端口 B" topRatio={LOGIC_PORT_BOTTOM_RATIO} scale={scale} theme={theme} onPointerDown={(event) => onConnectStart(event, data.id, "target", "input_b", LOGIC_PORT_BOTTOM_RATIO)} />
                     </>
                 ) : (
                     <ConnectionSideRail side="left" scale={scale} theme={theme} visible={hovered || forceInputVisible} onPointerDown={(event, anchorRatio) => onConnectStart(event, data.id, "target", undefined, anchorRatio)} />

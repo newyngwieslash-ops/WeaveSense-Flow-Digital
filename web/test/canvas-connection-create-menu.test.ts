@@ -10,7 +10,7 @@ test("connection menu omits the header and provides descriptions for every optio
     expect(component).not.toContain("ChevronRight");
     expect(component).not.toContain("absolute inset-x-8 top-0 h-px");
     const options = component.match(/<ConnectionCreateOption\b[\s\S]*?\n\s*\/>/g) || [];
-    expect(options).toHaveLength(9);
+    expect(options).toHaveLength(11);
     for (const option of options) expect(option).toMatch(/description="[^"]+"/);
     expect(component).toContain('title="批量创作表"');
     expect(component).toContain("onCreate(CanvasNodeType.BatchTable)");

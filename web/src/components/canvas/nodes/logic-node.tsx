@@ -4,12 +4,7 @@ import { useState } from "react";
 import { useCanvasNodeActions } from "@/components/canvas/canvas-node-action-context";
 import { useDataflowNodeResult } from "@/components/canvas/canvas-node-graph-context";
 import type { CanvasTheme } from "@/lib/canvas-theme";
-import {
-    formatDataItemsForPrompt,
-    LOGIC_COMPARATOR_LABELS,
-    readNodeLogicConfig,
-    type CanvasDataItem,
-} from "@/lib/canvas/dataflow-evaluator";
+import { formatDataItemsForPrompt, LOGIC_COMPARATOR_LABELS, readNodeLogicConfig, type CanvasDataItem } from "@/lib/canvas/dataflow-evaluator";
 import type { CanvasLogicComparator, CanvasLogicConfig, CanvasLogicOperator, CanvasNodeData } from "@/types/canvas";
 
 type LogicNodeContentProps = {
@@ -72,12 +67,7 @@ export function LogicNodeContent({ node, theme }: LogicNodeContentProps) {
         });
     };
 
-    const activePreviewItems =
-        operator === "if_else"
-            ? previewBranch === "false"
-                ? result.falseItems
-                : result.trueItems
-            : result.outputItems;
+    const activePreviewItems = operator === "if_else" ? (previewBranch === "false" ? result.falseItems : result.trueItems) : result.outputItems;
 
     return (
         <div
@@ -115,10 +105,7 @@ export function LogicNodeContent({ node, theme }: LogicNodeContentProps) {
 
             {/* 环路或错误提示 */}
             {result.error ? (
-                <div
-                    className="mt-2 flex items-center gap-1.5 rounded-[var(--r-sm)] px-2.5 py-1.5 text-[var(--fs-tiny)]"
-                    style={{ background: "color-mix(in srgb, var(--status-error, #ef4444) 14%, transparent)", color: "var(--status-error, #ef4444)" }}
-                >
+                <div className="mt-2 flex items-center gap-1.5 rounded-[var(--r-sm)] px-2.5 py-1.5 text-[var(--fs-tiny)]" style={{ background: "color-mix(in srgb, var(--status-error, #ef4444) 14%, transparent)", color: "var(--status-error, #ef4444)" }}>
                     <AlertTriangle className="size-3.5 shrink-0" />
                     <span className="truncate">{result.error}</span>
                 </div>
@@ -281,10 +268,7 @@ export function LogicNodeContent({ node, theme }: LogicNodeContentProps) {
                             <Filter className="size-3" />
                             输入 {result.inputA.length + result.inputB.length} 条
                         </span>
-                        <span
-                            className="inline-flex items-center gap-1 rounded-[var(--r-sm)] px-1.5 py-0.5 font-semibold tabular-nums"
-                            style={{ background: `${theme.accent.primary}1f`, color: theme.accent.primary }}
-                        >
+                        <span className="inline-flex items-center gap-1 rounded-[var(--r-sm)] px-1.5 py-0.5 font-semibold tabular-nums" style={{ background: `${theme.accent.primary}1f`, color: theme.accent.primary }}>
                             <Sparkles className="size-3" />
                             输出 {result.outputItems.length} 条
                         </span>
@@ -293,18 +277,11 @@ export function LogicNodeContent({ node, theme }: LogicNodeContentProps) {
             </div>
 
             {/* 实时求值结果列表 */}
-            <div
-                className="thin-scrollbar mt-1.5 min-h-0 flex-1 overflow-y-auto rounded-[var(--r-md)] border p-1.5"
-                style={{ background: theme.node.panel, borderColor: theme.node.edge }}
-            >
+            <div className="thin-scrollbar mt-1.5 min-h-0 flex-1 overflow-y-auto rounded-[var(--r-md)] border p-1.5" style={{ background: theme.node.panel, borderColor: theme.node.edge }}>
                 {activePreviewItems.length > 0 ? (
                     <div className="flex flex-col gap-1">
                         {activePreviewItems.slice(0, 30).map((item, idx) => (
-                            <div
-                                key={idx}
-                                className="flex items-start gap-1.5 rounded-[var(--r-sm)] px-2 py-1 font-mono text-[var(--fs-tiny)]"
-                                style={{ background: theme.node.fill, border: `1px solid ${theme.node.edge}` }}
-                            >
+                            <div key={idx} className="flex items-start gap-1.5 rounded-[var(--r-sm)] px-2 py-1 font-mono text-[var(--fs-tiny)]" style={{ background: theme.node.fill, border: `1px solid ${theme.node.edge}` }}>
                                 <span className="shrink-0 opacity-45">#{idx + 1}</span>
                                 <span className="min-w-0 flex-1 break-all select-text">{formatCompactItem(item)}</span>
                             </div>

@@ -5,7 +5,7 @@ Each directory is the reviewable export of one skill pack:
 - `manifest.json`: id, version, kind, the frozen skill ids, versions and hashes, `required_tools`, `optional_connectors`, `report_schema`, `evaluation_set`
 - `schemas/<skill>.json`: each skill's output schema. `schemas/report.json` is the pack's report section layout.
 - `evals/evidence-cases.jsonl`: evaluation cases, one JSON object per line
-- `glossary.json`, `source-templates.json`: present for every pack (core ships generic templates and a base glossary). The manifest `mcp_requirements` lists required MCP servers (empty for both packs today)
+- `glossary.json`, `source-templates.json`: present for every pack (core ships generic templates and a base glossary). The manifest `mcp_requirements` lists required MCP servers (education-math needs `math-service`; the other packs need none)
 
 The runtime source of truth is `backend/internal/flow/skillpacks/<id>.json`. It is embedded into the platform binary, and each run freezes the skill hash.
 

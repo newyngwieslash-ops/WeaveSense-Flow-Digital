@@ -165,9 +165,7 @@ export default function McpConnectionsPage() {
                 />
             </Card>
             <Card size="small" title={`结果未决调用（${unknownCalls.length}）`} style={{ gridColumn: "1 / -1" }}>
-                <Typography.Paragraph type="secondary">
-                    以下调用因网络或远端中断未能自动对账。请核实远端系统后人工确认：标记「已执行」将按单次计费并固化结果；标记「未执行」后允许使用相同幂等键重试。
-                </Typography.Paragraph>
+                <Typography.Paragraph type="secondary">以下调用因网络或远端中断未能自动对账。请核实远端系统后人工确认：标记「已执行」将按单次计费并固化结果；标记「未执行」后允许使用相同幂等键重试。</Typography.Paragraph>
                 <List
                     size="small"
                     dataSource={unknownCalls}

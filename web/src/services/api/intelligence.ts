@@ -302,6 +302,4 @@ export type CanvasHandoffResult = {
     created_canvas: boolean;
     revision: number;
 };
-export const handoffToCanvas = (workspaceId: string, input: CanvasHandoffInput) =>
-    http.post<CanvasHandoffResult>("/intelligence/canvas-handoff", input, ws(workspaceId));
-
+export const handoffToCanvas = (workspaceId: string, input: CanvasHandoffInput) => http.post<CanvasHandoffResult>("/intelligence/canvas-handoff", input, ws(workspaceId));

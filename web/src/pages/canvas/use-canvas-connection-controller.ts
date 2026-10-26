@@ -243,7 +243,18 @@ export function useCanvasConnectionController({
 
     const createConnectedNode = useCallback(
         async (
-            type: CanvasNodeType.Image | CanvasNodeType.Text | CanvasNodeType.Script | CanvasNodeType.BatchTable | CanvasNodeType.Video | CanvasNodeType.Audio | CanvasNodeType.Drawing | CanvasNodeType.Config | CanvasNodeType.MediaConversion | CanvasNodeType.DataSource | CanvasNodeType.Logic,
+            type:
+                | CanvasNodeType.Image
+                | CanvasNodeType.Text
+                | CanvasNodeType.Script
+                | CanvasNodeType.BatchTable
+                | CanvasNodeType.Video
+                | CanvasNodeType.Audio
+                | CanvasNodeType.Drawing
+                | CanvasNodeType.Config
+                | CanvasNodeType.MediaConversion
+                | CanvasNodeType.DataSource
+                | CanvasNodeType.Logic,
             pending: PendingConnectionCreate,
             workflowProvider?: "runninghub",
         ) => {
@@ -354,7 +365,15 @@ export function useCanvasConnectionController({
                 setSelectedNodeIds(new Set([newNode.id]));
                 setSelectedConnectionId(null);
                 if (nodeType === CanvasNodeType.Script) setDialogNodeId(null);
-                else if (nodeType !== CanvasNodeType.Text && nodeType !== CanvasNodeType.BatchTable && nodeType !== CanvasNodeType.Audio && nodeType !== CanvasNodeType.MediaConversion && nodeType !== CanvasNodeType.DataSource && nodeType !== CanvasNodeType.Logic) setDialogNodeId(newNode.id);
+                else if (
+                    nodeType !== CanvasNodeType.Text &&
+                    nodeType !== CanvasNodeType.BatchTable &&
+                    nodeType !== CanvasNodeType.Audio &&
+                    nodeType !== CanvasNodeType.MediaConversion &&
+                    nodeType !== CanvasNodeType.DataSource &&
+                    nodeType !== CanvasNodeType.Logic
+                )
+                    setDialogNodeId(newNode.id);
                 const skippedCount = batchPlan.skipped.length;
                 const duplicateCount = batchPlan.duplicates.length;
                 const suffix = skippedCount || duplicateCount ? `，跳过 ${skippedCount + duplicateCount} 个` : "";
@@ -421,7 +440,15 @@ export function useCanvasConnectionController({
             setSelectedConnectionId(null);
             if (nodeType === CanvasNodeType.Drawing) setDrawingNodeId(newNode.id);
             else if (nodeType === CanvasNodeType.Script) setDialogNodeId(null);
-            else if (nodeType !== CanvasNodeType.Text && nodeType !== CanvasNodeType.BatchTable && nodeType !== CanvasNodeType.Audio && nodeType !== CanvasNodeType.MediaConversion && nodeType !== CanvasNodeType.DataSource && nodeType !== CanvasNodeType.Logic) setDialogNodeId(newNode.id);
+            else if (
+                nodeType !== CanvasNodeType.Text &&
+                nodeType !== CanvasNodeType.BatchTable &&
+                nodeType !== CanvasNodeType.Audio &&
+                nodeType !== CanvasNodeType.MediaConversion &&
+                nodeType !== CanvasNodeType.DataSource &&
+                nodeType !== CanvasNodeType.Logic
+            )
+                setDialogNodeId(newNode.id);
             closeConnectionCreateMenu();
             setConnecting(null);
         },
@@ -447,7 +474,18 @@ export function useCanvasConnectionController({
 
     const getConnectionCreateDisabledReason = useCallback(
         (
-            type: CanvasNodeType.Image | CanvasNodeType.Text | CanvasNodeType.Script | CanvasNodeType.BatchTable | CanvasNodeType.Video | CanvasNodeType.Audio | CanvasNodeType.Drawing | CanvasNodeType.Config | CanvasNodeType.MediaConversion | CanvasNodeType.DataSource | CanvasNodeType.Logic,
+            type:
+                | CanvasNodeType.Image
+                | CanvasNodeType.Text
+                | CanvasNodeType.Script
+                | CanvasNodeType.BatchTable
+                | CanvasNodeType.Video
+                | CanvasNodeType.Audio
+                | CanvasNodeType.Drawing
+                | CanvasNodeType.Config
+                | CanvasNodeType.MediaConversion
+                | CanvasNodeType.DataSource
+                | CanvasNodeType.Logic,
             pending: PendingConnectionCreate,
             workflowProvider?: "runninghub",
         ) => {

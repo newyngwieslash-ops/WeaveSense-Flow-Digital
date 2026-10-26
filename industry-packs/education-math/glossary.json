@@ -1,0 +1,9 @@
+{
+  "分级提示": "五级提示，4、5 级为门控提示",
+  "学生投影": "服务端生成的学生可见版本，不含未释放答案；前端隐藏不算",
+  "审核绑定": "审核与发布绑定 lesson_hash；修改产生新修订",
+  "数学状态": "verified / partially_verified / failed / timeout_undetermined；超时不等于无解",
+  "确认题意": "教师确认结构化题目修订（input_hash 绑定），未确认不得分析",
+  "证据层级": "exact_symbolic / independent_closed_form / synthetic_route / numeric_sampling / manual_review；数值抽样不是证明，人工复核不冒充自动验证",
+  "题族": "有限参数题族（family_id），仅目录内准入的题族可生成课件；不是通用解题"
+}

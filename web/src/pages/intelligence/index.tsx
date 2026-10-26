@@ -333,11 +333,7 @@ export default function IntelligencePage() {
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 16px 0" }}>
             <Select style={{ width: 200 }} value={workspaceId} onChange={setWorkspaceId} options={workspaces.map((w) => ({ value: w.id, label: w.name }))} />
             <Tabs style={{ flex: 1, minWidth: 0 }} activeKey={view} onChange={(k) => void navigate(k === "overview" ? "/intelligence" : `/intelligence/${k}`)} items={INTEL_VIEWS.map((v) => ({ key: v.key, label: v.label }))} />
-            {view !== "topics" && (
-                <Button onClick={() => setAgentDrawerOpen(true)}>
-                    情报助手{monitors.length ? ` · 监控 (${monitors.length})` : ""}
-                </Button>
-            )}
+            {view !== "topics" && <Button onClick={() => setAgentDrawerOpen(true)}>情报助手{monitors.length ? ` · 监控 (${monitors.length})` : ""}</Button>}
         </div>
     );
 

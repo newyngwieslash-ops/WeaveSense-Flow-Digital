@@ -1,0 +1,49 @@
+{
+  "properties": {
+    "error_code": {
+      "type": "string"
+    },
+    "evidence_levels": {
+      "items": {
+        "enum": [
+          "exact_symbolic",
+          "independent_closed_form",
+          "synthetic_route",
+          "numeric_sampling",
+          "manual_review"
+        ]
+      },
+      "type": "array"
+    },
+    "job_id": {
+      "type": "string"
+    },
+    "math_state": {
+      "enum": [
+        "verified",
+        "partially_verified",
+        "failed",
+        "timeout_undetermined"
+      ]
+    },
+    "next_action": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "queued",
+        "running",
+        "needs_confirmation",
+        "succeeded",
+        "failed",
+        "cancelled",
+        "reconciliation_required"
+      ]
+    }
+  },
+  "required": [
+    "job_id",
+    "status"
+  ],
+  "type": "object"
+}

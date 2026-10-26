@@ -1,15 +1,7 @@
 import { describe, expect, it } from "bun:test";
 
 import { buildNodeGenerationContext } from "@/components/canvas/canvas-node-generation";
-import {
-    evaluateCanvasDataflow,
-    findBlockedLogicBranchInput,
-    isLogicDualInput,
-    isLogicDualOutput,
-    logicNodeHandleAtY,
-    logicNodeHandleY,
-    parseDataSourceNode,
-} from "@/lib/canvas/dataflow-evaluator";
+import { evaluateCanvasDataflow, findBlockedLogicBranchInput, isLogicDualInput, isLogicDualOutput, logicNodeHandleAtY, logicNodeHandleY, parseDataSourceNode } from "@/lib/canvas/dataflow-evaluator";
 import { CanvasNodeType, type CanvasConnection, type CanvasNodeData } from "@/types/canvas";
 
 function makeNode(partial: Partial<CanvasNodeData> & { id: string; type: CanvasNodeData["type"] }): CanvasNodeData {
@@ -219,9 +211,7 @@ describe("canvas low-code dataflow & logic evaluator", () => {
         const blocked = findBlockedLogicBranchInput("img-false", nodes, connections);
         expect(blocked).not.toBeNull();
         expect(blocked?.reason).toContain("False 分支当前未命中");
-        expect(() => buildNodeGenerationContext("img-false", nodes, connections, "未命中备选分支", [])).toThrow(
-            "逻辑节点「高分筛选」False 分支当前未命中（0 条数据），已跳过下游生成",
-        );
+        expect(() => buildNodeGenerationContext("img-false", nodes, connections, "未命中备选分支", [])).toThrow("逻辑节点「高分筛选」False 分支当前未命中（0 条数据），已跳过下游生成");
     });
 
     it("detects cyclic connections safely without infinite recursion", () => {
@@ -285,9 +275,7 @@ describe("canvas low-code dataflow & logic evaluator", () => {
             metadata: {
                 dataSource: {
                     format: "json",
-                    rawText: JSON.stringify([
-                        { id: "doc_1", title: "固态电池量产突破", score: 92 },
-                    ]),
+                    rawText: JSON.stringify([{ id: "doc_1", title: "固态电池量产突破", score: 92 }]),
                 },
             },
         });

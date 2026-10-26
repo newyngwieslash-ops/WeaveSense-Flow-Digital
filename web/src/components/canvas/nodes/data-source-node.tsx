@@ -4,11 +4,7 @@ import { useRef, useState, type ChangeEvent } from "react";
 import { useCanvasNodeActions } from "@/components/canvas/canvas-node-action-context";
 import { useDataflowNodeResult } from "@/components/canvas/canvas-node-graph-context";
 import type { CanvasTheme } from "@/lib/canvas-theme";
-import {
-    DATA_SOURCE_FORMAT_LABELS,
-    detectDataSourceFormatFromFilename,
-    type CanvasDataItem,
-} from "@/lib/canvas/dataflow-evaluator";
+import { DATA_SOURCE_FORMAT_LABELS, detectDataSourceFormatFromFilename, type CanvasDataItem } from "@/lib/canvas/dataflow-evaluator";
 import type { CanvasDataSourceConfig, CanvasDataSourceFormat, CanvasNodeData } from "@/types/canvas";
 
 type DataSourceNodeContentProps = {
@@ -91,13 +87,7 @@ export function DataSourceNodeContent({ node, theme }: DataSourceNodeContentProp
             onPointerDown={(event) => event.stopPropagation()}
             onWheel={(event) => event.stopPropagation()}
         >
-            <input
-                ref={fileInputRef}
-                type="file"
-                accept=".json,.jsonl,.csv,.tsv,.txt,.md,.markdown"
-                className="hidden"
-                onChange={handleFileImport}
-            />
+            <input ref={fileInputRef} type="file" accept=".json,.jsonl,.csv,.tsv,.txt,.md,.markdown" className="hidden" onChange={handleFileImport} />
 
             {/* 顶栏：格式切换 + 导入文件 + 视图切换 */}
             <div className="flex flex-wrap items-center justify-between gap-1.5 pb-2" style={{ borderBottom: `1px solid ${theme.node.edge}` }}>
@@ -153,10 +143,7 @@ export function DataSourceNodeContent({ node, theme }: DataSourceNodeContentProp
 
             {/* 错误提示 */}
             {result.error ? (
-                <div
-                    className="mt-2 flex items-center gap-1.5 rounded-[var(--r-sm)] px-2.5 py-1.5 text-[var(--fs-tiny)]"
-                    style={{ background: "color-mix(in srgb, var(--status-error, #ef4444) 14%, transparent)", color: "var(--status-error, #ef4444)" }}
-                >
+                <div className="mt-2 flex items-center gap-1.5 rounded-[var(--r-sm)] px-2.5 py-1.5 text-[var(--fs-tiny)]" style={{ background: "color-mix(in srgb, var(--status-error, #ef4444) 14%, transparent)", color: "var(--status-error, #ef4444)" }}>
                     <AlertCircle className="size-3.5 shrink-0" />
                     <span className="truncate">{result.error}</span>
                 </div>
@@ -177,11 +164,7 @@ export function DataSourceNodeContent({ node, theme }: DataSourceNodeContentProp
                     <div className="thin-scrollbar flex h-full w-full flex-col gap-1.5 overflow-y-auto p-2">
                         {result.outputItems.length ? (
                             result.outputItems.slice(0, 50).map((item, idx) => (
-                                <div
-                                    key={idx}
-                                    className="flex items-start gap-2 rounded-[var(--r-sm)] px-2 py-1.5 font-mono text-[var(--fs-tiny)]"
-                                    style={{ background: theme.node.fill, border: `1px solid ${theme.node.edge}` }}
-                                >
+                                <div key={idx} className="flex items-start gap-2 rounded-[var(--r-sm)] px-2 py-1.5 font-mono text-[var(--fs-tiny)]" style={{ background: theme.node.fill, border: `1px solid ${theme.node.edge}` }}>
                                     <span className="shrink-0 font-semibold opacity-50">#{idx + 1}</span>
                                     <span className="min-w-0 flex-1 break-all select-text">{formatPreviewItem(item)}</span>
                                 </div>
@@ -198,10 +181,7 @@ export function DataSourceNodeContent({ node, theme }: DataSourceNodeContentProp
             {/* 底栏：条数统计与字段摘要 */}
             <div className="mt-2 flex items-center justify-between gap-2 text-[var(--fs-tiny)]" style={{ color: theme.node.muted }}>
                 <div className="flex min-w-0 items-center gap-1.5">
-                    <span
-                        className="shrink-0 rounded-[var(--r-sm)] px-1.5 py-0.5 font-semibold tabular-nums"
-                        style={{ background: `${theme.accent.primary}1f`, color: theme.accent.primary }}
-                    >
+                    <span className="shrink-0 rounded-[var(--r-sm)] px-1.5 py-0.5 font-semibold tabular-nums" style={{ background: `${theme.accent.primary}1f`, color: theme.accent.primary }}>
                         {result.outputItems.length} 条记录
                     </span>
                     {result.detectedKeys.length ? (

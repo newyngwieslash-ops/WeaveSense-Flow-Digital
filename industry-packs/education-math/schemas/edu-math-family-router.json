@@ -1,0 +1,57 @@
+{
+  "properties": {
+    "admission": {
+      "enum": [
+        "admitted",
+        "dev",
+        "planned"
+      ]
+    },
+    "family_id": {
+      "type": "string"
+    },
+    "input_state": {
+      "enum": [
+        "sufficient",
+        "insufficient",
+        "conflict",
+        "unsupported"
+      ]
+    },
+    "method_profile": {
+      "properties": {
+        "allowed": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "preferred": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "missing_conditions": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "params": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "unit": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "family_id",
+    "input_state",
+    "params"
+  ],
+  "type": "object"
+}

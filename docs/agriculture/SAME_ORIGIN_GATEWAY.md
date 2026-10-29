@@ -69,3 +69,16 @@ web healthcheck只证明静态入口可读取，不证明平台、GIS或数据�
 本执行器没有Docker；原生Nginx HTTP检查不能作为Docker镜像构建或Compose启动
 通过证据。浏览器若因执行器AF_UNIX限制不能启动，明确记录阻塞，不禁用sandbox
 冒充浏览器验收。实际命令、结果与证据由测试报告单独记录。
+
+## 待执行的普通 CI
+
+`.github/workflows/agriculture-gateway.yml` 仅 `contents: read`，复用固定源码
+准备工具的逐文件允许列表，实际编译Go、构建React/Vue；临时runner解包官方
+发行版nginx而不启动系统daemon，运行真实Chromium网关测试。
+另一步仅构建临时本地Docker镜像并启动loopback容器，验证静态产物、内部路径404、
+上游故意不可用502，然后删除本次创建的容器及镜像。这不是容器认证端到端验收。
+不推镜像、不发布、不部署，不读取仓库secret；仅上传四个显式脱敏JSON证据文件。
+发行版Nginx与镜像版本分别记录，不冒称一致。
+
+当前工作流仅本地编写和静态检查，实际CI结果待执行；文件存在不等于通过。
+浏览器与Docker报告分开记录，任何失败不能合并宣称任务完成。

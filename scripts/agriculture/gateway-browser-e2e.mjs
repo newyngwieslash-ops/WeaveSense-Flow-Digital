@@ -112,7 +112,15 @@ export async function main() {
         const template = join(ROOT, 'deploy/agriculture/nginx.conf.template');
         for (const file of [binary, chrome, nginxBin, mimeTypes, join(react, 'index.html'), join(vue, 'index.html'), template]) if (!existsSync(file)) throw new Error('required executable or production artifact missing');
         report.artifact_hashes = { backend: digest(binary), nginx_template: digest(template), react_index: digest(join(react, 'index.html')), vue_index: digest(join(vue, 'index.html')) };
-        report.source_commit = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).stdout.trim();
+        report.checkout_head = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).stdout.trim();
+        report.source_commit = process.env.AGRI_E2E_SOURCE_COMMIT || report.checkout_head;
+        if (!/^[a-f0-9]{40}$/.test(report.source_commit)) throw new Error('invalid source provenance');
+        report.working_tree_changes_included = Boolean(spawnSync('git', ['status', '--porcelain'], { cwd: ROOT, encoding: 'utf8' }).stdout.trim());
+        const provenance = join(ROOT, '.local/evidence/session-ci-provenance.json');
+        if (existsSync(provenance)) {
+            if (JSON.parse(readFileSync(provenance, 'utf8')).source_commit !== report.source_commit) throw new Error('source provenance mismatch');
+            report.ci_provenance_sha256 = digest(provenance);
+        }
         temp = mkdtempSync(join(tmpdir(), 'agri-gateway-browser-'));
         cpSync(react, join(temp, 'html'), { recursive: true });
         cpSync(vue, join(temp, 'html/agri'), { recursive: true });

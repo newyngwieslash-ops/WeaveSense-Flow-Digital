@@ -211,6 +211,24 @@ OVERLAY = (
     "docs/agriculture/W01_LEGACY_ACTOR_GATE.md",
     "docs/agriculture/GIS_ACTOR_BINDINGS.md",
     "docs/agriculture/LEGACY_IDENTITY_INVENTORY.md",
+    # DT014 same-origin production gateway, shared navigation and real browser gate.
+    "contracts/agriculture/navigation.ts",
+    "deploy/agriculture/Dockerfile.web",
+    "deploy/agriculture/Dockerfile.web.dockerignore",
+    "deploy/agriculture/nginx.conf.template",
+    "deploy/agriculture/web-entrypoint.sh",
+    "deploy/agriculture/env.example",
+    "deploy/agriculture/errors/404.html",
+    "deploy/agriculture/errors/50x.html",
+    "deploy/agriculture/README.md",
+    "docker-compose.agriculture.yml",
+    "scripts/agriculture/gateway-browser-e2e.mjs",
+    "scripts/agriculture/gateway-browser-e2e.test.mjs",
+    "scripts/agriculture/gateway-container-smoke.py",
+    "scripts/agriculture/gateway-container-smoke.test.py",
+    "scripts/agriculture/native-gateway-test.py",
+    "tests/agriculture/test_gateway_configuration.py",
+    "docs/agriculture/SAME_ORIGIN_GATEWAY.md",
 )
 
 

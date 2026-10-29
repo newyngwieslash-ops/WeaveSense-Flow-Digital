@@ -1,0 +1,208 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "WeaveSense Agriculture initial contract subset",
+    "version": "1.0.0",
+    "description": "W00 contract-only, not implemented endpoint or full API claim. Platform session/CSRF and GIS delegation must be implemented and tested separately."
+  },
+  "servers": [
+    {
+      "url": "/api/agri/v1"
+    }
+  ],
+  "x-implementation-status": "contract_only",
+  "paths": {
+    "/analyses": {
+      "post": {
+        "operationId": "submitAgriAnalysis",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "./analysis-submit.schema.json"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Durably accepted operation, not completed execution or settled charge",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "operation_id",
+                        "job_id",
+                        "status_url",
+                        "events_url"
+                      ],
+                      "properties": {
+                        "operation_id": {
+                          "type": "string"
+                        },
+                        "job_id": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "status_url": {
+                          "type": "string",
+                          "pattern": "^/api/agri/v1/operations/[A-Za-z0-9_-]+$"
+                        },
+                        "events_url": {
+                          "type": "string",
+                          "pattern": "^/api/agri/v1/operations/[A-Za-z0-9_-]+/events$"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "request_id",
+                        "schema_version"
+                      ],
+                      "properties": {
+                        "request_id": {
+                          "type": "string"
+                        },
+                        "schema_version": {
+                          "const": "1.0"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Untrusted or expired session"
+          },
+          "402": {
+            "description": "Budget insufficient"
+          },
+          "403": {
+            "description": "Capability/CSRF denied"
+          },
+          "409": {
+            "description": "Idempotency conflict or stale approval"
+          },
+          "503": {
+            "description": "Dependency unavailable"
+          }
+        }
+      }
+    },
+    "/jobs/{id}": {
+      "get": {
+        "operationId": "getAgriJob",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current authorized projection; private cache only",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "./job.schema.json"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "request_id",
+                        "schema_version"
+                      ],
+                      "properties": {
+                        "request_id": {
+                          "type": "string"
+                        },
+                        "schema_version": {
+                          "const": "1.0"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Missing or outside authorization scope"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "platformSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "open_ai_canvas_session",
+        "x-note": "Existing Flow auth.SessionCookieName; actual authorization and CSRF integration required in W01."
+      }
+    }
+  }
+}

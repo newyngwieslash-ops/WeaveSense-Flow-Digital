@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.weavesense.invalid/agriculture/v1/analysis-submit.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "workspace_id",
+    "subject",
+    "analysis_kind",
+    "quote_id",
+    "input",
+    "parameters",
+    "approval_id"
+  ],
+  "properties": {
+    "workspace_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "id"
+      ],
+      "properties": {
+        "kind": {
+          "const": "farm"
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        }
+      }
+    },
+    "analysis_kind": {
+      "const": "ndvi_change"
+    },
+    "quote_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "season_id",
+        "parcels",
+        "baseline_asset_version_id",
+        "current_asset_version_id"
+      ],
+      "properties": {
+        "season_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        },
+        "parcels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "parcel_id",
+              "revision"
+            ],
+            "properties": {
+              "parcel_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "revision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              }
+            }
+          },
+          "minItems": 1,
+          "maxItems": 200,
+          "uniqueItems": true
+        },
+        "baseline_asset_version_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        },
+        "current_asset_version_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        }
+      }
+    },
+    "parameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm_version",
+        "quality_profile_version",
+        "poor_delta_threshold",
+        "good_delta_threshold"
+      ],
+      "properties": {
+        "algorithm_version": {
+          "$ref": "https://schemas.weavesense.invalid/agriculture/v1/common.schema.json#/$defs/version"
+        },
+        "quality_profile_version": {
+          "$ref": "https://schemas.weavesense.invalid/agriculture/v1/common.schema.json#/$defs/version"
+        },
+        "poor_delta_threshold": {
+          "type": "number",
+          "minimum": -2,
+          "exclusiveMaximum": 0
+        },
+        "good_delta_threshold": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 2
+        }
+      }
+    },
+    "approval_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+    }
+  }
+}

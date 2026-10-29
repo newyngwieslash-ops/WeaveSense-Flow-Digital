@@ -1,0 +1,114 @@
+# W00 controlled local baseline. NOT a production or G0 acceptance declaration.
+name: weavesense-digitaltwin-dev
+services:
+  postgres:
+    profiles: [core]
+    image: postgis/postgis:17-3.5
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?configure local secret}
+      PLATFORM_MIGRATION_PASSWORD: ${PLATFORM_MIGRATION_PASSWORD:?configure local secret}
+      PLATFORM_RUNTIME_PASSWORD: ${PLATFORM_RUNTIME_PASSWORD:?configure local secret}
+      INTEL_MIGRATION_PASSWORD: ${INTEL_MIGRATION_PASSWORD:?configure local secret}
+      INTEL_RUNTIME_PASSWORD: ${INTEL_RUNTIME_PASSWORD:?configure local secret}
+      GEO_MIGRATION_PASSWORD: ${GEO_MIGRATION_PASSWORD:?configure local secret}
+      GEO_RUNTIME_PASSWORD: ${GEO_RUNTIME_PASSWORD:?configure local secret}
+    volumes:
+      - agriculture_pgdata:/var/lib/postgresql/data
+      - ./deploy/agriculture/postgres/init.sh:/docker-entrypoint-initdb.d/10-agriculture.sh:ro
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U postgres -d flow_geo"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    networks: [internal]
+  redis:
+    profiles: [core]
+    image: redis:7.4.2-alpine
+    command: [redis-server, --appendonly, "yes", --requirepass, "${REDIS_PASSWORD:?configure local secret}"]
+    volumes: [agriculture_redisdata:/data]
+    networks: [internal]
+  geo-readiness:
+    profiles: [core]
+    build: {context: ./deploy/agriculture/health}
+    environment:
+      DATABASE_URL: postgresql://flow_geo_app:${GEO_RUNTIME_PASSWORD}@postgres:5432/flow_geo
+    depends_on:
+      postgres: {condition: service_healthy}
+    # Only the bounded W00 dependency probe is loopback-published; no GIS routes.
+    ports: ["127.0.0.1:${AGRI_HTTP_PORT:-8090}:8000"]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: [/tmp:rw,noexec,nosuid,size=16m]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready',timeout=3)"]
+      interval: 5s
+      timeout: 4s
+      retries: 20
+    networks: [internal]
+  platform-migrate:
+    profiles: [platform]
+    build: {context: ., dockerfile: backend/Dockerfile}
+    command: [migrate-schema, up]
+    environment:
+      CANVAS_DATABASE_DRIVER: postgres
+      DATABASE_URL: postgres://flow_platform_migrate:${PLATFORM_MIGRATION_PASSWORD}@postgres:5432/flow_platform?sslmode=disable
+    depends_on:
+      postgres: {condition: service_healthy}
+    networks: [internal]
+  platform:
+    profiles: [platform]
+    build: {context: ., dockerfile: backend/Dockerfile}
+    environment:
+      CANVAS_DATABASE_DRIVER: postgres
+      CANVAS_AUTO_MIGRATE: "false"
+      CANVAS_BACKEND_ADDR: ":8080"
+      CANVAS_BACKEND_DATA_DIR: /data
+      CANVAS_REGISTRATION_ENABLED: "false"
+      CANVAS_CORS_ORIGINS: http://127.0.0.1:${AGRI_HTTP_PORT:-8090}
+      DATABASE_URL: postgres://flow_platform_app:${PLATFORM_RUNTIME_PASSWORD}@postgres:5432/flow_platform?sslmode=disable
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      FLOW_INTERNAL_JWT_SIGNING_KEY: ${FLOW_INTERNAL_JWT_SIGNING_KEY:?configure local secret}
+      FLOW_INTERNAL_JWT_ISSUER: flow-platform
+      FLOW_INTERNAL_JWT_AUDIENCE: loom-engine
+    volumes: [agriculture_platformdata:/data]
+    depends_on:
+      platform-migrate: {condition: service_completed_successfully}
+      redis: {condition: service_started}
+    networks: [internal]
+  loom-migrate:
+    profiles: [knowledge]
+    build: {context: ./services/loom-engine, dockerfile: Dockerfile}
+    environment:
+      DATABASE_URL: postgres://flow_intel_migrate:${INTEL_MIGRATION_PASSWORD}@postgres:5432/flow_intel
+    volumes: [./deploy/agriculture/loom-migrate.mjs:/app/agriculture-migrate.mjs:ro]
+    command: [node, --experimental-strip-types, /app/agriculture-migrate.mjs]
+    depends_on:
+      postgres: {condition: service_healthy}
+    networks: [internal]
+  loom-engine:
+    profiles: [knowledge]
+    build: {context: ./services/loom-engine, dockerfile: Dockerfile}
+    user: node
+    environment:
+      DATABASE_URL: postgres://flow_intel_app:${INTEL_RUNTIME_PASSWORD}@postgres:5432/flow_intel
+      LOOM_AUTO_MIGRATE: "false"
+      LOOM_ROLE: api
+      LOOM_PORT: "8080"
+      LOOM_SPLIT_ROLES: "true"
+      LOOM_DIRECT_PROVIDER_KEYS: disabled
+      FLOW_INTERNAL_JWT_SIGNING_KEY: ${FLOW_INTERNAL_JWT_SIGNING_KEY:?configure local secret}
+      FLOW_INTERNAL_JWT_ISSUER: flow-platform
+      FLOW_INTERNAL_JWT_AUDIENCE: loom-engine
+    command: [node, --experimental-strip-types, flow/main.ts]
+    depends_on:
+      loom-migrate: {condition: service_completed_successfully}
+    networks: [internal]
+networks:
+  internal:
+    internal: true
+volumes:
+  agriculture_pgdata:
+  agriculture_redisdata:
+  agriculture_platformdata:

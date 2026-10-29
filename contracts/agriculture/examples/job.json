@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "job_id": "job_fixture",
+  "operation_id": "op_fixture",
+  "tenant_id": "tenant_fixture_a",
+  "workspace_id": "ws_fixture_a",
+  "status": "running",
+  "state_revision": 2,
+  "outcome": null,
+  "cancel_requested": false,
+  "retry_of_job_id": null,
+  "attempt": {
+    "attempt_no": 1,
+    "worker_id": "worker_fixture",
+    "fencing_token": 1,
+    "lease_until": "2026-01-01T00:01:00Z"
+  },
+  "result_id": null
+}

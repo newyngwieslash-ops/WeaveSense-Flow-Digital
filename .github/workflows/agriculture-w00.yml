@@ -1,0 +1,87 @@
+name: Agriculture W00 dependency evidence
+on:
+  workflow_dispatch:
+  push:
+    branches: [ci/agriculture-w00, feat/agriculture-v1]
+    paths:
+      - '.github/workflows/agriculture-w00.yml'
+      - 'scripts/agriculture/**'
+      - 'deploy/agriculture/**'
+      - 'docker-compose.agriculture.yml'
+      - 'contracts/agriculture/**'
+      - 'tests/agriculture/**'
+  pull_request:
+    branches: [ci/agriculture-w00, feat/agriculture-v1]
+    paths:
+      - '.github/workflows/agriculture-w00.yml'
+      - 'scripts/agriculture/**'
+      - 'deploy/agriculture/**'
+      - 'docker-compose.agriculture.yml'
+      - 'contracts/agriculture/**'
+      - 'tests/agriculture/**'
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Install isolated schema-test dependencies
+        run: |
+          python3 -m venv .ci-venv
+          .ci-venv/bin/pip install pytest==8.3.5 jsonschema==4.26.0 referencing==0.37.0 jsonschema-specifications==2025.9.1 rpds-py==2026.6.3
+      - name: Contract negatives and trusted source policy
+        run: |
+          .ci-venv/bin/python -m pytest -q tests/agriculture/test_contracts.py tests/agriculture/test_source_rights.py
+          .ci-venv/bin/python scripts/agriculture/check-source-policy.py --profile agriculture
+  compose:
+    needs: contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [core, migrations]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          path: scaffold
+          persist-credentials: false
+      - name: Explicit scaffold bootstrap or existing full product checkout
+        shell: bash
+        env:
+          SCAFFOLD_MODE: ${{ github.ref_name == 'ci/agriculture-w00' || github.head_ref == 'ci/agriculture-w00' }}
+        run: |
+          set -euo pipefail
+          if [[ "$SCAFFOLD_MODE" != true ]]; then
+            # Full product runs test their actual commit, never overwrite with upstream.
+            mv scaffold product
+            test -f product/backend/go.mod
+            test -f product/services/loom-engine/flow/db.ts
+            printf 'Source: full product checkout %s; no upstream replacement.\n' "$(git -C product rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          # No recursive checkout, source workflow execution or source-repository write.
+          # If source is private/unavailable this fails rather than silently substituting mocks.
+          git init product
+          git -C product remote add upstream-flow https://github.com/newyngwieslash-ops/WeaveSense-Flow.git
+          git -C product fetch --no-tags --depth=1 upstream-flow 206c82af7ae007f45da4c582f373fbabf027f1b8
+          git -C product checkout --detach FETCH_HEAD
+          test "$(git -C product rev-parse HEAD)" = 206c82af7ae007f45da4c582f373fbabf027f1b8
+          mkdir -p product/deploy/agriculture product/scripts/agriculture
+          cp -R scaffold/deploy/agriculture/. product/deploy/agriculture/
+          cp scaffold/scripts/agriculture/ci-smoke.sh product/scripts/agriculture/
+          cp scaffold/docker-compose.agriculture.yml product/
+          printf '%s\n' 'Source: pinned Flow 206c82a plus authored W00 deployment overlay; not a source-history import or product acceptance.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Fresh-volume database and migration smoke
+        working-directory: product
+        shell: bash
+        env:
+          SMOKE_MODE: ${{ matrix.mode }}
+        run: |
+          set -euo pipefail
+          bash scripts/agriculture/ci-smoke.sh "$SMOKE_MODE"
+          printf 'PASS: W00 %s Docker smoke. No tenant/business/live acceptance claimed.\n' "$SMOKE_MODE" >> "$GITHUB_STEP_SUMMARY"

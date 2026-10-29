@@ -1,0 +1,36 @@
+#!/bin/sh
+# First boot only; SQL identifiers are fixed, passwords are psql literal variables.
+set -eu
+for domain in platform intel geo; do
+  case "$domain" in
+    platform) owner_password=$PLATFORM_MIGRATION_PASSWORD; runtime_password=$PLATFORM_RUNTIME_PASSWORD ;;
+    intel) owner_password=$INTEL_MIGRATION_PASSWORD; runtime_password=$INTEL_RUNTIME_PASSWORD ;;
+    geo) owner_password=$GEO_MIGRATION_PASSWORD; runtime_password=$GEO_RUNTIME_PASSWORD ;;
+  esac
+  export AGRI_OWNER_PASSWORD="$owner_password" AGRI_RUNTIME_PASSWORD="$runtime_password"
+  psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d postgres \
+    -v db="flow_$domain" -v owner="flow_${domain}_migrate" \
+    -v runtime="flow_${domain}_app" <<'SQL'
+\getenv owner_password AGRI_OWNER_PASSWORD
+\getenv runtime_password AGRI_RUNTIME_PASSWORD
+CREATE ROLE :"owner" LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD :'owner_password';
+CREATE ROLE :"runtime" LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD :'runtime_password';
+CREATE DATABASE :"db" OWNER :"owner";
+REVOKE ALL ON DATABASE :"db" FROM PUBLIC;
+GRANT CONNECT ON DATABASE :"db" TO :"runtime";
+SQL
+  unset AGRI_OWNER_PASSWORD AGRI_RUNTIME_PASSWORD
+  psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "flow_$domain" \
+    -v owner="flow_${domain}_migrate" -v runtime="flow_${domain}_app" <<'SQL'
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+GRANT USAGE, CREATE ON SCHEMA public TO :"owner";
+GRANT USAGE ON SCHEMA public TO :"runtime";
+ALTER DEFAULT PRIVILEGES FOR ROLE :"owner" IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO :"runtime";
+ALTER DEFAULT PRIVILEGES FOR ROLE :"owner" IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO :"runtime";
+ALTER DEFAULT PRIVILEGES FOR ROLE :"owner" IN SCHEMA public REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
+SQL
+done
+psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d flow_geo <<'SQL'
+CREATE EXTENSION IF NOT EXISTS postgis;
+GRANT USAGE ON SCHEMA public TO flow_geo_app;
+SQL

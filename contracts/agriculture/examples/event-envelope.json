@@ -1,0 +1,24 @@
+{
+  "event_id": "evt_fixture",
+  "event_type": "agri.analysis.completed",
+  "schema_version": "1.0",
+  "producer": "agri-gis",
+  "tenant_id": "tenant_fixture_a",
+  "workspace_id": "ws_fixture_a",
+  "aggregate_type": "analysis_job",
+  "aggregate_id": "job_fixture",
+  "aggregate_revision": 7,
+  "occurred_at": "2026-01-01T00:00:00Z",
+  "correlation_id": "op_fixture",
+  "causation_id": null,
+  "trace_id": "trace_fixture",
+  "canonicalization_version": "sorted-json-v1",
+  "payload_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "payload": {
+    "operation_id": "op_fixture",
+    "job_id": "job_fixture",
+    "result_id": "result_fixture",
+    "outcome": "valid_result",
+    "manifest_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  }
+}

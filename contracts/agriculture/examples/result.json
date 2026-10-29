@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "job_id": "job_fixture",
+  "result_id": "result_fixture",
+  "execution_status": "succeeded",
+  "outcome": "insufficient_data",
+  "validity": "current",
+  "quality": {
+    "status": "insufficient_data",
+    "valid_pixel_ratio": 0.23,
+    "required_pixel_ratio": 0.75,
+    "reasons": [
+      "CLOUD_SHADOW_COVERAGE"
+    ],
+    "quality_profile_version": "crop-monitoring/1.0.0"
+  },
+  "summary": null,
+  "artifacts": [],
+  "evidence_refs": [
+    "evidence_fixture"
+  ],
+  "next_actions": [
+    "SELECT_ANOTHER_OBSERVATION"
+  ]
+}

@@ -1,11 +1,31 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { assertAgricultureModule } from "../scripts/agriculture-build-policy";
-import { applyUserSession } from "../src/features/agriculture/session";
+import { applyUserSession, beginSessionRevalidation } from "../src/features/agriculture/session";
 import { appQueryClient } from "../src/lib/query-client";
 import { useUserStore } from "../src/stores/use-user-store";
 
 describe("agriculture production profile", () => {
+    test("anonymous focus revalidation preserves hydration but hides authenticated state", async () => {
+        await applyUserSession({ user: null });
+        const hydration: boolean[] = [];
+        const unsubscribe = useUserStore.subscribe((state) => { hydration.push(state.hydrated); });
+        try {
+            beginSessionRevalidation();
+            await applyUserSession({ user: null });
+            expect(hydration.every(Boolean)).toBe(true);
+            expect(useUserStore.getState().hydrated).toBe(true);
+            useUserStore.getState().setHydrated(false);
+            beginSessionRevalidation();
+            expect(useUserStore.getState().hydrated).toBe(false);
+            await applyUserSession({ user: { id: "focus-test", username: "a", displayName: "A", role: "user", status: "active", createdAt: "2026-01-01T00:00:00Z", updatedAt: "2026-01-01T00:00:00Z" } });
+            beginSessionRevalidation();
+            expect(useUserStore.getState().hydrated).toBe(false);
+        } finally {
+            unsubscribe();
+            await applyUserSession({ user: null });
+        }
+    });
     test("rejects licensed drawing implementations rather than concealing menus", () => {
         for (const id of ["tldraw", "@tldraw/editor", "/app/node_modules/tldraw/dist/index.js", "C:\\app\\node_modules\\@tldraw\\editor\\dist.js", "/app/src/pages/canvas/index.tsx", "/app/src/components/canvas/drawing/tldraw-editor.tsx"]) {
             expect(() => assertAgricultureModule(id)).toThrow();

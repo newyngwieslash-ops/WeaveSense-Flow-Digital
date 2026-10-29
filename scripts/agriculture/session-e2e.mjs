@@ -86,6 +86,7 @@ async function connect(cdpPort, origin) {
     const pending = new Map();
     const exceptions = [];
     const statuses = [];
+    const statusRequests = new Map();
     let outboundBlocked = 0;
     const send = (method, params = {}) => new Promise((resolve, reject) => {
         const id = ++sequence;
@@ -105,8 +106,13 @@ async function connect(cdpPort, origin) {
             const response = message.params.response;
             const url = new URL(response.url);
             if (url.origin === origin && ["/api/auth/session", "/api/auth/login", "/api/auth/logout", "/api/auth/settings", "/api/intelligence/workspaces"].includes(url.pathname)) {
-                statuses.push({ path: url.pathname, status: response.status });
+                const status = { path: url.pathname, status: response.status, completed: false };
+                statuses.push(status);
+                statusRequests.set(message.params.requestId, status);
             }
+        } else if (message.method === "Network.loadingFinished") {
+            const status = statusRequests.get(message.params.requestId);
+            if (status) { status.completed = true; statusRequests.delete(message.params.requestId); }
         } else if (message.method === "Fetch.requestPaused") {
             const { requestId, request: req } = message.params;
             const allowed = req.url.startsWith(origin + "/") || /^(data|blob):/.test(req.url);
@@ -142,6 +148,11 @@ async function connect(cdpPort, origin) {
         await send("Input.insertText", { text: value });
         await poll(`document.querySelector(${query})?.value === ${JSON.stringify(value)}`, `${label} input retained`);
     };
+    // A CDP-created headless page can be backgrounded. Activate the real tab before
+    // loading application code, rather than letting the first field focus also
+    // become a delayed window-focus/session-revalidation event mid-keystroke.
+    await send("Page.bringToFront");
+    await poll("document.hasFocus()", "browser foreground activation");
     return { send, evaluate, poll, navigate, fill, exceptions, statuses, outboundBlocked: () => outboundBlocked, close: () => socket.close() };
 }
 
@@ -194,6 +205,7 @@ async function main() {
         browser = spawn(chrome, ["--headless=new", "--no-sandbox", "--disable-dev-shm-usage", "--disable-background-networking", "--no-first-run", `--remote-debugging-port=${port}`, `--user-data-dir=${join(temp, "chrome")}`, "about:blank"], { env: { ...process.env, HOME: temp, XDG_CONFIG_HOME: join(temp, "config"), XDG_CACHE_HOME: join(temp, "cache") }, stdio: "ignore" });
         await ready(`http://127.0.0.1:${port}/json/version`, browser, 30000);
         cdp = await connect(port, origin);
+        check(await cdp.evaluate("document.hasFocus()"), "browser_foreground_confirmed");
         report.stage = "anonymous_and_forged_identity";
         const sessionActor = () => cdp.evaluate(`fetch('/api/auth/session',{cache:'no-store'}).then(r=>r.json()).then(x=>x.data?.user?.id||null)`);
         await cdp.navigate("/");
@@ -208,6 +220,22 @@ async function main() {
         report.stage = "login_form_controls";
         await cdp.poll("!!document.querySelector('#login-account')", "real login form");
         await cdp.fill("#login-account", username, "account field");
+        report.stage = "login_form_focus_retention";
+        const sessionsBeforeFocus = cdp.statuses.filter(s => s.path === "/api/auth/session" && s.completed).length;
+        const otherTab = await cdp.send("Target.createTarget", { url: "about:blank", background: false });
+        try {
+            await cdp.send("Target.activateTarget", { targetId: otherTab.targetId });
+            await cdp.poll("!document.hasFocus()", "original browser tab really blurred");
+            await cdp.send("Page.bringToFront");
+            await cdp.poll("document.hasFocus()", "original browser tab refocused");
+            const deadline = Date.now() + 20000;
+            while (Date.now() < deadline && cdp.statuses.filter(s => s.path === "/api/auth/session" && s.completed).length <= sessionsBeforeFocus) await sleep(100);
+            check(cdp.statuses.filter(s => s.path === "/api/auth/session" && s.completed).length > sessionsBeforeFocus, "real_focus_change_revalidates_platform_session");
+            await cdp.evaluate("new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))", "focus revalidation render settle");
+            check(await cdp.evaluate(`document.querySelector('#login-account')?.value === ${JSON.stringify(username)}`), "anonymous_form_retains_real_input_after_focus_revalidation");
+        } finally {
+            await cdp.send("Target.closeTarget", { targetId: otherTab.targetId });
+        }
         await cdp.fill("#login-password", password, "password field");
         report.stage = "login_form_submit";
         await cdp.poll("(() => {const button=document.querySelector('form button[type=submit]'); if(!button || button.disabled) return false; button.click(); return true;})()", "login submit control");

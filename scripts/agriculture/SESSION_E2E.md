@@ -29,3 +29,5 @@ node scripts/agriculture/session-e2e.mjs
 `.github/workflows/agriculture-session.yml` 仅 `contents: read`，不发布镜像/注册表/部署或写上游。`ci/agriculture-w00` 分支通过 `session-ci-prepare.py` 只读获取固定 Flow/AgriScope SHA 的源码归档（不带 `.git`），仅覆盖脚本内逐文件允许列表。报告明确这是 scaffold 提交 + 固定上游 + 每个覆盖文件 SHA256 的组合来源，不冒充完整产品提交。完整产品分支直接使用实际 checkout，不替换上游或覆盖用户代码。`--list-overlay` 可输出精确待发布清单。
 
 浏览器断言要求 `/agri/` 路径且 Vue 独有 `main[data-session-status=ready]`，不能用 React 中相同 actor selector 冒充跳转通过；伪造身份查询参数必须拒绝；任何页面对外请求尝试均失败。历史回退测试检查恢复后的 React 重新验证，但未声称 Chromium 一定启用了 BFCache。
+
+浏览器在进入应用前执行真实 `Page.bringToFront` 并确认 `document.hasFocus()`。填写用户名后再创建专属空白页、实际切换前台 tab、确认原页 blur，再返回原页，等待真实 `/api/auth/session` 响应完成及渲染后断言输入仍保留；不重填掩盖丢失，也不直接修改 React state。此负例防止通过测试初始前台条件掩盖匿名表单重验时被卸载的产品缺陷。

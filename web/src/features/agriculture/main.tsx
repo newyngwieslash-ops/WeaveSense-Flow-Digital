@@ -18,7 +18,7 @@ import { listIntelWorkspaces } from "@/services/api/intelligence";
 import { useUserStore } from "@/stores/use-user-store";
 import { appQueryClient } from "@/lib/query-client";
 import { getAntThemeConfig } from "@/lib/app-theme";
-import { applyUserSession } from "./session";
+import { applyUserSession, beginSessionRevalidation } from "./session";
 
 function SessionBoundary({ children }: { children: ReactNode }) {
     const [error, setError] = useState(false);
@@ -26,7 +26,7 @@ function SessionBoundary({ children }: { children: ReactNode }) {
     const hydrated = useUserStore((state) => state.hydrated);
     useEffect(() => {
         const revalidate = () => {
-            useUserStore.getState().setHydrated(false);
+            beginSessionRevalidation();
             setError(false);
             setAttempt((value) => value + 1);
         };
@@ -42,7 +42,7 @@ function SessionBoundary({ children }: { children: ReactNode }) {
     }, []);
     useEffect(() => {
         let active = true;
-        useUserStore.getState().setHydrated(false);
+        beginSessionRevalidation();
         invalidateAuthSessionCache();
         getAuthSession().then((session) => { if (active) void applyUserSession(session); }).catch((error: unknown) => {
             if (!active) return;

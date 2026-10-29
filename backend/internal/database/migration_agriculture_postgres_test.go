@@ -38,6 +38,17 @@ func TestAgriculturePostgresAdmissionAndStrictRLS(t *testing.T) {
 		return db
 	}
 	owner, app := open(ownerDSN), open(appDSN)
+	var safeMembership bool
+	if err := owner.Raw(`SELECT EXISTS (
+ SELECT 1 FROM pg_catalog.pg_auth_members AS m
+ JOIN pg_catalog.pg_roles AS r ON r.oid = m.roleid
+ JOIN pg_catalog.pg_roles AS member ON member.oid = m.member
+ WHERE r.rolname = 'flow_platform_admission' AND member.rolname = current_user
+ AND NOT m.inherit_option AND m.set_option
+) AND NOT pg_catalog.pg_has_role(current_user, 'flow_platform_admission', 'USAGE')
+ AND pg_catalog.pg_has_role(current_user, 'flow_platform_admission', 'SET')`).Scan(&safeMembership).Error; err != nil || !safeMembership {
+		t.Fatal("migration role must allow admission ownership transfer without inheriting admission policies")
+	}
 	if err := MigrateSchema(owner); err != nil {
 		t.Fatal("migration failed (details deliberately not logged with test credentials)")
 	}

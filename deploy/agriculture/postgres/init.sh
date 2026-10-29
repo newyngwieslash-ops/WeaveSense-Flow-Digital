@@ -34,7 +34,9 @@ psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d flow_platform <<'SQL'
 -- The resolver owner cannot log in or bypass RLS. Only the migration role may
 -- transfer function ownership; the application is never a member of this role.
 CREATE ROLE flow_platform_admission NOLOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
-GRANT flow_platform_admission TO flow_platform_migrate;
+-- Ownership transfer requires SET membership, not inherited privileges. Inheriting
+-- this role would also apply its restrictive invitation policy to migrations.
+GRANT flow_platform_admission TO flow_platform_migrate WITH INHERIT FALSE;
 SQL
 psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d flow_geo <<'SQL'
 CREATE EXTENSION IF NOT EXISTS postgis;

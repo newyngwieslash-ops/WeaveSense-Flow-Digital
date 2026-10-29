@@ -192,6 +192,26 @@ func TestMemberWithoutCurrentWorkspaceHasNoRoleEditingCapability(t *testing.T) {
 	}
 }
 
+func TestOwnerBusinessRoleChangeRollsBackWithAuditFailure(t *testing.T) {
+	s, org := fixture(t)
+	ctx := context.Background()
+	roles := []string{"editor"}
+	if err := s.ChangeMember(ctx, "owner", org.Workspace.ID, "owner", &roles, nil); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.DB.Exec("CREATE TRIGGER reject_role_audit BEFORE INSERT ON flow_agriculture_audit_events BEGIN SELECT RAISE(ABORT,'fixture injected audit failure'); END").Error; err != nil {
+		t.Fatal(err)
+	}
+	empty := []string{}
+	if err := s.ChangeMember(ctx, "owner", org.Workspace.ID, "owner", &empty, nil); err == nil {
+		t.Fatal("failed audit returned successful role revocation")
+	}
+	views, err := s.ListWorkspaces(ctx, "owner")
+	if err != nil || len(views) != 1 || len(views[0].Roles) != 1 || views[0].Roles[0] != "editor" || !views[0].CanManageOrganization {
+		t.Fatal("audit failure partially changed owner roles")
+	}
+}
+
 func TestCanonicalRolesAndLegacyInviteCannotConsumeProduct(t *testing.T) {
 	for _, role := range AssignableRoles {
 		t.Run(role, func(t *testing.T) {

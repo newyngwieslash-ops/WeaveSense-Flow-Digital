@@ -89,6 +89,7 @@ for domain in platform intel geo; do
     done
   done
 done
+[[ $(sql platform migrate flow_platform "SELECT NOT pg_has_role(current_user, 'flow_platform_admission', 'USAGE') AND pg_has_role(current_user, 'flow_platform_admission', 'SET')") == t ]]
 [[ $(sql geo app flow_geo 'SELECT ST_SRID(ST_SetSRID(ST_Point(0,0),4326))') == 4326 ]]
 
 redact() {

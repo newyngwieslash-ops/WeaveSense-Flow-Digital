@@ -1,0 +1,6 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": { "incremental": false },
+    "include": ["src/vite-env.d.ts", "src/features/agriculture/**/*.ts", "src/features/agriculture/**/*.tsx", "vite.agriculture.config.ts", "scripts/agriculture-build-policy.ts", "scripts/check-agriculture-artifact.ts"],
+    "exclude": ["node_modules", "dist", "dist-agriculture"]
+}

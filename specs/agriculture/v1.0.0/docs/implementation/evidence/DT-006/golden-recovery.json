@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "scope": "DT-006 reconstructed synthetic fixture integrity and reference arithmetic only",
+  "recorded_at": "2026-10-29T14:30:06.178466+00:00",
+  "source_commit": "06b78298c52348d07fafe97751526f59dc06b151",
+  "working_tree_has_new_fixture_files": true,
+  "command": ".local/agri-identity-venv/bin/python -m pytest -q tests/agriculture/test_golden_fixtures.py --junitxml=.local/evidence/golden-recovery/junit.xml",
+  "exit_code": 0,
+  "tests": [
+    {
+      "name": "test_hashes_and_dataset_classes",
+      "status": "passed"
+    },
+    {
+      "name": "test_two_tenants_explicit_crs_overlap_and_metric_area",
+      "status": "passed"
+    },
+    {
+      "name": "test_actual_tiff_metadata_bands_masks_and_hand_truth[0]",
+      "status": "passed"
+    },
+    {
+      "name": "test_actual_tiff_metadata_bands_masks_and_hand_truth[1]",
+      "status": "passed"
+    },
+    {
+      "name": "test_comparable_two_dates",
+      "status": "passed"
+    },
+    {
+      "name": "test_bad_quality_and_metadata_fail_closed[cloud]",
+      "status": "passed"
+    },
+    {
+      "name": "test_bad_quality_and_metadata_fail_closed[missing_crs]",
+      "status": "passed"
+    },
+    {
+      "name": "test_bad_quality_and_metadata_fail_closed[shifted_grid]",
+      "status": "passed"
+    },
+    {
+      "name": "test_bad_quality_and_metadata_fail_closed[other_product]",
+      "status": "passed"
+    },
+    {
+      "name": "test_regeneration_is_byte_deterministic",
+      "status": "passed"
+    }
+  ],
+  "passed": 10,
+  "failed": 0,
+  "skipped": 0,
+  "versions": {
+    "python": "3.12.14",
+    "rasterio": "1.4.4",
+    "gdal": "3.10.3"
+  },
+  "source_sha256": {
+    "docs/agriculture/GOLDEN_FIXTURES.md": "7d2e36221e4de824af78622f1cdaa617a69956af483a28e448b2518c9a655722",
+    "tests/agriculture/fixtures/golden/generate.py": "9b6b2b91b222502793ad075a79d1c4b78aa35b487886669665c2fdf0dfeffc92",
+    "tests/agriculture/fixtures/golden/manifest.json": "7fc77ffc05f4d6e121e7c14c62c815d5eb2503389acf684f35dee40497cd495c",
+    "tests/agriculture/fixtures/golden/parcels.json": "b94fe7d24efd177abd0c0c40091cdc1b722760647ac45bdd12c2d1eb735a0ae9",
+    "tests/agriculture/fixtures/golden/reflectance-20260601.tif": "40f1433bf882efbf61606841282ff19622d8863220e31a419ae4662a7ebb8e0b",
+    "tests/agriculture/fixtures/golden/reflectance-20260611.tif": "4f736b32990f4eb9e7b119b871f8717d9d63166e872d894e37af08954b3ab3c2",
+    "tests/agriculture/test_golden_fixtures.py": "0433c8456c340ca1b8e5424576c2304901643408d4dafbab8cecf2c23cb1b740"
+  },
+  "public_real_samples": "not_provided",
+  "customer_operational_samples": "not_provided",
+  "production_pipeline_verified": false,
+  "original_lost_bytes_restored": false
+}

@@ -11,19 +11,323 @@
   "tasks": {
     "DT-001": {
       "historical_status": "done",
-      "verification": "pending_revalidation",
-      "evidence": [],
-      "commands": [],
-      "source_hashes": [],
-      "note": "W00 原始交付物及日志未全量恢复；保持历史状态，不宣称本次完成。"
+      "verification": "verified",
+      "source_commit": "df60292c0171794533ef1bcf733bfe3693f7b743",
+      "evidence": [
+        {
+          "path": "docs/implementation/evidence/W00-baseline/manifest.json",
+          "sha256": "c6d70aca4dd39ebc46bb5e5728f6c5286fc88b5b12f68b2e04613e7597023b14"
+        }
+      ],
+      "commands": [
+        {
+          "command": "git merge-base --is-ancestor 206c82af7ae007f45da4c582f373fbabf027f1b8 HEAD",
+          "exit_code": 0,
+          "result": "passed"
+        },
+        {
+          "command": "python scripts/agriculture/spec_status.py --check",
+          "exit_code": 0,
+          "result": "passed"
+        },
+        {
+          "command": "python scripts/agriculture/spec_status.test.py",
+          "exit_code": 0,
+          "result": "passed"
+        },
+        {
+          "command": "git diff --check",
+          "exit_code": 0,
+          "result": "passed"
+        }
+      ],
+      "source_hashes": [
+        {
+          "path": "AGENTS.md",
+          "sha256": "de9ae09ca46b6f3da63654e147cccf30cb75455037a211b963c244d4f48985b4"
+        },
+        {
+          "path": "LICENSE",
+          "sha256": "6f92cceb404c82da50b0c0318b3be7ae55b0952d449080bc42c82ddd9edaff3a"
+        },
+        {
+          "path": "NOTICE",
+          "sha256": "adcce66f810bf946cc1c032dbff2d8327715f357ff36d23f0031d85a2d8aaed0"
+        },
+        {
+          "path": "THIRD_PARTY_UPSTREAMS.md",
+          "sha256": "5ae573091465f278e4ad6a0c4b42723e2a14a42823819f6ed25a21ba3d4038ce"
+        },
+        {
+          "path": "backend/internal/agriculture/authorization.go",
+          "sha256": "742534dd9a8659e28d0e75999d6fd097436e45f719ca9c7e5c137f03a5e42212"
+        },
+        {
+          "path": "backend/internal/agriculture/delegation.go",
+          "sha256": "c4e416c5706513bec7c36c8994b2f2c37f9cc4beb8868c944d2b85147f8a978f"
+        },
+        {
+          "path": "backend/internal/database/flow_rls.go",
+          "sha256": "6d2d3312dbe695890ac5021e40d3d8f7bd3a2020b88fa0fa524078a6e5cf66bc"
+        },
+        {
+          "path": "backend/internal/flow/billing.go",
+          "sha256": "2058d08050e597ac67c7965a57d6dedbad53cf8d20d16fdc75f2cd794e779ea1"
+        },
+        {
+          "path": "backend/internal/flow/mcp.go",
+          "sha256": "70e594eb397b86dca7dcd2c416b097aa9878705f871cc573aee8b9ed2e910530"
+        },
+        {
+          "path": "backend/internal/flow/runchain.go",
+          "sha256": "8bad2e0b8e100c07d7244c62c9931f09e08d22e0799e1c876e7f7618e591b6f7"
+        },
+        {
+          "path": "deploy/agriculture/sources.json",
+          "sha256": "aae6b4e006489a1724a5fcefae8ed55e7ae83ffebe3d3951a73f6d78aff27fc8"
+        },
+        {
+          "path": "docs/agriculture/BASELINE_RECOVERY_AUDIT.md",
+          "sha256": "4e4ad3911f7ca47fe772ca92f0b697e5e2c0770a1159be69bd40fbfc6c974ee2"
+        },
+        {
+          "path": "docs/agriculture/BASELINE_RECOVERY_MANIFEST.json",
+          "sha256": "c6d70aca4dd39ebc46bb5e5728f6c5286fc88b5b12f68b2e04613e7597023b14"
+        },
+        {
+          "path": "docs/agriculture/dependencies/recovery-validation.json",
+          "sha256": "59cccb7285386a92136bd6b541008dd2c50eae5347fb1f6f63fdc5a50a170b56"
+        },
+        {
+          "path": "docs/agriculture/evidence/w01/native-pg-20261029/final-report.json",
+          "sha256": "1a166a525f9f474e12c9cd0adf3978b417ce2f6b9bd2379ee496a8b0ab8cc25c"
+        },
+        {
+          "path": "services/agri-gis/AGENTS.md",
+          "sha256": "3bafaaa69fae9c24d7da50f18c68c2c511b3594df921a2aab28434133e5426b5"
+        },
+        {
+          "path": "services/agri-gis/LICENSE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        },
+        {
+          "path": "services/agri-gis/NOTICE",
+          "sha256": "f690392c4e82594c093d12430923bbfea3d67b3c7ae8c2e68bd2a5b6920fb444"
+        },
+        {
+          "path": "services/agri-gis/backend/app/agriculture/actor_session.py",
+          "sha256": "fd09f61a5f04264f528e07128e5c92a128feae75999ebc7fd854b88f9f3eedf6"
+        },
+        {
+          "path": "services/agri-gis/backend/app/agriculture/main.py",
+          "sha256": "0b45a09af8dc7609f55356a89da79d623f7cc346efca0de78f9a3b6507fe4d4d"
+        },
+        {
+          "path": "services/agri-gis/backend/app/dao/plot_dao.py",
+          "sha256": "4ec9f8a940d054257a0517ed397d08d2b1a9fef2e70b2fd6cf386dd02b0dfd7a"
+        },
+        {
+          "path": "services/agri-gis/backend/app/services/growth_monitoring_engine.py",
+          "sha256": "1a90c6e19dcf0f2151560c39507d9e3fe89f5aa320433bc7032e2e7888067573"
+        },
+        {
+          "path": "services/agri-gis/frontend/vite.agriculture.config.ts",
+          "sha256": "882a8e2b9827aee136019a6fd761501cd0ab550ddf021f9935f3f4529c6280ae"
+        },
+        {
+          "path": "services/loom-engine/LICENSE",
+          "sha256": "05ae71b13ecdbc85a3c3bbab8ce92f712b3069d33992beba34a91a9b568fb612"
+        },
+        {
+          "path": "services/loom-engine/src/lib/db.ts",
+          "sha256": "23f420f5f0f7bd080745c93765143194dbe450dcc82a57b126ad478ebc1bb55c"
+        },
+        {
+          "path": "specs/agriculture/v1.0.0/AGENTS.md",
+          "sha256": "9580f6d0eb4105eef8c0644a08680b8673a6c8daf0c33e750c2e079a01f5ab9b"
+        },
+        {
+          "path": "specs/agriculture/v1.0.0/PRD.md",
+          "sha256": "3dd7de127b67e1aa04e5df6cfbea6c965812939d811770a94d98176579bd9c59"
+        },
+        {
+          "path": "specs/agriculture/v1.0.0/docs/DECISIONS.md",
+          "sha256": "70f479a26acf680725c078e027476905485c4dce08587c1270c38515337a9a01"
+        },
+        {
+          "path": "specs/agriculture/v1.0.0/docs/SOURCE_AUDIT.md",
+          "sha256": "bde610410aec719d79eb8222f54bbdc25411c575afd816d4057b4a1b56ff8d68"
+        },
+        {
+          "path": "specs/agriculture/v1.0.0/requirements.json",
+          "sha256": "1da296aa0230eb6223f5cd9c367ad50755eb46425fb91668569d6276f7b5db31"
+        },
+        {
+          "path": "web/vite.agriculture.config.ts",
+          "sha256": "096db3925699576173ef81f1e5ea4f615bb5851493e8e45d9e94bda018c11152"
+        }
+      ],
+      "note": "恢复后新执行只读基线及实际代码审计，不冒充原文或远程 HEAD 验证；固定 Flow 历史祖先通过、两来源全部文件存在，修改路径与来源摘要分列，AGENTS/LICENSE/NOTICE 保留。AgriScope 受控目录导入及独立完整来源历史明确区分；规则/农业 profile/规格追溯检查通过。不是全产品运行验收。"
     },
     "DT-002": {
       "historical_status": "done",
-      "verification": "pending_revalidation",
-      "evidence": [],
-      "commands": [],
-      "source_hashes": [],
-      "note": "W00 原始交付物及日志未全量恢复；保持历史状态，不宣称本次完成。"
+      "verification": "verified",
+      "source_commit": "df60292c0171794533ef1bcf733bfe3693f7b743",
+      "evidence": [
+        {
+          "path": "docs/implementation/evidence/W00-baseline/manifest.json",
+          "sha256": "c6d70aca4dd39ebc46bb5e5728f6c5286fc88b5b12f68b2e04613e7597023b14"
+        }
+      ],
+      "commands": [
+        {
+          "command": "git merge-base --is-ancestor 206c82af7ae007f45da4c582f373fbabf027f1b8 HEAD",
+          "exit_code": 0,
+          "result": "passed"
+        },
+        {
+          "command": "python scripts/agriculture/spec_status.py --check",
+          "exit_code": 0,
+          "result": "passed"
+        },
+        {
+          "command": "python scripts/agriculture/spec_status.test.py",
+          "exit_code": 0,
+          "result": "passed"
+        },
+        {
+          "command": "git diff --check",
+          "exit_code": 0,
+          "result": "passed"
+        }
+      ],
+      "source_hashes": [
+        {
+          "path": "AGENTS.md",
+          "sha256": "de9ae09ca46b6f3da63654e147cccf30cb75455037a211b963c244d4f48985b4"
+        },
+        {
+          "path": "LICENSE",
+          "sha256": "6f92cceb404c82da50b0c0318b3be7ae55b0952d449080bc42c82ddd9edaff3a"
+        },
+        {
+          "path": "NOTICE",
+          "sha256": "adcce66f810bf946cc1c032dbff2d8327715f357ff36d23f0031d85a2d8aaed0"
+        },
+        {
+          "path": "THIRD_PARTY_UPSTREAMS.md",
+          "sha256": "5ae573091465f278e4ad6a0c4b42723e2a14a42823819f6ed25a21ba3d4038ce"
+        },
+        {
+          "path": "backend/internal/agriculture/authorization.go",
+          "sha256": "742534dd9a8659e28d0e75999d6fd097436e45f719ca9c7e5c137f03a5e42212"
+        },
+        {
+          "path": "backend/internal/agriculture/delegation.go",
+          "sha256": "c4e416c5706513bec7c36c8994b2f2c37f9cc4beb8868c944d2b85147f8a978f"
+        },
+        {
+          "path": "backend/internal/database/flow_rls.go",
+          "sha256": "6d2d3312dbe695890ac5021e40d3d8f7bd3a2020b88fa0fa524078a6e5cf66bc"
+        },
+        {
+          "path": "backend/internal/flow/billing.go",
+          "sha256": "2058d08050e597ac67c7965a57d6dedbad53cf8d20d16fdc75f2cd794e779ea1"
+        },
+        {
+          "path": "backend/internal/flow/mcp.go",
+          "sha256": "70e594eb397b86dca7dcd2c416b097aa9878705f871cc573aee8b9ed2e910530"
+        },
+        {
+          "path": "backend/internal/flow/runchain.go",
+          "sha256": "8bad2e0b8e100c07d7244c62c9931f09e08d22e0799e1c876e7f7618e591b6f7"
+        },
+        {
+          "path": "deploy/agriculture/sources.json",
+          "sha256": "aae6b4e006489a1724a5fcefae8ed55e7ae83ffebe3d3951a73f6d78aff27fc8"
+        },
+        {
+          "path": "docs/agriculture/BASELINE_RECOVERY_AUDIT.md",
+          "sha256": "4e4ad3911f7ca47fe772ca92f0b697e5e2c0770a1159be69bd40fbfc6c974ee2"
+        },
+        {
+          "path": "docs/agriculture/BASELINE_RECOVERY_MANIFEST.json",
+          "sha256": "c6d70aca4dd39ebc46bb5e5728f6c5286fc88b5b12f68b2e04613e7597023b14"
+        },
+        {
+          "path": "docs/agriculture/dependencies/recovery-validation.json",
+          "sha256": "59cccb7285386a92136bd6b541008dd2c50eae5347fb1f6f63fdc5a50a170b56"
+        },
+        {
+          "path": "docs/agriculture/evidence/w01/native-pg-20261029/final-report.json",
+          "sha256": "1a166a525f9f474e12c9cd0adf3978b417ce2f6b9bd2379ee496a8b0ab8cc25c"
+        },
+        {
+          "path": "services/agri-gis/AGENTS.md",
+          "sha256": "3bafaaa69fae9c24d7da50f18c68c2c511b3594df921a2aab28434133e5426b5"
+        },
+        {
+          "path": "services/agri-gis/LICENSE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        },
+        {
+          "path": "services/agri-gis/NOTICE",
+          "sha256": "f690392c4e82594c093d12430923bbfea3d67b3c7ae8c2e68bd2a5b6920fb444"
+        },
+        {
+          "path": "services/agri-gis/backend/app/agriculture/actor_session.py",
+          "sha256": "fd09f61a5f04264f528e07128e5c92a128feae75999ebc7fd854b88f9f3eedf6"
+        },
+        {
+          "path": "services/agri-gis/backend/app/agriculture/main.py",
+          "sha256": "0b45a09af8dc7609f55356a89da79d623f7cc346efca0de78f9a3b6507fe4d4d"
+        },
+        {
+          "path": "services/agri-gis/backend/app/dao/plot_dao.py",
+          "sha256": "4ec9f8a940d054257a0517ed397d08d2b1a9fef2e70b2fd6cf386dd02b0dfd7a"
+        },
+        {
+          "path": "services/agri-gis/backend/app/services/growth_monitoring_engine.py",
+          "sha256": "1a90c6e19dcf0f2151560c39507d9e3fe89f5aa320433bc7032e2e7888067573"
+        },
+        {
+          "path": "services/agri-gis/frontend/vite.agriculture.config.ts",
+          "sha256": "882a8e2b9827aee136019a6fd761501cd0ab550ddf021f9935f3f4529c6280ae"
+        },
+        {
+          "path": "services/loom-engine/LICENSE",
+          "sha256": "05ae71b13ecdbc85a3c3bbab8ce92f712b3069d33992beba34a91a9b568fb612"
+        },
+        {
+          "path": "services/loom-engine/src/lib/db.ts",
+          "sha256": "23f420f5f0f7bd080745c93765143194dbe450dcc82a57b126ad478ebc1bb55c"
+        },
+        {
+          "path": "specs/agriculture/v1.0.0/AGENTS.md",
+          "sha256": "9580f6d0eb4105eef8c0644a08680b8673a6c8daf0c33e750c2e079a01f5ab9b"
+        },
+        {
+          "path": "specs/agriculture/v1.0.0/PRD.md",
+          "sha256": "3dd7de127b67e1aa04e5df6cfbea6c965812939d811770a94d98176579bd9c59"
+        },
+        {
+          "path": "specs/agriculture/v1.0.0/docs/DECISIONS.md",
+          "sha256": "70f479a26acf680725c078e027476905485c4dce08587c1270c38515337a9a01"
+        },
+        {
+          "path": "specs/agriculture/v1.0.0/docs/SOURCE_AUDIT.md",
+          "sha256": "bde610410aec719d79eb8222f54bbdc25411c575afd816d4057b4a1b56ff8d68"
+        },
+        {
+          "path": "specs/agriculture/v1.0.0/requirements.json",
+          "sha256": "1da296aa0230eb6223f5cd9c367ad50755eb46425fb91668569d6276f7b5db31"
+        },
+        {
+          "path": "web/vite.agriculture.config.ts",
+          "sha256": "096db3925699576173ef81f1e5ea4f615bb5851493e8e45d9e94bda018c11152"
+        }
+      ],
+      "note": "恢复后新执行只读基线及实际代码审计，不冒充原文或远程 HEAD 验证；固定 Flow 历史祖先通过、两来源全部文件存在，修改路径与来源摘要分列，AGENTS/LICENSE/NOTICE 保留。AgriScope 受控目录导入及独立完整来源历史明确区分；规则/农业 profile/规格追溯检查通过。不是全产品运行验收。"
     },
     "DT-003": {
       "historical_status": "done",
@@ -4052,11 +4356,163 @@
     },
     "DT-004": {
       "historical_status": "done",
-      "verification": "pending_revalidation",
-      "evidence": [],
-      "commands": [],
-      "source_hashes": [],
-      "note": "W00 原始交付物及日志未全量恢复；保持历史状态，不宣称本次完成。"
+      "verification": "verified",
+      "source_commit": "df60292c0171794533ef1bcf733bfe3693f7b743",
+      "evidence": [
+        {
+          "path": "docs/implementation/evidence/W00-baseline/manifest.json",
+          "sha256": "c6d70aca4dd39ebc46bb5e5728f6c5286fc88b5b12f68b2e04613e7597023b14"
+        }
+      ],
+      "commands": [
+        {
+          "command": "git merge-base --is-ancestor 206c82af7ae007f45da4c582f373fbabf027f1b8 HEAD",
+          "exit_code": 0,
+          "result": "passed"
+        },
+        {
+          "command": "python scripts/agriculture/spec_status.py --check",
+          "exit_code": 0,
+          "result": "passed"
+        },
+        {
+          "command": "python scripts/agriculture/spec_status.test.py",
+          "exit_code": 0,
+          "result": "passed"
+        },
+        {
+          "command": "git diff --check",
+          "exit_code": 0,
+          "result": "passed"
+        }
+      ],
+      "source_hashes": [
+        {
+          "path": "AGENTS.md",
+          "sha256": "de9ae09ca46b6f3da63654e147cccf30cb75455037a211b963c244d4f48985b4"
+        },
+        {
+          "path": "LICENSE",
+          "sha256": "6f92cceb404c82da50b0c0318b3be7ae55b0952d449080bc42c82ddd9edaff3a"
+        },
+        {
+          "path": "NOTICE",
+          "sha256": "adcce66f810bf946cc1c032dbff2d8327715f357ff36d23f0031d85a2d8aaed0"
+        },
+        {
+          "path": "THIRD_PARTY_UPSTREAMS.md",
+          "sha256": "5ae573091465f278e4ad6a0c4b42723e2a14a42823819f6ed25a21ba3d4038ce"
+        },
+        {
+          "path": "backend/internal/agriculture/authorization.go",
+          "sha256": "742534dd9a8659e28d0e75999d6fd097436e45f719ca9c7e5c137f03a5e42212"
+        },
+        {
+          "path": "backend/internal/agriculture/delegation.go",
+          "sha256": "c4e416c5706513bec7c36c8994b2f2c37f9cc4beb8868c944d2b85147f8a978f"
+        },
+        {
+          "path": "backend/internal/database/flow_rls.go",
+          "sha256": "6d2d3312dbe695890ac5021e40d3d8f7bd3a2020b88fa0fa524078a6e5cf66bc"
+        },
+        {
+          "path": "backend/internal/flow/billing.go",
+          "sha256": "2058d08050e597ac67c7965a57d6dedbad53cf8d20d16fdc75f2cd794e779ea1"
+        },
+        {
+          "path": "backend/internal/flow/mcp.go",
+          "sha256": "70e594eb397b86dca7dcd2c416b097aa9878705f871cc573aee8b9ed2e910530"
+        },
+        {
+          "path": "backend/internal/flow/runchain.go",
+          "sha256": "8bad2e0b8e100c07d7244c62c9931f09e08d22e0799e1c876e7f7618e591b6f7"
+        },
+        {
+          "path": "deploy/agriculture/sources.json",
+          "sha256": "aae6b4e006489a1724a5fcefae8ed55e7ae83ffebe3d3951a73f6d78aff27fc8"
+        },
+        {
+          "path": "docs/agriculture/BASELINE_RECOVERY_AUDIT.md",
+          "sha256": "4e4ad3911f7ca47fe772ca92f0b697e5e2c0770a1159be69bd40fbfc6c974ee2"
+        },
+        {
+          "path": "docs/agriculture/BASELINE_RECOVERY_MANIFEST.json",
+          "sha256": "c6d70aca4dd39ebc46bb5e5728f6c5286fc88b5b12f68b2e04613e7597023b14"
+        },
+        {
+          "path": "docs/agriculture/dependencies/recovery-validation.json",
+          "sha256": "59cccb7285386a92136bd6b541008dd2c50eae5347fb1f6f63fdc5a50a170b56"
+        },
+        {
+          "path": "docs/agriculture/evidence/w01/native-pg-20261029/final-report.json",
+          "sha256": "1a166a525f9f474e12c9cd0adf3978b417ce2f6b9bd2379ee496a8b0ab8cc25c"
+        },
+        {
+          "path": "services/agri-gis/AGENTS.md",
+          "sha256": "3bafaaa69fae9c24d7da50f18c68c2c511b3594df921a2aab28434133e5426b5"
+        },
+        {
+          "path": "services/agri-gis/LICENSE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        },
+        {
+          "path": "services/agri-gis/NOTICE",
+          "sha256": "f690392c4e82594c093d12430923bbfea3d67b3c7ae8c2e68bd2a5b6920fb444"
+        },
+        {
+          "path": "services/agri-gis/backend/app/agriculture/actor_session.py",
+          "sha256": "fd09f61a5f04264f528e07128e5c92a128feae75999ebc7fd854b88f9f3eedf6"
+        },
+        {
+          "path": "services/agri-gis/backend/app/agriculture/main.py",
+          "sha256": "0b45a09af8dc7609f55356a89da79d623f7cc346efca0de78f9a3b6507fe4d4d"
+        },
+        {
+          "path": "services/agri-gis/backend/app/dao/plot_dao.py",
+          "sha256": "4ec9f8a940d054257a0517ed397d08d2b1a9fef2e70b2fd6cf386dd02b0dfd7a"
+        },
+        {
+          "path": "services/agri-gis/backend/app/services/growth_monitoring_engine.py",
+          "sha256": "1a90c6e19dcf0f2151560c39507d9e3fe89f5aa320433bc7032e2e7888067573"
+        },
+        {
+          "path": "services/agri-gis/frontend/vite.agriculture.config.ts",
+          "sha256": "882a8e2b9827aee136019a6fd761501cd0ab550ddf021f9935f3f4529c6280ae"
+        },
+        {
+          "path": "services/loom-engine/LICENSE",
+          "sha256": "05ae71b13ecdbc85a3c3bbab8ce92f712b3069d33992beba34a91a9b568fb612"
+        },
+        {
+          "path": "services/loom-engine/src/lib/db.ts",
+          "sha256": "23f420f5f0f7bd080745c93765143194dbe450dcc82a57b126ad478ebc1bb55c"
+        },
+        {
+          "path": "specs/agriculture/v1.0.0/AGENTS.md",
+          "sha256": "9580f6d0eb4105eef8c0644a08680b8673a6c8daf0c33e750c2e079a01f5ab9b"
+        },
+        {
+          "path": "specs/agriculture/v1.0.0/PRD.md",
+          "sha256": "3dd7de127b67e1aa04e5df6cfbea6c965812939d811770a94d98176579bd9c59"
+        },
+        {
+          "path": "specs/agriculture/v1.0.0/docs/DECISIONS.md",
+          "sha256": "70f479a26acf680725c078e027476905485c4dce08587c1270c38515337a9a01"
+        },
+        {
+          "path": "specs/agriculture/v1.0.0/docs/SOURCE_AUDIT.md",
+          "sha256": "bde610410aec719d79eb8222f54bbdc25411c575afd816d4057b4a1b56ff8d68"
+        },
+        {
+          "path": "specs/agriculture/v1.0.0/requirements.json",
+          "sha256": "1da296aa0230eb6223f5cd9c367ad50755eb46425fb91668569d6276f7b5db31"
+        },
+        {
+          "path": "web/vite.agriculture.config.ts",
+          "sha256": "096db3925699576173ef81f1e5ea4f615bb5851493e8e45d9e94bda018c11152"
+        }
+      ],
+      "note": "恢复后新执行只读基线及实际代码审计，不冒充原文或远程 HEAD 验证；固定 Flow 历史祖先通过、两来源全部文件存在，修改路径与来源摘要分列，AGENTS/LICENSE/NOTICE 保留。AgriScope 受控目录导入及独立完整来源历史明确区分；规则/农业 profile/规格追溯检查通过。不是全产品运行验收。"
     },
     "DT-005": {
       "historical_status": "done",
@@ -4068,11 +4524,52 @@
     },
     "DT-006": {
       "historical_status": "done",
-      "verification": "pending_revalidation",
-      "evidence": [],
-      "commands": [],
-      "source_hashes": [],
-      "note": "W00 原始交付物及日志未全量恢复；保持历史状态，不宣称本次完成。"
+      "verification": "verified",
+      "source_commit": "51af0001846e642ebb62e515f6c79c6052d9d89d",
+      "evidence": [
+        {
+          "path": "docs/implementation/evidence/DT-006/golden-recovery.json",
+          "sha256": "9dec140878f004997ad96d23a16916beb6572167a8a42e90733ff674c3ed24b0"
+        }
+      ],
+      "commands": [
+        {
+          "command": ".local/agri-identity-venv/bin/python -m pytest -q tests/agriculture/test_golden_fixtures.py --junitxml=.local/evidence/golden-recovery/junit.xml",
+          "exit_code": 0,
+          "result": "passed"
+        }
+      ],
+      "source_hashes": [
+        {
+          "path": "docs/agriculture/GOLDEN_FIXTURES.md",
+          "sha256": "7d2e36221e4de824af78622f1cdaa617a69956af483a28e448b2518c9a655722"
+        },
+        {
+          "path": "tests/agriculture/fixtures/golden/generate.py",
+          "sha256": "9b6b2b91b222502793ad075a79d1c4b78aa35b487886669665c2fdf0dfeffc92"
+        },
+        {
+          "path": "tests/agriculture/fixtures/golden/manifest.json",
+          "sha256": "7fc77ffc05f4d6e121e7c14c62c815d5eb2503389acf684f35dee40497cd495c"
+        },
+        {
+          "path": "tests/agriculture/fixtures/golden/parcels.json",
+          "sha256": "b94fe7d24efd177abd0c0c40091cdc1b722760647ac45bdd12c2d1eb735a0ae9"
+        },
+        {
+          "path": "tests/agriculture/fixtures/golden/reflectance-20260601.tif",
+          "sha256": "40f1433bf882efbf61606841282ff19622d8863220e31a419ae4662a7ebb8e0b"
+        },
+        {
+          "path": "tests/agriculture/fixtures/golden/reflectance-20260611.tif",
+          "sha256": "4f736b32990f4eb9e7b119b871f8717d9d63166e872d894e37af08954b3ab3c2"
+        },
+        {
+          "path": "tests/agriculture/test_golden_fixtures.py",
+          "sha256": "0433c8456c340ca1b8e5424576c2304901643408d4dafbab8cecf2c23cb1b740"
+        }
+      ],
+      "note": "重新构造可追溯合成黄金样本，非丢失旧字节恢复。两租户重叠坐标、显式 CRS、两期实际 GeoTIFF、scale/offset/nodata/cloud/shadow 与手算面积/NDVI；10 项真实文件及参考算术测试通过，独立复核。公开真实/客户样本尚未提供，不代表生产分析/RLS或农学验收。"
     },
     "DT-007": {
       "historical_status": "done",

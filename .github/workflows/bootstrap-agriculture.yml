@@ -1,0 +1,43 @@
+name: Bootstrap pinned agriculture history
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/bootstrap-agriculture.yml]
+permissions:
+  contents: write
+jobs:
+  import-pinned-history:
+    if: github.repository == 'newyngwieslash-ops/WeaveSense-Flow-Digital'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Import exact public Flow ancestry into a new development branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          target='refs/heads/feat/agriculture-v1'
+          expected='206c82af7ae007f45da4c582f373fbabf027f1b8'
+          set +e
+          git ls-remote --exit-code origin "$target" > /tmp/existing-ref
+          code=$?
+          set -e
+          if [ "$code" = 0 ]; then
+            echo 'Development branch already exists; preserving it unchanged.'
+            exit 0
+          fi
+          if [ "$code" != 2 ]; then
+            echo 'Could not establish target branch absence.'
+            exit 1
+          fi
+          git fetch --no-tags https://github.com/newyngwieslash-ops/WeaveSense-Flow.git "$expected"
+          actual="$(git rev-parse FETCH_HEAD)"
+          test "$actual" = "$expected"
+          git cat-file -e "$expected^{commit}"
+          test "$(git rev-list --count "$expected")" -gt 1
+          # A normal non-force push creates the new branch; it cannot overwrite divergence.
+          git push origin "$expected:$target"
+          test "$(git ls-remote origin "$target" | cut -f1)" = "$expected"
+          echo "Pinned ancestry imported: $expected"

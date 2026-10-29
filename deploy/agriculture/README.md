@@ -31,9 +31,11 @@ docker compose --env-file .env.agriculture -f docker-compose.agriculture.yml --p
 docker compose --env-file .env.agriculture -f docker-compose.agriculture.yml --profile core --profile platform --profile knowledge up -d --build --wait
 ```
 
-`platform-migrate` 执行原 Go 迁移，`loom-migrate` 执行原 Loom 迁移；运行服务关闭自动迁移，使用各自运行账号。它们不向宿主发布端口，无真实 provider 配置，无外部 egress；这一步只验证上游隔离运行兼容性，不自动启用知识采集或农业 API。现有前端生产包可能含单独授权组件，因此本基线不直接发布原始 web 镜像；农业前端 profile 完成许可排除后再接入。
+`platform-migrate` 执行原 Go 迁移，`loom-migrate` 执行原 Loom 迁移；运行服务关闭自动迁移，使用各自运行账号。平台等待 Redis 的带认证 PING 健康检查，避免只等进程启动就连接的竞态。它们不向宿主发布端口，无真实 provider 配置，无外部 egress；这一步只验证上游隔离运行兼容性，不代表农业 API 已实现。现有前端生产包可能含单独授权组件，因此本基线不直接发布原始 web 镜像；农业前端 profile 完成许可排除后再接入。
 
-使用容器内请求检查平台 `/api/health/ready` 和 Loom 的实际健康入口；不要把未启动的功能写成成功。干净卷测试应在独立 CI 项目名执行，输出迁移结果、角色权限、健康响应和退出码，保留失败日志但清除敏感值。测试数据使用 `AGRI_DATA_CLASS=demo` 和 `demo/agriculture/` 对象前缀；当前基线没有假装提供对象存储上传功能。
+注意：原 Loom 的 `LOOM_ROLE=api` 仍会启动 collection worker，即使 `LOOM_SPLIT_ROLES=true`；不要把该 profile 当成无 worker 的静态服务。`LOOM_DIRECT_PROVIDER_KEYS=disabled` 尚未发现被此 Flow 入口使用，不能作为安全开关。当前隔离依赖空白演示数据库、未配置外部来源和 internal 网络；不得导入真实采集任务。平台未配置 `LOOM_ENGINE_URL`，Loom 未配置 `FLOW_PLATFORM_INTERNAL_URL` / `FLOW_PLATFORM_EVENTS_URL`，因此授权复核、预算、回调和事件投递闭环均未接通。后续工作包需要实际接线与负例验证。
+
+使用容器内请求检查平台 `/api/health/ready`。Loom `/healthz` 只是静态存活响应，不检查数据库，不能作为迁移或业务 readiness。不要把未启动的功能写成成功。干净卷测试应在独立 CI 项目名执行，输出迁移结果、角色权限、健康响应和退出码，保留失败日志但清除敏感值。测试数据使用 `AGRI_DATA_CLASS=demo` 和 `demo/agriculture/` 对象前缀；当前基线没有假装提供对象存储上传功能。
 
 ## 停止与恢复
 

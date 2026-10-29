@@ -25,7 +25,14 @@ services:
   redis:
     profiles: [core]
     image: redis:7.4.2-alpine
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?configure local secret}
     command: [redis-server, --appendonly, "yes", --requirepass, "${REDIS_PASSWORD:?configure local secret}"]
+    healthcheck:
+      test: [CMD-SHELL, 'REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli ping | grep -qx PONG']
+      interval: 5s
+      timeout: 3s
+      retries: 20
     volumes: [agriculture_redisdata:/data]
     networks: [internal]
   geo-readiness:
@@ -40,7 +47,7 @@ services:
     read_only: true
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
-    tmpfs: [/tmp:rw,noexec,nosuid,size=16m]
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=16m"]
     healthcheck:
       test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready',timeout=3)"]
       interval: 5s
@@ -75,7 +82,7 @@ services:
     volumes: [agriculture_platformdata:/data]
     depends_on:
       platform-migrate: {condition: service_completed_successfully}
-      redis: {condition: service_started}
+      redis: {condition: service_healthy}
     networks: [internal]
   loom-migrate:
     profiles: [knowledge]

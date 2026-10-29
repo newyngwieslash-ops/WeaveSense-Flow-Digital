@@ -32,10 +32,10 @@ jobs:
       - name: Install isolated schema-test dependencies
         run: |
           python3 -m venv .ci-venv
-          .ci-venv/bin/pip install pytest==8.3.5 jsonschema==4.26.0 referencing==0.37.0 jsonschema-specifications==2025.9.1 rpds-py==2026.6.3
+          .ci-venv/bin/pip install pytest==8.3.5 jsonschema==4.26.0 referencing==0.37.0 jsonschema-specifications==2025.9.1 rpds-py==2026.6.3 PyYAML==6.0.3
       - name: Contract negatives and trusted source policy
         run: |
-          .ci-venv/bin/python -m pytest -q tests/agriculture/test_contracts.py tests/agriculture/test_source_rights.py
+          .ci-venv/bin/python -m pytest -q tests/agriculture/test_contracts.py tests/agriculture/test_source_rights.py tests/agriculture/test_compose_policy.py
           .ci-venv/bin/python scripts/agriculture/check-source-policy.py --profile agriculture
   compose:
     needs: contracts

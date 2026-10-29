@@ -153,7 +153,7 @@ async function connect(cdpPort, origin) {
         } else if (message.method === "Network.responseReceived") {
             const response = message.params.response;
             const url = new URL(response.url);
-            if (url.origin === origin && ["/api/auth/session", "/api/auth/login", "/api/auth/logout", "/api/auth/settings", "/api/auth/password-reset-code", "/api/auth/password-reset", "/api/intelligence/workspaces"].includes(url.pathname)) {
+            if (url.origin === origin && ["/api/auth/session", "/api/auth/login", "/api/auth/logout", "/api/auth/settings", "/api/auth/password-reset-code", "/api/auth/password-reset", "/api/agriculture/workspaces"].includes(url.pathname)) {
                 const status = { path: url.pathname, status: response.status, completed: false };
                 statuses.push(status);
                 statusRequests.set(message.params.requestId, status);
@@ -233,12 +233,13 @@ async function main() {
         const apiPort = await freePort();
         proxy = await startProxy({ apiPort, reactRoot, vueRoot });
         const origin = `http://127.0.0.1:${proxy.address().port}`;
-        const workspaceStatus = async value => (await fetch(`${origin}/api/intelligence/workspaces`, {
+        const workspaceStatus = async value => (await fetch(`${origin}/api/agriculture/workspaces`, {
             headers: value ? { Cookie: `${COOKIE}=${value}` } : {},
         })).status;
         backend = spawn(binary, [], { cwd: join(ROOT, "backend"), env: {
             PATH: process.env.PATH, HOME: temp, GIN_MODE: "release", CANVAS_DATABASE_DRIVER: "sqlite", CANVAS_BACKEND_DATA_DIR: temp,
             CANVAS_BACKEND_ADDR: `127.0.0.1:${apiPort}`, CANVAS_AUTO_MIGRATE: "true", CANVAS_CORS_ORIGINS: origin,
+            FLOW_AGRICULTURE_ENABLED: "true", FLOW_AGRICULTURE_ALLOW_SQLITE_DEV: "true",
         }, stdio: "ignore" });
         await ready(`${origin}/api/auth/settings`, backend);
         const username = `e2e_${randomBytes(6).toString("hex")}`;

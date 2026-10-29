@@ -30,6 +30,12 @@ ALTER DEFAULT PRIVILEGES FOR ROLE :"owner" IN SCHEMA public GRANT USAGE, SELECT 
 ALTER DEFAULT PRIVILEGES FOR ROLE :"owner" IN SCHEMA public REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
 SQL
 done
+psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d flow_platform <<'SQL'
+-- The resolver owner cannot log in or bypass RLS. Only the migration role may
+-- transfer function ownership; the application is never a member of this role.
+CREATE ROLE flow_platform_admission NOLOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+GRANT flow_platform_admission TO flow_platform_migrate;
+SQL
 psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d flow_geo <<'SQL'
 CREATE EXTENSION IF NOT EXISTS postgis;
 GRANT USAGE ON SCHEMA public TO flow_geo_app;

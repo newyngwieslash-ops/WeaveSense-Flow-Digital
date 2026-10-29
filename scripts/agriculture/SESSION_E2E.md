@@ -20,15 +20,15 @@ node scripts/agriculture/session-e2e.mjs
 
 覆盖匿名/伪造 cookie 与 localStorage、跨 React/Vue 的真实 actor、HttpOnly 同路径 cookie、错误 token 不能注销原会话、Vue 退出后 React 刷新与 cookie 重放、真实 session 的数据库 fixture 到期后双方拒绝恢复。仅过期负例写本脚本新建数据库；其他身份操作都是实际 API/浏览器。所有进程和临时目录由脚本创建并精确清理。
 
-匿名、伪造 cookie、正确 session ID + 错误 token、注销后重放及过期 cookie 均直接请求真实受保护 `/api/intelligence/workspaces` 并断言 HTTP 401，而非仅查看界面隐藏或 `/auth/session` 的 null。农业 GIS 业务资源尚未开放；本脚本不把工作区入口拒绝当作未来 GIS 全部资源授权通过。
+匿名、伪造 cookie、正确 session ID + 错误 token、注销后重放及过期 cookie 均直接请求真实受保护 `/api/agriculture/workspaces` 并断言 HTTP 401，而非仅查看界面隐藏或 `/auth/session` 的 null。仅本脚本自建服务显式启用 `FLOW_AGRICULTURE_ENABLED=true`、`FLOW_AGRICULTURE_ALLOW_SQLITE_DEV=true`。农业 GIS 业务资源尚未开放；本脚本不把工作区入口拒绝当作未来 GIS 全部资源授权通过。
 
-## 口令重置扩展（须另一次真实 CI 验收）
+## 口令重置扩展
 
 口令重置使用隔离数据库 fixture：仅给本脚本注册的用户绑定随机 `fixture.invalid` 邮箱；SMTP 配置通过真实管理员 API 写入同一私有新建 SQLite，host 固定 `127.0.0.1`、随机端口、不配置任何外部账号。SMTP sink 只接收该地址，拒绝 relay、非 fixture 发件人/收件人、超大内容，无对外连接功能。邮件只在内存，关闭时清空。
 
 浏览器实际操作 forgot-password 的“发送验证码”与“重置密码”两阶段表单。验证码由真实 Go 服务生成、按实际 HMAC 规则入库、经真实 SMTP socket 发送至本地 sink；测试不插入验证码、不模拟发送/重置成功、不改 React 状态。然后验证两个真实旧会话的工作区 HTTP 401、双方页面拒绝旧 cookie、原口令 HTTP 401、新口令真实登录表单恢复同一身份、数据库内码为 hash 且已消费，以及重复使用该码失败。数据库直接修改仅邮箱 fixture 与原有 expiry 负例，不写新密码或伪造 session。
 
-这是 **loopback 邮件链路**，不是外部 SMTP/邮件供应商或用户真实邮箱验收。第三轮原有 31 项通过报告保留，不能用其证明尚未执行的新扩展通过。后端真实数据库测试仍作为独立分层证据，PostgreSQL RLS 与 GIS 上下文不在本测试范围。
+这是 **loopback 邮件链路**，不是外部 SMTP/邮件供应商或用户真实邮箱验收。第三轮原有 31 项通过报告保留。扩展已在 CI run `40818545088` 的 snapshot `f45cb899126ef543956bf2e86dfa4e0b9c2e4ee2` 实际通过 44 项断言；当时工作区端点为旧平台列表。当前 DT010 将 React/Vue 和受保护负例切换为农业端点，必须对新源码另行回归，不能沿用旧结果。后端真实数据库测试仍作为独立分层证据，PostgreSQL RLS 与 GIS 上下文不在本测试范围。
 
 `session-e2e.test.mjs` 验证静态同源服务路由/穿越拒绝，以及 loopback SMTP 协议接收、拒绝 relay、大小限制与内存清理；这些不冒充浏览器身份集成测试。
 

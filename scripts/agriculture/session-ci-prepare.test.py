@@ -11,6 +11,23 @@ spec.loader.exec_module(prepare)
 
 
 class PreparationTests(unittest.TestCase):
+    def test_membership_overlay_includes_dependency_closure_explicitly(self):
+        required = {
+            "backend/cmd/server/main.go", "backend/internal/agriculture/roles.go",
+            "backend/internal/agriculture/routes.go", "backend/internal/agriculture/service.go",
+            "backend/internal/agriculture/service_test.go", "backend/internal/agriculture/postgres_test.go",
+            "backend/internal/database/migrations.go", "backend/internal/database/migration_agriculture.go",
+            "backend/internal/database/migration_agriculture_postgres_test.go", "backend/internal/model/models_agriculture.go",
+            "backend/internal/model/models_tenancy.go", "backend/internal/model/models_flow_billing.go",
+            "deploy/agriculture/postgres/init.sh", "scripts/agriculture/membership-ci.sh",
+            "web/src/features/agriculture/organization.tsx", "web/src/services/api/agriculture.ts",
+            "scripts/agriculture/organization-e2e.mjs", "scripts/agriculture/organization-e2e.test.mjs",
+            "scripts/agriculture/ORGANIZATION_E2E.md",
+        }
+        self.assertTrue(required.issubset(set(prepare.OVERLAY)))
+        self.assertEqual(len(prepare.OVERLAY), len(set(prepare.OVERLAY)))
+        self.assertTrue(all("*" not in path and not path.startswith(".github/") for path in prepare.OVERLAY))
+
     def test_overlay_only_copies_reviewed_paths(self):
         with tempfile.TemporaryDirectory() as temp:
             source, destination = Path(temp) / "source", Path(temp) / "destination"

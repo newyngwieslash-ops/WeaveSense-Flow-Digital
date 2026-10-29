@@ -67,11 +67,14 @@ function workspacesFrom(payload: unknown): Workspace[] {
   if (!Array.isArray(payload)) throw invalid()
   const seen = new Set<string>()
   return payload.map((item: unknown) => {
-    if (!record(item) || !id(item.id) || !text(item.name) || !text(item.slug) || seen.has(item.id)) throw invalid()
+    const roles = ['viewer', 'analyst', 'editor', 'field_operator', 'reviewer', 'farm_manager', 'tenant_admin', 'billing_admin']
+    if (!record(item) || !id(item.id) || !id(item.tenantId) || !text(item.name) || !text(item.slug) || !text(item.tenantName)
+      || !['active', 'disabled'].includes(String(item.tenantStatus)) || typeof item.canManageMembers !== 'boolean' || typeof item.canManageOrganization !== 'boolean'
+      || !Array.isArray(item.roles) || item.roles.some(role => typeof role !== 'string' || !roles.includes(role)) || new Set(item.roles).size !== item.roles.length || seen.has(item.id)) throw invalid()
     seen.add(item.id)
     // tenantId is intentionally not retained or forwarded. GIS authority comes later from Go.
-    return { id: item.id, name: item.name, slug: item.slug }
-  })
+    return item.tenantStatus === 'active' ? { id: item.id, name: item.name, slug: item.slug } : null
+  }).filter((item): item is Workspace => item !== null)
 }
 
 export class SessionController {
@@ -105,7 +108,7 @@ export class SessionController {
       const user = userFrom(await request(this.fetcher, '/api/auth/session', signal))
       if (generation !== this.generation) return
       if (!user) throw new SessionError('AUTH_REQUIRED', '尚未登录或会话已失效，请使用平台统一登录。')
-      const workspaces = workspacesFrom(await request(this.fetcher, '/api/intelligence/workspaces', signal))
+      const workspaces = workspacesFrom(await request(this.fetcher, '/api/agriculture/workspaces', signal))
       const selected = requested === null ? null : workspaces.find((workspace) => workspace.id === requested)
       if (selected === undefined) throw new SessionError('WORKSPACE_FORBIDDEN', '该工作区不存在或当前账号无权访问。')
       if (generation === this.generation) this.publish({ status: 'ready', user, workspaces, selected, error: null })

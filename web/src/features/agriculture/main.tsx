@@ -14,11 +14,12 @@ import RegisterPage from "@/pages/auth/register";
 import ForgotPasswordPage from "@/pages/auth/forgot-password";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { getAuthSession, invalidateAuthSessionCache, logout } from "@/services/api/auth";
-import { listIntelWorkspaces } from "@/services/api/intelligence";
+import { agricultureAPI } from "@/services/api/agriculture";
 import { useUserStore } from "@/stores/use-user-store";
 import { appQueryClient } from "@/lib/query-client";
 import { getAntThemeConfig } from "@/lib/app-theme";
 import { applyUserSession, beginSessionRevalidation } from "./session";
+import OrganizationPage from "./organization";
 
 function SessionBoundary({ children }: { children: ReactNode }) {
     const [error, setError] = useState(false);
@@ -65,7 +66,7 @@ function AuthLayout() {
 function Home() {
     const { message } = App.useApp();
     const user = useUserStore((state) => state.user);
-    const workspaces = useQuery({ queryKey: ["agriculture", "workspaces", user?.id], queryFn: listIntelWorkspaces, enabled: Boolean(user) });
+    const workspaces = useQuery({ queryKey: ["agriculture", "workspaces", user?.id], queryFn: async ({ signal }) => (await agricultureAPI.workspaces(signal)).filter(workspace => workspace.tenantStatus === "active"), enabled: Boolean(user) });
     const leave = async () => {
         try { await logout(); await applyUserSession({ user: null }); }
         catch { message.error("退出失败，请重试。当前登录状态未被伪装为已退出。"); }
@@ -73,6 +74,7 @@ function Home() {
     return <main className="agri-profile">
         <header><h1>农业空间工作台</h1><Button onClick={leave}>退出登录</Button></header>
         <p data-testid="session-user" data-user-id={user?.id}>当前平台用户：{user?.displayName || user?.username}</p>
+        <nav aria-label="农业组织导航"><Link to="/organization">管理组织与成员</Link></nav>
         <Alert type="info" title="农业构建基线" description="GIS 工作台集成与业务验收仍在实施。此页展示平台返回的真实工作区，不提供模拟农场或遥感结果。" />
         <h2>可访问工作区</h2>
         {workspaces.isPending ? <p role="status">正在读取工作区…</p> : workspaces.isError ? <Alert type="error" title="工作区读取失败" action={<Button onClick={() => void workspaces.refetch()}>重试</Button>} /> : <ul>{workspaces.data.length ? workspaces.data.map((workspace) => <li key={workspace.id}><a href={`/agri/?workspace_id=${encodeURIComponent(workspace.id)}`}>{workspace.name}</a><span> · {workspace.slug}</span></li>) : <li>尚无可访问工作区。</li>}</ul>}
@@ -83,6 +85,7 @@ function Home() {
 const router = createBrowserRouter([
     { element: <AuthLayout />, children: [{ path: "/login", element: <LoginPage /> }, { path: "/register", element: <RegisterPage /> }, { path: "/forgot-password", element: <ForgotPasswordPage /> }] },
     { path: "/", element: <RequireAuth><Home /></RequireAuth> },
+    { path: "/organization", element: <RequireAuth><OrganizationPage /></RequireAuth> },
     { path: "*", element: <Navigate to="/" replace /> },
 ]);
 

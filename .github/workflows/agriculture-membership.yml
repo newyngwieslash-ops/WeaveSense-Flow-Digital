@@ -1,0 +1,128 @@
+name: Agriculture membership PostgreSQL and browser acceptance
+on:
+  workflow_dispatch:
+  push:
+    branches: [ci/agriculture-w00, feat/agriculture-v1]
+    paths:
+      - '.github/workflows/agriculture-membership.yml'
+      - 'scripts/agriculture/membership-*'
+      - 'scripts/agriculture/session-ci-prepare*'
+      - 'scripts/agriculture/organization-*'
+      - 'web/**'
+      - 'services/agri-gis/frontend/**'
+      - 'backend/internal/agriculture/**'
+      - 'backend/internal/database/**'
+      - 'backend/internal/model/**'
+      - 'backend/internal/flow/**'
+      - 'deploy/agriculture/postgres/**'
+  pull_request:
+    branches: [ci/agriculture-w00, feat/agriculture-v1]
+permissions:
+  contents: read
+jobs:
+  membership-postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          path: scaffold
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.9'
+          cache: false
+      - name: Validate safe preparation and skipped-test rejection
+        run: |
+          python3 scaffold/scripts/agriculture/session-ci-prepare.test.py
+          python3 scaffold/scripts/agriculture/membership-ci-result.test.py
+      - name: Assemble explicit reviewed source overlay or actual full checkout
+        env:
+          SCAFFOLD_MODE: ${{ github.ref_name == 'ci/agriculture-w00' || github.head_ref == 'ci/agriculture-w00' }}
+        run: |
+          set -euo pipefail
+          mode=full
+          if [[ "$SCAFFOLD_MODE" == true ]]; then mode=scaffold; fi
+          python3 scaffold/scripts/agriculture/session-ci-prepare.py --scaffold scaffold --destination product --mode "$mode"
+      - name: Actual fresh PostgreSQL migration, admission, RLS and membership service tests
+        working-directory: product
+        run: bash scripts/agriculture/membership-ci.sh
+      - name: Sanitized evidence only
+        if: always()
+        run: |
+          for file in product/.local/evidence/membership-*.json; do
+            if [[ -f "$file" ]]; then cat "$file"; fi
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agriculture-membership-sanitized-evidence
+          path: |
+            product/.local/evidence/membership-*.json
+            product/.local/evidence/session-ci-provenance.json
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+  organization-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          path: scaffold
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.9'
+          cache: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.22.1'
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.9'
+      - name: Assemble exact reviewed source and authored membership UI
+        env:
+          SCAFFOLD_MODE: ${{ github.ref_name == 'ci/agriculture-w00' || github.head_ref == 'ci/agriculture-w00' }}
+        run: |
+          set -euo pipefail
+          python3 scaffold/scripts/agriculture/session-ci-prepare.test.py
+          mode=full
+          if [[ "$SCAFFOLD_MODE" == true ]]; then mode=scaffold; fi
+          python3 scaffold/scripts/agriculture/session-ci-prepare.py --scaffold scaffold --destination product --mode "$mode"
+          echo "AGRI_E2E_SOURCE_COMMIT=$(python3 -c 'import json; print(json.load(open("product/.local/evidence/session-ci-provenance.json"))["source_commit"])')" >> "$GITHUB_ENV"
+      - name: Build actual platform and production React/Vue profiles
+        working-directory: product
+        env:
+          CANVAS_BUILD_COMMIT: ${{ env.AGRI_E2E_SOURCE_COMMIT }}
+        run: |
+          set -euo pipefail
+          mkdir -p .local/bin
+          go -C backend build -o "$PWD/.local/bin/agriculture-platform" ./cmd/server
+          (cd web && bun install --frozen-lockfile && bun test test/agriculture-api.test.ts test/agriculture-organization.test.ts test/agriculture-profile.test.ts test/auth-return-path.test.ts test/auth-session-race.test.ts && bun run build:agriculture)
+          (cd services/agri-gis/frontend && npm ci --ignore-scripts --no-audit --no-fund && bun run test:agriculture && npm run build:agriculture)
+      - name: Actual dual-account Chromium organization lifecycle
+        working-directory: product
+        run: |
+          set -euo pipefail
+          chrome="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          test -n "$chrome"
+          export CHROME_BIN="$chrome"
+          node --test scripts/agriculture/organization-e2e.test.mjs scripts/agriculture/session-e2e.test.mjs
+          node scripts/agriculture/organization-e2e.mjs
+      - name: Sanitized browser evidence only
+        if: always()
+        run: |
+          if [[ -f product/.local/evidence/organization-browser-e2e.json ]]; then
+            cat product/.local/evidence/organization-browser-e2e.json
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agriculture-organization-browser-sanitized-evidence
+          path: |
+            product/.local/evidence/organization-browser-e2e.json
+            product/.local/evidence/session-ci-provenance.json
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14

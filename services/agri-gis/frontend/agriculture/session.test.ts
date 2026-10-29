@@ -3,7 +3,7 @@ import { SessionController, loginURL, selectedWorkspace, workspaceURL } from './
 import { bindSessionLifecycle } from './session-lifecycle'
 
 const user = { id: 'user-a', username: 'farmer', displayName: 'Test Farmer', role: 'user', status: 'active' }
-const workspace = { id: 'workspace-a', tenantId: 'server-only-tenant', slug: 'farm', name: 'Farm workspace' }
+const workspace = { id: 'workspace-a', tenantId: 'server-only-tenant', slug: 'farm', name: 'Farm workspace', tenantName: 'Farm organization', tenantStatus: 'active', roles: ['viewer'], canManageMembers: false, canManageOrganization: false }
 const response = (data: unknown, status = 200) => Response.json({ code: 0, data }, { status })
 function client(responses: (Response | Error)[]) {
   const requests: { path: string; init: RequestInit }[] = []
@@ -23,7 +23,7 @@ describe('platform cookie session boundary', () => {
     await controller.refresh('?workspace_id=workspace-a')
     expect(controller.state.status).toBe('ready')
     expect(controller.state.selected).toEqual({ id: 'workspace-a', slug: 'farm', name: 'Farm workspace' })
-    expect(requests.map((item) => item.path)).toEqual(['/api/auth/session', '/api/intelligence/workspaces'])
+    expect(requests.map((item) => item.path)).toEqual(['/api/auth/session', '/api/agriculture/workspaces'])
     for (const item of requests) {
       expect(item.init.credentials).toBe('same-origin')
       expect(item.init.cache).toBe('no-store')
@@ -67,6 +67,18 @@ describe('platform cookie session boundary', () => {
     await controller.refresh('?workspace_id=other-tenant-workspace')
     expect(controller.state.error?.code).toBe('WORKSPACE_FORBIDDEN')
     expect(controller.state.workspaces).toEqual([])
+  })
+  test('disabled owner governance records never become Vue business workspaces', async () => {
+    const disabled = { ...workspace, tenantStatus: 'disabled', canManageOrganization: true }
+    const { controller } = client([response({ user }), response([disabled]), response({ user }), response([disabled])])
+    await controller.refresh(); expect(controller.state.status).toBe('ready'); expect(controller.state.workspaces).toEqual([])
+    await controller.refresh('?workspace_id=workspace-a'); expect(controller.state.error?.code).toBe('WORKSPACE_FORBIDDEN')
+  })
+  test('legacy records, incomplete profile fields and noncanonical roles fail closed', async () => {
+    for (const item of [{ id: 'old', name: 'Film', slug: 'default' }, { ...workspace, tenantName: null }, { ...workspace, roles: ['owner'] }, { ...workspace, roles: ['viewer', 'viewer'] }, { ...workspace, canManageMembers: 'true' }]) {
+      const { controller } = client([response({ user }), response([item])]); await controller.refresh()
+      expect(controller.state.error?.code).toBe('INVALID_RESPONSE'); expect(controller.state.user).toBeNull()
+    }
   })
   test('workspace API 401 clears identity and previously loaded data', async () => {
     const { controller } = client([response({ user }), response([workspace]), response({ user }), response(null, 401)])
@@ -179,7 +191,7 @@ test('BFCache pageshow clears restored actor, requests current server session, a
   expect(controller.state.user).toBeNull()
   expect(controller.state.workspaces).toEqual([])
   await restored
-  expect(requests.map((item) => item.path)).toEqual(['/api/auth/session', '/api/intelligence/workspaces', '/api/auth/session'])
+  expect(requests.map((item) => item.path)).toEqual(['/api/auth/session', '/api/agriculture/workspaces', '/api/auth/session'])
   expect(controller.state.error?.code).toBe('AUTH_REQUIRED')
   unbind()
   windowEvents.dispatchEvent(new Event('pageshow'))

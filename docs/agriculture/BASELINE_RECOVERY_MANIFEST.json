@@ -1,0 +1,321 @@
+{
+  "schema_version": 1,
+  "kind": "new_recovery_audit_not_original_bytes",
+  "observed_head": "06b78298c52348d07fafe97751526f59dc06b151",
+  "branch": "recovery/agriculture-20261029",
+  "flow": {
+    "commit": "206c82af7ae007f45da4c582f373fbabf027f1b8",
+    "ancestor_exit_code": 0,
+    "identical_files": 5416,
+    "changed_existing_files": [
+      {
+        "path": ".gitignore",
+        "baseline_sha256": "600001b56d071148f8b0e429c862205f961806b71bb817156dc34ebc45328d5a",
+        "current_sha256": "c3ce4066f430d43ef68d869e1c1314e88b381771d61592ea301df351eadfcfae"
+      },
+      {
+        "path": "backend/cmd/server/main.go",
+        "baseline_sha256": "44ed638c332ec52cdb9535c66776753dfc868d1cc70131dd17afa01633ff9c66",
+        "current_sha256": "c94f3634277724cb125a52c25c40fcd058a07e8d1867281b2fbb6736cbdf6193"
+      },
+      {
+        "path": "backend/go.mod",
+        "baseline_sha256": "89a2af0a6112d65c4a8f5d68ddc68a89b65e67b552f5095a57a07ddcd10a8f47",
+        "current_sha256": "c2458011cd426d7dac61d02f6dd212efa9dd5cceb5947bb1dfed10998687fd6e"
+      },
+      {
+        "path": "backend/go.sum",
+        "baseline_sha256": "ba33d8b510137683085181643571fd2814980ce2feddde5b284c03381cfe7dd4",
+        "current_sha256": "4840c140d5a1cb68eacf1057e85ad495bcd00c63c4f32fc465bcad5459fde684"
+      },
+      {
+        "path": "backend/internal/auth/auth.go",
+        "baseline_sha256": "35f04da35203186570a64da3d91360e064ff49d208ccf4fe85f82d813f3396b1",
+        "current_sha256": "597d6dce98d4e8a6f9f4e968652715df6d06dc4aa4ec6a6fd5cb8206f2069b2a"
+      },
+      {
+        "path": "backend/internal/auth/password_reset_test.go",
+        "baseline_sha256": "5daff6f39fca02c75495a1e0caaf49a35b5fc13417f617bea8ebdf55fe48ddac",
+        "current_sha256": "49545261641fcbd7376551b9f364e42aff74abd1231cfa300c2d06e056acd736"
+      },
+      {
+        "path": "backend/internal/database/migrations.go",
+        "baseline_sha256": "3def4d49c2e7da69784a9234de2eff1e3018e738a51233a794f04cbe0427b40e",
+        "current_sha256": "6d67eee01f2c1e9605a3e93ad3aa30acc89535d3faa7a2e06db91996c4317a3e"
+      },
+      {
+        "path": "backend/internal/flow/orgs.go",
+        "baseline_sha256": "75e26493ca2096f70ec2aa710c61f06614867f8370eda2595a7787daecec81e5",
+        "current_sha256": "e1cd99b521d9340651bce3536f01968e35cd608a1f5d310fbaeaa37b8f214850"
+      },
+      {
+        "path": "backend/internal/flow/p7.go",
+        "baseline_sha256": "8aa2de56c12048a3085009911d21e1a913c66e42c8f14c454f9739592a20c8db",
+        "current_sha256": "885dc5231bcd91293c01c05cabffc35af16973ac1c992adc3ac4cae8bc87b023"
+      },
+      {
+        "path": "backend/internal/flow/rls_runtime.go",
+        "baseline_sha256": "c0ed661a30367cde00129f31b70babab24ebb046f8670b37dca1ac34183cf2c6",
+        "current_sha256": "bf8b38878f398d62082b8ffe511fe958817c4a46c11a6838d5d04f2e4d5fd9b8"
+      },
+      {
+        "path": "backend/internal/flow/routes.go",
+        "baseline_sha256": "b10fe2132cadf8bc4b1583a898dd0309011ea2124311937332e34b0fca7a4234",
+        "current_sha256": "9d30ab5e17add292b2cc8b95f5ce14635873a3fbb78580c77f7e9ab0dcadf46f"
+      },
+      {
+        "path": "backend/internal/flow/routes_p5.go",
+        "baseline_sha256": "6350a91f256601cc50d8b3340cc34c7fc3fde4c22fd56afff2e5592e01c49008",
+        "current_sha256": "f48b4f3af6f17941a791c4da80743e48cf8915753ad17e822df560a579f41f09"
+      },
+      {
+        "path": "backend/internal/flow/routes_p7.go",
+        "baseline_sha256": "96aa3a53f5cb8a6f06e8d7f21397a75cc465dc1b80d2c6e686d6469751eb9a0d",
+        "current_sha256": "0d6fe278adef2d3a07812c7eb3daabb90711dcc960fdf0045b81b87190b2195e"
+      },
+      {
+        "path": "backend/internal/flow/scope.go",
+        "baseline_sha256": "9e52ee87be6f7967d4ba6d3965d286e7b98fba5cf0339938691669ccc74082d0",
+        "current_sha256": "8c7e390a1a83e96642f5e04ef47b169856ade7efb92cfd16d9d6fdaf9bb62b7a"
+      },
+      {
+        "path": "backend/internal/handler/auth.go",
+        "baseline_sha256": "17e251056858873d303b480ddd30c1e63a2ebe0abbb97638f9f1476c70f3d339",
+        "current_sha256": "aea97d434c5f757e93fa4999fa4e1476d1687e1e8831896a092f0079e7a4e99a"
+      },
+      {
+        "path": "backend/internal/model/models_flow_billing.go",
+        "baseline_sha256": "e900bab63217cf87fd1107501affa01beeeabcdc35fe94f290e8a3c1da60e9a4",
+        "current_sha256": "be96cf5d7250b13f4528f2a9f35036d0e9fdc3dc0202af277f69fb424802ad2b"
+      },
+      {
+        "path": "backend/internal/model/models_tenancy.go",
+        "baseline_sha256": "cf14eea37688598745b42c8b7982d433f8e291f2ba84528c2184723978d8a7c6",
+        "current_sha256": "68ebab18bd0bc2cef863fa3fd07991f9fa6540f092af6abaa7e414ec6f8e58bc"
+      },
+      {
+        "path": "restart.bat",
+        "baseline_sha256": "d7938370b1ec3837e1f09206905f5ddcc65e1ec49b85e2c593751b7cf6b9bc8b",
+        "current_sha256": "07e2ff7b7d45460cc2550f892e69b0f05f2246ac469ce9c23b13e285c36c0aad"
+      },
+      {
+        "path": "services/loom-engine/restart.bat",
+        "baseline_sha256": "efd16d081a7486a7a97996b8b674394455832004e9a41c741f1e696d6f590acd",
+        "current_sha256": "325819e2f1e57fa0aaebd30dd0c1e1a3fd8c1b3e4e35afebad4872f967f47c2c"
+      },
+      {
+        "path": "web/package.json",
+        "baseline_sha256": "7e9fb3c580aa021b1c8ef95d1d3d6263851fa620121db46849980e98b58ade07",
+        "current_sha256": "4d8928e67bafe1aac41c45a608942c078c3ba3bc0e78ec84edbf4db0824902af"
+      },
+      {
+        "path": "web/src/pages/auth/forgot-password.tsx",
+        "baseline_sha256": "3218f9bb929e557ad29817c0b6a9e179c27dabe6649fe42c0c90d3537a3a2d8d",
+        "current_sha256": "40b88d82a1cc3101dc77315874cdaf61eeafedd73fd0a29b7edb9b26623807dc"
+      },
+      {
+        "path": "web/src/pages/auth/login.tsx",
+        "baseline_sha256": "5363d708a97fe9116098b7983ba8346b6324a7a019bfd54f4cfbe5e89d125c8f",
+        "current_sha256": "2b30a832b2d41a5ad5ea6716d113ebb4cdf6acdde7065be6f9436507c9af0029"
+      },
+      {
+        "path": "web/src/pages/auth/register.tsx",
+        "baseline_sha256": "76eb807a54f4105211cd76b25b4ef1d8516118dcbd517be9ea7e313f4af8a371",
+        "current_sha256": "0d293877e1f86d52a5f110d1a443f834fb5133e0a309d58f7624350666a67885"
+      },
+      {
+        "path": "web/src/services/api/auth.ts",
+        "baseline_sha256": "639910aaf847d4fc9443a04ada8486cda0ec0600fa63d4cfe32eea752b6b5c14",
+        "current_sha256": "bca680b4d1d14d5ab9d3f605c846e45721982f0b27ff9d8373c446c542f032a1"
+      },
+      {
+        "path": "web/src/services/live2d-loader.ts",
+        "baseline_sha256": "f78aa44b92076ffdea788d7b042515e267b12b4afca2110b8f8a3577476bcc3e",
+        "current_sha256": "e4306077b95f89908efb613e5fc299089b01cd2c11eb02f6aedda82d29d2e4a2"
+      }
+    ],
+    "missing_files": [],
+    "compared_files": 5441
+  },
+  "agri": {
+    "commit": "571a2dcd9abf8b8a22b66c750ee710b61d482051",
+    "separate_source_head": "571a2dcd9abf8b8a22b66c750ee710b61d482051",
+    "main_repository_commit_object_present": false,
+    "identical_files": 556,
+    "changed_existing_files": [
+      {
+        "path": "services/agri-gis/backend/app/dao/workbench_dao.py",
+        "baseline_sha256": "919ba2004fe86b6c9e869ce60d251e8e78eb5576668427e9daf2ae84be0c1374",
+        "current_sha256": "f06ab69b815452029ca0d13be29463d40a634a68fe93bde9371c07bb39325469"
+      },
+      {
+        "path": "services/agri-gis/backend/app/main.py",
+        "baseline_sha256": "2ce9832c7503ad0fcc5500e7806bbd0d620dc54175b8521be544faf184d3c3b5",
+        "current_sha256": "bb846a1d2550a1799aa655c8e6cbb5249441ae7af8294f3833e1fae11480a45a"
+      },
+      {
+        "path": "services/agri-gis/backend/app/services/project_user_service.py",
+        "baseline_sha256": "adc2c1a022b2e8f26a8f32853e9d13a3fd1dd3eb88f8407af366ec14e62faba5",
+        "current_sha256": "6f36c4be95f8a69140d1da9e642fb91929439e32505e3d42d7d9e3a5971fbb2c"
+      },
+      {
+        "path": "services/agri-gis/backend/app/services/service_sharing_service.py",
+        "baseline_sha256": "cccb6f4a2ab5da5e44999709f1938a1e35dc7fea861f0cd795684e57fa9a3ff7",
+        "current_sha256": "2bbe43d66473d0f7af73cb3e2b02ae0d855d5d901827be5abaab5642034d99e7"
+      },
+      {
+        "path": "services/agri-gis/backend/app/services/workbench_service.py",
+        "baseline_sha256": "1a57c073f573de151ff3f8cf3fdb4a4a2cb44627d0600cc6376c9fcf7c4545c8",
+        "current_sha256": "5c9913dd03fe804a2f8f97e34f9b5346e3439bd78e73a677375a8086b8446e90"
+      },
+      {
+        "path": "services/agri-gis/backend/poetry.lock",
+        "baseline_sha256": "1cb6ee71053bc44e28cb6902073a88a3de1124609cdd57ba421f32bb1ef05388",
+        "current_sha256": "e5e287271ef6c5fb56185dfcd07f12eedae144a908ec1483ab877696259a26df"
+      },
+      {
+        "path": "services/agri-gis/backend/pyproject.toml",
+        "baseline_sha256": "ada0d39446252f7b190533d152ac77fd9044bc971625f6194a5dca88be929fec",
+        "current_sha256": "25ba43f87576814128bffd8b19f1a1f5cf9a673a6da9aa1a01ed6d1837b7abd2"
+      },
+      {
+        "path": "services/agri-gis/backend/tests/test_boundary_delivery_services.py",
+        "baseline_sha256": "83cd96a766d18413b145494f6436ada93c135d94736bf87292038d282f7e8ba2",
+        "current_sha256": "82b0af3e1880237f2f3a535655c7e992a0c1939a16eed46be5c066f6b39f381c"
+      },
+      {
+        "path": "services/agri-gis/backend/tests/test_rule_config.py",
+        "baseline_sha256": "036a4b052ef65218162b0f88492461080f6f82060bf80818549922dc70dc79f8",
+        "current_sha256": "3ef72049503e347ef04b8295a3a9584b35a0537d1302f8bceede35cb872e1bf5"
+      },
+      {
+        "path": "services/agri-gis/backend/tests/test_service_sharing.py",
+        "baseline_sha256": "b3e5597bf60f0357f0af8bdf564d66fe9f672a4e4c828eedba9f0b6c1c85a0f8",
+        "current_sha256": "41b4e9ea910afb0e63a4def2a544734ff719aa51dbd9c69c31ee95c22fbd689e"
+      },
+      {
+        "path": "services/agri-gis/backend/tests/test_workbench.py",
+        "baseline_sha256": "4816a41734041d5ac325f27b94cf71efb40223c591c62bb3c6d0a4902a4b75ea",
+        "current_sha256": "38427514ea980dec9f0c51e1820882ea212ab094efa072bba05d59c38cecad41"
+      },
+      {
+        "path": "services/agri-gis/frontend/package.json",
+        "baseline_sha256": "1d868ee7e0b16fc2580d26b862f6ae3c44b4699f996d6e69ca936a76426082c5",
+        "current_sha256": "8754de04388d16bbacb9363c40138396b7c074f42535f4f7892469e41e434897"
+      },
+      {
+        "path": "services/agri-gis/frontend/src/api/request.ts",
+        "baseline_sha256": "ba3b4cf380d6d66d184af3713a3e69942b0e9ddf0a79550a73505d911e1951e1",
+        "current_sha256": "3e579c12a9f123a17b4ead36c0a5b7e5005c672540c6bbc8d881828298f32610"
+      },
+      {
+        "path": "services/agri-gis/frontend/src/components/field/mobile/MobileFieldCaptureForm.vue",
+        "baseline_sha256": "087e38d2f2e45f71a5792b118eaea707a73b350b84eeda84232b46cfd18d0e1a",
+        "current_sha256": "430535c29a60d616468994659bd3a3611d6e4966092be3545f3fe4e640c3dec1"
+      },
+      {
+        "path": "services/agri-gis/frontend/src/components/layout/UserIdentitySwitcher.vue",
+        "baseline_sha256": "26e6882435f58e05671b1821eedb3d276f8545d49be54ea6df070bbdf90410a4",
+        "current_sha256": "fa0ce8a234f9741dac34d1a285f1987daf2e8d738586ea3b30cf0f6383e9889a"
+      },
+      {
+        "path": "services/agri-gis/frontend/src/components/uav/mobile/MobileUavCaptureForm.vue",
+        "baseline_sha256": "b57a26fa16a077d9c80785df6608e13fe3af77e294e9ab6074e72765b8acea4c",
+        "current_sha256": "4d8232c6157ce805631951acd7f720c97d6830acd6d6e479ed34535b19520938"
+      },
+      {
+        "path": "services/agri-gis/frontend/src/main.ts",
+        "baseline_sha256": "b119a3831082ea3cf337bd8d4806b7828dd7c12a7a8b36eef40919058fbc25ae",
+        "current_sha256": "197592c09c7f72c849318ba0368b489e7a55dd9660f002dcb4d46b296a39fcd7"
+      },
+      {
+        "path": "services/agri-gis/frontend/src/store/fieldCaptureStore.ts",
+        "baseline_sha256": "795e5b1168cfaf42494a561cb4a516c6a63a423f64da14ba126b3b481b0b5964",
+        "current_sha256": "759abd4f4559c0c92e474cfec15cd25ebc980866dd765ddbb84206775494f52a"
+      },
+      {
+        "path": "services/agri-gis/frontend/src/store/uavCaptureStore.ts",
+        "baseline_sha256": "23fe407ad0423d1043eff02a37fb7e539096c40b2194a2d8104a145c47a66039",
+        "current_sha256": "765011b88e75d4dd020687ec0fe9c29d9a92c953115b4214333e36da9b3d9a33"
+      },
+      {
+        "path": "services/agri-gis/frontend/src/store/userStore.ts",
+        "baseline_sha256": "c5336a66f50a59ae403657c8ff4255e4aebb0846fb4e8bb7559e21483a626212",
+        "current_sha256": "e5bd7e6894e713eb78a3f09e4195dc0d7c97a3d343f454533b980018c9355a57"
+      },
+      {
+        "path": "services/agri-gis/frontend/src/views/FieldCaptureView.vue",
+        "baseline_sha256": "e6293713a9eb06352192da0d1cf7b65b03ae9a2d2b9a9f58bc75687621232090",
+        "current_sha256": "ba51bd80cd9c957a493be1f6ddafbfa4f02e07b0d46ba07623dc150b1e84c752"
+      },
+      {
+        "path": "services/agri-gis/frontend/src/views/UavCaptureView.vue",
+        "baseline_sha256": "3ddf2d0ab1c15d9a73f1d23256dded3312df57cae3dbdcfc56ff1c7f4827d7eb",
+        "current_sha256": "5e7645aee210e7e6928f8ca64edfb5b4824a86ffbf0f005cec841e4e8af077ba"
+      }
+    ],
+    "missing_files": [],
+    "compared_files": 578
+  },
+  "remote_heads_queried": false,
+  "audit_performs_runtime_tests": false,
+  "selected_file_hashes": {
+    "AGENTS.md": "de9ae09ca46b6f3da63654e147cccf30cb75455037a211b963c244d4f48985b4",
+    "LICENSE": "6f92cceb404c82da50b0c0318b3be7ae55b0952d449080bc42c82ddd9edaff3a",
+    "NOTICE": "adcce66f810bf946cc1c032dbff2d8327715f357ff36d23f0031d85a2d8aaed0",
+    "THIRD_PARTY_UPSTREAMS.md": "5ae573091465f278e4ad6a0c4b42723e2a14a42823819f6ed25a21ba3d4038ce",
+    "services/agri-gis/AGENTS.md": "3bafaaa69fae9c24d7da50f18c68c2c511b3594df921a2aab28434133e5426b5",
+    "services/agri-gis/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "services/agri-gis/NOTICE": "f690392c4e82594c093d12430923bbfea3d67b3c7ae8c2e68bd2a5b6920fb444",
+    "services/loom-engine/LICENSE": "05ae71b13ecdbc85a3c3bbab8ce92f712b3069d33992beba34a91a9b568fb612",
+    "specs/agriculture/v1.0.0/AGENTS.md": "9580f6d0eb4105eef8c0644a08680b8673a6c8daf0c33e750c2e079a01f5ab9b",
+    "specs/agriculture/v1.0.0/PRD.md": "3dd7de127b67e1aa04e5df6cfbea6c965812939d811770a94d98176579bd9c59",
+    "specs/agriculture/v1.0.0/requirements.json": "1da296aa0230eb6223f5cd9c367ad50755eb46425fb91668569d6276f7b5db31",
+    "specs/agriculture/v1.0.0/docs/SOURCE_AUDIT.md": "bde610410aec719d79eb8222f54bbdc25411c575afd816d4057b4a1b56ff8d68",
+    "specs/agriculture/v1.0.0/docs/DECISIONS.md": "70f479a26acf680725c078e027476905485c4dce08587c1270c38515337a9a01",
+    "backend/internal/flow/runchain.go": "8bad2e0b8e100c07d7244c62c9931f09e08d22e0799e1c876e7f7618e591b6f7",
+    "backend/internal/flow/mcp.go": "70e594eb397b86dca7dcd2c416b097aa9878705f871cc573aee8b9ed2e910530",
+    "backend/internal/flow/billing.go": "2058d08050e597ac67c7965a57d6dedbad53cf8d20d16fdc75f2cd794e779ea1",
+    "backend/internal/database/flow_rls.go": "6d2d3312dbe695890ac5021e40d3d8f7bd3a2020b88fa0fa524078a6e5cf66bc",
+    "backend/internal/agriculture/authorization.go": "742534dd9a8659e28d0e75999d6fd097436e45f719ca9c7e5c137f03a5e42212",
+    "backend/internal/agriculture/delegation.go": "c4e416c5706513bec7c36c8994b2f2c37f9cc4beb8868c944d2b85147f8a978f",
+    "services/loom-engine/src/lib/db.ts": "23f420f5f0f7bd080745c93765143194dbe450dcc82a57b126ad478ebc1bb55c",
+    "services/agri-gis/backend/app/services/growth_monitoring_engine.py": "1a90c6e19dcf0f2151560c39507d9e3fe89f5aa320433bc7032e2e7888067573",
+    "services/agri-gis/backend/app/dao/plot_dao.py": "4ec9f8a940d054257a0517ed397d08d2b1a9fef2e70b2fd6cf386dd02b0dfd7a",
+    "services/agri-gis/backend/app/agriculture/main.py": "0b45a09af8dc7609f55356a89da79d623f7cc346efca0de78f9a3b6507fe4d4d",
+    "services/agri-gis/backend/app/agriculture/actor_session.py": "fd09f61a5f04264f528e07128e5c92a128feae75999ebc7fd854b88f9f3eedf6",
+    "web/vite.agriculture.config.ts": "096db3925699576173ef81f1e5ea4f615bb5851493e8e45d9e94bda018c11152",
+    "services/agri-gis/frontend/vite.agriculture.config.ts": "882a8e2b9827aee136019a6fd761501cd0ab550ddf021f9935f3f4529c6280ae",
+    "deploy/agriculture/sources.json": "aae6b4e006489a1724a5fcefae8ed55e7ae83ffebe3d3951a73f6d78aff27fc8",
+    "docs/agriculture/dependencies/recovery-validation.json": "59cccb7285386a92136bd6b541008dd2c50eae5347fb1f6f63fdc5a50a170b56",
+    "docs/agriculture/evidence/w01/native-pg-20261029/final-report.json": "1a166a525f9f474e12c9cd0adf3978b417ce2f6b9bd2379ee496a8b0ab8cc25c"
+  },
+  "original_spec_compare": {
+    "AGENTS.md": true,
+    "PRD.md": true,
+    "requirements.json": true,
+    "docs/SOURCE_AUDIT.md": true
+  },
+  "checks": [
+    {
+      "command": "git merge-base --is-ancestor 206c82af7ae007f45da4c582f373fbabf027f1b8 HEAD",
+      "exit_code": 0
+    },
+    {
+      "command": "python scripts/agriculture/spec_status.py --check",
+      "exit_code": 0,
+      "scope": "structure_and_markdown_sync_only",
+      "warning": "historical DT-001, DT-002, DT-004 through DT-012 recovery evidence pending"
+    },
+    {
+      "command": "python scripts/agriculture/spec_status.test.py",
+      "exit_code": 0,
+      "tests": 9
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    }
+  ],
+  "comparison_method": "Read fixed git blobs using ls-tree -rz, SHA256 original bytes and current worktree files; manifest only records changed original paths, counts identical paths, and selected evidence hashes. No remote query or source update."
+}

@@ -32,7 +32,7 @@ func fixture(t *testing.T) (Service, OrganizationResult) {
 	}
 	conn.SetMaxOpenConns(1)
 	t.Cleanup(func() { _ = conn.Close() })
-	err = db.AutoMigrate(&model.User{}, &model.Tenant{}, &model.Membership{}, &model.Workspace{}, &model.WorkspaceMembership{}, &model.FlowInvite{}, &model.FlowBillingAccount{}, &model.AgricultureRoleBinding{}, &model.AgricultureAuditEvent{})
+	err = db.AutoMigrate(&model.User{}, &model.Tenant{}, &model.Membership{}, &model.Workspace{}, &model.WorkspaceMembership{}, &model.FlowInvite{}, &model.FlowBillingAccount{}, &model.AgricultureRoleBinding{}, &model.AgricultureAuditEvent{}, &model.AgricultureAuthorizationEpoch{}, &model.AgricultureResourceBinding{})
 	if err != nil {
 		t.Fatal(err)
 	}

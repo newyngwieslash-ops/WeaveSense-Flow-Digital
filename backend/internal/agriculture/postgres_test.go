@@ -69,7 +69,7 @@ func postgresFixture(t *testing.T) (Service, *gorm.DB, string, string) {
 		}
 		for _, tenant := range tenants {
 			err := flow.TenantTx(owner, tenant.ID, func(tx *gorm.DB) error {
-				for _, table := range []string{"flow_agriculture_audit_events", "flow_agriculture_role_bindings", "flow_invites", "flow_billing_accounts", "flow_memberships"} {
+				for _, table := range []string{"flow_agriculture_resource_bindings", "flow_agriculture_authorization_epochs", "flow_agriculture_audit_events", "flow_agriculture_role_bindings", "flow_invites", "flow_billing_accounts", "flow_memberships"} {
 					if err := tx.Table(table).Where("tenant_id=?", tenant.ID).Delete(map[string]any{}).Error; err != nil {
 						return err
 					}

@@ -105,6 +105,7 @@ for line in sys.stdin:
 go -C backend run ./cmd/migrate-schema up 2>&1 | redact
 before=$(sql platform migrate flow_platform "SELECT md5(string_agg(version::text || ':' || checksum, ',' ORDER BY version)) FROM schema_migrations")
 [[ $(sql platform migrate flow_platform 'SELECT count(*) FROM schema_migrations WHERE version=82') == 1 ]]
+[[ $(sql platform migrate flow_platform 'SELECT count(*) FROM schema_migrations WHERE version=83') == 1 ]]
 go -C backend run ./cmd/migrate-schema up 2>&1 | redact
 [[ $(sql platform migrate flow_platform "SELECT md5(string_agg(version::text || ':' || checksum, ',' ORDER BY version)) FROM schema_migrations") == "$before" ]]
 go -C backend run ./cmd/migrate-schema verify 2>&1 | redact
@@ -119,7 +120,8 @@ manifest=Path('.local/evidence/session-ci-provenance.json')
 source=json.loads(manifest.read_text()) if manifest.exists() else {}
 evidence={
     'fresh_volume':True,'six_database_roles_checked':True,'runtime_not_owner_checked':True,
-    'cross_database_denial_checked':True,'migration_82_applied_and_replayed':True,'postgis_checked':True,
+    'cross_database_denial_checked':True,'migration_82_applied_and_replayed':True,
+    'migration_83_applied_and_replayed':True,'postgis_checked':True,
     'data_class':'fixture','production_deployment':False,'tests_outcome':'running',
     'started_at':os.environ['MEMBERSHIP_STARTED_AT'],
     'bootstrap_completed_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),

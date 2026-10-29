@@ -30,6 +30,10 @@ node scripts/agriculture/session-e2e.mjs
 
 这是 **loopback 邮件链路**，不是外部 SMTP/邮件供应商或用户真实邮箱验收。第三轮原有 31 项通过报告保留。扩展已在 CI run `40818545088` 的 snapshot `f45cb899126ef543956bf2e86dfa4e0b9c2e4ee2` 实际通过 44 项断言；当时工作区端点为旧平台列表。当前 DT010 将 React/Vue 和受保护负例切换为农业端点，必须对新源码另行回归，不能沿用旧结果。后端真实数据库测试仍作为独立分层证据，PostgreSQL RLS 与 GIS 上下文不在本测试范围。
 
+农业端点切换后的真实回归已通过：run `40819936013`（snapshot `84b279c2148c54cd72c9833e777282ec3ae3e458`）及 run `40820949488`（snapshot `bac853367d456bcb865596e05c573e5ba5589859`）均 44 条断言通过。后者 artifact `12874367498`，zip SHA256 `66e965bd29d93f8b7e681fc36dcb06fad68ca3fcf4fa3b0602e3b925507d0c78`。这是对应源码组合的真实浏览器结果，不是仅依据构建或旧端点结论推定通过。
+
+后续组织浏览器 run `40824605197` / job `123284634505` 在 snapshot `81a41097d3b6e58748cf286c39ac469f20b4e5da` 实际通过62条组织/既有会话撤权断言，详见 `ORGANIZATION_E2E.md`。这不是本脚本44条口令重置路径在该新snapshot重新执行的证据，不替换上述会话原始报告。该run的72项overlay与本地 `7a07fdfd9f53b8b117c1da8c61190c99646b0e59` 比较仅两份说明文档不同；运行代码、配置及测试脚本一致，精确比较已归档。
+
 `session-e2e.test.mjs` 验证静态同源服务路由/穿越拒绝，以及 loopback SMTP 协议接收、拒绝 relay、大小限制与内存清理；这些不冒充浏览器身份集成测试。
 
 当前云执行器发现 AF_UNIX `socket()` 被沙箱拒绝，Chromium 尚不能在该环境启动；标准执行升级也在执行器初始化失败。真实 Go 注册已运行通过，浏览器闭环必须在支持 Chromium 的 CI/授权执行环境实际运行后才可记 pass。不得通过删除浏览器断言或换成 mock 将此阻塞“修复”。

@@ -23,6 +23,15 @@ class PreparationTests(unittest.TestCase):
             "web/src/features/agriculture/organization.tsx", "web/src/services/api/agriculture.ts",
             "scripts/agriculture/organization-e2e.mjs", "scripts/agriculture/organization-e2e.test.mjs",
             "scripts/agriculture/ORGANIZATION_E2E.md",
+            "backend/internal/model/models_agriculture_authorization.go",
+            "backend/internal/database/migration_agriculture_authorization.go",
+            "backend/internal/database/migration_agriculture_authorization_test.go",
+            "backend/internal/database/migration_agriculture_authorization_postgres_test.go",
+            "backend/internal/agriculture/authorization.go", "backend/internal/agriculture/authorization_test.go",
+            "backend/internal/agriculture/authorization_postgres_test.go",
+            "backend/internal/agriculture/resource_ownership.go", "backend/internal/agriculture/resource_ownership_test.go",
+            "backend/internal/agriculture/resource_bindings.go", "backend/internal/agriculture/resource_bindings_test.go",
+            "backend/internal/agriculture/policy.go", "backend/internal/agriculture/policy_test.go",
         }
         self.assertTrue(required.issubset(set(prepare.OVERLAY)))
         self.assertEqual(len(prepare.OVERLAY), len(set(prepare.OVERLAY)))

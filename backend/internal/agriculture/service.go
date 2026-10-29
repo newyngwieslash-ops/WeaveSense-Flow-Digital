@@ -28,8 +28,9 @@ var (
 )
 
 type Service struct {
-	DB  *gorm.DB
-	Now func() time.Time
+	DB        *gorm.DB
+	Now       func() time.Time
+	Ownership OwnershipResolver
 }
 
 func (s Service) now() time.Time {
@@ -151,6 +152,10 @@ func resolve(tx *gorm.DB, actorID, workspaceID string, allowDisabledOwner bool) 
 // Only a server-resolved workspace supplies tenant context. Admission paths
 // have their own exact scope and never fall back to an unscoped transaction.
 func (s Service) withWorkspace(ctx context.Context, actorID, workspaceID string, allowDisabledOwner bool, fn func(*gorm.DB, workspaceContext) error) error {
+	return s.withWorkspacePrincipals(ctx, actorID, workspaceID, allowDisabledOwner, nil, fn)
+}
+
+func (s Service) withWorkspacePrincipals(ctx context.Context, actorID, workspaceID string, allowDisabledOwner bool, otherActors []string, fn func(*gorm.DB, workspaceContext) error) error {
 	var w model.Workspace
 	if err := s.DB.WithContext(ctx).Where("id = ? AND product = ?", workspaceID, Product).First(&w).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -159,6 +164,19 @@ func (s Service) withWorkspace(ctx context.Context, actorID, workspaceID string,
 		return err
 	}
 	return flow.TenantTx(s.DB.WithContext(ctx), w.TenantID, func(tx *gorm.DB) error {
+		if len(otherActors) > 0 {
+			var tenant model.Tenant
+			if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id=?", w.TenantID).First(&tenant).Error; err != nil {
+				return err
+			}
+			ids := append([]string{actorID}, otherActors...)
+			var users []model.User
+			// A grant locks its actor and target in stable order; reciprocal
+			// grants in different tenants cannot acquire user locks backwards.
+			if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id IN ?", ids).Order("id").Find(&users).Error; err != nil {
+				return err
+			}
+		}
 		scope, err := resolve(tx, actorID, workspaceID, allowDisabledOwner)
 		if err != nil {
 			return err
@@ -172,6 +190,9 @@ func view(scope workspaceContext) WorkspaceView {
 }
 
 func audit(tx *gorm.DB, now time.Time, scope workspaceContext, actor, action, subject string, detail any) error {
+	if err := bumpAuthorizationVersion(tx, scope.Tenant.ID, now); err != nil {
+		return err
+	}
 	raw, err := json.Marshal(detail)
 	if err != nil {
 		return err
@@ -580,6 +601,13 @@ func (s Service) ChangeMember(ctx context.Context, actorID, workspaceID, targetI
 			return err
 		}
 		if *status == "removed" {
+			version, err := currentAuthorizationVersion(tx, scope.Tenant.ID)
+			if err != nil {
+				return err
+			}
+			if err := tx.Model(&model.AgricultureResourceBinding{}).Where("tenant_id=? AND subject_type='user' AND subject_id=? AND state='active'", scope.Tenant.ID, targetID).Updates(map[string]any{"state": "revoked", "capabilities": "[]", "auth_version": version + 1, "updated_at": s.now()}).Error; err != nil {
+				return err
+			}
 			var user model.User
 			if err := tx.Select("email").Where("id=?", targetID).First(&user).Error; err != nil {
 				return err

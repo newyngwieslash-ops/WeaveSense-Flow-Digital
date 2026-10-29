@@ -42,11 +42,11 @@ def verify(lines, suite):
             skipped.add(key)
     present = {package for package, test in passed if suite != "postgres" or test.startswith("TestAgriculturePostgres")}
     missing = sorted(required - (present & packages))
-    expected_database_test = ("yingce/backend/internal/database", "TestAgriculturePostgresAdmissionAndStrictRLS")
-    if suite == "postgres" and expected_database_test not in passed:
-        missing.append("TestAgriculturePostgresAdmissionAndStrictRLS")
     if suite == "postgres":
-        for test in ("TestAgriculturePostgresMembershipLifecycle", "TestAgriculturePostgresConcurrentAcceptance"):
+        for test in ("TestAgriculturePostgresAdmissionAndStrictRLS", "TestAgriculturePostgresAuthorizationBindingsAndEpoch"):
+            if ("yingce/backend/internal/database", test) not in passed:
+                missing.append(test)
+        for test in ("TestAgriculturePostgresMembershipLifecycle", "TestAgriculturePostgresConcurrentAcceptance", "TestAgriculturePostgresResourceAuthorization"):
             if ("yingce/backend/internal/agriculture", test) not in passed:
                 missing.append(test)
     if suite == "legacy-flow":

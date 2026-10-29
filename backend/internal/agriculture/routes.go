@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"yingce/backend/internal/database"
 	"yingce/backend/internal/flow"
@@ -59,6 +60,8 @@ func respond(c *gin.Context, data any, err error) {
 		data = nil
 		status, reason, msg = http.StatusInternalServerError, "agriculture_unavailable", "农业服务暂不可用"
 		switch {
+		case errors.Is(err, ErrDependencyUnavailable):
+			status, reason, msg = 503, "dependency_unavailable", "资源归属验证暂不可用"
 		case errors.Is(err, ErrInvalid):
 			status, reason, msg = 400, "invalid_request", "请求参数无效"
 		case errors.Is(err, ErrInvitation):
@@ -133,6 +136,38 @@ func (a API) Register(api gin.IRouter) {
 	g.GET("/workspaces", func(c *gin.Context) {
 		out, err := a.Service.ListWorkspaces(c.Request.Context(), actor(c))
 		respond(c, out, err)
+	})
+	g.POST("/workspaces/:workspaceId/authorize", func(c *gin.Context) {
+		var body struct {
+			Action    string        `json:"action"`
+			Resources []ResourceRef `json:"resources"`
+		}
+		if !decode(c, &body) {
+			return
+		}
+		out, err := a.Service.Authorize(c.Request.Context(), actor(c), c.Param("workspaceId"), body.Action, body.Resources)
+		respond(c, out, err)
+	})
+	g.GET("/workspaces/:workspaceId/resource-bindings", func(c *gin.Context) {
+		out, err := a.Service.ListBindings(c.Request.Context(), actor(c), c.Param("workspaceId"))
+		respond(c, out, err)
+	})
+	g.POST("/workspaces/:workspaceId/resource-bindings", func(c *gin.Context) {
+		var body struct {
+			SubjectID    string      `json:"subjectId"`
+			Resource     ResourceRef `json:"resource"`
+			Capabilities []string    `json:"capabilities"`
+			ExpiresAt    *time.Time  `json:"expiresAt"`
+		}
+		if !decode(c, &body) {
+			return
+		}
+		out, err := a.Service.GrantResourceBinding(c.Request.Context(), actor(c), c.Param("workspaceId"), body.SubjectID, body.Resource, body.Capabilities, body.ExpiresAt)
+		respond(c, out, err)
+	})
+	g.POST("/workspaces/:workspaceId/resource-bindings/:bindingId/revoke", func(c *gin.Context) {
+		err := a.Service.RevokeBinding(c.Request.Context(), actor(c), c.Param("workspaceId"), c.Param("bindingId"))
+		respond(c, gin.H{"ok": true}, err)
 	})
 	g.POST("/organizations", func(c *gin.Context) {
 		var body struct {

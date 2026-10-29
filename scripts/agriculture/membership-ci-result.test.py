@@ -15,9 +15,11 @@ def event(action, package, test=None, **extra):
 def postgres_pass():
     return [
         event("pass", "database", "TestAgriculturePostgresAdmissionAndStrictRLS"),
+        event("pass", "database", "TestAgriculturePostgresAuthorizationBindingsAndEpoch"),
         event("pass", "database"),
         event("pass", "agriculture", "TestAgriculturePostgresMembershipLifecycle"),
         event("pass", "agriculture", "TestAgriculturePostgresConcurrentAcceptance"),
+        event("pass", "agriculture", "TestAgriculturePostgresResourceAuthorization"),
         event("pass", "agriculture"),
     ]
 
@@ -26,7 +28,7 @@ class EvidenceTests(unittest.TestCase):
     def test_accepts_required_actual_test_passes(self):
         evidence = result.verify(postgres_pass(), "postgres")
         self.assertTrue(evidence["passed"])
-        self.assertEqual(len(evidence["tests_passed"]), 3)
+        self.assertEqual(len(evidence["tests_passed"]), 5)
         self.assertFalse(evidence["live_farm_or_production_acceptance"])
 
     def test_skip_is_not_acceptance_even_when_package_passes(self):
@@ -41,6 +43,10 @@ class EvidenceTests(unittest.TestCase):
     def test_fail_or_missing_package_terminal_fails(self):
         self.assertFalse(result.verify(postgres_pass() + [event("fail", "agriculture")], "postgres")["passed"])
         self.assertFalse(result.verify(postgres_pass()[:-1], "postgres")["passed"])
+
+    def test_both_resource_authorization_tests_are_required(self):
+        for name in ("TestAgriculturePostgresAuthorizationBindingsAndEpoch", "TestAgriculturePostgresResourceAuthorization"):
+            self.assertFalse(result.verify([line for line in postgres_pass() if name not in line], "postgres")["passed"])
 
     def test_raw_output_and_credentials_are_not_in_evidence(self):
         events = postgres_pass() + [event("output", "database", Output="postgres://secret fixture@example.invalid token=never-report")]

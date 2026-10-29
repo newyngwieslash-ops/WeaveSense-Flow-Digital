@@ -78,7 +78,16 @@ func migrateAgriculture(tx *gorm.DB) error {
 	if !safe {
 		return ErrAgricultureAdmissionUnavailable
 	}
-	statements := []string{
+	for _, statement := range agricultureAdmissionStatements() {
+		if err := tx.Exec(statement).Error; err != nil {
+			return fmt.Errorf("install agriculture admission: %w", err)
+		}
+	}
+	return nil
+}
+
+func agricultureAdmissionStatements() []string {
+	return []string{
 		"CREATE SCHEMA IF NOT EXISTS agri_admission",
 		"REVOKE ALL ON SCHEMA agri_admission FROM PUBLIC",
 		"GRANT USAGE, CREATE ON SCHEMA agri_admission TO flow_platform_admission",
@@ -95,17 +104,13 @@ func migrateAgriculture(tx *gorm.DB) error {
 		"CREATE POLICY agriculture_admission_limit ON public.flow_invites AS RESTRICTIVE FOR SELECT TO flow_platform_admission USING (product = 'agriculture')",
 		agricultureAdmissionFunction,
 		"REVOKE ALL ON FUNCTION agri_admission.resolve_invite(text, text) FROM PUBLIC",
+		// Grant while still the function owner: migration membership intentionally
+		// does not inherit the admission role's privileges after ownership transfer.
+		"GRANT EXECUTE ON FUNCTION agri_admission.resolve_invite(text, text) TO flow_platform_app",
 		"ALTER FUNCTION agri_admission.resolve_invite(text, text) OWNER TO flow_platform_admission",
 		"REVOKE CREATE ON SCHEMA agri_admission FROM flow_platform_admission",
 		"GRANT USAGE ON SCHEMA agri_admission TO flow_platform_app",
-		"GRANT EXECUTE ON FUNCTION agri_admission.resolve_invite(text, text) TO flow_platform_app",
 	}
-	for _, statement := range statements {
-		if err := tx.Exec(statement).Error; err != nil {
-			return fmt.Errorf("install agriculture admission: %w", err)
-		}
-	}
-	return nil
 }
 
 const agricultureAdmissionReadinessSQL = `SELECT EXISTS (

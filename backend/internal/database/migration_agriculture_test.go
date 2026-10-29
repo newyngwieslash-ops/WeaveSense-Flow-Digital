@@ -64,6 +64,25 @@ func TestAgricultureMigrationSQLitePreservesLegacyAndUniqueRoles(t *testing.T) {
 }
 
 func TestAgricultureAdmissionSQLContract(t *testing.T) {
+	statements := agricultureAdmissionStatements()
+	positions := make(map[string]int)
+	for index, statement := range statements {
+		positions[statement] = index
+	}
+	previous := -1
+	for _, statement := range []string{
+		agricultureAdmissionFunction,
+		"REVOKE ALL ON FUNCTION agri_admission.resolve_invite(text, text) FROM PUBLIC",
+		"GRANT EXECUTE ON FUNCTION agri_admission.resolve_invite(text, text) TO flow_platform_app",
+		"ALTER FUNCTION agri_admission.resolve_invite(text, text) OWNER TO flow_platform_admission",
+		"REVOKE CREATE ON SCHEMA agri_admission FROM flow_platform_admission",
+	} {
+		index, exists := positions[statement]
+		if !exists || index <= previous {
+			t.Fatal("function privileges must be constrained and granted before non-inherited ownership transfer")
+		}
+		previous = index
+	}
 	for _, required := range []string{"runtime.rolcanlogin", "runtime.rolinherit", "runtime.rolsuper", "runtime.rolbypassrls", "runtime.rolcreatedb", "runtime.rolcreaterole", "runtime.rolreplication", "pg_catalog.pg_has_role(current_user, c.relowner, 'MEMBER')"} {
 		if !strings.Contains(agricultureAdmissionReadinessSQL, required) {
 			t.Errorf("missing runtime privilege gate: %s", required)

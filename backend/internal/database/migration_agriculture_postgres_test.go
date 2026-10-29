@@ -55,6 +55,18 @@ func TestAgriculturePostgresAdmissionAndStrictRLS(t *testing.T) {
 	if err := RequireAgricultureAdmission(app); err != nil {
 		t.Fatal(err)
 	}
+	var safeFunctionACL bool
+	if err := app.Raw(`SELECT NOT EXISTS (
+ SELECT 1 FROM pg_catalog.pg_proc AS p
+ CROSS JOIN LATERAL pg_catalog.aclexplode(p.proacl) AS acl
+ WHERE p.oid = 'agri_admission.resolve_invite(text,text)'::regprocedure
+ AND (acl.grantee NOT IN ((SELECT oid FROM pg_catalog.pg_roles WHERE rolname = 'flow_platform_admission'),
+                         (SELECT oid FROM pg_catalog.pg_roles WHERE rolname = 'flow_platform_app'))
+      OR acl.grantor <> p.proowner OR acl.privilege_type <> 'EXECUTE'
+      OR (acl.grantee = (SELECT oid FROM pg_catalog.pg_roles WHERE rolname = 'flow_platform_app') AND acl.is_grantable))
+)`).Scan(&safeFunctionACL).Error; err != nil || !safeFunctionACL {
+		t.Fatal("admission function ACL must contain only owner and non-grantable runtime execute")
+	}
 	var isOwner bool
 	if err := app.Raw("SELECT pg_has_role(current_user,'flow_platform_admission','MEMBER')").Scan(&isOwner).Error; err != nil || isOwner {
 		t.Fatal("runtime inherited admission owner")

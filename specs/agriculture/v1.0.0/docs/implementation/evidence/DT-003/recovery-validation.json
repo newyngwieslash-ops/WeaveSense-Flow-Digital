@@ -1,0 +1,66 @@
+{
+  "regenerated_after_reset": true,
+  "verified_at": "2026-10-29T14:11:51.976780+00:00",
+  "commands": [
+    {
+      "command": ".local/agri-identity-venv/bin/python scripts/agriculture/sbom.py",
+      "exit_code": 0,
+      "repeated_digest_identical": true
+    },
+    {
+      "command": ".local/agri-identity-venv/bin/python scripts/agriculture/sbom.test.py",
+      "exit_code": 0,
+      "passed": 4
+    },
+    {
+      "command": ".local/agri-identity-venv/bin/python -m pytest tests/agriculture/test_source_rights.py -q",
+      "exit_code": 0,
+      "passed": 22
+    },
+    {
+      "command": ".local/agri-identity-venv/bin/python scripts/agriculture/check-source-policy.py --profile agriculture --config deploy/agriculture/sources.json",
+      "exit_code": 0,
+      "enabled_external_sources": 0
+    },
+    {
+      "command": ".local/agri-identity-venv/bin/ruff check scripts/agriculture/sbom.py scripts/agriculture/sbom.test.py",
+      "exit_code": 0
+    }
+  ],
+  "counts": {
+    "go_modules": 332,
+    "go_sources_materialized": 332,
+    "go_server_import_modules": 71,
+    "python_distributions": 57,
+    "gdal_drivers": 155,
+    "node_installed_locations": {
+      "react": 1906,
+      "vue": 365
+    },
+    "node_reachable_locations": {
+      "react": 77,
+      "vue": 4
+    },
+    "preserved_unique_notice_files": 984,
+    "missing_go_notice": 1,
+    "missing_node_license_declaration": 4,
+    "react_graph_modules": 1237,
+    "vue_graph_modules": 12
+  },
+  "hashes": {
+    "docs/agriculture/dependencies/initial-sbom.json": "e6638e585418157d9e6fc2ae2ef5af64f633533d9f1f9facf78a2c16119481df",
+    "docs/agriculture/dependencies/inventory-gaps.json": "cd577e2debed930c5f8b67168b6b77761fceb1fb0c8950cd2d92b0400ba24f44",
+    "scripts/agriculture/sbom.py": "460c38bf0fcad3a789c6dff55a95f13fcc796e581ae873797da609cb2ea6df4a",
+    "scripts/agriculture/sbom.test.py": "1c6cbaff327b359bad0848e3a4fac3e5af14f05e3e071ebb227fbca389096121",
+    "backend/go.mod": "c2458011cd426d7dac61d02f6dd212efa9dd5cceb5947bb1dfed10998687fd6e",
+    "backend/go.sum": "4840c140d5a1cb68eacf1057e85ad495bcd00c63c4f32fc465bcad5459fde684",
+    "web/bun.lock": "7c4ad853b968ab5321ab2b9e9b00b441f169bfcf3290443c9181431c678272c7",
+    "services/agri-gis/frontend/package-lock.json": "e44cbf43293def575925506a98d3acbc8a7b0ec64d75454595329f5b5a57b64d",
+    "services/agri-gis/backend/poetry.lock": "e5e287271ef6c5fb56185dfcd07f12eedae144a908ec1483ab877696259a26df"
+  },
+  "all_preserved_notice_hashes_verified": true,
+  "final_container_or_commercial_acceptance": false,
+  "native_test_database_tooling_not_production_distribution": true,
+  "build_snapshot_note": "DT014 navigation rebuild occurred during inventory. Earlier digest comparison detected artifact changes. Final inventory was regenerated against frozen new React/Vue outputs and repeated with identical digest; actual current artifact hashes verified.",
+  "all_current_built_artifact_hashes_verified": true
+}

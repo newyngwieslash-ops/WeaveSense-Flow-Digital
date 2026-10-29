@@ -93,6 +93,105 @@ func TestCreateOrganizationIdempotentAndNoImplicitContentRole(t *testing.T) {
 	}
 }
 
+func checkOwnerBusinessRoleLifecycle(t *testing.T, s Service, actor string, org OrganizationResult) {
+	t.Helper()
+	ctx := context.Background()
+	members, err := s.Members(ctx, actor, org.Workspace.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, m := range members.Members {
+		if m.UserID != actor {
+			continue
+		}
+		found = true
+		if !m.IsOwner || !m.CanChangeRoles || len(m.Roles) != 0 || len(m.AssignableRoles) != 6 {
+			t.Fatal("owner explicit role capabilities missing")
+		}
+		for _, role := range m.AssignableRoles {
+			if governanceRole(role) {
+				t.Fatal("owner self assignment exposes governance")
+			}
+		}
+	}
+	if !found {
+		t.Fatal("owner member absent")
+	}
+	for _, forbidden := range []string{"tenant_admin", "billing_admin", "admin"} {
+		roles := []string{forbidden}
+		if err := s.ChangeMember(ctx, actor, org.Workspace.ID, actor, &roles, nil); !errors.Is(err, ErrForbidden) {
+			t.Fatal("owner governance self assignment accepted")
+		}
+	}
+	for _, status := range []string{"active", "suspended", "removed"} {
+		if err := s.ChangeMember(ctx, actor, org.Workspace.ID, actor, nil, &status); !errors.Is(err, ErrForbidden) {
+			t.Fatal("owner identity status changed")
+		}
+	}
+	for _, roles := range [][]string{{"analyst", "editor"}, {}} {
+		if err := s.ChangeMember(ctx, actor, org.Workspace.ID, actor, &roles, nil); err != nil {
+			t.Fatal(err)
+		}
+		views, err := s.ListWorkspaces(ctx, actor)
+		if err != nil {
+			t.Fatal(err)
+		}
+		matched := false
+		for _, view := range views {
+			if view.ID == org.Workspace.ID {
+				matched = true
+				if len(view.Roles) != len(roles) || !view.CanManageMembers || !view.CanManageOrganization {
+					t.Fatal("explicit business roles damaged owner governance")
+				}
+			}
+		}
+		if !matched {
+			t.Fatal("owner workspace disappeared")
+		}
+	}
+}
+
+func TestOwnerExplicitBusinessRolesAndRevocation(t *testing.T) {
+	s, org := fixture(t)
+	checkOwnerBusinessRoleLifecycle(t, s, "owner", org)
+	join(t, s, org, "bob", "tenant_admin")
+	roles := []string{"editor"}
+	if err := s.ChangeMember(context.Background(), "bob", org.Workspace.ID, "owner", &roles, nil); !errors.Is(err, ErrForbidden) {
+		t.Fatal("administrator changed owner roles")
+	}
+	members, err := s.Members(context.Background(), "bob", org.Workspace.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, member := range members.Members {
+		if member.IsOwner && (member.CanChangeRoles || len(member.AssignableRoles) != 0) {
+			t.Fatal("administrator sees editable owner")
+		}
+	}
+}
+
+func TestMemberWithoutCurrentWorkspaceHasNoRoleEditingCapability(t *testing.T) {
+	s, org := fixture(t)
+	join(t, s, org, "bob", "viewer")
+	if err := s.DB.Where("workspace_id=? AND user_id=?", org.Workspace.ID, "bob").Delete(&model.WorkspaceMembership{}).Error; err != nil {
+		t.Fatal(err)
+	}
+	members, err := s.Members(context.Background(), "owner", org.Workspace.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, member := range members.Members {
+		if member.UserID == "bob" && (member.CanChangeRoles || len(member.AssignableRoles) != 0) {
+			t.Fatal("tenant-only member exposes workspace role editing")
+		}
+	}
+	roles := []string{"editor"}
+	if err := s.ChangeMember(context.Background(), "owner", org.Workspace.ID, "bob", &roles, nil); !errors.Is(err, ErrNotFound) {
+		t.Fatal("missing workspace membership accepted")
+	}
+}
+
 func TestCanonicalRolesAndLegacyInviteCannotConsumeProduct(t *testing.T) {
 	for _, role := range AssignableRoles {
 		t.Run(role, func(t *testing.T) {

@@ -194,9 +194,19 @@ async function main() {
         const selector = id => '[data-testid="' + id + '"]';
         const click = async (c, query) => {
             await c.poll("(() => { const e=document.querySelector(" + JSON.stringify(query) + "); return !!e && !e.disabled && !!e.getClientRects().length; })()", "action available");
-            const point = await c.evaluate("(() => {const e=document.querySelector(" + JSON.stringify(query) + "); e.scrollIntoView({block:'center'}); const r=e.getBoundingClientRect(); return {x:r.x+r.width/2,y:r.y+r.height/2};})()");
+            await c.evaluate("document.querySelector(" + JSON.stringify(query) + ").scrollIntoView({block:'center',behavior:'instant'})");
+            await c.evaluate("new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))");
+            await c.poll("(() => {const e=document.querySelector(" + JSON.stringify(query) + "); if(!e) return false; const r=e.getBoundingClientRect(), hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2); return !!hit && (e===hit || e.contains(hit));})()", "real pointer target unobstructed");
+            const point = await c.evaluate("(() => {const r=document.querySelector(" + JSON.stringify(query) + ").getBoundingClientRect(); return {x:r.x+r.width/2,y:r.y+r.height/2};})()");
             await c.send("Input.dispatchMouseEvent", { type: "mousePressed", button: "left", clickCount: 1, ...point });
             await c.send("Input.dispatchMouseEvent", { type: "mouseReleased", button: "left", clickCount: 1, ...point });
+        };
+        const openSelect = async (c, wrapper) => {
+            const input = JSON.stringify(wrapper + ' input[role="combobox"]');
+            await c.poll("(() => {const e=document.querySelector(" + input + "); if(!e || e.disabled) return false; e.focus(); return document.activeElement===e;})()", "real select keyboard focus");
+            await c.send("Input.dispatchKeyEvent", { type: "keyDown", key: "ArrowDown", code: "ArrowDown", windowsVirtualKeyCode: 40 });
+            await c.send("Input.dispatchKeyEvent", { type: "keyUp", key: "ArrowDown", code: "ArrowDown", windowsVirtualKeyCode: 40 });
+            await c.poll("document.querySelector(" + input + ")?.getAttribute('aria-expanded')==='true'", "real select expanded");
         };
         const login = async (c, username) => {
             await c.navigate("/login?next=%2Forganization");
@@ -224,10 +234,31 @@ async function main() {
         const memberPath = "/agriculture/workspaces/" + orgA.id + "/members";
         check((await api("/agriculture/workspaces/" + orgB.id + "/members", cookieA)).status === 404, "platform_admin_has_no_cross_tenant_backdoor");
         check((await api(memberPath, cookieB)).status === 404, "uninvited_workspace_http_404");
+        const confirm = async () => { await click(a, selector("org-confirm")); await a.poll("!document.querySelector('[data-testid=org-confirm]')", "confirmation closed"); };
+        const ownerMember = async () => (await api(memberPath, cookieA)).data?.members?.find(x => x.userId === actorA);
+        report.stage = "owner_explicit_business_role_ui";
+        const initialOwner = await ownerMember();
+        check(initialOwner?.isOwner && initialOwner.canChangeRoles && initialOwner.roles.length === 0, "owner_has_governance_without_implicit_business_role");
+        check(initialOwner.assignableRoles.includes("editor") && !initialOwner.assignableRoles.includes("tenant_admin") && !initialOwner.assignableRoles.includes("billing_admin"), "owner_self_edit_has_server_limited_business_roles");
+        const ownerRow = 'li[data-user-id="' + actorA + '"] ';
+        for (const granting of [true, false]) {
+            report.stage = granting ? "owner_business_role_grant_ui" : "owner_business_role_clear_ui";
+            await openOrg(a, orgA.id); await openSelect(a, ownerRow + selector("org-member-roles"));
+            await click(a, '.ant-select-dropdown:not(.ant-select-dropdown-hidden) ' + selector("org-member-role-option-editor"));
+            await a.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
+            await a.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
+            await click(a, ownerRow + selector("org-member-roles-submit")); await confirm();
+            await eventual(async () => { const m = await ownerMember(); return m?.isOwner && (granting ? m.roles.length === 1 && m.roles[0] === "editor" : m.roles.length === 0); }, granting ? "owner_explicit_grant_effective" : "owner_explicit_revoke_effective");
+            check((await api(memberPath, cookieA)).status === 200, granting ? "owner_ui_business_grant_preserves_governance" : "owner_ui_empty_business_roles_preserves_governance");
+        }
         const invite = async () => {
-            await openOrg(a, orgA.id); await a.fill(selector("org-invite-email"), email, "invite recipient");
-            await click(a, selector("org-invite-role")); await click(a, '.ant-select-dropdown:not(.ant-select-dropdown-hidden) ' + selector("org-invite-role-option-viewer"));
+            report.stage = "invite_reload"; await openOrg(a, orgA.id);
+            report.stage = "invite_email_input"; await a.fill(selector("org-invite-email"), email, "invite recipient");
+            report.stage = "invite_role_expand"; await openSelect(a, selector("org-invite-role"));
+            report.stage = "invite_role_choose"; await click(a, '.ant-select-dropdown:not(.ant-select-dropdown-hidden) ' + selector("org-invite-role-option-viewer"));
+            report.stage = "invite_submit";
             await click(a, selector("org-invite-create"));
+            report.stage = "invite_token_result";
             await a.poll("!!document.querySelector('[data-testid=org-invite-token]')?.value", "one time invitation visible");
             return a.evaluate("document.querySelector('[data-testid=org-invite-token]').value");
         };
@@ -248,21 +279,20 @@ async function main() {
         check(await accept(token) === 400, "replayed_invite_real_ui_http_400");
         check((await api(memberPath, cookieB)).status === 403, "viewer_governance_http_403");
         check((await api(memberPath + "/" + actorB, cookieB, "PATCH", { roles: ["tenant_admin"] })).status === 403, "viewer_cannot_self_escalate");
-        for (const change of [{ status: "suspended" }, { status: "removed" }, { roles: ["viewer"] }]) check((await api(memberPath + "/" + actorA, cookieA, "PATCH", change)).status === 403, "owner_destructive_mutation_http_403");
+        for (const change of [{ status: "suspended" }, { status: "removed" }, { roles: ["tenant_admin"] }, { roles: ["billing_admin"] }]) check((await api(memberPath + "/" + actorA, cookieA, "PATCH", change)).status === 403, "owner_status_or_self_governance_mutation_http_403");
         await b.navigate("/agri/?workspace_id=" + encodeURIComponent(orgA.id));
         await b.poll("!!document.querySelector('main[data-session-status=ready]')", "accepted Vue workspace");
         check(await b.evaluate("!!document.querySelector('[data-testid=session-user]')"), "accepted_workspace_real_vue_entry");
         const row = 'li[data-user-id="' + actorB + '"] ';
-        const confirm = async () => { await click(a, selector("org-confirm")); await a.poll("!document.querySelector('[data-testid=org-confirm]')", "confirmation closed"); };
         report.stage = "role_changes_ui";
         await openOrg(a, orgA.id);
-        await click(a, row + selector("org-member-roles")); await click(a, '.ant-select-dropdown:not(.ant-select-dropdown-hidden) ' + selector("org-member-role-option-tenant_admin"));
+        await openSelect(a, row + selector("org-member-roles")); await click(a, '.ant-select-dropdown:not(.ant-select-dropdown-hidden) ' + selector("org-member-role-option-tenant_admin"));
         await a.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 }); await a.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
         await click(a, row + selector("org-member-roles-submit")); await confirm();
         await eventual(async () => (await api(memberPath, cookieB)).status === 200, "role_promotion_effective");
         check((await api(memberPath, cookieB)).status === 200, "real_ui_promotion_grants_governance");
         await openOrg(a, orgA.id);
-        await click(a, row + selector("org-member-roles")); await click(a, '.ant-select-dropdown:not(.ant-select-dropdown-hidden) ' + selector("org-member-role-option-tenant_admin"));
+        await openSelect(a, row + selector("org-member-roles")); await click(a, '.ant-select-dropdown:not(.ant-select-dropdown-hidden) ' + selector("org-member-role-option-tenant_admin"));
         await a.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 }); await a.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
         await click(a, row + selector("org-member-roles-submit")); await confirm();
         await eventual(async () => (await api(memberPath, cookieB)).status === 403, "role_demotion_effective");
@@ -314,6 +344,11 @@ async function main() {
         report.browser_statuses = clients.map(c => c.statuses);
         report.browser_runtime_exception_counts = clients.map(c => c.exceptions.length);
         report.outbound_request_counts = clients.map(c => c.outboundBlocked());
+        report.dom_flags = [];
+        for (const c of clients) {
+            try { report.dom_flags.push(await c.evaluate("({organization:!!document.querySelector('[data-testid=organization-management]'),invitationEmail:!!document.querySelector('[data-testid=org-invite-email]'),inviteEmailDisabled:document.querySelector('[data-testid=org-invite-email]')?.disabled??null,inviteEmailNonempty:!!document.querySelector('[data-testid=org-invite-email]')?.value,roleControl:!!document.querySelector('[data-testid=org-invite-role]'),roleExpanded:document.querySelector('[data-testid=org-invite-role] input')?.getAttribute('aria-expanded')==='true',viewerOption:!!document.querySelector('.ant-select-dropdown:not(.ant-select-dropdown-hidden) [data-testid=org-invite-role-option-viewer]'),roleSelected:document.querySelector('[data-testid=org-invite-role]')?.dataset.currentRoles==='viewer',inviteSubmitEnabled:document.querySelector('[data-testid=org-invite-create]')?.disabled===false,alert:!!document.querySelector('[role=alert]')})")); }
+            catch { report.dom_flags.push({ unavailable: true }); }
+        }
         process.exitCode = 1;
     } finally {
         for (const c of clients) c.close();

@@ -103,6 +103,7 @@ func TestAgriculturePostgresMembershipLifecycle(t *testing.T) {
 	if repeat, err := s.CreateOrganization(ctx, actor, "PostgreSQL isolated enterprise", "pg-create-fixture-001"); err != nil || repeat.Workspace.ID != org.Workspace.ID {
 		t.Fatal("PostgreSQL idempotent create failed")
 	}
+	checkOwnerBusinessRoleLifecycle(t, s, actor, org)
 	inv, err := s.CreateInvite(ctx, actor, org.Workspace.ID, recipient+"@fixture.invalid", "analyst")
 	if err != nil {
 		t.Fatalf("runtime invite creation failed: %T", err)

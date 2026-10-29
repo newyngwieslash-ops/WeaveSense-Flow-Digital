@@ -26,6 +26,16 @@ cleanup() {
   if docker network inspect "$network" >/dev/null 2>&1; then
     if ! docker network rm "$network" >/dev/null 2>&1; then echo 'Owned CI network cleanup failed' >&2; code=1; fi
   fi
+  MEMBERSHIP_EXIT_CODE="$code" python3 - <<'PY'
+import datetime,json,os
+from pathlib import Path
+path=Path('.local/evidence/membership-bootstrap.json')
+evidence=json.loads(path.read_text())
+if evidence.get('tests_outcome') == 'running':
+    evidence['tests_outcome']='failed'
+evidence.update(job_exit_code=int(os.environ['MEMBERSHIP_EXIT_CODE']),finished_at=datetime.datetime.now(datetime.timezone.utc).isoformat())
+path.write_text(json.dumps(evidence,indent=2)+'\n')
+PY
   exit "$code"
 }
 trap cleanup EXIT
@@ -109,7 +119,7 @@ source=json.loads(manifest.read_text()) if manifest.exists() else {}
 evidence={
     'fresh_volume':True,'six_database_roles_checked':True,'runtime_not_owner_checked':True,
     'cross_database_denial_checked':True,'migration_82_applied_and_replayed':True,'postgis_checked':True,
-    'data_class':'fixture','production_deployment':False,'tests_outcome':'not_run',
+    'data_class':'fixture','production_deployment':False,'tests_outcome':'running',
     'started_at':os.environ['MEMBERSHIP_STARTED_AT'],
     'bootstrap_completed_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),
     'environment':{'postgres_version':os.environ['MEMBERSHIP_POSTGRES_VERSION'],

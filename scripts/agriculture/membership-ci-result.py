@@ -3,6 +3,7 @@
 import argparse
 import json
 from pathlib import Path
+import re
 import sys
 
 
@@ -12,12 +13,21 @@ def verify(lines, suite):
         "legacy-flow": {"yingce/backend/internal/flow"},
     }[suite]
     passed, failed, skipped, packages = set(), set(), set(), set()
+    locations = {}
     for line in lines:
         item = json.loads(line)
         action, package, test = item.get("Action"), item.get("Package"), item.get("Test")
         if package not in required:
             continue
         key = (package, test or "<package>")
+        if action == "output" and test:
+            # Retain source coordinates and SQLSTATE only, not assertion text,
+            # SQL, request/response bodies, URLs, addresses or credentials.
+            for match in re.finditer(r"\b([A-Za-z0-9_]+_test\.go):(\d+):", item.get("Output", "")):
+                location = {"file": match.group(1), "line": int(match.group(2)),
+                            "sqlstates": sorted(set(re.findall(r"SQLSTATE ([0-9A-Z]{5})\b", item.get("Output", ""))))}
+                if len(locations.setdefault(key, [])) < 20 and location not in locations[key]:
+                    locations[key].append(location)
         if action == "pass":
             if test:
                 passed.add(key)
@@ -47,6 +57,7 @@ def verify(lines, suite):
             "tests_failed": [f"{p}/{t}" for p, t in sorted(failed)],
             "tests_skipped": [f"{p}/{t}" for p, t in sorted(skipped)],
             "missing_required": missing,
+            "failure_locations": [{"test": f"{p}/{t}", "locations": locations.get((p, t), [])} for p, t in sorted(failed) if t != "<package>"],
             "data_class": "fixture", "live_farm_or_production_acceptance": False}
 
 

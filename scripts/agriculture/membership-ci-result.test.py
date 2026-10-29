@@ -48,6 +48,16 @@ class EvidenceTests(unittest.TestCase):
         for value in ["postgres://", "secret", "fixture@example.invalid", "never-report"]:
             self.assertNotIn(value, encoded)
 
+    def test_failed_assertion_retains_coordinates_and_sqlstate_not_message(self):
+        events = postgres_pass() + [
+            event("output", "database", "TestAgriculturePostgresAdmissionAndStrictRLS", Output="    migration_agriculture_postgres_test.go:123: fixture@example.invalid postgres://secret TOKEN SQLSTATE 42501"),
+            event("fail", "database", "TestAgriculturePostgresAdmissionAndStrictRLS"),
+        ]
+        evidence = result.verify(events, "postgres")
+        self.assertEqual(evidence["failure_locations"][0]["locations"], [{"file": "migration_agriculture_postgres_test.go", "line": 123, "sqlstates": ["42501"]}])
+        for value in ["example.invalid", "secret", "TOKEN", "postgres://"]:
+            self.assertNotIn(value, json.dumps(evidence))
+
     def test_legacy_requires_old_and_new_regressions(self):
         events = [event("pass", "flow", name) for name in ["TestOrgInviteSingleUseAndGrantRevocation", "TestP7MembersRoleEditing", "TestAgricultureMembershipOwnerRemovalPreservesWorkspace"]] + [event("pass", "flow")]
         self.assertTrue(result.verify(events, "legacy-flow")["passed"])

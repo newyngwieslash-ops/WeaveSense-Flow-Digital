@@ -8,7 +8,7 @@ export interface AgricultureWorkspace {
     tenantStatus: "active" | "disabled"; roles: string[];
     canManageMembers: boolean; canManageOrganization: boolean;
 }
-export interface AgricultureMember { userId: string; name: string; roles: string[]; status: MemberStatus; isOwner: boolean }
+export interface AgricultureMember { userId: string; name: string; roles: string[]; status: MemberStatus; isOwner: boolean; canChangeRoles: boolean; assignableRoles: string[] }
 export interface AgricultureMembers { members: AgricultureMember[]; assignableRoles: string[] }
 export interface AgricultureInvite { invite: { id: string; email: string; role: string; expiresAt: string }; token: string }
 export type AgricultureMemberChange = { roles: string[]; status?: never } | { status: MemberStatus; roles?: never };
@@ -38,4 +38,10 @@ export const agricultureAPI = {
 
 export function assignableAgricultureRoles(values: string[]): AgricultureRole[] {
     return agricultureRoles.filter(role => values.includes(role));
+}
+
+export function canChangeAgricultureMemberRoles(member: AgricultureMember, roles: string[]): boolean {
+    return member.canChangeRoles === true && (roles.length > 0 || member.isOwner)
+        && new Set(roles).size === roles.length
+        && roles.every(role => assignableAgricultureRoles(member.assignableRoles).includes(role as AgricultureRole));
 }

@@ -55,11 +55,13 @@ type OrganizationResult struct {
 	Workspace WorkspaceView `json:"workspace"`
 }
 type MemberView struct {
-	UserID  string   `json:"userId"`
-	Name    string   `json:"name"`
-	Roles   []string `json:"roles"`
-	Status  string   `json:"status"`
-	IsOwner bool     `json:"isOwner"`
+	UserID          string   `json:"userId"`
+	Name            string   `json:"name"`
+	Roles           []string `json:"roles"`
+	Status          string   `json:"status"`
+	IsOwner         bool     `json:"isOwner"`
+	CanChangeRoles  bool     `json:"canChangeRoles"`
+	AssignableRoles []string `json:"assignableRoles"`
 }
 type MembersResult struct {
 	Members         []MemberView `json:"members"`
@@ -455,6 +457,14 @@ func (s Service) Members(ctx context.Context, actorID, workspaceID string) (Memb
 		if err := tx.Where("tenant_id=?", scope.Tenant.ID).Order("created_at,id").Find(&members).Error; err != nil {
 			return err
 		}
+		var workspaceMembers []model.WorkspaceMembership
+		if err := tx.Where("workspace_id=?", workspaceID).Find(&workspaceMembers).Error; err != nil {
+			return err
+		}
+		present := map[string]bool{}
+		for _, member := range workspaceMembers {
+			present[member.UserID] = true
+		}
 		for _, member := range members {
 			var user model.User
 			if err := tx.Select("id", "display_name").Where("id=?", member.UserID).First(&user).Error; err != nil {
@@ -464,7 +474,18 @@ func (s Service) Members(ctx context.Context, actorID, workspaceID string) (Memb
 			if err != nil {
 				return err
 			}
-			out.Members = append(out.Members, MemberView{UserID: member.UserID, Name: user.DisplayName, Roles: roles, Status: member.Status, IsOwner: member.Role == "owner" && scope.Tenant.OwnerUserID == member.UserID})
+			isOwner := member.Role == "owner" && scope.Tenant.OwnerUserID == member.UserID
+			selfOwner := scope.Owner && isOwner && member.UserID == actorID
+			canChange := present[member.UserID] && member.Status == "active" && (selfOwner || (!isOwner && member.UserID != actorID && (scope.Owner || (!hasRole(roles, "tenant_admin") && !hasRole(roles, "billing_admin")))))
+			allowed := []string{}
+			if canChange {
+				for _, role := range out.AssignableRoles {
+					if !selfOwner || !governanceRole(role) {
+						allowed = append(allowed, role)
+					}
+				}
+			}
+			out.Members = append(out.Members, MemberView{UserID: member.UserID, Name: user.DisplayName, Roles: roles, Status: member.Status, IsOwner: isOwner, CanChangeRoles: canChange, AssignableRoles: allowed})
 		}
 		return nil
 	})
@@ -477,7 +498,7 @@ func (s Service) ChangeMember(ctx context.Context, actorID, workspaceID, targetI
 	}
 	var canonical []string
 	var err error
-	if roles != nil {
+	if roles != nil && len(*roles) != 0 {
 		canonical, err = normalizeRoles(*roles)
 		if err != nil {
 			return err
@@ -497,8 +518,19 @@ func (s Service) ChangeMember(ctx context.Context, actorID, workspaceID, targetI
 			}
 			return err
 		}
-		if target.Role == "owner" || targetID == scope.Tenant.OwnerUserID || targetID == actorID {
+		selfOwnerRoles := scope.Owner && target.Role == "owner" && targetID == scope.Tenant.OwnerUserID && targetID == actorID && roles != nil
+		if !selfOwnerRoles && (target.Role == "owner" || targetID == scope.Tenant.OwnerUserID || targetID == actorID) {
 			return ErrForbidden
+		}
+		if roles != nil && len(canonical) == 0 && !selfOwnerRoles {
+			return ErrInvalid
+		}
+		if selfOwnerRoles {
+			for _, role := range canonical {
+				if governanceRole(role) {
+					return ErrForbidden
+				}
+			}
 		}
 		current, err := rolesFor(tx, scope.Tenant.ID, workspaceID, targetID)
 		if err != nil {
@@ -522,7 +554,15 @@ func (s Service) ChangeMember(ctx context.Context, actorID, workspaceID, targetI
 			if n != 1 {
 				return ErrNotFound
 			}
-			if err := tx.Where("tenant_id=? AND user_id=? AND (workspace_id=? OR workspace_id='')", scope.Tenant.ID, targetID, workspaceID).Delete(&model.AgricultureRoleBinding{}).Error; err != nil {
+			bindings := tx.Where("tenant_id=? AND user_id=?", scope.Tenant.ID, targetID)
+			if selfOwnerRoles {
+				// Explicit self-service changes only this workspace's business roles;
+				// ownership and tenant governance are not part of the editable set.
+				bindings = bindings.Where("workspace_id=?", workspaceID)
+			} else {
+				bindings = bindings.Where("workspace_id=? OR workspace_id=''", workspaceID)
+			}
+			if err := bindings.Delete(&model.AgricultureRoleBinding{}).Error; err != nil {
 				return err
 			}
 			for _, role := range canonical {

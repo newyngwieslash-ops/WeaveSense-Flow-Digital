@@ -1,4 +1,4 @@
-import { agricultureAPI, type AgricultureInvite, type AgricultureMembers, type AgricultureWorkspace } from "@/services/api/agriculture";
+import { agricultureAPI, canChangeAgricultureMemberRoles, type AgricultureInvite, type AgricultureMembers, type AgricultureWorkspace } from "@/services/api/agriculture";
 
 export interface OrganizationState {
     workspaces: AgricultureWorkspace[]; selectedId: string; members: AgricultureMembers | null;
@@ -57,6 +57,11 @@ export class OrganizationController {
         return this.mutate(async () => (await this.api.create(attempt.name, attempt.key)).workspace.id, "组织已创建，并已重新读取权限。");
     }
     accept(token: string) { return this.mutate(async () => (await this.api.accept(token.trim())).workspaceId, "邀请已接受，并已重新读取权限。"); }
+    changeRoles(workspaceId: string, userId: string, roles: string[]) {
+        const member = this.state.members?.members.find(row => row.userId === userId);
+        if (this.state.selectedId !== workspaceId || !member || !canChangeAgricultureMemberRoles(member, roles)) return Promise.resolve(false);
+        return this.mutate(() => this.api.member(workspaceId, userId, { roles }), "角色已更新并重新验证。");
+    }
     async invite(email: string, role: string) {
         const workspace = this.state.workspaces.find(w => w.id === this.state.selectedId);
         if (!workspace?.canManageMembers || !this.state.members?.assignableRoles.includes(role) || this.state.busy || this.state.loading || this.disposed) return;

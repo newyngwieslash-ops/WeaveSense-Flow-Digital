@@ -3,12 +3,29 @@ import { OrganizationController } from "../src/features/agriculture/organization
 import { agricultureAPI, assignableAgricultureRoles, type AgricultureWorkspace, type AgricultureMembers } from "../src/services/api/agriculture";
 
 const workspace = (id: string): AgricultureWorkspace => ({ id, tenantId: `tenant-${id}`, name: id, slug: "default", tenantName: id, tenantStatus: "active", roles: ["tenant_admin"], canManageMembers: true, canManageOrganization: false });
-const members = (id: string): AgricultureMembers => ({ members: [{ userId: id, name: id, roles: ["viewer"], status: "active", isOwner: false }], assignableRoles: ["viewer", "analyst"] });
+const members = (id: string): AgricultureMembers => ({ members: [{ userId: id, name: id, roles: ["viewer"], status: "active", isOwner: false, canChangeRoles: true, assignableRoles: ["viewer", "analyst"] }], assignableRoles: ["viewer", "analyst"] });
 function deferred<T>() { let resolve!: (value: T) => void; let reject!: (reason: unknown) => void; const promise = new Promise<T>((a, b) => { resolve = a; reject = b; }); return { promise, resolve, reject }; }
 function api(overrides: Partial<typeof agricultureAPI> = {}): typeof agricultureAPI {
     return { ...agricultureAPI, workspaces: async () => [workspace("a"), workspace("b")], members: async id => members(id), ...overrides };
 }
 describe("agriculture organization controller", () => {
+    test("owner business roles use authoritative row options and permit explicit empty revocation", async () => {
+        const changes: unknown[] = [];
+        const owner: AgricultureMembers = { ...members("owner"), members: [{ ...members("owner").members[0], isOwner: true, roles: [], assignableRoles: ["viewer", "analyst"] }] };
+        const c = new OrganizationController(api({ members: async () => owner, member: async (_w, _u, change) => { changes.push(change); return { ok: true }; } }));
+        await c.refresh("a");
+        expect(await c.changeRoles("a", "owner", ["analyst"])).toBe(true);
+        expect(await c.changeRoles("a", "owner", [])).toBe(true);
+        expect(await c.changeRoles("a", "owner", ["tenant_admin"])).toBe(false);
+        expect(await c.changeRoles("a", "owner", ["owner"])).toBe(false);
+        expect(changes).toEqual([{ roles: ["analyst"] }, { roles: [] }]);
+    });
+    test("owner identity never overrides row denial and stale workspace confirmation cannot submit", async () => {
+        let calls = 0;
+        const c = new OrganizationController(api({ members: async () => ({ ...members("owner"), members: [{ ...members("owner").members[0], isOwner: true, canChangeRoles: false }] }), member: async () => { calls++; return { ok: true }; } }));
+        await c.refresh("a"); expect(await c.changeRoles("a", "owner", ["viewer"])).toBe(false);
+        await c.refresh("b"); expect(await c.changeRoles("a", "owner", [])).toBe(false); expect(calls).toBe(0);
+    });
     test("unknown and legacy roles are never promoted to editor", () => {
         expect(assignableAgricultureRoles(["owner", "root", "member", "admin", "field_worker", "billing_admin", "viewer"])).toEqual(["viewer", "billing_admin"]);
     });

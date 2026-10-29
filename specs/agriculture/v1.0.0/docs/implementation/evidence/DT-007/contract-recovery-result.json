@@ -1,0 +1,394 @@
+{
+  "schema_version": 1,
+  "kind": "fresh_offline_contract_recovery_test",
+  "source_commit": "9f93e94c3ab039b974c4fd9fbb33a59f7016ad4a",
+  "comparison_commit": "c20fa403468951beb2c898a05fb1062337178c33",
+  "command": ".local/agri-identity-venv/bin/python -m pytest -q tests/agriculture/test_contracts.py --junitxml=.local/evidence/contract-recovery/junit.xml",
+  "exit_code": 0,
+  "summary": {
+    "passed": 69,
+    "failed": 0,
+    "skipped": 0
+  },
+  "environment": {
+    "python": "3.12.14",
+    "pytest": "8.4.2",
+    "jsonschema": "4.26.0",
+    "referencing": "0.37.0"
+  },
+  "source_hashes": [
+    {
+      "path": "contracts/agriculture/analysis-submit.schema.json",
+      "sha256": "e1b442e6a40dddb18a582485dd9ef387fabcd6ce214297a4f0c4699e66794f43",
+      "c20_blob_identical": true
+    },
+    {
+      "path": "contracts/agriculture/common.schema.json",
+      "sha256": "6d717f62e5988b075f1b9461f38e98fbc2ee746e82bf81b69f54a856771e604e",
+      "c20_blob_identical": true
+    },
+    {
+      "path": "contracts/agriculture/delegation.schema.json",
+      "sha256": "7996790cd15111dde37d93f31943987000393dec81ed8e68a8206b082fbb1817",
+      "c20_blob_identical": true
+    },
+    {
+      "path": "contracts/agriculture/event-envelope.schema.json",
+      "sha256": "519943d3a4f71eb4497d81416d147e051c41bc4d996f771a0ed26b923fe511f2",
+      "c20_blob_identical": true
+    },
+    {
+      "path": "contracts/agriculture/job.schema.json",
+      "sha256": "e1da22c8930672387db7a23c3d617a488272c90c30eed264ae8fbd7406545e9a",
+      "c20_blob_identical": true
+    },
+    {
+      "path": "contracts/agriculture/manifest.schema.json",
+      "sha256": "a0c61b96f4322e639b4bc209f13d837790f84e31986388462c7eb17bba7a4adf",
+      "c20_blob_identical": true
+    },
+    {
+      "path": "contracts/agriculture/result.schema.json",
+      "sha256": "b358caba41bb2f1ebd101ce6501ce95aa87d9160388529a4a0582fef8bee0f37",
+      "c20_blob_identical": true
+    },
+    {
+      "path": "contracts/agriculture/service-request.schema.json",
+      "sha256": "06d578b9c1f18691fe0e74d0dd8c0c1cfc295f64c580ccddfaaad7aa5335fc30",
+      "c20_blob_identical": true
+    },
+    {
+      "path": "contracts/agriculture/source-rights.schema.json",
+      "sha256": "543452243e26b328a996038dbfbd6024fae10a36bec144c7a755be57293c257d",
+      "c20_blob_identical": true
+    },
+    {
+      "path": "contracts/agriculture/examples/analysis-submit.json",
+      "sha256": "16fd7b82c440fd130b1beb1bba8389672135be391524044672676f1f2793de68",
+      "c20_blob_identical": true
+    },
+    {
+      "path": "contracts/agriculture/examples/delegation-read.json",
+      "sha256": "50a4517d95ba085b9ae2bdd30d22eba8261c5a28a876023866e356fe31323804",
+      "c20_blob_identical": true
+    },
+    {
+      "path": "contracts/agriculture/examples/delegation-write.json",
+      "sha256": "a5f11537534e22a7856bd66880b2e7565d20e5a6ed8afff2a183b24d70de3f90",
+      "c20_blob_identical": true
+    },
+    {
+      "path": "contracts/agriculture/examples/event-envelope.json",
+      "sha256": "f3a0ea024d74ae0a9055e0c7c7c0e46ef3bbc7426831165e902dc38edf166b4f",
+      "c20_blob_identical": true
+    },
+    {
+      "path": "contracts/agriculture/examples/job.json",
+      "sha256": "bb3f76695289dc3c0fecc3daa51c8a5d83d952b00ec0bf5ee5e88ccb6aa58269",
+      "c20_blob_identical": true
+    },
+    {
+      "path": "contracts/agriculture/examples/manifest.json",
+      "sha256": "6a9481a08e35b7106ce1dc50b4324c2537571d89c04d53b1782f7b5dbc491c54",
+      "c20_blob_identical": true
+    },
+    {
+      "path": "contracts/agriculture/examples/result.json",
+      "sha256": "b89e3a988287c81d8cf30ddc7ec7c930ebab31c15e4681d046eea451d8e20e62",
+      "c20_blob_identical": true
+    },
+    {
+      "path": "contracts/agriculture/openapi.json",
+      "sha256": "116c6dc019b8ae022b30e8b266231b89c886fee39c7843175f607f192a25e2ca",
+      "c20_blob_identical": true
+    },
+    {
+      "path": "tests/agriculture/test_contracts.py",
+      "sha256": "313c83ec888578c84ee4482bc593940525c0fc28d0a055a2d4e13e4c2341b041",
+      "c20_blob_identical": true
+    }
+  ],
+  "tests": [
+    {
+      "name": "test_all_schemas_are_valid_and_closed",
+      "status": "passed"
+    },
+    {
+      "name": "test_examples_validate[delegation-read-delegation]",
+      "status": "passed"
+    },
+    {
+      "name": "test_examples_validate[delegation-write-delegation]",
+      "status": "passed"
+    },
+    {
+      "name": "test_examples_validate[event-envelope-event-envelope]",
+      "status": "passed"
+    },
+    {
+      "name": "test_examples_validate[manifest-manifest]",
+      "status": "passed"
+    },
+    {
+      "name": "test_examples_validate[job-job]",
+      "status": "passed"
+    },
+    {
+      "name": "test_examples_validate[result-result]",
+      "status": "passed"
+    },
+    {
+      "name": "test_examples_validate[analysis-submit-analysis-submit]",
+      "status": "passed"
+    },
+    {
+      "name": "test_unsupported_schema_version_rejected[delegation]",
+      "status": "passed"
+    },
+    {
+      "name": "test_unsupported_schema_version_rejected[event-envelope]",
+      "status": "passed"
+    },
+    {
+      "name": "test_unsupported_schema_version_rejected[manifest]",
+      "status": "passed"
+    },
+    {
+      "name": "test_unsupported_schema_version_rejected[job]",
+      "status": "passed"
+    },
+    {
+      "name": "test_unsupported_schema_version_rejected[result]",
+      "status": "passed"
+    },
+    {
+      "name": "test_internal_missing_tenant_rejected[delegation]",
+      "status": "passed"
+    },
+    {
+      "name": "test_internal_missing_tenant_rejected[event-envelope]",
+      "status": "passed"
+    },
+    {
+      "name": "test_internal_missing_tenant_rejected[manifest]",
+      "status": "passed"
+    },
+    {
+      "name": "test_internal_missing_tenant_rejected[job]",
+      "status": "passed"
+    },
+    {
+      "name": "test_unbounded_or_invalid_scope_rejected[]",
+      "status": "passed"
+    },
+    {
+      "name": "test_unbounded_or_invalid_scope_rejected[*]",
+      "status": "passed"
+    },
+    {
+      "name": "test_unbounded_or_invalid_scope_rejected[tenant=other]",
+      "status": "passed"
+    },
+    {
+      "name": "test_unbounded_or_invalid_scope_rejected[agri.*]",
+      "status": "passed"
+    },
+    {
+      "name": "test_unbounded_or_invalid_scope_rejected[agri.parcel.admin]",
+      "status": "passed"
+    },
+    {
+      "name": "test_write_delegation_requires_request_binding[payload_hash]",
+      "status": "passed"
+    },
+    {
+      "name": "test_write_delegation_requires_request_binding[operation_id]",
+      "status": "passed"
+    },
+    {
+      "name": "test_write_delegation_requires_request_binding[canonicalization_version]",
+      "status": "passed"
+    },
+    {
+      "name": "test_delegation_scope_and_header_constraints[resource_scope-bad0]",
+      "status": "passed"
+    },
+    {
+      "name": "test_delegation_scope_and_header_constraints[scopes-bad1]",
+      "status": "passed"
+    },
+    {
+      "name": "test_delegation_scope_and_header_constraints[audience-flow-platform]",
+      "status": "passed"
+    },
+    {
+      "name": "test_delegation_scope_and_header_constraints[issuer-browser]",
+      "status": "passed"
+    },
+    {
+      "name": "test_delegation_scope_and_header_constraints[issued_at-not-a-date]",
+      "status": "passed"
+    },
+    {
+      "name": "test_delegation_scope_and_header_constraints[expires_at-2026-01-01T00:00:00+08:00]",
+      "status": "passed"
+    },
+    {
+      "name": "test_delegation_scope_and_header_constraints[authorization_version-0]",
+      "status": "passed"
+    },
+    {
+      "name": "test_delegation_cannot_bind_unrestricted_url_or_arbitrary_route",
+      "status": "passed"
+    },
+    {
+      "name": "test_delegation_preserves_platform_numeric_leading_actor_only",
+      "status": "passed"
+    },
+    {
+      "name": "test_delegation_requires_current_authority_resource_snapshot[policy_version]",
+      "status": "passed"
+    },
+    {
+      "name": "test_delegation_requires_current_authority_resource_snapshot[farm_ids]",
+      "status": "passed"
+    },
+    {
+      "name": "test_delegation_requires_current_authority_resource_snapshot[resource_versions]",
+      "status": "passed"
+    },
+    {
+      "name": "test_delegation_freezes_canonicalization_and_single_action",
+      "status": "passed"
+    },
+    {
+      "name": "test_service_request_separates_direction_and_capability[ownership.resolve-flow-platform-agri-gis-/internal/agri/v1/ownership/resolve]",
+      "status": "passed"
+    },
+    {
+      "name": "test_service_request_separates_direction_and_capability[authority.check-agri-gis-flow-platform-/internal/agri/v1/authority/check]",
+      "status": "passed"
+    },
+    {
+      "name": "test_client_cannot_supply_identity_price_or_storage_locator[tenant_id]",
+      "status": "passed"
+    },
+    {
+      "name": "test_client_cannot_supply_identity_price_or_storage_locator[user_id]",
+      "status": "passed"
+    },
+    {
+      "name": "test_client_cannot_supply_identity_price_or_storage_locator[operator_code]",
+      "status": "passed"
+    },
+    {
+      "name": "test_client_cannot_supply_identity_price_or_storage_locator[requester_code]",
+      "status": "passed"
+    },
+    {
+      "name": "test_client_cannot_supply_identity_price_or_storage_locator[role]",
+      "status": "passed"
+    },
+    {
+      "name": "test_client_cannot_supply_identity_price_or_storage_locator[price]",
+      "status": "passed"
+    },
+    {
+      "name": "test_client_cannot_supply_identity_price_or_storage_locator[object_key]",
+      "status": "passed"
+    },
+    {
+      "name": "test_client_cannot_supply_identity_price_or_storage_locator[signed_url]",
+      "status": "passed"
+    },
+    {
+      "name": "test_payload_hash_strict_hex[hash_of_manifest]",
+      "status": "passed"
+    },
+    {
+      "name": "test_payload_hash_strict_hex[AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA]",
+      "status": "passed"
+    },
+    {
+      "name": "test_payload_hash_strict_hex[aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa]",
+      "status": "passed"
+    },
+    {
+      "name": "test_payload_hash_strict_hex[https://bucket?token=secret]",
+      "status": "passed"
+    },
+    {
+      "name": "test_event_producer_and_payload_cannot_be_relabelled",
+      "status": "passed"
+    },
+    {
+      "name": "test_public_artifact_no_internal_storage_locator[object_key]",
+      "status": "passed"
+    },
+    {
+      "name": "test_public_artifact_no_internal_storage_locator[signed_url]",
+      "status": "passed"
+    },
+    {
+      "name": "test_public_artifact_no_internal_storage_locator[token]",
+      "status": "passed"
+    },
+    {
+      "name": "test_public_artifact_no_internal_storage_locator[bucket]",
+      "status": "passed"
+    },
+    {
+      "name": "test_manifest_cannot_embed_self_hash",
+      "status": "passed"
+    },
+    {
+      "name": "test_job_state_and_outcome_are_separate_but_consistent[cancelled-valid_result]",
+      "status": "passed"
+    },
+    {
+      "name": "test_job_state_and_outcome_are_separate_but_consistent[failed-None]",
+      "status": "passed"
+    },
+    {
+      "name": "test_job_state_and_outcome_are_separate_but_consistent[running-valid_result]",
+      "status": "passed"
+    },
+    {
+      "name": "test_job_state_and_outcome_are_separate_but_consistent[succeeded-execution_failed]",
+      "status": "passed"
+    },
+    {
+      "name": "test_running_job_requires_attempt",
+      "status": "passed"
+    },
+    {
+      "name": "test_insufficient_data_cannot_have_normal_summary_or_artifacts",
+      "status": "passed"
+    },
+    {
+      "name": "test_meter_is_bounded_nonnegative_integer[-1]",
+      "status": "passed"
+    },
+    {
+      "name": "test_meter_is_bounded_nonnegative_integer[0.5]",
+      "status": "passed"
+    },
+    {
+      "name": "test_meter_is_bounded_nonnegative_integer[1]",
+      "status": "passed"
+    },
+    {
+      "name": "test_meter_is_bounded_nonnegative_integer[9007199254740992]",
+      "status": "passed"
+    },
+    {
+      "name": "test_minimum_openapi_is_explicitly_unimplemented_and_uses_real_platform_cookie",
+      "status": "passed"
+    }
+  ],
+  "raw_log_sha256": "e0711c26742785aea10caf6bb8121ea957fc0388bdd3c242149c34b52ddeca90",
+  "raw_junit_sha256": "9af4e5e506326b099ab5a271dfa32de0c8d644ae3557c2eac3a71ef2b6835a9a",
+  "runtime_signature_verified_by_this_run": false,
+  "live_endpoints_verified_by_this_run": false,
+  "original_adr027_recovered": false
+}

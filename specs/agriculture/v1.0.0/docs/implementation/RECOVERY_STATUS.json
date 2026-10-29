@@ -4516,11 +4516,16 @@
     },
     "DT-005": {
       "historical_status": "done",
-      "verification": "pending_revalidation",
-      "evidence": [],
+      "verification": "restored_not_revalidated",
+      "evidence": [
+        {
+          "path": "docs/implementation/evidence/historical-ci/recovery-ci.json",
+          "sha256": "2481df255f04dd5fe7d70e6a4caf825b714b2e343ce3d835d3bfc4f18b2d1c67"
+        }
+      ],
       "commands": [],
       "source_hashes": [],
-      "note": "W00 原始交付物及日志未全量恢复；保持历史状态，不宣称本次完成。"
+      "note": "原官方 CI 终态与可取得的原始脱敏证据已恢复，精确来源及当前差异见 RECOVERED_CI_EVIDENCE.md；并非当前源码全部重新验收。W00 没有原 artifact，只有原 job/安全日志标记；W01 原字节有摘要及 c20 源码映射。任务历史 done 不自动变成新浏览器/Docker通过。"
     },
     "DT-006": {
       "historical_status": "done",
@@ -4573,11 +4578,108 @@
     },
     "DT-007": {
       "historical_status": "done",
-      "verification": "pending_revalidation",
-      "evidence": [],
-      "commands": [],
-      "source_hashes": [],
-      "note": "W00 原始交付物及日志未全量恢复；保持历史状态，不宣称本次完成。"
+      "verification": "verified",
+      "source_commit": "120654c8e7d0774fb375cbad70d623b3bf83e21b",
+      "evidence": [
+        {
+          "path": "docs/implementation/evidence/DT-007/contract-recovery-result.json",
+          "sha256": "367cc5bb6a2cefe52b5b6f50cb07315c7719ea575132f210f19c30f65684269e"
+        }
+      ],
+      "commands": [
+        {
+          "command": ".local/agri-identity-venv/bin/python -m pytest -q tests/agriculture/test_contracts.py --junitxml=.local/evidence/contract-recovery/junit.xml",
+          "exit_code": 0,
+          "result": "passed"
+        }
+      ],
+      "source_hashes": [
+        {
+          "path": "contracts/agriculture/analysis-submit.schema.json",
+          "sha256": "e1b442e6a40dddb18a582485dd9ef387fabcd6ce214297a4f0c4699e66794f43"
+        },
+        {
+          "path": "contracts/agriculture/common.schema.json",
+          "sha256": "6d717f62e5988b075f1b9461f38e98fbc2ee746e82bf81b69f54a856771e604e"
+        },
+        {
+          "path": "contracts/agriculture/delegation.schema.json",
+          "sha256": "7996790cd15111dde37d93f31943987000393dec81ed8e68a8206b082fbb1817"
+        },
+        {
+          "path": "contracts/agriculture/event-envelope.schema.json",
+          "sha256": "519943d3a4f71eb4497d81416d147e051c41bc4d996f771a0ed26b923fe511f2"
+        },
+        {
+          "path": "contracts/agriculture/job.schema.json",
+          "sha256": "e1da22c8930672387db7a23c3d617a488272c90c30eed264ae8fbd7406545e9a"
+        },
+        {
+          "path": "contracts/agriculture/manifest.schema.json",
+          "sha256": "a0c61b96f4322e639b4bc209f13d837790f84e31986388462c7eb17bba7a4adf"
+        },
+        {
+          "path": "contracts/agriculture/result.schema.json",
+          "sha256": "b358caba41bb2f1ebd101ce6501ce95aa87d9160388529a4a0582fef8bee0f37"
+        },
+        {
+          "path": "contracts/agriculture/service-request.schema.json",
+          "sha256": "06d578b9c1f18691fe0e74d0dd8c0c1cfc295f64c580ccddfaaad7aa5335fc30"
+        },
+        {
+          "path": "contracts/agriculture/source-rights.schema.json",
+          "sha256": "543452243e26b328a996038dbfbd6024fae10a36bec144c7a755be57293c257d"
+        },
+        {
+          "path": "contracts/agriculture/examples/analysis-submit.json",
+          "sha256": "16fd7b82c440fd130b1beb1bba8389672135be391524044672676f1f2793de68"
+        },
+        {
+          "path": "contracts/agriculture/examples/delegation-read.json",
+          "sha256": "50a4517d95ba085b9ae2bdd30d22eba8261c5a28a876023866e356fe31323804"
+        },
+        {
+          "path": "contracts/agriculture/examples/delegation-write.json",
+          "sha256": "a5f11537534e22a7856bd66880b2e7565d20e5a6ed8afff2a183b24d70de3f90"
+        },
+        {
+          "path": "contracts/agriculture/examples/event-envelope.json",
+          "sha256": "f3a0ea024d74ae0a9055e0c7c7c0e46ef3bbc7426831165e902dc38edf166b4f"
+        },
+        {
+          "path": "contracts/agriculture/examples/job.json",
+          "sha256": "bb3f76695289dc3c0fecc3daa51c8a5d83d952b00ec0bf5ee5e88ccb6aa58269"
+        },
+        {
+          "path": "contracts/agriculture/examples/manifest.json",
+          "sha256": "6a9481a08e35b7106ce1dc50b4324c2537571d89c04d53b1782f7b5dbc491c54"
+        },
+        {
+          "path": "contracts/agriculture/examples/result.json",
+          "sha256": "b89e3a988287c81d8cf30ddc7ec7c930ebab31c15e4681d046eea451d8e20e62"
+        },
+        {
+          "path": "contracts/agriculture/openapi.json",
+          "sha256": "116c6dc019b8ae022b30e8b266231b89c886fee39c7843175f607f192a25e2ca"
+        },
+        {
+          "path": "tests/agriculture/test_contracts.py",
+          "sha256": "313c83ec888578c84ee4482bc593940525c0fc28d0a055a2d4e13e4c2341b041"
+        },
+        {
+          "path": "contracts/agriculture/README.md",
+          "sha256": "76abbee0c802d370b13776da4d18632ec456aa8e8c052a2c1dbd3f31627463c0"
+        },
+        {
+          "path": "docs/agriculture/CONTRACT_RECOVERY_BASELINE.md",
+          "sha256": "457ebdc42ff15de6da5ceecbc137edcbc1660a863b699f8f607000d640dad910"
+        },
+        {
+          "path": "specs/agriculture/v1.0.0/docs/DECISIONS.md",
+          "sha256": "fe72310ba8ac14830a1dae842f87fcd4816e0654a69a16639d9e3f8605c2ead5"
+        }
+      ],
+      "note": "18 份机器合同/示例/测试与 c20 来源逐字一致，新跑 69 passed/0 failed/0 skipped。职责边界及缺版本/范围等负例可复核；不是签名、实际 endpoint、全量 API 或 live 验收。原 ADR027 没有恢复，新 ADR029R 明确补记而非伪造原文。"
     },
     "DT-008": {
       "historical_status": "done",
@@ -4590,34 +4692,54 @@
     "DT-009": {
       "historical_status": "done",
       "verification": "restored_not_revalidated",
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "docs/implementation/evidence/historical-ci/recovery-ci.json",
+          "sha256": "2481df255f04dd5fe7d70e6a4caf825b714b2e343ce3d835d3bfc4f18b2d1c67"
+        }
+      ],
       "commands": [],
       "source_hashes": [],
-      "note": "源代码已恢复；当前整项恢复验收证据尚待整理复核。"
+      "note": "原官方 CI 终态与可取得的原始脱敏证据已恢复，精确来源及当前差异见 RECOVERED_CI_EVIDENCE.md；并非当前源码全部重新验收。W00 没有原 artifact，只有原 job/安全日志标记；W01 原字节有摘要及 c20 源码映射。任务历史 done 不自动变成新浏览器/Docker通过。"
     },
     "DT-010": {
       "historical_status": "done",
       "verification": "restored_not_revalidated",
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "docs/implementation/evidence/historical-ci/recovery-ci.json",
+          "sha256": "2481df255f04dd5fe7d70e6a4caf825b714b2e343ce3d835d3bfc4f18b2d1c67"
+        }
+      ],
       "commands": [],
       "source_hashes": [],
-      "note": "源代码已恢复；当前整项恢复验收证据尚待整理复核。"
+      "note": "原官方 CI 终态与可取得的原始脱敏证据已恢复，精确来源及当前差异见 RECOVERED_CI_EVIDENCE.md；并非当前源码全部重新验收。W00 没有原 artifact，只有原 job/安全日志标记；W01 原字节有摘要及 c20 源码映射。任务历史 done 不自动变成新浏览器/Docker通过。"
     },
     "DT-011": {
       "historical_status": "done",
       "verification": "restored_not_revalidated",
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "docs/implementation/evidence/historical-ci/recovery-ci.json",
+          "sha256": "2481df255f04dd5fe7d70e6a4caf825b714b2e343ce3d835d3bfc4f18b2d1c67"
+        }
+      ],
       "commands": [],
       "source_hashes": [],
-      "note": "源代码已恢复；当前整项恢复验收证据尚待整理复核。"
+      "note": "原官方 CI 终态与可取得的原始脱敏证据已恢复，精确来源及当前差异见 RECOVERED_CI_EVIDENCE.md；并非当前源码全部重新验收。W00 没有原 artifact，只有原 job/安全日志标记；W01 原字节有摘要及 c20 源码映射。任务历史 done 不自动变成新浏览器/Docker通过。"
     },
     "DT-012": {
       "historical_status": "done",
       "verification": "restored_not_revalidated",
-      "evidence": [],
+      "evidence": [
+        {
+          "path": "docs/implementation/evidence/historical-ci/recovery-ci.json",
+          "sha256": "2481df255f04dd5fe7d70e6a4caf825b714b2e343ce3d835d3bfc4f18b2d1c67"
+        }
+      ],
       "commands": [],
       "source_hashes": [],
-      "note": "源代码已恢复；当前整项恢复验收证据尚待整理复核。"
+      "note": "原官方 CI 终态与可取得的原始脱敏证据已恢复，精确来源及当前差异见 RECOVERED_CI_EVIDENCE.md；并非当前源码全部重新验收。W00 没有原 artifact，只有原 job/安全日志标记；W01 原字节有摘要及 c20 源码映射。任务历史 done 不自动变成新浏览器/Docker通过。"
     },
     "DT-013": {
       "historical_status": "in_progress",

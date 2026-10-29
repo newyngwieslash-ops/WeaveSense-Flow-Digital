@@ -885,7 +885,7 @@
         "用普通成员提交管理员编码验证没有提权"
       ],
       "blockers": [],
-      "status": "in_progress"
+      "status": "done"
     },
     {
       "id": "DT-014",
@@ -925,7 +925,7 @@
         "检查构建文件与网络请求不含内部凭证"
       ],
       "blockers": [],
-      "status": "not_started"
+      "status": "in_progress"
     },
     {
       "id": "DT-015",

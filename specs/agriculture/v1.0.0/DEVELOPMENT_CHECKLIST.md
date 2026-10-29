@@ -435,7 +435,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-013 · 替换AgriScope的客户端操作人信任链
 
-- 状态：`in_progress`；阶段：`S0`；优先级：`P0`。
+- 状态：`done`；阶段：`S0`；优先级：`P0`。
 - 需求：AG-FR-002、AG-FR-004、AG-FR-006、AG-FR-054、AG-NFR-001。
 - 验收用例：AG-AC-002、AG-AC-004、AG-AC-006、AG-AC-054。
 - 前置任务：DT-012。
@@ -467,7 +467,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-014 · 接通React主壳和Vue农业子应用
 
-- 状态：`not_started`；阶段：`S0`；优先级：`P0`。
+- 状态：`in_progress`；阶段：`S0`；优先级：`P0`。
 - 需求：AG-FR-023、AG-FR-068、AG-NFR-012。
 - 验收用例：AG-AC-023、AG-AC-068。
 - 前置任务：DT-009、DT-012、DT-013。
@@ -4816,9 +4816,9 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 | 状态 | 数量 |
 | --- | ---: |
-| done | 12 |
+| done | 13 |
 | in_progress | 1 |
-| not_started | 131 |
+| not_started | 130 |
 
 历史 done、恢复证据待补验：DT-001、DT-002、DT-003、DT-004、DT-005、DT-006、DT-007、DT-008、DT-009、DT-010、DT-011、DT-012。
 依赖状态就绪但仍须检查恢复条件：无。
@@ -4837,8 +4837,8 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 | DT-010 | done |
 | DT-011 | done |
 | DT-012 | done |
-| DT-013 | in_progress |
-| DT-014 | not_started |
+| DT-013 | done |
+| DT-014 | in_progress |
 | DT-015 | not_started |
 | DT-016 | not_started |
 | DT-017 | not_started |

@@ -1,0 +1,148 @@
+[
+  {
+    "tenant_id": "fixture-tenant-a",
+    "parcel_id": "fixture-parcel-001",
+    "revision": 1,
+    "synthetic": true,
+    "source_crs": "EPSG:6933",
+    "source_axis_order": "x,y",
+    "source_coordinates": [
+      [
+        1000000,
+        3000000
+      ],
+      [
+        1000100,
+        3000000
+      ],
+      [
+        1000100,
+        3000100
+      ],
+      [
+        1000000,
+        3000100
+      ],
+      [
+        1000000,
+        3000000
+      ]
+    ],
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            10.364167811212809,
+            24.212474445403934
+          ],
+          [
+            10.365204227993932,
+            24.212474445403934
+          ],
+          [
+            10.365204227993932,
+            24.21333198380038
+          ],
+          [
+            10.364167811212809,
+            24.21333198380038
+          ],
+          [
+            10.364167811212809,
+            24.212474445403934
+          ]
+        ]
+      ]
+    },
+    "output_crs": "EPSG:4326",
+    "output_axis_order": "longitude,latitude",
+    "transform": {
+      "engine": "GDAL/PROJ via rasterio.warp.transform",
+      "source": "EPSG:6933",
+      "target": "EPSG:4326",
+      "always_xy": true
+    },
+    "area_reference": {
+      "algorithm": "fixture-equal-area-shoelace-v1",
+      "crs": "EPSG:6933",
+      "area_m2": 10000,
+      "area_hectares": 1,
+      "area_mu": 15,
+      "tolerance_m2": 0.01
+    }
+  },
+  {
+    "tenant_id": "fixture-tenant-b",
+    "parcel_id": "fixture-parcel-001",
+    "revision": 1,
+    "synthetic": true,
+    "source_crs": "EPSG:4326",
+    "source_axis_order": "longitude,latitude",
+    "source_coordinates": [
+      [
+        10.364167811212809,
+        24.212474445403934
+      ],
+      [
+        10.365204227993932,
+        24.212474445403934
+      ],
+      [
+        10.365204227993932,
+        24.21333198380038
+      ],
+      [
+        10.364167811212809,
+        24.21333198380038
+      ],
+      [
+        10.364167811212809,
+        24.212474445403934
+      ]
+    ],
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            10.364167811212809,
+            24.212474445403934
+          ],
+          [
+            10.365204227993932,
+            24.212474445403934
+          ],
+          [
+            10.365204227993932,
+            24.21333198380038
+          ],
+          [
+            10.364167811212809,
+            24.21333198380038
+          ],
+          [
+            10.364167811212809,
+            24.212474445403934
+          ]
+        ]
+      ]
+    },
+    "output_crs": "EPSG:4326",
+    "output_axis_order": "longitude,latitude",
+    "transform": {
+      "engine": "GDAL/PROJ via rasterio.warp.transform",
+      "source": "EPSG:4326",
+      "target": "EPSG:4326",
+      "always_xy": true
+    },
+    "area_reference": {
+      "algorithm": "fixture-equal-area-shoelace-v1",
+      "crs": "EPSG:6933",
+      "area_m2": 10000,
+      "area_hectares": 1,
+      "area_mu": 15,
+      "tolerance_m2": 0.01
+    }
+  }
+]

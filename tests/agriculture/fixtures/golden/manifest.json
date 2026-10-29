@@ -1,0 +1,245 @@
+{
+  "schema_version": "1.0",
+  "dataset_id": "dt006-synthetic-recovery-v1",
+  "recovery": "newly reconstructed fixtures; not asserted byte-identical to lost W00 artifacts",
+  "groups": {
+    "synthetic": {
+      "status": "provided",
+      "source": "self-authored numerical fixtures",
+      "license": "MIT",
+      "rights": "test-only synthetic, no third-party or customer inputs"
+    },
+    "public_real": {
+      "status": "not_provided",
+      "assets": []
+    },
+    "customer_operational": {
+      "status": "not_provided",
+      "assets": []
+    }
+  },
+  "files": {
+    "parcels.json": {
+      "sha256": "b94fe7d24efd177abd0c0c40091cdc1b722760647ac45bdd12c2d1eb735a0ae9",
+      "size_bytes": 3050
+    },
+    "reflectance-20260601.tif": {
+      "sha256": "40f1433bf882efbf61606841282ff19622d8863220e31a419ae4662a7ebb8e0b",
+      "size_bytes": 2054
+    },
+    "reflectance-20260611.tif": {
+      "sha256": "4f736b32990f4eb9e7b119b871f8717d9d63166e872d894e37af08954b3ab3c2",
+      "size_bytes": 2054
+    }
+  },
+  "assets": [
+    {
+      "path": "reflectance-20260601.tif",
+      "acquired_at": "2026-06-01T00:00:00Z",
+      "product_family": "synthetic-golden-v1",
+      "product_level": "synthetic_surface_reflectance",
+      "source_crs": "EPSG:6933",
+      "resolution_m": [
+        10,
+        10
+      ],
+      "bands": [
+        {
+          "index": 1,
+          "semantic": "red",
+          "scale": 0.0001,
+          "offset": -0.1,
+          "nodata": -9999
+        },
+        {
+          "index": 2,
+          "semantic": "nir",
+          "scale": 0.0001,
+          "offset": -0.1,
+          "nodata": -9999
+        },
+        {
+          "index": 3,
+          "semantic": "quality",
+          "codes": {
+            "0": "clear",
+            "1": "cloud",
+            "2": "shadow"
+          }
+        }
+      ]
+    },
+    {
+      "path": "reflectance-20260611.tif",
+      "acquired_at": "2026-06-11T00:00:00Z",
+      "product_family": "synthetic-golden-v1",
+      "product_level": "synthetic_surface_reflectance",
+      "source_crs": "EPSG:6933",
+      "resolution_m": [
+        10,
+        10
+      ],
+      "bands": [
+        {
+          "index": 1,
+          "semantic": "red",
+          "scale": 0.0001,
+          "offset": -0.1,
+          "nodata": -9999
+        },
+        {
+          "index": 2,
+          "semantic": "nir",
+          "scale": 0.0001,
+          "offset": -0.1,
+          "nodata": -9999
+        },
+        {
+          "index": 3,
+          "semantic": "quality",
+          "codes": {
+            "0": "clear",
+            "1": "cloud",
+            "2": "shadow"
+          }
+        }
+      ]
+    }
+  ],
+  "raw_arrays": {
+    "red": [
+      [
+        2000,
+        3000,
+        -9999
+      ],
+      [
+        2000,
+        2000,
+        1000
+      ],
+      [
+        3000,
+        4000,
+        2000
+      ]
+    ],
+    "nir_by_date": [
+      [
+        [
+          6000,
+          5000,
+          5000
+        ],
+        [
+          6000,
+          6000,
+          1000
+        ],
+        [
+          7000,
+          4000,
+          8000
+        ]
+      ],
+      [
+        [
+          4000,
+          7000,
+          5000
+        ],
+        [
+          6000,
+          6000,
+          1000
+        ],
+        [
+          5000,
+          6000,
+          4000
+        ]
+      ]
+    ],
+    "quality": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        2,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  "expected": {
+    "valid_row_column": [
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        2,
+        2
+      ]
+    ],
+    "ndvi_by_date": [
+      [
+        0.6666666666666666,
+        0.3333333333333333,
+        0.5,
+        0,
+        0.75
+      ],
+      [
+        0.5,
+        0.5,
+        0.3333333333333333,
+        0.25,
+        0.5
+      ]
+    ],
+    "mean_ndvi_by_date": [
+      0.45,
+      0.4166666666666667
+    ],
+    "mean_change": -0.03333333333333333,
+    "valid_pixel_count": 5,
+    "tolerance": 1e-12,
+    "no_valid_pixels": {
+      "status": "insufficient_data",
+      "value": null
+    },
+    "incomparable_dates": {
+      "status": "insufficient_data",
+      "value": null
+    }
+  },
+  "generator_environment": {
+    "rasterio": "1.4.4",
+    "gdal": "3.10.3"
+  },
+  "limitations": [
+    "Not a production processing implementation or permission-isolation test",
+    "Not real imagery, a real farm, agronomic diagnosis or commercial acceptance",
+    "Deterministic bytes are checked within the recorded locked GDAL/Rasterio environment"
+  ]
+}

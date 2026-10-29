@@ -1,0 +1,18 @@
+{
+  "repository": "https://deb.debian.org/debian/",
+  "inrelease_sha256": "0584fba32e13e0ab8285fb16c27adea1ec03a73669c18702821094fd6ca86675",
+  "packages": [
+    {
+      "Package": "nginx",
+      "Version": "1.26.3-3+deb13u7",
+      "Filename": "pool/main/n/nginx/nginx_1.26.3-3+deb13u7_amd64.deb",
+      "SHA256": "4ec80321b945692ab6cec4de41e571ab5d77253ada31ae61524004e45632db58"
+    },
+    {
+      "Package": "nginx-common",
+      "Version": "1.26.3-3+deb13u7",
+      "Filename": "pool/main/n/nginx/nginx-common_1.26.3-3+deb13u7_all.deb",
+      "SHA256": "212d3cccd493965a646b3ed11f3541c573b67f957b508703c1b55a8d8875f64d"
+    }
+  ]
+}

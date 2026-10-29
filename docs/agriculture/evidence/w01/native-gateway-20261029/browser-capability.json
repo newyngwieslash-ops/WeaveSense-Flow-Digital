@@ -1,0 +1,10 @@
+{
+  "browser_version": "Chromium 155.0.8059.79 built on Debian GNU/Linux 13 (trixie)",
+  "exit_code": -6,
+  "unix_socket_denied": true,
+  "browser_e2e_executed": false,
+  "sandbox_disabled": false,
+  "result": "blocked_environment",
+  "diagnostic": "process_singleton_posix socket() EPERM",
+  "network_target": "about:blank only"
+}

@@ -17,6 +17,54 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const hashFile = file => createHash("sha256").update(readFileSync(file)).digest("hex");
 const COOKIE = "open_ai_canvas_session";
 
+export async function startLocalSMTPSink(recipient) {
+    if (!/^[a-z0-9_-]+@fixture\.invalid$/.test(recipient)) throw new Error("SMTP sink requires a reserved fixture recipient");
+    const messages = [];
+    const sockets = new Set();
+    const server = createPortServer(socket => {
+        sockets.add(socket);
+        socket.setEncoding("utf8");
+        socket.setTimeout(30000, () => socket.destroy());
+        socket.on("error", () => {});
+        socket.on("close", () => sockets.delete(socket));
+        let buffer = "", bytes = 0, data = false, recipientAccepted = false, senderAccepted = false;
+        let body = [];
+        socket.write("220 fixture.invalid local test sink\r\n");
+        socket.on("data", chunk => {
+            bytes += Buffer.byteLength(chunk);
+            if (bytes > 128 * 1024) { socket.end("552 fixture message size limit\r\n"); return; }
+            buffer += chunk;
+            while (buffer.includes("\r\n")) {
+                const index = buffer.indexOf("\r\n");
+                const line = buffer.slice(0, index); buffer = buffer.slice(index + 2);
+                if (data) {
+                    if (line === ".") {
+                        messages.push({ recipient, content: body.join("\n") });
+                        body = []; data = false; recipientAccepted = false;
+                        socket.write("250 accepted into local memory only\r\n");
+                    } else body.push(line.startsWith("..") ? line.slice(1) : line);
+                } else if (/^(EHLO|HELO) /i.test(line)) socket.write("250-fixture.invalid\r\n250 8BITMIME\r\n");
+                else if (/^MAIL FROM:<noreply@fixture\.invalid>(?: BODY=8BITMIME)?$/i.test(line)) { senderAccepted = true; socket.write("250 fixture sender accepted\r\n"); }
+                else if (/^RCPT TO:/i.test(line)) {
+                    recipientAccepted = senderAccepted && line.toLowerCase() === `rcpt to:<${recipient}>`;
+                    socket.write(recipientAccepted ? "250 fixture recipient accepted\r\n" : "550 no relay and no other recipients\r\n");
+                } else if (line.toUpperCase() === "DATA") {
+                    if (!recipientAccepted || messages.length >= 2) socket.write("503 fixture recipient required or message limit reached\r\n");
+                    else { data = true; body = []; socket.write("354 end with dot\r\n"); }
+                } else if (line.toUpperCase() === "RSET") { senderAccepted = false; recipientAccepted = false; body = []; socket.write("250 reset\r\n"); }
+                else if (line.toUpperCase() === "QUIT") socket.end("221 local sink closed\r\n");
+                else socket.write("500 unsupported local fixture command\r\n");
+            }
+        });
+    });
+    await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+    return { host: server.address().address, port: server.address().port, messages, close: async () => {
+        for (const socket of sockets) socket.destroy();
+        await new Promise(resolve => server.close(resolve));
+        messages.length = 0;
+    } };
+}
+
 export function resolveStatic(pathname, reactRoot, vueRoot) {
     let decoded;
     try { decoded = decodeURIComponent(pathname); } catch { return null; }
@@ -105,7 +153,7 @@ async function connect(cdpPort, origin) {
         } else if (message.method === "Network.responseReceived") {
             const response = message.params.response;
             const url = new URL(response.url);
-            if (url.origin === origin && ["/api/auth/session", "/api/auth/login", "/api/auth/logout", "/api/auth/settings", "/api/intelligence/workspaces"].includes(url.pathname)) {
+            if (url.origin === origin && ["/api/auth/session", "/api/auth/login", "/api/auth/logout", "/api/auth/settings", "/api/auth/password-reset-code", "/api/auth/password-reset", "/api/intelligence/workspaces"].includes(url.pathname)) {
                 const status = { path: url.pathname, status: response.status, completed: false };
                 statuses.push(status);
                 statusRequests.set(message.params.requestId, status);
@@ -164,7 +212,7 @@ async function main() {
     for (const file of [binary, join(reactRoot, "index.html"), join(vueRoot, "index.html"), chrome]) if (!existsSync(file)) throw new Error("required executable or production build absent");
     const temp = mkdtempSync(join(tmpdir(), "digitaltwin-session-e2e-"));
     const results = [];
-    let backend, browser, proxy, cdp;
+    let backend, browser, proxy, cdp, smtp;
     const check = (ok, name) => { if (!ok) throw new Error(`assertion failed: ${name}`); results.push({ name, result: "pass" }); console.log(`PASS ${name}`); };
     const started = new Date().toISOString();
     const manifestPath = join(ROOT, ".local/evidence/session-ci-provenance.json");
@@ -298,6 +346,65 @@ async function main() {
         await cdp.navigate("/");
         await cdp.poll("!!document.querySelector('#login-account')", "expired React session rejected");
         check(await sessionActor() === null, "expired_session_cannot_rehydrate_react");
+
+        report.stage = "password_reset_loopback_fixture";
+        report.password_reset_transport = "real SMTP to loopback sink only; reserved fixture.invalid address; no external delivery";
+        const fixtureEmail = `reset_${randomBytes(6).toString("hex")}@fixture.invalid`;
+        const bind = spawnSync("python3", ["-c", "import json,sqlite3,sys; x=json.load(sys.stdin); db=sqlite3.connect(x['db']); c=db.execute('UPDATE users SET email=? WHERE id=?',(x['email'],x['id'])); assert c.rowcount==1; db.commit(); db.close()"], { input: JSON.stringify({ db: join(temp, "open_ai_canvas.db"), id: actor, email: fixtureEmail }), stdio: ["pipe", "ignore", "ignore"] });
+        check(bind.status === 0, "owned_fixture_email_bound_for_password_reset");
+        const loginFixture = async () => {
+            const response = await fetch(`${origin}/api/auth/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ username, password }) });
+            const value = response.headers.get("set-cookie")?.split(";")[0].slice(COOKIE.length + 1);
+            if (!response.ok || !value) throw new Error("real reset session fixture login failed");
+            return decodeURIComponent(value);
+        };
+        const preResetA = await loginFixture();
+        const preResetB = await loginFixture();
+        check(await workspaceStatus(preResetA) === 200 && await workspaceStatus(preResetB) === 200, "two_real_pre_reset_sessions_are_authorized");
+        smtp = await startLocalSMTPSink(fixtureEmail);
+        const mailConfig = await fetch(`${origin}/api/admin/settings/email`, { method: "PATCH", headers: { "content-type": "application/json", Cookie: `${COOKIE}=${preResetA}` },
+            body: JSON.stringify({ enabled: true, host: "127.0.0.1", port: smtp.port, encryption: "none", username: "", password: "", fromEmail: "noreply@fixture.invalid", fromName: "Local Test Fixture" }) });
+        check(mailConfig.ok && (await mailConfig.json()).code === 0, "real_admin_api_configures_only_loopback_smtp_fixture");
+        await cdp.send("Network.deleteCookies", { name: COOKIE, url: origin });
+        await cdp.navigate("/forgot-password?next=%2Fagri%2F");
+        await cdp.fill("#recovery-email", fixtureEmail, "recovery email field");
+        report.stage = "password_reset_real_email_request";
+        await cdp.poll("(() => {const button=document.querySelector('form button[type=submit]'); if(!button || button.disabled) return false; button.click(); return true;})()", "request recovery code form");
+        await cdp.poll("!!document.querySelector('#recovery-code')", "actual reset code request accepted");
+        const mailDeadline = Date.now() + 15000;
+        while (Date.now() < mailDeadline && smtp.messages.length === 0) await sleep(100);
+        check(smtp.messages.length === 1 && smtp.messages[0].recipient === fixtureEmail, "real_backend_smtp_message_received_only_by_local_sink");
+        const resetCode = smtp.messages[0].content.match(/验证码：(\d{6})/)?.[1];
+        check(Boolean(resetCode), "real_backend_generated_reset_code_available_in_memory");
+        const newPassword = randomBytes(24).toString("base64url");
+        report.stage = "password_reset_real_form_submit";
+        await cdp.fill("#recovery-code", resetCode, "recovery code field");
+        await cdp.fill("#recovery-password", newPassword, "new password field");
+        await cdp.fill("#recovery-confirm-password", newPassword, "confirm password field");
+        await cdp.poll("(() => {const button=document.querySelector('form button[type=submit]'); if(!button || button.disabled) return false; button.click(); return true;})()", "submit real password reset form");
+        await cdp.poll("location.pathname === '/login' && !!document.querySelector('#login-account')", "password reset returns to platform login");
+        check(await workspaceStatus(preResetA) === 401 && await workspaceStatus(preResetB) === 401, "password_reset_revokes_both_old_sessions_protected_http");
+        const consumed = spawnSync("python3", ["-c", "import json,sqlite3,sys; x=json.load(sys.stdin); db=sqlite3.connect(x['db']); r=db.execute(\"SELECT code_hash,used_at FROM email_verification_codes WHERE email=? AND purpose='password_reset' ORDER BY created_at DESC LIMIT 1\",(x['email'],)).fetchone(); assert r and r[1] and len(r[0])==64 and r[0]!=x['code']; db.close()"], { input: JSON.stringify({ db: join(temp, "open_ai_canvas.db"), email: fixtureEmail, code: resetCode }), stdio: ["pipe", "ignore", "ignore"] });
+        check(consumed.status === 0, "real_reset_code_is_hashed_and_consumed_in_owned_database");
+        const reused = await fetch(`${origin}/api/auth/password-reset`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: fixtureEmail, emailCode: resetCode, password: randomBytes(24).toString("base64url") }) });
+        check(reused.status === 400, "consumed_reset_code_cannot_be_replayed");
+        await cdp.send("Network.setCookie", { name: COOKIE, value: preResetB, url: origin, path: "/", httpOnly: true, sameSite: "Lax" });
+        await cdp.navigate("/agri/");
+        await cdp.poll("!!document.querySelector('main[data-session-status=anonymous]')", "Vue rejects password-reset old session");
+        check(await sessionActor() === null, "vue_rejects_old_cookie_after_password_reset");
+        await cdp.navigate("/");
+        await cdp.poll("!!document.querySelector('#login-account')", "React rejects password-reset old session");
+        check(await sessionActor() === null, "react_rejects_old_cookie_after_password_reset");
+        const oldPasswordLogin = await fetch(`${origin}/api/auth/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ username, password }) });
+        check(oldPasswordLogin.status === 401, "old_password_http_login_is_rejected");
+        report.stage = "password_reset_new_password_real_login";
+        await cdp.navigate("/login?next=%2Fagri%2F");
+        await cdp.fill("#login-account", username, "post-reset account field");
+        await cdp.fill("#login-password", newPassword, "post-reset password field");
+        await cdp.poll("(() => {const button=document.querySelector('form button[type=submit]'); if(!button || button.disabled) return false; button.click(); return true;})()", "post-reset real login submit");
+        await cdp.poll("location.pathname === '/agri/' && !!document.querySelector('main[data-session-status=ready] [data-testid=session-user]')", "new password logs into Vue");
+        check(await sessionActor() === actor, "new_password_real_form_login_restores_same_actor");
+        check(smtp.messages.length === 1, "local_sink_received_exactly_one_reset_message");
         check(cdp.exceptions.length === 0, "no_browser_runtime_exceptions");
         report.outbound_requests_blocked = cdp.outboundBlocked();
         check(report.outbound_requests_blocked === 0, "no_outbound_request_attempts");
@@ -319,6 +426,7 @@ async function main() {
     } finally {
         cdp?.close();
         await stop(browser); await stop(backend);
+        await smtp?.close();
         if (proxy) { proxy.closeAllConnections(); await new Promise(resolve => proxy.close(resolve)); }
         rmSync(temp, { recursive: true, force: true });
         report.finished_at = new Date().toISOString();

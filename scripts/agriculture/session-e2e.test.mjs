@@ -2,8 +2,58 @@ import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { createConnection } from "node:net";
 import test from "node:test";
-import { resolveStatic, startProxy } from "./session-e2e.mjs";
+import { resolveStatic, startProxy, startLocalSMTPSink } from "./session-e2e.mjs";
+
+function smtpExchange(port, commands) {
+    return new Promise((resolve, reject) => {
+        const socket = createConnection({ host: "127.0.0.1", port });
+        let received = "";
+        socket.setEncoding("utf8");
+        socket.setTimeout(3000, () => { socket.destroy(); reject(new Error("local SMTP test timeout")); });
+        socket.on("connect", () => socket.write(commands));
+        socket.on("data", chunk => { received += chunk; });
+        socket.on("end", () => resolve(received));
+        socket.on("error", reject);
+    });
+}
+
+test("SMTP sink receives real protocol bytes only on loopback and clears memory", async () => {
+    const sink = await startLocalSMTPSink("reset_fixture@fixture.invalid");
+    try {
+        assert.equal(sink.host, "127.0.0.1");
+        const replies = await smtpExchange(sink.port, "EHLO fixture\r\nMAIL FROM:<noreply@fixture.invalid> BODY=8BITMIME\r\nRCPT TO:<reset_fixture@fixture.invalid>\r\nDATA\r\nSubject: fixture\r\n\r\n验证码：123456\r\n..dot\r\n.\r\nQUIT\r\n");
+        assert.match(replies, /250 accepted into local memory only/);
+        assert.equal(sink.messages.length, 1);
+        assert.equal(sink.messages[0].recipient, "reset_fixture@fixture.invalid");
+        assert.match(sink.messages[0].content, /验证码：123456\n\.dot/);
+    } finally { await sink.close(); }
+    assert.equal(sink.messages.length, 0);
+});
+
+test("SMTP sink refuses non-fixture relay recipients and DATA", async () => {
+    const sink = await startLocalSMTPSink("reset_fixture@fixture.invalid");
+    try {
+        const replies = await smtpExchange(sink.port, "EHLO fixture\r\nMAIL FROM:<noreply@fixture.invalid>\r\nRCPT TO:<outsider@example.com>\r\nDATA\r\nQUIT\r\n");
+        assert.match(replies, /550 no relay/);
+        assert.match(replies, /503 fixture recipient required/);
+        assert.equal(sink.messages.length, 0);
+    } finally { await sink.close(); }
+});
+
+test("SMTP sink rejects oversized messages without retaining content", async () => {
+    const sink = await startLocalSMTPSink("reset_fixture@fixture.invalid");
+    try {
+        const replies = await smtpExchange(sink.port, "EHLO fixture\r\nMAIL FROM:<noreply@fixture.invalid>\r\nRCPT TO:<reset_fixture@fixture.invalid>\r\nDATA\r\n" + "x".repeat(140 * 1024));
+        assert.match(replies, /552 fixture message size limit/);
+        assert.equal(sink.messages.length, 0);
+    } finally { await sink.close(); }
+});
+
+test("SMTP fixture cannot be configured with an external recipient", async () => {
+    await assert.rejects(startLocalSMTPSink("someone@example.com"), /reserved fixture recipient/);
+});
 
 test("static harness separates React and Vue SPA roots and refuses traversal", () => {
     const root = mkdtempSync(join(tmpdir(), "agri-static-test-"));

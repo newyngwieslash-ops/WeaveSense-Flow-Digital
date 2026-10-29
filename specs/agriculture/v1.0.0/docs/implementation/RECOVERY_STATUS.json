@@ -4516,16 +4516,80 @@
     },
     "DT-005": {
       "historical_status": "done",
-      "verification": "restored_not_revalidated",
+      "verification": "verified",
       "evidence": [
+        {
+          "path": "docs/implementation/evidence/historical-ci/d13-mapping.json",
+          "sha256": "ddfe477a3435d7a1c1e3f65e1d9f1a5578afea41b6e8fc571383dddf5285a1a5"
+        },
         {
           "path": "docs/implementation/evidence/historical-ci/recovery-ci.json",
           "sha256": "2481df255f04dd5fe7d70e6a4caf825b714b2e343ce3d835d3bfc4f18b2d1c67"
         }
       ],
-      "commands": [],
-      "source_hashes": [],
-      "note": "原官方 CI 终态与可取得的原始脱敏证据已恢复，精确来源及当前差异见 RECOVERED_CI_EVIDENCE.md；并非当前源码全部重新验收。W00 没有原 artifact，只有原 job/安全日志标记；W01 原字节有摘要及 c20 源码映射。任务历史 done 不自动变成新浏览器/Docker通过。"
+      "commands": [
+        {
+          "command": "bash scripts/agriculture/ci-smoke.sh core",
+          "exit_code": 0,
+          "result": "passed",
+          "execution": "historical CI c20; not rerun during reconciliation"
+        },
+        {
+          "command": "bash scripts/agriculture/ci-smoke.sh migrations",
+          "exit_code": 0,
+          "result": "passed",
+          "execution": "historical CI c20; not rerun during reconciliation"
+        }
+      ],
+      "source_hashes": [
+        {
+          "path": "deploy/agriculture/README.md",
+          "sha256": "f8c9e9d584cfd07dc66b3fa2f698cf4dd386efe482b6992792265e84ed0b1f0e"
+        },
+        {
+          "path": "deploy/agriculture/gis-identity.template.json",
+          "sha256": "c97dce09907636b1fb6d41d9d46c9fdbabbd68334458af773f0e54fe838b3d60"
+        },
+        {
+          "path": "deploy/agriculture/health/Dockerfile",
+          "sha256": "0028525df4927a9dae87cfa9f090727bab420261cea54c5d466e8bb7458c2973"
+        },
+        {
+          "path": "deploy/agriculture/health/health.py",
+          "sha256": "f6a9e324b3beb43b134f2c2ebdfce61f8d237c5f06174f86b90fd8d3a4d2f7e4"
+        },
+        {
+          "path": "deploy/agriculture/loom-migrate.mjs",
+          "sha256": "2dcef627ffe50116538797b781747bb78eaf22ee571628a049b1b630bd79928d"
+        },
+        {
+          "path": "deploy/agriculture/platform-identity.template.json",
+          "sha256": "f4e3778f3535a79d6b4ea009c46e10ae749b41dcef0882bda524cd8b8a68f500"
+        },
+        {
+          "path": "deploy/agriculture/postgres/init.sh",
+          "sha256": "b93dafad69a01881a9dbec09f4f6f3bd491aca26bb9ca8fdf68fbbf84cc8f951"
+        },
+        {
+          "path": "deploy/agriculture/sources.json",
+          "sha256": "aae6b4e006489a1724a5fcefae8ed55e7ae83ffebe3d3951a73f6d78aff27fc8"
+        },
+        {
+          "path": "scripts/agriculture/ci-smoke.sh",
+          "sha256": "c25b6630010987098216df418cce4717f6ea985d3b669ddee4aa5ed39b4453e5"
+        },
+        {
+          "path": "docker-compose.agriculture.yml",
+          "sha256": "93713c7f44d6a841166f299978ee09c1270f50b5fb477772cd96b7e31882e13e"
+        },
+        {
+          "path": ".github/workflows/agriculture-w00.yml",
+          "sha256": "7c86158675fe3b1ccdbae3fc2c85be24b06c40146464cd7ae02c627dd2919bb7"
+        }
+      ],
+      "note": "historical core and migrations smoke only; Flow206 plus deployment overlay; 186 platform/28 Loom tables, not agricultural82/83 or full business servers. Recovery verification only: historical CI source hashes match frozen d13 ancestor; later changes/DT014 real nginx browser regression not accepted. deploy/agriculture/env.example was reconstructed after d13, later amended by DT014; historical c20 smoke uses private generated environment, not current template acceptance",
+      "source_commit": "d13a09bb5ebdcaeb38b8136987ee577360fa7add",
+      "verification_basis": "recovered_original_historical_execution_mapped_to_frozen_ancestor_not_fresh_current_run"
     },
     "DT-006": {
       "historical_status": "done",
@@ -4691,55 +4755,431 @@
     },
     "DT-009": {
       "historical_status": "done",
-      "verification": "restored_not_revalidated",
+      "verification": "verified",
       "evidence": [
+        {
+          "path": "docs/implementation/evidence/historical-ci/d13-mapping.json",
+          "sha256": "ddfe477a3435d7a1c1e3f65e1d9f1a5578afea41b6e8fc571383dddf5285a1a5"
+        },
         {
           "path": "docs/implementation/evidence/historical-ci/recovery-ci.json",
           "sha256": "2481df255f04dd5fe7d70e6a4caf825b714b2e343ce3d835d3bfc4f18b2d1c67"
+        },
+        {
+          "path": "docs/implementation/evidence/historical-ci/ci-40839895134-session/session-browser-e2e.json",
+          "sha256": "75186c8e6cbe2b2dd0d18607204b6bace6b600a6d8756afb0021cf230b2f30d5"
+        },
+        {
+          "path": "docs/implementation/evidence/historical-ci/ci-40839895134-session/session-ci-provenance.json",
+          "sha256": "117d18b18e6605845ad585699ee89bd966417060c53ee588eeacc95adbbaeeb4"
         }
       ],
-      "commands": [],
-      "source_hashes": [],
-      "note": "原官方 CI 终态与可取得的原始脱敏证据已恢复，精确来源及当前差异见 RECOVERED_CI_EVIDENCE.md；并非当前源码全部重新验收。W00 没有原 artifact，只有原 job/安全日志标记；W01 原字节有摘要及 c20 源码映射。任务历史 done 不自动变成新浏览器/Docker通过。"
+      "commands": [
+        {
+          "command": "node scripts/agriculture/session-e2e.mjs",
+          "exit_code": 0,
+          "result": "passed",
+          "execution": "historical CI c20; not rerun during reconciliation"
+        }
+      ],
+      "source_hashes": [
+        {
+          "path": "backend/internal/auth/auth.go",
+          "sha256": "597d6dce98d4e8a6f9f4e968652715df6d06dc4aa4ec6a6fd5cb8206f2069b2a"
+        },
+        {
+          "path": "backend/internal/auth/password_reset_test.go",
+          "sha256": "49545261641fcbd7376551b9f364e42aff74abd1231cfa300c2d06e056acd736"
+        },
+        {
+          "path": "backend/internal/auth/session_security_test.go",
+          "sha256": "7b43b35eca30a31b6c4cb05f902445d244992e0f042354ad90dad24a9d94397e"
+        },
+        {
+          "path": "backend/internal/handler/auth.go",
+          "sha256": "aea97d434c5f757e93fa4999fa4e1476d1687e1e8831896a092f0079e7a4e99a"
+        },
+        {
+          "path": "web/src/services/api/auth.ts",
+          "sha256": "bca680b4d1d14d5ab9d3f605c846e45721982f0b27ff9d8373c446c542f032a1"
+        },
+        {
+          "path": "scripts/agriculture/session-e2e.mjs",
+          "sha256": "e4d118a80397bbde0c6d0f8089103fda8f27a27c92af1121290367380ff198b3"
+        },
+        {
+          "path": "scripts/agriculture/browser-navigation.mjs",
+          "sha256": "8df240e019e3ce4c3ed3f814a89ae21773955a3e33bafbd5eca88d3a6a684f2f"
+        },
+        {
+          "path": "scripts/agriculture/session-e2e.test.mjs",
+          "sha256": "6e6dc09cdb3365edb872812950377b8276181123ca3c1d7bb0809dfd39846c0c"
+        }
+      ],
+      "note": "44 historical real Chromium same-origin session checks, SQLite fixture and test proxy. Recovery verification only: historical CI source hashes match frozen d13 ancestor; later changes/DT014 real nginx browser regression not accepted. ",
+      "source_commit": "d13a09bb5ebdcaeb38b8136987ee577360fa7add",
+      "verification_basis": "recovered_original_historical_execution_mapped_to_frozen_ancestor_not_fresh_current_run"
     },
     "DT-010": {
       "historical_status": "done",
-      "verification": "restored_not_revalidated",
+      "verification": "verified",
       "evidence": [
+        {
+          "path": "docs/implementation/evidence/historical-ci/d13-mapping.json",
+          "sha256": "ddfe477a3435d7a1c1e3f65e1d9f1a5578afea41b6e8fc571383dddf5285a1a5"
+        },
         {
           "path": "docs/implementation/evidence/historical-ci/recovery-ci.json",
           "sha256": "2481df255f04dd5fe7d70e6a4caf825b714b2e343ce3d835d3bfc4f18b2d1c67"
+        },
+        {
+          "path": "docs/implementation/evidence/historical-ci/ci-40839895150-organization/organization-browser-e2e.json",
+          "sha256": "17e61f3b070634662d8ec382b3d2dca2fa82cf5a8ec8f8c3000cd39bc4ec291f"
+        },
+        {
+          "path": "docs/implementation/evidence/historical-ci/ci-40839895150-organization/session-ci-provenance.json",
+          "sha256": "117d18b18e6605845ad585699ee89bd966417060c53ee588eeacc95adbbaeeb4"
+        },
+        {
+          "path": "docs/implementation/evidence/historical-ci/ci-40839895150-membership/membership-bootstrap.json",
+          "sha256": "1e5ffed4aecc48170ab3987de431f2a759c4f40baec004f670292d06ec7e04ce"
+        },
+        {
+          "path": "docs/implementation/evidence/historical-ci/ci-40839895150-membership/membership-legacy-flow.json",
+          "sha256": "30cad83f9f7705dc02bae07561225f8d3dbcf199eb38326f0bb9d10d44f3f22e"
+        },
+        {
+          "path": "docs/implementation/evidence/historical-ci/ci-40839895150-membership/membership-postgres.json",
+          "sha256": "99a3b3894a4661b48278cd8414db4c6e507a862e194a93974c9d58c36b230bcb"
+        },
+        {
+          "path": "docs/implementation/evidence/historical-ci/ci-40839895150-membership/session-ci-provenance.json",
+          "sha256": "117d18b18e6605845ad585699ee89bd966417060c53ee588eeacc95adbbaeeb4"
         }
       ],
-      "commands": [],
-      "source_hashes": [],
-      "note": "原官方 CI 终态与可取得的原始脱敏证据已恢复，精确来源及当前差异见 RECOVERED_CI_EVIDENCE.md；并非当前源码全部重新验收。W00 没有原 artifact，只有原 job/安全日志标记；W01 原字节有摘要及 c20 源码映射。任务历史 done 不自动变成新浏览器/Docker通过。"
+      "commands": [
+        {
+          "command": "bash scripts/agriculture/membership-ci.sh",
+          "exit_code": 0,
+          "result": "passed",
+          "execution": "historical CI c20; not rerun during reconciliation"
+        },
+        {
+          "command": "node scripts/agriculture/organization-e2e.mjs",
+          "exit_code": 0,
+          "result": "passed",
+          "execution": "historical CI c20; not rerun during reconciliation"
+        }
+      ],
+      "source_hashes": [
+        {
+          "path": "backend/internal/agriculture/routes.go",
+          "sha256": "0aa130b280720b765abf51e4fde999849b0aefef821c7b6465f0ad262fb91ec0"
+        },
+        {
+          "path": "backend/internal/agriculture/service.go",
+          "sha256": "7b9e0322f1b6de64d9d3c40ee10eabb202ca3868cda94aa71038fa84910fc599"
+        },
+        {
+          "path": "backend/internal/agriculture/service_test.go",
+          "sha256": "7a9efa140a3c50b9695a5769564fc7ce49c7db0ecb69e9b7f5c51f82eaf16132"
+        },
+        {
+          "path": "backend/internal/agriculture/postgres_test.go",
+          "sha256": "5b8843f3751001454a7eef446f55e7dcc9e9114817c532a26617e192f4aa3b1b"
+        },
+        {
+          "path": "scripts/agriculture/membership-ci.sh",
+          "sha256": "df0b03b74acf7f9459a1d50c062ce62d4ffbb1e9c86a4422af1019a110bba8c6"
+        },
+        {
+          "path": "scripts/agriculture/membership-ci-result.py",
+          "sha256": "6ea50c2d47ce50f156d9dce7bfa9772555ed09ab5e2700a748d9cc1e0f545777"
+        },
+        {
+          "path": "scripts/agriculture/membership-ci-result.test.py",
+          "sha256": "8325c7b00e654986e053cc3fcadfe5490ed9a45b3cfe4454400ddefcd04cd405"
+        },
+        {
+          "path": "scripts/agriculture/organization-e2e.mjs",
+          "sha256": "73b13086883261da60563476cbf74360572a2bc11fbe3c6716b05d67700476af"
+        },
+        {
+          "path": "scripts/agriculture/organization-e2e.test.mjs",
+          "sha256": "24091b5294de5a554e9cb062978eeb11a0a7672fd18cc3793fe0cd7546c6a836"
+        },
+        {
+          "path": "backend/internal/agriculture/service_identity.go",
+          "sha256": "c8fbb872ad9fbe87995e7fa3f7aad73530a60648fc87a28da379c29d613036b0"
+        },
+        {
+          "path": "backend/internal/agriculture/service_identity_config.go",
+          "sha256": "0089a340cb1efb269fde235e8a8e80932dbe8a08178f49d179dee682bd62117d"
+        },
+        {
+          "path": "backend/internal/agriculture/service_identity_keys.go",
+          "sha256": "242f466b26d53c3a1a50929fbcf1620058bd87ac8ce83962f7f183d8abfe1f32"
+        },
+        {
+          "path": "backend/internal/agriculture/service_identity_test.go",
+          "sha256": "7e38e7468e5a2c0f051a45d8205bbaf57581d151d2dec4dd8b710aaff90baee1"
+        },
+        {
+          "path": "backend/internal/agriculture/service_identity_transport.go",
+          "sha256": "0edeb0e02e963227764c14ee6d018759f0d86f8e5807c5a02be4034ba1a6cb64"
+        },
+        {
+          "path": "backend/internal/agriculture/service_identity_transport_test.go",
+          "sha256": "fd113dc12ce3f45f7b18ce95b30ec1e3ccbf547ada0665c7fe2cd83f8624715c"
+        }
+      ],
+      "note": "62 historical organization browser checks plus real PostgreSQL membership fixture. Recovery verification only: historical CI source hashes match frozen d13 ancestor; later changes/DT014 real nginx browser regression not accepted. ",
+      "source_commit": "d13a09bb5ebdcaeb38b8136987ee577360fa7add",
+      "verification_basis": "recovered_original_historical_execution_mapped_to_frozen_ancestor_not_fresh_current_run"
     },
     "DT-011": {
       "historical_status": "done",
-      "verification": "restored_not_revalidated",
+      "verification": "verified",
       "evidence": [
+        {
+          "path": "docs/implementation/evidence/historical-ci/d13-mapping.json",
+          "sha256": "ddfe477a3435d7a1c1e3f65e1d9f1a5578afea41b6e8fc571383dddf5285a1a5"
+        },
         {
           "path": "docs/implementation/evidence/historical-ci/recovery-ci.json",
           "sha256": "2481df255f04dd5fe7d70e6a4caf825b714b2e343ce3d835d3bfc4f18b2d1c67"
+        },
+        {
+          "path": "docs/implementation/evidence/historical-ci/ci-40839895150-membership/membership-bootstrap.json",
+          "sha256": "1e5ffed4aecc48170ab3987de431f2a759c4f40baec004f670292d06ec7e04ce"
+        },
+        {
+          "path": "docs/implementation/evidence/historical-ci/ci-40839895150-membership/membership-legacy-flow.json",
+          "sha256": "30cad83f9f7705dc02bae07561225f8d3dbcf199eb38326f0bb9d10d44f3f22e"
+        },
+        {
+          "path": "docs/implementation/evidence/historical-ci/ci-40839895150-membership/membership-postgres.json",
+          "sha256": "99a3b3894a4661b48278cd8414db4c6e507a862e194a93974c9d58c36b230bcb"
+        },
+        {
+          "path": "docs/implementation/evidence/historical-ci/ci-40839895150-membership/session-ci-provenance.json",
+          "sha256": "117d18b18e6605845ad585699ee89bd966417060c53ee588eeacc95adbbaeeb4"
         }
       ],
-      "commands": [],
-      "source_hashes": [],
-      "note": "原官方 CI 终态与可取得的原始脱敏证据已恢复，精确来源及当前差异见 RECOVERED_CI_EVIDENCE.md；并非当前源码全部重新验收。W00 没有原 artifact，只有原 job/安全日志标记；W01 原字节有摘要及 c20 源码映射。任务历史 done 不自动变成新浏览器/Docker通过。"
+      "commands": [
+        {
+          "command": "bash scripts/agriculture/membership-ci.sh",
+          "exit_code": 0,
+          "result": "passed",
+          "execution": "historical CI c20; not rerun during reconciliation"
+        },
+        {
+          "command": "node scripts/agriculture/organization-e2e.mjs",
+          "exit_code": 0,
+          "result": "passed",
+          "execution": "historical CI c20; not rerun during reconciliation"
+        }
+      ],
+      "source_hashes": [
+        {
+          "path": "backend/internal/agriculture/authorization.go",
+          "sha256": "742534dd9a8659e28d0e75999d6fd097436e45f719ca9c7e5c137f03a5e42212"
+        },
+        {
+          "path": "backend/internal/agriculture/authorization_test.go",
+          "sha256": "c90275347216f6454c050ec04aad90023e0f45fbab23682356ee629b7323ef57"
+        },
+        {
+          "path": "backend/internal/agriculture/authorization_http_test.go",
+          "sha256": "35e4770416b2bd4958c5566333bf4c7d3f1476ff2ea97df3af48d2e32c5953d9"
+        },
+        {
+          "path": "backend/internal/agriculture/authorization_v1.go",
+          "sha256": "0b13b24211ad1f2bb429d57a6d6ce026e1718649ec1196ad849b40b9a5eb8e41"
+        },
+        {
+          "path": "backend/internal/agriculture/authorization_v1_test.go",
+          "sha256": "251646a6f37583716df1fbb606aad594f565095d8d6a4f1608d0e60b35777940"
+        },
+        {
+          "path": "backend/internal/agriculture/authorization_postgres_test.go",
+          "sha256": "c49489b149dae0868b5011717efe1a6ddbc73e426993784067d4fe2818176824"
+        },
+        {
+          "path": "backend/internal/agriculture/resource_ownership.go",
+          "sha256": "bfd8a89776fd28800bfbbf45d066c158e752cc5ae8ca4d0c8d706a2a4763bba4"
+        },
+        {
+          "path": "backend/internal/agriculture/resource_ownership_test.go",
+          "sha256": "c32a3485eb2ca2fb525a6cea612e6dd4a3a715c2d60bd3d1a3a8849c1fea6f86"
+        },
+        {
+          "path": "backend/internal/agriculture/resource_bindings.go",
+          "sha256": "e87df2db92a9663f9fcb79d75998809d9a4ac73671053e394478774f24add2b3"
+        },
+        {
+          "path": "backend/internal/agriculture/resource_bindings_test.go",
+          "sha256": "26110127c3c6666360a0e49d1cf0bfffb1988ade87da1c5eb9c8c320ed9926de"
+        },
+        {
+          "path": "backend/internal/agriculture/policy.go",
+          "sha256": "452838029162a664378873c03a6989b2a137ddcc8b4dc6a8f93dc78c62375286"
+        },
+        {
+          "path": "backend/internal/agriculture/policy_test.go",
+          "sha256": "a864cf896d131d6fe4be0d8431829af706bba81a29f10d4fa9452a255ce405eb"
+        },
+        {
+          "path": "scripts/agriculture/membership-ci.sh",
+          "sha256": "df0b03b74acf7f9459a1d50c062ce62d4ffbb1e9c86a4422af1019a110bba8c6"
+        },
+        {
+          "path": "scripts/agriculture/membership-ci-result.py",
+          "sha256": "6ea50c2d47ce50f156d9dce7bfa9772555ed09ab5e2700a748d9cc1e0f545777"
+        },
+        {
+          "path": "scripts/agriculture/membership-ci-result.test.py",
+          "sha256": "8325c7b00e654986e053cc3fcadfe5490ed9a45b3cfe4454400ddefcd04cd405"
+        }
+      ],
+      "note": "PostgreSQL 5 parent cases plus reciprocal_grants subcase; 21 legacy Flow tests, no failed/skipped; not all GIS resources. Recovery verification only: historical CI source hashes match frozen d13 ancestor; later changes/DT014 real nginx browser regression not accepted. ",
+      "source_commit": "d13a09bb5ebdcaeb38b8136987ee577360fa7add",
+      "verification_basis": "recovered_original_historical_execution_mapped_to_frozen_ancestor_not_fresh_current_run"
     },
     "DT-012": {
       "historical_status": "done",
-      "verification": "restored_not_revalidated",
+      "verification": "verified",
       "evidence": [
+        {
+          "path": "docs/implementation/evidence/historical-ci/d13-mapping.json",
+          "sha256": "ddfe477a3435d7a1c1e3f65e1d9f1a5578afea41b6e8fc571383dddf5285a1a5"
+        },
         {
           "path": "docs/implementation/evidence/historical-ci/recovery-ci.json",
           "sha256": "2481df255f04dd5fe7d70e6a4caf825b714b2e343ce3d835d3bfc4f18b2d1c67"
+        },
+        {
+          "path": "docs/implementation/evidence/historical-ci/ci-40839895250-identity/identity-bootstrap.json",
+          "sha256": "73f995cd91eb284cd0d57e52058023f676c7b5bd499266ac566dc178092ff1f5"
+        },
+        {
+          "path": "docs/implementation/evidence/historical-ci/ci-40839895250-identity/identity-go.json",
+          "sha256": "a7a36d214ebf259ea3b438aaa1d10221195b09d39a56f38fd56ebade1e9f73be"
+        },
+        {
+          "path": "docs/implementation/evidence/historical-ci/ci-40839895250-identity/identity-python.json",
+          "sha256": "9c8936c7a47acdc77ac5b6350445c5c7f3beac494ae0e89e6c0b3247577dbfaa"
+        },
+        {
+          "path": "docs/implementation/evidence/historical-ci/ci-40839895250-identity/session-ci-provenance.json",
+          "sha256": "117d18b18e6605845ad585699ee89bd966417060c53ee588eeacc95adbbaeeb4"
         }
       ],
-      "commands": [],
-      "source_hashes": [],
-      "note": "原官方 CI 终态与可取得的原始脱敏证据已恢复，精确来源及当前差异见 RECOVERED_CI_EVIDENCE.md；并非当前源码全部重新验收。W00 没有原 artifact，只有原 job/安全日志标记；W01 原字节有摘要及 c20 源码映射。任务历史 done 不自动变成新浏览器/Docker通过。"
+      "commands": [
+        {
+          "command": "bash scripts/agriculture/identity-postgres-ci.sh",
+          "exit_code": 0,
+          "result": "passed",
+          "execution": "historical CI c20; not rerun during reconciliation"
+        }
+      ],
+      "source_hashes": [
+        {
+          "path": "backend/internal/agriculture/delegation.go",
+          "sha256": "c4e416c5706513bec7c36c8994b2f2c37f9cc4beb8868c944d2b85147f8a978f"
+        },
+        {
+          "path": "backend/internal/agriculture/delegation_test.go",
+          "sha256": "7d67c776bb9a09d790f2e8b1ccf47ed8d7804e6ad2e910473e14bc862ad0f509"
+        },
+        {
+          "path": "backend/internal/agriculture/service_identity.go",
+          "sha256": "c8fbb872ad9fbe87995e7fa3f7aad73530a60648fc87a28da379c29d613036b0"
+        },
+        {
+          "path": "backend/internal/agriculture/service_identity_config.go",
+          "sha256": "0089a340cb1efb269fde235e8a8e80932dbe8a08178f49d179dee682bd62117d"
+        },
+        {
+          "path": "backend/internal/agriculture/service_identity_keys.go",
+          "sha256": "242f466b26d53c3a1a50929fbcf1620058bd87ac8ce83962f7f183d8abfe1f32"
+        },
+        {
+          "path": "backend/internal/agriculture/service_identity_test.go",
+          "sha256": "7e38e7468e5a2c0f051a45d8205bbaf57581d151d2dec4dd8b710aaff90baee1"
+        },
+        {
+          "path": "backend/internal/agriculture/service_identity_transport.go",
+          "sha256": "0edeb0e02e963227764c14ee6d018759f0d86f8e5807c5a02be4034ba1a6cb64"
+        },
+        {
+          "path": "backend/internal/agriculture/service_identity_transport_test.go",
+          "sha256": "fd113dc12ce3f45f7b18ce95b30ec1e3ccbf547ada0665c7fe2cd83f8624715c"
+        },
+        {
+          "path": "backend/internal/agriculture/identity_http_integration_test.go",
+          "sha256": "2485eb98030270ae90a44ead98ef11cc356940ca41a6b265a561db00f52dd1d2"
+        },
+        {
+          "path": "services/agri-gis/backend/app/agriculture/identity/__init__.py",
+          "sha256": "d03d955b9eb9e56df428f42184a344f127292c29553a6183c34bc19224217cf2"
+        },
+        {
+          "path": "services/agri-gis/backend/app/agriculture/identity/callback.py",
+          "sha256": "fe99446e720f89e01147c55c8a0a47bfa57b613e5f75dd46ab4846bdeae83fee"
+        },
+        {
+          "path": "services/agri-gis/backend/app/agriculture/identity/canonical.py",
+          "sha256": "bd09a9c7fcdd20a783d09abd122f9c268c7e7f01a70a7d75f30d5d538b61c1d2"
+        },
+        {
+          "path": "services/agri-gis/backend/app/agriculture/identity/config.py",
+          "sha256": "e00ee1b1c9832b76d5860a05ddd6610e21ea0010e5be26a6373513914e7e1030"
+        },
+        {
+          "path": "services/agri-gis/backend/app/agriculture/identity/dependency.py",
+          "sha256": "ad25e7bc5729dadefeef0991eed177680c8b1851d378fa7ee36ad36a69919ccc"
+        },
+        {
+          "path": "services/agri-gis/backend/app/agriculture/identity/keys.py",
+          "sha256": "3153d9b0ef99dc38cdd8d124d090dcdfc74cebca735f22a4b5e9b0de44905f2e"
+        },
+        {
+          "path": "services/agri-gis/backend/app/agriculture/identity/providers.py",
+          "sha256": "bc4953cfeeb7c28b7531a00c8297f2b3961126c5787241a04e96769f4b37c6af"
+        },
+        {
+          "path": "services/agri-gis/backend/app/agriculture/identity/replay.py",
+          "sha256": "5b92364b15eb8c430128c606c0c0e147b7ed59f2a77804510510c41834417886"
+        },
+        {
+          "path": "services/agri-gis/backend/app/agriculture/identity/verify.py",
+          "sha256": "45af0835ccac582e88b8a2c555c64b4cdb71ef0f9fde6362add90ddace630277"
+        },
+        {
+          "path": "services/agri-gis/backend/tests/identity_http_fixture.py",
+          "sha256": "64251d0daeb58342e7610132022ab26192308e9171db8fa37a58568d994b91ba"
+        },
+        {
+          "path": "scripts/agriculture/identity-ci.sh",
+          "sha256": "b00764fa4e9eebccc7138ccc426391338b437c9007a00e4bf9d4261597a96185"
+        },
+        {
+          "path": "scripts/agriculture/identity-postgres-ci.sh",
+          "sha256": "c2755a96792a49ce253c1ed0efbcc2fefafafc2b311f1f30c06ed653575b9afb"
+        },
+        {
+          "path": "scripts/agriculture/identity-ci-result.py",
+          "sha256": "8e1ff60b5d2a40144ab7c401861387970eeb25a1a91cbf50a94da7193ae13bc6"
+        },
+        {
+          "path": "scripts/agriculture/identity-ci-result.test.py",
+          "sha256": "1bfcfee2cea4b7eed0b67e3310e430437c4ec88cb246bb1f6766afd7b6135794"
+        }
+      ],
+      "note": "75 Python cases including 2 real geo PG cases; Go real HTTP parent plus14 subcases =15; fixture ownership, not live farms. Recovery verification only: historical CI source hashes match frozen d13 ancestor; later changes/DT014 real nginx browser regression not accepted. ",
+      "source_commit": "d13a09bb5ebdcaeb38b8136987ee577360fa7add",
+      "verification_basis": "recovered_original_historical_execution_mapped_to_frozen_ancestor_not_fresh_current_run"
     },
     "DT-013": {
       "historical_status": "in_progress",

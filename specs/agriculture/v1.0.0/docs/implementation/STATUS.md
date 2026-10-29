@@ -34,6 +34,16 @@ DT-013 已按任务原范围完成：冻结源码提交 `91e3fd5d8bf07e02410ef53
 
 DT-003 的恢复核验已通过：重新生成初始 SBOM，984 份通知原文、实际农业构建可达图与产物摘要、固定依赖及来源禁用策略均已核验；4 项 SBOM 负例及 22 项来源权利测试通过。保留最终镜像、缺通知、图标出处及原生编解码器等发布门禁，不声明所有商业许可已审结。
 
+DT-005、DT-009–012 的历史 CI 证据映射现已核实：原 c20 provenance 的 156 项
+overlay 与冻结产品祖先 `d13a09bb5ebdcaeb38b8136987ee577360fa7add` 全部匹配，
+W00 的 11 项部署/工作流源码也全部匹配；原 JSON 字节与日志成功标记保留。
+RECOVERY_STATUS 的 verified 在此仅表示历史执行证据恢复与冻结来源映射完成，
+不表示后续 DT013/DT014 工作树重新跑过这些浏览器/Docker 测试。
+原 W00 仅六角色/核心 readiness 及 Flow206/Loom 迁移重放，不含后续农业82/83或完整
+应用服务器启动；当前重建 env.example 另属后续源码。详见
+`docs/agriculture/RECOVERED_CI_EVIDENCE.md` 与规格证据 `historical-ci/d13-mapping.json`。
+DT008 门禁及当前 DT014 真实 Nginx 浏览器回归不因本次证据补齐而通过。
+
 DT-014 代码与部分验证已落地：真实 Nginx + Go（明确 SQLite 开发 fixture）+ React/Vue 构建的 50 项 HTTP 检查通过，导航单测 59 项通过并完成两端类型检查/生产构建。真实浏览器因执行器 Unix socket 限制尚未运行；Docker 构建和容器启动亦未验证。因此任务保持 in_progress，不能用 HTTP 或单测替代浏览器深链接/跨应用闭环。已准备专用真实浏览器测试，等待可执行环境与获准发布链路。
 
 恢复验证独立记录于 `RECOVERY_STATUS.json`；历史例外严格限定 DT-001–012，新增 done 必须提供当前真实证据文件、命令/退出码/结果、源码哈希和已完成依赖。`spec_status.py --require-evidence` 在历史恢复证据待补验时失败；普通结构检查仅给出明确警告，不冒充验收。
@@ -77,7 +87,7 @@ DT-014 代码与部分验证已落地：真实 Nginx + Go（明确 SQLite 开发
 | in_progress | 1 |
 | not_started | 130 |
 
-历史 done、恢复证据待补验：DT-005、DT-008、DT-009、DT-010、DT-011、DT-012。
+历史 done、恢复证据待补验：DT-008。
 依赖状态就绪但仍须检查恢复条件：无。
 
 | 任务 | 状态 |

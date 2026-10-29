@@ -33,4 +33,29 @@
 
 `evidence/w01/ci-40839895250-identity/` 原件已在此前恢复，本次未重复下载。`native-pg-20261029/final-report.json` 是恢复后另一轮实际 PostgreSQL/PostGIS 123 项测试，不是上述 Docker/平台/Loom 运行的替代或重写。
 
-此文和机器记录只补齐证据与可追溯性，不修改任务状态、验收项或任何未完成能力。
+## 冻结产品祖先映射补验
+
+恢复后再次执行本地逐 blob 核对：四份原 session provenance 的 156 个 overlay
+SHA256 全部与产品历史祖先 `d13a09bb5ebdcaeb38b8136987ee577360fa7add` 一致，
+也与原 `c20fa403...` scaffold 一致；W00 c20 run 的 11 个部署/工作流文件同样
+全部匹配 d13。此前“当前工作树有差异”的记录原样保留，不能把差异改成匹配。
+8 份本次恢复的原 JSON 再次核对保存摘要；此前恢复的 identity 4 份 JSON
+及其相同 provenance 独立保留。原文件内容、source_commit、测试结果均未改写。
+
+新增机器证明 `evidence/historical-ci-d13-mapping.json`，另将同一证明与原 JSON
+复制到 SPEC_ROOT 的 `docs/implementation/evidence/historical-ci/`，供状态校验引用。
+RECOVERY_STATUS 的 DT-005/009–012 因此标记 recovery verification=verified：
+意思是**历史执行结果的原件/来源与冻结恢复祖先映射已核实**，不是今天重新运行 CI，
+不是当前 DT014 网关、容器或浏览器验证通过。任务历史 done、验收矩阵和 DT014 状态不变。
+
+DT012 原报告计数为 Python 75 项（含 2 项真实 geo PostgreSQL 测试），Go 15 项
+（真实 HTTP 父测试加 14 子例）；均是受控 fixture，不是生产农场/影像数据验收。
+DT010/011 PostgreSQL 报告有 5 个主测试和 reciprocal_grants 子例共 6 条结果，
+另有 21 项 legacy Flow 回归；不得把子例当作 6 个独立主测试。
+
+DT005 的当前 `deploy/agriculture/env.example` 是恢复后重建并由 DT014 调整的配置，
+不在原 c20 W00 测试覆盖内；原 smoke 生成自己的私有临时环境。原 W00 验证
+固定 Flow206 的迁移和部署 overlay，既未运行后来农业迁移82/83，也未启动完整平台/
+Loom 业务服务器。早期 7ff init 差异仍只属历史，不能套用于当前数据库初始化。
+
+本次补验仅关闭上述历史证据恢复待核项；DT008 的工作包门禁由独立闭环继续处理。

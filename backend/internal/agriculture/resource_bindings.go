@@ -31,11 +31,39 @@ func canonicalBindingCapabilities(input []string) ([]string, error) {
 	return out, nil
 }
 
-func (s Service) GrantResourceBinding(ctx context.Context, actorID, workspaceID, targetUserID string, resource ResourceRef, capabilities []string, expiresAt *time.Time) (model.AgricultureResourceBinding, error) {
+var ErrPreconditionRequired = errors.New("agriculture: expected revision required")
+
+func bindingExpectedRevision(input *int64, allowAbsent bool) (int64, error) {
+	if input == nil {
+		return 0, ErrPreconditionRequired
+	}
+	value := *input
+	if value < 0 || value > maximumAuthorizationVersion || (!allowAbsent && value == 0) {
+		return 0, ErrInvalid
+	}
+	return value, nil
+}
+
+func (s Service) GrantResourceBinding(ctx context.Context, actorID, workspaceID, targetUserID string, resource ResourceRef, capabilities []string, expiresAt *time.Time, expectedRevision *int64) (model.AgricultureResourceBinding, error) {
 	var out model.AgricultureResourceBinding
+	expected, err := bindingExpectedRevision(expectedRevision, true)
+	if err != nil {
+		return out, err
+	}
 	caps, err := canonicalBindingCapabilities(capabilities)
 	if err != nil || targetUserID == "" {
 		return out, ErrInvalid
+	}
+	// An actor without any grant-management role must not use the ownership
+	// resolver as an existence oracle. Resource-specific authority is still
+	// rechecked after resolution in the final transaction.
+	if err := s.withWorkspace(ctx, actorID, workspaceID, false, func(_ *gorm.DB, scope workspaceContext) error {
+		if !scope.Owner && !hasRole(scope.Roles, "tenant_admin") && !hasRole(scope.Roles, "farm_manager") {
+			return ErrForbidden
+		}
+		return nil
+	}); err != nil {
+		return out, err
 	}
 	// Copy caller-owned memory before crossing the external ownership boundary.
 	var expiry *time.Time
@@ -92,6 +120,9 @@ func (s Service) GrantResourceBinding(ctx context.Context, actorID, workspaceID,
 			return err
 		}
 		isNew := errors.Is(err, gorm.ErrRecordNotFound)
+		if (isNew && expected != 0) || (!isNew && out.AuthVersion != expected) {
+			return ErrConflict
+		}
 		if isNew {
 			out = model.AgricultureResourceBinding{ID: flow.NewID("arb_"), TenantID: scope.Tenant.ID, WorkspaceID: workspaceID, ResourceKind: resource.Kind, ResourceID: resource.ID, SubjectType: "user", SubjectID: targetUserID, CreatedAt: now}
 		}
@@ -189,10 +220,14 @@ func revokeBinding(tx *gorm.DB, scope workspaceContext, actorID string, row mode
 	return audit(tx, now, scope, actorID, "resource_binding.revoked", row.ID, map[string]any{"auth_version": version + 1})
 }
 
-func (s Service) RevokeBinding(ctx context.Context, actorID, workspaceID, bindingID string) error {
+func (s Service) RevokeBinding(ctx context.Context, actorID, workspaceID, bindingID string, expectedRevision *int64) error {
+	expected, err := bindingExpectedRevision(expectedRevision, false)
+	if err != nil {
+		return err
+	}
 	var initial model.AgricultureResourceBinding
 	manager := false
-	err := s.withWorkspace(ctx, actorID, workspaceID, true, func(tx *gorm.DB, scope workspaceContext) error {
+	err = s.withWorkspace(ctx, actorID, workspaceID, true, func(tx *gorm.DB, scope workspaceContext) error {
 		if !scope.Owner && !hasRole(scope.Roles, "tenant_admin") && !hasRole(scope.Roles, "farm_manager") {
 			return ErrForbidden
 		}
@@ -202,6 +237,9 @@ func (s Service) RevokeBinding(ctx context.Context, actorID, workspaceID, bindin
 			return err
 		}
 		if scope.Owner || hasRole(scope.Roles, "tenant_admin") {
+			if initial.AuthVersion != expected {
+				return ErrConflict
+			}
 			// Revoking authority must not depend on GIS availability.
 			version, err := currentAuthorizationVersion(tx, scope.Tenant.ID)
 			if err != nil {
@@ -224,11 +262,11 @@ func (s Service) RevokeBinding(ctx context.Context, actorID, workspaceID, bindin
 		if err != nil {
 			return err
 		}
-		if row.AuthVersion != initial.AuthVersion || row.ResourceKind != resource.Kind || row.ResourceID != resource.ID {
-			return ErrConflict
-		}
 		if _, err := authorizeOwned(tx, scope, actorID, "agri.authorization.update", proofs, s.now()); err != nil {
 			return err
+		}
+		if row.AuthVersion != expected || row.AuthVersion != initial.AuthVersion || row.ResourceKind != resource.Kind || row.ResourceID != resource.ID {
+			return ErrConflict
 		}
 		return revokeBinding(tx, scope, actorID, row, version, s.now())
 	})

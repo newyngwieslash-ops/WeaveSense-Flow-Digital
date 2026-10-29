@@ -8,6 +8,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { startProxy, startLocalSMTPSink } from "./session-e2e.mjs";
+import { navigateDocument } from "./browser-navigation.mjs";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const COOKIE = "open_ai_canvas_session";
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -25,6 +26,29 @@ export function safeFailure(error) {
     // Errors from dependencies may contain secrets. Emit only our fixed labels.
     return /^assertion failed: [a-z0-9_]+$/.test(error?.message || "") ? error.message : "organization browser operation failed; inspect fixed stage and sanitized statuses";
 }
+
+// Diagnostic booleans only: never return actor ids, selectors, input values,
+// invitation text or arbitrary DOM content. This does not alter UI state.
+export function memberRoleDiagnostics(control) {
+    const input = control?.querySelector('input[role="combobox"]');
+    const doc = control?.ownerDocument;
+    const row = control?.closest('li');
+    const submit = row?.querySelector('[data-testid="org-member-roles-submit"]');
+    const option = doc?.querySelector('.ant-select-dropdown:not(.ant-select-dropdown-hidden) [data-testid="org-member-role-option-tenant_admin"]');
+    const current = (control?.dataset.currentRoles || '').split(',');
+    const draft = (control?.dataset.draftRoles || '').split(',');
+    return {
+        controlPresent: !!control, inputPresent: !!input, inputDisabled: input?.disabled === true,
+        documentFocused: doc?.hasFocus() === true, inputFocused: !!input && doc?.activeElement === input,
+        expanded: input?.getAttribute('aria-expanded') === 'true',
+        serverViewer: current.includes('viewer'), serverTenantAdmin: current.includes('tenant_admin'),
+        draftViewer: draft.includes('viewer'), draftTenantAdmin: draft.includes('tenant_admin'),
+        submitPresent: !!submit, submitEnabled: !!submit && !submit.disabled,
+        targetOptionPresent: !!option, targetOptionVisible: !!option?.getClientRects().length,
+        confirmPresent: !!doc?.querySelector('[data-testid="org-confirm"]'),
+    };
+}
+
 async function freePort() {
     const server = createPortServer();
     await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
@@ -61,6 +85,7 @@ async function connect(cdpPort, origin) {
     const statuses = [];
     const statusRequests = new Map();
     let outboundBlocked = 0;
+    let committedNavigation = false;
     const send = (method, params = {}) => new Promise((resolve, reject) => {
         const id = ++sequence;
         const timeout = setTimeout(() => { pending.delete(id); reject(new Error(`CDP timeout: ${method}`)); }, 20000);
@@ -112,10 +137,7 @@ async function connect(cdpPort, origin) {
         await send("Page.bringToFront");
         await poll("document.hasFocus()", "active account browser foreground");
         const destination = origin + path;
-        await send("Page.navigate", { url: destination });
-        // CDP Page.navigate responds before the new document commits. Never let a
-        // selector in the old document satisfy readiness for the next page.
-        await poll(`document.readyState === 'complete' && performance.getEntriesByType('navigation')[0]?.name === ${JSON.stringify(destination)}`, "new document loaded");
+        await navigateDocument({ send, evaluate, destination, onCommit: value => { committedNavigation = value; } });
     };
     const fill = async (selector, value, label) => {
         const query = JSON.stringify(selector);
@@ -128,7 +150,7 @@ async function connect(cdpPort, origin) {
     // become a delayed window-focus/session-revalidation event mid-keystroke.
     await send("Page.bringToFront");
     await poll("document.hasFocus()", "browser foreground activation");
-    return { send, evaluate, poll, navigate, fill, exceptions, statuses, outboundBlocked: () => outboundBlocked, close: () => socket.close() };
+    return { send, evaluate, poll, navigate, fill, exceptions, statuses, outboundBlocked: () => outboundBlocked, navigationCommitted: () => committedNavigation, close: () => socket.close() };
 }
 
 
@@ -140,7 +162,7 @@ async function main() {
     for (const file of [binary, join(reactRoot, "index.html"), join(vueRoot, "index.html"), chrome]) if (!existsSync(file)) throw new Error("missing build");
     const temp = mkdtempSync(join(tmpdir(), "digitaltwin-organization-e2e-"));
     const processes = [], clients = [], results = [];
-    let proxy, smtp;
+    let proxy, smtp, memberRoleSelector;
     const check = (ok, name) => { if (!ok) throw new Error("assertion failed: " + name); results.push({ name, result: "pass" }); };
     const manifestFile = join(ROOT, ".local/evidence/session-ci-provenance.json");
     const manifest = existsSync(manifestFile) ? JSON.parse(readFileSync(manifestFile, "utf8")) : null;
@@ -284,17 +306,27 @@ async function main() {
         await b.poll("!!document.querySelector('main[data-session-status=ready]')", "accepted Vue workspace");
         check(await b.evaluate("!!document.querySelector('[data-testid=session-user]')"), "accepted_workspace_real_vue_entry");
         const row = 'li[data-user-id="' + actorB + '"] ';
-        report.stage = "role_changes_ui";
+        memberRoleSelector = row + selector("org-member-roles");
+        report.stage = "role_promotion_reload";
         await openOrg(a, orgA.id);
-        await openSelect(a, row + selector("org-member-roles")); await click(a, '.ant-select-dropdown:not(.ant-select-dropdown-hidden) ' + selector("org-member-role-option-tenant_admin"));
+        report.stage = "role_promotion_expand"; await openSelect(a, memberRoleSelector);
+        report.stage = "role_promotion_choose"; await click(a, '.ant-select-dropdown:not(.ant-select-dropdown-hidden) ' + selector("org-member-role-option-tenant_admin"));
+        report.stage = "role_promotion_close_dropdown";
         await a.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 }); await a.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
-        await click(a, row + selector("org-member-roles-submit")); await confirm();
+        report.stage = "role_promotion_submit"; await click(a, row + selector("org-member-roles-submit"));
+        report.stage = "role_promotion_confirm"; await confirm();
+        report.stage = "role_promotion_server_effect";
         await eventual(async () => (await api(memberPath, cookieB)).status === 200, "role_promotion_effective");
         check((await api(memberPath, cookieB)).status === 200, "real_ui_promotion_grants_governance");
+        report.stage = "role_demotion_reload";
         await openOrg(a, orgA.id);
-        await openSelect(a, row + selector("org-member-roles")); await click(a, '.ant-select-dropdown:not(.ant-select-dropdown-hidden) ' + selector("org-member-role-option-tenant_admin"));
+        report.stage = "role_demotion_expand"; await openSelect(a, memberRoleSelector);
+        report.stage = "role_demotion_choose"; await click(a, '.ant-select-dropdown:not(.ant-select-dropdown-hidden) ' + selector("org-member-role-option-tenant_admin"));
+        report.stage = "role_demotion_close_dropdown";
         await a.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 }); await a.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
-        await click(a, row + selector("org-member-roles-submit")); await confirm();
+        report.stage = "role_demotion_submit"; await click(a, row + selector("org-member-roles-submit"));
+        report.stage = "role_demotion_confirm"; await confirm();
+        report.stage = "role_demotion_server_effect";
         await eventual(async () => (await api(memberPath, cookieB)).status === 403, "role_demotion_effective");
         check((await api(memberPath, cookieB)).status === 403, "old_cookie_loses_governance_after_ui_demotion");
         const deniedScope = async label => {
@@ -344,6 +376,11 @@ async function main() {
         report.browser_statuses = clients.map(c => c.statuses);
         report.browser_runtime_exception_counts = clients.map(c => c.exceptions.length);
         report.outbound_request_counts = clients.map(c => c.outboundBlocked());
+        report.expected_loader_committed = clients.map(c => c.navigationCommitted());
+        if (clients[0] && memberRoleSelector) {
+            try { report.member_role_flags = await clients[0].evaluate('(' + memberRoleDiagnostics.toString() + ')(document.querySelector(' + JSON.stringify(memberRoleSelector) + '))'); }
+            catch { report.member_role_flags = { unavailable: true }; }
+        }
         report.dom_flags = [];
         for (const c of clients) {
             try { report.dom_flags.push(await c.evaluate("({organization:!!document.querySelector('[data-testid=organization-management]'),invitationEmail:!!document.querySelector('[data-testid=org-invite-email]'),inviteEmailDisabled:document.querySelector('[data-testid=org-invite-email]')?.disabled??null,inviteEmailNonempty:!!document.querySelector('[data-testid=org-invite-email]')?.value,roleControl:!!document.querySelector('[data-testid=org-invite-role]'),roleExpanded:document.querySelector('[data-testid=org-invite-role] input')?.getAttribute('aria-expanded')==='true',viewerOption:!!document.querySelector('.ant-select-dropdown:not(.ant-select-dropdown-hidden) [data-testid=org-invite-role-option-viewer]'),roleSelected:document.querySelector('[data-testid=org-invite-role]')?.dataset.currentRoles==='viewer',inviteSubmitEnabled:document.querySelector('[data-testid=org-invite-create]')?.disabled===false,alert:!!document.querySelector('[role=alert]')})")); }

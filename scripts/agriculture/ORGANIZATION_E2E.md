@@ -24,7 +24,15 @@ CHROME_BIN=/usr/bin/chromium node scripts/agriculture/organization-e2e.mjs
 
 ## 当前验收状态
 
-最新实际回归：run `40824605197` / job `123284634505`、snapshot `81a41097d3b6e58748cf286c39ac469f20b4e5da`，组织浏览器再次62条全部通过；断言名称及结果与下述前次通过完全一致，无新增失败。artifact `12876162498`，zip SHA256 `e3697511449e65e4a0a6bbfee452d5c6507394b4de52c198787e758c5883cdf3`。原报告、源manifest和本地比较记录位于 `docs/agriculture/evidence/w01/organization-*-40824605197.json`。
+后续DT011回归 run `40830249475` / job `123302551657`、snapshot `b3973103e7e82b5cd09fd69e0297b9809b2cc27d` **失败**，原报告保留在 `docs/agriculture/evidence/w01/organization-ci-40830249475.json`。29条通过到成员提升治理权限；随后降级流程未发出PATCH，最后session/workspace/member读取均200，无浏览器异常或外连。原诊断只查看邀请角色控件，不能据其expanded=false断定成员角色控件状态，也不能归因为后端500。
+
+代码复查确认可确定复现的harness缺陷：对同一组织URL再次 `Page.navigate` 时，旧文档已具有相同的performance导航name和complete状态，原等待条件会过早放行，下一步Select操作可能作用于即将销毁的旧DOM。新增单元明确重现旧URL条件误通过、旧loader被新条件拒绝。等待现绑定 `Page.navigate` 返回的frame/loader与 `Page.getFrameTree` 的实际提交，再检查新文档complete，保留原20秒总等待限制。
+
+此等待逻辑提取为 `browser-navigation.mjs`，由组织及会话harness共同调用，避免两份同类缺陷或循环依赖。单元模拟的是CDP提交时序（不是业务API），验证旧loader时完全不检查DOM、新loader提交后仍等待complete、无新loader时拒绝，且不重复发起导航。
+
+同时新增升级/降级reload、展开、选择、收起、提交、确认及服务端效果的固定子阶段，以及目标成员角色的纯布尔诊断（服务器/草稿角色、焦点、展开、选项可见、按钮启用）和expected-loader提交布尔值，不记录URL或loader/actor ID。未修改产品、交互事件或授权断言；仍需下一次真实CI确认该修复消除本次故障，不能用单元或既往62通过冒充新版本已验收。
+
+此前DT010通过的实际回归：run `40824605197` / job `123284634505`、snapshot `81a41097d3b6e58748cf286c39ac469f20b4e5da`，组织浏览器再次62条全部通过；断言名称及结果与下述前次通过完全一致，无新增失败。artifact `12876162498`，zip SHA256 `e3697511449e65e4a0a6bbfee452d5c6507394b4de52c198787e758c5883cdf3`。原报告、源manifest和本地比较记录位于 `docs/agriculture/evidence/w01/organization-*-40824605197.json`。
 
 对比本地HEAD `7a07fdfd9f53b8b117c1da8c61190c99646b0e59`，72项overlay中70项SHA256相同，唯一差异为本文件及 `SESSION_E2E.md` 两份说明文档；实际运行代码、配置和测试脚本均匹配。比较记录保存的是更新本文前的工作区hash，不伪称所有72项匹配或完整产品历史已发布。浏览器范围仍为SQLite fixture；同run的独立PG job另有自己的报告。
 

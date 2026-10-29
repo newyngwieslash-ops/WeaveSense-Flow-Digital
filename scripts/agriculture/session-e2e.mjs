@@ -11,6 +11,7 @@ import { createServer as createPortServer } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, extname, join, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { navigateDocument } from "./browser-navigation.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -136,6 +137,7 @@ async function connect(cdpPort, origin) {
     const statuses = [];
     const statusRequests = new Map();
     let outboundBlocked = 0;
+    let committedNavigation = false;
     const send = (method, params = {}) => new Promise((resolve, reject) => {
         const id = ++sequence;
         const timeout = setTimeout(() => { pending.delete(id); reject(new Error(`CDP timeout: ${method}`)); }, 20000);
@@ -185,10 +187,7 @@ async function connect(cdpPort, origin) {
     };
     const navigate = async path => {
         const destination = origin + path;
-        await send("Page.navigate", { url: destination });
-        // CDP Page.navigate responds before the new document commits. Never let a
-        // selector in the old document satisfy readiness for the next page.
-        await poll(`document.readyState === 'complete' && performance.getEntriesByType('navigation')[0]?.name === ${JSON.stringify(destination)}`, "new document loaded");
+        await navigateDocument({ send, evaluate, destination, onCommit: value => { committedNavigation = value; } });
     };
     const fill = async (selector, value, label) => {
         const query = JSON.stringify(selector);
@@ -201,7 +200,7 @@ async function connect(cdpPort, origin) {
     // become a delayed window-focus/session-revalidation event mid-keystroke.
     await send("Page.bringToFront");
     await poll("document.hasFocus()", "browser foreground activation");
-    return { send, evaluate, poll, navigate, fill, exceptions, statuses, outboundBlocked: () => outboundBlocked, close: () => socket.close() };
+    return { send, evaluate, poll, navigate, fill, exceptions, statuses, outboundBlocked: () => outboundBlocked, navigationCommitted: () => committedNavigation, close: () => socket.close() };
 }
 
 async function main() {
@@ -419,6 +418,7 @@ async function main() {
             report.api_statuses = cdp.statuses;
             report.browser_runtime_exception_count = cdp.exceptions.length;
             report.outbound_requests_blocked = cdp.outboundBlocked();
+            report.expected_loader_committed = cdp.navigationCommitted();
             try {
                 report.dom_flags = await cdp.evaluate(`({page: ['/','/login','/agri/'].includes(location.pathname)?location.pathname:'other',ready:document.readyState,account:!!document.querySelector('#login-account'),password:!!document.querySelector('#login-password'),submit:!!document.querySelector('form button[type=submit]'),actor:!!document.querySelector('[data-testid=session-user]'),vueStatus:document.querySelector('main[data-session-status]')?.dataset.sessionStatus||null})`, "sanitized diagnostics");
             } catch { report.dom_flags = { unavailable: true }; }

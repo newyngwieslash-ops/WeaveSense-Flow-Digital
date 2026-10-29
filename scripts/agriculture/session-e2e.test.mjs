@@ -5,6 +5,38 @@ import { join } from "node:path";
 import { createConnection } from "node:net";
 import test from "node:test";
 import { resolveStatic, startProxy, startLocalSMTPSink } from "./session-e2e.mjs";
+import { navigateDocument } from "./browser-navigation.mjs";
+
+test("shared document barrier never evaluates old same-URL DOM and waits for new readiness", async () => {
+    let frameReads = 0, evaluates = 0, navigations = 0;
+    const commits = [];
+    await navigateDocument({ destination: "http://127.0.0.1/organization?workspace_id=fixture",
+        send: async method => {
+            if (method === "Page.navigate") { navigations++; return { frameId: "main", loaderId: "new" }; }
+            assert.equal(method, "Page.getFrameTree");
+            frameReads++;
+            return { frameTree: { frame: { id: "main", loaderId: frameReads === 1 ? "old" : "new" } } };
+        },
+        evaluate: async () => { assert.ok(frameReads > 1, "old document must not satisfy readiness"); return ++evaluates === 2; },
+        onCommit: value => commits.push(value),
+    });
+    assert.equal(navigations, 1);
+    assert.equal(frameReads, 3);
+    assert.equal(evaluates, 2);
+    assert.deepEqual(commits, [false, false, true, true]);
+});
+
+test("shared document barrier fails closed without a new loader or on navigation failure", async () => {
+    for (const response of [{ frameId: "main" }, { frameId: "main", loaderId: "new", errorText: "private URL" }]) {
+        let evaluations = 0, calls = 0;
+        await assert.rejects(navigateDocument({ destination: "http://127.0.0.1/",
+            send: async method => { calls++; assert.equal(method, "Page.navigate"); return response; },
+            evaluate: async () => { evaluations++; return true; },
+        }), /^Error: browser document navigation did not return an expected loader$/);
+        assert.equal(evaluations, 0);
+        assert.equal(calls, 1);
+    }
+});
 
 function smtpExchange(port, commands) {
     return new Promise((resolve, reject) => {

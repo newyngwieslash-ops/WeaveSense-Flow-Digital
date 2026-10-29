@@ -3,6 +3,7 @@ package agriculture
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -16,7 +17,7 @@ import (
 // The authenticated caller is fixed by test setup, never read from request
 // headers/body. This exercises real Gin handlers and SQLite service writes;
 // ownership receipts remain explicit fixtures, not a live GIS acceptance test.
-func authorizationHTTP(t *testing.T, s Service, trustedActor, method, path, body, origin string) *httptest.ResponseRecorder {
+func authorizationHTTP(t *testing.T, s Service, trustedActor, method, path, body, origin string, extraHeaders ...map[string]string) *httptest.ResponseRecorder {
 	t.Helper()
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
@@ -32,6 +33,11 @@ func authorizationHTTP(t *testing.T, s Service, trustedActor, method, path, body
 	req.Header.Set("X-User-ID", "owner")
 	req.Header.Set("X-Tenant-ID", "forged_tenant")
 	req.Header.Set("X-Operator-Code", "owner")
+	for _, headers := range extraHeaders {
+		for name, value := range headers {
+			req.Header.Set(name, value)
+		}
+	}
 	if origin != "" {
 		req.Header.Set("Origin", origin)
 	}
@@ -69,7 +75,7 @@ func assertAuthorizationHTTP(t *testing.T, w *httptest.ResponseRecorder, status 
 func TestAuthorizationHTTPTrustedSessionAndResourceNegatives(t *testing.T) {
 	s, org, _ := authorizationFixture(t)
 	join(t, s, org, "bob", "viewer")
-	if _, err := s.GrantResourceBinding(context.Background(), "owner", org.Workspace.ID, "bob", ResourceRef{"farm", "farm_a"}, []string{"agri.farm.read", "agri.parcel.read", "agri.asset.read"}, nil); err != nil {
+	if _, err := s.GrantResourceBinding(context.Background(), "owner", org.Workspace.ID, "bob", ResourceRef{"farm", "farm_a"}, []string{"agri.farm.read", "agri.parcel.read", "agri.asset.read"}, nil, revisionPointer(0)); err != nil {
 		t.Fatal(err)
 	}
 	path := "/api/agriculture/workspaces/" + org.Workspace.ID + "/authorize"
@@ -116,7 +122,7 @@ func TestAuthorizationHTTPStrictClaimsAndWritesHaveNoSideEffects(t *testing.T) {
 	s, org, _ := authorizationFixture(t)
 	join(t, s, org, "bob", "viewer")
 	ctx := context.Background()
-	row, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ResourceRef{"farm", "farm_a"}, []string{"agri.farm.read"}, nil)
+	row, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ResourceRef{"farm", "farm_a"}, []string{"agri.farm.read"}, nil, revisionPointer(0))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,7 +132,7 @@ func TestAuthorizationHTTPStrictClaimsAndWritesHaveNoSideEffects(t *testing.T) {
 	if err = s.DB.Model(&model.AgricultureAuditEvent{}).Count(&beforeAudit).Error; err != nil {
 		t.Fatal(err)
 	}
-	grant := `{"subjectId":"bob","resource":{"kind":"farm","id":"farm_b"},"capabilities":["agri.farm.read"]}`
+	grant := `{"subjectId":"bob","resource":{"kind":"farm","id":"farm_b"},"capabilities":["agri.farm.read"],"expectedRevision":0}`
 	for _, field := range []string{"tenant_id", "tenantId", "user_id", "userId", "operator_code", "actorId", "roles"} {
 		t.Run(field, func(t *testing.T) {
 			for _, endpoint := range []string{"authorize", "resource-bindings"} {
@@ -149,7 +155,7 @@ func TestAuthorizationHTTPStrictClaimsAndWritesHaveNoSideEffects(t *testing.T) {
 	assertAuthorizationHTTP(t, authorizationHTTP(t, s, "owner", "POST", base+"/resource-bindings/"+row.ID+"/revoke", "{}", "https://attacker.invalid"), 403, "forbidden")
 	assertAuthorizationHTTP(t, authorizationHTTP(t, s, "bob", "GET", base+"/resource-bindings", "", ""), 403, "forbidden")
 	assertAuthorizationHTTP(t, authorizationHTTP(t, s, "", "GET", base+"/resource-bindings", "", ""), 401, "unauthenticated")
-	assertAuthorizationHTTP(t, authorizationHTTP(t, s, "owner", "POST", base+"/resource-bindings/arb_foreign/revoke", "{}", ""), 404, "resource_unavailable")
+	assertAuthorizationHTTP(t, authorizationHTTP(t, s, "owner", "POST", base+"/resource-bindings/arb_foreign/revoke", `{"expectedRevision":1}`, ""), 404, "resource_unavailable")
 	var rows []model.AgricultureResourceBinding
 	if err = s.DB.Find(&rows).Error; err != nil {
 		t.Fatal(err)
@@ -167,7 +173,7 @@ func TestAuthorizationHTTPBindingCRUDAndForeignBindingID(t *testing.T) {
 	s, org, _ := authorizationFixture(t)
 	join(t, s, org, "bob", "viewer")
 	base := "/api/agriculture/workspaces/" + org.Workspace.ID + "/resource-bindings"
-	data := assertAuthorizationHTTP(t, authorizationHTTP(t, s, "owner", "POST", base, `{"subjectId":"bob","resource":{"kind":"farm","id":"farm_a"},"capabilities":["agri.farm.read"]}`, ""), 200, "")
+	data := assertAuthorizationHTTP(t, authorizationHTTP(t, s, "owner", "POST", base, `{"subjectId":"bob","resource":{"kind":"farm","id":"farm_a"},"capabilities":["agri.farm.read"],"expectedRevision":0}`, ""), 200, "")
 	var row model.AgricultureResourceBinding
 	if err := json.Unmarshal(data, &row); err != nil || row.ID == "" {
 		t.Fatalf("grant response: %s %v", data, err)
@@ -181,8 +187,9 @@ func TestAuthorizationHTTPBindingCRUDAndForeignBindingID(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assertAuthorizationHTTP(t, authorizationHTTP(t, s, "owner", "POST", "/api/agriculture/workspaces/"+other.Workspace.ID+"/resource-bindings/"+row.ID+"/revoke", "{}", ""), 404, "resource_unavailable")
-	assertAuthorizationHTTP(t, authorizationHTTP(t, s, "owner", "POST", base+"/"+row.ID+"/revoke", "{}", ""), 200, "")
+	revokeBody := fmt.Sprintf(`{"expectedRevision":%d}`, row.AuthVersion)
+	assertAuthorizationHTTP(t, authorizationHTTP(t, s, "owner", "POST", "/api/agriculture/workspaces/"+other.Workspace.ID+"/resource-bindings/"+row.ID+"/revoke", revokeBody, ""), 404, "resource_unavailable")
+	assertAuthorizationHTTP(t, authorizationHTTP(t, s, "owner", "POST", base+"/"+row.ID+"/revoke", revokeBody, ""), 200, "")
 	var stored model.AgricultureResourceBinding
 	if err = s.DB.First(&stored, "id=?", row.ID).Error; err != nil || stored.State != "revoked" {
 		t.Fatalf("revoke not persisted: %+v %v", stored, err)

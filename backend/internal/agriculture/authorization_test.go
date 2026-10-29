@@ -70,7 +70,7 @@ func TestAuthorizationExplicitFarmScopeAndRoleCeiling(t *testing.T) {
 		t.Fatal("workspace membership implied farm access", e)
 	}
 	caps := []string{"agri.farm.read", "agri.parcel.read", "agri.asset.read"}
-	if _, e := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ResourceRef{Kind: "farm", ID: "farm_a"}, caps, nil); e != nil {
+	if _, e := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ResourceRef{Kind: "farm", ID: "farm_a"}, caps, nil, revisionPointer(0)); e != nil {
 		t.Fatal(e)
 	}
 	decision, e := s.Authorize(ctx, "bob", org.Workspace.ID, "agri.parcel.read", []ResourceRef{{Kind: "parcel", ID: "parcel_a"}})
@@ -101,7 +101,7 @@ func TestAuthorizationRechecksWithdrawalOutsideDatabaseTransaction(t *testing.T)
 	s, org, r := authorizationFixture(t)
 	ctx := context.Background()
 	join(t, s, org, "bob", "analyst")
-	if _, e := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ResourceRef{"farm", "farm_a"}, []string{"agri.farm.read"}, nil); e != nil {
+	if _, e := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ResourceRef{"farm", "farm_a"}, []string{"agri.farm.read"}, nil, revisionPointer(0)); e != nil {
 		t.Fatal(e)
 	}
 	before, e := s.Authorize(ctx, "bob", org.Workspace.ID, "agri.farm.read", []ResourceRef{{"farm", "farm_a"}})
@@ -138,7 +138,7 @@ func TestAuthorizationProviderFailuresAndCrossScope(t *testing.T) {
 			ctx := context.Background()
 			join(t, s, org, "bob", "viewer")
 			ref := ResourceRef{"farm", "farm_a"}
-			if _, e := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.farm.read"}, nil); e != nil {
+			if _, e := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.farm.read"}, nil, revisionPointer(0)); e != nil {
 				t.Fatal(e)
 			}
 			want := ErrDependencyUnavailable
@@ -173,7 +173,7 @@ func TestAuthorizationDirectResourceRevisionAndIndependentDownload(t *testing.T)
 	ctx := context.Background()
 	join(t, s, org, "bob", "viewer")
 	ref := ResourceRef{"asset", "asset_multi"}
-	if _, e := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.asset.read", "agri.asset_download.read"}, nil); e != nil {
+	if _, e := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.asset.read", "agri.asset_download.read"}, nil, revisionPointer(0)); e != nil {
 		t.Fatal(e)
 	}
 	if _, e := s.Authorize(ctx, "bob", org.Workspace.ID, "agri.asset_download.read", []ResourceRef{ref}); e != nil {
@@ -191,7 +191,7 @@ func TestAuthorizationStatusChecksAreNotReplacedByEpoch(t *testing.T) {
 	s, org, _ := authorizationFixture(t)
 	ctx := context.Background()
 	join(t, s, org, "bob", "viewer")
-	if _, e := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ResourceRef{"farm", "farm_a"}, []string{"agri.farm.read"}, nil); e != nil {
+	if _, e := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ResourceRef{"farm", "farm_a"}, []string{"agri.farm.read"}, nil, revisionPointer(0)); e != nil {
 		t.Fatal(e)
 	}
 	before, e := s.Authorize(ctx, "bob", org.Workspace.ID, "agri.farm.read", []ResourceRef{{"farm", "farm_a"}})
@@ -211,7 +211,7 @@ func TestRemovedMemberRejoiningDoesNotResurrectResourceGrants(t *testing.T) {
 	ctx := context.Background()
 	join(t, s, org, "bob", "viewer")
 	ref := ResourceRef{"farm", "farm_a"}
-	if _, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.farm.read"}, nil); err != nil {
+	if _, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.farm.read"}, nil, revisionPointer(0)); err != nil {
 		t.Fatal(err)
 	}
 	for _, status := range []string{"removed", "active"} {
@@ -229,12 +229,12 @@ func TestDirectGrantDoesNotOverrideFarmAllowAndDeadline(t *testing.T) {
 	s, org, _ := authorizationFixture(t)
 	ctx := context.Background()
 	join(t, s, org, "bob", "viewer")
-	if _, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ResourceRef{"farm", "farm_a"}, []string{"agri.asset.read", "agri.asset_download.read"}, nil); err != nil {
+	if _, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ResourceRef{"farm", "farm_a"}, []string{"agri.asset.read", "agri.asset_download.read"}, nil, revisionPointer(0)); err != nil {
 		t.Fatal(err)
 	}
 	soon := s.now().Add(3 * time.Second)
 	ref := ResourceRef{"asset", "asset_a"}
-	if _, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.asset.read"}, &soon); err != nil {
+	if _, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.asset.read"}, &soon, revisionPointer(0)); err != nil {
 		t.Fatal(err)
 	}
 	for _, action := range []string{"agri.asset.read", "agri.asset_download.read"} {
@@ -251,7 +251,7 @@ func TestDecisionDeadlineAndOwnershipChanges(t *testing.T) {
 	join(t, s, org, "bob", "viewer")
 	soon := s.now().Add(3 * time.Second)
 	ref := ResourceRef{"asset", "asset_a"}
-	if _, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.asset.read"}, &soon); err != nil {
+	if _, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.asset.read"}, &soon, revisionPointer(0)); err != nil {
 		t.Fatal(err)
 	}
 	decision, err := s.Authorize(ctx, "bob", org.Workspace.ID, "agri.asset.read", []ResourceRef{ref})
@@ -274,7 +274,7 @@ func TestFieldRoleCombinationDoesNotBypassAssignment(t *testing.T) {
 	if err := s.ChangeMember(ctx, "owner", org.Workspace.ID, "bob", &roles, nil); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ResourceRef{"farm", "farm_a"}, []string{"agri.inspection.update"}, nil); err != nil {
+	if _, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ResourceRef{"farm", "farm_a"}, []string{"agri.inspection.update"}, nil, revisionPointer(0)); err != nil {
 		t.Fatal(err)
 	}
 	ref := ResourceRef{"parcel", "parcel_a"}
@@ -286,5 +286,21 @@ func TestFieldRoleCombinationDoesNotBypassAssignment(t *testing.T) {
 	r.rows[ref] = p
 	if _, err := s.Authorize(ctx, "bob", org.Workspace.ID, "agri.inspection.update", []ResourceRef{ref}); err != nil {
 		t.Fatal("assigned field write denied", err)
+	}
+}
+
+func TestNonManagerCannotProbeOwnershipThroughGrant(t *testing.T) {
+	s, org, r := authorizationFixture(t)
+	ctx := context.Background()
+	join(t, s, org, "bob", "viewer")
+	called := false
+	r.before = func() { called = true }
+	for _, resource := range []ResourceRef{{"farm", "farm_a"}, {"farm", "farm_missing"}} {
+		if _, err := s.GrantResourceBinding(ctx, "bob", org.Workspace.ID, "bob", resource, []string{"agri.farm.read"}, nil, revisionPointer(0)); !errors.Is(err, ErrForbidden) {
+			t.Fatal("nonmanager response revealed ownership existence", err)
+		}
+	}
+	if called {
+		t.Fatal("nonmanager invoked ownership discovery")
 	}
 }

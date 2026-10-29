@@ -9,6 +9,30 @@ import (
 	"yingce/backend/internal/model"
 )
 
+func revisionPointer(value int64) *int64 { return &value }
+
+func TestResourceBindingServiceRequiresExplicitRevision(t *testing.T) {
+	s, org, _ := bindingFixture(t)
+	join(t, s, org, "bob", "viewer")
+	ctx := context.Background()
+	ref := ResourceRef{"farm", "farm_one"}
+	before := bindingEpoch(t, s, org.Tenant.ID)
+	if _, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.farm.read"}, nil, nil); !errors.Is(err, ErrPreconditionRequired) {
+		t.Fatalf("service bypassed missing revision: %v", err)
+	}
+	if err := s.RevokeBinding(ctx, "owner", org.Workspace.ID, "binding_absent", nil); !errors.Is(err, ErrPreconditionRequired) {
+		t.Fatalf("service revoke bypassed revision: %v", err)
+	}
+	for _, revision := range []int64{-1, maximumAuthorizationVersion + 1} {
+		if _, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.farm.read"}, nil, revisionPointer(revision)); !errors.Is(err, ErrInvalid) {
+			t.Fatalf("invalid service revision accepted: %v", err)
+		}
+	}
+	if bindingEpoch(t, s, org.Tenant.ID) != before {
+		t.Fatal("missing revision changed epoch")
+	}
+}
+
 type bindingTestResolver struct {
 	now   time.Time
 	err   error
@@ -53,7 +77,7 @@ func TestResourceBindingGrantReplaceRevoke(t *testing.T) {
 	ref := ResourceRef{Kind: "farm", ID: "farm_one"}
 	before := bindingEpoch(t, s, org.Tenant.ID)
 	expiry := s.now().Add(time.Hour)
-	row, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.parcel.read", "agri.farm.read"}, &expiry)
+	row, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.parcel.read", "agri.farm.read"}, &expiry, revisionPointer(0))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,7 +87,7 @@ func TestResourceBindingGrantReplaceRevoke(t *testing.T) {
 	if bindingEpoch(t, s, org.Tenant.ID) != before+1 {
 		t.Fatal("grant epoch not atomic")
 	}
-	updated, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.farm.read"}, nil)
+	updated, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.farm.read"}, nil, revisionPointer(row.AuthVersion))
 	if err != nil || updated.ID != row.ID || updated.ExpiresAt != nil || updated.AuthVersion != before+2 {
 		t.Fatalf("replace: %+v %v", updated, err)
 	}
@@ -76,7 +100,7 @@ func TestResourceBindingGrantReplaceRevoke(t *testing.T) {
 	}
 	resolver.err = ErrDependencyUnavailable
 	calls := resolver.calls
-	if err = s.RevokeBinding(ctx, "owner", org.Workspace.ID, row.ID); err != nil {
+	if err = s.RevokeBinding(ctx, "owner", org.Workspace.ID, row.ID, revisionPointer(updated.AuthVersion)); err != nil {
 		t.Fatal(err)
 	}
 	if resolver.calls != calls {
@@ -88,7 +112,7 @@ func TestResourceBindingGrantReplaceRevoke(t *testing.T) {
 	if updated.State != "revoked" || updated.Capabilities != "[]" || updated.AuthVersion != before+3 {
 		t.Fatalf("revoke lost history: %+v", updated)
 	}
-	if err = s.RevokeBinding(ctx, "owner", org.Workspace.ID, row.ID); err != nil {
+	if err = s.RevokeBinding(ctx, "owner", org.Workspace.ID, row.ID, revisionPointer(updated.AuthVersion)); err != nil {
 		t.Fatal(err)
 	}
 	if bindingEpoch(t, s, org.Tenant.ID) != before+3 {
@@ -116,18 +140,18 @@ func TestResourceBindingInvalidGrantNeverPersists(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			if _, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, tc.target, ref, tc.caps, tc.expiry); err == nil {
+			if _, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, tc.target, ref, tc.caps, tc.expiry, revisionPointer(0)); err == nil {
 				t.Fatal("invalid grant accepted")
 			}
 		})
 	}
-	if _, err := s.GrantResourceBinding(ctx, "bob", org.Workspace.ID, "bob", ref, []string{"agri.farm.read"}, nil); !errors.Is(err, ErrForbidden) {
+	if _, err := s.GrantResourceBinding(ctx, "bob", org.Workspace.ID, "bob", ref, []string{"agri.farm.read"}, nil, revisionPointer(0)); !errors.Is(err, ErrForbidden) {
 		t.Fatalf("self grant: %v", err)
 	}
 	if err := s.DB.Model(&model.User{}).Where("id='bob'").Update("status", model.UserStatusDisabled).Error; err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.farm.read"}, nil); err == nil {
+	if _, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.farm.read"}, nil, revisionPointer(0)); err == nil {
 		t.Fatal("disabled target grant accepted")
 	}
 	var count int64
@@ -145,28 +169,31 @@ func TestResourceBindingManagerCannotWidenDelegation(t *testing.T) {
 	join(t, s, org, "carol", "viewer")
 	ctx := context.Background()
 	ref := ResourceRef{Kind: "farm", ID: "farm_one"}
-	if _, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.authorization.update", "agri.farm.read", "agri.asset_download.read"}, nil); err != nil {
+	if _, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.authorization.update", "agri.farm.read", "agri.asset_download.read"}, nil, revisionPointer(0)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.GrantResourceBinding(ctx, "bob", org.Workspace.ID, "carol", ref, []string{"agri.parcel.read"}, nil); !errors.Is(err, ErrForbidden) {
+	if _, err := s.GrantResourceBinding(ctx, "bob", org.Workspace.ID, "carol", ref, []string{"agri.parcel.read"}, nil, revisionPointer(0)); !errors.Is(err, ErrForbidden) {
 		t.Fatalf("manager widened capability: %v", err)
 	}
-	if _, err := s.GrantResourceBinding(ctx, "bob", org.Workspace.ID, "carol", ResourceRef{Kind: "farm", ID: "farm_two"}, []string{"agri.farm.read"}, nil); !errors.Is(err, ErrNotFound) {
+	if _, err := s.GrantResourceBinding(ctx, "bob", org.Workspace.ID, "carol", ResourceRef{Kind: "farm", ID: "farm_two"}, []string{"agri.farm.read"}, nil, revisionPointer(0)); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("manager widened farm: %v", err)
 	}
-	row, err := s.GrantResourceBinding(ctx, "bob", org.Workspace.ID, "carol", ref, []string{"agri.farm.read"}, nil)
+	row, err := s.GrantResourceBinding(ctx, "bob", org.Workspace.ID, "carol", ref, []string{"agri.farm.read"}, nil, revisionPointer(0))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = s.RevokeBinding(ctx, "carol", org.Workspace.ID, row.ID); !errors.Is(err, ErrForbidden) {
+	if err = s.RevokeBinding(ctx, "carol", org.Workspace.ID, row.ID, revisionPointer(row.AuthVersion)); !errors.Is(err, ErrForbidden) {
 		t.Fatalf("viewer revoked: %v", err)
 	}
-	if err = s.RevokeBinding(ctx, "bob", org.Workspace.ID, row.ID); err != nil {
+	if err = s.RevokeBinding(ctx, "bob", org.Workspace.ID, row.ID, revisionPointer(row.AuthVersion)); err != nil {
 		t.Fatal(err)
 	}
 	// Delegating download authority on a farm root is distinct from executing
 	// an actual download: the public operation still requires an asset ref.
-	if _, err = s.GrantResourceBinding(ctx, "bob", org.Workspace.ID, "carol", ref, []string{"agri.asset_download.read"}, nil); err != nil {
+	if err = s.DB.First(&row, "id=?", row.ID).Error; err != nil || row.State != "revoked" {
+		t.Fatalf("read revoked grant: %+v %v", row, err)
+	}
+	if _, err = s.GrantResourceBinding(ctx, "bob", org.Workspace.ID, "carol", ref, []string{"agri.asset_download.read"}, nil, revisionPointer(row.AuthVersion)); err != nil {
 		t.Fatalf("manager could not delegate explicitly held download capability: %v", err)
 	}
 	if _, err = s.Authorize(ctx, "carol", org.Workspace.ID, "agri.asset_download.read", []ResourceRef{ref}); !errors.Is(err, ErrInvalid) {
@@ -193,20 +220,21 @@ func TestResourceBindingManagerCannotExtendTemporaryAuthority(t *testing.T) {
 	ctx := context.Background()
 	ref := ResourceRef{Kind: "farm", ID: "farm_one"}
 	limit := s.now().Add(time.Hour)
-	if _, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.authorization.update", "agri.farm.read"}, &limit); err != nil {
+	if _, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.authorization.update", "agri.farm.read"}, &limit, revisionPointer(0)); err != nil {
 		t.Fatal(err)
 	}
 	longer := limit.Add(time.Second)
 	for _, expiry := range []*time.Time{nil, &longer} {
-		if _, err := s.GrantResourceBinding(ctx, "bob", org.Workspace.ID, "carol", ref, []string{"agri.farm.read"}, expiry); !errors.Is(err, ErrForbidden) {
+		if _, err := s.GrantResourceBinding(ctx, "bob", org.Workspace.ID, "carol", ref, []string{"agri.farm.read"}, expiry, revisionPointer(0)); !errors.Is(err, ErrForbidden) {
 			t.Fatalf("temporary authority extended: %v", err)
 		}
 	}
-	if _, err := s.GrantResourceBinding(ctx, "bob", org.Workspace.ID, "carol", ref, []string{"agri.farm.read"}, &limit); err != nil {
+	granted, err := s.GrantResourceBinding(ctx, "bob", org.Workspace.ID, "carol", ref, []string{"agri.farm.read"}, &limit, revisionPointer(0))
+	if err != nil {
 		t.Fatal(err)
 	}
 	shorter := limit.Add(-time.Minute)
-	if _, err := s.GrantResourceBinding(ctx, "bob", org.Workspace.ID, "carol", ref, []string{"agri.farm.read"}, &shorter); err != nil {
+	if _, err := s.GrantResourceBinding(ctx, "bob", org.Workspace.ID, "carol", ref, []string{"agri.farm.read"}, &shorter, revisionPointer(granted.AuthVersion)); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -216,7 +244,7 @@ func TestResourceBindingDisabledOrganizationOwnerCanRevokeWithoutRestoring(t *te
 	join(t, s, org, "bob", "viewer")
 	join(t, s, org, "carol", "tenant_admin")
 	ctx := context.Background()
-	row, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ResourceRef{Kind: "farm", ID: "farm_one"}, []string{"agri.farm.read"}, nil)
+	row, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ResourceRef{Kind: "farm", ID: "farm_one"}, []string{"agri.farm.read"}, nil, revisionPointer(0))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -230,13 +258,13 @@ func TestResourceBindingDisabledOrganizationOwnerCanRevokeWithoutRestoring(t *te
 	if _, err := s.ListBindings(ctx, "carol", org.Workspace.ID); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("disabled admin list: %v", err)
 	}
-	if err := s.RevokeBinding(ctx, "carol", org.Workspace.ID, row.ID); !errors.Is(err, ErrNotFound) {
+	if err := s.RevokeBinding(ctx, "carol", org.Workspace.ID, row.ID, revisionPointer(row.AuthVersion)); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("disabled admin revoke: %v", err)
 	}
-	if err := s.RevokeBinding(ctx, "owner", org.Workspace.ID, row.ID); err != nil {
+	if err := s.RevokeBinding(ctx, "owner", org.Workspace.ID, row.ID, revisionPointer(row.AuthVersion)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ResourceRef{Kind: "farm", ID: "farm_one"}, []string{"agri.farm.read"}, nil); !errors.Is(err, ErrNotFound) {
+	if _, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ResourceRef{Kind: "farm", ID: "farm_one"}, []string{"agri.farm.read"}, nil, revisionPointer(0)); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("disabled owner grant: %v", err)
 	}
 }
@@ -249,7 +277,7 @@ func TestResourceBindingAuditFailureRollsBackRowAndEpoch(t *testing.T) {
 	if err := s.DB.Exec("CREATE TRIGGER fail_binding_audit BEFORE INSERT ON " + table + " BEGIN SELECT RAISE(ABORT, 'fixture audit failure'); END").Error; err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.GrantResourceBinding(context.Background(), "owner", org.Workspace.ID, "bob", ResourceRef{Kind: "farm", ID: "farm_one"}, []string{"agri.farm.read"}, nil); err == nil {
+	if _, err := s.GrantResourceBinding(context.Background(), "owner", org.Workspace.ID, "bob", ResourceRef{Kind: "farm", ID: "farm_one"}, []string{"agri.farm.read"}, nil, revisionPointer(0)); err == nil {
 		t.Fatal("audit failure hidden")
 	}
 	var count int64
@@ -267,11 +295,11 @@ func TestResourceBindingUnavailableGISAndCrossWorkspaceFailClosed(t *testing.T) 
 	ctx := context.Background()
 	ref := ResourceRef{Kind: "farm", ID: "farm_one"}
 	resolver.err = ErrDependencyUnavailable
-	if _, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.farm.read"}, nil); !errors.Is(err, ErrDependencyUnavailable) {
+	if _, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.farm.read"}, nil, revisionPointer(0)); !errors.Is(err, ErrDependencyUnavailable) {
 		t.Fatalf("ownership failure hidden: %v", err)
 	}
 	resolver.err = nil
-	row, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.farm.read"}, nil)
+	row, err := s.GrantResourceBinding(ctx, "owner", org.Workspace.ID, "bob", ref, []string{"agri.farm.read"}, nil, revisionPointer(0))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -279,14 +307,14 @@ func TestResourceBindingUnavailableGISAndCrossWorkspaceFailClosed(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := s.RevokeBinding(ctx, "owner", other.Workspace.ID, row.ID); !errors.Is(err, ErrNotFound) {
+	if err := s.RevokeBinding(ctx, "owner", other.Workspace.ID, row.ID, revisionPointer(row.AuthVersion)); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("cross-workspace revoke: %v", err)
 	}
 	listed, err := s.ListBindings(ctx, "owner", other.Workspace.ID)
 	if err != nil || len(listed) != 0 {
 		t.Fatalf("cross-workspace listing: %+v %v", listed, err)
 	}
-	if _, err := s.GrantResourceBinding(ctx, "owner", other.Workspace.ID, "bob", ref, []string{"agri.farm.read"}, nil); !errors.Is(err, ErrNotFound) {
+	if _, err := s.GrantResourceBinding(ctx, "owner", other.Workspace.ID, "bob", ref, []string{"agri.farm.read"}, nil, revisionPointer(0)); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("cross-tenant target: %v", err)
 	}
 	before := bindingEpoch(t, s, org.Tenant.ID)
@@ -294,7 +322,7 @@ func TestResourceBindingUnavailableGISAndCrossWorkspaceFailClosed(t *testing.T) 
 	if err := s.DB.Exec("CREATE TRIGGER fail_revoke_audit BEFORE INSERT ON " + table + " BEGIN SELECT RAISE(ABORT, 'fixture audit failure'); END").Error; err != nil {
 		t.Fatal(err)
 	}
-	if err := s.RevokeBinding(ctx, "owner", org.Workspace.ID, row.ID); err == nil {
+	if err := s.RevokeBinding(ctx, "owner", org.Workspace.ID, row.ID, revisionPointer(row.AuthVersion)); err == nil {
 		t.Fatal("revoke audit failure hidden")
 	}
 	var stored model.AgricultureResourceBinding

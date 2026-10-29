@@ -18,6 +18,8 @@ node scripts/agriculture/session-e2e.mjs
 
 测试启动新的 loopback Go 服务与唯一临时 SQLite 数据库，执行真正的注册 API、Chromium 输入登录表单及同源完整文档跳转。临时同源服务器分别挂载 React `/`、Vue `/agri/`，所有 `/api/` 转发真实 Go。浏览器 CDP 请求拦截拒绝测试 origin 以外的 HTTP 请求。
 
+与组织harness共用 `browser-navigation.mjs`：新导航必须匹配 `Page.navigate` 返回的frame/loader及 `Page.getFrameTree` 的实际提交，然后才接受新文档complete。原仅比较URL与performance name的条件无法区分同URL旧DOM；已用确定性单元复现并修正。共享等待保留20秒总deadline，诊断只存提交布尔值、不输出URL/loader ID。该harness修订须另一次真实CI，旧会话44条证据不自动视为新版本已通过。
+
 覆盖匿名/伪造 cookie 与 localStorage、跨 React/Vue 的真实 actor、HttpOnly 同路径 cookie、错误 token 不能注销原会话、Vue 退出后 React 刷新与 cookie 重放、真实 session 的数据库 fixture 到期后双方拒绝恢复。仅过期负例写本脚本新建数据库；其他身份操作都是实际 API/浏览器。所有进程和临时目录由脚本创建并精确清理。
 
 匿名、伪造 cookie、正确 session ID + 错误 token、注销后重放及过期 cookie 均直接请求真实受保护 `/api/agriculture/workspaces` 并断言 HTTP 401，而非仅查看界面隐藏或 `/auth/session` 的 null。仅本脚本自建服务显式启用 `FLOW_AGRICULTURE_ENABLED=true`、`FLOW_AGRICULTURE_ALLOW_SQLITE_DEV=true`。农业 GIS 业务资源尚未开放；本脚本不把工作区入口拒绝当作未来 GIS 全部资源授权通过。

@@ -38,7 +38,11 @@ func TestAgriculturePostgresResourceAuthorization(t *testing.T) {
 	if _, err := s.Authorize(ctx, recipient, org.Workspace.ID, "agri.farm.read", []ResourceRef{farm}); !errors.Is(err, ErrNotFound) {
 		t.Fatal("workspace viewer implicitly accessed a farm")
 	}
-	binding, err := s.GrantResourceBinding(ctx, actor, org.Workspace.ID, recipient, farm, []string{"agri.farm.read", "agri.parcel.read"}, nil)
+	if _, err := s.GrantResourceBinding(ctx, actor, org.Workspace.ID, recipient, farm, []string{"agri.farm.read", "agri.parcel.read"}, nil, nil); !errors.Is(err, ErrPreconditionRequired) {
+		t.Fatal("missing binding revision precondition was accepted")
+	}
+	absentRevision := int64(0)
+	binding, err := s.GrantResourceBinding(ctx, actor, org.Workspace.ID, recipient, farm, []string{"agri.farm.read", "agri.parcel.read"}, nil, &absentRevision)
 	if err != nil {
 		t.Fatalf("real PostgreSQL resource grant failed: %T", err)
 	}
@@ -68,7 +72,7 @@ func TestAgriculturePostgresResourceAuthorization(t *testing.T) {
 		t.Fatal("missing GIS dependency did not fail closed")
 	}
 	s.Ownership = resolver
-	roles := []string{"analyst"}
+	roles := []string{"analyst", "tenant_admin"}
 	if err := s.ChangeMember(ctx, actor, org.Workspace.ID, recipient, &roles, nil); err != nil {
 		t.Fatal("fixture role mutation failed")
 	}
@@ -79,15 +83,44 @@ func TestAgriculturePostgresResourceAuthorization(t *testing.T) {
 	if err != nil || fresh.AuthorizationVersion <= decision.AuthorizationVersion {
 		t.Fatal("authorization epoch did not advance")
 	}
-	if err := s.RevokeBinding(ctx, actor, org.Workspace.ID, binding.ID); err != nil {
+	// A second authorized administrator revokes the version observed earlier by
+	// the owner. The owner's already-prepared grant must not resurrect that row.
+	if err := s.RevokeBinding(ctx, recipient, org.Workspace.ID, binding.ID, &binding.AuthVersion); err != nil {
 		t.Fatal("runtime binding revocation failed")
 	}
 	if _, err := s.Reauthorize(ctx, recipient, fresh); !errors.Is(err, ErrNotFound) {
 		t.Fatal("revoked binding retained old decision access")
 	}
-	granted, err := s.GrantResourceBinding(ctx, actor, org.Workspace.ID, recipient, farm, []string{"agri.farm.read", "agri.parcel.read"}, nil)
+	revokedRows, err := s.ListBindings(ctx, actor, org.Workspace.ID)
+	if err != nil || len(revokedRows) != 1 || revokedRows[0].State != "revoked" || revokedRows[0].AuthVersion <= binding.AuthVersion {
+		t.Fatal("second administrator revocation did not persist a new revision")
+	}
+	if err := s.RevokeBinding(ctx, recipient, org.Workspace.ID, binding.ID, &revokedRows[0].AuthVersion); err != nil {
+		t.Fatal("current-version repeated revoke must be idempotent")
+	}
+	if err := s.RevokeBinding(ctx, actor, org.Workspace.ID, binding.ID, &binding.AuthVersion); !errors.Is(err, ErrConflict) {
+		t.Fatal("stale repeated revoke must conflict even when already revoked")
+	}
+	for _, stale := range []int64{binding.AuthVersion, absentRevision} {
+		if _, err := s.GrantResourceBinding(ctx, actor, org.Workspace.ID, recipient, farm, []string{"agri.farm.read", "agri.parcel.read"}, nil, &stale); !errors.Is(err, ErrConflict) {
+			t.Fatal("stale administrator grant reactivated a revoked binding")
+		}
+	}
+	unchanged, err := s.ListBindings(ctx, actor, org.Workspace.ID)
+	if err != nil || len(unchanged) != 1 || unchanged[0].State != "revoked" || unchanged[0].AuthVersion != revokedRows[0].AuthVersion {
+		t.Fatal("rejected stale grants changed the revoked binding")
+	}
+	if _, err := s.Authorize(ctx, recipient, org.Workspace.ID, "agri.parcel.read", []ResourceRef{parcel}); !errors.Is(err, ErrNotFound) {
+		t.Fatal("rejected stale grant restored resource access")
+	}
+	// This is a new, intentional operation after reading the revoked revision;
+	// no retry helper silently substitutes a current revision for a stale request.
+	granted, err := s.GrantResourceBinding(ctx, actor, org.Workspace.ID, recipient, farm, []string{"agri.farm.read", "agri.parcel.read"}, nil, &revokedRows[0].AuthVersion)
 	if err != nil || granted.ID != binding.ID {
 		t.Fatal("regrant did not retain unique binding identity")
+	}
+	if err := s.RevokeBinding(ctx, recipient, org.Workspace.ID, binding.ID, &binding.AuthVersion); !errors.Is(err, ErrConflict) {
+		t.Fatal("stale revoke removed a newer explicit grant")
 	}
 	latest, err := s.Authorize(ctx, recipient, org.Workspace.ID, "agri.parcel.read", []ResourceRef{parcel})
 	if err != nil || latest.AuthorizationVersion <= fresh.AuthorizationVersion {
@@ -139,10 +172,11 @@ func testPostgresReciprocalResourceGrants(t *testing.T) {
 	}
 	results := make(chan outcome, 2)
 	start := make(chan struct{})
+	absentRevision := int64(0)
 	for _, pair := range [][2]string{{actor, recipient}, {recipient, actor}} {
 		go func(pair [2]string) {
 			<-start
-			_, err := s.GrantResourceBinding(ctx, pair[0], org.Workspace.ID, pair[1], ref, []string{"agri.farm.read"}, nil)
+			_, err := s.GrantResourceBinding(ctx, pair[0], org.Workspace.ID, pair[1], ref, []string{"agri.farm.read"}, nil, &absentRevision)
 			results <- outcome{pair[0], pair[1], err}
 		}(pair)
 	}
@@ -153,7 +187,7 @@ func testPostgresReciprocalResourceGrants(t *testing.T) {
 			// An optimistic epoch conflict is a valid concurrency result, not a
 			// deadlock or implicit success. Retry it once after the peer completes.
 			if errors.Is(result.err, ErrConflict) {
-				if _, err := s.GrantResourceBinding(ctx, result.actor, org.Workspace.ID, result.target, ref, []string{"agri.farm.read"}, nil); err != nil {
+				if _, err := s.GrantResourceBinding(ctx, result.actor, org.Workspace.ID, result.target, ref, []string{"agri.farm.read"}, nil, &absentRevision); err != nil {
 					t.Fatal("reciprocal conflict retry failed")
 				}
 			} else if result.err != nil {

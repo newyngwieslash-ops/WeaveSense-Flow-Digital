@@ -54,12 +54,18 @@ type API struct {
 	User    flow.UserFunc
 }
 
+var ErrUnauthenticated = errors.New("agriculture: unauthenticated")
+
 func respond(c *gin.Context, data any, err error) {
 	status, reason, msg := http.StatusOK, "", "ok"
 	if err != nil {
 		data = nil
 		status, reason, msg = http.StatusInternalServerError, "agriculture_unavailable", "农业服务暂不可用"
 		switch {
+		case errors.Is(err, ErrPreconditionRequired):
+			status, reason, msg = 428, "precondition_required", "必须提供预期授权版本"
+		case errors.Is(err, ErrUnauthenticated):
+			status, reason, msg = 401, "unauthenticated", "请先登录"
 		case errors.Is(err, ErrDependencyUnavailable):
 			status, reason, msg = 503, "dependency_unavailable", "资源归属验证暂不可用"
 		case errors.Is(err, ErrInvalid):
@@ -82,33 +88,46 @@ func respond(c *gin.Context, data any, err error) {
 }
 
 func decode(c *gin.Context, target any) bool {
+	return decodeWithResponder(c, target, respond)
+}
+
+func decodeWithResponder(c *gin.Context, target any, response func(*gin.Context, any, error)) bool {
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 16<<10)
 	decoder := json.NewDecoder(c.Request.Body)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(target); err != nil {
-		respond(c, nil, ErrInvalid)
+		response(c, nil, ErrInvalid)
 		return false
 	}
 	var extra any
 	if err := decoder.Decode(&extra); err != io.EOF {
-		respond(c, nil, ErrInvalid)
+		response(c, nil, ErrInvalid)
 		return false
 	}
 	return true
 }
 
-func (a API) Register(api gin.IRouter) {
-	g := api.Group("/agriculture")
-	g.Use(func(c *gin.Context) {
+// Binding writes use an explicit body revision, not an HTTP representation
+// ETag. Reject If-Match rather than silently ignoring a conflicting condition.
+func bindingBodyRevisionOnly(c *gin.Context, response func(*gin.Context, any, error)) bool {
+	if len(c.Request.Header.Values("If-Match")) > 0 {
+		response(c, nil, ErrInvalid)
+		return false
+	}
+	return true
+}
+
+func (a API) sessionMiddleware(response func(*gin.Context, any, error)) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		c.Header("Cache-Control", "no-store")
 		c.Header("Vary", "Cookie")
 		actor, err := a.User(c)
 		if err != nil || actor == nil {
 			var appErr *kernel.AppError
 			if err != nil && (!errors.As(err, &appErr) || (appErr.Status != 401 && appErr.Status != 403)) {
-				respond(c, nil, err)
+				response(c, nil, err)
 			} else {
-				c.JSON(401, gin.H{"code": 401, "data": nil, "msg": "请先登录", "reason": "unauthenticated"})
+				response(c, nil, ErrUnauthenticated)
 			}
 			c.Abort()
 			return
@@ -118,20 +137,26 @@ func (a API) Register(api gin.IRouter) {
 			if origin != "" {
 				parsed, e := url.Parse(origin)
 				if e != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Host != c.Request.Host || parsed.User != nil || parsed.Path != "" {
-					respond(c, nil, ErrForbidden)
+					response(c, nil, ErrForbidden)
 					c.Abort()
 					return
 				}
 			}
 			if strings.EqualFold(c.GetHeader("Sec-Fetch-Site"), "cross-site") {
-				respond(c, nil, ErrForbidden)
+				response(c, nil, ErrForbidden)
 				c.Abort()
 				return
 			}
 		}
 		c.Set("agriculture.actor", actor.ID)
 		c.Next()
-	})
+	}
+}
+
+func (a API) Register(api gin.IRouter) {
+	a.registerAuthorizationV1(api)
+	g := api.Group("/agriculture")
+	g.Use(a.sessionMiddleware(respond))
 	actor := func(c *gin.Context) string { return c.GetString("agriculture.actor") }
 	g.GET("/workspaces", func(c *gin.Context) {
 		out, err := a.Service.ListWorkspaces(c.Request.Context(), actor(c))
@@ -153,20 +178,33 @@ func (a API) Register(api gin.IRouter) {
 		respond(c, out, err)
 	})
 	g.POST("/workspaces/:workspaceId/resource-bindings", func(c *gin.Context) {
+		if !bindingBodyRevisionOnly(c, respond) {
+			return
+		}
 		var body struct {
-			SubjectID    string      `json:"subjectId"`
-			Resource     ResourceRef `json:"resource"`
-			Capabilities []string    `json:"capabilities"`
-			ExpiresAt    *time.Time  `json:"expiresAt"`
+			SubjectID        string      `json:"subjectId"`
+			Resource         ResourceRef `json:"resource"`
+			Capabilities     []string    `json:"capabilities"`
+			ExpiresAt        *time.Time  `json:"expiresAt"`
+			ExpectedRevision *int64      `json:"expectedRevision"`
 		}
 		if !decode(c, &body) {
 			return
 		}
-		out, err := a.Service.GrantResourceBinding(c.Request.Context(), actor(c), c.Param("workspaceId"), body.SubjectID, body.Resource, body.Capabilities, body.ExpiresAt)
+		out, err := a.Service.GrantResourceBinding(c.Request.Context(), actor(c), c.Param("workspaceId"), body.SubjectID, body.Resource, body.Capabilities, body.ExpiresAt, body.ExpectedRevision)
 		respond(c, out, err)
 	})
 	g.POST("/workspaces/:workspaceId/resource-bindings/:bindingId/revoke", func(c *gin.Context) {
-		err := a.Service.RevokeBinding(c.Request.Context(), actor(c), c.Param("workspaceId"), c.Param("bindingId"))
+		if !bindingBodyRevisionOnly(c, respond) {
+			return
+		}
+		var body struct {
+			ExpectedRevision *int64 `json:"expectedRevision"`
+		}
+		if !decode(c, &body) {
+			return
+		}
+		err := a.Service.RevokeBinding(c.Request.Context(), actor(c), c.Param("workspaceId"), c.Param("bindingId"), body.ExpectedRevision)
 		respond(c, gin.H{"ok": true}, err)
 	})
 	g.POST("/organizations", func(c *gin.Context) {

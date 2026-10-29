@@ -1,0 +1,274 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.weavesense.invalid/agriculture/v1/event-envelope.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "event_type",
+    "schema_version",
+    "producer",
+    "tenant_id",
+    "workspace_id",
+    "aggregate_type",
+    "aggregate_id",
+    "aggregate_revision",
+    "occurred_at",
+    "correlation_id",
+    "causation_id",
+    "trace_id",
+    "canonicalization_version",
+    "payload_hash",
+    "payload"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "agri.analysis.completed",
+        "agri.usage.measured",
+        "platform.authorization.revoked"
+      ]
+    },
+    "schema_version": {
+      "const": "1.0"
+    },
+    "producer": {
+      "type": "string",
+      "enum": [
+        "agri-gis",
+        "flow-platform"
+      ]
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+    },
+    "workspace_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+    },
+    "aggregate_type": {
+      "type": "string",
+      "enum": [
+        "analysis_job",
+        "authorization"
+      ]
+    },
+    "aggregate_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+    },
+    "aggregate_revision": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "correlation_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+    },
+    "causation_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "trace_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+    },
+    "canonicalization_version": {
+      "const": "sorted-json-v1"
+    },
+    "payload_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "payload": {
+      "type": "object"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "agri.analysis.completed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "producer": {
+            "const": "agri-gis"
+          },
+          "aggregate_type": {
+            "const": "analysis_job"
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "operation_id",
+              "job_id",
+              "result_id",
+              "outcome",
+              "manifest_sha256"
+            ],
+            "properties": {
+              "operation_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "job_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "result_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "valid_result",
+                  "insufficient_data",
+                  "not_applicable"
+                ]
+              },
+              "manifest_sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "agri.usage.measured"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "producer": {
+            "const": "agri-gis"
+          },
+          "aggregate_type": {
+            "const": "analysis_job"
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "operation_id",
+              "job_id",
+              "meter",
+              "quantity",
+              "price_version",
+              "dedupe_key"
+            ],
+            "properties": {
+              "operation_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "job_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "meter": {
+                "type": "string",
+                "enum": [
+                  "pixels",
+                  "cpu_milliseconds",
+                  "storage_byte_seconds",
+                  "model_tokens"
+                ]
+              },
+              "quantity": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "price_version": {
+                "$ref": "https://schemas.weavesense.invalid/agriculture/v1/common.schema.json#/$defs/version"
+              },
+              "dedupe_key": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "platform.authorization.revoked"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "producer": {
+            "const": "flow-platform"
+          },
+          "aggregate_type": {
+            "const": "authorization"
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "subject_id",
+              "authorization_version",
+              "resource_scope"
+            ],
+            "properties": {
+              "subject_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "authorization_version": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "resource_scope": {
+                "type": "array",
+                "items": {
+                  "$ref": "https://schemas.weavesense.invalid/agriculture/v1/common.schema.json#/$defs/resource"
+                },
+                "minItems": 1,
+                "maxItems": 200,
+                "uniqueItems": true
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

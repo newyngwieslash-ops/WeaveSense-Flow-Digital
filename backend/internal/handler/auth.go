@@ -154,14 +154,24 @@ func RegisterAuthRoutes(r *gin.RouterGroup, svc *service.Service) {
 	})
 	r.GET("/auth/linuxdo/callback", linuxDOCallbackHandler(svc))
 	r.POST("/auth/logout", func(c *gin.Context) {
-		_ = svc.Logout(sessionCookie(c))
+		if err := svc.Logout(sessionCookie(c)); err != nil {
+			failService(c, err)
+			return
+		}
 		clearSessionCookie(c)
 		ok(c, gin.H{"ok": true})
 	})
 	r.GET("/auth/session", func(c *gin.Context) {
 		user, err := currentUser(c, svc)
 		if err != nil {
-			ok(c, gin.H{"user": nil})
+			var authErr *service.AuthError
+			if errors.As(err, &authErr) && (authErr.Status == http.StatusUnauthorized || authErr.Status == http.StatusForbidden) {
+				// Preserve the existing anonymous/expired/disabled-user contract;
+				// infrastructure failures must not impersonate a successful logout.
+				ok(c, gin.H{"user": nil})
+			} else {
+				failService(c, err)
+			}
 			return
 		}
 		publicUser, err := svc.PublicAuthUser(user)

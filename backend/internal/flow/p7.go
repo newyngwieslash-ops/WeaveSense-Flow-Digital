@@ -183,6 +183,9 @@ type MemberView struct {
 }
 
 func ListMembers(db *gorm.DB, scope Scope) ([]MemberView, error) {
+	if err := requireActiveWorkspace(db, scope.TenantID, scope.WorkspaceID); err != nil {
+		return nil, err
+	}
 	var ms []model.Membership
 	if err := db.Where("tenant_id = ? AND status = ?", scope.TenantID, "active").Order("created_at").Find(&ms).Error; err != nil {
 		return nil, err
@@ -190,22 +193,23 @@ func ListMembers(db *gorm.DB, scope Scope) ([]MemberView, error) {
 	wsRoles := make(map[string]string, len(ms))
 	if scope.WorkspaceID != "" {
 		var wms []model.WorkspaceMembership
-		if err := db.Where("workspace_id = ?", scope.WorkspaceID).Find(&wms).Error; err == nil {
-			for _, wm := range wms {
-				wsRoles[wm.UserID] = wm.Role
-			}
+		if err := db.Where("workspace_id = ?", scope.WorkspaceID).Find(&wms).Error; err != nil {
+			return nil, err
+		}
+		for _, wm := range wms {
+			wsRoles[wm.UserID] = wm.Role
 		}
 	}
 	out := make([]MemberView, 0, len(ms))
 	for _, m := range ms {
 		var u model.User
-		db.Select("id", "email", "display_name").First(&u, "id = ?", m.UserID)
+		if err := db.Select("id", "email", "display_name").First(&u, "id = ?", m.UserID).Error; err != nil {
+			return nil, err
+		}
 		role := m.Role
 		if m.Role != "owner" {
 			if wsRole := wsRoles[m.UserID]; wsRole != "" {
 				role = wsRole
-			} else if m.Role == "member" {
-				role = "editor"
 			}
 		}
 		out = append(out, MemberView{UserID: m.UserID, Email: u.Email, Name: u.DisplayName, Role: role, Status: m.Status, JoinedAt: m.CreatedAt.UTC().Format(time.RFC3339)})
@@ -213,46 +217,64 @@ func ListMembers(db *gorm.DB, scope Scope) ([]MemberView, error) {
 	return out, nil
 }
 
-// SetMemberRole changes a member's tenant role (admin|member) and the matching
-// workspace role (admin→admin, editor/member→editor, analyst→analyst, viewer→viewer). Owners cannot be changed and
-// the last admin cannot demote themselves away.
+// SetMemberRole changes only the selected workspace role. A workspace admin
+// cannot modify tenant governance or grants in another workspace. "member" is
+// retained solely as an explicit legacy input alias for "editor".
 func SetMemberRole(db *gorm.DB, scope Scope, userID, role string) error {
 	if scope.Role != "admin" && scope.Role != "owner" {
 		return ErrForbidden
 	}
-	var tenantRole, wsRole string
+	var wsRole string
 	switch role {
 	case "admin":
-		tenantRole, wsRole = "admin", "admin"
+		wsRole = "admin"
 	case "editor", "member":
-		tenantRole, wsRole = "member", "editor"
+		wsRole = "editor"
 	case "analyst":
-		tenantRole, wsRole = "member", "analyst"
+		wsRole = "analyst"
 	case "viewer":
-		tenantRole, wsRole = "member", "viewer"
+		wsRole = "viewer"
 	default:
 		return ErrInvalid
 	}
 	return db.Transaction(func(tx *gorm.DB) error {
+		if err := requireActiveWorkspace(tx, scope.TenantID, scope.WorkspaceID); err != nil {
+			return err
+		}
+		// Serialize administrator-count checks for this workspace on PostgreSQL.
+		var workspace model.Workspace
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&workspace, "id = ? AND tenant_id = ?", scope.WorkspaceID, scope.TenantID).Error; err != nil {
+			return err
+		}
 		var m model.Membership
 		if err := tx.First(&m, "tenant_id = ? AND user_id = ? AND status = ?", scope.TenantID, userID, "active").Error; err != nil {
-			return ErrNotFound
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return ErrNotFound
+			}
+			return err
 		}
 		if m.Role == "owner" {
 			return ErrForbidden
 		}
-		if m.Role == "admin" && tenantRole != "admin" {
+		var grant model.WorkspaceMembership
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&grant, "workspace_id = ? AND user_id = ?", scope.WorkspaceID, userID).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return ErrNotFound
+			}
+			return err
+		}
+		if grant.Role == "admin" && wsRole != "admin" {
 			var n int64
-			tx.Model(&model.Membership{}).Where("tenant_id = ? AND status = ? AND role IN ?", scope.TenantID, "active", []string{"admin", "owner"}).Count(&n)
+			if err := tx.Table("flow_workspace_memberships wm").
+				Joins("JOIN flow_memberships m ON m.user_id = wm.user_id AND m.tenant_id = ? AND m.status = 'active'", scope.TenantID).
+				Where("wm.workspace_id = ? AND wm.role = ?", scope.WorkspaceID, "admin").Count(&n).Error; err != nil {
+				return err
+			}
 			if n <= 1 {
 				return ErrForbidden
 			}
 		}
-		if err := tx.Model(&model.Membership{}).Where("id = ?", m.ID).Updates(map[string]any{"role": tenantRole, "updated_at": time.Now().UTC()}).Error; err != nil {
-			return err
-		}
-		return tx.Model(&model.WorkspaceMembership{}).Where("user_id = ? AND workspace_id IN (?)", userID,
-			tx.Model(&model.Workspace{}).Select("id").Where("tenant_id = ?", scope.TenantID)).Update("role", wsRole).Error
+		return tx.Model(&grant).Update("role", wsRole).Error
 	})
 }
 

@@ -3,6 +3,7 @@ module yingce/backend
 go 1.25.0
 
 require (
+	github.com/cyberphone/json-canonicalization v0.0.0-20261011152517-32a48195b9b2
 	github.com/aws/aws-sdk-go v1.45.5
 	github.com/casdoor/go-sms-sender v0.25.0
 	github.com/gabriel-vasile/mimetype v1.4.13

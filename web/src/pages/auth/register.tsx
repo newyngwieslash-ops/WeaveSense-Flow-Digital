@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useRef, useState, type ReactNode } from "rea
 import { App, Button, Checkbox, Divider, Input, Modal, Segmented } from "antd";
 import { ArrowRight, FileText, Info, LockKeyhole, Mail, TriangleAlert, UserRound } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router";
+import { safeAuthReturnPath as safeNext, returnAfterAuthentication } from "@/lib/auth-return-path";
 
 import { getAuthSession, getAuthSettings, linuxDOLoginURL, register } from "@/services/api/auth";
 import { LinuxDOIcon } from "./auth-scene";
@@ -84,7 +85,7 @@ export default function RegisterPage() {
             await applyUserSession(await getAuthSession());
             if (!settings?.firstUser) window.sessionStorage.setItem("yingce:model-setup-guide", "1");
             message.success(settings?.firstUser ? "管理员账号已创建" : "注册成功");
-            navigate(next, { replace: true });
+            returnAfterAuthentication(next, navigate);
         } catch (error) {
             if (error instanceof ApiError && error.status === 429) setRegisterCountdown(Math.max(1, Math.ceil((error.retryAfterMs ?? 60000) / 1000)));
             message.error(error instanceof Error ? error.message : "注册失败");
@@ -274,10 +275,6 @@ function Notice({ icon, tone, children }: { icon: ReactNode; tone: "blue" | "amb
     );
 }
 
-function safeNext(value: string | null) {
-    if (!value || !value.startsWith("/") || value.startsWith("//")) return "/";
-    return value;
-}
 
 // 中文条款里「一、」「二、」这类条目标题常与正文写在同一个段落内（只隔一个换行）。
 // 这里按「条目标题 + 紧随其后的正文」拆成独立段落，让标题能单独成行并加重；

@@ -11,6 +11,7 @@ import (
 	"yingce/backend/internal/model"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 var ErrInviteInvalid = errors.New("flow: invite invalid, expired or already used")
@@ -48,16 +49,27 @@ func CreateInvite(db *gorm.DB, scope Scope, inviterID, email, role string, ttl t
 		return model.FlowInvite{}, "", ErrForbidden
 	}
 	var t model.Tenant
-	if err := db.First(&t, "id = ?", scope.TenantID).Error; err != nil || t.Kind != "organization" {
-		return model.FlowInvite{}, "", errors.New("flow: invites are only for organization tenants")
+	if err := requireActiveWorkspace(db, scope.TenantID, scope.WorkspaceID); err != nil {
+		return model.FlowInvite{}, "", err
+	}
+	if err := db.First(&t, "id = ?", scope.TenantID).Error; err != nil {
+		return model.FlowInvite{}, "", err
+	}
+	if t.Kind != "organization" {
+		return model.FlowInvite{}, "", ErrInvalid
+	}
+	if ttl <= 0 {
+		return model.FlowInvite{}, "", ErrInvalid
 	}
 	switch role {
 	case "admin", "editor", "analyst", "viewer":
 	default:
-		return model.FlowInvite{}, "", errors.New("flow: invalid role")
+		return model.FlowInvite{}, "", ErrInvalid
 	}
 	var b [24]byte
-	_, _ = rand.Read(b[:])
+	if _, err := rand.Read(b[:]); err != nil {
+		return model.FlowInvite{}, "", err
+	}
 	tok := hex.EncodeToString(b[:])
 	inv := model.FlowInvite{ID: NewID("inv_"), TenantID: scope.TenantID, WorkspaceID: scope.WorkspaceID, Email: strings.TrimSpace(email), Role: role,
 		TokenHash: hashToken(tok), InvitedBy: inviterID, ExpiresAt: time.Now().UTC().Add(ttl), CreatedAt: time.Now().UTC()}
@@ -69,45 +81,88 @@ func AcceptInvite(db *gorm.DB, userID, token string) (Scope, error) {
 	var out Scope
 	err := db.Transaction(func(tx *gorm.DB) error {
 		var inv model.FlowInvite
-		if err := tx.First(&inv, "token_hash = ?", hashToken(token)).Error; err != nil {
-			return ErrInviteInvalid
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&inv, "token_hash = ?", hashToken(token)).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return ErrInviteInvalid
+			}
+			return err
 		}
 		now := time.Now().UTC()
-		if inv.AcceptedAt != nil || inv.RevokedAt != nil || now.After(inv.ExpiresAt) {
+		if inv.Product != "" || inv.AcceptedAt != nil || inv.RevokedAt != nil || !now.Before(inv.ExpiresAt) {
 			return ErrInviteInvalid
 		}
-		res := tx.Model(&model.FlowInvite{}).Where("id = ? AND accepted_at IS NULL", inv.ID).Updates(map[string]any{"accepted_by": userID, "accepted_at": now})
-		if res.Error != nil || res.RowsAffected == 0 {
-			return ErrInviteInvalid
+		if err := requireActiveWorkspace(tx, inv.TenantID, inv.WorkspaceID); err != nil {
+			return err
 		}
 		var m model.Membership
-		if tx.First(&m, "tenant_id = ? AND user_id = ?", inv.TenantID, userID).Error != nil {
+		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&m, "tenant_id = ? AND user_id = ?", inv.TenantID, userID).Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+		if err == nil && m.Status != "active" {
+			return ErrForbidden
+		}
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			if err := tx.Create(&model.Membership{ID: NewID("mb_"), TenantID: inv.TenantID, UserID: userID, Role: "member", Status: "active"}).Error; err != nil {
 				return err
 			}
 		}
 		var wm model.WorkspaceMembership
-		if tx.First(&wm, "workspace_id = ? AND user_id = ?", inv.WorkspaceID, userID).Error != nil {
-			if err := tx.Create(&model.WorkspaceMembership{ID: NewID("wm_"), WorkspaceID: inv.WorkspaceID, UserID: userID, Role: inv.Role}).Error; err != nil {
+		err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&wm, "workspace_id = ? AND user_id = ?", inv.WorkspaceID, userID).Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			wm = model.WorkspaceMembership{ID: NewID("wm_"), WorkspaceID: inv.WorkspaceID, UserID: userID, Role: inv.Role}
+			if err := tx.Create(&wm).Error; err != nil {
 				return err
 			}
 		}
-		out = Scope{TenantID: inv.TenantID, WorkspaceID: inv.WorkspaceID, Role: inv.Role}
+		res := tx.Model(&model.FlowInvite{}).Where("id = ? AND accepted_at IS NULL AND revoked_at IS NULL AND expires_at > ?", inv.ID, now).Updates(map[string]any{"accepted_by": userID, "accepted_at": now})
+		if res.Error != nil {
+			return res.Error
+		}
+		if res.RowsAffected != 1 {
+			return ErrInviteInvalid
+		}
+		out = Scope{TenantID: inv.TenantID, WorkspaceID: inv.WorkspaceID, Role: wm.Role}
 		return nil
 	})
 	return out, err
 }
 
-// RemoveMember deactivates a tenant membership (ongoing authorization checks then fail).
+// RemoveMember removes only this workspace grant. Tenant-wide governance must
+// use a separately verified tenant administrator, not a workspace role.
 func RemoveMember(db *gorm.DB, scope Scope, userID string) error {
 	if scope.Role != "admin" {
 		return ErrForbidden
 	}
 	return db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&model.Membership{}).Where("tenant_id = ? AND user_id = ? AND role <> ?", scope.TenantID, userID, "owner").Update("status", "removed").Error; err != nil {
+		if err := requireActiveWorkspace(tx, scope.TenantID, scope.WorkspaceID); err != nil {
 			return err
 		}
-		return tx.Where("user_id = ? AND workspace_id IN (?)", userID, tx.Model(&model.Workspace{}).Select("id").Where("tenant_id = ?", scope.TenantID)).Delete(&model.WorkspaceMembership{}).Error
+		var member model.Membership
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&member, "tenant_id = ? AND user_id = ?", scope.TenantID, userID).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return ErrNotFound
+			}
+			return err
+		}
+		if member.Role == "owner" || member.Role == "admin" {
+			return ErrForbidden
+		}
+		if err := tx.Where("user_id = ? AND workspace_id = ?", userID, scope.WorkspaceID).Delete(&model.WorkspaceMembership{}).Error; err != nil {
+			return err
+		}
+		var remaining int64
+		if err := tx.Model(&model.WorkspaceMembership{}).Where("user_id = ? AND workspace_id IN (?)", userID,
+			tx.Model(&model.Workspace{}).Select("id").Where("tenant_id = ?", scope.TenantID)).Count(&remaining).Error; err != nil {
+			return err
+		}
+		if remaining == 0 {
+			return tx.Model(&member).Update("status", "removed").Error
+		}
+		return nil
 	})
 }
 

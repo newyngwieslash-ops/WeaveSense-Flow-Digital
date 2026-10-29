@@ -1,0 +1,153 @@
+{
+  "product_profile": "agriculture",
+  "requested_uses": {},
+  "registry": {
+    "schema_version": "1.0.0",
+    "sources": [
+      {
+        "id": "unconfigured-basemap",
+        "kind": "basemap",
+        "enabled": false,
+        "data_class": "operational",
+        "source_ref": "pending-basemap",
+        "parent_ids": [],
+        "rights": {
+          "status": "unknown",
+          "owner": null,
+          "license_ref": null,
+          "commercial_use": "unknown",
+          "redistribution": "unknown",
+          "permitted_uses": [],
+          "attribution": {
+            "required": true,
+            "text": null
+          },
+          "valid_from": null,
+          "expiry": null,
+          "review_ref": null,
+          "evidence": []
+        }
+      },
+      {
+        "id": "unconfigured-imagery",
+        "kind": "imagery",
+        "enabled": false,
+        "data_class": "operational",
+        "source_ref": "pending-imagery",
+        "parent_ids": [],
+        "rights": {
+          "status": "unknown",
+          "owner": null,
+          "license_ref": null,
+          "commercial_use": "unknown",
+          "redistribution": "unknown",
+          "permitted_uses": [],
+          "attribution": {
+            "required": true,
+            "text": null
+          },
+          "valid_from": null,
+          "expiry": null,
+          "review_ref": null,
+          "evidence": []
+        }
+      },
+      {
+        "id": "unconfigured-administrative_boundary",
+        "kind": "administrative_boundary",
+        "enabled": false,
+        "data_class": "operational",
+        "source_ref": "pending-administrative_boundary",
+        "parent_ids": [],
+        "rights": {
+          "status": "unknown",
+          "owner": null,
+          "license_ref": null,
+          "commercial_use": "unknown",
+          "redistribution": "unknown",
+          "permitted_uses": [],
+          "attribution": {
+            "required": true,
+            "text": null
+          },
+          "valid_from": null,
+          "expiry": null,
+          "review_ref": null,
+          "evidence": []
+        }
+      },
+      {
+        "id": "unconfigured-customer_data",
+        "kind": "customer_data",
+        "enabled": false,
+        "data_class": "operational",
+        "source_ref": "pending-customer_data",
+        "parent_ids": [],
+        "rights": {
+          "status": "unknown",
+          "owner": null,
+          "license_ref": null,
+          "commercial_use": "unknown",
+          "redistribution": "unknown",
+          "permitted_uses": [],
+          "attribution": {
+            "required": true,
+            "text": null
+          },
+          "valid_from": null,
+          "expiry": null,
+          "review_ref": null,
+          "evidence": []
+        }
+      },
+      {
+        "id": "unconfigured-model_weights",
+        "kind": "model_weights",
+        "enabled": false,
+        "data_class": "operational",
+        "source_ref": "pending-model_weights",
+        "parent_ids": [],
+        "rights": {
+          "status": "unknown",
+          "owner": null,
+          "license_ref": null,
+          "commercial_use": "unknown",
+          "redistribution": "unknown",
+          "permitted_uses": [],
+          "attribution": {
+            "required": true,
+            "text": null
+          },
+          "valid_from": null,
+          "expiry": null,
+          "review_ref": null,
+          "evidence": []
+        }
+      },
+      {
+        "id": "unconfigured-knowledge",
+        "kind": "knowledge",
+        "enabled": false,
+        "data_class": "operational",
+        "source_ref": "pending-knowledge",
+        "parent_ids": [],
+        "rights": {
+          "status": "unknown",
+          "owner": null,
+          "license_ref": null,
+          "commercial_use": "unknown",
+          "redistribution": "unknown",
+          "permitted_uses": [],
+          "attribution": {
+            "required": true,
+            "text": null
+          },
+          "valid_from": null,
+          "expiry": null,
+          "review_ref": null,
+          "evidence": []
+        }
+      }
+    ]
+  }
+}

@@ -46,6 +46,7 @@ type FlowBudgetReservation struct {
 
 // FlowInvite invites a user into an organization tenant (token stored hashed).
 type FlowInvite struct {
+	Product     string     `json:"product" gorm:"size:32;not null;default:''"`
 	ID          string     `json:"id" gorm:"primaryKey;size:40"`
 	TenantID    string     `json:"tenantId" gorm:"size:40;not null;index"`
 	WorkspaceID string     `json:"workspaceId" gorm:"size:40;not null"`

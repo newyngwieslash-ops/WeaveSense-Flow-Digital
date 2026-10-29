@@ -5,6 +5,7 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 
 import { getAuthSession, getAuthSettings, linuxDOLoginURL, login } from "@/services/api/auth";
 import { useUserStore } from "@/stores/use-user-store";
+import { safeAuthReturnPath as safeNext, returnAfterAuthentication } from "@/lib/auth-return-path";
 import { LinuxDOIcon } from "./auth-scene";
 import { VerificationFields } from "@/components/auth/verification-fields";
 import { emptyVerification, loginVerification, methodLabels, verificationMethods, type VerificationMethod } from "@/services/api/verification";
@@ -28,7 +29,7 @@ export default function LoginPage() {
     // 如果已登录，直接跳转
     useEffect(() => {
         if (hydrated && user) {
-            navigate(next, { replace: true });
+            returnAfterAuthentication(next, navigate);
         }
     }, [hydrated, user, next, navigate]);
 
@@ -59,7 +60,7 @@ export default function LoginPage() {
             const { applyUserSession } = await import("@/lib/user-session");
             await applyUserSession(await getAuthSession());
             message.success("登录成功");
-            navigate(next, { replace: true });
+            returnAfterAuthentication(next, navigate);
         } catch (error) {
             message.error(error instanceof Error ? error.message : "登录失败");
         } finally {
@@ -127,7 +128,6 @@ export default function LoginPage() {
         </form>
     );
 }
-
 function AuthField({ label, htmlFor, action, children }: { label: string; htmlFor: string; action?: ReactNode; children: ReactNode }) {
     return (
         <div className="space-y-2">
@@ -140,9 +140,4 @@ function AuthField({ label, htmlFor, action, children }: { label: string; htmlFo
             {children}
         </div>
     );
-}
-
-function safeNext(value: string | null) {
-    if (!value || !value.startsWith("/") || value.startsWith("//")) return "/";
-    return value;
 }

@@ -1,0 +1,7768 @@
+{
+  "product": "WeaveSense-DigitalTwin",
+  "version": "1.0.0",
+  "date": "2026-10-29",
+  "schema_version": "1.0.0",
+  "spec_root": "PROJECT_ROOT/specs/agriculture/v1.0.0",
+  "source_requirements": "requirements.json",
+  "source_requirements_sha256": "1da296aa0230eb6223f5cd9c367ad50755eb46425fb91668569d6276f7b5db31",
+  "status_policy": {
+    "initial": "not_started",
+    "allowed": [
+      "not_started",
+      "in_progress",
+      "blocked_external",
+      "blocked_internal",
+      "review",
+      "done"
+    ],
+    "completion_rule": "Actual implementation and applicable observable acceptance with evidence are required; fixtures cannot replace live, paid, farm, or device verification.",
+    "scope_change_rule": "There is no cancelled task status. Removing or deferring a requirement needs an explicit scope decision and synchronized PRD/tasks/acceptance changes; mandatory first-release gates cannot be bypassed.",
+    "dependency_rule": "Execute ready tasks by dependencies; complete authorized work continuously. Missing external inputs block only affected work and dependent gates.",
+    "evidence_root": "SPEC_ROOT/docs/implementation/",
+    "status_file": "SPEC_ROOT/docs/implementation/STATUS.md"
+  },
+  "conditional_dependencies": [
+    {
+      "task_id": "DT-144",
+      "depends_on": "DT-143",
+      "condition": "Only when physical device control is included in the enabled release scope; otherwise keep control disabled and record AG-FR-076 as not live-accepted."
+    }
+  ],
+  "work_packages": [
+    {
+      "id": "W00",
+      "title": "基线审计",
+      "primary_stage": "S0",
+      "task_ids": [
+        "DT-001",
+        "DT-002",
+        "DT-003",
+        "DT-004",
+        "DT-005",
+        "DT-006",
+        "DT-007",
+        "DT-008"
+      ],
+      "stage_counts": {
+        "S0": 8
+      }
+    },
+    {
+      "id": "W01",
+      "title": "身份集成",
+      "primary_stage": "S0",
+      "task_ids": [
+        "DT-009",
+        "DT-010",
+        "DT-011",
+        "DT-012",
+        "DT-013",
+        "DT-014",
+        "DT-015",
+        "DT-016"
+      ],
+      "stage_counts": {
+        "S0": 8
+      }
+    },
+    {
+      "id": "W02",
+      "title": "租户安全",
+      "primary_stage": "S0",
+      "task_ids": [
+        "DT-017",
+        "DT-018",
+        "DT-019",
+        "DT-020",
+        "DT-021",
+        "DT-022",
+        "DT-023",
+        "DT-024"
+      ],
+      "stage_counts": {
+        "S0": 8
+      }
+    },
+    {
+      "id": "W03",
+      "title": "农业领域",
+      "primary_stage": "S1",
+      "task_ids": [
+        "DT-025",
+        "DT-026",
+        "DT-027",
+        "DT-028",
+        "DT-029",
+        "DT-030",
+        "DT-031",
+        "DT-032"
+      ],
+      "stage_counts": {
+        "S1": 8
+      }
+    },
+    {
+      "id": "W04",
+      "title": "地图工作台",
+      "primary_stage": "S1",
+      "task_ids": [
+        "DT-033",
+        "DT-034",
+        "DT-035",
+        "DT-036",
+        "DT-037",
+        "DT-038",
+        "DT-039",
+        "DT-040"
+      ],
+      "stage_counts": {
+        "S1": 8
+      }
+    },
+    {
+      "id": "W05",
+      "title": "数据影像",
+      "primary_stage": "S1",
+      "task_ids": [
+        "DT-041",
+        "DT-042",
+        "DT-043",
+        "DT-044",
+        "DT-045",
+        "DT-046",
+        "DT-047",
+        "DT-048"
+      ],
+      "stage_counts": {
+        "S1": 8
+      }
+    },
+    {
+      "id": "W06",
+      "title": "持久作业",
+      "primary_stage": "S1",
+      "task_ids": [
+        "DT-049",
+        "DT-050",
+        "DT-051",
+        "DT-052",
+        "DT-053",
+        "DT-054",
+        "DT-055",
+        "DT-056"
+      ],
+      "stage_counts": {
+        "S1": 8
+      }
+    },
+    {
+      "id": "W07",
+      "title": "遥感分析",
+      "primary_stage": "S1",
+      "task_ids": [
+        "DT-057",
+        "DT-058",
+        "DT-059",
+        "DT-060",
+        "DT-061",
+        "DT-062",
+        "DT-063",
+        "DT-064"
+      ],
+      "stage_counts": {
+        "S1": 8
+      }
+    },
+    {
+      "id": "W08",
+      "title": "外业闭环",
+      "primary_stage": "S1",
+      "task_ids": [
+        "DT-065",
+        "DT-066",
+        "DT-067",
+        "DT-068",
+        "DT-069",
+        "DT-070",
+        "DT-071",
+        "DT-072"
+      ],
+      "stage_counts": {
+        "S1": 8
+      }
+    },
+    {
+      "id": "W09",
+      "title": "知识证据",
+      "primary_stage": "S2",
+      "task_ids": [
+        "DT-073",
+        "DT-074",
+        "DT-075",
+        "DT-076",
+        "DT-077",
+        "DT-078",
+        "DT-079",
+        "DT-080"
+      ],
+      "stage_counts": {
+        "S2": 8
+      }
+    },
+    {
+      "id": "W10",
+      "title": "Agent工具技能",
+      "primary_stage": "S2",
+      "task_ids": [
+        "DT-081",
+        "DT-082",
+        "DT-083",
+        "DT-084",
+        "DT-085",
+        "DT-086",
+        "DT-087",
+        "DT-088"
+      ],
+      "stage_counts": {
+        "S2": 7,
+        "S3": 1
+      }
+    },
+    {
+      "id": "W11",
+      "title": "报告审核",
+      "primary_stage": "S2",
+      "task_ids": [
+        "DT-089",
+        "DT-090",
+        "DT-091",
+        "DT-092",
+        "DT-093",
+        "DT-094",
+        "DT-095",
+        "DT-096"
+      ],
+      "stage_counts": {
+        "S2": 8
+      }
+    },
+    {
+      "id": "W12",
+      "title": "商业计量",
+      "primary_stage": "S2",
+      "task_ids": [
+        "DT-097",
+        "DT-098",
+        "DT-099",
+        "DT-100",
+        "DT-101",
+        "DT-102",
+        "DT-103",
+        "DT-104"
+      ],
+      "stage_counts": {
+        "S2": 5,
+        "S3": 3
+      }
+    },
+    {
+      "id": "W13",
+      "title": "运维",
+      "primary_stage": "S3",
+      "task_ids": [
+        "DT-105",
+        "DT-106",
+        "DT-107",
+        "DT-108",
+        "DT-109",
+        "DT-110",
+        "DT-111",
+        "DT-112"
+      ],
+      "stage_counts": {
+        "S3": 8
+      }
+    },
+    {
+      "id": "W14",
+      "title": "验收",
+      "primary_stage": "S3",
+      "task_ids": [
+        "DT-113",
+        "DT-114",
+        "DT-115",
+        "DT-116",
+        "DT-117",
+        "DT-118",
+        "DT-119",
+        "DT-120"
+      ],
+      "stage_counts": {
+        "S3": 8
+      }
+    },
+    {
+      "id": "W15",
+      "title": "发布",
+      "primary_stage": "S3",
+      "task_ids": [
+        "DT-121",
+        "DT-122",
+        "DT-123",
+        "DT-124",
+        "DT-125",
+        "DT-126",
+        "DT-127",
+        "DT-128"
+      ],
+      "stage_counts": {
+        "S1": 1,
+        "S3": 7
+      }
+    },
+    {
+      "id": "W16",
+      "title": "持续监测",
+      "primary_stage": "S4",
+      "task_ids": [
+        "DT-129",
+        "DT-130",
+        "DT-131",
+        "DT-132",
+        "DT-133",
+        "DT-134",
+        "DT-135",
+        "DT-136"
+      ],
+      "stage_counts": {
+        "S4": 8
+      }
+    },
+    {
+      "id": "W17",
+      "title": "预测决策",
+      "primary_stage": "S5",
+      "task_ids": [
+        "DT-137",
+        "DT-138",
+        "DT-139",
+        "DT-140",
+        "DT-141",
+        "DT-142",
+        "DT-143",
+        "DT-144"
+      ],
+      "stage_counts": {
+        "S5": 8
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "id": "DT-001",
+      "work_package": "W00",
+      "stage": "S0",
+      "title": "建立隔离开发副本与固定上游基线",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-014",
+        "AG-FR-068",
+        "AG-NFR-010",
+        "AG-NFR-019"
+      ],
+      "acceptance_refs": [
+        "AG-AC-014",
+        "AG-AC-068"
+      ],
+      "dependencies": [],
+      "implementation": [
+        "核对主干及AgriScope固定SHA、许可证与工作区现状；保留原仓库历史",
+        "在用户指定新目录或隔离分支建立开发副本；不得强推或覆盖已有未提交修改",
+        "将规格放到SPEC_ROOT=PROJECT_ROOT/specs/agriculture/v1.0.0并记录源仓库和实际HEAD"
+      ],
+      "deliverables": [
+        "上游版本锁定记录与工作区清单",
+        "隔离分支或本地项目及SPEC_ROOT路径记录"
+      ],
+      "acceptance": [
+        "可由记录重建同一代码基线且原工作区变更保留",
+        "目标远程未知时仅记录待指定，不虚构仓库或推送状态"
+      ],
+      "verification": [
+        "核对git状态、提交对象及远程URL，只读比对源文件",
+        "检查既有AGENTS与项目规范未被覆盖"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-002",
+      "work_package": "W00",
+      "stage": "S0",
+      "title": "核实已有功能与缺口并建立证据账本",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-005",
+        "AG-FR-031",
+        "AG-FR-047",
+        "AG-FR-058",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-005",
+        "AG-AC-031",
+        "AG-AC-047",
+        "AG-AC-058"
+      ],
+      "dependencies": [
+        "DT-001"
+      ],
+      "implementation": [
+        "逐条核实身份来源、租户范围、GIS编辑、栅格任务、MCP、计费和前端技术栈",
+        "将源码实现、fixture验证、真实外部验证和未验证分列",
+        "记录复用路径、改造范围和需要补充的业务数据"
+      ],
+      "deliverables": [
+        "带文件路径及固定提交链接的SOURCE_AUDIT增量",
+        "实现与验收差异清单"
+      ],
+      "acceptance": [
+        "关键风险均有代码或实际运行依据",
+        "未运行的构建、测试、外部调用保持未验证状态"
+      ],
+      "verification": [
+        "抽查上游用户编码链、RLS空范围策略和请求内栅格执行",
+        "对照源码与文档冲突并说明采用的事实"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-003",
+      "work_package": "W00",
+      "stage": "S0",
+      "title": "完成生产依赖与数据授权清单",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-015",
+        "AG-FR-068",
+        "AG-NFR-002",
+        "AG-NFR-010"
+      ],
+      "acceptance_refs": [
+        "AG-AC-015",
+        "AG-AC-068"
+      ],
+      "dependencies": [
+        "DT-001"
+      ],
+      "implementation": [
+        "盘点实际生产构建的Go、Node、Python、GIS驱动及前端依赖许可",
+        "移除农业生产路径中的tldraw使用或记录合法商业许可，保留MIT和Apache归属",
+        "分别登记地图、影像、行政边界、客户数据、模型权重的授权及署名条件"
+      ],
+      "deliverables": [
+        "初始SBOM与许可决策表",
+        "第三方通知及数据来源权利登记模板"
+      ],
+      "acceptance": [
+        "根MIT不被当成全部依赖授权",
+        "所有首发外部数据源都有允许的用途或明确禁用状态"
+      ],
+      "verification": [
+        "检查生产依赖图及构建产物是否仍包含未授权功能",
+        "用缺失许可的来源验证发布门禁"
+      ],
+      "blockers": [
+        "启用商业依赖或商业数据时需提供对应授权；可先禁用该项继续开发"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-004",
+      "work_package": "W00",
+      "stage": "S0",
+      "title": "确认仓库规则与规格优先级",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-014",
+        "AG-FR-068",
+        "AG-NFR-011",
+        "AG-NFR-019"
+      ],
+      "acceptance_refs": [
+        "AG-AC-014",
+        "AG-AC-068"
+      ],
+      "dependencies": [
+        "DT-001",
+        "DT-002"
+      ],
+      "implementation": [
+        "读取原有AGENTS、构建脚本与迁移规范，标记与新规格的实质冲突",
+        "保留影视、数学和Loom业务；以农业feature profile隔离导航与运行配置",
+        "统一需求、任务、验收、决策和状态记录的位置及变更流程"
+      ],
+      "deliverables": [
+        "仓库规则整合说明",
+        "农业产品profile和规格变更记录机制"
+      ],
+      "acceptance": [
+        "原有规范不被静默删除或覆盖",
+        "每项范围变化可追踪到决策及受影响需求、任务与验收"
+      ],
+      "verification": [
+        "检查规格文件均位于独立SPEC_ROOT",
+        "用一项样例变更走完需求与任务联动检查"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-005",
+      "work_package": "W00",
+      "stage": "S0",
+      "title": "建立最小可复现开发与验证环境",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-063",
+        "AG-FR-068",
+        "AG-NFR-010",
+        "AG-NFR-012",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-063",
+        "AG-AC-068"
+      ],
+      "dependencies": [
+        "DT-001",
+        "DT-003",
+        "DT-004"
+      ],
+      "implementation": [
+        "核对固定版本所需Go、Node、Python、PostgreSQL/PostGIS和容器依赖",
+        "提供无真实密钥的环境变量模板及私网服务启动profile",
+        "分开建立测试数据库和样例对象前缀，演示标记不可移除"
+      ],
+      "deliverables": [
+        "本地环境说明与模板",
+        "开发及测试profile和健康检查入口"
+      ],
+      "acceptance": [
+        "新环境可启动最小服务且数据库与内部API不对公网暴露",
+        "没有外部账号时基础构建和本地验证仍可运行"
+      ],
+      "verification": [
+        "在干净容器卷执行安装、迁移和健康检查",
+        "检查日志、样例配置与版本库不存在真实密钥"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-006",
+      "work_package": "W00",
+      "stage": "S0",
+      "title": "建立可追溯的GIS与遥感测试数据集",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-013",
+        "AG-FR-019",
+        "AG-FR-063",
+        "AG-NFR-003",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-013",
+        "AG-AC-019",
+        "AG-AC-063"
+      ],
+      "dependencies": [
+        "DT-003",
+        "DT-005"
+      ],
+      "implementation": [
+        "准备两租户、重叠坐标地块、不同CRS、两期栅格、云影和缺失值样本",
+        "登记来源许可、SHA256、预期几何面积和波段统计真值",
+        "分离可人工构造fixture、公开真实样本和客户operational数据"
+      ],
+      "deliverables": [
+        "数据样本清单与小规模fixture",
+        "预期结果及误差容忍说明"
+      ],
+      "acceptance": [
+        "测试样本来源和期望值可复核",
+        "fixture结果不被写成真实农学或商业运行证明"
+      ],
+      "verification": [
+        "重新计算文件摘要并校验样本坐标与波段",
+        "人工复核至少一个几何面积和NDVI真值样本"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-007",
+      "work_package": "W00",
+      "stage": "S0",
+      "title": "冻结服务边界与最小数据API契约",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-006",
+        "AG-FR-020",
+        "AG-FR-031",
+        "AG-FR-047",
+        "AG-NFR-011"
+      ],
+      "acceptance_refs": [
+        "AG-AC-006",
+        "AG-AC-020",
+        "AG-AC-031",
+        "AG-AC-047"
+      ],
+      "dependencies": [
+        "DT-002",
+        "DT-004",
+        "DT-006"
+      ],
+      "implementation": [
+        "确定Go、Loom和GIS的权威数据所有者及API加Outbox边界",
+        "定义资源ID、租户范围、版本、错误码、幂等键、事件及分析结果结构",
+        "明确GeoJSON轴序、时间单位、文件引用和观察预测标记"
+      ],
+      "deliverables": [
+        "ARCHITECTURE与DATA_API_CONTRACTS实施基线",
+        "可机器校验的API及事件schema"
+      ],
+      "acceptance": [
+        "任何业务表只有一个写入所有者",
+        "跨服务调用不依赖互写数据库或前端提供可信身份"
+      ],
+      "verification": [
+        "对契约样例执行schema校验",
+        "用不兼容版本或缺失必填范围的请求验证拒绝规则"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-008",
+      "work_package": "W00",
+      "stage": "S0",
+      "title": "完成基线构建及首包验收",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-080",
+        "AG-NFR-019",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-080"
+      ],
+      "dependencies": [
+        "DT-002",
+        "DT-003",
+        "DT-004",
+        "DT-005",
+        "DT-006",
+        "DT-007"
+      ],
+      "implementation": [
+        "运行固定基线可执行的构建、迁移和现有针对性回归",
+        "记录失败原因及原有缺陷，区分本次新增问题",
+        "生成W00证据并按依赖推进W01，不等待重复授权"
+      ],
+      "deliverables": [
+        "基线验证报告与可复现命令",
+        "STATUS中的完成项、剩余风险及下一批任务"
+      ],
+      "acceptance": [
+        "只有真实完成且证据齐备的任务被勾选",
+        "外部凭证缺失只阻塞对应live验证，其余工作继续"
+      ],
+      "verification": [
+        "核对日志时间、提交和环境与报告一致",
+        "抽查任务状态没有以计划或mock替代实现"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-009",
+      "work_package": "W01",
+      "stage": "S0",
+      "title": "复用平台登录与统一会话",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-002",
+        "AG-NFR-001"
+      ],
+      "acceptance_refs": [
+        "AG-AC-002"
+      ],
+      "dependencies": [
+        "DT-008"
+      ],
+      "implementation": [
+        "复用Flow实际登录主体与会话校验，不新增平行用户密码库",
+        "为农业入口建立服务端会话解析和未登录跳转",
+        "统一会话失效、退出及权限变更后的访问行为"
+      ],
+      "deliverables": [
+        "农业入口认证适配代码",
+        "会话接口及前后端联调"
+      ],
+      "acceptance": [
+        "农业访问主体仅来自受验证会话",
+        "过期或注销会话不能继续读取农业资源"
+      ],
+      "verification": [
+        "验证登录、过期、退出和伪造cookie负例",
+        "跨React主壳与Vue子应用验证同一登录状态"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-010",
+      "work_package": "W01",
+      "stage": "S0",
+      "title": "建立组织成员与工作区操作闭环",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-001",
+        "AG-FR-003",
+        "AG-FR-004",
+        "AG-NFR-001"
+      ],
+      "acceptance_refs": [
+        "AG-AC-001",
+        "AG-AC-003",
+        "AG-AC-004"
+      ],
+      "dependencies": [
+        "DT-009"
+      ],
+      "implementation": [
+        "复用租户、成员邀请、工作区成员与有效状态模型",
+        "实现农业组织创建、邀请、接受、停用及成员移除界面",
+        "定义owner/admin/farm_manager/analyst/field_worker/reviewer/viewer与租户管理员、农场经理等PRD角色的能力映射"
+      ],
+      "deliverables": [
+        "成员管理API与界面",
+        "角色能力矩阵及迁移"
+      ],
+      "acceptance": [
+        "成员只能获得经服务端确认的组织工作区权限",
+        "移除成员后既有会话及后台访问按策略失效"
+      ],
+      "verification": [
+        "验证过期邀请、重复接受与非管理员提权",
+        "验证租户停用和成员停用后的请求拒绝"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-011",
+      "work_package": "W01",
+      "stage": "S0",
+      "title": "实现农业资源授权解析器",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-003",
+        "AG-FR-004",
+        "AG-FR-006",
+        "AG-NFR-001"
+      ],
+      "acceptance_refs": [
+        "AG-AC-003",
+        "AG-AC-004",
+        "AG-AC-006"
+      ],
+      "dependencies": [
+        "DT-007",
+        "DT-010"
+      ],
+      "implementation": [
+        "建立租户、工作区、农场及动作范围的服务端授权接口",
+        "资源ID先归属解析再执行能力检查，不接受前端任意tenant_id",
+        "把授权失败映射为稳定错误码并避免泄露他租户资源存在性"
+      ],
+      "deliverables": [
+        "统一授权中间层和资源范围契约",
+        "角色到农业操作的策略实现"
+      ],
+      "acceptance": [
+        "读取与写入都经过同一授权入口",
+        "拥有某工作区权限不能自动访问同租户其它受限农场"
+      ],
+      "verification": [
+        "用跨租户ID及同租户无权限农场执行负例",
+        "验证读者不能调用修改、发布或成本配置接口"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-012",
+      "work_package": "W01",
+      "stage": "S0",
+      "title": "实现平台到GIS的受信短期身份",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-006",
+        "AG-NFR-001",
+        "AG-NFR-016"
+      ],
+      "acceptance_refs": [
+        "AG-AC-006"
+      ],
+      "dependencies": [
+        "DT-007",
+        "DT-009",
+        "DT-011"
+      ],
+      "implementation": [
+        "平台签发短期且绑定GIS audience的服务调用身份",
+        "携带可信租户、工作区、用户、服务、能力与资源范围，支持密钥轮换",
+        "GIS验证签名、有效期、audience及资源归属，敏感一次性操作另绑定nonce"
+      ],
+      "deliverables": [
+        "签发与验证组件",
+        "密钥轮换和服务身份配置说明"
+      ],
+      "acceptance": [
+        "浏览器不能直接伪造下游操作人",
+        "错audience、过期、未知签名和超范围身份均被拒绝"
+      ],
+      "verification": [
+        "进行签名篡改、过期与密钥轮换测试",
+        "验证短期身份及私钥不会出现在模型上下文和前端日志"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-013",
+      "work_package": "W01",
+      "stage": "S0",
+      "title": "替换AgriScope的客户端操作人信任链",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-002",
+        "AG-FR-004",
+        "AG-FR-006",
+        "AG-FR-054",
+        "AG-NFR-001"
+      ],
+      "acceptance_refs": [
+        "AG-AC-002",
+        "AG-AC-004",
+        "AG-AC-006",
+        "AG-AC-054"
+      ],
+      "dependencies": [
+        "DT-012"
+      ],
+      "implementation": [
+        "清点所有operator_code/requester_code及默认项目用户依赖",
+        "写入主体从受信身份转换为内部成员，兼容字段只作非权威显示或拒绝",
+        "移除生产身份切换器，审计记录稳定用户ID和当时角色"
+      ],
+      "deliverables": [
+        "端点及服务层认证改造",
+        "原身份切换逻辑的生产禁用与迁移"
+      ],
+      "acceptance": [
+        "修改请求中的用户编码不会改变实际执行主体",
+        "历史审计中的原身份仍可解释且不被覆盖"
+      ],
+      "verification": [
+        "扫描全部写、下载、审核端点的身份来源",
+        "用普通成员提交管理员编码验证没有提权"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-014",
+      "work_package": "W01",
+      "stage": "S0",
+      "title": "接通React主壳和Vue农业子应用",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-023",
+        "AG-FR-068",
+        "AG-NFR-012"
+      ],
+      "acceptance_refs": [
+        "AG-AC-023",
+        "AG-AC-068"
+      ],
+      "dependencies": [
+        "DT-009",
+        "DT-012",
+        "DT-013"
+      ],
+      "implementation": [
+        "以同域/agri独立子应用接入，统一导航、回跳与会话",
+        "通过网关访问GIS，禁止前端持有内部服务密钥",
+        "为开发和生产配置history fallback、静态缓存及错误页面"
+      ],
+      "deliverables": [
+        "网关路由与Vue构建集成",
+        "主平台农业入口和跨应用导航"
+      ],
+      "acceptance": [
+        "深链接刷新和跨应用跳转正常",
+        "未授权用户无法通过直接访问子应用API读取数据"
+      ],
+      "verification": [
+        "验证/agri深路径、退出与重新登录",
+        "检查构建文件与网络请求不含内部凭证"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-015",
+      "work_package": "W01",
+      "stage": "S0",
+      "title": "加固会话请求和权限撤销",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-002",
+        "AG-FR-004",
+        "AG-NFR-001",
+        "AG-NFR-002"
+      ],
+      "acceptance_refs": [
+        "AG-AC-002",
+        "AG-AC-004"
+      ],
+      "dependencies": [
+        "DT-010",
+        "DT-014"
+      ],
+      "implementation": [
+        "配置安全cookie、CSRF保护、严格origin及CORS策略",
+        "关键写操作重新查当前成员状态，避免旧页面保留高权限",
+        "定义会话撤销、服务身份失效和权限变更传播时限"
+      ],
+      "deliverables": [
+        "统一请求安全配置",
+        "权限撤销及会话失效实现"
+      ],
+      "acceptance": [
+        "跨站未授权写入被拒绝",
+        "被降权用户不能继续提交旧页面中未完成的高权限操作"
+      ],
+      "verification": [
+        "执行CSRF和origin负例及降权后的旧请求测试",
+        "检查多标签页、刷新和服务重启时会话行为"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-016",
+      "work_package": "W01",
+      "stage": "S0",
+      "title": "完成身份链跨服务集成验收",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-001",
+        "AG-FR-002",
+        "AG-FR-003",
+        "AG-FR-004",
+        "AG-FR-006",
+        "AG-NFR-001",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-001",
+        "AG-AC-002",
+        "AG-AC-003",
+        "AG-AC-004",
+        "AG-AC-006"
+      ],
+      "dependencies": [
+        "DT-010",
+        "DT-011",
+        "DT-012",
+        "DT-013",
+        "DT-014",
+        "DT-015"
+      ],
+      "implementation": [
+        "覆盖浏览器登录、Go授权、GIS验证和审计主体整条链",
+        "同时验证两租户、多工作区及不同角色",
+        "记录每类拒绝的响应、日志与实际数据库效果"
+      ],
+      "deliverables": [
+        "身份授权集成测试集",
+        "W01证据与未覆盖端点清单"
+      ],
+      "acceptance": [
+        "全部已开放农业端点都有可信主体和权限检查",
+        "未认证及越权请求没有产生领域副作用"
+      ],
+      "verification": [
+        "运行真实服务和数据库集成验证",
+        "对照API清单检查遗漏的下载、预览及审核路由"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-017",
+      "work_package": "W02",
+      "stage": "S0",
+      "title": "建立GIS数据库独立角色与缺省拒绝",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-005",
+        "AG-FR-006",
+        "AG-NFR-001",
+        "AG-NFR-019"
+      ],
+      "acceptance_refs": [
+        "AG-AC-005",
+        "AG-AC-006"
+      ],
+      "dependencies": [
+        "DT-007",
+        "DT-012",
+        "DT-016"
+      ],
+      "implementation": [
+        "创建flow_geo及独立迁移、业务、后台角色，禁止应用超级用户连接",
+        "为租户表启用RLS并以事务局部scope访问，缺失scope拒绝",
+        "为跨租户系统任务设置独立受控角色并限制凭证分发"
+      ],
+      "deliverables": [
+        "数据库初始化与RLS迁移",
+        "角色权限与连接池范围管理"
+      ],
+      "acceptance": [
+        "普通连接无scope看不到租户数据且不能写入",
+        "迁移角色不会作为Web或Worker默认业务角色"
+      ],
+      "verification": [
+        "使用真实PostgreSQL逐角色验证权限",
+        "复用连接后切换租户并检查scope不会串用"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-018",
+      "work_package": "W02",
+      "stage": "S0",
+      "title": "迁移Flow空范围系统上下文约定",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-005",
+        "AG-NFR-001",
+        "AG-NFR-019"
+      ],
+      "acceptance_refs": [
+        "AG-AC-005"
+      ],
+      "dependencies": [
+        "DT-017"
+      ],
+      "implementation": [
+        "盘点Flow和Loom现有空租户范围系统路径及相关测试",
+        "将普通业务访问迁为缺省拒绝，系统回调和迁移使用明确授权路径",
+        "以兼容迁移保留现有数学、影视和情报功能，建立回滚步骤"
+      ],
+      "deliverables": [
+        "平台及Loom范围策略迁移",
+        "现有业务回归和回滚说明"
+      ],
+      "acceptance": [
+        "遗漏scope不会获得跨租户权限",
+        "合法系统任务与原有业务在显式授权下继续运行"
+      ],
+      "verification": [
+        "运行空scope、有效scope、系统角色及池化连接负例",
+        "回归已有Flow Agent、数学和Loom的关键流程"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-019",
+      "work_package": "W02",
+      "stage": "S0",
+      "title": "为GIS全量查询建立资源范围约束",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-005",
+        "AG-FR-026",
+        "AG-NFR-001"
+      ],
+      "acceptance_refs": [
+        "AG-AC-005",
+        "AG-AC-026"
+      ],
+      "dependencies": [
+        "DT-013",
+        "DT-017"
+      ],
+      "implementation": [
+        "审查列表、详情、bbox、空间统计、导出和版本查询",
+        "将tenant/workspace/farm范围加入DAO入口及关联约束",
+        "建立新表及新路由遗漏范围的检查机制"
+      ],
+      "deliverables": [
+        "所有GIS查询的授权改造",
+        "范围检查测试及审计清单"
+      ],
+      "acceptance": [
+        "相同坐标下的他租户地块不出现在结果中",
+        "聚合统计、错误信息和计数不会泄露他租户数据"
+      ],
+      "verification": [
+        "两租户相同bbox执行列表详情统计负例",
+        "通过关联表和历史revision请求检查间接越权"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-020",
+      "work_package": "W02",
+      "stage": "S0",
+      "title": "建立私有对象下载与瓦片鉴权基础",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-005",
+        "AG-FR-021",
+        "AG-FR-053",
+        "AG-NFR-001",
+        "AG-NFR-015"
+      ],
+      "acceptance_refs": [
+        "AG-AC-005",
+        "AG-AC-021",
+        "AG-AC-053"
+      ],
+      "dependencies": [
+        "DT-012",
+        "DT-017",
+        "DT-019"
+      ],
+      "implementation": [
+        "对象路径绑定租户且下载前查权威资源归属，拒绝裸路径直读",
+        "签发短期下载能力或经鉴权网关传输，范围限制到具体对象版本",
+        "为缩略图、瓦片、报告和媒体统一撤销及缓存隔离策略"
+      ],
+      "deliverables": [
+        "对象访问网关与短期能力实现",
+        "对象key规范及访问测试"
+      ],
+      "acceptance": [
+        "改对象ID或复用其它租户地址不能获取内容",
+        "撤回后新访问立即拒绝，既有签名窗口有明确上限"
+      ],
+      "verification": [
+        "验证路径穿越、猜测key和跨租户签名重放",
+        "检查瓦片与预览不因公开缓存泄露内容"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-021",
+      "work_package": "W02",
+      "stage": "S0",
+      "title": "隔离缓存SSE和检索投影",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-005",
+        "AG-FR-047",
+        "AG-FR-064",
+        "AG-NFR-001",
+        "AG-NFR-008"
+      ],
+      "acceptance_refs": [
+        "AG-AC-005",
+        "AG-AC-047",
+        "AG-AC-064"
+      ],
+      "dependencies": [
+        "DT-018",
+        "DT-019",
+        "DT-020"
+      ],
+      "implementation": [
+        "所有缓存键包含租户及权限版本等实际隔离维度",
+        "SSE订阅按任务归属鉴权并支持权限撤销和断线重连",
+        "搜索、地图结果和Agent工具缓存按主体范围构建"
+      ],
+      "deliverables": [
+        "范围化缓存与事件流实现",
+        "缓存失效和重连游标契约"
+      ],
+      "acceptance": [
+        "两个租户相同参数不会命中彼此私有结果",
+        "权限撤销后旧订阅不继续接收敏感事件"
+      ],
+      "verification": [
+        "并发切换租户和复用缓存执行负例",
+        "使用过期游标、他租户任务ID检查SSE拒绝"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-022",
+      "work_package": "W02",
+      "stage": "S0",
+      "title": "固化后台作业身份与租户传播",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-005",
+        "AG-FR-006",
+        "AG-FR-031",
+        "AG-NFR-001",
+        "AG-NFR-004"
+      ],
+      "acceptance_refs": [
+        "AG-AC-005",
+        "AG-AC-006",
+        "AG-AC-031"
+      ],
+      "dependencies": [
+        "DT-012",
+        "DT-017",
+        "DT-019"
+      ],
+      "implementation": [
+        "定义任务创建时的授权主体、租户与资源快照",
+        "Worker每次领取和写结果时校验范围，禁止默认系统全权执行",
+        "区分创建时授权与执行时资源撤回规则"
+      ],
+      "deliverables": [
+        "任务身份及授权快照结构",
+        "后台范围校验中间层"
+      ],
+      "acceptance": [
+        "消息被篡改或缺失scope时任务无法访问数据",
+        "成员撤销或数据撤回后按明确策略取消或拒绝任务"
+      ],
+      "verification": [
+        "用伪造tenant_id、替换asset_id和过期服务身份测试",
+        "验证任务重试仍使用同一受控范围"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-023",
+      "work_package": "W02",
+      "stage": "S0",
+      "title": "加固上传解析与外部访问边界",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-016",
+        "AG-FR-017",
+        "AG-FR-047",
+        "AG-NFR-002",
+        "AG-NFR-007",
+        "AG-NFR-016"
+      ],
+      "acceptance_refs": [
+        "AG-AC-016",
+        "AG-AC-017",
+        "AG-AC-047"
+      ],
+      "dependencies": [
+        "DT-003",
+        "DT-005",
+        "DT-012",
+        "DT-020"
+      ],
+      "implementation": [
+        "为栅格矢量文档解析配置隔离、超时、内存和解压上限",
+        "STAC与外部MCP执行固定来源或审批白名单，校验重定向和DNS解析",
+        "阻断私网探测、云元数据地址和任意用户URL下载"
+      ],
+      "deliverables": [
+        "解析运行限制与安全下载器",
+        "SSRF和异常文件回归样本"
+      ],
+      "acceptance": [
+        "压缩炸弹、超大像元和恶意重定向不会耗尽服务",
+        "浏览器提交的资产URL不直接决定后端网络目标"
+      ],
+      "verification": [
+        "测试私网IP、重定向到内网、异常CRS和损坏栅格",
+        "检查进程超限退出后的临时文件与任务状态"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-024",
+      "work_package": "W02",
+      "stage": "S0",
+      "title": "完成租户隔离专项基线验收",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-005",
+        "AG-FR-006",
+        "AG-FR-053",
+        "AG-NFR-001",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-005",
+        "AG-AC-006",
+        "AG-AC-053"
+      ],
+      "dependencies": [
+        "DT-017",
+        "DT-018",
+        "DT-019",
+        "DT-020",
+        "DT-021",
+        "DT-022",
+        "DT-023"
+      ],
+      "implementation": [
+        "对已开放接口建立跨租户、跨工作区、跨角色负例矩阵",
+        "验证数据库、对象、缓存、SSE、后台与Agent适配范围",
+        "将以后新增接口必须加入的隔离用例设为持续集成门槛"
+      ],
+      "deliverables": [
+        "隔离矩阵与自动化集成测试",
+        "W02安全基线证据"
+      ],
+      "acceptance": [
+        "所有已开放路径的拒绝都有数据库无副作用证明",
+        "不能用前端隐藏或mock鉴权代替服务端验证"
+      ],
+      "verification": [
+        "真实PostgreSQL、多连接并发和对象访问集成验证",
+        "人工抽查越权响应不会暴露资源详情"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-025",
+      "work_package": "W03",
+      "stage": "S1",
+      "title": "实现农场档案和区域配置",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-007",
+        "AG-FR-003",
+        "AG-FR-014",
+        "AG-NFR-011"
+      ],
+      "acceptance_refs": [
+        "AG-AC-007",
+        "AG-AC-003",
+        "AG-AC-014"
+      ],
+      "dependencies": [
+        "DT-011",
+        "DT-017",
+        "DT-019",
+        "DT-024"
+      ],
+      "implementation": [
+        "新增长期farm_id、经营主体、边界、时区、区域及状态",
+        "农场与工作区绑定，GIS为权威所有者，平台只保留授权引用",
+        "将黑龙江等默认行政区、字典和规则改为可配置数据"
+      ],
+      "deliverables": [
+        "农场模型迁移及CRUD接口",
+        "农场创建编辑与权限映射"
+      ],
+      "acceptance": [
+        "一个租户可管理多个独立农场",
+        "业务不依赖固定RS项目编号或硬编码省县"
+      ],
+      "verification": [
+        "验证跨区域农场及权限隔离",
+        "校验非法边界、重复业务编号和停用状态"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-026",
+      "work_package": "W03",
+      "stage": "S1",
+      "title": "实现稳定地块与不可变边界修订",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-008",
+        "AG-FR-014",
+        "AG-FR-029",
+        "AG-NFR-003",
+        "AG-NFR-004"
+      ],
+      "acceptance_refs": [
+        "AG-AC-008",
+        "AG-AC-014",
+        "AG-AC-029"
+      ],
+      "dependencies": [
+        "DT-025"
+      ],
+      "implementation": [
+        "parcel_id保持长期身份，geometry_revision独立递增",
+        "记录有效时间、变更原因、操作者和几何hash，历史修订不可原地改写",
+        "提供带expected_revision的创建修改读取接口"
+      ],
+      "deliverables": [
+        "地块与revision数据模型",
+        "版本化API与并发约束"
+      ],
+      "acceptance": [
+        "修改边界不会丢失旧几何和历史分析关联",
+        "冲突修改返回明确冲突并保留用户待提交内容"
+      ],
+      "verification": [
+        "并发编辑相同revision检查唯一成功",
+        "查询历史时间点验证返回对应修订"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-027",
+      "work_package": "W03",
+      "stage": "S1",
+      "title": "建立种植季作物与品种档案",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-009",
+        "AG-FR-011",
+        "AG-NFR-014"
+      ],
+      "acceptance_refs": [
+        "AG-AC-009",
+        "AG-AC-011"
+      ],
+      "dependencies": [
+        "DT-025",
+        "DT-026"
+      ],
+      "implementation": [
+        "种植季关联地块版本、作物品种、播种收获及管理信息",
+        "允许跨年或多茬，重叠规则可配置且必须显式处理",
+        "将作物字典及单位管理与租户自定义项分开"
+      ],
+      "deliverables": [
+        "种植季模型接口与表单",
+        "作物品种字典及时间单位验证"
+      ],
+      "acceptance": [
+        "同一地块不同年度数据不会被混合为一个长势序列",
+        "播种日期等信息不足时明确缺失而非补造"
+      ],
+      "verification": [
+        "验证跨年、多茬、重叠日期及无品种场景",
+        "检查用户时区显示与UTC存储一致"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-028",
+      "work_package": "W03",
+      "stage": "S1",
+      "title": "实现地块分割合并和关联血缘",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-010",
+        "AG-FR-008",
+        "AG-FR-029",
+        "AG-NFR-003",
+        "AG-NFR-004"
+      ],
+      "acceptance_refs": [
+        "AG-AC-010",
+        "AG-AC-008",
+        "AG-AC-029"
+      ],
+      "dependencies": [
+        "DT-026",
+        "DT-031"
+      ],
+      "implementation": [
+        "复用PostGIS分割及合并逻辑并校验几何有效性与面积差",
+        "创建新地块身份并记录父子lineage，保留原地块有效期",
+        "显式处理种植季、巡查、分析与权益计量关联迁移"
+      ],
+      "deliverables": [
+        "分割合并领域服务与迁移事件",
+        "预览确认界面及血缘查询"
+      ],
+      "acceptance": [
+        "分割合并前后面积误差处于声明容差内",
+        "历史任务仍能追溯旧地块，不能静默改绑所有历史结果"
+      ],
+      "verification": [
+        "测试自相交、空分割、跨租户合并及并发修改",
+        "对复杂多边形和孔洞运行面积守恒验证"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-029",
+      "work_package": "W03",
+      "stage": "S1",
+      "title": "实现地块属性与版本化自定义字段",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-011",
+        "AG-FR-043",
+        "AG-NFR-011"
+      ],
+      "acceptance_refs": [
+        "AG-AC-011",
+        "AG-AC-043"
+      ],
+      "dependencies": [
+        "DT-026",
+        "DT-027"
+      ],
+      "implementation": [
+        "固定属性与租户农场自定义字段采用明确类型和校验",
+        "字段编码稳定，选项、必填、停用及顺序版本化",
+        "字段变更触发受影响质检与报告重新验证"
+      ],
+      "deliverables": [
+        "属性schema及配置接口",
+        "属性编辑表单和失效规则"
+      ],
+      "acceptance": [
+        "停用字段历史值保留但不能继续写入",
+        "必填或选项变更后旧审核不能被当成仍有效"
+      ],
+      "verification": [
+        "测试类型错误、长选项、字段冲突和历史读取",
+        "验证字段版本更新后的质检及导入行为"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-030",
+      "work_package": "W03",
+      "stage": "S1",
+      "title": "实现受控矢量导入与导出",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-012",
+        "AG-FR-013",
+        "AG-FR-015",
+        "AG-NFR-002",
+        "AG-NFR-003"
+      ],
+      "acceptance_refs": [
+        "AG-AC-012",
+        "AG-AC-013",
+        "AG-AC-015"
+      ],
+      "dependencies": [
+        "DT-023",
+        "DT-026",
+        "DT-029",
+        "DT-031"
+      ],
+      "implementation": [
+        "导入GeoJSON、GeoPackage及受控Shapefile ZIP，采用预检后事务发布；导出至少支持GeoJSON和GeoPackage",
+        "检查来源许可、CRS、编码、几何类型、重复记录和租户范围；拒绝ZIP穿越、压缩炸弹及缺失配套文件",
+        "导出按当前授权及明确revision生成实体和清单"
+      ],
+      "deliverables": [
+        "导入预检结果与批次服务",
+        "矢量导出任务及下载入口"
+      ],
+      "acceptance": [
+        "部分记录错误有逐条报告，失败不会产生半批已发布数据",
+        "导出几何与属性版本一致且无他租户记录"
+      ],
+      "verification": [
+        "测试非法CRS、中文字段、重复上传及错误中断",
+        "重新读出导出文件核对数量、范围、面积与hash"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-031",
+      "work_package": "W03",
+      "stage": "S1",
+      "title": "统一坐标转换轴序及面积单位",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-013",
+        "AG-NFR-003",
+        "AG-NFR-014"
+      ],
+      "acceptance_refs": [
+        "AG-AC-013"
+      ],
+      "dependencies": [
+        "DT-006",
+        "DT-026"
+      ],
+      "implementation": [
+        "对外GeoJSON使用WGS84经度纬度，输入保存原CRS及变换信息",
+        "面积采用geography或适当本地投影，禁止EPSG4326度平方换算",
+        "实现平方米、公顷与亩转换，记录数值精度和误差容差"
+      ],
+      "deliverables": [
+        "坐标与面积公共库",
+        "标准样本及单位显示组件"
+      ],
+      "acceptance": [
+        "同一地块不同有效CRS导入后的面积差在声明容差内",
+        "无CRS或轴序不明时要求补充信息而不猜测"
+      ],
+      "verification": [
+        "用已知面积多边形及跨坐标系样本验证",
+        "覆盖经纬度颠倒、异常范围、孔洞和多面几何"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-032",
+      "work_package": "W03",
+      "stage": "S1",
+      "title": "迁移旧项目地块与历史业务",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-014",
+        "AG-FR-008",
+        "AG-FR-020",
+        "AG-NFR-019"
+      ],
+      "acceptance_refs": [
+        "AG-AC-014",
+        "AG-AC-008",
+        "AG-AC-020"
+      ],
+      "dependencies": [
+        "DT-025",
+        "DT-026",
+        "DT-027",
+        "DT-028",
+        "DT-029",
+        "DT-030"
+      ],
+      "implementation": [
+        "设计AgriScope项目任务到农场地块种植季的显式映射",
+        "提供dry-run及旧ID到新ID映射，未知业务字段保留待确认",
+        "迁移原始来源、修订、审核及文件引用并生成校验报告"
+      ],
+      "deliverables": [
+        "迁移脚本和映射说明",
+        "回滚及历史只读访问方案"
+      ],
+      "acceptance": [
+        "迁移前后数量、面积和文件摘要可对账",
+        "无法确认的作物或经营边界不自动变成正式数据"
+      ],
+      "verification": [
+        "在副本执行重复迁移与失败回滚",
+        "抽查历史报告仍绑定原始地块和影像版本"
+      ],
+      "blockers": [
+        "迁移客户生产历史需提供授权数据副本及业务字段映射；可先验证公开和fixture样本"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-033",
+      "work_package": "W04",
+      "stage": "S1",
+      "title": "完成农业工作台导航和状态壳层",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-023",
+        "AG-FR-068",
+        "AG-FR-067",
+        "AG-NFR-012",
+        "AG-NFR-013"
+      ],
+      "acceptance_refs": [
+        "AG-AC-023",
+        "AG-AC-068",
+        "AG-AC-067"
+      ],
+      "dependencies": [
+        "DT-014",
+        "DT-025",
+        "DT-027"
+      ],
+      "implementation": [
+        "建立农场、地块、影像、分析、巡查、报告和Agent入口",
+        "保存用户布局偏好并明确当前租户农场种植季",
+        "提供加载、空数据、无权限、失败重试及数据过期状态"
+      ],
+      "deliverables": [
+        "Vue农业工作台完整路由与主导航",
+        "状态提示与基本无障碍交互"
+      ],
+      "acceptance": [
+        "用户可以明确看到当前业务范围并安全切换",
+        "没有业务数据时显示真实空状态"
+      ],
+      "verification": [
+        "键盘导航及浏览器前进后退验证",
+        "切换租户后检查旧农场数据和缓存被清理"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-034",
+      "work_package": "W04",
+      "stage": "S1",
+      "title": "实现图层目录样式和资源绑定",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-024",
+        "AG-FR-021",
+        "AG-FR-015",
+        "AG-NFR-002"
+      ],
+      "acceptance_refs": [
+        "AG-AC-024",
+        "AG-AC-021",
+        "AG-AC-015"
+      ],
+      "dependencies": [
+        "DT-020",
+        "DT-026",
+        "DT-033"
+      ],
+      "implementation": [
+        "将矢量、影像、异常、外业和观测图层绑定到受权资源ID",
+        "实现显隐、顺序、图例、透明度及样式版本",
+        "每个图层展示来源时间、数据等级、署名与不可用原因"
+      ],
+      "deliverables": [
+        "图层目录API及OpenLayers图层管理",
+        "样式与图例配置"
+      ],
+      "acceptance": [
+        "图层切换不需要浏览器直接访问私有对象key",
+        "撤回或越权图层明确不可用且不能继续加载瓦片"
+      ],
+      "verification": [
+        "测试图层样式错误、来源缺失和权限撤销",
+        "验证样例及正式图层标识不会混淆"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-035",
+      "work_package": "W04",
+      "stage": "S1",
+      "title": "实现地块绘制节点编辑和拓扑校验",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-025",
+        "AG-FR-008",
+        "AG-FR-013",
+        "AG-NFR-003"
+      ],
+      "acceptance_refs": [
+        "AG-AC-025",
+        "AG-AC-008",
+        "AG-AC-013"
+      ],
+      "dependencies": [
+        "DT-026",
+        "DT-031",
+        "DT-033",
+        "DT-034"
+      ],
+      "implementation": [
+        "接入OpenLayers绘制修改和必要吸附交互",
+        "提交前展示几何错误和面积变化，服务端再次权威校验",
+        "保存expected_revision并保留编辑草稿和失败恢复"
+      ],
+      "deliverables": [
+        "地图编辑组件及几何保存API联调",
+        "编辑预览与错误反馈"
+      ],
+      "acceptance": [
+        "绘制结果真实入库且刷新后保持",
+        "非法几何或并发冲突不能静默覆盖原边界"
+      ],
+      "verification": [
+        "验证孔洞、多面、重复节点及越界坐标",
+        "断网或服务失败后恢复编辑草稿"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-036",
+      "work_package": "W04",
+      "stage": "S1",
+      "title": "实现视窗查询空间筛选与规模控制",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-026",
+        "AG-FR-024",
+        "AG-NFR-006",
+        "AG-NFR-007"
+      ],
+      "acceptance_refs": [
+        "AG-AC-026",
+        "AG-AC-024"
+      ],
+      "dependencies": [
+        "DT-019",
+        "DT-026",
+        "DT-031",
+        "DT-034"
+      ],
+      "implementation": [
+        "按bbox、农场、作物和时间过滤并执行服务端范围检查",
+        "对大数据提供分页、简化几何或MVT，避免全量地块一次返回",
+        "建立空间索引和查询计划基线，限制请求复杂度"
+      ],
+      "deliverables": [
+        "视窗查询及分级加载接口",
+        "空间查询性能基准"
+      ],
+      "acceptance": [
+        "缩放和平移时仅加载需要的授权数据",
+        "大范围请求不会绕过限额或使服务失去响应"
+      ],
+      "verification": [
+        "在目标基准数据上测响应大小、p95及浏览器交互",
+        "检验几何简化不被用于正式面积或编辑依据"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-037",
+      "work_package": "W04",
+      "stage": "S1",
+      "title": "实现时间轴对比和分析结果定位",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-027",
+        "AG-FR-034",
+        "AG-FR-035",
+        "AG-FR-055",
+        "AG-NFR-012",
+        "AG-NFR-014"
+      ],
+      "acceptance_refs": [
+        "AG-AC-027",
+        "AG-AC-034",
+        "AG-AC-035",
+        "AG-AC-055"
+      ],
+      "dependencies": [
+        "DT-034",
+        "DT-055",
+        "DT-058",
+        "DT-059"
+      ],
+      "implementation": [
+        "按观测时间展示来源、质量与可比性，支持两期卷帘或并排",
+        "通过analysis_id和parcel_revision定位异常及统计",
+        "显示无效时相、缺数据、过期结果和预测结果的区别"
+      ],
+      "deliverables": [
+        "时间轴与对比视图",
+        "分析结果选择与地图联动"
+      ],
+      "acceptance": [
+        "用户可从统计或报告定位到实际分析图层",
+        "不可比或质量不足的时相不被显示为确定性长势结论"
+      ],
+      "verification": [
+        "验证跨年时区、云覆盖和边界变更场景",
+        "检查两期对比使用已验证共同网格而非随意拉伸"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-038",
+      "work_package": "W04",
+      "stage": "S1",
+      "title": "提供可选轻量三维视图",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-028",
+        "AG-FR-024",
+        "AG-NFR-007",
+        "AG-NFR-012"
+      ],
+      "acceptance_refs": [
+        "AG-AC-028",
+        "AG-AC-024"
+      ],
+      "dependencies": [
+        "DT-034",
+        "DT-044",
+        "DT-047"
+      ],
+      "implementation": [
+        "以feature flag和懒加载接入Cesium，复用同一选中地块和授权资源",
+        "可加载合法地形或3DTiles，缺数据时保留二维可用性",
+        "明确高度拉伸为统计展示，真实高度必须标明观测来源"
+      ],
+      "deliverables": [
+        "可选Cesium模块及功能配置",
+        "二维三维状态同步"
+      ],
+      "acceptance": [
+        "关闭三维不会影响核心农业流程",
+        "示意高度不会标注为真实作物高度或仿真结果"
+      ],
+      "verification": [
+        "测试低显存设备、加载失败和权限撤销",
+        "检查三维资源来源和归属显示"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-039",
+      "work_package": "W04",
+      "stage": "S1",
+      "title": "实现协作冲突撤销与版本恢复",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-029",
+        "AG-FR-008",
+        "AG-FR-010",
+        "AG-NFR-004",
+        "AG-NFR-019"
+      ],
+      "acceptance_refs": [
+        "AG-AC-029",
+        "AG-AC-008",
+        "AG-AC-010"
+      ],
+      "dependencies": [
+        "DT-026",
+        "DT-028",
+        "DT-035"
+      ],
+      "implementation": [
+        "编辑命令绑定base_revision，冲突提供比较与重新应用",
+        "区分会话撤销和持久历史恢复，恢复产生新revision",
+        "对边界或属性变化触发分析与审核依赖失效"
+      ],
+      "deliverables": [
+        "冲突处理和版本比较界面",
+        "恢复服务及依赖失效事件"
+      ],
+      "acceptance": [
+        "两个操作者不能互相无提示覆盖",
+        "恢复保留完整历史且旧分析不会自动冒充最新有效结果"
+      ],
+      "verification": [
+        "并发编辑、撤销与恢复组合测试",
+        "验证恢复需要权限且不恢复已撤回数据授权"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-040",
+      "work_package": "W04",
+      "stage": "S1",
+      "title": "建立移动外业入口与能力检测",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-030",
+        "AG-FR-067",
+        "AG-NFR-012",
+        "AG-NFR-013"
+      ],
+      "acceptance_refs": [
+        "AG-AC-030",
+        "AG-AC-067"
+      ],
+      "dependencies": [
+        "DT-014",
+        "DT-025",
+        "DT-033"
+      ],
+      "implementation": [
+        "提供独立移动路由和简化导航，加载最小资源",
+        "检测HTTPS、GPS、相机、存储权限与设备兼容性",
+        "显示当前农场任务和离线状态，不预造现场观测"
+      ],
+      "deliverables": [
+        "移动外业壳层和权限引导",
+        "响应式与可访问性基础"
+      ],
+      "acceptance": [
+        "常用移动浏览器可进入授权任务列表",
+        "拒绝GPS或相机权限时有可理解的替代与错误状态"
+      ],
+      "verification": [
+        "在真实移动浏览器测试权限授予拒绝及旋转",
+        "检查桌面GIS壳层不被全部加载到移动入口"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-041",
+      "work_package": "W05",
+      "stage": "S1",
+      "title": "建立资产目录和数据权利模型",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-015",
+        "AG-FR-020",
+        "AG-FR-022",
+        "AG-NFR-002",
+        "AG-NFR-015"
+      ],
+      "acceptance_refs": [
+        "AG-AC-015",
+        "AG-AC-020",
+        "AG-AC-022"
+      ],
+      "dependencies": [
+        "DT-003",
+        "DT-017",
+        "DT-020",
+        "DT-025"
+      ],
+      "implementation": [
+        "保存资产类型、来源、许可、用途、范围、期限和operational/demo等级",
+        "资产元数据与实体对象分离，原始文件不可原地覆盖",
+        "为客户数据、公开影像和第三方服务建立不同接入规则"
+      ],
+      "deliverables": [
+        "资产及权利模型迁移API",
+        "目录页面和权利校验规则"
+      ],
+      "acceptance": [
+        "无允许用途的资产不能进入正式处理或共享",
+        "同名不同版本资产均可追溯且不会覆盖历史"
+      ],
+      "verification": [
+        "测试过期授权、撤回来源和演示数据混入",
+        "验证目录查询与实体访问均隔离租户"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-042",
+      "work_package": "W05",
+      "stage": "S1",
+      "title": "实现分片上传预检和安全发布",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-016",
+        "AG-FR-020",
+        "AG-NFR-004",
+        "AG-NFR-007"
+      ],
+      "acceptance_refs": [
+        "AG-AC-016",
+        "AG-AC-020"
+      ],
+      "dependencies": [
+        "DT-023",
+        "DT-041"
+      ],
+      "implementation": [
+        "支持受限大小的分片上传、续传、完整摘要与内容类型识别",
+        "上传先进入隔离区，校验格式、路径、CRS和重复内容",
+        "通过校验后发布资产，失败清理临时对象并记录批次状态"
+      ],
+      "deliverables": [
+        "上传会话及完成提交接口",
+        "格式检查器和临时对象清理"
+      ],
+      "acceptance": [
+        "中断续传不产生重复正式资产",
+        "校验失败不会留下可被业务使用的半成品"
+      ],
+      "verification": [
+        "模拟缺片、乱序、hash冲突、超限和提交重复",
+        "检查错误恢复后的对象与数据库一致性"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-043",
+      "work_package": "W05",
+      "stage": "S1",
+      "title": "实现公开STAC检索及受控影像获取",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-017",
+        "AG-FR-015",
+        "AG-FR-019",
+        "AG-NFR-002",
+        "AG-NFR-007"
+      ],
+      "acceptance_refs": [
+        "AG-AC-017",
+        "AG-AC-015",
+        "AG-AC-019"
+      ],
+      "dependencies": [
+        "DT-023",
+        "DT-041",
+        "DT-042"
+      ],
+      "implementation": [
+        "按适配器接入Sentinel或Landsat目录，固定collection和来源域名",
+        "前端只提交候选ID，服务端重查足迹、许可、波段及元数据",
+        "至少一个来源完成真实查询和裁取路径，短期签名不写入日志或数据库"
+      ],
+      "deliverables": [
+        "STAC适配器及检索选景界面",
+        "影像来源与获取清单"
+      ],
+      "acceptance": [
+        "选景覆盖率按实际足迹判断而非仅bbox",
+        "无效Item、缺波段或非法URL在下载前被拒绝"
+      ],
+      "verification": [
+        "fixture覆盖倾斜足迹、跨景覆盖和来源故障",
+        "记录一个真实合法来源的检索获取证据"
+      ],
+      "blockers": [
+        "真实源连通或访问凭证不可用时仅live验收阻塞；fixture通过不代表该源可商用运行"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-044",
+      "work_package": "W05",
+      "stage": "S1",
+      "title": "实现栅格标准化和波段语义校验",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-018",
+        "AG-FR-013",
+        "AG-FR-020",
+        "AG-NFR-003",
+        "AG-NFR-007"
+      ],
+      "acceptance_refs": [
+        "AG-AC-018",
+        "AG-AC-013",
+        "AG-AC-020"
+      ],
+      "dependencies": [
+        "DT-042",
+        "DT-043",
+        "DT-051"
+      ],
+      "implementation": [
+        "在Worker中检查CRS、波段角色、分辨率和采集时间",
+        "正确应用scale、offset与nodata并记录是否源级已处理",
+        "按受控参数重投影或裁剪，禁止虚构已执行的大气校正等步骤"
+      ],
+      "deliverables": [
+        "标准化处理算子及资产血缘",
+        "波段映射和处理报告"
+      ],
+      "acceptance": [
+        "反射率与波段语义可从原始元数据复算",
+        "缺少关键标度或未知波段时明确拒绝或等待人工确认"
+      ],
+      "verification": [
+        "使用已知像元样本验证标度及nodata",
+        "测试重复处理、超大输出、错误CRS和源文件损坏"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-045",
+      "work_package": "W05",
+      "stage": "S1",
+      "title": "接入云阴影与有效观测质量掩膜",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-019",
+        "AG-FR-038",
+        "AG-FR-055",
+        "AG-NFR-003"
+      ],
+      "acceptance_refs": [
+        "AG-AC-019",
+        "AG-AC-038",
+        "AG-AC-055"
+      ],
+      "dependencies": [
+        "DT-044"
+      ],
+      "implementation": [
+        "按来源解析SCL/QA及有效像元标记，排除云、云影、雪、饱和及nodata，保留掩膜出处与版本",
+        "计算地块覆盖、有效像元比例、云影比例和最小可用样本",
+        "将质量不足输出为insufficient_data，阈值版本化"
+      ],
+      "deliverables": [
+        "质量掩膜算子与指标模型",
+        "有效观测门禁及前端提示"
+      ],
+      "acceptance": [
+        "云、云影、雪、饱和及nodata不参与正式长势统计",
+        "不能以整景低云量代替目标地块像元质量"
+      ],
+      "verification": [
+        "构造局部云影而整景云量低的反例",
+        "核对掩膜重采样方法与原始分类值保持正确"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-046",
+      "work_package": "W05",
+      "stage": "S1",
+      "title": "建立输入输出血缘及实体完整性链",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-020",
+        "AG-FR-018",
+        "AG-FR-054",
+        "AG-NFR-003",
+        "AG-NFR-008"
+      ],
+      "acceptance_refs": [
+        "AG-AC-020",
+        "AG-AC-018",
+        "AG-AC-054"
+      ],
+      "dependencies": [
+        "DT-041",
+        "DT-044",
+        "DT-045"
+      ],
+      "implementation": [
+        "保存原始资产、处理步骤、算法参数、版本及输出manifest摘要",
+        "每个派生资产关联不可变输入版本和权利记录",
+        "下载和重算前校验实体存在性及必要摘要，损坏资产禁止继续使用"
+      ],
+      "deliverables": [
+        "血缘关系与manifest模型",
+        "完整性检查及追溯页面"
+      ],
+      "acceptance": [
+        "任一分析产物能定位全部输入及算法版本",
+        "修改元数据不会无痕替换对应实体"
+      ],
+      "verification": [
+        "篡改或删除一个来源对象验证失效链",
+        "复算manifest和输入摘要并检查记录一致"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-047",
+      "work_package": "W05",
+      "stage": "S1",
+      "title": "实现COG发布瓦片和缩略图服务",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-021",
+        "AG-FR-024",
+        "AG-NFR-001",
+        "AG-NFR-006",
+        "AG-NFR-015"
+      ],
+      "acceptance_refs": [
+        "AG-AC-021",
+        "AG-AC-024"
+      ],
+      "dependencies": [
+        "DT-020",
+        "DT-044",
+        "DT-046",
+        "DT-054"
+      ],
+      "implementation": [
+        "将适合展示的成果生成带概览的COG或受控瓦片",
+        "按资源及租户鉴权处理range、瓦片、缩略图和缓存",
+        "限制渲染参数与输出范围，保持原始分析值独立于显示拉伸"
+      ],
+      "deliverables": [
+        "COG生成与瓦片服务",
+        "图层预览和缓存配置"
+      ],
+      "acceptance": [
+        "大影像浏览不要求一次性下载全幅",
+        "缩略图、range及缓存命中仍遵守访问权限"
+      ],
+      "verification": [
+        "检查COG内部结构及按需范围读取",
+        "进行跨租户瓦片路径及缓存污染负例"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-048",
+      "work_package": "W05",
+      "stage": "S1",
+      "title": "实现授权到期撤回与数据生命周期",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-022",
+        "AG-FR-066",
+        "AG-FR-053",
+        "AG-NFR-002",
+        "AG-NFR-015",
+        "AG-NFR-018"
+      ],
+      "acceptance_refs": [
+        "AG-AC-022",
+        "AG-AC-066",
+        "AG-AC-053"
+      ],
+      "dependencies": [
+        "DT-041",
+        "DT-046",
+        "DT-047"
+      ],
+      "implementation": [
+        "建立撤回事件影响资产、图层、分析、报告及共享能力的索引",
+        "新处理及新下载立即重查权利，已签发能力受短期窗口约束",
+        "原始审计保留与业务可见性分离，清理任务可恢复且可审计"
+      ],
+      "deliverables": [
+        "权利变更与失效传播任务",
+        "保留策略及管理员操作界面"
+      ],
+      "acceptance": [
+        "到期或撤回数据不能继续进入新报告和Agent上下文",
+        "删除不会抹除必要账单及审计关联"
+      ],
+      "verification": [
+        "撤回时并发处理、下载和缓存命中测试",
+        "验证保留期及法律保留标记不会被清理绕过"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-049",
+      "work_package": "W06",
+      "stage": "S1",
+      "title": "建立持久任务及状态转换模型",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-031",
+        "AG-FR-032",
+        "AG-FR-033",
+        "AG-NFR-004",
+        "AG-NFR-005"
+      ],
+      "acceptance_refs": [
+        "AG-AC-031",
+        "AG-AC-032",
+        "AG-AC-033"
+      ],
+      "dependencies": [
+        "DT-007",
+        "DT-017",
+        "DT-022",
+        "DT-041"
+      ],
+      "implementation": [
+        "在GIS权威数据库记录job、attempt、输入快照、参数、幂等键和状态",
+        "定义合法状态转换及唯一终态，明确成功、失败、取消和待对账的区别",
+        "将任务记录与队列通知分开，Redis或消息系统丢失后可从数据库恢复"
+      ],
+      "deliverables": [
+        "任务及尝试模型迁移",
+        "状态机和转换约束"
+      ],
+      "acceptance": [
+        "任何处理请求都有持久可查询状态",
+        "终态不可被迟到回调任意覆盖"
+      ],
+      "verification": [
+        "遍历非法状态转换及重复终态请求",
+        "重启服务后校验任务记录和输入快照仍在"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-050",
+      "work_package": "W06",
+      "stage": "S1",
+      "title": "实现幂等提交与事务Outbox",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-031",
+        "AG-FR-033",
+        "AG-FR-058",
+        "AG-NFR-004",
+        "AG-NFR-017"
+      ],
+      "acceptance_refs": [
+        "AG-AC-031",
+        "AG-AC-033",
+        "AG-AC-058"
+      ],
+      "dependencies": [
+        "DT-049"
+      ],
+      "implementation": [
+        "Go解析授权并冻结参数hash，在本库短事务写operation、已有预算契约的reservation及Outbox，立即返回operation_id",
+        "GIS消费命令在本库Inbox去重并创建job，回事件让平台关联job_id；不得跨服务互写数据库",
+        "幂等键相同且载荷不同返回冲突；同载荷重试返回同一operation和已关联job",
+        "商业计量包补全估价及费率规则；接单结果未知保留必要预留并查询对账，不直接释放"
+      ],
+      "deliverables": [
+        "任务提交API和Outbox投递器",
+        "请求幂等及预算关联"
+      ],
+      "acceptance": [
+        "重试提交返回同一任务而不重复预留",
+        "数据库提交后通知失败不会丢任务"
+      ],
+      "verification": [
+        "注入提交与投递之间崩溃并验证恢复",
+        "测试同键同载荷、同键异载荷和不足预算"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-051",
+      "work_package": "W06",
+      "stage": "S1",
+      "title": "实现独立Python计算Worker运行时",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-031",
+        "AG-FR-018",
+        "AG-NFR-005",
+        "AG-NFR-007"
+      ],
+      "acceptance_refs": [
+        "AG-AC-031",
+        "AG-AC-018"
+      ],
+      "dependencies": [
+        "DT-023",
+        "DT-049",
+        "DT-050"
+      ],
+      "implementation": [
+        "从持久任务领取算子并在独立进程执行，禁止长时间持有数据库事务",
+        "统一输入下载、临时目录、资源限制和算子版本注册",
+        "将算法异常和基础设施异常映射到不同可重试错误"
+      ],
+      "deliverables": [
+        "Worker镜像及算子协议",
+        "任务执行器和资源配置"
+      ],
+      "acceptance": [
+        "HTTP提交完成后计算可独立继续",
+        "单任务内存或处理异常不会使平台服务整体退出"
+      ],
+      "verification": [
+        "用确定性测试算子验证真实任务链，明确其fixture属性",
+        "执行进程超时、OOM模拟和服务重启恢复"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-052",
+      "work_package": "W06",
+      "stage": "S1",
+      "title": "实现租约心跳与fencing防止过期写入",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-032",
+        "AG-FR-033",
+        "AG-NFR-004",
+        "AG-NFR-005"
+      ],
+      "acceptance_refs": [
+        "AG-AC-032",
+        "AG-AC-033"
+      ],
+      "dependencies": [
+        "DT-049",
+        "DT-051"
+      ],
+      "implementation": [
+        "任务领取使用原子租约和递增fencing_token",
+        "心跳续期有明确超时和重领条件，attempt关联当前租约",
+        "所有进度与结果提交校验租约持有者及token"
+      ],
+      "deliverables": [
+        "租约管理与心跳接口",
+        "过期任务回收器"
+      ],
+      "acceptance": [
+        "两个Worker竞争时仅当前有效租约允许发布结果",
+        "已失去租约的旧Worker恢复后不能覆盖新结果"
+      ],
+      "verification": [
+        "模拟网络分区、暂停进程和租约过期重领",
+        "验证旧token更新进度和结果均被拒绝"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-053",
+      "work_package": "W06",
+      "stage": "S1",
+      "title": "实现重试取消及未知状态处理",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-032",
+        "AG-FR-033",
+        "AG-NFR-004",
+        "AG-NFR-005"
+      ],
+      "acceptance_refs": [
+        "AG-AC-032",
+        "AG-AC-033"
+      ],
+      "dependencies": [
+        "DT-052"
+      ],
+      "implementation": [
+        "按错误分类设置退避、最大尝试和死信，避免无界重试",
+        "取消记录意图并让Worker协作退出，成功与取消以原子条件决定唯一终态",
+        "外部结果未知时进入待确认或对账，禁止直接重跑有副作用操作"
+      ],
+      "deliverables": [
+        "重试取消API及任务操作界面",
+        "死信与未知结果处理规则"
+      ],
+      "acceptance": [
+        "取消和成功并发时只产生一个有效终态",
+        "重试不会创建重复业务成果或重复消费"
+      ],
+      "verification": [
+        "注入在输出完成前后取消的竞态",
+        "模拟超时但外部已成功的结果并验证对账流程"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-054",
+      "work_package": "W06",
+      "stage": "S1",
+      "title": "实现成果原子发布及临时对象回收",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-033",
+        "AG-FR-020",
+        "AG-NFR-004",
+        "AG-NFR-005",
+        "AG-NFR-015"
+      ],
+      "acceptance_refs": [
+        "AG-AC-033",
+        "AG-AC-020"
+      ],
+      "dependencies": [
+        "DT-046",
+        "DT-052",
+        "DT-053"
+      ],
+      "implementation": [
+        "每attempt输出独立临时对象和完整manifest，验hash与范围后再发布",
+        "数据库事务只提交结果元数据和Outbox，不宣称跨库或对象存储全局事务",
+        "标记孤儿对象并用可恢复清理流程回收，清理不删除仍被引用的资产"
+      ],
+      "deliverables": [
+        "成果发布服务与结果清单",
+        "临时对象及孤儿引用清理器"
+      ],
+      "acceptance": [
+        "用户只看到完整有效的成果版本",
+        "任意发布中断可恢复且不暴露部分输出"
+      ],
+      "verification": [
+        "在对象写入、清单校验、DB提交及事件发送处逐点注入故障",
+        "确认旧attempt和重复发布都不能生成第二份有效结果"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-055",
+      "work_package": "W06",
+      "stage": "S1",
+      "title": "实现任务状态事件和平台投影",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-031",
+        "AG-FR-033",
+        "AG-FR-064",
+        "AG-NFR-004",
+        "AG-NFR-008"
+      ],
+      "acceptance_refs": [
+        "AG-AC-031",
+        "AG-AC-033",
+        "AG-AC-064"
+      ],
+      "dependencies": [
+        "DT-021",
+        "DT-050",
+        "DT-054"
+      ],
+      "implementation": [
+        "GIS以Outbox发送状态及结果引用，平台Inbox按事件ID去重",
+        "统一operation_id、接单后关联的job_id、correlation_id和事件版本，处理乱序及重放",
+        "通过受控SSE或轮询展示任务进度并保留可恢复游标"
+      ],
+      "deliverables": [
+        "平台任务投影及事件消费者",
+        "用户任务列表和进度界面"
+      ],
+      "acceptance": [
+        "事件重复或乱序不会使成功任务回退为运行中",
+        "平台投影丢失可由权威任务状态重建"
+      ],
+      "verification": [
+        "重放与乱序事件测试",
+        "断线续接后检查事件不越权且最终状态正确"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-056",
+      "work_package": "W06",
+      "stage": "S1",
+      "title": "实现计算配额公平调度与资源保护",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-061",
+        "AG-FR-031",
+        "AG-NFR-007",
+        "AG-NFR-005"
+      ],
+      "acceptance_refs": [
+        "AG-AC-061",
+        "AG-AC-031"
+      ],
+      "dependencies": [
+        "DT-051",
+        "DT-052",
+        "DT-053",
+        "DT-055"
+      ],
+      "implementation": [
+        "限制租户并发、任务大小、像元和临时空间，区分交互与批量任务",
+        "从数据库恢复待执行任务，队列只作唤醒加速",
+        "提供队列长度、等待时间、失败率及资源限额运营视图"
+      ],
+      "deliverables": [
+        "公平调度和限额策略",
+        "队列运行指标与告警"
+      ],
+      "acceptance": [
+        "单租户大量提交不会耗尽全部处理能力",
+        "消息系统清空后未完成任务仍可被重新调度"
+      ],
+      "verification": [
+        "两个租户混合长短任务测等待与限额",
+        "模拟磁盘不足、队列丢失和Worker全部重启"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-057",
+      "work_package": "W07",
+      "stage": "S1",
+      "title": "建立分析算子注册及共同网格约束",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-018",
+        "AG-FR-034",
+        "AG-FR-038",
+        "AG-NFR-003",
+        "AG-NFR-011"
+      ],
+      "acceptance_refs": [
+        "AG-AC-018",
+        "AG-AC-034",
+        "AG-AC-038"
+      ],
+      "dependencies": [
+        "DT-044",
+        "DT-045",
+        "DT-049",
+        "DT-054"
+      ],
+      "implementation": [
+        "按算法ID和版本注册输入波段、参数schema、输出结构与适用条件",
+        "验证共同CRS、网格、范围、分辨率与配准质量",
+        "分类掩膜和连续反射率采用各自正确重采样方式"
+      ],
+      "deliverables": [
+        "分析注册表和参数校验器",
+        "输入网格兼容性预检"
+      ],
+      "acceptance": [
+        "不兼容数据在重计算前拒绝并给出原因",
+        "更改算法名称不能复用未匹配版本的旧结果"
+      ],
+      "verification": [
+        "测试错波段、错分辨率、错网格和错误参数",
+        "核对重采样后分类值和统计范围"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-058",
+      "work_package": "W07",
+      "stage": "S1",
+      "title": "实现NDVI与地块分区统计",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-034",
+        "AG-FR-019",
+        "AG-FR-026",
+        "AG-NFR-003"
+      ],
+      "acceptance_refs": [
+        "AG-AC-034",
+        "AG-AC-019",
+        "AG-AC-026"
+      ],
+      "dependencies": [
+        "DT-026",
+        "DT-031",
+        "DT-045",
+        "DT-057"
+      ],
+      "implementation": [
+        "基于有效反射率计算NDVI并处理零分母、nodata和掩膜",
+        "按地块revision计算均值、中位数、分位数、面积和有效像元比例",
+        "保存输入采集时间、算法版本及精度说明，绑定结果图层"
+      ],
+      "deliverables": [
+        "NDVI及zonal statistics算子",
+        "统计API和地块结果卡片"
+      ],
+      "acceptance": [
+        "已知像元及简单地块结果与预期真值一致",
+        "有效数据不足时不返回误导的零或正常结论"
+      ],
+      "verification": [
+        "使用独立公式和人工可算小栅格验证",
+        "测试边缘混合像元、小地块、全云和零分母"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-059",
+      "work_package": "W07",
+      "stage": "S1",
+      "title": "实现多期长势变化与可比性门禁",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-035",
+        "AG-FR-009",
+        "AG-FR-038",
+        "AG-FR-055",
+        "AG-NFR-003"
+      ],
+      "acceptance_refs": [
+        "AG-AC-035",
+        "AG-AC-009",
+        "AG-AC-038",
+        "AG-AC-055"
+      ],
+      "dependencies": [
+        "DT-027",
+        "DT-045",
+        "DT-058"
+      ],
+      "implementation": [
+        "建立时间序列、可用观测选择和基准期选择规则",
+        "考虑作物种植季、观测间隔、分辨率及有效覆盖的可比性",
+        "输出变化幅度和异常候选，避免将自然成熟等变化直接定为病害"
+      ],
+      "deliverables": [
+        "多期分析与基准选择器",
+        "变化指标和质量说明"
+      ],
+      "acceptance": [
+        "跨种植季或质量不合格比较有显式阻断或标注",
+        "结果可以复算且不自动给出未经验证的减产或病因结论"
+      ],
+      "verification": [
+        "验证播种前后、成熟期、长期缺测和混合传感器场景",
+        "固定参数重跑检查变化图层与统计一致"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-060",
+      "work_package": "W07",
+      "stage": "S1",
+      "title": "接入变化候选发现与人工分类",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-036",
+        "AG-FR-025",
+        "AG-FR-043",
+        "AG-NFR-003"
+      ],
+      "acceptance_refs": [
+        "AG-AC-036",
+        "AG-AC-025",
+        "AG-AC-043"
+      ],
+      "dependencies": [
+        "DT-035",
+        "DT-054",
+        "DT-057"
+      ],
+      "implementation": [
+        "复用已核实的RGB差分或变化向量算子，明确算法能力范围",
+        "候选初始保持未分类，保存阈值、共同网格和来源摘要",
+        "支持人工确认、重新分类、排除和不可变审计"
+      ],
+      "deliverables": [
+        "变化候选算子及复核界面",
+        "分类历史和版本约束"
+      ],
+      "acceptance": [
+        "自动发现不会被描述成已识别作物或法定地类",
+        "人工调整可追踪且失效旧审核依赖"
+      ],
+      "verification": [
+        "使用无变化、光照差异和真实变化样本验证",
+        "并发分类及旧版本提交负例"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-061",
+      "work_package": "W07",
+      "stage": "S1",
+      "title": "实现灾害范围叠加与影响初评",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-037",
+        "AG-FR-012",
+        "AG-FR-051",
+        "AG-NFR-003"
+      ],
+      "acceptance_refs": [
+        "AG-AC-037",
+        "AG-AC-012",
+        "AG-AC-051"
+      ],
+      "dependencies": [
+        "DT-026",
+        "DT-030",
+        "DT-031",
+        "DT-054"
+      ],
+      "implementation": [
+        "导入有来源的灾害范围或合法模型结果并校验空间范围",
+        "按受影响地块和种植季计算交集面积和等级统计",
+        "报告标识范围来源、人工复核状态及初步评估限制"
+      ],
+      "deliverables": [
+        "灾害叠加分析及复核接口",
+        "受影响地块清单和地图"
+      ],
+      "acceptance": [
+        "交集面积不大于相关地块有效面积",
+        "未经验证的等级不被转为经济损失或赔付结论"
+      ],
+      "verification": [
+        "用已知几何交集和重复重叠灾害验证去重统计",
+        "测试跨租户、跨季和无合法来源的导入"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-062",
+      "work_package": "W07",
+      "stage": "S1",
+      "title": "统一分析不确定性与结果有效性",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-038",
+        "AG-FR-055",
+        "AG-FR-020",
+        "AG-NFR-003",
+        "AG-NFR-016"
+      ],
+      "acceptance_refs": [
+        "AG-AC-038",
+        "AG-AC-055",
+        "AG-AC-020"
+      ],
+      "dependencies": [
+        "DT-046",
+        "DT-058",
+        "DT-059",
+        "DT-060",
+        "DT-061"
+      ],
+      "implementation": [
+        "统一observed/inferred/predicted及quality_status字段",
+        "定义数据不足、来源撤回、边界变化和算法更新的失效影响",
+        "向地图、报告和Agent返回可读限制及补充数据建议"
+      ],
+      "deliverables": [
+        "结果质量状态与失效规则",
+        "统一质量提示组件"
+      ],
+      "acceptance": [
+        "不同入口对同一结果展示相同有效性",
+        "模型置信度、数据覆盖率和人工确认状态不混成一个分数"
+      ],
+      "verification": [
+        "逐一触发输入变化与授权撤回验证传播",
+        "检查数据不足不会被提示词改写成确定性结论"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-063",
+      "work_package": "W07",
+      "stage": "S1",
+      "title": "建立遥感与几何科学正确性回归",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-013",
+        "AG-FR-034",
+        "AG-FR-035",
+        "AG-FR-038",
+        "AG-FR-056",
+        "AG-NFR-003",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-013",
+        "AG-AC-034",
+        "AG-AC-035",
+        "AG-AC-038",
+        "AG-AC-056"
+      ],
+      "dependencies": [
+        "DT-006",
+        "DT-057",
+        "DT-058",
+        "DT-059",
+        "DT-060",
+        "DT-061",
+        "DT-062"
+      ],
+      "implementation": [
+        "为核心算子建立独立真值、误差容忍及参数版本",
+        "覆盖CRS、面积、反射率、掩膜、配准、分区统计及异常矢量化",
+        "记录精度限制与不适用场景，专家审阅与自动测试分别留痕"
+      ],
+      "deliverables": [
+        "科学正确性测试及数据版本",
+        "农学解释审阅模板"
+      ],
+      "acceptance": [
+        "核心数值不只通过与实现同源的重复计算验证",
+        "阈值、容差变更必须说明原因且保留旧基线"
+      ],
+      "verification": [
+        "运行独立参考数据和误差报告",
+        "由具备领域知识的审阅者核查首发结论表述"
+      ],
+      "blockers": [
+        "农学解释的真实适用性需客户或农学专家审阅；自动数值验证可先完成"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-064",
+      "work_package": "W07",
+      "stage": "S1",
+      "title": "完成农业分析真实端到端闭环",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-017",
+        "AG-FR-027",
+        "AG-FR-031",
+        "AG-FR-034",
+        "AG-FR-035",
+        "AG-FR-038",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-017",
+        "AG-AC-027",
+        "AG-AC-031",
+        "AG-AC-034",
+        "AG-AC-035",
+        "AG-AC-038"
+      ],
+      "dependencies": [
+        "DT-037",
+        "DT-043",
+        "DT-055",
+        "DT-058",
+        "DT-059",
+        "DT-062",
+        "DT-063"
+      ],
+      "implementation": [
+        "使用真实合法影像完成检索、入库、处理、地图定位与结果下载",
+        "保留所有输入摘要、参数、耗时、质量判断及成本计量样本",
+        "分别记录成功、数据不足和处理失败的用户路径"
+      ],
+      "deliverables": [
+        "真实分析验收记录及复现清单",
+        "S1遥感链路证据"
+      ],
+      "acceptance": [
+        "至少一个真实来源及两个可比较时相完成链路",
+        "数据不足时系统正确拒绝，不用演示数据补齐现场证据"
+      ],
+      "verification": [
+        "重建同一输入和参数验证输出摘要或声明的数值容差",
+        "核查结果实际出现在授权地图和下载中"
+      ],
+      "blockers": [
+        "需可访问的真实合法影像及适当时相；缺失时标blocked_external"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-065",
+      "work_package": "W08",
+      "stage": "S1",
+      "title": "实现巡查工单及任务范围",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-039",
+        "AG-FR-003",
+        "AG-NFR-004"
+      ],
+      "acceptance_refs": [
+        "AG-AC-039",
+        "AG-AC-003"
+      ],
+      "dependencies": [
+        "DT-025",
+        "DT-026",
+        "DT-027",
+        "DT-062"
+      ],
+      "implementation": [
+        "从异常或手工创建巡查草稿，绑定农场地块revision和证据",
+        "指派有效成员、期限、优先级和检查项",
+        "定义草稿、已指派、进行、待复核、关闭及撤销流程"
+      ],
+      "deliverables": [
+        "巡查模型接口与列表详情",
+        "任务指派和状态机"
+      ],
+      "acceptance": [
+        "离职或无农场权限成员不能被继续指派",
+        "分析更新不会静默改变已执行巡查的原始依据"
+      ],
+      "verification": [
+        "测试越权指派、重复提交和截止时间",
+        "验证工单状态转换及原始证据关联"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-066",
+      "work_package": "W08",
+      "stage": "S1",
+      "title": "实现GPS和现场媒体证据采集",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-040",
+        "AG-FR-030",
+        "AG-FR-020",
+        "AG-NFR-002",
+        "AG-NFR-012"
+      ],
+      "acceptance_refs": [
+        "AG-AC-040",
+        "AG-AC-030",
+        "AG-AC-020"
+      ],
+      "dependencies": [
+        "DT-020",
+        "DT-040",
+        "DT-042",
+        "DT-065"
+      ],
+      "implementation": [
+        "采集WGS84坐标、定位精度、采集时间、设备信息及人工备注",
+        "相机照片和附件通过安全上传保留摘要、大小与媒体签名",
+        "区分浏览器定位、手填坐标及后补证据，不伪造现场真实性"
+      ],
+      "deliverables": [
+        "移动采集表单及媒体上传链路",
+        "现场证据模型与查看入口"
+      ],
+      "acceptance": [
+        "GPS精度与来源在复核时可见",
+        "证据上传失败时记录明确待补传状态而非假成功"
+      ],
+      "verification": [
+        "真实终端验证GPS相机和文件权限",
+        "测试伪造媒体类型、超限文件及不带时区时间"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-067",
+      "work_package": "W08",
+      "stage": "S1",
+      "title": "实现弱网草稿和幂等补传",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-041",
+        "AG-FR-040",
+        "AG-NFR-004",
+        "AG-NFR-012",
+        "AG-NFR-018"
+      ],
+      "acceptance_refs": [
+        "AG-AC-041",
+        "AG-AC-040"
+      ],
+      "dependencies": [
+        "DT-066"
+      ],
+      "implementation": [
+        "本地草稿按当前用户与租户隔离，并支持明确删除",
+        "以客户端采集ID及载荷hash进行幂等提交，照片可补传",
+        "退出或切换用户时清除或安全锁定敏感草稿并提示同步状态"
+      ],
+      "deliverables": [
+        "移动离线草稿及同步队列",
+        "幂等补传和冲突处理"
+      ],
+      "acceptance": [
+        "网络反复中断不会创建重复现场记录",
+        "同ID不同内容不能覆盖既有证据"
+      ],
+      "verification": [
+        "在提交前、记录创建后、媒体上传中断网",
+        "切换租户、清理本地存储和过期会话场景验证"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-068",
+      "work_package": "W08",
+      "stage": "S1",
+      "title": "实现现场点与地块匹配及人工处置",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-042",
+        "AG-FR-040",
+        "AG-FR-008",
+        "AG-NFR-003"
+      ],
+      "acceptance_refs": [
+        "AG-AC-042",
+        "AG-AC-040",
+        "AG-AC-008"
+      ],
+      "dependencies": [
+        "DT-026",
+        "DT-031",
+        "DT-066",
+        "DT-067"
+      ],
+      "implementation": [
+        "按采集时地块revision及定位精度执行空间匹配",
+        "对多重匹配、边界附近、超范围和未匹配保留显式状态",
+        "人工处置保留内业、采用外业或要求复查，实际改图生成新版本"
+      ],
+      "deliverables": [
+        "点斑匹配服务和复核界面",
+        "疑点处置及地块变更关联"
+      ],
+      "acceptance": [
+        "未匹配现场记录不会虚构已修改某地块",
+        "人工选择和理由可审计并保持原始证据不变"
+      ],
+      "verification": [
+        "测试边界点、低精度GPS和地块已分割场景",
+        "验证跨农场匹配及旧revision处理"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-069",
+      "work_package": "W08",
+      "stage": "S1",
+      "title": "实现规则质检和分级审核",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-043",
+        "AG-FR-029",
+        "AG-FR-052",
+        "AG-NFR-003",
+        "AG-NFR-004"
+      ],
+      "acceptance_refs": [
+        "AG-AC-043",
+        "AG-AC-029",
+        "AG-AC-052"
+      ],
+      "dependencies": [
+        "DT-029",
+        "DT-039",
+        "DT-062",
+        "DT-068"
+      ],
+      "implementation": [
+        "版本化项目规则并生成任务级不可变质检批次",
+        "审核绑定地块、影像、规则和字段模式摘要",
+        "修改输入后使当前审核失效，角色分离策略可配置且后端强制"
+      ],
+      "deliverables": [
+        "质检批次及问题队列",
+        "审核退回整改和恢复工作流"
+      ],
+      "acceptance": [
+        "旧质检批次不能继续批准已变化的数据",
+        "自动问题与现场问题按对应流程复核，不能无依据跳过"
+      ],
+      "verification": [
+        "测试自审策略、越权审批及内容变更后重检",
+        "复核质检覆盖数量与当前任务实际记录一致"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-070",
+      "work_package": "W08",
+      "stage": "S1",
+      "title": "实现巡查通知送达与闭环追踪",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-039",
+        "AG-FR-042",
+        "AG-FR-064",
+        "AG-NFR-008"
+      ],
+      "acceptance_refs": [
+        "AG-AC-039",
+        "AG-AC-042",
+        "AG-AC-064"
+      ],
+      "dependencies": [
+        "DT-055",
+        "DT-065",
+        "DT-068",
+        "DT-069"
+      ],
+      "implementation": [
+        "通知通过平台受控渠道并记录目标、状态及送达回执",
+        "工单推进以业务状态为准，通知失败不假装已完成",
+        "提供逾期、退回、重新指派及待复核视图"
+      ],
+      "deliverables": [
+        "工单事件与通知适配",
+        "巡查闭环运营视图"
+      ],
+      "acceptance": [
+        "通知重复投递不产生重复工单",
+        "没有实际送达回执时保留未送达状态"
+      ],
+      "verification": [
+        "用本地接收器验证重试、重复和拒收",
+        "真实外部通知需经授权接收人试发"
+      ],
+      "blockers": [
+        "真实邮件或消息送达验收需提供渠道和明确获准的接收人，未授权不发送"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-071",
+      "work_package": "W08",
+      "stage": "S1",
+      "title": "建立农业作业记录与效果反馈",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-044",
+        "AG-FR-009",
+        "AG-FR-042",
+        "AG-NFR-014"
+      ],
+      "acceptance_refs": [
+        "AG-AC-044",
+        "AG-AC-009",
+        "AG-AC-042"
+      ],
+      "dependencies": [
+        "DT-027",
+        "DT-065",
+        "DT-068"
+      ],
+      "implementation": [
+        "登记作业类型、执行时间、范围、数量单位、执行人和证据",
+        "关联建议、巡查和后续观测，区分计划与实际执行",
+        "支持更正版本和理由，禁止直接覆盖历史记录"
+      ],
+      "deliverables": [
+        "作业记录模型接口及页面",
+        "建议到执行到观测的关联"
+      ],
+      "acceptance": [
+        "未执行计划不会被统计为已完成作业",
+        "数量单位、范围与执行时间可核验"
+      ],
+      "verification": [
+        "验证单位错误、重复记录和跨季关联",
+        "检查历史更正与后续分析引用"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-072",
+      "work_package": "W08",
+      "stage": "S1",
+      "title": "完成真实移动巡查业务验收",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-030",
+        "AG-FR-039",
+        "AG-FR-040",
+        "AG-FR-041",
+        "AG-FR-042",
+        "AG-FR-043",
+        "AG-FR-044",
+        "AG-NFR-012",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-030",
+        "AG-AC-039",
+        "AG-AC-040",
+        "AG-AC-041",
+        "AG-AC-042",
+        "AG-AC-043",
+        "AG-AC-044"
+      ],
+      "dependencies": [
+        "DT-065",
+        "DT-066",
+        "DT-067",
+        "DT-068",
+        "DT-069",
+        "DT-070",
+        "DT-071"
+      ],
+      "implementation": [
+        "用授权真实地块在移动终端完成采集、断网补传和复核",
+        "核对照片实体、GPS精度、操作者、时间和地块版本",
+        "由实际角色完成工单关闭与报告引用"
+      ],
+      "deliverables": [
+        "真实移动外业验证记录",
+        "W08业务闭环证据"
+      ],
+      "acceptance": [
+        "真实终端弱网流程可恢复且不重复",
+        "现场结论与原始证据及最终处置可相互追踪"
+      ],
+      "verification": [
+        "在网络限制下执行完整操作并保存过程证据",
+        "抽查GPS原始精度和照片hash"
+      ],
+      "blockers": [
+        "需授权地块、真实移动终端及现场人员；模拟定位只能作为fixture验证"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-073",
+      "work_package": "W09",
+      "stage": "S2",
+      "title": "建立农业知识目录与来源权利",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-045",
+        "AG-FR-015",
+        "AG-NFR-002",
+        "AG-NFR-018"
+      ],
+      "acceptance_refs": [
+        "AG-AC-045",
+        "AG-AC-015"
+      ],
+      "dependencies": [
+        "DT-003",
+        "DT-025",
+        "DT-041",
+        "DT-048"
+      ],
+      "implementation": [
+        "定义农技文档、政策、种植手册、客户规程等知识来源",
+        "记录来源、发布时间、适用地区作物、许可和有效期",
+        "Loom保存材料和修订，GIS保存实体数据，关联仅用受控引用"
+      ],
+      "deliverables": [
+        "农业知识目录及来源模板",
+        "知识权利与适用范围模型"
+      ],
+      "acceptance": [
+        "知识文档不能替代当前地块观测事实",
+        "客户私有文档不进入其它租户检索范围"
+      ],
+      "verification": [
+        "测试过期规程、禁用来源和跨租户文档",
+        "确认来源类型与可信等级可见"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-074",
+      "work_package": "W09",
+      "stage": "S2",
+      "title": "接入首批真实知识来源和人工上传",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-045",
+        "AG-FR-063",
+        "AG-NFR-002",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-045",
+        "AG-AC-063"
+      ],
+      "dependencies": [
+        "DT-023",
+        "DT-042",
+        "DT-073"
+      ],
+      "implementation": [
+        "优先客户授权手册及合法RSS或公开资料来源",
+        "复用Loom采集适配器，保留抓取时间、原文引用和错误状态",
+        "对于需账号或服务的连接器单独标记live待验，不扩大采集范围"
+      ],
+      "deliverables": [
+        "来源接入及人工上传流程",
+        "真实来源样本和采集记录"
+      ],
+      "acceptance": [
+        "至少一种真实合法来源可完成入库检索",
+        "无凭证连接器不会被标注为可用或已验收"
+      ],
+      "verification": [
+        "验证文档损坏、编码异常、重复采集及来源撤回",
+        "对真实样本核对摘录与原始文本一致"
+      ],
+      "blockers": [
+        "客户私有材料需明确授权；账号型来源缺凭证时只阻塞该适配器"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-075",
+      "work_package": "W09",
+      "stage": "S2",
+      "title": "实现租户和农场范围的证据检索",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-045",
+        "AG-FR-046",
+        "AG-FR-005",
+        "AG-NFR-001",
+        "AG-NFR-016"
+      ],
+      "acceptance_refs": [
+        "AG-AC-045",
+        "AG-AC-046",
+        "AG-AC-005"
+      ],
+      "dependencies": [
+        "DT-021",
+        "DT-073",
+        "DT-074"
+      ],
+      "implementation": [
+        "检索前执行来源与资源授权，并过滤过期撤回或不适用材料",
+        "按租户、工作区、农场和作物上下文组合检索条件",
+        "返回可引用段落、版本、时间和适用性，不只返回相似度"
+      ],
+      "deliverables": [
+        "农业检索适配器",
+        "来源证据引用结构"
+      ],
+      "acceptance": [
+        "问题语义相近不能突破租户或资料权限",
+        "每个检索引用能定位当前有效原文版本"
+      ],
+      "verification": [
+        "相同内容在两租户出现时验证隔离",
+        "测试撤回资料在向量索引、缓存与搜索中的失效"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-076",
+      "work_package": "W09",
+      "stage": "S2",
+      "title": "管理知识修订索引和重新计算",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-045",
+        "AG-FR-020",
+        "AG-FR-022",
+        "AG-NFR-004",
+        "AG-NFR-015"
+      ],
+      "acceptance_refs": [
+        "AG-AC-045",
+        "AG-AC-020",
+        "AG-AC-022"
+      ],
+      "dependencies": [
+        "DT-048",
+        "DT-074",
+        "DT-075"
+      ],
+      "implementation": [
+        "来源更新创建新revision，保留历史引用和有效期",
+        "索引任务幂等且记录采用的分块、嵌入与模型版本",
+        "将删除撤回传递到检索索引和相关报告新引用门禁"
+      ],
+      "deliverables": [
+        "知识修订与索引任务",
+        "来源变更影响查询"
+      ],
+      "acceptance": [
+        "报告历史引用可追溯原版本",
+        "被撤回资料不会在新回答中重新出现"
+      ],
+      "verification": [
+        "中断索引并恢复检查无重复分块",
+        "对更新和删除事件重放验证最终一致性"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-077",
+      "work_package": "W09",
+      "stage": "S2",
+      "title": "防止外部资料提升Agent权限",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-045",
+        "AG-FR-047",
+        "AG-FR-050",
+        "AG-NFR-016"
+      ],
+      "acceptance_refs": [
+        "AG-AC-045",
+        "AG-AC-047",
+        "AG-AC-050"
+      ],
+      "dependencies": [
+        "DT-023",
+        "DT-075"
+      ],
+      "implementation": [
+        "将检索内容标记为不可信数据，不作为系统指令或权限来源",
+        "工具白名单、资源授权和预算在服务端独立执行",
+        "限制外部资料诱导的任意URL请求、代码执行与秘密输出"
+      ],
+      "deliverables": [
+        "知识到Agent的信任边界实现",
+        "提示注入和数据外传评测样本"
+      ],
+      "acceptance": [
+        "资料中的指令不能使Agent取得额外工具或租户数据",
+        "工具输出和日志不包含内部服务密钥"
+      ],
+      "verification": [
+        "使用恶意文档要求忽略权限、导出他租户数据等负例",
+        "检查服务端拒绝独立于模型是否识别攻击"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-078",
+      "work_package": "W09",
+      "stage": "S2",
+      "title": "建立农业信息采集与周期报告调度",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-045",
+        "AG-FR-051",
+        "AG-FR-064",
+        "AG-NFR-004",
+        "AG-NFR-008"
+      ],
+      "acceptance_refs": [
+        "AG-AC-045",
+        "AG-AC-051",
+        "AG-AC-064"
+      ],
+      "dependencies": [
+        "DT-055",
+        "DT-074",
+        "DT-076"
+      ],
+      "implementation": [
+        "按租户授权和来源能力配置采集频率与预算",
+        "复用Loom调度和任务结果投影，明确失效、暂停与恢复",
+        "内容变化触发待审核摘要或报告草稿，不自动扩大分享范围"
+      ],
+      "deliverables": [
+        "农业来源计划与运行记录",
+        "周期材料汇总草稿"
+      ],
+      "acceptance": [
+        "重复调度不会重复扣费或重复材料版本",
+        "来源失败时报告明确缺口和最后成功时间"
+      ],
+      "verification": [
+        "测试时区边界、重复tick和调度恢复",
+        "验证暂停租户或撤回来源后的任务行为"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-079",
+      "work_package": "W09",
+      "stage": "S2",
+      "title": "建立农业术语规则和知识适用性",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-045",
+        "AG-FR-049",
+        "AG-FR-055",
+        "AG-NFR-003",
+        "AG-NFR-014"
+      ],
+      "acceptance_refs": [
+        "AG-AC-045",
+        "AG-AC-049",
+        "AG-AC-055"
+      ],
+      "dependencies": [
+        "DT-027",
+        "DT-073",
+        "DT-075"
+      ],
+      "implementation": [
+        "管理作物、品种、生育期、灾害和农事单位术语及别名",
+        "知识规则明确地区、季节、作物和发布版本限制",
+        "支持专家审阅与引用说明，避免把普适建议直接当作现场处方"
+      ],
+      "deliverables": [
+        "农业术语表及适用性规则",
+        "专家知识审阅清单"
+      ],
+      "acceptance": [
+        "术语归一化不改变原始观测单位和含义",
+        "不适用地区或作物的建议有明确限制"
+      ],
+      "verification": [
+        "验证同名作物、亩公顷及不同地区农事用语",
+        "抽查输出建议能指向有效来源"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-080",
+      "work_package": "W09",
+      "stage": "S2",
+      "title": "验证知识回答的证据与拒答能力",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-045",
+        "AG-FR-055",
+        "AG-FR-056",
+        "AG-NFR-016",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-045",
+        "AG-AC-055",
+        "AG-AC-056"
+      ],
+      "dependencies": [
+        "DT-075",
+        "DT-076",
+        "DT-077",
+        "DT-079"
+      ],
+      "implementation": [
+        "建立有答案、冲突来源、过期资料、无资料及越权问题样本",
+        "分别评估检索相关性、引用正确性和结论支持程度",
+        "对于缺少现场证据的问题输出补充观测需求"
+      ],
+      "deliverables": [
+        "知识评测集与逐例结果",
+        "错误分析和整改清单"
+      ],
+      "acceptance": [
+        "不能用只看语言流畅度的评分替代证据检查",
+        "关键无依据结论有阻断规则和可复现反例"
+      ],
+      "verification": [
+        "固定模型配置运行样本并人工抽查引用",
+        "将错误答案及修复后复测结果留档"
+      ],
+      "blockers": [
+        "涉及真实模型质量的评测需可用模型路由；fixture只证明接口及权限行为"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-081",
+      "work_package": "W10",
+      "stage": "S2",
+      "title": "扩展农场和地块Agent上下文",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-046",
+        "AG-FR-003",
+        "AG-FR-005",
+        "AG-NFR-001",
+        "AG-NFR-016"
+      ],
+      "acceptance_refs": [
+        "AG-AC-046",
+        "AG-AC-003",
+        "AG-AC-005"
+      ],
+      "dependencies": [
+        "DT-011",
+        "DT-025",
+        "DT-026",
+        "DT-027",
+        "DT-062",
+        "DT-075"
+      ],
+      "implementation": [
+        "在现有RunChain增加农业subject或等价受权适配器",
+        "服务端组装农场、地块revision、种植季、近期质量及引用摘要",
+        "限制上下文大小并标明来源时间，避免把全量栅格和私密文档直接塞入提示词"
+      ],
+      "deliverables": [
+        "农业ScopeResolver与ContextProvider",
+        "上下文schema及裁剪规则"
+      ],
+      "acceptance": [
+        "改变客户端subject_id不能取得其它农场上下文",
+        "观测、推断与预测在上下文中有不同类型"
+      ],
+      "verification": [
+        "测试跨租户、无成员及过期地块revision",
+        "检查模型请求实际内容不含越权资源或密钥"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-082",
+      "work_package": "W10",
+      "stage": "S2",
+      "title": "实现农业只读工具与MCP契约",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-047",
+        "AG-FR-026",
+        "AG-FR-034",
+        "AG-NFR-001",
+        "AG-NFR-011"
+      ],
+      "acceptance_refs": [
+        "AG-AC-047",
+        "AG-AC-026",
+        "AG-AC-034"
+      ],
+      "dependencies": [
+        "DT-036",
+        "DT-058",
+        "DT-062",
+        "DT-081"
+      ],
+      "implementation": [
+        "提供地块搜索详情、影像目录、观测统计和分析状态等有类型工具",
+        "统一参数schema、输出上限、错误码、来源引用及版本",
+        "复用MCP白名单和schema漂移检查，工具内部仍重新授权"
+      ],
+      "deliverables": [
+        "只读工具适配及MCP注册",
+        "工具契约和错误样例"
+      ],
+      "acceptance": [
+        "工具返回可定位真实资源和证据",
+        "未授权资源或过大查询无法由自然语言绕过"
+      ],
+      "verification": [
+        "运行真实工具到GIS API的集成测试",
+        "测试schema变更、伪造ID和恶意参数"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-083",
+      "work_package": "W10",
+      "stage": "S2",
+      "title": "实现分析及业务写工具的受控执行",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-047",
+        "AG-FR-050",
+        "AG-FR-031",
+        "AG-FR-039",
+        "AG-NFR-004",
+        "AG-NFR-016"
+      ],
+      "acceptance_refs": [
+        "AG-AC-047",
+        "AG-AC-050",
+        "AG-AC-031",
+        "AG-AC-039"
+      ],
+      "dependencies": [
+        "DT-050",
+        "DT-053",
+        "DT-065",
+        "DT-081",
+        "DT-082"
+      ],
+      "implementation": [
+        "提交分析、生成巡查草稿和更新允许的业务字段采用独立工具",
+        "工具执行绑定调用ID、主体、资源版本和预算，禁止任意SQL或脚本",
+        "跨服务长任务提交立即返回operation_id，GIS接单后关联job_id供查询；模型不阻塞等待整个栅格计算"
+      ],
+      "deliverables": [
+        "农业写工具及调用账本",
+        "异步任务工具流程"
+      ],
+      "acceptance": [
+        "重放同一tool_call不会重复创建任务或工单",
+        "缺失审批或预算时没有领域写入副作用"
+      ],
+      "verification": [
+        "验证超时重试、同键异载荷和未审批写入",
+        "检查服务端权限与工具说明保持一致"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-084",
+      "work_package": "W10",
+      "stage": "S2",
+      "title": "构建农业Skill包及版本固定",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-049",
+        "AG-FR-045",
+        "AG-FR-055",
+        "AG-NFR-011",
+        "AG-NFR-016"
+      ],
+      "acceptance_refs": [
+        "AG-AC-049",
+        "AG-AC-045",
+        "AG-AC-055"
+      ],
+      "dependencies": [
+        "DT-079",
+        "DT-082",
+        "DT-083"
+      ],
+      "implementation": [
+        "实现长势巡检、灾害初评和农场报告三组首发技能",
+        "声明required_tools、输入输出schema、适用范围及数据不足分支",
+        "采用现有版本hash与run能力冻结机制，导出行业包和评测样例"
+      ],
+      "deliverables": [
+        "农业行业包及输出schema",
+        "运行版本冻结和包导出验证"
+      ],
+      "acceptance": [
+        "运行中修改技能不改变已开始任务的能力快照",
+        "缺少所需工具或数据时技能明确不可用"
+      ],
+      "verification": [
+        "校验导出包与嵌入源一致",
+        "测试中途升级、工具撤销及版本回滚"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-085",
+      "work_package": "W10",
+      "stage": "S2",
+      "title": "提供预置和租户自定义农业Agent",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-048",
+        "AG-FR-049",
+        "AG-FR-004",
+        "AG-NFR-001",
+        "AG-NFR-016"
+      ],
+      "acceptance_refs": [
+        "AG-AC-048",
+        "AG-AC-049",
+        "AG-AC-004"
+      ],
+      "dependencies": [
+        "DT-081",
+        "DT-082",
+        "DT-083",
+        "DT-084"
+      ],
+      "implementation": [
+        "提供巡检、数据整理及报告Agent的可配置角色与默认技能",
+        "租户可配置名称、提示、知识范围、工具子集和预算上限",
+        "自定义配置不能新增平台未授予权限；可执行用户代码不纳入首版"
+      ],
+      "deliverables": [
+        "Agent配置模型与管理页面",
+        "配置版本及租户范围控制"
+      ],
+      "acceptance": [
+        "自定义Agent能力始终是用户及组织权限的子集",
+        "停用技能或连接后新运行不能继续使用"
+      ],
+      "verification": [
+        "测试提示词要求提权、外传和扩大工具集",
+        "比较不同角色可见工具与资源"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-086",
+      "work_package": "W10",
+      "stage": "S2",
+      "title": "实现具体操作预览审批及版本校验",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-050",
+        "AG-FR-029",
+        "AG-FR-058",
+        "AG-NFR-004",
+        "AG-NFR-016"
+      ],
+      "acceptance_refs": [
+        "AG-AC-050",
+        "AG-AC-029",
+        "AG-AC-058"
+      ],
+      "dependencies": [
+        "DT-039",
+        "DT-083",
+        "DT-085"
+      ],
+      "implementation": [
+        "写操作展示目标资源、修改差异、输入版本及预计费用",
+        "审批绑定操作hash、资源范围、有效期和审批人，不接受笼统永久授权",
+        "执行前重查权限和版本，变化后要求重新生成预览"
+      ],
+      "deliverables": [
+        "审批记录与执行绑定服务",
+        "操作预览和审批界面"
+      ],
+      "acceptance": [
+        "批准A操作不能被复用于B操作或新版本数据",
+        "用户取消后不会因迟到回调继续创建新副作用"
+      ],
+      "verification": [
+        "测试审批重放、过期、参数篡改和并发改图",
+        "检查模型不能自批高风险操作"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-087",
+      "work_package": "W10",
+      "stage": "S2",
+      "title": "实现聊天地图图表与任务联动",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-046",
+        "AG-FR-027",
+        "AG-FR-051",
+        "AG-FR-055",
+        "AG-NFR-012",
+        "AG-NFR-013"
+      ],
+      "acceptance_refs": [
+        "AG-AC-046",
+        "AG-AC-027",
+        "AG-AC-051",
+        "AG-AC-055"
+      ],
+      "dependencies": [
+        "DT-037",
+        "DT-055",
+        "DT-062",
+        "DT-082",
+        "DT-083",
+        "DT-086"
+      ],
+      "implementation": [
+        "工具输出返回受权layer_id、parcel_id、job_id及小规模结构化统计",
+        "前端消费白名单事件完成定位、显层、图表和任务状态显示",
+        "模型文本与可执行界面事件分离，禁止运行任意生成脚本"
+      ],
+      "deliverables": [
+        "Agent侧栏和地图事件协议",
+        "结果卡片、来源跳转及任务联动"
+      ],
+      "acceptance": [
+        "用户能从回答跳转到真实分析证据",
+        "伪造或过期资源事件不会加载其它租户图层"
+      ],
+      "verification": [
+        "验证断线重放、结果撤回和大结果截断",
+        "用无效事件类型与脚本载荷检查前端拒绝"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-088",
+      "work_package": "W10",
+      "stage": "S3",
+      "title": "交付受控CLI开放API和MCP集成包",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-077",
+        "AG-FR-078",
+        "AG-FR-047",
+        "AG-NFR-001",
+        "AG-NFR-011"
+      ],
+      "acceptance_refs": [
+        "AG-AC-077",
+        "AG-AC-078",
+        "AG-AC-047"
+      ],
+      "dependencies": [
+        "DT-082",
+        "DT-083",
+        "DT-086",
+        "DT-098",
+        "DT-102"
+      ],
+      "implementation": [
+        "提供Go CLI的登录或令牌配置、查询、提交任务、状态、取消及受控下载",
+        "开放API版本化并生成最小SDK样例，服务令牌限制租户工作区和scope",
+        "发布经过白名单约束的MCP能力及开发文档，写操作仍受权限审批与计费控制"
+      ],
+      "deliverables": [
+        "可构建Go CLI及API文档",
+        "最小SDK示例、MCP连接说明及契约测试"
+      ],
+      "acceptance": [
+        "CLI和外部Agent无法绕过网页端同等权限和预算",
+        "没有令牌或令牌撤销时全部受保护操作失败"
+      ],
+      "verification": [
+        "在两个租户账户下运行查询提交取消下载集成测试",
+        "验证stdout日志脱敏、退出码及重试幂等"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-089",
+      "work_package": "W11",
+      "stage": "S2",
+      "title": "实现农业报告结构与生成任务",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-051",
+        "AG-FR-055",
+        "AG-FR-020",
+        "AG-NFR-011"
+      ],
+      "acceptance_refs": [
+        "AG-AC-051",
+        "AG-AC-055",
+        "AG-AC-020"
+      ],
+      "dependencies": [
+        "DT-062",
+        "DT-065",
+        "DT-071",
+        "DT-078",
+        "DT-084"
+      ],
+      "implementation": [
+        "定义农场周期、长势巡检和灾害初评报告schema，并支持与PDF内容一致的结构化JSON导出",
+        "报告绑定输入快照、分析结果、现场反馈及知识来源",
+        "生成过程走持久任务，明确缺失章节和不可用数据"
+      ],
+      "deliverables": [
+        "报告模板schema、生成服务及结构化JSON导出",
+        "报告草稿列表和预览"
+      ],
+      "acceptance": [
+        "报告数值来源于可追溯数据而非模型编造",
+        "缺失数据不会填入假值或默认正常结论"
+      ],
+      "verification": [
+        "校验schema及数值与分析API一致",
+        "测试没有影像、部分工单未完成和来源冲突"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-090",
+      "work_package": "W11",
+      "stage": "S2",
+      "title": "实现可追溯地图图表及导出渲染",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-051",
+        "AG-FR-021",
+        "AG-FR-067",
+        "AG-NFR-003",
+        "AG-NFR-013"
+      ],
+      "acceptance_refs": [
+        "AG-AC-051",
+        "AG-AC-021",
+        "AG-AC-067"
+      ],
+      "dependencies": [
+        "DT-034",
+        "DT-047",
+        "DT-058",
+        "DT-061",
+        "DT-089"
+      ],
+      "implementation": [
+        "专题图包含图例、比例或尺度说明、CRS、时间、数据来源及必要署名",
+        "图表单位和有效样本范围与分析结果一致",
+        "生成可读PDF及原始图表资源，支持长表分页和中文字体"
+      ],
+      "deliverables": [
+        "地图图表渲染器及报告PDF导出",
+        "渲染参数和产物清单"
+      ],
+      "acceptance": [
+        "导出的图例颜色与平台当前图层一致",
+        "文字、表格和地图没有裁切或不可辨识标注"
+      ],
+      "verification": [
+        "逐页渲染检查代表性报告版式",
+        "核对面积、单位、采集时间和来源署名"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-091",
+      "work_package": "W11",
+      "stage": "S2",
+      "title": "实现报告审核发布与版本冻结",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-052",
+        "AG-FR-043",
+        "AG-FR-029",
+        "AG-NFR-004"
+      ],
+      "acceptance_refs": [
+        "AG-AC-052",
+        "AG-AC-043",
+        "AG-AC-029"
+      ],
+      "dependencies": [
+        "DT-069",
+        "DT-089",
+        "DT-090"
+      ],
+      "implementation": [
+        "审核锁定报告内容hash及输入manifest",
+        "发布形成不可变版本，修改后创建新修订并重新审核",
+        "按组织策略分离作者和审核者，所有门禁由服务端执行"
+      ],
+      "deliverables": [
+        "报告审核发布模型及界面",
+        "版本差异和审核记录"
+      ],
+      "acceptance": [
+        "审核后内容变化不能沿用原批准直接发布",
+        "已发布报告保留原证据版本"
+      ],
+      "verification": [
+        "测试作者越权自审、并发修改及hash变化",
+        "验证旧版可追溯但不被标为最新有效版"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-092",
+      "work_package": "W11",
+      "stage": "S2",
+      "title": "实现受控导出分享及访问撤销",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-053",
+        "AG-FR-012",
+        "AG-FR-022",
+        "AG-NFR-001",
+        "AG-NFR-018"
+      ],
+      "acceptance_refs": [
+        "AG-AC-053",
+        "AG-AC-012",
+        "AG-AC-022"
+      ],
+      "dependencies": [
+        "DT-020",
+        "DT-030",
+        "DT-048",
+        "DT-090",
+        "DT-091"
+      ],
+      "implementation": [
+        "导出内容按当前角色和资源授权投影，保存清单与hash",
+        "分享使用明确对象、接收范围、有效期和可撤销能力",
+        "下载时复核版本及权利，不通过永久公开桶提供私有成果"
+      ],
+      "deliverables": [
+        "导出包和受控下载API",
+        "分享管理与撤销界面"
+      ],
+      "acceptance": [
+        "只读或外部接收者不能取得未批准的原始数据",
+        "撤销后新访问失败且审计记录完整"
+      ],
+      "verification": [
+        "测试猜测分享ID、扩大导出范围和过期链接",
+        "检查压缩包内容不存在他租户数据及秘密"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-093",
+      "work_package": "W11",
+      "stage": "S2",
+      "title": "统一不可变审计和证据追溯",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-054",
+        "AG-FR-020",
+        "AG-NFR-008",
+        "AG-NFR-018"
+      ],
+      "acceptance_refs": [
+        "AG-AC-054",
+        "AG-AC-020"
+      ],
+      "dependencies": [
+        "DT-013",
+        "DT-046",
+        "DT-055",
+        "DT-068",
+        "DT-086",
+        "DT-091"
+      ],
+      "implementation": [
+        "记录身份、租户、资源版本、动作、原因、结果和correlation_id",
+        "业务事件追加写，修正通过新事件，不允许普通用户改历史",
+        "对敏感字段脱敏并定义保留、检索及管理员访问规则"
+      ],
+      "deliverables": [
+        "统一审计事件模型和检索页面",
+        "关键操作覆盖清单"
+      ],
+      "acceptance": [
+        "从报告或分析能追踪输入、审批、执行与结算引用",
+        "审计不暴露完整令牌、数据库密码或原始敏感附件"
+      ],
+      "verification": [
+        "抽查关键操作链与数据库记录一致",
+        "验证普通角色修改或删除审计失败"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-094",
+      "work_package": "W11",
+      "stage": "S2",
+      "title": "实现报告来源撤回和内容事故流程",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-022",
+        "AG-FR-052",
+        "AG-FR-053",
+        "AG-FR-054",
+        "AG-NFR-002",
+        "AG-NFR-018"
+      ],
+      "acceptance_refs": [
+        "AG-AC-022",
+        "AG-AC-052",
+        "AG-AC-053",
+        "AG-AC-054"
+      ],
+      "dependencies": [
+        "DT-048",
+        "DT-091",
+        "DT-092",
+        "DT-093"
+      ],
+      "implementation": [
+        "定位被撤回来源影响的报告、共享、下载及Agent引用",
+        "冻结新访问并通知有权限的管理人员，保留必要审计",
+        "修正版重新审核发布，不能把已撤回版本直接设为恢复目标"
+      ],
+      "deliverables": [
+        "撤回影响分析和处置流程",
+        "版本替代及通知记录"
+      ],
+      "acceptance": [
+        "发现错误或权利撤回时能够控制后续传播",
+        "事故处理中原始证据与修改理由仍可审计"
+      ],
+      "verification": [
+        "模拟来源撤回与严重错误报告并执行演练",
+        "验证缓存、分享和索引的新访问都受控"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-095",
+      "work_package": "W11",
+      "stage": "S2",
+      "title": "验证报告中的事实推断预测及限制",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-055",
+        "AG-FR-051",
+        "AG-FR-056",
+        "AG-NFR-003",
+        "AG-NFR-016"
+      ],
+      "acceptance_refs": [
+        "AG-AC-055",
+        "AG-AC-051",
+        "AG-AC-056"
+      ],
+      "dependencies": [
+        "DT-062",
+        "DT-080",
+        "DT-089",
+        "DT-090",
+        "DT-091"
+      ],
+      "implementation": [
+        "为事实、统计推断和模型预测建立固定展示语义",
+        "报告显式列出时间范围、质量、适用作物和未完成核查",
+        "对关键数值和建议检查证据支持，发现无依据结论阻断发布"
+      ],
+      "deliverables": [
+        "报告质量规则及评测样例",
+        "引用和结论支持检查"
+      ],
+      "acceptance": [
+        "没有将NDVI下降直接写成确定病害或减产",
+        "质量不足与待现场核查不会被排版或摘要隐藏"
+      ],
+      "verification": [
+        "使用包含误导性总结的样本验证阻断",
+        "专家逐例审阅首发报告模板"
+      ],
+      "blockers": [
+        "真实农学解释审阅需专业人员；不能以语言模型自评分作为唯一通过依据"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-096",
+      "work_package": "W11",
+      "stage": "S2",
+      "title": "完成报告交付与复现验收",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-051",
+        "AG-FR-052",
+        "AG-FR-053",
+        "AG-FR-054",
+        "AG-FR-055",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-051",
+        "AG-AC-052",
+        "AG-AC-053",
+        "AG-AC-054",
+        "AG-AC-055"
+      ],
+      "dependencies": [
+        "DT-089",
+        "DT-090",
+        "DT-091",
+        "DT-092",
+        "DT-093",
+        "DT-094",
+        "DT-095"
+      ],
+      "implementation": [
+        "使用真实分析和巡查材料完成生成审核发布下载及撤回",
+        "验证报告引用的地图、表格和源文件版本一致",
+        "归档可重建报告的输入清单及软件版本"
+      ],
+      "deliverables": [
+        "真实报告交付验收记录",
+        "W11证据和可复现样本"
+      ],
+      "acceptance": [
+        "用户下载的文件与批准版本摘要一致",
+        "撤回及修改流程不改变已归档历史内容"
+      ],
+      "verification": [
+        "重新生成同输入报告并核对语义和声明可变字段",
+        "逐页检查中文PDF及压缩包清单"
+      ],
+      "blockers": [
+        "真实客户数据和审核角色不可用时，业务live验收标blocked_external"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-097",
+      "work_package": "W12",
+      "stage": "S2",
+      "title": "实现套餐权益和降级策略",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-057",
+        "AG-FR-061",
+        "AG-NFR-017",
+        "AG-NFR-018"
+      ],
+      "acceptance_refs": [
+        "AG-AC-057",
+        "AG-AC-061"
+      ],
+      "dependencies": [
+        "DT-010",
+        "DT-025",
+        "DT-041",
+        "DT-056"
+      ],
+      "implementation": [
+        "定义席位、农场、管理面积、存储、计算和Agent额度的版本化套餐",
+        "权益检查位于服务端，界面只解释剩余额度和升级选择",
+        "定义试用到期、降级、欠费及停用时的只读和数据导出窗口"
+      ],
+      "deliverables": [
+        "套餐权益模型API和用量页面",
+        "套餐变更与降级处理"
+      ],
+      "acceptance": [
+        "改前端套餐标记不能扩大实际权益",
+        "降级不会无提示删除客户数据或破坏已付任务"
+      ],
+      "verification": [
+        "验证跨月、套餐变更、席位超限和到期状态",
+        "对边界分割后的管理面积计量验证不重复累计"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-098",
+      "work_package": "W12",
+      "stage": "S2",
+      "title": "实现遥感任务估价和预算预留",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-058",
+        "AG-FR-059",
+        "AG-NFR-017"
+      ],
+      "acceptance_refs": [
+        "AG-AC-058",
+        "AG-AC-059"
+      ],
+      "dependencies": [
+        "DT-050",
+        "DT-057",
+        "DT-097"
+      ],
+      "implementation": [
+        "按实际算子及计量维度配置价格，不沿用LLM单价冒充遥感价格",
+        "提交时记录估价依据、单价版本、预算上限与整数微积分预留",
+        "预留成功后才允许付费执行，预留和创建任务失败通过幂等补偿恢复"
+      ],
+      "deliverables": [
+        "估价API和预算适配器",
+        "价格版本及预留事务"
+      ],
+      "acceptance": [
+        "预算不足或价格已变更时用户获得明确结果",
+        "并发提交不能超用同一余额或重复预留"
+      ],
+      "verification": [
+        "测试并发余额竞争、重复提交及预留后任务创建失败",
+        "验证金额全程整数并固定费率版本"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-099",
+      "work_package": "W12",
+      "stage": "S2",
+      "title": "实现真实用量和成本采集",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-059",
+        "AG-FR-061",
+        "AG-FR-064",
+        "AG-NFR-008",
+        "AG-NFR-017"
+      ],
+      "acceptance_refs": [
+        "AG-AC-059",
+        "AG-AC-061",
+        "AG-AC-064"
+      ],
+      "dependencies": [
+        "DT-051",
+        "DT-054",
+        "DT-055",
+        "DT-098"
+      ],
+      "implementation": [
+        "采集像元处理量或计算单位、模型tokens、存储周期与流量等可测量数据",
+        "用量绑定tenant/job/attempt/price_version，区分计费量和内部成本",
+        "保留未知成本状态，控制计量噪声及重试重复上报"
+      ],
+      "deliverables": [
+        "用量事件与成本记录",
+        "客户用量明细和运营成本视图"
+      ],
+      "acceptance": [
+        "每笔收费可对应实际任务与明确计量规则",
+        "失败重试的收费策略与用户预览一致"
+      ],
+      "verification": [
+        "重复和乱序用量事件幂等测试",
+        "核对小规模真实任务的日志、计量与账本关联"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-100",
+      "work_package": "W12",
+      "stage": "S2",
+      "title": "实现结算退款和不确定结果对账",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-058",
+        "AG-FR-062",
+        "AG-NFR-004",
+        "AG-NFR-017"
+      ],
+      "acceptance_refs": [
+        "AG-AC-058",
+        "AG-AC-062"
+      ],
+      "dependencies": [
+        "DT-053",
+        "DT-055",
+        "DT-098",
+        "DT-099"
+      ],
+      "implementation": [
+        "完成后按冻结费率结算，只有确证未消费且不会再执行的预留可释放，部分消费有明确规则",
+        "外部调用回执丢失、网络超时或结果未知保留必要预留并进入reconciliation；先对账后决定结算或释放",
+        "所有退款修正采用追加账本记录，不能直接修改历史余额"
+      ],
+      "deliverables": [
+        "结算及对账状态机",
+        "退款调整记录和运营处理入口"
+      ],
+      "acceptance": [
+        "任何重试或迟到事件最多产生一次业务结算",
+        "预留、消费、释放和调整在账户层保持守恒"
+      ],
+      "verification": [
+        "注入结算前后崩溃、回调重复与取消竞态",
+        "对账覆盖零消费、部分消费、超估价及未知外部结果"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-101",
+      "work_package": "W12",
+      "stage": "S3",
+      "title": "实现支付订阅与获准收费通道",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-060",
+        "AG-FR-057",
+        "AG-NFR-004",
+        "AG-NFR-017"
+      ],
+      "acceptance_refs": [
+        "AG-AC-060",
+        "AG-AC-057"
+      ],
+      "dependencies": [
+        "DT-097",
+        "DT-100"
+      ],
+      "implementation": [
+        "抽象订单、支付、退款和订阅周期provider接口，冻结订单价格与权益版本",
+        "自动支付路径必须验签、去重、状态回查及续期幂等",
+        "支持经用户选择的B2B manual_invoice路径：真实到账证据、独立复核、审计记账后授予权益"
+      ],
+      "deliverables": [
+        "支付provider适配及订单订阅页面",
+        "线下真实到账复核流程和回调测试"
+      ],
+      "acceptance": [
+        "没有真实商户验证时自助收费保持关闭",
+        "manual_invoice不能通过单人点击或fixture回执伪装到账"
+      ],
+      "verification": [
+        "测试伪造回调、金额币种不符、重复支付、退款与迟到回调",
+        "验证真实通道或授权B2B到账流程后才标对应路径可用"
+      ],
+      "blockers": [
+        "上线收费需用户选择通道及提供真实商户或B2B到账验证条件；未提供时保持该能力未验收"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-102",
+      "work_package": "W12",
+      "stage": "S2",
+      "title": "统一API计算与消费限流",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-061",
+        "AG-FR-057",
+        "AG-NFR-007",
+        "AG-NFR-017"
+      ],
+      "acceptance_refs": [
+        "AG-AC-061",
+        "AG-AC-057"
+      ],
+      "dependencies": [
+        "DT-056",
+        "DT-097",
+        "DT-098",
+        "DT-100"
+      ],
+      "implementation": [
+        "将租户、用户、服务和工具限流接到统一权益策略",
+        "限制任务并发、每日预算、存储及单次最大分析范围",
+        "超限响应提供原因、可恢复时间或明确升级路径，不能自动无限加购"
+      ],
+      "deliverables": [
+        "配额检查中间层及配置",
+        "超限提示与运营调节界面"
+      ],
+      "acceptance": [
+        "Web、Agent和CLI使用相同的收费和配额边界",
+        "同租户并发请求不能突破原子配额检查"
+      ],
+      "verification": [
+        "测试多入口并发提交和时间窗口切换",
+        "停用套餐后检查已运行与新任务的差异策略"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-103",
+      "work_package": "W12",
+      "stage": "S3",
+      "title": "实现运营客服和限时支持授权",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-079",
+        "AG-FR-054",
+        "AG-NFR-001",
+        "AG-NFR-008"
+      ],
+      "acceptance_refs": [
+        "AG-AC-079",
+        "AG-AC-054"
+      ],
+      "dependencies": [
+        "DT-093",
+        "DT-097",
+        "DT-100",
+        "DT-102"
+      ],
+      "implementation": [
+        "运营仅默认访问服务指标、账单和授权范围内支持工单",
+        "读取客户内容需要客户授权或明确合法工单依据，并限制范围和时长",
+        "支持故障定位、暂停异常任务和追加财务调整，关键动作可追溯"
+      ],
+      "deliverables": [
+        "运营控制台与支持授权模型",
+        "工单审计及权限撤销"
+      ],
+      "acceptance": [
+        "平台运营身份不天然具备浏览所有客户地图文件的能力",
+        "支持授权过期后不能继续访问原内容"
+      ],
+      "verification": [
+        "测试无授权内容访问及支持范围扩大",
+        "验证客服调整不会原地修改历史用量或账本"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-104",
+      "work_package": "W12",
+      "stage": "S3",
+      "title": "完成账单对账与真实收费路径验收",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-058",
+        "AG-FR-059",
+        "AG-FR-060",
+        "AG-FR-062",
+        "AG-FR-080",
+        "AG-NFR-017",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-058",
+        "AG-AC-059",
+        "AG-AC-060",
+        "AG-AC-062",
+        "AG-AC-080"
+      ],
+      "dependencies": [
+        "DT-099",
+        "DT-100",
+        "DT-101",
+        "DT-102",
+        "DT-103"
+      ],
+      "implementation": [
+        "将任务用量、内部账本及支付或provider明细逐项对账",
+        "运行实际获准收费路径的小额或约定B2B试点交易及退款演练",
+        "统计任务毛成本、未知费用和支持成本，明确报价依据"
+      ],
+      "deliverables": [
+        "收费与退款验收记录",
+        "成本对账和异常处理报告"
+      ],
+      "acceptance": [
+        "实际到账、权益和账本可相互核验",
+        "未验证支付渠道不能在发布报告写成已上线"
+      ],
+      "verification": [
+        "检查重复回调、账单差额和未知结果人工处理证据",
+        "独立复核余额及费用守恒"
+      ],
+      "blockers": [
+        "真实付费操作、退款及商户配置需用户明确授权；缺失时只阻塞收费路径验收"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-105",
+      "work_package": "W13",
+      "stage": "S3",
+      "title": "建立生产构建供应链与依赖门禁",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-068",
+        "AG-NFR-010",
+        "AG-NFR-019"
+      ],
+      "acceptance_refs": [
+        "AG-AC-068"
+      ],
+      "dependencies": [
+        "DT-003",
+        "DT-014",
+        "DT-051",
+        "DT-084",
+        "DT-097"
+      ],
+      "implementation": [
+        "锁定依赖及镜像，分开构建Go、Pi/Loom、GIS Worker和Vue资源",
+        "生成实际产物SBOM、许可通知及漏洞审查记录",
+        "使用非root、最小文件权限和独立秘密注入，农业构建剔除未授权功能"
+      ],
+      "deliverables": [
+        "生产CI与镜像构建流程",
+        "产物SBOM和许可门禁"
+      ],
+      "acceptance": [
+        "可追溯部署产物到源提交及依赖锁文件",
+        "不能用隐藏菜单代替去掉不允许生产使用的模块"
+      ],
+      "verification": [
+        "检查镜像用户、依赖图和敏感配置",
+        "执行可重复构建及已知阻断项失败验证"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-106",
+      "work_package": "W13",
+      "stage": "S3",
+      "title": "完善Windows11和WSL2本地开发路径",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-063",
+        "AG-FR-068",
+        "AG-NFR-012",
+        "AG-NFR-011"
+      ],
+      "acceptance_refs": [
+        "AG-AC-063",
+        "AG-AC-068"
+      ],
+      "dependencies": [
+        "DT-005",
+        "DT-014",
+        "DT-051",
+        "DT-105"
+      ],
+      "implementation": [
+        "提供Windows11加WSL2容器开发及原生工具可选路径",
+        "说明服务端口、卷权限、CRLF、路径与代理配置，避免硬编码用户磁盘",
+        "提供只读环境诊断及故障排查，禁止脚本自动删除Docker或WSL数据"
+      ],
+      "deliverables": [
+        "本地启动排错文档",
+        "开发profile、诊断命令及示例配置"
+      ],
+      "acceptance": [
+        "新开发者可按文档启动并运行一个样例闭环",
+        "诊断工具不会泄漏代理凭据或修改系统环境"
+      ],
+      "verification": [
+        "在实际可用的WindowsWSL环境执行并记录；其它环境不冒充该验证",
+        "验证带空格路径、卷权限和断网依赖缺失提示"
+      ],
+      "blockers": [
+        "真实Windows11/WSL2验证需相应环境；Linux验证可先完成，Windows状态单独保留"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-107",
+      "work_package": "W13",
+      "stage": "S3",
+      "title": "建立私网部署HTTPS和环境隔离",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-068",
+        "AG-FR-064",
+        "AG-NFR-010",
+        "AG-NFR-005"
+      ],
+      "acceptance_refs": [
+        "AG-AC-068",
+        "AG-AC-064"
+      ],
+      "dependencies": [
+        "DT-017",
+        "DT-020",
+        "DT-051",
+        "DT-105"
+      ],
+      "implementation": [
+        "提供开发、受限试点和生产部署profile及显式默认值",
+        "仅公开网关HTTPS，数据库、Worker和内部GIS服务留在私网",
+        "配置健康检查、优雅关闭、秘密轮换和生产禁止fixture开关"
+      ],
+      "deliverables": [
+        "部署配置及环境变量字典",
+        "上线网络及密钥运行手册"
+      ],
+      "acceptance": [
+        "默认口令、公开数据库端口和开发旁路在生产被阻断",
+        "测试和生产对象、数据库及模型凭证不混用"
+      ],
+      "verification": [
+        "检查部署配置与实际网络监听",
+        "在受限环境验证滚动重启及服务依赖失败"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-108",
+      "work_package": "W13",
+      "stage": "S3",
+      "title": "实现全链路监测日志与告警",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-064",
+        "AG-FR-054",
+        "AG-FR-059",
+        "AG-NFR-008"
+      ],
+      "acceptance_refs": [
+        "AG-AC-064",
+        "AG-AC-054",
+        "AG-AC-059"
+      ],
+      "dependencies": [
+        "DT-055",
+        "DT-056",
+        "DT-093",
+        "DT-099",
+        "DT-107"
+      ],
+      "implementation": [
+        "贯穿request/trace/run/job/tenant关联字段，日志不保存令牌或签名URL",
+        "建立API错误率、任务年龄、Worker租约、数据质量和费用异常指标",
+        "配置可执行的告警处理说明，外部通知仅发送到获准渠道"
+      ],
+      "deliverables": [
+        "监测仪表与结构化日志",
+        "告警规则及排障手册"
+      ],
+      "acceptance": [
+        "一个用户任务可从请求追到分析成果和费用",
+        "告警有责任入口和处置步骤，不只有图表"
+      ],
+      "verification": [
+        "注入任务积压、来源失效和账单差异验证告警",
+        "扫描日志确认敏感信息脱敏"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-109",
+      "work_package": "W13",
+      "stage": "S3",
+      "title": "实现协同备份与真实恢复演练",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-065",
+        "AG-NFR-009",
+        "AG-NFR-019"
+      ],
+      "acceptance_refs": [
+        "AG-AC-065"
+      ],
+      "dependencies": [
+        "DT-041",
+        "DT-046",
+        "DT-076",
+        "DT-093",
+        "DT-100",
+        "DT-107"
+      ],
+      "implementation": [
+        "备份flow_platform、flow_intel、flow_geo及对象引用清单",
+        "记录一致性时间点、密钥恢复依赖和完整性校验方式",
+        "在隔离环境恢复，检查资源引用、授权、任务与账本一致性"
+      ],
+      "deliverables": [
+        "备份恢复脚本和运行手册",
+        "恢复演练及实际RPO/RTO记录"
+      ],
+      "acceptance": [
+        "恢复后关键资源可读取且不越权",
+        "试点RPO不超过24小时、RTO不超过4小时是待验证目标；未达标须整改或明确限制"
+      ],
+      "verification": [
+        "真实执行备份到隔离恢复全过程计时",
+        "抽查文件hash、地块revision、报告和余额"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-110",
+      "work_package": "W13",
+      "stage": "S3",
+      "title": "实现数据导出注销与保留流程",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-066",
+        "AG-FR-022",
+        "AG-FR-053",
+        "AG-NFR-015",
+        "AG-NFR-018"
+      ],
+      "acceptance_refs": [
+        "AG-AC-066",
+        "AG-AC-022",
+        "AG-AC-053"
+      ],
+      "dependencies": [
+        "DT-048",
+        "DT-076",
+        "DT-092",
+        "DT-093",
+        "DT-100",
+        "DT-109"
+      ],
+      "implementation": [
+        "租户导出覆盖授权农业对象、媒体、报告与必要元数据",
+        "注销先冻结新任务和分享，再处理索引缓存对象及成员访问",
+        "保留必要账务审计最小信息并记录依据、期限和legal hold"
+      ],
+      "deliverables": [
+        "租户导出及注销任务",
+        "保留策略和用户说明"
+      ],
+      "acceptance": [
+        "删除操作可恢复到明确进度且不留下可访问分享",
+        "数据保留不会成为无期限保留全部客户内容的借口"
+      ],
+      "verification": [
+        "演练存在运行中任务、共享链接和索引时的注销",
+        "检查法律保留与真正可删除数据的处理差异"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-111",
+      "work_package": "W13",
+      "stage": "S3",
+      "title": "实现迁移升级兼容与回滚机制",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-014",
+        "AG-FR-065",
+        "AG-FR-068",
+        "AG-NFR-019"
+      ],
+      "acceptance_refs": [
+        "AG-AC-014",
+        "AG-AC-065",
+        "AG-AC-068"
+      ],
+      "dependencies": [
+        "DT-018",
+        "DT-032",
+        "DT-105",
+        "DT-109"
+      ],
+      "implementation": [
+        "数据库采用兼容扩展再收缩，迁移版本与应用版本对应",
+        "升级前dry-run、备份和回滚条件明确，避免跨库一键不可逆混迁",
+        "回归Flow既有业务和农业服务事件版本兼容"
+      ],
+      "deliverables": [
+        "升级迁移及回滚说明",
+        "兼容矩阵与演练记录"
+      ],
+      "acceptance": [
+        "失败升级不会迫使用户丢失原始数据",
+        "回滚不会恢复已撤回的授权或重复执行任务"
+      ],
+      "verification": [
+        "在生产规模副本上演练升级失败及恢复",
+        "检查新旧服务短暂并存时API和事件处理"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-112",
+      "work_package": "W13",
+      "stage": "S3",
+      "title": "验证容量性能与故障恢复边界",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-026",
+        "AG-FR-031",
+        "AG-FR-064",
+        "AG-NFR-005",
+        "AG-NFR-006",
+        "AG-NFR-007"
+      ],
+      "acceptance_refs": [
+        "AG-AC-026",
+        "AG-AC-031",
+        "AG-AC-064"
+      ],
+      "dependencies": [
+        "DT-036",
+        "DT-047",
+        "DT-056",
+        "DT-107",
+        "DT-108",
+        "DT-109"
+      ],
+      "implementation": [
+        "固定基准环境、数据量、网络、缓存条件和并发，执行分层压测",
+        "测试10万地块每租户、20并发会话和5000万像元分块等目标场景",
+        "报告吞吐、p95、资源峰值和失败恢复，不以解除上限代替扩展验证"
+      ],
+      "deliverables": [
+        "容量和性能测试配置",
+        "实测容量边界与优化记录"
+      ],
+      "acceptance": [
+        "常见查询p95小于2秒、任务提交p95小于1秒和受控地图交互小于3秒作为验收目标",
+        "超容量请求可解释拒绝且不影响其它租户"
+      ],
+      "verification": [
+        "在约定8vCPU/32GB/SSD等基准假设环境实测并记录差异",
+        "同时进行Worker被杀、对象失败和数据库短暂不可用注入"
+      ],
+      "blockers": [
+        "目标硬件或足量授权数据缺失时容量结论保留未验证，不能推算生产SLA"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-113",
+      "work_package": "W14",
+      "stage": "S3",
+      "title": "完成需求任务和接口覆盖检查",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-080",
+        "AG-NFR-011",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-080"
+      ],
+      "dependencies": [
+        "DT-007",
+        "DT-084",
+        "DT-088",
+        "DT-091",
+        "DT-100"
+      ],
+      "implementation": [
+        "建立80项FR、20项NFR到任务、代码和验收证据的追踪关系",
+        "检查所有公开API、事件和工具schema与实现一致",
+        "区分首版S0至S3与S4/S5路线图，所有未完成项显式列出"
+      ],
+      "deliverables": [
+        "需求追踪及契约覆盖报告",
+        "未完成和例外清单"
+      ],
+      "acceptance": [
+        "每项首发需求可追踪到实现证据或明确的未完成状态；文档与空目录不能代替实现",
+        "任务完成状态与实际证据一致"
+      ],
+      "verification": [
+        "自动检查ID、依赖、引用和schema一致性",
+        "人工抽查关键需求从UI到数据库完整链路"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-114",
+      "work_package": "W14",
+      "stage": "S3",
+      "title": "执行全入口跨租户安全验收",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-005",
+        "AG-FR-006",
+        "AG-FR-047",
+        "AG-FR-053",
+        "AG-FR-077",
+        "AG-NFR-001",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-005",
+        "AG-AC-006",
+        "AG-AC-047",
+        "AG-AC-053",
+        "AG-AC-077"
+      ],
+      "dependencies": [
+        "DT-024",
+        "DT-088",
+        "DT-092",
+        "DT-103",
+        "DT-110",
+        "DT-113"
+      ],
+      "implementation": [
+        "对Web、Agent、CLI、MCP、下载、瓦片、缓存、SSE和Worker运行负例",
+        "真实PostgreSQL验证普通角色、RLS、连接池scope及系统角色边界",
+        "修复所有已确认越权路径并加入回归"
+      ],
+      "deliverables": [
+        "全入口安全验收记录",
+        "缺陷修复及回归证据"
+      ],
+      "acceptance": [
+        "跨租户和对象越权负例全部通过",
+        "没有用SQLite或mock替代PostgreSQL策略验证"
+      ],
+      "verification": [
+        "两租户相同业务编号与相同空间范围并发测试",
+        "检验服务令牌撤销、过期及缺失scope"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-115",
+      "work_package": "W14",
+      "stage": "S3",
+      "title": "执行几何遥感正确性验收",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-013",
+        "AG-FR-018",
+        "AG-FR-019",
+        "AG-FR-034",
+        "AG-FR-035",
+        "AG-FR-036",
+        "AG-FR-038",
+        "AG-NFR-003",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-013",
+        "AG-AC-018",
+        "AG-AC-019",
+        "AG-AC-034",
+        "AG-AC-035",
+        "AG-AC-036",
+        "AG-AC-038"
+      ],
+      "dependencies": [
+        "DT-063",
+        "DT-113"
+      ],
+      "implementation": [
+        "运行冻结样本的坐标、面积、scale/offset、mask和NDVI真值检查",
+        "检验变化候选与地块统计在数据不足和物候变化场景的解释",
+        "归档算法版本、参数、数值容差和原始输出"
+      ],
+      "deliverables": [
+        "科学正确性验收报告",
+        "不可用场景及产品限制清单"
+      ],
+      "acceptance": [
+        "关键数值与独立参考结果符合声明容差",
+        "不把截图正确当成计算正确"
+      ],
+      "verification": [
+        "复跑黄金样本并对超差逐例分析",
+        "人工核查首发结论是否超出数据支持范围"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-116",
+      "work_package": "W14",
+      "stage": "S3",
+      "title": "执行作业幂等与恢复故障验收",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-031",
+        "AG-FR-032",
+        "AG-FR-033",
+        "AG-NFR-004",
+        "AG-NFR-005",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-031",
+        "AG-AC-032",
+        "AG-AC-033"
+      ],
+      "dependencies": [
+        "DT-052",
+        "DT-053",
+        "DT-054",
+        "DT-055",
+        "DT-056",
+        "DT-113"
+      ],
+      "implementation": [
+        "在领取、计算、对象写入、DB提交、Outbox和消费各边界注入故障",
+        "验证重复事件、旧Worker、取消成功竞态和多次重试",
+        "检查所有任务最终有可解释终态或显式待处理状态"
+      ],
+      "deliverables": [
+        "故障注入矩阵及日志证据",
+        "恢复与重驱运行手册验证"
+      ],
+      "acceptance": [
+        "不丢任务、不重复有效成果、不允许过期Worker覆盖",
+        "未知结果保持待确认，不能假装失败后盲目重跑"
+      ],
+      "verification": [
+        "逐点恢复并核对任务、对象和平台投影",
+        "使用真实数据库及对象存储环境验证"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-117",
+      "work_package": "W14",
+      "stage": "S3",
+      "title": "执行Agent证据与农学效果评测",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-046",
+        "AG-FR-047",
+        "AG-FR-048",
+        "AG-FR-049",
+        "AG-FR-050",
+        "AG-FR-055",
+        "AG-FR-056",
+        "AG-NFR-016",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-046",
+        "AG-AC-047",
+        "AG-AC-048",
+        "AG-AC-049",
+        "AG-AC-050",
+        "AG-AC-055",
+        "AG-AC-056"
+      ],
+      "dependencies": [
+        "DT-080",
+        "DT-084",
+        "DT-085",
+        "DT-086",
+        "DT-087",
+        "DT-095",
+        "DT-113"
+      ],
+      "implementation": [
+        "冻结模型、提示、技能、工具schema和评测数据版本",
+        "覆盖工具选择、引用忠实、数值一致、拒答、越权及提示注入",
+        "对真实农场场景记录专家判断及误报漏报，分开接口通过与效果达标"
+      ],
+      "deliverables": [
+        "Agent评测逐例记录",
+        "农场效果评测与整改报告"
+      ],
+      "acceptance": [
+        "高风险无依据结论和权限绕过为阻断项",
+        "无法验证的产量、病害和处方能力保持不可承诺"
+      ],
+      "verification": [
+        "使用真实模型运行并人工复核关键样本",
+        "对失败样本修复后复测且保留旧结果"
+      ],
+      "blockers": [
+        "真实模型路由和农学审阅人员需可用；否则效果评测标blocked_external"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-118",
+      "work_package": "W14",
+      "stage": "S3",
+      "title": "执行费用守恒及支付回调验收",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-057",
+        "AG-FR-058",
+        "AG-FR-059",
+        "AG-FR-060",
+        "AG-FR-061",
+        "AG-FR-062",
+        "AG-NFR-017",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-057",
+        "AG-AC-058",
+        "AG-AC-059",
+        "AG-AC-060",
+        "AG-AC-061",
+        "AG-AC-062"
+      ],
+      "dependencies": [
+        "DT-098",
+        "DT-099",
+        "DT-100",
+        "DT-101",
+        "DT-102",
+        "DT-104",
+        "DT-113"
+      ],
+      "implementation": [
+        "覆盖预算预留、任务失败、部分消费、取消、退款和对账",
+        "并发重复发送用量、支付及provider回调，验证账本唯一性",
+        "核对套餐权益和实际到账，区分沙箱、manual_invoice和真实在线支付证据"
+      ],
+      "deliverables": [
+        "费用不变量测试及账本快照",
+        "已验证收费模式清单"
+      ],
+      "acceptance": [
+        "所有账务调整可审计且余额守恒",
+        "未验证支付模式不会出现在上线可用能力中"
+      ],
+      "verification": [
+        "运行并发、崩溃恢复和迟到回调用例",
+        "由独立复核者核验真实试点账单"
+      ],
+      "blockers": [
+        "真实扣款和退款需明确授权；可先完成无真实资金的接口及账本测试"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-119",
+      "work_package": "W14",
+      "stage": "S3",
+      "title": "完成浏览器移动和可访问性验收",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-023",
+        "AG-FR-030",
+        "AG-FR-040",
+        "AG-FR-041",
+        "AG-FR-067",
+        "AG-NFR-012",
+        "AG-NFR-013",
+        "AG-NFR-014"
+      ],
+      "acceptance_refs": [
+        "AG-AC-023",
+        "AG-AC-030",
+        "AG-AC-040",
+        "AG-AC-041",
+        "AG-AC-067"
+      ],
+      "dependencies": [
+        "DT-033",
+        "DT-035",
+        "DT-037",
+        "DT-038",
+        "DT-039",
+        "DT-040",
+        "DT-067",
+        "DT-087",
+        "DT-090",
+        "DT-113"
+      ],
+      "implementation": [
+        "桌面验证主流Chromium和至少一种非Chromium，移动覆盖真实Android/iOS能力",
+        "检查键盘、焦点、标签、地图表格替代及非颜色状态信息",
+        "验证UTC与业务时区、面积单位、长表中文和错误提示"
+      ],
+      "deliverables": [
+        "跨端兼容和可访问性报告",
+        "已知降级行为说明"
+      ],
+      "acceptance": [
+        "核心流程可通过可读表单和表格完成",
+        "不支持GPS或3D设备有明确退化路径"
+      ],
+      "verification": [
+        "实机执行登录、采集、弱网补传和报告查看",
+        "验证跨日及夏令时地区时间与亩公顷转换"
+      ],
+      "blockers": [
+        "缺少指定真实设备时对应兼容项保持未验证，模拟器结果单列"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-120",
+      "work_package": "W14",
+      "stage": "S3",
+      "title": "完成真实客户端到端UAT",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-039",
+        "AG-FR-042",
+        "AG-FR-043",
+        "AG-FR-051",
+        "AG-FR-080",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-039",
+        "AG-AC-042",
+        "AG-AC-043",
+        "AG-AC-051",
+        "AG-AC-080"
+      ],
+      "dependencies": [
+        "DT-064",
+        "DT-072",
+        "DT-096",
+        "DT-114",
+        "DT-115",
+        "DT-116",
+        "DT-117",
+        "DT-118",
+        "DT-119",
+        "DT-121"
+      ],
+      "implementation": [
+        "由客户角色完成入场、建农场、导地块、处理影像、Agent分析和现场复核",
+        "完成报告审核交付和实际获准收费路径",
+        "记录发现的问题、客户签认和不能满足的限制"
+      ],
+      "deliverables": [
+        "真实UAT记录及问题关闭证据",
+        "首发验收结论"
+      ],
+      "acceptance": [
+        "至少一个真实业务闭环完成且不是由开发者假扮全部角色",
+        "所有阻断缺陷关闭，未验收项明确阻塞商用发布"
+      ],
+      "verification": [
+        "按冻结UAT脚本逐步核对产物及审计",
+        "复测整改缺陷并保留前后证据"
+      ],
+      "blockers": [
+        "需真实客户、获准数据、审核角色与已选收费方式，未就绪不得标完成"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-121",
+      "work_package": "W15",
+      "stage": "S1",
+      "title": "完善客户初始化与首个农场引导",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-063",
+        "AG-FR-007",
+        "AG-FR-001",
+        "AG-NFR-012",
+        "AG-NFR-013"
+      ],
+      "acceptance_refs": [
+        "AG-AC-063",
+        "AG-AC-007",
+        "AG-AC-001"
+      ],
+      "dependencies": [
+        "DT-010",
+        "DT-025",
+        "DT-030",
+        "DT-033",
+        "DT-041"
+      ],
+      "implementation": [
+        "提供新租户空状态、成员邀请和首个农场导入向导",
+        "演示沙箱与正式工作区分离，演示产物不能用于正式结算或报告",
+        "向导逐项显示坐标、数据许可、种植季及上传错误处理"
+      ],
+      "deliverables": [
+        "客户入门流程与帮助内容",
+        "演示数据隔离和清理入口"
+      ],
+      "acceptance": [
+        "新客户不依赖开发者修改数据库即可完成首次导入",
+        "演示内容始终标记且不能被升级为正式事实"
+      ],
+      "verification": [
+        "使用空租户完成入门流程",
+        "验证向导中断恢复及错误数据修复"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-122",
+      "work_package": "W15",
+      "stage": "S3",
+      "title": "完成商用产物与授权发布检查",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-015",
+        "AG-FR-060",
+        "AG-FR-068",
+        "AG-FR-080",
+        "AG-NFR-002",
+        "AG-NFR-010"
+      ],
+      "acceptance_refs": [
+        "AG-AC-015",
+        "AG-AC-060",
+        "AG-AC-068",
+        "AG-AC-080"
+      ],
+      "dependencies": [
+        "DT-003",
+        "DT-101",
+        "DT-105",
+        "DT-107",
+        "DT-114"
+      ],
+      "implementation": [
+        "核对最终镜像SBOM、第三方通知、地图来源和模型及数据权利",
+        "确认已选择且验收过的收费路径，其它收费入口保持禁用",
+        "检查正式配置没有样例口令、开发旁路、未授权tldraw路径和公共私有桶"
+      ],
+      "deliverables": [
+        "发布产物许可及配置审查",
+        "允许上线功能和外部依赖清单"
+      ],
+      "acceptance": [
+        "每个上线依赖都有合法且适用的配置或授权依据",
+        "功能开关与实际上线界面一致"
+      ],
+      "verification": [
+        "对实际候选镜像和静态产物检查",
+        "审查用户可触达的外部服务及收费入口"
+      ],
+      "blockers": [
+        "需实际上线域名、数据服务及商业授权材料；缺失项对应功能关闭或阻塞发布"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-123",
+      "work_package": "W15",
+      "stage": "S3",
+      "title": "演练真实升级数据迁移和回退",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-014",
+        "AG-FR-065",
+        "AG-FR-080",
+        "AG-NFR-009",
+        "AG-NFR-019"
+      ],
+      "acceptance_refs": [
+        "AG-AC-014",
+        "AG-AC-065",
+        "AG-AC-080"
+      ],
+      "dependencies": [
+        "DT-109",
+        "DT-111",
+        "DT-120",
+        "DT-122"
+      ],
+      "implementation": [
+        "在客户授权副本或等价数据集上执行完整迁移和验证",
+        "确定切换窗口、回退触发条件、兼容版本及恢复责任",
+        "演练失败回退并核对任务、文件引用和账本未重复"
+      ],
+      "deliverables": [
+        "迁移切换与回退执行手册",
+        "演练记录及实际恢复时长"
+      ],
+      "acceptance": [
+        "发布前存在实际可执行的回退方案",
+        "未通过迁移验证不能直接在生产库尝试"
+      ],
+      "verification": [
+        "按手册独立执行一次升级和回退",
+        "比较关键数据数量、hash和余额"
+      ],
+      "blockers": [
+        "真实生产数据迁移需用户提供授权副本及切换计划"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-124",
+      "work_package": "W15",
+      "stage": "S3",
+      "title": "准备受限发布与部署执行",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-080",
+        "AG-FR-064",
+        "AG-FR-068",
+        "AG-NFR-010",
+        "AG-NFR-005"
+      ],
+      "acceptance_refs": [
+        "AG-AC-080",
+        "AG-AC-064",
+        "AG-AC-068"
+      ],
+      "dependencies": [
+        "DT-107",
+        "DT-108",
+        "DT-112",
+        "DT-120",
+        "DT-122",
+        "DT-123"
+      ],
+      "implementation": [
+        "形成具体可审查的域名、网络、资源、费用和回退部署计划",
+        "先在获准受限环境发布并验证健康检查、日志及关键业务",
+        "公网开放、付费资源开通和客户通知按用户明确授权执行"
+      ],
+      "deliverables": [
+        "候选发布版本及部署计划",
+        "部署记录和上线验证结果"
+      ],
+      "acceptance": [
+        "所有上线修改可追溯到固定产物与配置",
+        "未获公网或付费授权时记录阻塞，不擅自执行"
+      ],
+      "verification": [
+        "执行部署后登录、资源隔离、任务及报告冒烟",
+        "验证健康失败时回退路径"
+      ],
+      "blockers": [
+        "公网部署、付费资源与外部客户通知需具体授权；可先完成本地及已授权受限环境验证"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-125",
+      "work_package": "W15",
+      "stage": "S3",
+      "title": "开展获准真实付费试点",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-080",
+        "AG-FR-059",
+        "AG-FR-062",
+        "AG-FR-079",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-080",
+        "AG-AC-059",
+        "AG-AC-062",
+        "AG-AC-079"
+      ],
+      "dependencies": [
+        "DT-104",
+        "DT-103",
+        "DT-120",
+        "DT-124"
+      ],
+      "implementation": [
+        "选择明确客户、农场、时间范围、支持责任和收费方式",
+        "记录真实使用频次、分析成功率、误报反馈和单位服务成本",
+        "收集实际付费与交付反馈，保持试点限制和未支持能力透明"
+      ],
+      "deliverables": [
+        "付费试点方案及执行记录",
+        "客户反馈和成本复盘"
+      ],
+      "acceptance": [
+        "有真实客户使用、交付及获准付款证据",
+        "没有把测试账号活跃或沙箱支付算作商业验证"
+      ],
+      "verification": [
+        "对照订单、用量、报告交付与用户反馈",
+        "复核反馈问题的整改和再验证"
+      ],
+      "blockers": [
+        "需明确客户、数据授权及真实收费授权，条件不足保持blocked_external"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-126",
+      "work_package": "W15",
+      "stage": "S3",
+      "title": "完成首个商用版本发布门禁",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-080",
+        "AG-FR-056",
+        "AG-FR-060",
+        "AG-FR-065",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-080",
+        "AG-AC-056",
+        "AG-AC-060",
+        "AG-AC-065"
+      ],
+      "dependencies": [
+        "DT-113",
+        "DT-114",
+        "DT-115",
+        "DT-116",
+        "DT-117",
+        "DT-118",
+        "DT-119",
+        "DT-120",
+        "DT-122",
+        "DT-123",
+        "DT-124",
+        "DT-125",
+        "DT-127"
+      ],
+      "implementation": [
+        "汇总S0至S3全部必需需求和已执行验收证据",
+        "区分已完成、blocked_external和不在首版范围的S4/S5能力",
+        "确认安全、账务、恢复、真实数据和客户试点阻断项全部满足后标商用就绪"
+      ],
+      "deliverables": [
+        "发布门禁结论和支持范围",
+        "版本发布说明及剩余路线图"
+      ],
+      "acceptance": [
+        "不能用整体完成百分比掩盖关键阻断项",
+        "所有对外能力声明与实际验收范围一致"
+      ],
+      "verification": [
+        "按验收矩阵逐条核对代码、环境、证据和状态",
+        "独立复核所有付费、数据和访问边界条件"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-127",
+      "work_package": "W15",
+      "stage": "S3",
+      "title": "交付开发运维客户使用文档",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-077",
+        "AG-FR-078",
+        "AG-FR-079",
+        "AG-FR-080",
+        "AG-NFR-011"
+      ],
+      "acceptance_refs": [
+        "AG-AC-077",
+        "AG-AC-078",
+        "AG-AC-079",
+        "AG-AC-080"
+      ],
+      "dependencies": [
+        "DT-088",
+        "DT-103",
+        "DT-106",
+        "DT-108",
+        "DT-109",
+        "DT-110",
+        "DT-123"
+      ],
+      "implementation": [
+        "交付本地开发、部署升级、备份恢复、故障排查及费用对账手册",
+        "提供客户入门、地图分析、现场采集、报告和Agent使用说明",
+        "保存API/CLI/MCP版本化示例和新Agent接手时的状态及证据索引"
+      ],
+      "deliverables": [
+        "开发运维和客户文档",
+        "接手提示词、版本说明及证据目录"
+      ],
+      "acceptance": [
+        "其它开发者能定位当前状态与下一任务",
+        "文档命令和接口示例基于实际实现，不留伪装可用占位符"
+      ],
+      "verification": [
+        "由未参与核心实现的人按文档完成一个流程",
+        "校验文档链接、命令、错误处理与实际版本一致"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-128",
+      "work_package": "W15",
+      "stage": "S3",
+      "title": "建立上线后质量成本与反馈维护流程",
+      "priority": "P1",
+      "requirements": [
+        "AG-FR-064",
+        "AG-FR-079",
+        "AG-FR-080",
+        "AG-NFR-005",
+        "AG-NFR-008",
+        "AG-NFR-017"
+      ],
+      "acceptance_refs": [
+        "AG-AC-064",
+        "AG-AC-079",
+        "AG-AC-080"
+      ],
+      "dependencies": [
+        "DT-108",
+        "DT-125",
+        "DT-126",
+        "DT-127"
+      ],
+      "implementation": [
+        "建立缺陷分级、数据事故、费用异常和客户反馈处理入口",
+        "定期复核来源可用性、模型质量、成本与权限策略的执行方法",
+        "定义补丁发布回归范围及后续S4/S5进入条件，记录责任和证据"
+      ],
+      "deliverables": [
+        "运行维护及变更流程",
+        "后续需求与问题队列"
+      ],
+      "acceptance": [
+        "新增需求不会绕过既有租户安全及计费门禁",
+        "运维事件能形成可追溯处置和必要回归"
+      ],
+      "verification": [
+        "模拟一次来源中断与一次错误报告的处理",
+        "验证补丁回滚和客户问题跟踪流程"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-129",
+      "work_package": "W16",
+      "stage": "S4",
+      "title": "建立设备站点注册与独立身份",
+      "priority": "P2",
+      "requirements": [
+        "AG-FR-069",
+        "AG-FR-007",
+        "AG-NFR-001",
+        "AG-NFR-002"
+      ],
+      "acceptance_refs": [
+        "AG-AC-069",
+        "AG-AC-007"
+      ],
+      "dependencies": [
+        "DT-126",
+        "DT-025",
+        "DT-071"
+      ],
+      "implementation": [
+        "设备绑定租户、农场、站点、厂商、型号和序列号",
+        "每设备独立凭据，支持轮换、吊销及最小范围权限",
+        "记录传感指标、单位、校准和安装位置版本"
+      ],
+      "deliverables": [
+        "设备站点模型接口及管理页面",
+        "设备凭据生命周期"
+      ],
+      "acceptance": [
+        "一个设备不能向其它农场写观测",
+        "吊销凭据后新遥测请求被拒绝"
+      ],
+      "verification": [
+        "测试冒用序列号、跨租户设备和旧凭据",
+        "记录至少一个真实设备注册结果"
+      ],
+      "blockers": [
+        "真实设备接入验收需设备及厂商协议；模拟设备只作接口验证"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-130",
+      "work_package": "W16",
+      "stage": "S4",
+      "title": "实现遥测接入去重及离线补传",
+      "priority": "P2",
+      "requirements": [
+        "AG-FR-070",
+        "AG-FR-069",
+        "AG-NFR-004",
+        "AG-NFR-007"
+      ],
+      "acceptance_refs": [
+        "AG-AC-070",
+        "AG-AC-069"
+      ],
+      "dependencies": [
+        "DT-129"
+      ],
+      "implementation": [
+        "按首批设备需要实现HTTP或MQTT适配器，避免无依据全协议开发",
+        "按设备事件ID或序号去重，保留设备时间和接收时间",
+        "处理断线补传、迟到、乱序、异常单位及质量标志"
+      ],
+      "deliverables": [
+        "遥测网关和设备适配器",
+        "原始事件及质量处理"
+      ],
+      "acceptance": [
+        "重复或乱序上报不会重复统计或覆盖较新状态",
+        "不可信设备时间被标识并保留原始值"
+      ],
+      "verification": [
+        "模拟长时间离线后批量补传及凭据撤销",
+        "实机对照上报数量、原始时间和记录hash"
+      ],
+      "blockers": [
+        "真实设备、网络及协议文档不可用时live接入阻塞"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-131",
+      "work_package": "W16",
+      "stage": "S4",
+      "title": "建立观测时序存储与质量版本",
+      "priority": "P2",
+      "requirements": [
+        "AG-FR-071",
+        "AG-FR-070",
+        "AG-NFR-003",
+        "AG-NFR-015"
+      ],
+      "acceptance_refs": [
+        "AG-AC-071",
+        "AG-AC-070"
+      ],
+      "dependencies": [
+        "DT-130",
+        "DT-046"
+      ],
+      "implementation": [
+        "统一遥感与传感观测索引，保持测量单位和来源差异",
+        "按测量时间存储并记录接收时间、校准版本、质量及更正历史",
+        "按规模选择PostgreSQL分区和必要索引，先测后引新时序组件"
+      ],
+      "deliverables": [
+        "观测时序模型和查询API",
+        "分区保留及更正规则"
+      ],
+      "acceptance": [
+        "更正不会无痕覆盖原始测量",
+        "设备单位与地块分析单位转换可追溯"
+      ],
+      "verification": [
+        "测试迟到、更正、坏值和跨日时序",
+        "核查保留策略不会删除仍被报告引用的数据"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-132",
+      "work_package": "W16",
+      "stage": "S4",
+      "title": "实现对象状态汇总与历史回放",
+      "priority": "P2",
+      "requirements": [
+        "AG-FR-071",
+        "AG-FR-027",
+        "AG-FR-028",
+        "AG-NFR-003",
+        "AG-NFR-014"
+      ],
+      "acceptance_refs": [
+        "AG-AC-071",
+        "AG-AC-027",
+        "AG-AC-028"
+      ],
+      "dependencies": [
+        "DT-131",
+        "DT-037",
+        "DT-038"
+      ],
+      "implementation": [
+        "将农场、地块、设备状态关联到持续身份及有效版本",
+        "状态汇总显示最后观测时间和数据过期，区分实时与历史",
+        "回放按当时边界、设备关系和质量版本读取，预测另层展示"
+      ],
+      "deliverables": [
+        "状态汇总及历史快照",
+        "观测回放地图与曲线"
+      ],
+      "acceptance": [
+        "离线设备不会持续显示正常实时状态",
+        "历史回放不混入未来观测或新边界"
+      ],
+      "verification": [
+        "测试地块分割、设备迁移和迟到数据",
+        "核对某历史时间点状态可由原始事件重建"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-133",
+      "work_package": "W16",
+      "stage": "S4",
+      "title": "实现规则告警抑制及通知闭环",
+      "priority": "P2",
+      "requirements": [
+        "AG-FR-072",
+        "AG-FR-070",
+        "AG-FR-039",
+        "AG-NFR-004",
+        "AG-NFR-008"
+      ],
+      "acceptance_refs": [
+        "AG-AC-072",
+        "AG-AC-070",
+        "AG-AC-039"
+      ],
+      "dependencies": [
+        "DT-130",
+        "DT-131",
+        "DT-065",
+        "DT-070"
+      ],
+      "implementation": [
+        "规则定义阈值、持续时间、恢复条件和抑制窗口并版本化",
+        "按对象和事件去重，区分设备离线、数据异常及业务风险",
+        "送达回执、确认、升级和处置关联工单"
+      ],
+      "deliverables": [
+        "规则引擎与告警状态机",
+        "告警管理和反馈页面"
+      ],
+      "acceptance": [
+        "信号抖动不造成无限重复告警",
+        "没有送达回执或确认时状态如实显示"
+      ],
+      "verification": [
+        "测试迟到数据、阈值来回波动和规则中途升级",
+        "向明确获准接收人执行真实通知验证"
+      ],
+      "blockers": [
+        "真实通知通道和接收人需明确授权"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-134",
+      "work_package": "W16",
+      "stage": "S4",
+      "title": "接入持续观测Agent与周期解释",
+      "priority": "P2",
+      "requirements": [
+        "AG-FR-046",
+        "AG-FR-071",
+        "AG-FR-072",
+        "AG-FR-055",
+        "AG-NFR-016"
+      ],
+      "acceptance_refs": [
+        "AG-AC-046",
+        "AG-AC-071",
+        "AG-AC-072",
+        "AG-AC-055"
+      ],
+      "dependencies": [
+        "DT-081",
+        "DT-084",
+        "DT-087",
+        "DT-132",
+        "DT-133"
+      ],
+      "implementation": [
+        "为Agent新增设备状态和时序摘要只读工具",
+        "对近期数据质量、异常和告警形成带来源解释",
+        "生成巡查建议仍走审批，不允许模型将观测解释直接转设备控制"
+      ],
+      "deliverables": [
+        "持续监测工具及技能更新",
+        "观测解释与告警地图联动"
+      ],
+      "acceptance": [
+        "Agent能够明确区分新观测、迟到数据及预测",
+        "解释不能越过现有资源、预算和审批范围"
+      ],
+      "verification": [
+        "用缺测、设备故障与真实异常对照评测",
+        "测试提示注入诱导设备控制被拒绝"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-135",
+      "work_package": "W16",
+      "stage": "S4",
+      "title": "验证设备规模和时间序列恢复",
+      "priority": "P2",
+      "requirements": [
+        "AG-FR-070",
+        "AG-FR-071",
+        "AG-FR-072",
+        "AG-NFR-005",
+        "AG-NFR-006",
+        "AG-NFR-007"
+      ],
+      "acceptance_refs": [
+        "AG-AC-070",
+        "AG-AC-071",
+        "AG-AC-072"
+      ],
+      "dependencies": [
+        "DT-130",
+        "DT-131",
+        "DT-132",
+        "DT-133",
+        "DT-134"
+      ],
+      "implementation": [
+        "按试点实际设备数、上报频率和断网积压建立容量模型",
+        "测试突发补传、并发连接、分区查询和告警处理",
+        "保留数据丢失率、去重率、时延和恢复证据，不声明未经测试的万台能力"
+      ],
+      "deliverables": [
+        "设备与时序容量报告",
+        "恢复及扩容运行手册"
+      ],
+      "acceptance": [
+        "约定负载下数据可完整对账且队列可恢复",
+        "超负载有明确限流和缓冲策略"
+      ],
+      "verification": [
+        "仿真负载与真实设备样本分开报告",
+        "执行网关重启、断网补传及数据库维护演练"
+      ],
+      "blockers": [
+        "设备规模与网络条件由试点确认，不能由单设备结果外推"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-136",
+      "work_package": "W16",
+      "stage": "S4",
+      "title": "完成持续监测现场验收",
+      "priority": "P2",
+      "requirements": [
+        "AG-FR-069",
+        "AG-FR-070",
+        "AG-FR-071",
+        "AG-FR-072",
+        "AG-FR-080",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-069",
+        "AG-AC-070",
+        "AG-AC-071",
+        "AG-AC-072",
+        "AG-AC-080"
+      ],
+      "dependencies": [
+        "DT-129",
+        "DT-130",
+        "DT-131",
+        "DT-132",
+        "DT-133",
+        "DT-134",
+        "DT-135"
+      ],
+      "implementation": [
+        "在获准农场连续运行设备观测、地图回放、告警及人工反馈",
+        "核对设备原始记录和平台记录的数量、时间及质量",
+        "记录设备维护责任、数据缺口与用户实际处理效果"
+      ],
+      "deliverables": [
+        "S4现场运行证据",
+        "持续监测阶段验收结论"
+      ],
+      "acceptance": [
+        "现场观测与数字对象映射可持续维护",
+        "模拟数据不被当成真实农场持续运行证明"
+      ],
+      "verification": [
+        "抽样复核设备读数与平台时序",
+        "由现场人员验证告警及处置闭环"
+      ],
+      "blockers": [
+        "需现场设备、安装网络和负责人员；条件未就绪保持blocked_external"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-137",
+      "work_package": "W17",
+      "stage": "S5",
+      "title": "建立农学模型注册与适用条件",
+      "priority": "P2",
+      "requirements": [
+        "AG-FR-073",
+        "AG-FR-015",
+        "AG-FR-038",
+        "AG-NFR-002",
+        "AG-NFR-003"
+      ],
+      "acceptance_refs": [
+        "AG-AC-073",
+        "AG-AC-015",
+        "AG-AC-038"
+      ],
+      "dependencies": [
+        "DT-126",
+        "DT-063",
+        "DT-095"
+      ],
+      "implementation": [
+        "登记模型代码权重数据许可、版本、输入单位和计算需求",
+        "定义适用地区、作物、生育期、数据要求及限制",
+        "将实验模型与可用于实际决策的已验证模型分开"
+      ],
+      "deliverables": [
+        "模型注册表及模型卡",
+        "适用性校验和启用流程"
+      ],
+      "acceptance": [
+        "模型文件存在不等于已完成有效性验证",
+        "权利或适用条件不明的模型不能进入正式建议路径"
+      ],
+      "verification": [
+        "验证错作物、错区域及缺少输入时拒绝",
+        "核对模型权重和参数版本hash"
+      ],
+      "blockers": [
+        "选定模型和相关数据权利需核实，未就绪可完成注册框架"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-138",
+      "work_package": "W17",
+      "stage": "S5",
+      "title": "完成真实数据校准与独立评估",
+      "priority": "P2",
+      "requirements": [
+        "AG-FR-073",
+        "AG-FR-056",
+        "AG-NFR-003",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-073",
+        "AG-AC-056"
+      ],
+      "dependencies": [
+        "DT-131",
+        "DT-137"
+      ],
+      "implementation": [
+        "按农场、年份或空间划分训练验证集，防止近邻或同季泄漏",
+        "定义简单基准、误差指标及专家确认的通过条件",
+        "记录校准过程、数据版本和失败场景，不用同一数据自证效果"
+      ],
+      "deliverables": [
+        "校准及独立评估流程",
+        "模型效果报告和适用范围"
+      ],
+      "acceptance": [
+        "模型改进相对明确基准且有独立验证",
+        "没有足够真值时只标实验，不能宣传准确产量或病害预测"
+      ],
+      "verification": [
+        "复核样本拆分和数据泄漏",
+        "用未参与训练的真实地块或时段评估"
+      ],
+      "blockers": [
+        "需真实标注数据、时间跨度及农学专家；不足时模型效果验收阻塞"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-139",
+      "work_package": "W17",
+      "stage": "S5",
+      "title": "实现带不确定性的预测结果",
+      "priority": "P2",
+      "requirements": [
+        "AG-FR-074",
+        "AG-FR-073",
+        "AG-FR-055",
+        "AG-NFR-003"
+      ],
+      "acceptance_refs": [
+        "AG-AC-074",
+        "AG-AC-073",
+        "AG-AC-055"
+      ],
+      "dependencies": [
+        "DT-137",
+        "DT-138"
+      ],
+      "implementation": [
+        "预测任务冻结观测版本、模型、参数和预测时域",
+        "输出区间或明确误差说明，与实测值使用不同类型和图层",
+        "对超出训练适用范围或输入不足的情况拒绝确定输出"
+      ],
+      "deliverables": [
+        "预测任务及结果schema",
+        "预测地图和时序展示"
+      ],
+      "acceptance": [
+        "用户能辨识哪些是观测哪些是预测",
+        "相同输入模型版本可复现结果或声明随机性控制"
+      ],
+      "verification": [
+        "测试输入缺失、异常外推和模型版本变化",
+        "核对预测区间解释与评估证据一致"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-140",
+      "work_package": "W17",
+      "stage": "S5",
+      "title": "实现情景假设及方案比较",
+      "priority": "P2",
+      "requirements": [
+        "AG-FR-074",
+        "AG-FR-058",
+        "AG-FR-059",
+        "AG-NFR-003",
+        "AG-NFR-017"
+      ],
+      "acceptance_refs": [
+        "AG-AC-074",
+        "AG-AC-058",
+        "AG-AC-059"
+      ],
+      "dependencies": [
+        "DT-139",
+        "DT-098",
+        "DT-100"
+      ],
+      "implementation": [
+        "用户显式设置情景假设并保留基准观测和参数差异",
+        "模拟任务按预计计算资源预算，避免Agent无界批量试算",
+        "比较结果显示假设、误差、适用条件及成本，不把情景值称为事实"
+      ],
+      "deliverables": [
+        "情景配置与比较界面",
+        "模拟任务及预算计量"
+      ],
+      "acceptance": [
+        "方案差异能追溯到输入假设与模型版本",
+        "超预算情景在执行前被阻断"
+      ],
+      "verification": [
+        "验证不合法假设、同场景重试及多方案对比",
+        "独立核查场景输出标签和费用"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-141",
+      "work_package": "W17",
+      "stage": "S5",
+      "title": "建立决策建议与人工执行计划",
+      "priority": "P2",
+      "requirements": [
+        "AG-FR-075",
+        "AG-FR-044",
+        "AG-FR-050",
+        "AG-NFR-003",
+        "AG-NFR-016"
+      ],
+      "acceptance_refs": [
+        "AG-AC-075",
+        "AG-AC-044",
+        "AG-AC-050"
+      ],
+      "dependencies": [
+        "DT-071",
+        "DT-086",
+        "DT-139",
+        "DT-140"
+      ],
+      "implementation": [
+        "把模型和观测依据转为可审阅建议及人工执行计划",
+        "保存对象、条件、单位、实施窗口和适用限制，关键农学参数由验证模型或专家确定",
+        "执行前需要具体批准，未批准建议不成为已实施作业"
+      ],
+      "deliverables": [
+        "建议和人工计划模型",
+        "建议审核及执行反馈界面"
+      ],
+      "acceptance": [
+        "LLM不能自行编造现场处方参数并直接执行",
+        "用户能看到建议依据和风险条件"
+      ],
+      "verification": [
+        "测试来源不足、单位错误、过期模型及参数变更",
+        "核查批准绑定计划版本并限制重放"
+      ],
+      "blockers": [],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-142",
+      "work_package": "W17",
+      "stage": "S5",
+      "title": "验证干预效果误报与业务收益",
+      "priority": "P2",
+      "requirements": [
+        "AG-FR-075",
+        "AG-FR-056",
+        "AG-NFR-003",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-075",
+        "AG-AC-056"
+      ],
+      "dependencies": [
+        "DT-138",
+        "DT-141",
+        "DT-071"
+      ],
+      "implementation": [
+        "预先定义效果指标、观测窗口及对照或可接受评估方法",
+        "记录实际执行、环境变化和后续观测，区分相关和因果",
+        "测量误报漏报、执行成本和客户价值，保留失败结果"
+      ],
+      "deliverables": [
+        "效果评估方案及数据集",
+        "实际决策效果报告"
+      ],
+      "acceptance": [
+        "收益结论有明确数据和评估方法",
+        "没有对照条件时不宣称已证明增产或节水因果效果"
+      ],
+      "verification": [
+        "由领域人员复核指标及样本选择",
+        "逐例追踪建议到作业到实际观测"
+      ],
+      "blockers": [
+        "需足够农时和现场执行结果，不能通过短期模拟替代"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-143",
+      "work_package": "W17",
+      "stage": "S5",
+      "title": "实现默认禁用的设备控制适配",
+      "priority": "P0",
+      "requirements": [
+        "AG-FR-076",
+        "AG-FR-069",
+        "AG-FR-050",
+        "AG-NFR-001",
+        "AG-NFR-016"
+      ],
+      "acceptance_refs": [
+        "AG-AC-076",
+        "AG-AC-069",
+        "AG-AC-050"
+      ],
+      "dependencies": [
+        "DT-129",
+        "DT-133",
+        "DT-141"
+      ],
+      "implementation": [
+        "仅为选定设备定义允许命令、范围、有效期和幂等回执",
+        "控制在独立适配层执行现场联锁、速率限额、手动接管和故障停止",
+        "生产功能默认关闭，启用必须获具体授权并经过现场演练；LLM无任意命令接口"
+      ],
+      "deliverables": [
+        "受控设备命令接口和dry-run模式",
+        "联锁、应急和授权运行手册"
+      ],
+      "acceptance": [
+        "没有明确批准和现场条件时不发送物理控制",
+        "重复请求或通信未知不能导致重复危险动作"
+      ],
+      "verification": [
+        "先做模拟器故障注入和断线回执测试",
+        "现场测试仅在获准设备及负责人员监督下执行"
+      ],
+      "blockers": [
+        "真实控制需用户单独授权、设备资料与现场安全条件；未满足保持禁用"
+      ],
+      "status": "not_started"
+    },
+    {
+      "id": "DT-144",
+      "work_package": "W17",
+      "stage": "S5",
+      "title": "完成预测决策阶段验收和能力声明",
+      "priority": "P2",
+      "requirements": [
+        "AG-FR-073",
+        "AG-FR-074",
+        "AG-FR-075",
+        "AG-FR-076",
+        "AG-FR-080",
+        "AG-NFR-020"
+      ],
+      "acceptance_refs": [
+        "AG-AC-073",
+        "AG-AC-074",
+        "AG-AC-075",
+        "AG-AC-076",
+        "AG-AC-080"
+      ],
+      "dependencies": [
+        "DT-136",
+        "DT-137",
+        "DT-138",
+        "DT-139",
+        "DT-140",
+        "DT-141",
+        "DT-142"
+      ],
+      "implementation": [
+        "分别汇总模型、预测、建议、现场效果和控制的证据级别",
+        "区分可生产、实验及默认禁用能力，更新对外范围和费用说明",
+        "确认S5数据条件及现场授权后才发布相应功能；若启用物理控制，额外要求DT-143真实授权现场验收完成，否则保持控制关闭"
+      ],
+      "deliverables": [
+        "S5验收报告及模型能力清单",
+        "后续校准和运行维护计划"
+      ],
+      "acceptance": [
+        "缺少农学或现场证据的能力不会因为界面存在被标完成",
+        "设备控制未获准时保持明确禁用，不阻塞无控制的已验收预测服务"
+      ],
+      "verification": [
+        "逐条核对验收矩阵与真实模型设备证据",
+        "由独立业务角色复核能力声明和限制"
+      ],
+      "blockers": [
+        "模型和现场效果存在实际农时及设备条件，未满足项如实阻塞对应能力发布"
+      ],
+      "status": "not_started"
+    }
+  ],
+  "topological_execution_order": [
+    "DT-001",
+    "DT-002",
+    "DT-003",
+    "DT-004",
+    "DT-005",
+    "DT-006",
+    "DT-007",
+    "DT-008",
+    "DT-009",
+    "DT-010",
+    "DT-011",
+    "DT-012",
+    "DT-013",
+    "DT-014",
+    "DT-015",
+    "DT-016",
+    "DT-017",
+    "DT-018",
+    "DT-019",
+    "DT-020",
+    "DT-021",
+    "DT-022",
+    "DT-023",
+    "DT-024",
+    "DT-025",
+    "DT-026",
+    "DT-027",
+    "DT-029",
+    "DT-031",
+    "DT-028",
+    "DT-030",
+    "DT-032",
+    "DT-033",
+    "DT-034",
+    "DT-035",
+    "DT-036",
+    "DT-039",
+    "DT-040",
+    "DT-041",
+    "DT-042",
+    "DT-043",
+    "DT-049",
+    "DT-050",
+    "DT-051",
+    "DT-044",
+    "DT-045",
+    "DT-046",
+    "DT-052",
+    "DT-053",
+    "DT-054",
+    "DT-047",
+    "DT-038",
+    "DT-048",
+    "DT-055",
+    "DT-056",
+    "DT-057",
+    "DT-058",
+    "DT-059",
+    "DT-037",
+    "DT-060",
+    "DT-061",
+    "DT-062",
+    "DT-063",
+    "DT-064",
+    "DT-065",
+    "DT-066",
+    "DT-067",
+    "DT-068",
+    "DT-069",
+    "DT-070",
+    "DT-071",
+    "DT-072",
+    "DT-073",
+    "DT-074",
+    "DT-075",
+    "DT-076",
+    "DT-077",
+    "DT-078",
+    "DT-079",
+    "DT-080",
+    "DT-081",
+    "DT-082",
+    "DT-083",
+    "DT-084",
+    "DT-085",
+    "DT-086",
+    "DT-087",
+    "DT-089",
+    "DT-090",
+    "DT-091",
+    "DT-092",
+    "DT-093",
+    "DT-094",
+    "DT-095",
+    "DT-096",
+    "DT-097",
+    "DT-098",
+    "DT-099",
+    "DT-100",
+    "DT-101",
+    "DT-102",
+    "DT-088",
+    "DT-103",
+    "DT-104",
+    "DT-105",
+    "DT-106",
+    "DT-107",
+    "DT-108",
+    "DT-109",
+    "DT-110",
+    "DT-111",
+    "DT-112",
+    "DT-113",
+    "DT-114",
+    "DT-115",
+    "DT-116",
+    "DT-117",
+    "DT-118",
+    "DT-119",
+    "DT-121",
+    "DT-120",
+    "DT-122",
+    "DT-123",
+    "DT-124",
+    "DT-125",
+    "DT-127",
+    "DT-126",
+    "DT-128",
+    "DT-129",
+    "DT-130",
+    "DT-131",
+    "DT-132",
+    "DT-133",
+    "DT-134",
+    "DT-135",
+    "DT-136",
+    "DT-137",
+    "DT-138",
+    "DT-139",
+    "DT-140",
+    "DT-141",
+    "DT-142",
+    "DT-143",
+    "DT-144"
+  ],
+  "requirement_to_tasks": {
+    "AG-FR-001": [
+      "DT-010",
+      "DT-016",
+      "DT-121"
+    ],
+    "AG-FR-002": [
+      "DT-009",
+      "DT-013",
+      "DT-015",
+      "DT-016"
+    ],
+    "AG-FR-003": [
+      "DT-010",
+      "DT-011",
+      "DT-016",
+      "DT-025",
+      "DT-065",
+      "DT-081"
+    ],
+    "AG-FR-004": [
+      "DT-010",
+      "DT-011",
+      "DT-013",
+      "DT-015",
+      "DT-016",
+      "DT-085"
+    ],
+    "AG-FR-005": [
+      "DT-002",
+      "DT-017",
+      "DT-018",
+      "DT-019",
+      "DT-020",
+      "DT-021",
+      "DT-022",
+      "DT-024",
+      "DT-075",
+      "DT-081",
+      "DT-114"
+    ],
+    "AG-FR-006": [
+      "DT-007",
+      "DT-011",
+      "DT-012",
+      "DT-013",
+      "DT-016",
+      "DT-017",
+      "DT-022",
+      "DT-024",
+      "DT-114"
+    ],
+    "AG-FR-007": [
+      "DT-025",
+      "DT-121",
+      "DT-129"
+    ],
+    "AG-FR-008": [
+      "DT-026",
+      "DT-028",
+      "DT-032",
+      "DT-035",
+      "DT-039",
+      "DT-068"
+    ],
+    "AG-FR-009": [
+      "DT-027",
+      "DT-059",
+      "DT-071"
+    ],
+    "AG-FR-010": [
+      "DT-028",
+      "DT-039"
+    ],
+    "AG-FR-011": [
+      "DT-027",
+      "DT-029"
+    ],
+    "AG-FR-012": [
+      "DT-030",
+      "DT-061",
+      "DT-092"
+    ],
+    "AG-FR-013": [
+      "DT-006",
+      "DT-030",
+      "DT-031",
+      "DT-035",
+      "DT-044",
+      "DT-063",
+      "DT-115"
+    ],
+    "AG-FR-014": [
+      "DT-001",
+      "DT-004",
+      "DT-025",
+      "DT-026",
+      "DT-032",
+      "DT-111",
+      "DT-123"
+    ],
+    "AG-FR-015": [
+      "DT-003",
+      "DT-030",
+      "DT-034",
+      "DT-041",
+      "DT-043",
+      "DT-073",
+      "DT-122",
+      "DT-137"
+    ],
+    "AG-FR-016": [
+      "DT-023",
+      "DT-042"
+    ],
+    "AG-FR-017": [
+      "DT-023",
+      "DT-043",
+      "DT-064"
+    ],
+    "AG-FR-018": [
+      "DT-044",
+      "DT-046",
+      "DT-051",
+      "DT-057",
+      "DT-115"
+    ],
+    "AG-FR-019": [
+      "DT-006",
+      "DT-043",
+      "DT-045",
+      "DT-058",
+      "DT-115"
+    ],
+    "AG-FR-020": [
+      "DT-007",
+      "DT-032",
+      "DT-041",
+      "DT-042",
+      "DT-044",
+      "DT-046",
+      "DT-054",
+      "DT-062",
+      "DT-066",
+      "DT-076",
+      "DT-089",
+      "DT-093"
+    ],
+    "AG-FR-021": [
+      "DT-020",
+      "DT-034",
+      "DT-047",
+      "DT-090"
+    ],
+    "AG-FR-022": [
+      "DT-041",
+      "DT-048",
+      "DT-076",
+      "DT-092",
+      "DT-094",
+      "DT-110"
+    ],
+    "AG-FR-023": [
+      "DT-014",
+      "DT-033",
+      "DT-119"
+    ],
+    "AG-FR-024": [
+      "DT-034",
+      "DT-036",
+      "DT-038",
+      "DT-047"
+    ],
+    "AG-FR-025": [
+      "DT-035",
+      "DT-060"
+    ],
+    "AG-FR-026": [
+      "DT-019",
+      "DT-036",
+      "DT-058",
+      "DT-082",
+      "DT-112"
+    ],
+    "AG-FR-027": [
+      "DT-037",
+      "DT-064",
+      "DT-087",
+      "DT-132"
+    ],
+    "AG-FR-028": [
+      "DT-038",
+      "DT-132"
+    ],
+    "AG-FR-029": [
+      "DT-026",
+      "DT-028",
+      "DT-039",
+      "DT-069",
+      "DT-086",
+      "DT-091"
+    ],
+    "AG-FR-030": [
+      "DT-040",
+      "DT-066",
+      "DT-072",
+      "DT-119"
+    ],
+    "AG-FR-031": [
+      "DT-002",
+      "DT-007",
+      "DT-022",
+      "DT-049",
+      "DT-050",
+      "DT-051",
+      "DT-055",
+      "DT-056",
+      "DT-064",
+      "DT-083",
+      "DT-112",
+      "DT-116"
+    ],
+    "AG-FR-032": [
+      "DT-049",
+      "DT-052",
+      "DT-053",
+      "DT-116"
+    ],
+    "AG-FR-033": [
+      "DT-049",
+      "DT-050",
+      "DT-052",
+      "DT-053",
+      "DT-054",
+      "DT-055",
+      "DT-116"
+    ],
+    "AG-FR-034": [
+      "DT-037",
+      "DT-057",
+      "DT-058",
+      "DT-063",
+      "DT-064",
+      "DT-082",
+      "DT-115"
+    ],
+    "AG-FR-035": [
+      "DT-037",
+      "DT-059",
+      "DT-063",
+      "DT-064",
+      "DT-115"
+    ],
+    "AG-FR-036": [
+      "DT-060",
+      "DT-115"
+    ],
+    "AG-FR-037": [
+      "DT-061"
+    ],
+    "AG-FR-038": [
+      "DT-045",
+      "DT-057",
+      "DT-059",
+      "DT-062",
+      "DT-063",
+      "DT-064",
+      "DT-115",
+      "DT-137"
+    ],
+    "AG-FR-039": [
+      "DT-065",
+      "DT-070",
+      "DT-072",
+      "DT-083",
+      "DT-120",
+      "DT-133"
+    ],
+    "AG-FR-040": [
+      "DT-066",
+      "DT-067",
+      "DT-068",
+      "DT-072",
+      "DT-119"
+    ],
+    "AG-FR-041": [
+      "DT-067",
+      "DT-072",
+      "DT-119"
+    ],
+    "AG-FR-042": [
+      "DT-068",
+      "DT-070",
+      "DT-071",
+      "DT-072",
+      "DT-120"
+    ],
+    "AG-FR-043": [
+      "DT-029",
+      "DT-060",
+      "DT-069",
+      "DT-072",
+      "DT-091",
+      "DT-120"
+    ],
+    "AG-FR-044": [
+      "DT-071",
+      "DT-072",
+      "DT-141"
+    ],
+    "AG-FR-045": [
+      "DT-073",
+      "DT-074",
+      "DT-075",
+      "DT-076",
+      "DT-077",
+      "DT-078",
+      "DT-079",
+      "DT-080",
+      "DT-084"
+    ],
+    "AG-FR-046": [
+      "DT-075",
+      "DT-081",
+      "DT-087",
+      "DT-117",
+      "DT-134"
+    ],
+    "AG-FR-047": [
+      "DT-002",
+      "DT-007",
+      "DT-021",
+      "DT-023",
+      "DT-077",
+      "DT-082",
+      "DT-083",
+      "DT-088",
+      "DT-114",
+      "DT-117"
+    ],
+    "AG-FR-048": [
+      "DT-085",
+      "DT-117"
+    ],
+    "AG-FR-049": [
+      "DT-079",
+      "DT-084",
+      "DT-085",
+      "DT-117"
+    ],
+    "AG-FR-050": [
+      "DT-077",
+      "DT-083",
+      "DT-086",
+      "DT-117",
+      "DT-141",
+      "DT-143"
+    ],
+    "AG-FR-051": [
+      "DT-061",
+      "DT-078",
+      "DT-087",
+      "DT-089",
+      "DT-090",
+      "DT-095",
+      "DT-096",
+      "DT-120"
+    ],
+    "AG-FR-052": [
+      "DT-069",
+      "DT-091",
+      "DT-094",
+      "DT-096"
+    ],
+    "AG-FR-053": [
+      "DT-020",
+      "DT-024",
+      "DT-048",
+      "DT-092",
+      "DT-094",
+      "DT-096",
+      "DT-110",
+      "DT-114"
+    ],
+    "AG-FR-054": [
+      "DT-013",
+      "DT-046",
+      "DT-093",
+      "DT-094",
+      "DT-096",
+      "DT-103",
+      "DT-108"
+    ],
+    "AG-FR-055": [
+      "DT-037",
+      "DT-045",
+      "DT-059",
+      "DT-062",
+      "DT-079",
+      "DT-080",
+      "DT-084",
+      "DT-087",
+      "DT-089",
+      "DT-095",
+      "DT-096",
+      "DT-117",
+      "DT-134",
+      "DT-139"
+    ],
+    "AG-FR-056": [
+      "DT-063",
+      "DT-080",
+      "DT-095",
+      "DT-117",
+      "DT-126",
+      "DT-138",
+      "DT-142"
+    ],
+    "AG-FR-057": [
+      "DT-097",
+      "DT-101",
+      "DT-102",
+      "DT-118"
+    ],
+    "AG-FR-058": [
+      "DT-002",
+      "DT-050",
+      "DT-086",
+      "DT-098",
+      "DT-100",
+      "DT-104",
+      "DT-118",
+      "DT-140"
+    ],
+    "AG-FR-059": [
+      "DT-098",
+      "DT-099",
+      "DT-104",
+      "DT-108",
+      "DT-118",
+      "DT-125",
+      "DT-140"
+    ],
+    "AG-FR-060": [
+      "DT-101",
+      "DT-104",
+      "DT-118",
+      "DT-122",
+      "DT-126"
+    ],
+    "AG-FR-061": [
+      "DT-056",
+      "DT-097",
+      "DT-099",
+      "DT-102",
+      "DT-118"
+    ],
+    "AG-FR-062": [
+      "DT-100",
+      "DT-104",
+      "DT-118",
+      "DT-125"
+    ],
+    "AG-FR-063": [
+      "DT-005",
+      "DT-006",
+      "DT-074",
+      "DT-106",
+      "DT-121"
+    ],
+    "AG-FR-064": [
+      "DT-021",
+      "DT-055",
+      "DT-070",
+      "DT-078",
+      "DT-099",
+      "DT-107",
+      "DT-108",
+      "DT-112",
+      "DT-124",
+      "DT-128"
+    ],
+    "AG-FR-065": [
+      "DT-109",
+      "DT-111",
+      "DT-123",
+      "DT-126"
+    ],
+    "AG-FR-066": [
+      "DT-048",
+      "DT-110"
+    ],
+    "AG-FR-067": [
+      "DT-033",
+      "DT-040",
+      "DT-090",
+      "DT-119"
+    ],
+    "AG-FR-068": [
+      "DT-001",
+      "DT-003",
+      "DT-004",
+      "DT-005",
+      "DT-014",
+      "DT-033",
+      "DT-105",
+      "DT-106",
+      "DT-107",
+      "DT-111",
+      "DT-122",
+      "DT-124"
+    ],
+    "AG-FR-069": [
+      "DT-129",
+      "DT-130",
+      "DT-136",
+      "DT-143"
+    ],
+    "AG-FR-070": [
+      "DT-130",
+      "DT-131",
+      "DT-133",
+      "DT-135",
+      "DT-136"
+    ],
+    "AG-FR-071": [
+      "DT-131",
+      "DT-132",
+      "DT-134",
+      "DT-135",
+      "DT-136"
+    ],
+    "AG-FR-072": [
+      "DT-133",
+      "DT-134",
+      "DT-135",
+      "DT-136"
+    ],
+    "AG-FR-073": [
+      "DT-137",
+      "DT-138",
+      "DT-139",
+      "DT-144"
+    ],
+    "AG-FR-074": [
+      "DT-139",
+      "DT-140",
+      "DT-144"
+    ],
+    "AG-FR-075": [
+      "DT-141",
+      "DT-142",
+      "DT-144"
+    ],
+    "AG-FR-076": [
+      "DT-143",
+      "DT-144"
+    ],
+    "AG-FR-077": [
+      "DT-088",
+      "DT-114",
+      "DT-127"
+    ],
+    "AG-FR-078": [
+      "DT-088",
+      "DT-127"
+    ],
+    "AG-FR-079": [
+      "DT-103",
+      "DT-125",
+      "DT-127",
+      "DT-128"
+    ],
+    "AG-FR-080": [
+      "DT-008",
+      "DT-104",
+      "DT-113",
+      "DT-120",
+      "DT-122",
+      "DT-123",
+      "DT-124",
+      "DT-125",
+      "DT-126",
+      "DT-127",
+      "DT-128",
+      "DT-136",
+      "DT-144"
+    ],
+    "AG-NFR-001": [
+      "DT-009",
+      "DT-010",
+      "DT-011",
+      "DT-012",
+      "DT-013",
+      "DT-015",
+      "DT-016",
+      "DT-017",
+      "DT-018",
+      "DT-019",
+      "DT-020",
+      "DT-021",
+      "DT-022",
+      "DT-024",
+      "DT-047",
+      "DT-075",
+      "DT-081",
+      "DT-082",
+      "DT-085",
+      "DT-088",
+      "DT-092",
+      "DT-103",
+      "DT-114",
+      "DT-129",
+      "DT-143"
+    ],
+    "AG-NFR-002": [
+      "DT-003",
+      "DT-015",
+      "DT-023",
+      "DT-030",
+      "DT-034",
+      "DT-041",
+      "DT-043",
+      "DT-048",
+      "DT-066",
+      "DT-073",
+      "DT-074",
+      "DT-094",
+      "DT-122",
+      "DT-129",
+      "DT-137"
+    ],
+    "AG-NFR-003": [
+      "DT-006",
+      "DT-026",
+      "DT-028",
+      "DT-030",
+      "DT-031",
+      "DT-035",
+      "DT-044",
+      "DT-045",
+      "DT-046",
+      "DT-057",
+      "DT-058",
+      "DT-059",
+      "DT-060",
+      "DT-061",
+      "DT-062",
+      "DT-063",
+      "DT-068",
+      "DT-069",
+      "DT-079",
+      "DT-090",
+      "DT-095",
+      "DT-115",
+      "DT-131",
+      "DT-132",
+      "DT-137",
+      "DT-138",
+      "DT-139",
+      "DT-140",
+      "DT-141",
+      "DT-142"
+    ],
+    "AG-NFR-004": [
+      "DT-022",
+      "DT-026",
+      "DT-028",
+      "DT-039",
+      "DT-042",
+      "DT-049",
+      "DT-050",
+      "DT-052",
+      "DT-053",
+      "DT-054",
+      "DT-055",
+      "DT-065",
+      "DT-067",
+      "DT-069",
+      "DT-076",
+      "DT-078",
+      "DT-083",
+      "DT-086",
+      "DT-091",
+      "DT-100",
+      "DT-101",
+      "DT-116",
+      "DT-130",
+      "DT-133"
+    ],
+    "AG-NFR-005": [
+      "DT-049",
+      "DT-051",
+      "DT-052",
+      "DT-053",
+      "DT-054",
+      "DT-056",
+      "DT-107",
+      "DT-112",
+      "DT-116",
+      "DT-124",
+      "DT-128",
+      "DT-135"
+    ],
+    "AG-NFR-006": [
+      "DT-036",
+      "DT-047",
+      "DT-112",
+      "DT-135"
+    ],
+    "AG-NFR-007": [
+      "DT-023",
+      "DT-036",
+      "DT-038",
+      "DT-042",
+      "DT-043",
+      "DT-044",
+      "DT-051",
+      "DT-056",
+      "DT-102",
+      "DT-112",
+      "DT-130",
+      "DT-135"
+    ],
+    "AG-NFR-008": [
+      "DT-021",
+      "DT-046",
+      "DT-055",
+      "DT-070",
+      "DT-078",
+      "DT-093",
+      "DT-099",
+      "DT-103",
+      "DT-108",
+      "DT-128",
+      "DT-133"
+    ],
+    "AG-NFR-009": [
+      "DT-109",
+      "DT-123"
+    ],
+    "AG-NFR-010": [
+      "DT-001",
+      "DT-003",
+      "DT-005",
+      "DT-105",
+      "DT-107",
+      "DT-122",
+      "DT-124"
+    ],
+    "AG-NFR-011": [
+      "DT-004",
+      "DT-007",
+      "DT-025",
+      "DT-029",
+      "DT-057",
+      "DT-082",
+      "DT-084",
+      "DT-088",
+      "DT-089",
+      "DT-106",
+      "DT-113",
+      "DT-127"
+    ],
+    "AG-NFR-012": [
+      "DT-005",
+      "DT-014",
+      "DT-033",
+      "DT-037",
+      "DT-038",
+      "DT-040",
+      "DT-066",
+      "DT-067",
+      "DT-072",
+      "DT-087",
+      "DT-106",
+      "DT-119",
+      "DT-121"
+    ],
+    "AG-NFR-013": [
+      "DT-033",
+      "DT-040",
+      "DT-087",
+      "DT-090",
+      "DT-119",
+      "DT-121"
+    ],
+    "AG-NFR-014": [
+      "DT-027",
+      "DT-031",
+      "DT-037",
+      "DT-071",
+      "DT-079",
+      "DT-119",
+      "DT-132"
+    ],
+    "AG-NFR-015": [
+      "DT-020",
+      "DT-041",
+      "DT-047",
+      "DT-048",
+      "DT-054",
+      "DT-076",
+      "DT-110",
+      "DT-131"
+    ],
+    "AG-NFR-016": [
+      "DT-012",
+      "DT-023",
+      "DT-062",
+      "DT-075",
+      "DT-077",
+      "DT-080",
+      "DT-081",
+      "DT-083",
+      "DT-084",
+      "DT-085",
+      "DT-086",
+      "DT-095",
+      "DT-117",
+      "DT-134",
+      "DT-141",
+      "DT-143"
+    ],
+    "AG-NFR-017": [
+      "DT-050",
+      "DT-097",
+      "DT-098",
+      "DT-099",
+      "DT-100",
+      "DT-101",
+      "DT-102",
+      "DT-104",
+      "DT-118",
+      "DT-128",
+      "DT-140"
+    ],
+    "AG-NFR-018": [
+      "DT-048",
+      "DT-067",
+      "DT-073",
+      "DT-092",
+      "DT-093",
+      "DT-094",
+      "DT-097",
+      "DT-110"
+    ],
+    "AG-NFR-019": [
+      "DT-001",
+      "DT-004",
+      "DT-008",
+      "DT-017",
+      "DT-018",
+      "DT-032",
+      "DT-039",
+      "DT-105",
+      "DT-109",
+      "DT-111",
+      "DT-123"
+    ],
+    "AG-NFR-020": [
+      "DT-002",
+      "DT-005",
+      "DT-006",
+      "DT-008",
+      "DT-016",
+      "DT-024",
+      "DT-063",
+      "DT-064",
+      "DT-072",
+      "DT-074",
+      "DT-080",
+      "DT-096",
+      "DT-104",
+      "DT-113",
+      "DT-114",
+      "DT-115",
+      "DT-116",
+      "DT-117",
+      "DT-118",
+      "DT-120",
+      "DT-125",
+      "DT-126",
+      "DT-136",
+      "DT-138",
+      "DT-142",
+      "DT-144"
+    ]
+  },
+  "validation": {
+    "scope": "specification_structure_only_not_implementation_or_acceptance",
+    "task_count": 144,
+    "work_package_count": 18,
+    "tasks_per_work_package": 8,
+    "first_commercial_task_count": 128,
+    "future_stage_task_count": 16,
+    "functional_requirements_covered": 80,
+    "nonfunctional_requirements_covered": 20,
+    "missing_requirements": [],
+    "unknown_requirements": [],
+    "missing_dependencies": [],
+    "dependency_cycles": [],
+    "dependency_stage_inversions": [],
+    "functional_stage_gaps_excluding_baseline_audit": [],
+    "all_initial_statuses": "not_started",
+    "acceptance_execution_status": "not_run",
+    "stage_counts": {
+      "S0": 24,
+      "S1": 49,
+      "S2": 28,
+      "S3": 27,
+      "S4": 8,
+      "S5": 8
+    },
+    "required_field_validation": "passed",
+    "markdown_source": "same_tasks_array_as_json"
+  }
+}

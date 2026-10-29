@@ -1,0 +1,27 @@
+{
+  "workspace_id": "ws_fixture_a",
+  "subject": {
+    "kind": "farm",
+    "id": "farm_fixture"
+  },
+  "analysis_kind": "ndvi_change",
+  "quote_id": "quote_fixture",
+  "input": {
+    "season_id": "season_fixture",
+    "parcels": [
+      {
+        "parcel_id": "parcel_fixture",
+        "revision": 3
+      }
+    ],
+    "baseline_asset_version_id": "av_baseline_fixture",
+    "current_asset_version_id": "av_current_fixture"
+  },
+  "parameters": {
+    "algorithm_version": "ndvi-change/1.0.0",
+    "quality_profile_version": "crop-monitoring/1.0.0",
+    "poor_delta_threshold": -0.1,
+    "good_delta_threshold": 0.1
+  },
+  "approval_id": "approval_fixture"
+}

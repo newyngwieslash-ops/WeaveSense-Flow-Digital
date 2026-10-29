@@ -15,6 +15,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"yingce/backend/internal/agriculture"
 	"yingce/backend/internal/edumath"
 	"yingce/backend/internal/flow"
 	"yingce/backend/internal/model"
@@ -131,6 +132,9 @@ func run(ctx context.Context) error {
 	flowUser := func(c *gin.Context) (*model.User, error) {
 		cookie, _ := c.Cookie(service.SessionCookieName)
 		return svc.CurrentUser(cookie)
+	}
+	if err := agriculture.RegisterFromEnv(r, api, db, flowUser); err != nil {
+		return err
 	}
 	// Every authenticated flow request runs in a tenant-scoped transaction (RLS enforced).
 	flowAPI := api.Group("", flow.TenantMiddleware(db, flowUser))

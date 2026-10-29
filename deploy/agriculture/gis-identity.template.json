@@ -1,0 +1,22 @@
+{
+  "platform_base_url": "https://platform.internal.example",
+  "platform_keys": [
+    {
+      "kid": "platform-key-version",
+      "public_key": "<standard-base64-32-byte-public-key>",
+      "not_before": "<UTC-RFC3339-seconds>",
+      "not_after": "<UTC-RFC3339-seconds>",
+      "revoked": false
+    }
+  ],
+  "gis_signing_kid": "gis-key-version",
+  "gis_keys": [
+    {
+      "kid": "gis-key-version",
+      "private_seed": "<standard-base64-32-byte-private-seed-secret-mount-only>",
+      "not_before": "<UTC-RFC3339-seconds>",
+      "not_after": "<UTC-RFC3339-seconds>",
+      "revoked": false
+    }
+  ]
+}

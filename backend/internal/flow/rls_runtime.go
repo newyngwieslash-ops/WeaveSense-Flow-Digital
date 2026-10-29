@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -33,6 +34,13 @@ func TenantMiddleware(db *gorm.DB, user UserFunc) gin.HandlerFunc {
 		tenants, err := UserTenantIDs(db, u.ID)
 		if err != nil {
 			reply(c, http.StatusInternalServerError, nil, "tenant resolution failed")
+			c.Abort()
+			return
+		}
+		if len(tenants) == 0 {
+			// Legacy RLS still treats empty scope as system. Never turn an
+			// inactive user's empty tenant set into that privileged context.
+			reply(c, http.StatusForbidden, nil, "no active tenant membership")
 			c.Abort()
 			return
 		}
@@ -95,11 +103,26 @@ func (g *MCPGateway) withDB(db *gorm.DB) *MCPGateway {
 // UserTenantIDs are the tenants a user may touch: active memberships plus the
 // personal tenant (which exists implicitly before first use).
 func UserTenantIDs(db *gorm.DB, userID string) ([]string, error) {
+	if userID == "" {
+		return nil, ErrForbidden
+	}
 	var tenants []string
-	if err := db.Model(&model.Membership{}).Where("user_id = ? AND status = ?", userID, "active").Pluck("tenant_id", &tenants).Error; err != nil {
+	if err := db.Table("flow_memberships m").
+		Joins("JOIN flow_tenants t ON t.id = m.tenant_id AND t.status = 'active'").
+		Where("m.user_id = ? AND m.status = ?", userID, "active").Pluck("m.tenant_id", &tenants).Error; err != nil {
 		return nil, err
 	}
-	return append(tenants, model.PersonalTenantID(userID)), nil
+	// Only an absent personal tenant may be implicitly created. An existing
+	// disabled tenant or revoked membership must never be restored by fallback.
+	var personal model.Tenant
+	err := db.First(&personal, "id = ?", model.PersonalTenantID(userID)).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return append(tenants, model.PersonalTenantID(userID)), nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return tenants, nil
 }
 
 // UserTx runs fn in a transaction scoped (RLS app.tenant_ids) to the user's

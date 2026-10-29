@@ -1,0 +1,237 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.weavesense.invalid/agriculture/v1/common.schema.json",
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "integer": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "utc_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*/[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "resource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "id"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "farm",
+            "parcel",
+            "asset",
+            "job",
+            "report",
+            "workspace"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        }
+      }
+    },
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "valid_pixel_ratio",
+        "required_pixel_ratio",
+        "reasons",
+        "quality_profile_version"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "valid",
+            "degraded",
+            "insufficient_data",
+            "invalid",
+            "unknown"
+          ]
+        },
+        "valid_pixel_ratio": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "required_pixel_ratio": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]{0,63}$"
+          },
+          "minItems": 0,
+          "maxItems": 200,
+          "uniqueItems": true
+        },
+        "quality_profile_version": {
+          "$ref": "https://schemas.weavesense.invalid/agriculture/v1/common.schema.json#/$defs/version"
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "kind",
+        "mime_type",
+        "size_bytes",
+        "sha256",
+        "object_version",
+        "spatial_extent",
+        "crs",
+        "unit"
+      ],
+      "properties": {
+        "artifact_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "raster",
+            "vector",
+            "quality_report",
+            "report_pdf",
+            "report_json"
+          ]
+        },
+        "mime_type": {
+          "type": "string",
+          "enum": [
+            "image/tiff",
+            "application/geo+json",
+            "application/json",
+            "application/pdf"
+          ]
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "object_version": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        },
+        "spatial_extent": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "number"
+          },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "crs": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^EPSG:[0-9]{4,6}$"
+        },
+        "unit": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "dimensionless",
+            "m2",
+            "ha",
+            "mu",
+            null
+          ]
+        }
+      }
+    },
+    "input_revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resource_id",
+        "revision",
+        "content_sha256"
+      ],
+      "properties": {
+        "resource_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "content_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mean_ndvi",
+        "valid_pixel_count",
+        "area_m2"
+      ],
+      "properties": {
+        "mean_ndvi": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 1
+        },
+        "valid_pixel_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "area_m2": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,6})?$"
+        }
+      }
+    }
+  }
+}

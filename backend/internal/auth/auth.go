@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
@@ -292,8 +293,20 @@ func (s *Service) Login(req LoginRequest) (*AuthSessionResult, error) {
 }
 
 func (s *Service) Logout(cookieValue string) error {
-	sessionID, _ := parseSessionCookie(cookieValue)
-	if sessionID == "" {
+	sessionID, token := parseSessionCookie(cookieValue)
+	if sessionID == "" || token == "" {
+		return nil
+	}
+	session, err := s.repo.AuthSession(sessionID)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	// A session ID is not a credential. Invalid cookies must not revoke a
+	// different browser's valid session, and logout remains idempotent.
+	if !hmac.Equal([]byte(session.TokenHash), []byte(HashToken(token))) {
 		return nil
 	}
 	return s.repo.DeleteAuthSession(sessionID)
@@ -311,7 +324,10 @@ func (s *Service) CurrentUser(cookieValue string) (*model.User, error) {
 		}
 		return nil, err
 	}
-	if time.Now().After(session.ExpiresAt) || session.TokenHash != HashToken(token) {
+	if !hmac.Equal([]byte(session.TokenHash), []byte(HashToken(token))) {
+		return nil, kernel.Unauthorized("登录状态已失效")
+	}
+	if !time.Now().Before(session.ExpiresAt) {
 		if cleanupErr := s.repo.DeleteAuthSession(sessionID); cleanupErr != nil {
 			log.Printf("expired auth session cleanup failed: session_id=%s error=%v", sessionID, cleanupErr)
 		}
@@ -319,6 +335,9 @@ func (s *Service) CurrentUser(cookieValue string) (*model.User, error) {
 	}
 	user, err := s.repo.User(session.UserID)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, kernel.Unauthorized("登录状态已失效")
+		}
 		return nil, err
 	}
 	if user.Status != model.UserStatusActive {

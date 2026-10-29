@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.weavesense.invalid/agriculture/v1/manifest.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "result_id",
+    "tenant_id",
+    "workspace_id",
+    "created_at",
+    "data_class",
+    "input_revisions",
+    "algorithm_version",
+    "canonicalization_version",
+    "parameter_hash",
+    "quality",
+    "rights_refs",
+    "artifacts"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "result_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+    },
+    "workspace_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "data_class": {
+      "type": "string",
+      "enum": [
+        "demo",
+        "operational"
+      ]
+    },
+    "input_revisions": {
+      "type": "array",
+      "items": {
+        "$ref": "https://schemas.weavesense.invalid/agriculture/v1/common.schema.json#/$defs/input_revision"
+      },
+      "minItems": 1,
+      "maxItems": 200,
+      "uniqueItems": true
+    },
+    "algorithm_version": {
+      "$ref": "https://schemas.weavesense.invalid/agriculture/v1/common.schema.json#/$defs/version"
+    },
+    "canonicalization_version": {
+      "const": "sorted-json-v1"
+    },
+    "parameter_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "quality": {
+      "$ref": "https://schemas.weavesense.invalid/agriculture/v1/common.schema.json#/$defs/quality"
+    },
+    "rights_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+      },
+      "minItems": 1,
+      "maxItems": 200,
+      "uniqueItems": true
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "https://schemas.weavesense.invalid/agriculture/v1/common.schema.json#/$defs/artifact"
+      },
+      "minItems": 0,
+      "maxItems": 200,
+      "uniqueItems": true
+    }
+  }
+}

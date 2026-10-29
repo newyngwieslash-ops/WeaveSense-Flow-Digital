@@ -9,9 +9,18 @@ import type { VerificationPolicy } from "./verification";
 
 let authSessionRequest: Promise<AuthSessionPayload> | null = null;
 let authSessionCache: { payload: AuthSessionPayload; expiresAt: number } | null = null;
+let authSessionGeneration = 0;
 
 export function invalidateAuthSessionCache() {
+    authSessionGeneration += 1;
     authSessionCache = null;
+    authSessionRequest = null;
+}
+
+function assertCurrentAuthGeneration(generation: number) {
+    if (generation !== authSessionGeneration) {
+        throw new DOMException("Session request superseded by an authentication boundary", "AbortError");
+    }
 }
 
 export type LocalUser = {
@@ -413,18 +422,32 @@ export function linuxDOLoginURL(next: string, acceptedTerms?: boolean) {
 }
 
 export function getAuthSession() {
+    const generation = authSessionGeneration;
     const now = Date.now();
-    if (authSessionCache && authSessionCache.expiresAt > now) return Promise.resolve(authSessionCache.payload);
+    if (authSessionCache && authSessionCache.expiresAt > now) {
+        const payload = authSessionCache.payload;
+        return Promise.resolve().then(() => {
+            assertCurrentAuthGeneration(generation);
+            return payload;
+        });
+    }
     if (authSessionRequest) return authSessionRequest;
-    authSessionRequest = http
+    const request = http
         .get<AuthSessionPayload>("/auth/session")
         .then((payload) => {
+            assertCurrentAuthGeneration(generation);
             authSessionCache = { payload, expiresAt: Date.now() + 5_000 };
             return payload;
         })
+        .catch((error: unknown) => {
+            assertCurrentAuthGeneration(generation);
+            throw error;
+        })
         .finally(() => {
-            authSessionRequest = null;
+            if (authSessionRequest === request) authSessionRequest = null;
+            assertCurrentAuthGeneration(generation);
         });
+    authSessionRequest = request;
     return authSessionRequest;
 }
 
@@ -449,10 +472,12 @@ export function updateAdminFeatureAvailability(
 }
 
 export async function login(input: { username: string; password: string }) {
-    const result = await http.post<{ user: LocalUser }>("/auth/login", input);
-    // 登录会改变服务端会话身份，不能让登录前缓存的游客 session 污染后续恢复。
     invalidateAuthSessionCache();
-    return result;
+    try {
+        return await http.post<{ user: LocalUser }>("/auth/login", input);
+    } finally {
+        invalidateAuthSessionCache();
+    }
 }
 
 export function sendRegistrationEmailCode(email: string) {
@@ -463,20 +488,31 @@ export function sendPasswordResetEmailCode(email: string) {
     return http.post<{ sent: boolean }>("/auth/password-reset-code", { email });
 }
 
-export function resetPassword(input: { email: string; emailCode: string; password: string }) {
-    return http.post<{ reset: boolean }>("/auth/password-reset", input);
+export async function resetPassword(input: { email: string; emailCode: string; password: string }) {
+    invalidateAuthSessionCache();
+    try {
+        return await http.post<{ reset: boolean }>("/auth/password-reset", input);
+    } finally {
+        invalidateAuthSessionCache();
+    }
 }
 
 export async function register(input: { username: string; email?: string; emailCode?: string; phone?: string; smsCode?: string; ticket?: string; displayName?: string; password: string; acceptedTerms: boolean }) {
-    const result = await http.post<{ user: LocalUser }>("/auth/register", input);
     invalidateAuthSessionCache();
-    return result;
+    try {
+        return await http.post<{ user: LocalUser }>("/auth/register", input);
+    } finally {
+        invalidateAuthSessionCache();
+    }
 }
 
 export async function logout() {
-    const result = await http.post<{ ok: boolean }>("/auth/logout");
     invalidateAuthSessionCache();
-    return result;
+    try {
+        return await http.post<{ ok: boolean }>("/auth/logout");
+    } finally {
+        invalidateAuthSessionCache();
+    }
 }
 
 export type AdminListParams = { keyword?: string; status?: string; role?: string; page?: number; pageSize?: number };

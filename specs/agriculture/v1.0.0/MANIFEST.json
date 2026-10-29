@@ -1,0 +1,102 @@
+{
+  "product": "WeaveSense-DigitalTwin",
+  "version": "1.0.0",
+  "date": "2026-10-29",
+  "time_zone": "Asia/Shanghai",
+  "kind": "development_specification",
+  "application_implementation_status": "not_started",
+  "hash_algorithm": "sha256",
+  "manifest_self_excluded": true,
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "bytes": 3702,
+      "sha256": "9580f6d0eb4105eef8c0644a08680b8673a6c8daf0c33e750c2e079a01f5ab9b"
+    },
+    {
+      "path": "AGENT_MASTER_PROMPT.md",
+      "bytes": 10068,
+      "sha256": "f4291fdfff9e24f38bab65e165c2f373a37ac9a3c99db005a8d4d87591eb8052"
+    },
+    {
+      "path": "DEVELOPMENT_CHECKLIST.md",
+      "bytes": 164061,
+      "sha256": "ecbeca675ca32be8be445b6412f8e1be0067ec467380a7e4568d121aa949222c"
+    },
+    {
+      "path": "DEVELOPMENT_PLAN.md",
+      "bytes": 30570,
+      "sha256": "bd144680f9278828d0182179afe25d83dd4e49e454e6635dbbf49290bdfc6b33"
+    },
+    {
+      "path": "PRD.md",
+      "bytes": 40418,
+      "sha256": "3dd7de127b67e1aa04e5df6cfbea6c965812939d811770a94d98176579bd9c59"
+    },
+    {
+      "path": "README_START_HERE.md",
+      "bytes": 8613,
+      "sha256": "1279d50f29fcc9c84d0bbb992bdf2d13dbeaf7817643cba74c35ac7f3e78fd24"
+    },
+    {
+      "path": "VALIDATION_REPORT.md",
+      "bytes": 4868,
+      "sha256": "ad153f06a7cd163791d688c7e38119d71d8c064331d5c8faba22c03e1367d4df"
+    },
+    {
+      "path": "docs/ACCEPTANCE_MATRIX.md",
+      "bytes": 70641,
+      "sha256": "840bbc4876b0ed297ffaccf11d4b6e7bdf082ed9e82efd5b1098345d4d89bef9"
+    },
+    {
+      "path": "docs/AGENT_CONTINUATION_PROMPTS.md",
+      "bytes": 2937,
+      "sha256": "eb87dcfeebf401d63a44f2938f69ceebfbe5ba60147764ab98c0d0f100115d03"
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "bytes": 31183,
+      "sha256": "5a8bb5890db2a1593d399754e5c54051b51aa1503568bd0b224fa0a32f5513eb"
+    },
+    {
+      "path": "docs/DATA_API_CONTRACTS.md",
+      "bytes": 48849,
+      "sha256": "547229982dfe16664159210ca5ae4b7614c483bfc5d37fa7ddc55fcdd14e0d7a"
+    },
+    {
+      "path": "docs/DECISIONS.md",
+      "bytes": 4215,
+      "sha256": "0e15459c4b773232919dc7748a78672ee5916933c5866a993bd63e57f3ede035"
+    },
+    {
+      "path": "docs/SECURITY_TENANCY.md",
+      "bytes": 34356,
+      "sha256": "9fe07343b108ec777f28b868c16ae09905ffa32461dd3951d30a3026e6ce40ab"
+    },
+    {
+      "path": "docs/SOURCE_AUDIT.md",
+      "bytes": 14943,
+      "sha256": "bde610410aec719d79eb8222f54bbdc25411c575afd816d4057b4a1b56ff8d68"
+    },
+    {
+      "path": "docs/implementation/STATUS.md",
+      "bytes": 2845,
+      "sha256": "5d1b3f87553d89a59217a7fcc0fceb6805798d3b078de51aa3ad0d1007ed633a"
+    },
+    {
+      "path": "docs/implementation/WORK_PACKAGE_TEMPLATE.md",
+      "bytes": 1795,
+      "sha256": "7e7f911a633d381ac4b38504cf7cc16aca13c8391a4f8f8c04e5aa0f1fab4a53"
+    },
+    {
+      "path": "requirements.json",
+      "bytes": 31213,
+      "sha256": "1da296aa0230eb6223f5cd9c367ad50755eb46425fb91668569d6276f7b5db31"
+    },
+    {
+      "path": "tasks.json",
+      "bytes": 212457,
+      "sha256": "38daf9681fcc00f41c973683ee25daac7202fd31444e8665fcd59a2341c809e1"
+    }
+  ]
+}

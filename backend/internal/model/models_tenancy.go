@@ -31,6 +31,7 @@ type Membership struct {
 func (Membership) TableName() string { return "flow_memberships" }
 
 type Workspace struct {
+	Product   string    `json:"product" gorm:"size:32;not null;default:''"`
 	ID        string    `json:"id" gorm:"primaryKey;size:40"`
 	TenantID  string    `json:"tenantId" gorm:"size:40;index;uniqueIndex:ux_flow_workspace_slug"`
 	Slug      string    `json:"slug" gorm:"size:64;uniqueIndex:ux_flow_workspace_slug"`

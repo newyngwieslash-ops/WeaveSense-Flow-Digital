@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0",
+  "result_id": "result_fixture",
+  "tenant_id": "tenant_fixture_a",
+  "workspace_id": "ws_fixture_a",
+  "created_at": "2026-01-01T00:00:00Z",
+  "data_class": "demo",
+  "input_revisions": [
+    {
+      "resource_id": "asset_fixture",
+      "revision": 1,
+      "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  ],
+  "algorithm_version": "ndvi-change/1.0.0",
+  "canonicalization_version": "sorted-json-v1",
+  "parameter_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "quality": {
+    "status": "valid",
+    "valid_pixel_ratio": 1,
+    "required_pixel_ratio": 0.75,
+    "reasons": [],
+    "quality_profile_version": "crop-monitoring/1.0.0"
+  },
+  "rights_refs": [
+    "rights_fixture_mit"
+  ],
+  "artifacts": [
+    {
+      "artifact_id": "artifact_fixture",
+      "kind": "raster",
+      "mime_type": "image/tiff",
+      "size_bytes": 512,
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "object_version": "object_v1",
+      "spatial_extent": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "crs": "EPSG:4326",
+      "unit": "dimensionless"
+    }
+  ]
+}

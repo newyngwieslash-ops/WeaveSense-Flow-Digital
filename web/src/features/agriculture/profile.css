@@ -1,0 +1,8 @@
+.agri-profile { max-width: 72rem; margin: auto; padding: var(--spacing-6, 1.5rem); color: var(--foreground); font-family: var(--font-sans); }
+.agri-profile header { display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-4, 1rem); }
+.agri-profile h1 { font-size: var(--fs-h1, 2rem); }
+.agri-profile h2 { margin-top: var(--spacing-6, 1.5rem); }
+.agri-profile p, .agri-profile ul { margin-block: var(--spacing-4, 1rem); }
+.agri-profile nav { display: flex; gap: var(--spacing-4, 1rem); margin-block: var(--spacing-4, 1rem); }
+.agri-profile a { text-decoration: underline; }
+.agri-auth { max-width: 32rem; }

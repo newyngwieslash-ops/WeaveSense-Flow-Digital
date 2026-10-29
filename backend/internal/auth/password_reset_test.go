@@ -28,11 +28,14 @@ func TestPasswordResetChangesPasswordConsumesCodeAndRevokesSessions(t *testing.T
 		t.Fatal(err)
 	}
 	sessions := []model.AuthSession{
-		{ID: "session-1", UserID: user.ID, TokenHash: "one", ExpiresAt: time.Now().Add(time.Hour)},
-		{ID: "session-2", UserID: user.ID, TokenHash: "two", ExpiresAt: time.Now().Add(time.Hour)},
+		{ID: "session-1", UserID: user.ID, TokenHash: HashToken("one"), ExpiresAt: time.Now().Add(time.Hour)},
+		{ID: "session-2", UserID: user.ID, TokenHash: HashToken("two"), ExpiresAt: time.Now().Add(time.Hour)},
 	}
 	if err := db.Create(&sessions).Error; err != nil {
 		t.Fatal(err)
+	}
+	if _, err := svc.CurrentUser("session-1.one"); err != nil {
+		t.Fatalf("pre-reset valid session rejected: %v", err)
 	}
 
 	var deliveredCode string
@@ -79,6 +82,11 @@ func TestPasswordResetChangesPasswordConsumesCodeAndRevokesSessions(t *testing.T
 	}
 	if sessionCount != 0 {
 		t.Fatalf("auth session count = %d, want 0", sessionCount)
+	}
+	for _, cookie := range []string{"session-1.one", "session-2.two"} {
+		if _, err := svc.CurrentUser(cookie); err == nil {
+			t.Fatal("password reset left an old cookie authenticated")
+		}
 	}
 	if err := db.First(&storedCode, "id = ?", storedCode.ID).Error; err != nil {
 		t.Fatal(err)

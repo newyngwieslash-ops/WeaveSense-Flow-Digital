@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.weavesense.invalid/agriculture/v1/result.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "job_id",
+    "result_id",
+    "execution_status",
+    "outcome",
+    "validity",
+    "quality",
+    "summary",
+    "artifacts",
+    "evidence_refs",
+    "next_actions"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "job_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+    },
+    "result_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+    },
+    "execution_status": {
+      "const": "succeeded"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "valid_result",
+        "insufficient_data",
+        "not_applicable"
+      ]
+    },
+    "validity": {
+      "type": "string",
+      "enum": [
+        "current",
+        "historical",
+        "revoked"
+      ]
+    },
+    "quality": {
+      "$ref": "https://schemas.weavesense.invalid/agriculture/v1/common.schema.json#/$defs/quality"
+    },
+    "summary": {
+      "anyOf": [
+        {
+          "$ref": "https://schemas.weavesense.invalid/agriculture/v1/common.schema.json#/$defs/metrics"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "https://schemas.weavesense.invalid/agriculture/v1/common.schema.json#/$defs/artifact"
+      },
+      "minItems": 0,
+      "maxItems": 200,
+      "uniqueItems": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+      },
+      "minItems": 1,
+      "maxItems": 200,
+      "uniqueItems": true
+    },
+    "next_actions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "SELECT_ANOTHER_OBSERVATION",
+          "REQUEST_FIELD_INSPECTION",
+          "REVIEW_RESULT"
+        ]
+      },
+      "minItems": 0,
+      "maxItems": 200,
+      "uniqueItems": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "outcome": {
+            "const": "insufficient_data"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "summary": {
+            "type": "null"
+          },
+          "artifacts": {
+            "maxItems": 0
+          },
+          "quality": {
+            "properties": {
+              "status": {
+                "const": "insufficient_data"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "outcome": {
+            "const": "not_applicable"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "summary": {
+            "type": "null"
+          },
+          "artifacts": {
+            "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "outcome": {
+            "const": "valid_result"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "summary": {
+            "$ref": "https://schemas.weavesense.invalid/agriculture/v1/common.schema.json#/$defs/metrics"
+          },
+          "quality": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "valid",
+                  "degraded"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

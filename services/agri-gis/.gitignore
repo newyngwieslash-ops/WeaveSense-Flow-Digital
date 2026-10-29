@@ -1,0 +1,35 @@
+# Python
+backend/__pycache__/
+backend/**/__pycache__/
+backend/.pytest_cache/
+backend/.ruff_cache/
+backend/.venv/
+backend/.env
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.log
+
+# Runtime-generated delivery artifacts
+backend/storage/deliveries/*.zip
+backend/storage/imagery/
+backend/storage/imagery-registration/
+backend/storage/imagery-fusion/
+backend/storage/change_detection/
+backend/storage/supervision/
+backend/storage/thematic_maps/
+backend/storage/field-evidence/
+backend/storage/disaster-reports/
+backend/storage/statistics-reports/
+backend/storage/vector-exports/
+backend/storage/acceptance-reports/
+backend/storage/plot-attribute-imports/
+backend/storage/growth-monitoring/
+backend/storage/offline-archives/

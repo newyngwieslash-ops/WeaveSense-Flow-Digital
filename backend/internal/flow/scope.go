@@ -33,9 +33,10 @@ func ResolveScope(db *gorm.DB, userID, workspaceID string) (Scope, error) {
 	var row struct {
 		TenantID string
 		Role     string
+		Product  string
 	}
 	err := db.Table("flow_workspaces w").
-		Select("w.tenant_id, wm.role").
+		Select("w.tenant_id, wm.role, w.product").
 		Joins("JOIN flow_workspace_memberships wm ON wm.workspace_id = w.id AND wm.user_id = ?", userID).
 		Joins("JOIN flow_memberships m ON m.tenant_id = w.tenant_id AND m.user_id = ? AND m.status = 'active'", userID).
 		Joins("JOIN flow_tenants t ON t.id = w.tenant_id AND t.status = 'active'").
@@ -46,11 +47,19 @@ func ResolveScope(db *gorm.DB, userID, workspaceID string) (Scope, error) {
 	if err != nil {
 		return Scope{}, err
 	}
+	if row.Product != "" {
+		// Product-specific capabilities must be resolved by that product's
+		// authorization service, never interpreted as legacy intelligence roles.
+		return Scope{}, ErrForbidden
+	}
 	return Scope{TenantID: row.TenantID, WorkspaceID: workspaceID, Role: row.Role}, nil
 }
 
 // ListWorkspaces returns the workspaces a user can access.
 func ListWorkspaces(db *gorm.DB, userID string) ([]model.Workspace, error) {
+	if userID == "" {
+		return nil, ErrForbidden
+	}
 	if err := db.Transaction(func(tx *gorm.DB) error { return model.EnsurePersonalTenantTx(tx, userID) }); err != nil {
 		return nil, err
 	}
@@ -58,8 +67,26 @@ func ListWorkspaces(db *gorm.DB, userID string) ([]model.Workspace, error) {
 	err := db.Table("flow_workspaces w").Select("w.*").
 		Joins("JOIN flow_workspace_memberships wm ON wm.workspace_id = w.id AND wm.user_id = ?", userID).
 		Joins("JOIN flow_memberships m ON m.tenant_id = w.tenant_id AND m.user_id = ? AND m.status = 'active'", userID).
+		Joins("JOIN flow_tenants t ON t.id = w.tenant_id AND t.status = 'active'").
 		Order("w.created_at").Find(&out).Error
 	return out, err
+}
+
+func requireActiveWorkspace(db *gorm.DB, tenantID, workspaceID string) error {
+	if tenantID == "" || workspaceID == "" {
+		return ErrForbidden
+	}
+	var workspace model.Workspace
+	err := db.Table("flow_workspaces w").Select("w.*").
+		Joins("JOIN flow_tenants t ON t.id = w.tenant_id AND t.status = 'active'").
+		Where("w.id = ? AND w.tenant_id = ?", workspaceID, tenantID).Take(&workspace).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return ErrForbidden
+	}
+	if err == nil && workspace.Product != "" {
+		return ErrForbidden
+	}
+	return err
 }
 
 // ScopesForRole maps workspace roles to Engine scopes.

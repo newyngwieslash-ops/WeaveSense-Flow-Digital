@@ -17,9 +17,13 @@ func RegisterP7Routes(api gin.IRouter, db *gorm.DB, user UserFunc, mcp *MCPGatew
 			reply(c, http.StatusUnauthorized, nil, "unauthorized")
 			return Scope{}, false
 		}
-		s, err := ResolveScope(db, u.ID, c.GetHeader("X-Workspace-Id"))
+		s, err := ResolveScope(reqDB(c, db), u.ID, c.GetHeader("X-Workspace-Id"))
 		if err != nil {
-			reply(c, http.StatusNotFound, nil, "workspace not found")
+			if errors.Is(err, ErrForbidden) {
+				reply(c, http.StatusNotFound, nil, "workspace not found")
+			} else {
+				reply(c, http.StatusInternalServerError, nil, "scope resolution failed")
+			}
 			return Scope{}, false
 		}
 		return s, true

@@ -1,0 +1,690 @@
+{
+  "product": "WeaveSense-DigitalTwin",
+  "version": "1.0.0",
+  "date": "2026-10-29",
+  "functional": [
+    {
+      "id": "AG-FR-001",
+      "title": "组织、成员与邀请",
+      "stage": "S0",
+      "requirement": "由租户所有者管理成员邀请、失效、转移与停用；角色变更影响后续访问，保留审计。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-002",
+      "title": "统一登录与会话",
+      "stage": "S0",
+      "requirement": "复用平台登录会话，登出/失效/密码重置遵循统一会话机制；农业端不建立第二套口令或可自选身份。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-003",
+      "title": "工作区与农场授权",
+      "stage": "S0",
+      "requirement": "工作区到农场权限显式映射；每个资源访问由服务端解析当前用户可用范围，覆盖跨农场协作。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-004",
+      "title": "角色及能力策略",
+      "stage": "S0",
+      "requirement": "预置租户管理员、农场经理、GIS分析员、巡查员、审核员、只读客户；权限在后端判定，平台运维默认不读取客户内容。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-005",
+      "title": "租户全链路隔离",
+      "stage": "S0",
+      "requirement": "数据库、对象、瓦片、检索、任务、SSE、缓存、导出、审计和计费均保留租户边界；缺失上下文默认拒绝。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-006",
+      "title": "服务身份与代理授权",
+      "stage": "S0",
+      "requirement": "平台到GIS采用可验证、短期、限定受众与操作范围的身份；后台任务以显式服务主体执行，拒绝浏览器自报operator_code。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-007",
+      "title": "农场档案与区域配置",
+      "stage": "S1",
+      "requirement": "创建农场、经营区域、联系与时间单位偏好；区域和行政字典可配置，不硬编码黑龙江；示例资料有永久演示标识。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-008",
+      "title": "稳定地块与边界版本",
+      "stage": "S1",
+      "requirement": "parcel_id在种植季间稳定，geometry_revision不可变；边界变更使用expected_revision并触发有关派生产物重新评估。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-009",
+      "title": "种植季与作物品种",
+      "stage": "S1",
+      "requirement": "建立种植季、作物/品种、播种/预计收获日期、实际作业；同一地块重叠茬口须符合显式间套作策略。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-010",
+      "title": "地块分割合并血缘",
+      "stage": "S1",
+      "requirement": "分割合并创建新地块身份并保留父子血缘、面积变更和历史关联；旧观测不得被悄悄归入新边界。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-011",
+      "title": "地块属性与自定义字段",
+      "stage": "S1",
+      "requirement": "固定属性和租户/项目自定义字段有类型、单位、枚举、必填与版本；停用保留历史，导入逐行错误可定位。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-012",
+      "title": "矢量导入导出",
+      "stage": "S1",
+      "requirement": "首版支持GeoJSON/GeoPackage及受控Shapefile ZIP，导出至少GeoJSON/GeoPackage；大批量先预览再提交，错误整批或显式分批策略固定。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-013",
+      "title": "坐标系统与面积计算",
+      "stage": "S1",
+      "requirement": "外部GeoJSON使用WGS84经度纬度；存原CRS与变换信息；面积按geography或适当投影计算；无CRS或轴序不明时要求明确，不猜。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-014",
+      "title": "业务迁移与历史保留",
+      "stage": "S1",
+      "requirement": "上游演示数据与客户业务数据分离；旧项目映射新农场/任务可dry-run、核对数量与hash、失败回滚；不把旧示例标正式。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-015",
+      "title": "资产目录与数据权利",
+      "stage": "S1",
+      "requirement": "每项资产记录来源、权利主体、允许用途、署名、期限、敏感等级、operational/demo和依赖资源，权利不明不能公开发布。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-016",
+      "title": "分片上传及实体校验",
+      "stage": "S1",
+      "requirement": "支持上传会话、分片/断点、服务端实际格式/大小/校验与受控解析；完成校验前资产不可用，禁止文件名穿越与超额解压。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-017",
+      "title": "STAC查询与受控接入",
+      "stage": "S1",
+      "requirement": "通过服务端允许的STAC适配器检索和导入；接收provider/collection/item等ID，由后端解析URL；至少一真实公共来源完成live验收。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-018",
+      "title": "影像标准化与波段语义",
+      "stage": "S1",
+      "requirement": "记录波段语义、传感器、处理级别、scale/offset/nodata和分辨率；生成可追溯标准化产物，防重复缩放和冒充算法执行。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-019",
+      "title": "云阴影及有效观测质量",
+      "stage": "S1",
+      "requirement": "按源产品处理云、云影、雪、饱和与无数据；保存有效像元比例与覆盖；低质量标insufficient_data，不能生成人为正常结论。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-020",
+      "title": "来源血缘与校验值",
+      "stage": "S1",
+      "requirement": "原始文件、STAC条目、算法输入和产物有校验值及版本；每份成果能追溯输入，源对象损坏或撤回会失效相关新分发。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-021",
+      "title": "COG与瓦片访问",
+      "stage": "S1",
+      "requirement": "提供按需COG读取/受控栅格瓦片和矢量视窗访问；缓存含租户与版本，私有瓦片不进入公用缓存。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-022",
+      "title": "数据有效期与撤回",
+      "stage": "S3",
+      "requirement": "权利到期、源撤回、敏感等级变化触发下载/共享/检索与报告依赖检查；旧审计保留，残余短链有效窗口有明确说明。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-023",
+      "title": "农业工作台与路由",
+      "stage": "S1",
+      "requirement": "农业产品入口含总览、农场地块、地图、影像、分析、巡查、报告、Agent和用量；Vue子应用统一登录与深链。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-024",
+      "title": "图层目录与样式",
+      "stage": "S1",
+      "requirement": "图层分组、显隐、透明度、图例、时间、来源和数据质量可见；分析图层保留单位、范围与版本。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-025",
+      "title": "地图绘制与节点编辑",
+      "stage": "S1",
+      "requirement": "绘制、捕捉、节点编辑、分割合并与撤销重做；提交后端几何/拓扑/范围校验；冲突不覆盖别人修改。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-026",
+      "title": "空间查询与统计",
+      "stage": "S1",
+      "requirement": "支持属性筛选、bbox/多边形范围查询、面积汇总和地块统计；结果与当前授权/过滤条件一致，大集合分页或切片。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-027",
+      "title": "时序对比与结果定位",
+      "stage": "S1",
+      "requirement": "同地块多时相对比、卷帘/并排和结果定位，显示观测时间与处理时间；地图时间轴不把旧数据伪装实时。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-028",
+      "title": "二维三维联动",
+      "stage": "S1",
+      "requirement": "Cesium按需启用，二维三维共享地块ID与选中状态；示意拉伸明确标识，真实地形/3DTiles有来源授权；未配置显示不可用。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-029",
+      "title": "协作冲突与版本恢复",
+      "stage": "S1",
+      "requirement": "乐观版本、编辑冲突提示与历史恢复；恢复作为新版本，不抹除历史审核；变更影响范围能查看。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-030",
+      "title": "移动外业入口",
+      "stage": "S1",
+      "requirement": "移动Web/PWA支持巡查任务、定位、相机、简单地图和上传；首版覆盖移动浏览器，不承诺已实现微信小程序或原生App。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-031",
+      "title": "持久分析任务",
+      "stage": "S1",
+      "requirement": "分析提交立即返回operation_id及预算/输入快照；GIS接单后关联job_id并可查询；排队、运行、发布与终态持久化；请求生命周期与计算生命周期分离。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-032",
+      "title": "任务重试取消与恢复",
+      "stage": "S1",
+      "requirement": "任务有租约/心跳/超时/取消/重试/死信与人工重驱；旧worker受fencing阻断；状态及可重试性明确。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-033",
+      "title": "幂等事件与结果发布",
+      "stage": "S1",
+      "requirement": "事务outbox与消费者inbox去重；产物先临时写入再校验并发布元数据，失败可清理；跨服务以幂等达到业务一次效果。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-034",
+      "title": "地块分区统计与NDVI",
+      "stage": "S1",
+      "requirement": "计算地块级有效面积、有效像元、NDVI统计与可视图；公式和mask有版本，零分母/无有效像元返回无效而非0。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-035",
+      "title": "多期变化与异常筛查",
+      "stage": "S1",
+      "requirement": "按种植季、作物和可比时段分析两期或多期变化；保留基准选择、分辨率、质量和阈值，阈值仅为监测策略。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-036",
+      "title": "变化候选与人工复核",
+      "stage": "S1",
+      "requirement": "复用RGB差分/变化向量等候选发现并明确算法名称；人工分类/排除/确认有依据及版本，候选不得直接当确诊。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-037",
+      "title": "灾害范围与影响初评",
+      "stage": "S2",
+      "requirement": "导入灾害范围或接入经验证模型输出，按地块交集计算初评面积，明确数据时间/重叠去重/不确定性，不声称法定定损。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-038",
+      "title": "分析质量与适用范围",
+      "stage": "S1",
+      "requirement": "对输入、配准、覆盖、有效像元、像元尺度及农学适用条件执行门禁；失败写结构化原因与建议补充数据。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-039",
+      "title": "巡查工单与指派",
+      "stage": "S2",
+      "requirement": "从异常或手工创建巡查工单草稿，指派有权限成员、期限、位置、优先级及检查项；变更有通知与历史。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-040",
+      "title": "现场GPS与媒体证据",
+      "stage": "S1",
+      "requirement": "采集WGS84定位与精度、观测时间、照片/语音/表单、采集人及hash；现场证据可关联地块或明确未匹配。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-041",
+      "title": "弱网草稿与幂等补传",
+      "stage": "S1",
+      "requirement": "离线/弱网保存本地草稿与上传队列；网络恢复重传不重复业务记录；退出账号清理敏感本地数据并提示未同步内容。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-042",
+      "title": "现场复核与异常处置",
+      "stage": "S2",
+      "requirement": "现场确认真实异常/误报/需复查，支持补充原因、图片与处置结果；关闭前校验必需证据，允许有审计地重开。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-043",
+      "title": "质量规则与审核",
+      "stage": "S2",
+      "requirement": "版本化质检规则，检查属性/拓扑/覆盖/证据完整；审核绑定具体输入与成果hash，变更后重检；审核权限独立于编辑。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-044",
+      "title": "作业记录与效果反馈",
+      "stage": "S2",
+      "requirement": "登记实际农事作业及执行时间、实施量、单位、作业对象和结果；可以对照后续观测，明确关联不等于证明因果。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-045",
+      "title": "农业知识与来源证据",
+      "stage": "S2",
+      "requirement": "通过Loom接入获准农业资料，保留原始来源、时间、版本、权利、作物区域适用范围；知识检索与客户空间事实分层。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-046",
+      "title": "农场地块Agent上下文",
+      "stage": "S2",
+      "requirement": "Agent会话绑定租户/工作区/农场/地块/种植季与当前选中图层，范围由服务端重解析，用户可查看数据范围。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-047",
+      "title": "农业工具与MCP",
+      "stage": "S2",
+      "requirement": "提供有类型工具及MCP适配，读/分析/写/共享/计费分类；工具Schema和权限版本固定到run，长计算返回job引用。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-048",
+      "title": "预置及租户自定义Agent",
+      "stage": "S2",
+      "requirement": "预置GIS助手、长势巡检、外业协调、报告助手；租户可配置名称、提示词、知识与授权工具子集，不能超过创建人及运行人权限。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-049",
+      "title": "农业Skill版本与权限",
+      "stage": "S2",
+      "requirement": "农业Skill定义适用前提、流程、工具依赖、输出Schema和评测；安装/升级/回滚有版本；首版不开放未经沙箱的任意脚本。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-050",
+      "title": "审批预览与受控执行",
+      "stage": "S2",
+      "requirement": "Agent写边界、指派工单、发布共享等先形成可复核预览；批准绑定对象、版本、参数hash、费用上限和有效期，变化后失效。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-051",
+      "title": "报告生成与地图证据",
+      "stage": "S2",
+      "requirement": "生成含地图、表格、来源/算法/质量/时间/结论和数据缺口的报告，PDF及结构化JSON至少可用；图件与正文数字一致。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-052",
+      "title": "报告版本审核发布",
+      "stage": "S2",
+      "requirement": "报告draft/reviewed/published/withdrawn有不可变revision；正式外发按项目策略审核，默认作者与审核人分离，个人探索报告明确状态。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-053",
+      "title": "导出下载共享与撤回",
+      "stage": "S3",
+      "requirement": "资源下载和报告分享需对象级权限；共享有范围、期限和撤销，敏感内容通过可撤销鉴权代理；导出有清单和校验值。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-054",
+      "title": "不可变审计与追溯",
+      "stage": "S2",
+      "requirement": "记录用户/代理/服务主体、租户、操作、资源版本、审批、请求/任务关联及结果；常规操作者不能改写历史事件。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-055",
+      "title": "不确定性与数据缺口表达",
+      "stage": "S2",
+      "requirement": "结果标明观测事实、计算指标、推断建议或预测；资料不足明确拒答/补数，不编造天气、设备、产量和识别概率。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-056",
+      "title": "Agent与农学效果评测",
+      "stage": "S3",
+      "requirement": "提供权限、安全、工具选择、来源忠实、数值准确、缺数拒答及现场效果评测；冻结数据集和版本，不能只靠LLM自评分。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-057",
+      "title": "产品套餐与权益",
+      "stage": "S2",
+      "requirement": "租户套餐管理用户席位、农场/面积、存储、计算、Agent/设备额度；政策版本明确，降级保留只读及合规导出窗口。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-058",
+      "title": "预算预留结算及退款",
+      "stage": "S2",
+      "requirement": "任务启动前预估与预留，完成结算或失败释放；整数微积分，取消/部分消耗/外部结果未知进入明确结算或对账流程。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-059",
+      "title": "计量价格版本与成本",
+      "stage": "S2",
+      "requirement": "记录模型tokens、处理像元或计算单位、存储周期、流量等实际计量维度及单价版本；价格与成本分开，未知成本不得编造。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-060",
+      "title": "支付订阅与账单",
+      "stage": "S3",
+      "requirement": "支付provider接口与至少一选定渠道接入；订单/回调验签、去重、状态对账、退款与订阅续期；无真实商户验收时关闭自助收费并如实阻塞该渠道上线。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-061",
+      "title": "配额与限流",
+      "stage": "S2",
+      "requirement": "按租户和服务限制请求、并发、预算、像元及存储；限流可解释，超额要先告知估价与升级选项，避免无界付费。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-062",
+      "title": "成本对账与异常处置",
+      "stage": "S3",
+      "requirement": "业务用量与账本及provider账单对账，处理重复回调、迟到结果、差额和异常；不可直接改余额修复，采用可审计调整记录。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-063",
+      "title": "客户初始化与样例隔离",
+      "stage": "S1",
+      "requirement": "新租户空状态、入门流程与演示沙箱；样例不能生成正式报告或账单，首个真实农场导入有向导和错误指引。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-064",
+      "title": "可观测性与运维",
+      "stage": "S3",
+      "requirement": "服务/任务/数据质量/账单指标、链路关联日志、告警及运维控制台；秘密和签名URL不进入日志。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-065",
+      "title": "备份恢复与迁移",
+      "stage": "S3",
+      "requirement": "平台库/GIS库/知识库/对象协同备份，恢复验证引用和hash；数据库升级可回滚或恢复，演练结果记录实际RPO/RTO。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-066",
+      "title": "数据保留导出与注销",
+      "stage": "S3",
+      "requirement": "租户导出及注销流程覆盖对象、检索、缓存和处理中的任务；保留依法/合同所需审计与账务最小记录，保留依据与期限可配置。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-067",
+      "title": "国际化单位与可访问性",
+      "stage": "S3",
+      "requirement": "中文优先，UTC存储并显式显示业务时区；m²/ha/亩转换一致，键盘基础操作、图例对比和可读错误信息。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-068",
+      "title": "产品构建与功能配置",
+      "stage": "S0",
+      "requirement": "独立农业profile/feature flags；保留上游其他业务，农业构建不包含未授权tldraw使用路径；依赖锁定及许可清单可审查。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-069",
+      "title": "传感设备注册与身份",
+      "stage": "S4",
+      "requirement": "设备绑定租户/农场/站点，独立凭据、轮换和撤销；设备资料与观测单位版本化，禁止共享万能设备令牌。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-070",
+      "title": "遥测接入与质量",
+      "stage": "S4",
+      "requirement": "HTTP/MQTT等适配器按需要实现，设备序号/事件ID去重，区分设备时间和接收时间，处理迟到、乱序、质量和离线。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-071",
+      "title": "观测时序及状态回放",
+      "stage": "S4",
+      "requirement": "按地块/设施展示环境与遥感观测时间序列，保留更正和质量标记；回放用当时版本，观测与预测分图层。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-072",
+      "title": "规则告警与通知反馈",
+      "stage": "S4",
+      "requirement": "阈值规则和持续时间、抑制窗口、告警去重、送达与确认闭环；规则变更可追溯，设备离线单独显示。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-073",
+      "title": "模型版本校准及评估",
+      "stage": "S5",
+      "requirement": "模型注册、数据权利、适用作物/区域/季节、训练验证拆分、校准和基准比较；无真实验证只可标实验。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-074",
+      "title": "预测与情景对比",
+      "stage": "S5",
+      "requirement": "生成带版本、输入、时域和误差范围的预测，比较场景假设；缺乏适用数据拒绝输出确定结论。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-075",
+      "title": "决策建议及效果核验",
+      "stage": "S5",
+      "requirement": "建议映射到人工计划，记录实际执行与后续结果，评估误报/漏报及收益；不得将相关性宣传成因果效果。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-076",
+      "title": "设备控制适配与人工授权",
+      "stage": "S5",
+      "requirement": "默认禁用；真实设备控制须单独授权、设备适配器、现场联锁、限额、手动接管、演练和审计，LLM不能直接发任意控制指令。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-077",
+      "title": "受控CLI与开放API",
+      "stage": "S3",
+      "requirement": "提供Go CLI访问同一授权API：登录/凭据引用、查资源、提交任务、状态、导出；具备JSON输出、退出码和幂等键，不绕过计费。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-078",
+      "title": "集成SDK及外部MCP发布",
+      "stage": "S3",
+      "requirement": "发布版本化OpenAPI/工具Schema和最小SDK示例；外部MCP仅暴露获授权工具，服务身份、限流和预算与Web一致。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-079",
+      "title": "管理员运营与客服",
+      "stage": "S3",
+      "requirement": "运营可管理套餐、故障和授权范围内工单；访问客户内容需有明确工单/限时授权和审计，不能默认跨租户查看。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-FR-080",
+      "title": "付费试点及商用发布",
+      "stage": "S3",
+      "requirement": "完成真实客户试点、真实依赖验证、成本核算、恢复演练、支持手册及商业发布门禁；未验收项不得标完成。",
+      "verification_status": "not_run"
+    }
+  ],
+  "nonfunctional": [
+    {
+      "id": "AG-NFR-001",
+      "title": "身份与租户",
+      "requirement": "跨租户和对象越权负例必须全部通过；普通DB角色无BYPASSRLS，缺失scope拒绝；浏览器、Agent、CLI、worker共用授权规则。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-NFR-002",
+      "title": "数据权利与敏感信息",
+      "requirement": "资产来源/用途/署名/期限可追溯；秘密不进日志、提示词、前端配置和版本库；正式成果不得使用权利不明数据。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-NFR-003",
+      "title": "几何和遥感正确性",
+      "requirement": "用黄金样本校验几何面积、NDVI、mask、scale/offset、空值和坐标轴；数值容差按算子记录，不用UI截图替代数值检验。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-NFR-004",
+      "title": "幂等与并发",
+      "requirement": "重复HTTP、事件、worker领取、支付回调不重复业务效果/结算；并发编辑返回版本冲突；终态和产物一致。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-NFR-005",
+      "title": "恢复与可用性",
+      "requirement": "进程被杀、网络中断、数据库短暂不可用及对象写失败有可恢复状态；禁止静默丢任务；发布前执行故障注入。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-NFR-006",
+      "title": "地图/API性能",
+      "requirement": "试点基准目标：常见授权查询p95<2s、任务提交p95<1s；地图窗口在限制要素或切片后交互就绪<3s。必须报告数据量、网络、缓存和并发。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-NFR-007",
+      "title": "计算资源与公平性",
+      "requirement": "租户并发与CPU/内存/IO预算受限；5000万像元分块场景作为扩展压测目标，不能简单解除上游限制；队列公平、超限明确拒绝。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-NFR-008",
+      "title": "可观测审计",
+      "requirement": "request_id/trace_id/run_id/job_id/tenant_id贯穿链路；计费、审批、来源和输出能关联；错误率/队列年龄/质量和成本有监测。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-NFR-009",
+      "title": "备份恢复",
+      "requirement": "试点目标RPO≤24h、RTO≤4h，须真实恢复演练记录达成情况；商用SLA以最终基础设施和演练证据承诺。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-NFR-010",
+      "title": "部署供应链",
+      "requirement": "镜像/依赖锁定、SBOM及许可审查、非root运行、最小权限、无默认口令；数据库/worker仅内网，公开入口HTTPS。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-NFR-011",
+      "title": "可维护性与契约",
+      "requirement": "跨服务API/事件Schema版本化并有契约验证，单库唯一写入所有者；不硬耦合上游内部表；模块可单独回归。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-NFR-012",
+      "title": "浏览器与移动适配",
+      "requirement": "桌面验证当前主流Chromium与至少一非Chromium浏览器；移动验证真实Android Chrome/iOS Safari或实机等效；HTTPS定位与相机退化可用。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-NFR-013",
+      "title": "可访问性",
+      "requirement": "核心导航/表单支持键盘、焦点与可读标签；地图结果可通过表格读取；色彩不作为唯一状态信息。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-NFR-014",
+      "title": "时间单位本地化",
+      "requirement": "保存UTC与必要原始时区；默认Asia/Shanghai显示；数值/单位转换不改原始值；跨日、夏令时地区与亩/ha转换有测试。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-NFR-015",
+      "title": "存储生命周期",
+      "requirement": "临时产物/失效上传/历史报告按策略清理；源数据保留策略由权利及合同决定；对象删除前检查依赖与legal hold。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-NFR-016",
+      "title": "Agent安全与证据",
+      "requirement": "检索内容视为数据，不能提升权限；工具范围来自服务端；提示注入/秘密泄漏/危险写操作有负例；引用能指回可访问的来源版本。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-NFR-017",
+      "title": "费用准确性",
+      "requirement": "整数计量及金额、幂等账本与冻结费率；并发和跨服务失败情况下预算守恒；未知provider结果进入reconciliation，不重复扣费。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-NFR-018",
+      "title": "隐私与导出删除",
+      "requirement": "用户和租户可获取授权范围的数据导出；注销覆盖索引及共享；不可删除的账务/审计最小记录说明依据和保留期。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-NFR-019",
+      "title": "兼容迁移回滚",
+      "requirement": "保留上游许可证、历史及现有业务；迁移前备份和dry-run；RLS收紧先回归系统任务、教育/影视旧路径，不通过则不发布。",
+      "verification_status": "not_run"
+    },
+    {
+      "id": "AG-NFR-020",
+      "title": "真实验收与可复现",
+      "requirement": "fixture/contract/integration/live/farm/paid/device证据分层；所有完成项有实际产物与命令结果；外部未就绪明确blocked_external。",
+      "verification_status": "not_run"
+    }
+  ]
+}
+

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.weavesense.invalid/agriculture/v1/source-rights.schema.json",
+  "title": "Reviewed agriculture source-rights registry (not client authority)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "sources"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "sources": {"type": "array", "items": {"$ref": "#/$defs/source"}}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$"},
+    "text": {"type": "string", "minLength": 1, "maxLength": 2048, "pattern": "\\S"},
+    "nullableText": {"anyOf": [{"$ref": "#/$defs/text"}, {"type": "null"}]},
+    "use": {"enum": ["ingest", "analysis", "report_publish", "export", "external_share", "model_training"]},
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "kind", "enabled", "data_class", "source_ref", "parent_ids", "rights"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"enum": ["basemap", "imagery", "administrative_boundary", "customer_data", "model_weights", "knowledge", "derived", "fixture"]},
+        "enabled": {"type": "boolean"},
+        "data_class": {"enum": ["demo", "operational"]},
+        "source_ref": {"$ref": "#/$defs/id"},
+        "parent_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "rights": {
+          "type": "object", "additionalProperties": false,
+          "required": ["status", "owner", "license_ref", "commercial_use", "redistribution", "permitted_uses", "attribution", "valid_from", "expiry", "review_ref", "evidence"],
+          "properties": {
+            "status": {"enum": ["unknown", "approved", "prohibited", "revoked"]},
+            "owner": {"$ref": "#/$defs/nullableText"},
+            "license_ref": {"anyOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+            "commercial_use": {"enum": ["allowed", "prohibited", "unknown"]},
+            "redistribution": {"enum": ["allowed", "prohibited", "unknown"]},
+            "permitted_uses": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/use"}},
+            "attribution": {
+              "type": "object", "additionalProperties": false,
+              "required": ["required", "text"],
+              "properties": {"required": {"type": "boolean"}, "text": {"$ref": "#/$defs/nullableText"}}
+            },
+            "valid_from": {"type": ["string", "null"], "format": "date-time", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}[Tt][0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?([Zz]|[+-][0-9]{2}:[0-9]{2})$"},
+            "expiry": {"type": ["string", "null"], "format": "date-time", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}[Tt][0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?([Zz]|[+-][0-9]{2}:[0-9]{2})$"},
+            "review_ref": {"anyOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+            "evidence": {"type": "array", "items": {
+              "type": "object", "additionalProperties": false,
+              "required": ["ref", "sha256"],
+              "properties": {"ref": {"$ref": "#/$defs/id"}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
+            }}
+          }
+        }
+      }
+    }
+  }
+}

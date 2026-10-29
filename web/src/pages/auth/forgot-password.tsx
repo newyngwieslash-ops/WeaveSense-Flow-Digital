@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState, type ReactNode } from "react";
 import { App, Button, Input } from "antd";
 import { ArrowLeft, ArrowRight, LockKeyhole, Mail, ShieldCheck, TriangleAlert } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router";
+import { safeAuthReturnPath as safeNext } from "@/lib/auth-return-path";
 
 import { getAuthSettings, resetPassword, sendPasswordResetEmailCode } from "@/services/api/auth";
 
@@ -179,7 +180,6 @@ export default function ForgotPasswordPage() {
         </form>
     );
 }
-
 function AuthField({ label, htmlFor, children }: { label: string; htmlFor: string; children: ReactNode }) {
     return (
         <div className="space-y-2">
@@ -209,9 +209,4 @@ function Notice({ icon, children }: { icon: ReactNode; children: ReactNode }) {
             {children}
         </div>
     );
-}
-
-function safeNext(value: string | null) {
-    if (!value || !value.startsWith("/") || value.startsWith("//")) return "/";
-    return value;
 }

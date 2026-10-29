@@ -43,9 +43,13 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 		if !ok {
 			return Scope{}, nil, false
 		}
-		s, err := ResolveScope(db, u.ID, c.GetHeader("X-Workspace-Id"))
+		s, err := ResolveScope(reqDB(c, db), u.ID, c.GetHeader("X-Workspace-Id"))
 		if err != nil {
-			reply(c, http.StatusNotFound, nil, "workspace not found")
+			if errors.Is(err, ErrForbidden) {
+				reply(c, http.StatusNotFound, nil, "workspace not found")
+			} else {
+				reply(c, http.StatusInternalServerError, nil, "scope resolution failed")
+			}
 			return Scope{}, nil, false
 		}
 		return s, u, true
@@ -123,7 +127,14 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 		_ = c.ShouldBindJSON(&body)
 		inv, tok, err := CreateInvite(db, s, u.ID, body.Email, body.Role, 7*24*time.Hour)
 		if err != nil {
-			reply(c, http.StatusForbidden, nil, err.Error())
+			switch {
+			case errors.Is(err, ErrForbidden):
+				reply(c, http.StatusForbidden, nil, "forbidden")
+			case errors.Is(err, ErrInvalid):
+				reply(c, http.StatusBadRequest, nil, "invalid invitation")
+			default:
+				reply(c, http.StatusInternalServerError, nil, "invitation creation failed")
+			}
 			return
 		}
 		// The token is shown once to the inviting admin; only its hash is stored.
@@ -142,7 +153,11 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 		_ = c.ShouldBindJSON(&body)
 		s, err := AcceptInvite(db, u.ID, body.Token)
 		if err != nil {
-			reply(c, http.StatusBadRequest, nil, "invite invalid or used")
+			if errors.Is(err, ErrInviteInvalid) || errors.Is(err, ErrForbidden) {
+				reply(c, http.StatusBadRequest, nil, "invite invalid or used")
+			} else {
+				reply(c, http.StatusInternalServerError, nil, "invitation acceptance failed")
+			}
 			return
 		}
 		reply(c, http.StatusOK, s, "ok")
@@ -157,7 +172,14 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 			return
 		}
 		if err := RemoveMember(db, s, c.Param("userId")); err != nil {
-			reply(c, http.StatusForbidden, nil, err.Error())
+			switch {
+			case errors.Is(err, ErrForbidden):
+				reply(c, http.StatusForbidden, nil, "forbidden")
+			case errors.Is(err, ErrNotFound):
+				reply(c, http.StatusNotFound, nil, "member not found")
+			default:
+				reply(c, http.StatusInternalServerError, nil, "member removal failed")
+			}
 			return
 		}
 		reply(c, http.StatusOK, nil, "ok")

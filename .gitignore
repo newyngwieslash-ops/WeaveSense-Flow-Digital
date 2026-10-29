@@ -83,5 +83,6 @@ backend/tmp_*
 
 # WeaveSense-Flow: versioned docs and env template
 !docs/flow/
+!docs/agriculture/
 !.env.flow.example
 .comet/

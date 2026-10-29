@@ -34,7 +34,7 @@ func RegisterRoutes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc) {
 			reply(c, http.StatusUnauthorized, nil, "unauthorized")
 			return Scope{}, nil, false
 		}
-		s, err := ResolveScope(db, u.ID, c.GetHeader("X-Workspace-Id"))
+		s, err := ResolveScope(reqDB(c, db), u.ID, c.GetHeader("X-Workspace-Id"))
 		if err != nil {
 			if errors.Is(err, ErrForbidden) {
 				reply(c, http.StatusNotFound, nil, "workspace not found")

@@ -104,7 +104,7 @@ export const useFieldCaptureStore = defineStore('field-capture', () => {
   const draftRef = ref<FieldCaptureDraft>(
     restoreJson(DRAFT_STORAGE_KEY, isFieldCaptureDraft) || buildDraft(),
   )
-  const taskCodeRef = ref<string>('RS-2026-045')
+  const taskCodeRef = ref<string>('')
   const photoFileRef = ref<File | null>(null)
   const pendingUploadRef = ref<PendingFieldPhotoUpload | null>(
     restoreJson(PENDING_STORAGE_KEY, isPendingFieldPhotoUpload),

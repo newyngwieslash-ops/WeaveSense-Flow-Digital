@@ -1,0 +1,51 @@
+{
+  "official_repository": "https://deb.debian.org/debian/",
+  "distribution": "trixie",
+  "gpg_verify_exit_code": 0,
+  "keyring": "/usr/share/keyrings/debian-archive-keyring.gpg",
+  "inrelease_sha256": "0584fba32e13e0ab8285fb16c27adea1ec03a73669c18702821094fd6ca86675",
+  "packages_xz_sha256": "7778d3e3f303b7ddb8ce0fe7c8d57473a076c6bf2e8f241f75421d2396352498",
+  "package_count_checked": 8,
+  "signature_primary_fingerprints": [
+    "04B54C3CDCA79751B16BC6B5225629DF75B188BD",
+    "41587F7DB8C774BCCF131416762F67A0B2C39DE4"
+  ],
+  "exploratory_first_attempt": {
+    "product_acceptance": false,
+    "results": [
+      {
+        "name": "test_postgres_replay_parallel_persistence_scope_and_fail_closed",
+        "outcome": "failure",
+        "reason": "ConnectionRefusedError on private loopback endpoint"
+      },
+      {
+        "name": "test_postgres_actual_verifier_dependency_nonce_order_and_parallel_http",
+        "outcome": "failure",
+        "reason": "ConnectionRefusedError on private loopback endpoint"
+      },
+      {
+        "name": "test_postgres_actor_mapping_strict_scope_and_atomic_audit",
+        "outcome": "failure",
+        "reason": "ConnectionRefusedError on private loopback endpoint"
+      },
+      {
+        "name": "test_postgres_actor_binding_lock_blocks_concurrent_revocation",
+        "outcome": "failure",
+        "reason": "ConnectionRefusedError on private loopback endpoint"
+      },
+      {
+        "name": "test_postgres_real_workbench_write_commit_and_stable_audit",
+        "outcome": "error",
+        "reason": "ConnectionRefusedError on private loopback endpoint"
+      },
+      {
+        "name": "test_postgres_real_workbench_audit_failure_rolls_back",
+        "outcome": "error",
+        "reason": "ConnectionRefusedError on private loopback endpoint"
+      }
+    ],
+    "boundary": "Server was not reachable across execution calls. Subsequent successful tests started, tested and stopped the private server in a single execution call. No result of this failed attempt was relabeled as passed."
+  },
+  "remote_ci": "not_run_for_reconstructed_DT013",
+  "no_production_deployment": true
+}

@@ -30,7 +30,11 @@ const axiosInstance = axios.create({
 })
 
 axiosInstance.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => config,
+  (_config: InternalAxiosRequestConfig) => {
+    // No legacy endpoint has a trusted domain adapter yet. Even a local demo
+    // must not turn a selected fixture code into a server-side principal.
+    throw new Error('旧GIS接口未接入可信平台身份，当前不可用')
+  },
   () => {
     message.error('请求发送失败，请稍后重试')
     return Promise.reject(new Error('请求发送失败'))

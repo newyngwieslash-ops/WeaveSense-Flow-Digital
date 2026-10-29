@@ -3,13 +3,15 @@ import { DownOutlined } from '@ant-design/icons-vue'
 import { storeToRefs } from 'pinia'
 
 import { useUserStore } from '@/store/userStore'
+import { legacyDemoEnabled } from '@/security/legacyIdentity'
 
 const userStore = useUserStore()
 const { currentUserComputed, loadingRef, usersRef } = storeToRefs(userStore)
 </script>
 
 <template>
-  <a-dropdown :trigger="['click']" placement="bottomRight">
+  <span v-if="!legacyDemoEnabled()" role="status">旧GIS身份不可用，请使用农业平台入口</span>
+  <a-dropdown v-else :trigger="['click']" placement="bottomRight">
     <button class="user-profile" type="button" :disabled="loadingRef">
       <a-avatar size="small" class="user-avatar">
         {{ currentUserComputed?.role_name.slice(0, 1) || '用' }}

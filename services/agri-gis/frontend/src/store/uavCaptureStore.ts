@@ -79,7 +79,7 @@ const restoreDraft = (): UavMobileCaptureDraft => {
 
 export const useUavCaptureStore = defineStore('uav-capture', () => {
   const userStore = useUserStore()
-  const projectCodeRef = ref<string>('RS-2026')
+  const projectCodeRef = ref<string>('')
   const missionsRef = ref<UavMission[]>([])
   const draftRef = ref<UavMobileCaptureDraft>(restoreDraft())
   const photoFileRef = ref<File | null>(null)

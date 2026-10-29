@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock
 import pytest
 from pydantic import ValidationError
 
-from app.core.exceptions import PermissionDeniedException
+from app.agriculture.identity.verify import IdentityError
 from app.models.workbench import ProjectRuleConfig
 from app.schemas.field_verification import FieldResolutionRequest
 from app.schemas.rule_config import RuleConfigUpdateRequest
@@ -188,7 +188,7 @@ def test_rule_config_update_rejects_quality_inspector_role() -> None:
         project_user_service=ProjectUserService(dao=user_dao),
     )
 
-    with pytest.raises(PermissionDeniedException, match="无权执行当前业务节点"):
+    with pytest.raises(IdentityError, match="trusted_actor_required") as denied:
         asyncio.run(
             service.update_config(
                 AsyncMock(),
@@ -198,6 +198,9 @@ def test_rule_config_update_rejects_quality_inspector_role() -> None:
                     ),
             )
         )
+
+    assert denied.value.status == 403
+    user_dao.get_active_user.assert_not_awaited()
 
 
 def test_field_match_uses_configured_offset_threshold() -> None:

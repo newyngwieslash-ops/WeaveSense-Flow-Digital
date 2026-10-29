@@ -191,34 +191,37 @@ async def handle_unexpected_exception(
     )
 
 
+# Legacy production business routes stay closed; no demo identity bypass.
+LEGACY_ROUTERS_NOT_MOUNTED = (
+    plot.router,
+    plot_attribute_field.router,
+    plot_attribute_workbook.router,
+    project_user.router,
+    workbench.router,
+    field_verification.router,
+    growth_monitoring.router,
+    review.router,
+    statistics.router,
+    vector_export.router,
+    disaster.router,
+    imagery.router,
+    imagery_fusion.router,
+    imagery_history.router,
+    public_imagery.router,
+    imagery_mosaic.router,
+    imagery_registration.router,
+    delivery.router,
+    acceptance_report.router,
+    boundary.router,
+    rule_config.router,
+    service_sharing.router,
+    production.router,
+    change_detection.router,
+    supervision.router,
+    thematic_map.router,
+    monitoring_network.router,
+    uav.router,
+    offline_archive.router,
+)
 app.include_router(health.router)
-app.include_router(plot.router)
-app.include_router(plot_attribute_field.router)
-app.include_router(plot_attribute_workbook.router)
-app.include_router(project_user.router)
-app.include_router(workbench.router)
-app.include_router(field_verification.router)
-app.include_router(growth_monitoring.router)
-app.include_router(review.router)
-app.include_router(statistics.router)
-app.include_router(vector_export.router)
-app.include_router(disaster.router)
-app.include_router(imagery.router)
-app.include_router(imagery_fusion.router)
-app.include_router(imagery_history.router)
-app.include_router(public_imagery.router)
-app.include_router(imagery_mosaic.router)
-app.include_router(imagery_registration.router)
-app.include_router(delivery.router)
-app.include_router(acceptance_report.router)
-app.include_router(boundary.router)
-app.include_router(rule_config.router)
-app.include_router(service_sharing.router)
-app.include_router(production.router)
-app.include_router(change_detection.router)
-app.include_router(supervision.router)
-app.include_router(thematic_map.router)
-app.include_router(monitoring_network.router)
-app.include_router(uav.router)
-app.include_router(offline_archive.router)
 configure_openapi_envelopes(app)

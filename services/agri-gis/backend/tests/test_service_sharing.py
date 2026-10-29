@@ -10,6 +10,7 @@ from unittest.mock import ANY, AsyncMock
 import pytest
 from pydantic import ValidationError
 
+from app.agriculture.identity.verify import IdentityError
 from app.core.exceptions import ValidationException
 from app.dao.service_sharing_dao import ServiceResourceEvidence
 from app.models.service_sharing import (
@@ -354,8 +355,8 @@ def test_health_target_rejects_private_address(
         asyncio.run(service._validate_health_target("http://internal.test/health"))
 
 
-def test_usage_rejects_wrong_api_key_and_accepts_correct_secret() -> None:
-    """验证调用审计必须通过活动 API Key 哈希校验。"""
+def test_usage_api_key_never_substitutes_for_human_delegation() -> None:
+    """DT013: even a correct old API key needs a separate service-consumer adapter."""
     now = datetime.now(UTC)
     shared_service = build_service()
     raw_secret = "temporary-secret-used-only-by-test"
@@ -395,7 +396,7 @@ def test_usage_rejects_wrong_api_key_and_accepts_correct_secret() -> None:
         "response_bytes": 4096,
     }
 
-    with pytest.raises(ValidationException, match="密钥不正确"):
+    with pytest.raises(IdentityError, match="service_consumer_adapter_unavailable"):
         asyncio.run(
             service.record_usage(
                 db,
@@ -408,19 +409,18 @@ def test_usage_rejects_wrong_api_key_and_accepts_correct_secret() -> None:
             )
         )
 
-    response = asyncio.run(
-        service.record_usage(
-            db,
-            "RS-2026",
-            shared_service.service_code,
-            ServiceUsageRecordRequest(
-                **common,
-                credential_secret=raw_secret,
-            ),
+    with pytest.raises(IdentityError, match="service_consumer_adapter_unavailable"):
+        asyncio.run(
+            service.record_usage(
+                db,
+                "RS-2026",
+                shared_service.service_code,
+                ServiceUsageRecordRequest(
+                    **common,
+                    credential_secret=raw_secret,
+                ),
+            )
         )
-    )
-
-    assert response.event_type == "invocation_recorded"
-    assert response.response_status == 200
-    assert response.actor_code == credential.credential_code
-    assert dao.add_event.await_args.args[1].credential_id == credential.id
+    dao.get_credential_by_code.assert_not_awaited()
+    dao.add_event.assert_not_awaited()
+    db.commit.assert_not_awaited()

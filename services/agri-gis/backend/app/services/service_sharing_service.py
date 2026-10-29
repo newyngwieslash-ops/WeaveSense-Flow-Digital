@@ -16,6 +16,7 @@ import httpx
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.agriculture.identity.verify import IdentityError
 from app.core.config import settings
 from app.core.exceptions import NotFoundException, ValidationException
 from app.dao.service_sharing_dao import ServiceSharingDAO
@@ -863,6 +864,8 @@ class ServiceSharingService:
         Returns:
             ServiceUsageEventResponse: 已持久化调用事件。
         """
+        if not request.operator_code:
+            raise IdentityError("service_consumer_adapter_unavailable", 403)
         project = await self._project(db, project_code)
         service = await self.dao.get_service_by_code(
             db,

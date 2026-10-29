@@ -1,0 +1,117 @@
+{
+  "schema_version": "1.0-reconstructed",
+  "kind": "recovery_verification_not_product_acceptance",
+  "date": "2026-10-29",
+  "note": "历史 DT001..012 完成已确认；本记录不把历史结果冒充本次恢复后的完整验收。W00 部分产物缺失须恢复及复核；DT012 源码恢复不等于所有验证已重跑。",
+  "acceptance_recovery": {
+    "baseline_file_state": "80 not_run",
+    "historical_known": "AG-AC-002 running",
+    "action": "pending_evidence_recovery_no_automatic_matrix_update"
+  },
+  "tasks": {
+    "DT-001": {
+      "historical_status": "done",
+      "verification": "pending_revalidation",
+      "evidence": [],
+      "commands": [],
+      "source_hashes": [],
+      "note": "W00 原始交付物及日志未全量恢复；保持历史状态，不宣称本次完成。"
+    },
+    "DT-002": {
+      "historical_status": "done",
+      "verification": "pending_revalidation",
+      "evidence": [],
+      "commands": [],
+      "source_hashes": [],
+      "note": "W00 原始交付物及日志未全量恢复；保持历史状态，不宣称本次完成。"
+    },
+    "DT-003": {
+      "historical_status": "done",
+      "verification": "pending_revalidation",
+      "evidence": [],
+      "commands": [],
+      "source_hashes": [],
+      "note": "W00 原始交付物及日志未全量恢复；保持历史状态，不宣称本次完成。"
+    },
+    "DT-004": {
+      "historical_status": "done",
+      "verification": "pending_revalidation",
+      "evidence": [],
+      "commands": [],
+      "source_hashes": [],
+      "note": "W00 原始交付物及日志未全量恢复；保持历史状态，不宣称本次完成。"
+    },
+    "DT-005": {
+      "historical_status": "done",
+      "verification": "pending_revalidation",
+      "evidence": [],
+      "commands": [],
+      "source_hashes": [],
+      "note": "W00 原始交付物及日志未全量恢复；保持历史状态，不宣称本次完成。"
+    },
+    "DT-006": {
+      "historical_status": "done",
+      "verification": "pending_revalidation",
+      "evidence": [],
+      "commands": [],
+      "source_hashes": [],
+      "note": "W00 原始交付物及日志未全量恢复；保持历史状态，不宣称本次完成。"
+    },
+    "DT-007": {
+      "historical_status": "done",
+      "verification": "pending_revalidation",
+      "evidence": [],
+      "commands": [],
+      "source_hashes": [],
+      "note": "W00 原始交付物及日志未全量恢复；保持历史状态，不宣称本次完成。"
+    },
+    "DT-008": {
+      "historical_status": "done",
+      "verification": "pending_revalidation",
+      "evidence": [],
+      "commands": [],
+      "source_hashes": [],
+      "note": "W00 原始交付物及日志未全量恢复；保持历史状态，不宣称本次完成。"
+    },
+    "DT-009": {
+      "historical_status": "done",
+      "verification": "restored_not_revalidated",
+      "evidence": [],
+      "commands": [],
+      "source_hashes": [],
+      "note": "源代码已恢复；当前整项恢复验收证据尚待整理复核。"
+    },
+    "DT-010": {
+      "historical_status": "done",
+      "verification": "restored_not_revalidated",
+      "evidence": [],
+      "commands": [],
+      "source_hashes": [],
+      "note": "源代码已恢复；当前整项恢复验收证据尚待整理复核。"
+    },
+    "DT-011": {
+      "historical_status": "done",
+      "verification": "restored_not_revalidated",
+      "evidence": [],
+      "commands": [],
+      "source_hashes": [],
+      "note": "源代码已恢复；当前整项恢复验收证据尚待整理复核。"
+    },
+    "DT-012": {
+      "historical_status": "done",
+      "verification": "restored_not_revalidated",
+      "evidence": [],
+      "commands": [],
+      "source_hashes": [],
+      "note": "源代码已恢复；当前整项恢复验收证据尚待整理复核。"
+    },
+    "DT-013": {
+      "historical_status": "in_progress",
+      "verification": "restored_not_revalidated",
+      "evidence": [],
+      "commands": [],
+      "source_hashes": [],
+      "note": "正在实施与真实数据库验证；尚无完成或 CI 全通过结论。"
+    }
+  }
+}

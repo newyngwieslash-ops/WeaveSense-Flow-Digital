@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "repository": "https://deb.debian.org/debian/",
+  "distribution": "trixie",
+  "architecture": "amd64",
+  "inrelease_sha256": "0584fba32e13e0ab8285fb16c27adea1ec03a73669c18702821094fd6ca86675",
+  "packages_xz_sha256": "7778d3e3f303b7ddb8ce0fe7c8d57473a076c6bf2e8f241f75421d2396352498",
+  "packages": [
+    {
+      "Package": "postgresql-17",
+      "Version": "17.11-0+deb13u1",
+      "Filename": "pool/main/p/postgresql-17/postgresql-17_17.11-0+deb13u1_amd64.deb",
+      "SHA256": "d2ce1ddffafa783f9acda4c92c86fc21e8288bff3782d739294f14fa797d7886"
+    },
+    {
+      "Package": "postgresql-client-17",
+      "Version": "17.11-0+deb13u1",
+      "Filename": "pool/main/p/postgresql-17/postgresql-client-17_17.11-0+deb13u1_amd64.deb",
+      "SHA256": "9d8558f8dd57c8e92e218a20698383575d53742ca3f9e7c2b7fe5f246d5216ae"
+    },
+    {
+      "Package": "postgresql-17-postgis-3",
+      "Version": "3.5.2+dfsg-1",
+      "Filename": "pool/main/p/postgis/postgresql-17-postgis-3_3.5.2+dfsg-1_amd64.deb",
+      "SHA256": "4e59c5c0c27b98675ea65c7018166b1f8e48282e17801b149bf3e241e3d1b30d"
+    },
+    {
+      "Package": "postgresql-17-postgis-3-scripts",
+      "Version": "3.5.2+dfsg-1",
+      "Filename": "pool/main/p/postgis/postgresql-17-postgis-3-scripts_3.5.2+dfsg-1_all.deb",
+      "SHA256": "e19b04d69f856f339f3813ac2b5fdc8b0e6708dd4c3abe0aa5ebf128736a2edf"
+    },
+    {
+      "Package": "libsfcgal2",
+      "Version": "2.0.0-1",
+      "Filename": "pool/main/s/sfcgal/libsfcgal2_2.0.0-1_amd64.deb",
+      "SHA256": "0b1a8a6da16cda8988a242c8704f7faf54a1516307dd336938781452baeace89"
+    },
+    {
+      "Package": "libpq5",
+      "Version": "17.11-0+deb13u1",
+      "Filename": "pool/main/p/postgresql-17/libpq5_17.11-0+deb13u1_amd64.deb",
+      "SHA256": "20a4c9ef58b4baf90deda67cfb2cc062871c062830dddc234d28f5ac7931b86b"
+    },
+    {
+      "Package": "libprotobuf-c1",
+      "Version": "1.5.1-1",
+      "Filename": "pool/main/p/protobuf-c/libprotobuf-c1_1.5.1-1_amd64.deb",
+      "SHA256": "9fa7e6932f620c7155aab365ed277f04cae3e04ac80ee048fb09d1e838738d14"
+    },
+    {
+      "Package": "libboost-serialization1.83.0",
+      "Version": "1.83.0-4.2",
+      "Filename": "pool/main/b/boost1.83/libboost-serialization1.83.0_1.83.0-4.2_amd64.deb",
+      "SHA256": "5c0f28f2464e72c16c01440db47122e23ae0b4147e11e0e6d3b4ced86190324c"
+    }
+  ]
+}

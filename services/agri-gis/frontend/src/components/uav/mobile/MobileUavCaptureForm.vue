@@ -13,6 +13,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 
 import { useUavCaptureStore } from '@/store/uavCaptureStore'
 import { useUserStore } from '@/store/userStore'
+import { legacyDemoEnabled } from '@/security/legacyIdentity'
 import type { UavMission } from '@/types/uav'
 
 const captureStore = useUavCaptureStore()
@@ -170,6 +171,7 @@ const submit = async (): Promise<void> => {
         <a-tag>{{ statusLabelComputed }}</a-tag>
       </div>
       <a-select
+        v-if="legacyDemoEnabled()"
         :value="userStore.currentUserComputed?.user_code"
         :loading="userStore.loadingRef"
         placeholder="选择无人机采集人员"

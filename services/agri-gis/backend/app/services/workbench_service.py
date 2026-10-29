@@ -1088,6 +1088,7 @@ class WorkbenchService:
             task.project_id,
             request.operator_code,
             "edit_plots",
+            expected_action="agri.parcel.create",
         )
         if request.plot_code:
             existing = await self.dao.get_plot_by_code(db, request.plot_code)
@@ -1192,6 +1193,7 @@ class WorkbenchService:
             task.project_id,
             request.operator_code,
             "edit_plots",
+            expected_action="agri.parcel.update",
         )
         plot = await self.dao.get_plot_by_code_for_update(db, plot_code)
         if plot is None or plot.interpretation_status == "deleted":
@@ -1266,6 +1268,7 @@ class WorkbenchService:
             task.project_id,
             request.operator_code,
             "edit_plots",
+            expected_action="agri.parcel.delete",
         )
         plot = await self.dao.get_plot_by_code_for_update(db, plot_code)
         if plot is None or plot.interpretation_status == "deleted":
@@ -2066,6 +2069,9 @@ class WorkbenchService:
             task.project_id,
             request.operator_code,
             "edit_plots",
+            expected_action="agri.parcel.update",
+            operation="workbench.update_plot_attributes",
+            targets={"task_code": task_code, "plot_code": plot_code},
         )
         plot = await self.dao.get_plot_by_code_for_update(db, plot_code)
         if plot is None or plot.interpretation_status == "deleted":
@@ -2153,6 +2159,7 @@ class WorkbenchService:
             task.project_id,
             request.operator_code,
             "edit_plots",
+            expected_action="agri.parcel.update",
         )
         plots = list(
             await self.dao.get_task_plots_by_codes_for_update(

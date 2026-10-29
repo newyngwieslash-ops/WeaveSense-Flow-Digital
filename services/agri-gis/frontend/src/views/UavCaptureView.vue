@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router'
 import MobileUavCaptureForm from '@/components/uav/mobile/MobileUavCaptureForm.vue'
 import { useUavCaptureStore } from '@/store/uavCaptureStore'
 import { useUserStore } from '@/store/userStore'
+import { legacyDemoEnabled, explicitDemoContext } from '@/security/legacyIdentity'
 
 const route = useRoute()
 const captureStore = useUavCaptureStore()
@@ -12,18 +13,11 @@ const userStore = useUserStore()
 
 onMounted(async () => {
   document.documentElement.classList.add('mobile-standalone')
-  const projectCode = typeof route.query.project_code === 'string'
-    ? route.query.project_code
-    : 'RS-2026'
+  const projectCode = explicitDemoContext(legacyDemoEnabled(), route.query.project_code)
+  if (!projectCode) return
   captureStore.setProjectCode(projectCode)
   captureStore.startNetworkMonitoring()
   await userStore.initialize(projectCode)
-  if (!userStore.hasCapability('operate_uav_missions')) {
-    const operator = userStore.usersRef.find(
-      (user) => user.capabilities.includes('operate_uav_missions'),
-    )
-    if (operator) userStore.setCurrentUser(operator.user_code)
-  }
   try {
     await captureStore.load()
   } catch {
@@ -39,7 +33,8 @@ onUnmounted(() => {
 
 <template>
   <div class="uav-capture-view">
-    <MobileUavCaptureForm />
+    <MobileUavCaptureForm v-if="legacyDemoEnabled()" />
+    <p v-else role="status">无人机领域接口尚未接入可信平台身份，采集暂不可用。</p>
   </div>
 </template>
 

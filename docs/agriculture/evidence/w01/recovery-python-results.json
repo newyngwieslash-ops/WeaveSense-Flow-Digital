@@ -1,0 +1,33 @@
+{
+  "new_execution_after_recovery": true,
+  "data_class": "fixture",
+  "checks": [
+    {
+      "private_log": ".local/evidence/recovery-python-identity-actors-gate.log",
+      "sha256": "ce2240c852a1b22f58edd643c65110282a32fc9b9033f93d7335ea33b0e1599a",
+      "last_lines": [
+        "........................................................................ [ 71%]",
+        ".ss.......ssss...............                                            [100%]",
+        "95 passed, 6 skipped in 6.96s"
+      ]
+    },
+    {
+      "private_log": ".local/evidence/recovery-python-original-suite.log",
+      "sha256": "f39d41c28d1f1e8286b1857810d8c3704d01e4911d98db2f1dda227164668d19",
+      "last_lines": [
+        "........................................................................ [ 91%]",
+        "................................                                         [100%]",
+        "392 passed in 43.67s"
+      ]
+    },
+    {
+      "private_log": ".local/evidence/recovery-python-contract-export.log",
+      "sha256": "d17512b308d3e94cc78d1d6b03ee1a7878272efc87441f4b72718f50d3b10671",
+      "last_lines": [
+        "........................................................................ [100%]",
+        "72 passed in 0.41s"
+      ]
+    }
+  ],
+  "postgres_at_these_commands": "not_run; separate native PG evidence supersedes skip status only for explicitly executed PG tests"
+}

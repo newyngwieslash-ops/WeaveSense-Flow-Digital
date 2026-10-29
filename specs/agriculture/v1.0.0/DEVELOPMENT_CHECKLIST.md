@@ -1,8 +1,8 @@
 # WeaveSense-DigitalTwin 完整开发任务清单
 
-版本：1.0.0 ｜ 日期：2026-10-29 ｜ 状态：规格基线，所有开发任务尚未执行。
+版本：1.0.0 ｜ 日期：2026-10-29 ｜ 状态：历史进度恢复登记；当前统计见末尾生成区。
 
-本文件和 `tasks.json` 来自同一任务数据。共 **18 个工作包、144 项任务、80 项功能需求和 20 项非功能需求映射**。每项任务包括依赖、实现、产物、可观察验收、验证与外部条件；当前全部为 `not_started`。文档结构校验通过不表示软件已完成、测试已通过或已具备商业运行证据。
+本文件和 `tasks.json` 来自同一任务数据。共 **18 个工作包、144 项任务、80 项功能需求和 20 项非功能需求映射**。每项任务包括依赖、实现、产物、可观察验收、验证与外部条件。DT-001–012 保留已确认历史完成状态，其余进度见生成区；历史完成不等于运行环境重置后已重新验收。文档结构校验通过不表示软件已完成或已具备商业运行证据。
 
 ## 1. 执行规则
 
@@ -49,7 +49,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-001 · 建立隔离开发副本与固定上游基线
 
-- 状态：`not_started`；阶段：`S0`；优先级：`P0`。
+- 状态：`done`；阶段：`S0`；优先级：`P0`。
 - 需求：AG-FR-014、AG-FR-068、AG-NFR-010、AG-NFR-019。
 - 验收用例：AG-AC-014、AG-AC-068。
 - 前置任务：无；作为项目起点。
@@ -81,7 +81,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-002 · 核实已有功能与缺口并建立证据账本
 
-- 状态：`not_started`；阶段：`S0`；优先级：`P0`。
+- 状态：`done`；阶段：`S0`；优先级：`P0`。
 - 需求：AG-FR-005、AG-FR-031、AG-FR-047、AG-FR-058、AG-NFR-020。
 - 验收用例：AG-AC-005、AG-AC-031、AG-AC-047、AG-AC-058。
 - 前置任务：DT-001。
@@ -113,7 +113,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-003 · 完成生产依赖与数据授权清单
 
-- 状态：`not_started`；阶段：`S0`；优先级：`P0`。
+- 状态：`done`；阶段：`S0`；优先级：`P0`。
 - 需求：AG-FR-015、AG-FR-068、AG-NFR-002、AG-NFR-010。
 - 验收用例：AG-AC-015、AG-AC-068。
 - 前置任务：DT-001。
@@ -145,7 +145,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-004 · 确认仓库规则与规格优先级
 
-- 状态：`not_started`；阶段：`S0`；优先级：`P0`。
+- 状态：`done`；阶段：`S0`；优先级：`P0`。
 - 需求：AG-FR-014、AG-FR-068、AG-NFR-011、AG-NFR-019。
 - 验收用例：AG-AC-014、AG-AC-068。
 - 前置任务：DT-001、DT-002。
@@ -177,7 +177,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-005 · 建立最小可复现开发与验证环境
 
-- 状态：`not_started`；阶段：`S0`；优先级：`P0`。
+- 状态：`done`；阶段：`S0`；优先级：`P0`。
 - 需求：AG-FR-063、AG-FR-068、AG-NFR-010、AG-NFR-012、AG-NFR-020。
 - 验收用例：AG-AC-063、AG-AC-068。
 - 前置任务：DT-001、DT-003、DT-004。
@@ -209,7 +209,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-006 · 建立可追溯的GIS与遥感测试数据集
 
-- 状态：`not_started`；阶段：`S0`；优先级：`P0`。
+- 状态：`done`；阶段：`S0`；优先级：`P0`。
 - 需求：AG-FR-013、AG-FR-019、AG-FR-063、AG-NFR-003、AG-NFR-020。
 - 验收用例：AG-AC-013、AG-AC-019、AG-AC-063。
 - 前置任务：DT-003、DT-005。
@@ -241,7 +241,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-007 · 冻结服务边界与最小数据API契约
 
-- 状态：`not_started`；阶段：`S0`；优先级：`P0`。
+- 状态：`done`；阶段：`S0`；优先级：`P0`。
 - 需求：AG-FR-006、AG-FR-020、AG-FR-031、AG-FR-047、AG-NFR-011。
 - 验收用例：AG-AC-006、AG-AC-020、AG-AC-031、AG-AC-047。
 - 前置任务：DT-002、DT-004、DT-006。
@@ -273,7 +273,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-008 · 完成基线构建及首包验收
 
-- 状态：`not_started`；阶段：`S0`；优先级：`P0`。
+- 状态：`done`；阶段：`S0`；优先级：`P0`。
 - 需求：AG-FR-080、AG-NFR-019、AG-NFR-020。
 - 验收用例：AG-AC-080。
 - 前置任务：DT-002、DT-003、DT-004、DT-005、DT-006、DT-007。
@@ -307,7 +307,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-009 · 复用平台登录与统一会话
 
-- 状态：`not_started`；阶段：`S0`；优先级：`P0`。
+- 状态：`done`；阶段：`S0`；优先级：`P0`。
 - 需求：AG-FR-002、AG-NFR-001。
 - 验收用例：AG-AC-002。
 - 前置任务：DT-008。
@@ -339,7 +339,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-010 · 建立组织成员与工作区操作闭环
 
-- 状态：`not_started`；阶段：`S0`；优先级：`P0`。
+- 状态：`done`；阶段：`S0`；优先级：`P0`。
 - 需求：AG-FR-001、AG-FR-003、AG-FR-004、AG-NFR-001。
 - 验收用例：AG-AC-001、AG-AC-003、AG-AC-004。
 - 前置任务：DT-009。
@@ -371,7 +371,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-011 · 实现农业资源授权解析器
 
-- 状态：`not_started`；阶段：`S0`；优先级：`P0`。
+- 状态：`done`；阶段：`S0`；优先级：`P0`。
 - 需求：AG-FR-003、AG-FR-004、AG-FR-006、AG-NFR-001。
 - 验收用例：AG-AC-003、AG-AC-004、AG-AC-006。
 - 前置任务：DT-007、DT-010。
@@ -403,7 +403,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-012 · 实现平台到GIS的受信短期身份
 
-- 状态：`not_started`；阶段：`S0`；优先级：`P0`。
+- 状态：`done`；阶段：`S0`；优先级：`P0`。
 - 需求：AG-FR-006、AG-NFR-001、AG-NFR-016。
 - 验收用例：AG-AC-006。
 - 前置任务：DT-007、DT-009、DT-011。
@@ -435,7 +435,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-013 · 替换AgriScope的客户端操作人信任链
 
-- 状态：`not_started`；阶段：`S0`；优先级：`P0`。
+- 状态：`in_progress`；阶段：`S0`；优先级：`P0`。
 - 需求：AG-FR-002、AG-FR-004、AG-FR-006、AG-FR-054、AG-NFR-001。
 - 验收用例：AG-AC-002、AG-AC-004、AG-AC-006、AG-AC-054。
 - 前置任务：DT-012。
@@ -4799,12 +4799,174 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ## 5. 结构校验与机器执行提示
 
-- 144 个任务 ID 连续且唯一；每包 8 项；全部初始 `not_started`。
+- 144 个任务 ID 连续且唯一；每包 8 项；原始规格初始均为 `not_started`，当前状态由 JSON 同步。
 - 80 个 FR、20 个 NFR 均有任务映射；不存在未声明需求编号。
 - 所有依赖均存在、无自依赖、无循环；没有任务依赖于更晚阶段的任务。
 - 每项任务至少 3 条实现要点、2 条产物、2 条验收、2 条验证；JSON 与 Markdown 使用同一数据源。
 - `tasks.json.topological_execution_order` 提供合法排序；并行执行仍须避免共同文件和共享迁移冲突。状态改变后重新计算就绪集合。
 - `tasks.json.conditional_dependencies` 记录 S5 物理控制的条件门禁；不启用控制时必须保留明确禁用状态，不能把未做的真实控制验收标通过。
-- 本清单只验证规格结构；软件构建、测试、真实数据、真实支付与现场验收均未执行。
+- 本清单的结构校验不代表软件验收；已执行的历史工作和恢复后的验证分开记录，真实数据、真实支付与现场验收不由此推定通过。
 
 建议关联阅读：`PRD.md`、`docs/ARCHITECTURE.md`、`docs/DATA_API_CONTRACTS.md`、`docs/ACCEPTANCE_MATRIX.md`、`AGENT_MASTER_PROMPT.md`。
+
+<!-- generated-task-status:start -->
+## 当前任务状态（从 tasks.json 生成）
+
+历史完成状态与本次恢复验证分开记录；done 不表示恢复后重新验收通过。
+
+| 状态 | 数量 |
+| --- | ---: |
+| done | 12 |
+| in_progress | 1 |
+| not_started | 131 |
+
+历史 done、恢复证据待补验：DT-001、DT-002、DT-003、DT-004、DT-005、DT-006、DT-007、DT-008、DT-009、DT-010、DT-011、DT-012。
+依赖状态就绪但仍须检查恢复条件：无。
+
+| 任务 | 状态 |
+| --- | --- |
+| DT-001 | done |
+| DT-002 | done |
+| DT-003 | done |
+| DT-004 | done |
+| DT-005 | done |
+| DT-006 | done |
+| DT-007 | done |
+| DT-008 | done |
+| DT-009 | done |
+| DT-010 | done |
+| DT-011 | done |
+| DT-012 | done |
+| DT-013 | in_progress |
+| DT-014 | not_started |
+| DT-015 | not_started |
+| DT-016 | not_started |
+| DT-017 | not_started |
+| DT-018 | not_started |
+| DT-019 | not_started |
+| DT-020 | not_started |
+| DT-021 | not_started |
+| DT-022 | not_started |
+| DT-023 | not_started |
+| DT-024 | not_started |
+| DT-025 | not_started |
+| DT-026 | not_started |
+| DT-027 | not_started |
+| DT-028 | not_started |
+| DT-029 | not_started |
+| DT-030 | not_started |
+| DT-031 | not_started |
+| DT-032 | not_started |
+| DT-033 | not_started |
+| DT-034 | not_started |
+| DT-035 | not_started |
+| DT-036 | not_started |
+| DT-037 | not_started |
+| DT-038 | not_started |
+| DT-039 | not_started |
+| DT-040 | not_started |
+| DT-041 | not_started |
+| DT-042 | not_started |
+| DT-043 | not_started |
+| DT-044 | not_started |
+| DT-045 | not_started |
+| DT-046 | not_started |
+| DT-047 | not_started |
+| DT-048 | not_started |
+| DT-049 | not_started |
+| DT-050 | not_started |
+| DT-051 | not_started |
+| DT-052 | not_started |
+| DT-053 | not_started |
+| DT-054 | not_started |
+| DT-055 | not_started |
+| DT-056 | not_started |
+| DT-057 | not_started |
+| DT-058 | not_started |
+| DT-059 | not_started |
+| DT-060 | not_started |
+| DT-061 | not_started |
+| DT-062 | not_started |
+| DT-063 | not_started |
+| DT-064 | not_started |
+| DT-065 | not_started |
+| DT-066 | not_started |
+| DT-067 | not_started |
+| DT-068 | not_started |
+| DT-069 | not_started |
+| DT-070 | not_started |
+| DT-071 | not_started |
+| DT-072 | not_started |
+| DT-073 | not_started |
+| DT-074 | not_started |
+| DT-075 | not_started |
+| DT-076 | not_started |
+| DT-077 | not_started |
+| DT-078 | not_started |
+| DT-079 | not_started |
+| DT-080 | not_started |
+| DT-081 | not_started |
+| DT-082 | not_started |
+| DT-083 | not_started |
+| DT-084 | not_started |
+| DT-085 | not_started |
+| DT-086 | not_started |
+| DT-087 | not_started |
+| DT-088 | not_started |
+| DT-089 | not_started |
+| DT-090 | not_started |
+| DT-091 | not_started |
+| DT-092 | not_started |
+| DT-093 | not_started |
+| DT-094 | not_started |
+| DT-095 | not_started |
+| DT-096 | not_started |
+| DT-097 | not_started |
+| DT-098 | not_started |
+| DT-099 | not_started |
+| DT-100 | not_started |
+| DT-101 | not_started |
+| DT-102 | not_started |
+| DT-103 | not_started |
+| DT-104 | not_started |
+| DT-105 | not_started |
+| DT-106 | not_started |
+| DT-107 | not_started |
+| DT-108 | not_started |
+| DT-109 | not_started |
+| DT-110 | not_started |
+| DT-111 | not_started |
+| DT-112 | not_started |
+| DT-113 | not_started |
+| DT-114 | not_started |
+| DT-115 | not_started |
+| DT-116 | not_started |
+| DT-117 | not_started |
+| DT-118 | not_started |
+| DT-119 | not_started |
+| DT-120 | not_started |
+| DT-121 | not_started |
+| DT-122 | not_started |
+| DT-123 | not_started |
+| DT-124 | not_started |
+| DT-125 | not_started |
+| DT-126 | not_started |
+| DT-127 | not_started |
+| DT-128 | not_started |
+| DT-129 | not_started |
+| DT-130 | not_started |
+| DT-131 | not_started |
+| DT-132 | not_started |
+| DT-133 | not_started |
+| DT-134 | not_started |
+| DT-135 | not_started |
+| DT-136 | not_started |
+| DT-137 | not_started |
+| DT-138 | not_started |
+| DT-139 | not_started |
+| DT-140 | not_started |
+| DT-141 | not_started |
+| DT-142 | not_started |
+| DT-143 | not_started |
+| DT-144 | not_started |
+<!-- generated-task-status:end -->

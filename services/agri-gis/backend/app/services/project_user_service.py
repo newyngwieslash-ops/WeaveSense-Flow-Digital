@@ -2,7 +2,11 @@
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import NotFoundException, PermissionDeniedException
+from app.agriculture.actor_session import AgricultureSession
+from app.agriculture.actors import TrustedActor, recheck_trusted_actor
+from app.agriculture.identity.verify import require
+from app.agriculture.operation_authorization import authorize_operation
+from app.core.exceptions import PermissionDeniedException
 from app.dao.project_user_dao import ProjectUserDAO
 from app.models.workbench import ProjectUser
 from app.schemas.project_user import (
@@ -185,6 +189,51 @@ ROLE_CAPABILITIES: dict[str, tuple[str, ...]] = {
 }
 
 
+CAPABILITY_ACTIONS: dict[str, frozenset[str]] = {
+    "edit_plots": frozenset(
+        {"agri.parcel.create", "agri.parcel.update", "agri.parcel.delete"}
+    ),
+    "process_imagery": frozenset(
+        {"agri.analysis.read", "agri.analysis.submit", "agri.asset_download.read"}
+    ),
+    "manage_datasets": frozenset({"agri.asset.create", "agri.asset_download.read"}),
+    "view_growth_monitoring": frozenset({"agri.analysis.read"}),
+    "generate_growth_monitoring": frozenset({"agri.analysis.submit"}),
+    "run_change_detection": frozenset({"agri.analysis.submit"}),
+    "view_field_evidence": frozenset({"agri.asset_download.read"}),
+}
+for _capability in (
+    "download_statistics_report",
+    "download_vector_export",
+    "download_supervision_report",
+    "download_delivery",
+    "download_disaster_report",
+    "download_pest_report",
+    "download_uav_artifacts",
+    "download_thematic_maps",
+    "download_acceptance_report",
+    "download_growth_monitoring",
+    "export_plot_attributes",
+    "export_statistics",
+):
+    CAPABILITY_ACTIONS[_capability] = frozenset({"agri.asset_download.read"})
+
+
+async def require_bound_actor(db: AsyncSession, project_id: int) -> TrustedActor:
+    require(
+        isinstance(getattr(db, "sync_session", None), AgricultureSession),
+        "trusted_actor_required",
+        403,
+    )
+    actor = db.info.get("agriculture_resolved_actor")
+    require(
+        isinstance(actor, TrustedActor) and actor.project_id == project_id,
+        "trusted_actor_required",
+        403,
+    )
+    return actor
+
+
 class ProjectUserService:
     """解析项目身份并执行服务端角色能力校验。"""
 
@@ -231,27 +280,10 @@ class ProjectUserService:
         )
 
     async def list_project_users(
-        self,
-        db: AsyncSession,
-        project_code: str,
+        self, db: AsyncSession, project_code: str
     ) -> ProjectUserListResponse:
-        """查询项目启用用户与能力。
-
-        Args:
-            db: 异步数据库会话。
-            project_code: 项目编号。
-
-        Returns:
-            ProjectUserListResponse: 项目成员列表。
-        """
-        project = await self.dao.get_project_by_code(db, project_code)
-        if project is None:
-            raise NotFoundException(f"未找到项目 {project_code}")
-        users = await self.dao.list_active_users(db, project.id)
-        return ProjectUserListResponse(
-            project_code=project_code,
-            users=[self.to_response(user) for user in users],
-        )
+        # No existence query before rejection, and no alternate identity directory.
+        raise PermissionDeniedException("旧项目身份目录未开放，请使用平台成员接口")
 
     async def require_capability(
         self,
@@ -259,21 +291,27 @@ class ProjectUserService:
         project_id: int,
         user_code: str,
         capability: str,
+        *,
+        expected_action: str | None = None,
+        operation: str | None = None,
+        targets: dict[str, str] | None = None,
     ) -> ProjectUser:
-        """校验项目用户是否具备指定业务能力。
-
-        Args:
-            db: 异步数据库会话。
-            project_id: 项目主键。
-            user_code: 稳定用户编码。
-            capability: 目标业务能力编码。
-
-        Returns:
-            ProjectUser: 已通过校验的启用项目用户。
-        """
-        user = await self.dao.get_active_user(db, project_id, user_code)
-        if user is None:
-            raise PermissionDeniedException("当前用户不属于该项目或账号已停用")
+        actor = await require_bound_actor(db, project_id)
+        require(user_code == actor.legacy_user_code, "actor_code_mismatch", 403)
+        actions = CAPABILITY_ACTIONS.get(capability, frozenset())
+        if expected_action is None and len(actions) == 1:
+            expected_action = next(iter(actions))
+        require(
+            expected_action in actions
+            and actor.signed_action == expected_action
+            and db.info.get("agriculture_action") == actor.signed_action,
+            "action_capability_mismatch",
+            403,
+        )
+        user = await recheck_trusted_actor(db, actor)
         if capability not in ROLE_CAPABILITIES.get(user.role_code, ()):
             raise PermissionDeniedException(f"{user.role_name}无权执行当前业务节点")
-        return user
+        await authorize_operation(
+            db, actor, capability, expected_action, operation, targets
+        )
+        return await recheck_trusted_actor(db, actor)

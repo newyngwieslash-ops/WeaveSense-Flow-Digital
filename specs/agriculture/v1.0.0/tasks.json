@@ -394,7 +394,7 @@
         "检查既有AGENTS与项目规范未被覆盖"
       ],
       "blockers": [],
-      "status": "not_started"
+      "status": "done"
     },
     {
       "id": "DT-002",
@@ -436,7 +436,7 @@
         "对照源码与文档冲突并说明采用的事实"
       ],
       "blockers": [],
-      "status": "not_started"
+      "status": "done"
     },
     {
       "id": "DT-003",
@@ -477,7 +477,7 @@
       "blockers": [
         "启用商业依赖或商业数据时需提供对应授权；可先禁用该项继续开发"
       ],
-      "status": "not_started"
+      "status": "done"
     },
     {
       "id": "DT-004",
@@ -517,7 +517,7 @@
         "用一项样例变更走完需求与任务联动检查"
       ],
       "blockers": [],
-      "status": "not_started"
+      "status": "done"
     },
     {
       "id": "DT-005",
@@ -559,7 +559,7 @@
         "检查日志、样例配置与版本库不存在真实密钥"
       ],
       "blockers": [],
-      "status": "not_started"
+      "status": "done"
     },
     {
       "id": "DT-006",
@@ -601,7 +601,7 @@
         "人工复核至少一个几何面积和NDVI真值样本"
       ],
       "blockers": [],
-      "status": "not_started"
+      "status": "done"
     },
     {
       "id": "DT-007",
@@ -645,7 +645,7 @@
         "用不兼容版本或缺失必填范围的请求验证拒绝规则"
       ],
       "blockers": [],
-      "status": "not_started"
+      "status": "done"
     },
     {
       "id": "DT-008",
@@ -687,7 +687,7 @@
         "抽查任务状态没有以计划或mock替代实现"
       ],
       "blockers": [],
-      "status": "not_started"
+      "status": "done"
     },
     {
       "id": "DT-009",
@@ -723,7 +723,7 @@
         "跨React主壳与Vue子应用验证同一登录状态"
       ],
       "blockers": [],
-      "status": "not_started"
+      "status": "done"
     },
     {
       "id": "DT-010",
@@ -763,7 +763,7 @@
         "验证租户停用和成员停用后的请求拒绝"
       ],
       "blockers": [],
-      "status": "not_started"
+      "status": "done"
     },
     {
       "id": "DT-011",
@@ -804,7 +804,7 @@
         "验证读者不能调用修改、发布或成本配置接口"
       ],
       "blockers": [],
-      "status": "not_started"
+      "status": "done"
     },
     {
       "id": "DT-012",
@@ -843,7 +843,7 @@
         "验证短期身份及私钥不会出现在模型上下文和前端日志"
       ],
       "blockers": [],
-      "status": "not_started"
+      "status": "done"
     },
     {
       "id": "DT-013",
@@ -885,7 +885,7 @@
         "用普通成员提交管理员编码验证没有提权"
       ],
       "blockers": [],
-      "status": "not_started"
+      "status": "in_progress"
     },
     {
       "id": "DT-014",
@@ -7764,5 +7764,24 @@
     },
     "required_field_validation": "passed",
     "markdown_source": "same_tasks_array_as_json"
+  },
+  "recovery": {
+    "kind": "historical_progress_reconciliation",
+    "historical_done": [
+      "DT-001",
+      "DT-002",
+      "DT-003",
+      "DT-004",
+      "DT-005",
+      "DT-006",
+      "DT-007",
+      "DT-008",
+      "DT-009",
+      "DT-010",
+      "DT-011",
+      "DT-012"
+    ],
+    "evidence_verification": "pending_revalidation",
+    "note": "DT-001..012保留已确认的历史完成状态；运行环境重置后部分W00产物尚待恢复，DT012源码恢复不等于全套重新验收；DT013仍在实施。详见docs/implementation/RECOVERY_STATUS.json。"
   }
 }

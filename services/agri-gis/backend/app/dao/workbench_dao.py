@@ -1856,14 +1856,16 @@ class WorkbenchDAO:
         Returns:
             None: 无返回值。
         """
-        await db.execute(
-            update(PlotEditOperation)
+        operations = (await db.execute(
+            select(PlotEditOperation)
             .where(
                 PlotEditOperation.task_id == task_id,
                 PlotEditOperation.status == "reverted",
             )
-            .values(status="superseded")
-        )
+            .with_for_update()
+        )).scalars().all()
+        for operation in operations:
+            operation.status = "superseded"
 
     async def add_plot_edit_operation_event(
         self,

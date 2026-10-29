@@ -1,0 +1,116 @@
+{
+  "recorded_at": "2026-10-29T13:41:20.755366+00:00",
+  "source_head": "d13a09bb5ebdcaeb38b8136987ee577360fa7add",
+  "new_execution_after_recovery": true,
+  "source_inventory_count": 1599,
+  "source_inventory_all_unchanged": true,
+  "locks_unchanged": true,
+  "bun": {
+    "version": "1.3.9",
+    "package": "@oven/bun-linux-x64@1.3.9",
+    "npm_integrity_verified": true,
+    "tar_sha256": "13d7d1a65a92e221912821f0342acc2c6077909a84fcb262cf9262dc9ac7b7b9"
+  },
+  "commands": [
+    {
+      "name": "web bun install --frozen-lockfile --ignore-scripts",
+      "exit_code": 0
+    },
+    {
+      "name": "Vue npm ci --ignore-scripts --no-audit --no-fund",
+      "exit_code": 0
+    },
+    {
+      "name": "Vue test:agriculture",
+      "exit_code": 0,
+      "passed": 36,
+      "assertions": 161
+    },
+    {
+      "name": "Vue typecheck",
+      "exit_code": 0
+    },
+    {
+      "name": "Vue build:agriculture",
+      "exit_code": 0,
+      "transformed_modules": 13,
+      "manifest_modules": 11,
+      "legacy_src_excluded": true
+    },
+    {
+      "name": "Vue build",
+      "exit_code": 0,
+      "transformed_modules": 3836
+    },
+    {
+      "name": "React 5 targeted auth/agriculture test files",
+      "exit_code": 0,
+      "passed": 34,
+      "assertions": 144
+    },
+    {
+      "name": "React build:agriculture",
+      "exit_code": 0,
+      "modules": 1236,
+      "packages": 53,
+      "drawing_runtime": "absent"
+    }
+  ],
+  "evidence": [
+    {
+      "path": ".local/evidence/recovery-web-install.log",
+      "sha256": "df765093225069f916e8ead047e4afb4ecf2c685fca2ceb4409923c61e49f69c"
+    },
+    {
+      "path": ".local/evidence/recovery-vue-install.log",
+      "sha256": "4b73f1a552b370ebd8a5492eb3ab05f5a1185754e663208bb0ea3d00f645126b"
+    },
+    {
+      "path": ".local/evidence/recovery-vue-test-agriculture.log",
+      "sha256": "7de240275adcf1a39fad99fe8ca4b4562462b7ac30d832fb1a4e03a528ea7956"
+    },
+    {
+      "path": ".local/evidence/recovery-vue-typecheck.log",
+      "sha256": "aacdfedc485449151e8f0cedfb8264a7d15047256a7b3c3a4a9e848e28e7b178"
+    },
+    {
+      "path": ".local/evidence/recovery-vue-build-agriculture.log",
+      "sha256": "1b63cb98efab8fdda48c18bb5f1c695c5a9c1f82122365b1c84ffb140d889ceb"
+    },
+    {
+      "path": ".local/evidence/recovery-vue-build.log",
+      "sha256": "691f185be592e8d54a8236a110a904a4fcaf48d532d034b0a6e56622bce640f9"
+    },
+    {
+      "path": ".local/evidence/recovery-react-targeted-tests.log",
+      "sha256": "df821b4e29df7e2237ca8f26992036329fb01c7bbe480050550a87282b7af708"
+    },
+    {
+      "path": ".local/evidence/recovery-react-agriculture-build.log",
+      "sha256": "5642636992f20673fbe6020d7f8ce7d22d2a0cb1569a42b101f9beef25e09e28"
+    },
+    {
+      "path": ".local/evidence/recovery-frontend-source.json",
+      "sha256": "6266dc68c78e176f9e6449645b1eec71175cf534c31f57b79965c1d79ecb947b"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "web/dist-agriculture/index.html",
+      "sha256": "0839f5427ad5ca26add253d79a34d5dbb7779ca5ee62ef5f9d76134975f84736"
+    },
+    {
+      "path": "services/agri-gis/frontend/dist-agriculture/index.html",
+      "sha256": "2f2c0cab547b8e003c1e06edfc9cb00e1594be376f81ad6793481ca50be2171b"
+    },
+    {
+      "path": "services/agri-gis/frontend/dist/index.html",
+      "sha256": "d8f84c015a7e60a97878c7291e0fa0b6ea01033a820adceffdcdbee97a6fdff7"
+    }
+  ],
+  "limitations": [
+    "Local component/build validation only; no new browser/live acceptance.",
+    "Vue full build regenerated components declaration; exact pre-build bytes restored.",
+    "Build chunk-size warnings retained; no assertions or budgets weakened."
+  ]
+}

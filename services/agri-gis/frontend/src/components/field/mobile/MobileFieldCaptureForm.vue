@@ -13,6 +13,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 
 import { useFieldCaptureStore } from '@/store/fieldCaptureStore'
 import { useUserStore } from '@/store/userStore'
+import { legacyDemoEnabled } from '@/security/legacyIdentity'
 
 const captureStore = useFieldCaptureStore()
 const userStore = useUserStore()
@@ -144,9 +145,9 @@ const retryPhoto = async (): Promise<void> => {
       description="浏览器会阻止现场 GPS；请通过 HTTPS 网关打开移动采集页面。"
     />
 
-    <section class="capture-section identity-section">
+    <section v-if="legacyDemoEnabled()" class="capture-section identity-section">
       <div class="section-title">
-        <span><strong>采集身份</strong><small>权限由后端项目成员目录决定</small></span>
+        <span><strong>演示身份</strong><small>仅本地展示，不授予服务端权限</small></span>
         <a-tag>{{ statusLabelComputed }}</a-tag>
       </div>
       <a-select

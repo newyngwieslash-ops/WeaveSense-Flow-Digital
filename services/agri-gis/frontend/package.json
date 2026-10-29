@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev:agriculture": "vite --config vite.agriculture.config.ts",
-    "test:agriculture": "bun test agriculture/session.test.ts",
+    "test:agriculture": "bun test agriculture/session.test.ts agriculture/legacy-identity.test.ts",
     "build:agriculture": "vue-tsc --noEmit -p tsconfig.agriculture.json && vite build --config vite.agriculture.config.ts",
     "dev": "vite --host 0.0.0.0",
     "build": "vue-tsc --noEmit && vite build",

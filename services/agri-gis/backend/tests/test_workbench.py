@@ -10,6 +10,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from pydantic import ValidationError
 
+from app.agriculture.identity.verify import IdentityError
 from app.core.exceptions import (
     NotFoundException,
     PermissionDeniedException,
@@ -314,6 +315,9 @@ def test_update_plot_attributes_uses_stable_user_audit() -> None:
         task.project_id,
         "interp-li-jing",
         "edit_plots",
+        expected_action="agri.parcel.update",
+        operation="workbench.update_plot_attributes",
+        targets={"task_code": "RS-2026-045", "plot_code": plot.plot_code},
     )
     dao.supersede_reverted_plot_operations.assert_awaited_once_with(db, task.id)
     db.commit.assert_awaited_once()
@@ -2074,7 +2078,7 @@ def test_quality_review_rejects_interpreter_role() -> None:
         project_user_service=ProjectUserService(dao=user_dao),
     )
 
-    with pytest.raises(PermissionDeniedException, match="无权执行当前业务节点"):
+    with pytest.raises(IdentityError, match="trusted_actor_required") as denied:
         asyncio.run(
             service.execute_task_action(
                 AsyncMock(),
@@ -2089,6 +2093,9 @@ def test_quality_review_rejects_interpreter_role() -> None:
 
     assert task.status == "quality_review"
     workbench_dao.add_review_record.assert_not_awaited()
+
+    assert denied.value.status == 403
+    user_dao.get_active_user.assert_not_awaited()
 
 
 def test_quality_review_blocks_unresolved_issues() -> None:
@@ -2390,7 +2397,7 @@ def test_plot_rollback_rejects_interpreter_role() -> None:
         project_user_service=ProjectUserService(dao=user_dao),
     )
 
-    with pytest.raises(PermissionDeniedException, match="无权执行当前业务节点"):
+    with pytest.raises(IdentityError, match="trusted_actor_required") as denied:
         asyncio.run(
             service.rollback_plot(
                 AsyncMock(),
@@ -2404,6 +2411,9 @@ def test_plot_rollback_rejects_interpreter_role() -> None:
         )
 
     review_dao.add_version.assert_not_awaited()
+
+    assert denied.value.status == 403
+    user_dao.get_active_user.assert_not_awaited()
 
 
 def test_area_statistics_aggregates_groups_and_trend() -> None:

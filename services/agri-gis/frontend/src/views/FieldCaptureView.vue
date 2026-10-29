@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router'
 import MobileFieldCaptureForm from '@/components/field/mobile/MobileFieldCaptureForm.vue'
 import { useFieldCaptureStore } from '@/store/fieldCaptureStore'
 import { useUserStore } from '@/store/userStore'
+import { legacyDemoEnabled, explicitDemoContext } from '@/security/legacyIdentity'
 
 const route = useRoute()
 const captureStore = useFieldCaptureStore()
@@ -12,21 +13,12 @@ const userStore = useUserStore()
 
 onMounted(async () => {
   document.documentElement.classList.add('mobile-standalone')
-  const projectCode = typeof route.query.project_code === 'string'
-    ? route.query.project_code
-    : 'RS-2026'
-  const taskCode = typeof route.query.task_code === 'string'
-    ? route.query.task_code
-    : 'RS-2026-045'
+  const projectCode = explicitDemoContext(legacyDemoEnabled(), route.query.project_code)
+  const taskCode = explicitDemoContext(legacyDemoEnabled(), route.query.task_code)
+  if (!projectCode || !taskCode) return
   captureStore.setTaskCode(taskCode)
   captureStore.startNetworkMonitoring()
   await userStore.initialize(projectCode)
-  if (!userStore.hasCapability('upload_field_data')) {
-    const fieldUser = userStore.usersRef.find(
-      (user) => user.capabilities.includes('upload_field_data'),
-    )
-    if (fieldUser) userStore.setCurrentUser(fieldUser.user_code)
-  }
 })
 
 onUnmounted(() => {
@@ -37,7 +29,8 @@ onUnmounted(() => {
 
 <template>
   <div class="field-capture-view">
-    <MobileFieldCaptureForm />
+    <MobileFieldCaptureForm v-if="legacyDemoEnabled()" />
+    <p v-else role="status">外业领域接口尚未接入可信平台身份，采集暂不可用。</p>
   </div>
 </template>
 

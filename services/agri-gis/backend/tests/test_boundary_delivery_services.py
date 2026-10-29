@@ -11,9 +11,9 @@ from zipfile import ZipFile
 
 import pytest
 
+from app.agriculture.identity.verify import IdentityError
 from app.core.exceptions import (
     NotFoundException,
-    PermissionDeniedException,
     ValidationException,
 )
 from app.dao.delivery_dao import DeliveryArchiveState
@@ -545,7 +545,7 @@ def test_delivery_generation_rejects_non_manager_role() -> None:
         project_user_service=ProjectUserService(dao=user_dao),
     )
 
-    with pytest.raises(PermissionDeniedException, match="无权执行当前业务节点"):
+    with pytest.raises(IdentityError, match="trusted_actor_required") as denied:
         asyncio.run(
             service.generate_package(
                 AsyncMock(),
@@ -555,6 +555,9 @@ def test_delivery_generation_rejects_non_manager_role() -> None:
                 ),
             )
         )
+
+    assert denied.value.status == 403
+    user_dao.get_active_user.assert_not_awaited()
 
 
 def test_delivery_generation_blocks_unresolved_issues() -> None:
@@ -1373,7 +1376,7 @@ def test_delivery_download_rejects_interpreter_role() -> None:
         project_user_service=ProjectUserService(dao=user_dao),
     )
 
-    with pytest.raises(PermissionDeniedException, match="无权执行当前业务节点"):
+    with pytest.raises(IdentityError, match="trusted_actor_required") as denied:
         asyncio.run(
             service.get_package_for_download(
                 AsyncMock(),
@@ -1381,3 +1384,6 @@ def test_delivery_download_rejects_interpreter_role() -> None:
                 "interp-li-jing",
             )
         )
+
+    assert denied.value.status == 403
+    user_dao.get_active_user.assert_not_awaited()

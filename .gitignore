@@ -84,5 +84,10 @@ backend/tmp_*
 # WeaveSense-Flow: versioned docs and env template
 !docs/flow/
 !docs/agriculture/
+# Agriculture generated build/cache artifacts are not source evidence.
+/web/dist-agriculture/
+/services/agri-gis/frontend/dist-agriculture/
+__pycache__/
+*.pyc
 !.env.flow.example
 .comet/

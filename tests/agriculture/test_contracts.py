@@ -85,10 +85,71 @@ def test_delegation_scope_and_header_constraints(field, bad):
 
 def test_delegation_cannot_bind_unrestricted_url_or_arbitrary_route():
     value = example("delegation-read")
-    for path in ["https://example.invalid", "/internal/agri/v1/../admin", "/internal/agri/v1/jobs?token=secret"]:
+    for path in ["https://example.invalid", "/internal/agri/v1/../admin", "/internal/agri/v1/jobs?token=secret", "/internal/agri/v1//jobs", "/internal/agri/v1/jobs/"]:
         value["request"]["path"] = path
         with pytest.raises(ValidationError):
             validate("delegation", value)
+
+
+def test_delegation_preserves_platform_numeric_leading_actor_only():
+    value = example("delegation-read")
+    value["actor"]["id"] = "206c82af7ae007f45da4c582f373fbabf0"
+    validate("delegation", value)
+    for field in ["tenant_id", "workspace_id", "subject"]:
+        bad = example("delegation-read")
+        bad[field] = value["actor"]["id"]
+        with pytest.raises(ValidationError):
+            validate("delegation", bad)
+    for actor_id in ["", "*", " user", "../owner", "用户", "x" * 129]:
+        value["actor"]["id"] = actor_id
+        with pytest.raises(ValidationError):
+            validate("delegation", value)
+
+
+@pytest.mark.parametrize("field", ["policy_version", "farm_ids", "resource_versions"])
+def test_delegation_requires_current_authority_resource_snapshot(field):
+    value = example("delegation-read")
+    del value[field]
+    with pytest.raises(ValidationError):
+        validate("delegation", value)
+
+
+def test_delegation_freezes_canonicalization_and_single_action():
+    value = example("delegation-write")
+    value["request"]["canonicalization_version"] = "sorted-json-v1"
+    with pytest.raises(ValidationError):
+        validate("delegation", value)
+    value = example("delegation-read")
+    value["scopes"].append("agri.parcel.update")
+    with pytest.raises(ValidationError):
+        validate("delegation", value)
+    value = example("delegation-read")
+    value["resource_versions"][0]["revision"] = 0
+    with pytest.raises(ValidationError):
+        validate("delegation", value)
+
+
+@pytest.mark.parametrize("capability,issuer,audience,path", [
+    ("ownership.resolve", "flow-platform", "agri-gis", "/internal/agri/v1/ownership/resolve"),
+    ("authority.check", "agri-gis", "flow-platform", "/internal/agri/v1/authority/check"),
+])
+def test_service_request_separates_direction_and_capability(capability, issuer, audience, path):
+    value = {
+        "schema_version": "1.0", "issuer": issuer, "subject": issuer,
+        "audience": audience, "capability": capability,
+        "tenant_id": "tenant_fixture", "workspace_id": "ws_fixture",
+        "issued_at": "2026-01-01T00:00:00Z", "expires_at": "2026-01-01T00:00:30Z",
+        "jti": "jti_fixture", "trace_id": "trace_fixture", "request_id": "req_fixture",
+        "request": {"method": "POST", "path": path,
+                    "canonicalization_version": "rfc8785-safe-v1", "payload_hash": "a" * 64},
+    }
+    validate("service-request", value)
+    for field, bad in [("subject", audience), ("issuer", audience),
+                       ("audience", issuer), ("capability", "agri.farm.read"),
+                       ("actor", {"id": "admin"})]:
+        altered = {**value, field: bad}
+        with pytest.raises(ValidationError):
+            validate("service-request", altered)
 
 
 @pytest.mark.parametrize("field", ["tenant_id", "user_id", "operator_code", "requester_code", "role", "price", "object_key", "signed_url"])

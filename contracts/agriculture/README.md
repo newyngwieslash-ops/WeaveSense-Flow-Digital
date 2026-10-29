@@ -12,12 +12,19 @@ are not implemented by substituting NDVI logic or unrestricted payload objects.
 
 Delegation claims are **not authentication** by themselves. W01 must verify the
 actual signature, configured issuer/key/audience, current authorization, resource
-ownership, clock/TTL (default60s), replay receipts and canonical method/path/body
+ownership, clock/TTL (at most30s), replay receipts and canonical method/path/body
 bindings. Write claims require operation_id and payload hash; read claims bind
 method/path. No client request may introduce tenant_id, user_id, operator_code,
 roles or direct object keys/URLs. IDs are opaque references, not authorization.
 
-`sorted-json-v1` identifies a bounded canonical JSON protocol: UTF-8, sorted object
+DT012 freezes delegation `rfc8785-safe-v1` and the exact bounded number/input
+domain in `docs/agriculture/SERVICE_IDENTITY.md`. It adds the current policy,
+complete farm set and resource revisions to the signed snapshot; only actor IDs
+allow a numeric first character to preserve real platform account IDs. The
+service subject is `flow-platform`, not the represented user. This pre-runtime
+contract evolution is recorded in ADR-027; it is not signature acceptance.
+
+Other W00 `sorted-json-v1` uses still identify a bounded provisional JSON protocol: UTF-8, sorted object
 keys, no insignificant whitespace, no NaN/Infinity, no duplicate keys. Cross-language
 number serialization must be frozen/tested before runtime use; this schema change
 does not by itself implement canonical signing. Billing counters are bounded JSON

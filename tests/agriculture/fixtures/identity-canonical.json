@@ -1,0 +1,133 @@
+{
+  "protocol": "rfc8785-safe-v1",
+  "root_depth": 1,
+  "keys_count_as_nodes": false,
+  "valid": [
+    {
+      "name": "empty",
+      "input": "{}",
+      "output_hex": "7b7d"
+    },
+    {
+      "name": "coordinates",
+      "input": "{ \"lon\":120.12500,\"lat\":3.0125e1,\"zero\":-0.0}",
+      "output_hex": "7b226c6174223a33302e3132352c226c6f6e223a3132302e3132352c227a65726f223a307d"
+    },
+    {
+      "name": "fraction",
+      "input": "{\"n\":0.0000001,\"m\":1e-6,\"a\":1.0e2}",
+      "output_hex": "7b2261223a3130302c226d223a302e3030303030312c226e223a31652d377d"
+    },
+    {
+      "name": "safe_edge",
+      "input": "{\"n\":9007199254740991.000e0}",
+      "output_hex": "7b226e223a393030373139393235343734303939317d"
+    },
+    {
+      "name": "utf16",
+      "input": "{\"דּ\":1,\"😀\":2,\"€\":3,\"1\":4,\"\\r\":5}",
+      "output_hex": "7b225c72223a352c2231223a342c22e282ac223a332c22f09f9880223a322c22efacb3223a317d"
+    },
+    {
+      "name": "no_normalization",
+      "input": "{\"b\":\"e\\u0301\",\"a\":\"é\",\"x\":\"<>&\\u2028\\u2029\"}",
+      "output_hex": "7b2261223a22c3a9222c2262223a2265cc81222c2278223a223c3e26e280a8e280a9227d"
+    },
+    {
+      "name": "surrogate_pair",
+      "input": "{\"v\":\"\\ud83d\\ude00\"}",
+      "output_hex": "7b2276223a22f09f9880227d"
+    },
+    {
+      "name": "escape",
+      "input": "{\"a\":\"\\\\uD800\"}",
+      "output_hex": "7b2261223a225c5c7544383030227d"
+    },
+    {
+      "name": "underflow",
+      "input": "{\"a\":1e-9999}",
+      "output_hex": "7b2261223a307d"
+    },
+    {
+      "name": "zero_exponent",
+      "input": "{\"a\":0e99999999}",
+      "output_hex": "7b2261223a307d"
+    }
+  ],
+  "invalid": [
+    {
+      "name": "duplicate",
+      "input": "{\"a\":1,\"\\u0061\":2}"
+    },
+    {
+      "name": "unsafe_integer",
+      "input": "{\"n\":9007199254740992}"
+    },
+    {
+      "name": "unsafe_fraction",
+      "input": "{\"n\":9007199254740991.1}"
+    },
+    {
+      "name": "unsafe_exponent",
+      "input": "{\"n\":9.007199254740992e15}"
+    },
+    {
+      "name": "unsafe_negative",
+      "input": "{\"n\":-9007199254740992}"
+    },
+    {
+      "name": "huge",
+      "input": "{\"n\":1e999999}"
+    },
+    {
+      "name": "nan",
+      "input": "{\"n\":NaN}"
+    },
+    {
+      "name": "infinity",
+      "input": "{\"n\":Infinity}"
+    },
+    {
+      "name": "leading_zero",
+      "input": "{\"n\":01}"
+    },
+    {
+      "name": "plus",
+      "input": "{\"n\":+1}"
+    },
+    {
+      "name": "hex",
+      "input": "{\"n\":0x1p0}"
+    },
+    {
+      "name": "lone_high",
+      "input": "{\"n\":\"\\ud800\"}"
+    },
+    {
+      "name": "lone_low",
+      "input": "{\"n\":\"\\udc00\"}"
+    },
+    {
+      "name": "reverse",
+      "input": "{\"n\":\"\\udc00\\ud800\"}"
+    },
+    {
+      "name": "trailing",
+      "input": "{}{}"
+    },
+    {
+      "name": "array_root",
+      "input": "[]"
+    },
+    {
+      "name": "scalar",
+      "input": "1"
+    }
+  ],
+  "invalid_hex": [
+    {
+      "name": "invalid_utf8",
+      "input_hex": "7b2261223a22ff227d"
+    }
+  ]
+}

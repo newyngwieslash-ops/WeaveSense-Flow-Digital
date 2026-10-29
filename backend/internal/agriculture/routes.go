@@ -21,7 +21,7 @@ import (
 
 // Enablement is explicit: the default film/math profile remains unchanged.
 // PostgreSQL must have the narrowly owned admission function provisioned.
-func RegisterFromEnv(api gin.IRouter, db *gorm.DB, user flow.UserFunc) error {
+func RegisterFromEnv(root, api gin.IRouter, db *gorm.DB, user flow.UserFunc) error {
 	enabled, err := strconv.ParseBool(envDefault("FLOW_AGRICULTURE_ENABLED", "false"))
 	if err != nil {
 		return errors.New("invalid agriculture enablement configuration")
@@ -39,7 +39,16 @@ func RegisterFromEnv(api gin.IRouter, db *gorm.DB, user flow.UserFunc) error {
 			return errors.New("agriculture requires PostgreSQL or explicit isolated SQLite development mode")
 		}
 	}
-	API{Service: Service{DB: db}, User: user}.Register(api)
+	service := Service{DB: db}
+	if path := os.Getenv("FLOW_AGRICULTURE_SERVICE_IDENTITY_CONFIG"); path != "" {
+		client, gisKeys, err := loadServiceIdentity(path)
+		if err != nil {
+			return err
+		}
+		service.Ownership = client
+		service.RegisterInternalAuthority(root, gisKeys)
+	}
+	API{Service: service, User: user}.Register(api)
 	return nil
 }
 func envDefault(name, value string) string {

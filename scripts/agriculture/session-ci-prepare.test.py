@@ -32,6 +32,23 @@ class PreparationTests(unittest.TestCase):
             "backend/internal/agriculture/resource_ownership.go", "backend/internal/agriculture/resource_ownership_test.go",
             "backend/internal/agriculture/resource_bindings.go", "backend/internal/agriculture/resource_bindings_test.go",
             "backend/internal/agriculture/policy.go", "backend/internal/agriculture/policy_test.go",
+            "backend/go.mod", "backend/go.sum",
+            "backend/internal/agricanonical/canonical.go",
+            "backend/internal/agriculture/delegation.go",
+            "backend/internal/agriculture/identity_http_integration_test.go",
+            "services/agri-gis/backend/pyproject.toml", "services/agri-gis/backend/poetry.lock",
+            "services/agri-gis/backend/app/agriculture/identity/verify.py",
+            "services/agri-gis/backend/app/agriculture/identity/dependency.py",
+            "services/agri-gis/backend/app/agriculture/identity/replay.py",
+            "services/agri-gis/backend/scripts/migrations/20261029_agriculture_identity_replay.sql",
+            "services/agri-gis/backend/tests/identity_http_fixture.py",
+            "services/agri-gis/backend/tests/test_agriculture_identity_postgres.py",
+            "scripts/agriculture/identity-postgres-ci.sh",
+            "scripts/agriculture/identity-ci-result.py",
+            "scripts/agriculture/export-python-lock.py",
+            "scripts/agriculture/python-test-requirements.txt",
+            "tests/agriculture/fixtures/identity-canonical.json",
+            "contracts/agriculture/service-request.schema.json",
         }
         self.assertTrue(required.issubset(set(prepare.OVERLAY)))
         self.assertEqual(len(prepare.OVERLAY), len(set(prepare.OVERLAY)))

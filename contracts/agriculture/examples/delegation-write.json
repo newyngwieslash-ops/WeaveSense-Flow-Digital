@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "issuer": "flow-platform",
   "audience": "agri-gis",
-  "subject": "user_fixture",
+  "subject": "flow-platform",
   "actor": {
     "kind": "user",
     "id": "user_fixture"
@@ -19,15 +19,18 @@
     "agri.analysis.submit"
   ],
   "authorization_version": 1,
+  "policy_version": "agriculture-policy/1.0.0",
+  "farm_ids": ["farm_fixture"],
+  "resource_versions": [{"resource": {"kind": "farm", "id": "farm_fixture"}, "revision": 1}],
   "issued_at": "2026-01-01T00:00:00Z",
-  "expires_at": "2026-01-01T00:01:00Z",
+  "expires_at": "2026-01-01T00:00:30Z",
   "jti": "jti_fixture",
   "trace_id": "trace_fixture",
   "request_id": "request_fixture",
   "request": {
     "method": "POST",
     "path": "/internal/agri/v1/jobs",
-    "canonicalization_version": "sorted-json-v1",
+    "canonicalization_version": "rfc8785-safe-v1",
     "payload_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "operation_id": "op_fixture"
   }

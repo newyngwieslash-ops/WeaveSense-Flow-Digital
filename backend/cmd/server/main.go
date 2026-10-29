@@ -133,7 +133,7 @@ func run(ctx context.Context) error {
 		cookie, _ := c.Cookie(service.SessionCookieName)
 		return svc.CurrentUser(cookie)
 	}
-	if err := agriculture.RegisterFromEnv(api, db, flowUser); err != nil {
+	if err := agriculture.RegisterFromEnv(r, api, db, flowUser); err != nil {
 		return err
 	}
 	// Every authenticated flow request runs in a tenant-scoped transaction (RLS enforced).

@@ -20,6 +20,8 @@ node scripts/agriculture/session-e2e.mjs
 
 覆盖匿名/伪造 cookie 与 localStorage、跨 React/Vue 的真实 actor、HttpOnly 同路径 cookie、错误 token 不能注销原会话、Vue 退出后 React 刷新与 cookie 重放、真实 session 的数据库 fixture 到期后双方拒绝恢复。仅过期负例写本脚本新建数据库；其他身份操作都是实际 API/浏览器。所有进程和临时目录由脚本创建并精确清理。
 
+匿名、伪造 cookie、正确 session ID + 错误 token、注销后重放及过期 cookie 均直接请求真实受保护 `/api/intelligence/workspaces` 并断言 HTTP 401，而非仅查看界面隐藏或 `/auth/session` 的 null。农业 GIS 业务资源尚未开放；本脚本不把工作区入口拒绝当作未来 GIS 全部资源授权通过。口令重置浏览器流程不在本脚本范围，后端真实数据库撤销测试是独立分层证据，不能冒充浏览器覆盖。
+
 两个 `session-e2e.test.mjs` 测试仅验证静态同源服务路由/穿越拒绝，不冒充身份集成测试。
 
 当前云执行器发现 AF_UNIX `socket()` 被沙箱拒绝，Chromium 尚不能在该环境启动；标准执行升级也在执行器初始化失败。真实 Go 注册已运行通过，浏览器闭环必须在支持 Chromium 的 CI/授权执行环境实际运行后才可记 pass。不得通过删除浏览器断言或换成 mock 将此阻塞“修复”。

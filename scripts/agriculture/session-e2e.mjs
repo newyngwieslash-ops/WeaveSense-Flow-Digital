@@ -85,6 +85,7 @@ async function connect(cdpPort, origin) {
     let sequence = 0;
     const pending = new Map();
     const exceptions = [];
+    const statuses = [];
     let outboundBlocked = 0;
     const send = (method, params = {}) => new Promise((resolve, reject) => {
         const id = ++sequence;
@@ -100,6 +101,12 @@ async function connect(cdpPort, origin) {
         } else if (message.method === "Runtime.exceptionThrown") {
             // Do not store descriptions: exception text can contain request secrets.
             exceptions.push("browser_runtime_exception");
+        } else if (message.method === "Network.responseReceived") {
+            const response = message.params.response;
+            const url = new URL(response.url);
+            if (url.origin === origin && ["/api/auth/session", "/api/auth/login", "/api/auth/logout", "/api/auth/settings", "/api/intelligence/workspaces"].includes(url.pathname)) {
+                statuses.push({ path: url.pathname, status: response.status });
+            }
         } else if (message.method === "Fetch.requestPaused") {
             const { requestId, request: req } = message.params;
             const allowed = req.url.startsWith(origin + "/") || /^(data|blob):/.test(req.url);
@@ -109,9 +116,9 @@ async function connect(cdpPort, origin) {
     });
     for (const method of ["Runtime.enable", "Page.enable", "Network.enable"]) await send(method);
     await send("Fetch.enable", { patterns: [{ urlPattern: "*", requestStage: "Request" }] });
-    const evaluate = async expression => {
+    const evaluate = async (expression, label = "evaluation") => {
         const result = await send("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true });
-        if (result.exceptionDetails) throw new Error("browser evaluation failed (details withheld)");
+        if (result.exceptionDetails) throw new Error(`browser ${label} failed (details withheld)`);
         return result.result.value;
     };
     const poll = async (expression, label, timeout = 20000) => {
@@ -122,8 +129,20 @@ async function connect(cdpPort, origin) {
         }
         throw new Error(`browser assertion timeout: ${label}`);
     };
-    const navigate = async path => { await send("Page.navigate", { url: origin + path }); };
-    return { send, evaluate, poll, navigate, exceptions, outboundBlocked: () => outboundBlocked, close: () => socket.close() };
+    const navigate = async path => {
+        const destination = origin + path;
+        await send("Page.navigate", { url: destination });
+        // CDP Page.navigate responds before the new document commits. Never let a
+        // selector in the old document satisfy readiness for the next page.
+        await poll(`document.readyState === 'complete' && performance.getEntriesByType('navigation')[0]?.name === ${JSON.stringify(destination)}`, "new document loaded");
+    };
+    const fill = async (selector, value, label) => {
+        const query = JSON.stringify(selector);
+        await poll(`(() => { const el = document.querySelector(${query}); if (!el || el.disabled) return false; el.focus(); return document.activeElement === el; })()`, `${label} focus`);
+        await send("Input.insertText", { text: value });
+        await poll(`document.querySelector(${query})?.value === ${JSON.stringify(value)}`, `${label} input retained`);
+    };
+    return { send, evaluate, poll, navigate, fill, exceptions, statuses, outboundBlocked: () => outboundBlocked, close: () => socket.close() };
 }
 
 async function main() {
@@ -151,9 +170,13 @@ async function main() {
         started_at: started, command: "node scripts/agriculture/session-e2e.mjs", results,
         limitations: ["SQLite fixture is not PostgreSQL RLS acceptance", "does not validate signed GIS service context", "no real farm or external provider", "no production deployment", "history restoration tested, BFCache eligibility not guaranteed"] };
     try {
+        report.stage = "fixture_startup";
         const apiPort = await freePort();
         proxy = await startProxy({ apiPort, reactRoot, vueRoot });
         const origin = `http://127.0.0.1:${proxy.address().port}`;
+        const workspaceStatus = async value => (await fetch(`${origin}/api/intelligence/workspaces`, {
+            headers: value ? { Cookie: `${COOKIE}=${value}` } : {},
+        })).status;
         backend = spawn(binary, [], { cwd: join(ROOT, "backend"), env: {
             PATH: process.env.PATH, HOME: temp, GIN_MODE: "release", CANVAS_DATABASE_DRIVER: "sqlite", CANVAS_BACKEND_DATA_DIR: temp,
             CANVAS_BACKEND_ADDR: `127.0.0.1:${apiPort}`, CANVAS_AUTO_MIGRATE: "true", CANVAS_CORS_ORIGINS: origin,
@@ -166,10 +189,12 @@ async function main() {
         const registerBody = await registered.json();
         const actor = registerBody.data?.user?.id;
         check(registered.ok && Boolean(actor), "real_fixture_registration");
+        check(await workspaceStatus() === 401, "anonymous_workspace_http_unauthorized");
         const port = await freePort();
         browser = spawn(chrome, ["--headless=new", "--no-sandbox", "--disable-dev-shm-usage", "--disable-background-networking", "--no-first-run", `--remote-debugging-port=${port}`, `--user-data-dir=${join(temp, "chrome")}`, "about:blank"], { env: { ...process.env, HOME: temp, XDG_CONFIG_HOME: join(temp, "config"), XDG_CACHE_HOME: join(temp, "cache") }, stdio: "ignore" });
         await ready(`http://127.0.0.1:${port}/json/version`, browser, 30000);
         cdp = await connect(port, origin);
+        report.stage = "anonymous_and_forged_identity";
         const sessionActor = () => cdp.evaluate(`fetch('/api/auth/session',{cache:'no-store'}).then(r=>r.json()).then(x=>x.data?.user?.id||null)`);
         await cdp.navigate("/");
         await cdp.poll("!!document.querySelector('#login-account')", "anonymous React login");
@@ -178,13 +203,15 @@ async function main() {
         await cdp.navigate("/agri/");
         await cdp.poll("!!document.querySelector('main[data-session-status=anonymous]')", "anonymous Vue login");
         check(await sessionActor() === null, "forged_cookie_and_storage_do_not_authenticate_vue");
+        check(await workspaceStatus("forged-id.forged-token") === 401, "forged_cookie_workspace_http_unauthorized");
         await cdp.navigate("/login?next=%2Fagri%2F");
+        report.stage = "login_form_controls";
         await cdp.poll("!!document.querySelector('#login-account')", "real login form");
-        await cdp.evaluate("document.querySelector('#login-account').focus()");
-        await cdp.send("Input.insertText", { text: username });
-        await cdp.evaluate("document.querySelector('#login-password').focus()");
-        await cdp.send("Input.insertText", { text: password });
-        await cdp.evaluate("document.querySelector('form button[type=submit]').click()");
+        await cdp.fill("#login-account", username, "account field");
+        await cdp.fill("#login-password", password, "password field");
+        report.stage = "login_form_submit";
+        await cdp.poll("(() => {const button=document.querySelector('form button[type=submit]'); if(!button || button.disabled) return false; button.click(); return true;})()", "login submit control");
+        report.stage = "vue_document_handoff";
         await cdp.poll("location.pathname === '/agri/' && !!document.querySelector('main[data-session-status=ready] [data-testid=session-user]')", "login transfers to Vue document");
         check(await sessionActor() === actor, "real_form_login_shared_cookie_vue_actor");
         check(await cdp.evaluate(`document.body.innerText.includes(${JSON.stringify(displayName)})`), "vue_displays_authoritative_actor");
@@ -199,9 +226,11 @@ async function main() {
         const cookie = cookies.find(c => c.name === COOKIE);
         check(Boolean(cookie?.httpOnly) && cookie.path === "/" && cookie.sameSite === "Lax", "session_cookie_scope_and_http_only");
         const original = cookie.value;
+        report.stage = "wrong_token_and_cross_app_identity";
         const wrong = original.split(".")[0] + ".invalid-token";
         const denied = await fetch(`${origin}/api/auth/session`, { headers: { Cookie: `${COOKIE}=${wrong}` } });
         check((await denied.json()).data?.user === null, "wrong_token_is_anonymous");
+        check(await workspaceStatus(wrong) === 401, "wrong_token_workspace_http_unauthorized");
         await fetch(`${origin}/api/auth/logout`, { method: "POST", headers: { Cookie: `${COOKIE}=${wrong}` } });
         check(await sessionActor() === actor, "wrong_token_logout_does_not_revoke_original");
         await cdp.navigate("/");
@@ -209,6 +238,7 @@ async function main() {
         check(await sessionActor() === actor, "react_and_vue_share_actual_actor");
         check(await cdp.evaluate(`location.pathname === '/' && document.querySelector('[data-testid=session-user]')?.dataset.userId === ${JSON.stringify(actor)}`), "react_dom_actor_matches_server_identity");
         await cdp.navigate("/agri/");
+        report.stage = "vue_logout_and_history_revalidation";
         await cdp.poll("!!document.querySelector('[data-testid=session-logout]')", "Vue logout control");
         await cdp.evaluate("document.querySelector('[data-testid=session-logout]').click()");
         await cdp.poll("!!document.querySelector('main[data-session-status=anonymous]')", "Vue logout clears actor");
@@ -223,13 +253,16 @@ async function main() {
         await cdp.poll("!!document.querySelector('#login-account')", "React refresh after Vue logout");
         const replay = await fetch(`${origin}/api/auth/session`, { headers: { Cookie: `${COOKIE}=${original}` } });
         check((await replay.json()).data?.user === null, "logout_revoked_cookie_cannot_be_replayed");
+        check(await workspaceStatus(original) === 401, "revoked_cookie_workspace_http_unauthorized");
         // Create a real session via API, then change ONLY this owned SQLite fixture's expiry.
         const relogin = await fetch(`${origin}/api/auth/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ username, password }) });
+        report.stage = "expired_session_negative";
         const setCookie = relogin.headers.get("set-cookie");
         const expired = setCookie?.split(";")[0].slice(COOKIE.length + 1);
         check(relogin.ok && Boolean(expired), "real_session_created_for_expiry_negative");
         const expire = spawnSync("python3", ["-c", "import json,sqlite3,sys; x=json.load(sys.stdin); db=sqlite3.connect(x['db']); c=db.execute(\"UPDATE auth_sessions SET expires_at='2000-01-01 00:00:00+00:00' WHERE id=?\",(x['id'],)); assert c.rowcount==1; db.commit(); db.close()"], { input: JSON.stringify({ db: join(temp, "open_ai_canvas.db"), id: decodeURIComponent(expired).split(".")[0] }), encoding: "utf8", stdio: ["pipe", "ignore", "ignore"] });
         check(expire.status === 0, "owned_fixture_expiry_mutation");
+        check(await workspaceStatus(decodeURIComponent(expired)) === 401, "expired_cookie_workspace_http_unauthorized");
         await cdp.send("Network.setCookie", { name: COOKIE, value: decodeURIComponent(expired), url: origin, path: "/", httpOnly: true, sameSite: "Lax" });
         await cdp.navigate("/agri/");
         await cdp.poll("!!document.querySelector('main[data-session-status=anonymous]')", "expired Vue session rejected");
@@ -241,10 +274,19 @@ async function main() {
         report.outbound_requests_blocked = cdp.outboundBlocked();
         check(report.outbound_requests_blocked === 0, "no_outbound_request_attempts");
         report.result = "pass";
+        report.stage = "complete";
     } catch (error) {
         report.result = "fail";
         // Our error messages contain only fixed labels, never runtime values.
         report.failure = String(error.message).replace(/https?:\/\/\S+/g, "[URL]").slice(0, 300);
+        if (cdp) {
+            report.api_statuses = cdp.statuses;
+            report.browser_runtime_exception_count = cdp.exceptions.length;
+            report.outbound_requests_blocked = cdp.outboundBlocked();
+            try {
+                report.dom_flags = await cdp.evaluate(`({page: ['/','/login','/agri/'].includes(location.pathname)?location.pathname:'other',ready:document.readyState,account:!!document.querySelector('#login-account'),password:!!document.querySelector('#login-password'),submit:!!document.querySelector('form button[type=submit]'),actor:!!document.querySelector('[data-testid=session-user]'),vueStatus:document.querySelector('main[data-session-status]')?.dataset.sessionStatus||null})`, "sanitized diagnostics");
+            } catch { report.dom_flags = { unavailable: true }; }
+        }
         process.exitCode = 1;
     } finally {
         cdp?.close();

@@ -1,4 +1,5 @@
 // Display-only projection of the platform cookie session. Never an authority for GIS.
+import { AgricultureNavigationError, agricultureRoute, agricultureWorkspaceURL } from '../../../../contracts/agriculture/navigation'
 export type User = { id: string; username: string; displayName: string; role: 'admin' | 'user'; status: 'active' }
 export type Workspace = { id: string; name: string; slug: string }
 export type State = {
@@ -19,21 +20,13 @@ const invalid = () => new SessionError('INVALID_RESPONSE', '平台返回格式�
 const empty = (status: State['status'], error: SessionError | null = null): State => ({ status, user: null, workspaces: [], selected: null, error })
 
 export function selectedWorkspace(search: string): string | null {
-  const params = new URLSearchParams(search)
-  // No client tenant_id/user_id/operator_code/role, redirect or arbitrary context.
-  for (const key of params.keys()) if (key !== 'workspace_id') throw new SessionError('UNTRUSTED_CONTEXT', '链接包含不受支持的身份或导航参数，请从平台工作区重新进入。')
-  const values = params.getAll('workspace_id')
-  if (values.length > 1 || (values.length === 1 && !id(values[0]))) throw new SessionError('INVALID_WORKSPACE', '工作区链接无效。')
-  return values[0] ?? null
+  return agricultureRoute('/agri/', search).workspaceId
 }
 export function workspaceURL(workspaceId: string): string {
-  if (!id(workspaceId)) throw new SessionError('INVALID_WORKSPACE', '工作区链接无效。')
-  return `/agri/?workspace_id=${encodeURIComponent(workspaceId)}`
+  return agricultureWorkspaceURL(workspaceId)
 }
-export function loginURL(search: string): string {
-  const workspaceId = selectedWorkspace(search)
-  // Construct from fixed routes, never accept a user-supplied redirect destination.
-  const next = workspaceId === null ? '/agri/' : workspaceURL(workspaceId)
+export function loginURL(search: string, pathname = '/agri/', hash = ''): string {
+  const next = agricultureRoute(pathname, search, hash).href
   return `/login?next=${encodeURIComponent(next)}`
 }
 
@@ -96,15 +89,16 @@ export class SessionController {
   }
   private failure(error: unknown, logout = false) {
     const failure = logout ? new SessionError('LOGOUT_FAILED', '退出未确认，不能认为服务器会话已注销。请重试或重新检查登录状态。')
+      : error instanceof AgricultureNavigationError ? new SessionError(error.code, error.message)
       : error instanceof SessionError ? error : new SessionError('NETWORK_ERROR', '平台暂时无法连接或请求超时，身份和工作区已清空。')
     const status = ['AUTH_REQUIRED', 'AUTH_EXPIRED'].includes(failure.code) ? 'anonymous' : failure.code === 'ACCOUNT_DISABLED' ? 'disabled' : 'error'
     this.publish(empty(status, failure))
   }
-  async refresh(search = '') {
+  async refresh(search = '', pathname = '/agri/', hash = '') {
     if (this.state.status === 'logging_out') return
     const { generation, signal } = this.begin('loading')
     try {
-      const requested = selectedWorkspace(search)
+      const requested = agricultureRoute(pathname, search, hash).workspaceId
       const user = userFrom(await request(this.fetcher, '/api/auth/session', signal))
       if (generation !== this.generation) return
       if (!user) throw new SessionError('AUTH_REQUIRED', '尚未登录或会话已失效，请使用平台统一登录。')

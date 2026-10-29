@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "date": "2026-10-29",
+  "scope": "DT014 navigation unit/type/production-build evidence; not browser acceptance",
+  "source_hashes": {
+    "contracts/agriculture/navigation.ts": "4fb1d786be8622592635b78a25628cd276b1845ef19969ef79702758b6fcd360",
+    "services/agri-gis/frontend/agriculture/App.vue": "07adb0258ca2e4d5543b04fe62ddfb57e51aa0fede355c12e304c885e7ee6a06",
+    "services/agri-gis/frontend/agriculture/session.ts": "4a0910b3a005c4765967e6115024170dc58f2ac763693186ee63aacb3362983b",
+    "services/agri-gis/frontend/agriculture/session-lifecycle.ts": "d349a2973293acc1d7c3c0c1995435cd14966603bf0f245746ffa3e97a4ca0bb",
+    "services/agri-gis/frontend/agriculture/session.test.ts": "81f84ff8c5b1e7fe4bc21ae3ad25d4aad316e698704b724bdc682d71632f86ba",
+    "web/src/features/agriculture/main.tsx": "96161fbc77f4312f4eebf5781247d32fe3e739348432cca4c990106a46f121c7",
+    "web/src/lib/auth-return-path.ts": "bf030dc293c22cf667306d7e592c9f7f54191d14db4e5e50f80b63dcdf8370b3",
+    "web/test/auth-return-path.test.ts": "362b19ae33f75a7df42958c8ae69ae2b2b79def10e917db117a71c86f5f89194"
+  },
+  "commands": [
+    {
+      "command": "bun test services/agri-gis/frontend/agriculture/session.test.ts services/agri-gis/frontend/agriculture/legacy-identity.test.ts web/test/auth-return-path.test.ts web/test/agriculture-profile.test.ts web/test/auth-session-race.test.ts",
+      "exit_code": 0,
+      "result": "passed",
+      "tests": 59,
+      "failed": 0,
+      "assertions": 294
+    },
+    {
+      "command": "cd web && bun run build:agriculture",
+      "exit_code": 0,
+      "result": "passed",
+      "includes": "TypeScript check, Vite production build and agriculture artifact policy",
+      "warnings": [
+        "Existing chunk-size and mixed static/dynamic import warnings"
+      ]
+    },
+    {
+      "command": "cd services/agri-gis/frontend && bun run build:agriculture",
+      "exit_code": 0,
+      "result": "passed",
+      "includes": "vue-tsc and Vite production build"
+    }
+  ],
+  "real_browser": {
+    "status": "not_run",
+    "reason": "Local Chromium execution unavailable; separate real production-nginx browser harness required"
+  },
+  "limitations": [
+    "Not PostgreSQL/RLS acceptance",
+    "No live farm or paid provider",
+    "No production deployment",
+    "Unit fixtures do not establish browser behavior"
+  ]
+}

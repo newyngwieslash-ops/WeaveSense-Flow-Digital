@@ -11,14 +11,19 @@
 
 ## 配置与检查
 
-首次在新工作区复制 `.env.agriculture.example` 为 `.env.agriculture`；已有文件先检查，不能覆盖。由获准的本地操作者配置每项互不相同、至少 32 位 URL-safe 随机秘密，保留文件权限 `0600`。模板不含可使用的默认秘密。不要打印完整 `docker compose config`、数据库 URL 或环境文件。
+首次在新工作区复制 `deploy/agriculture/env.example` 为 `.env.agriculture`；已有文件先检查，不能覆盖。由获准的本地操作者配置每项互不相同、至少 32 位 URL-safe 随机秘密，保留文件权限 `0600`。模板不含可使用的默认秘密。不要打印完整 `docker compose config`、数据库 URL 或环境文件。
 
 ```sh
-python3 scripts/agriculture/doctor.py
 docker compose --env-file .env.agriculture -f docker-compose.agriculture.yml --profile core config --quiet
 docker compose --env-file .env.agriculture -f docker-compose.agriculture.yml --profile core up -d --build --wait
 curl --fail http://127.0.0.1:8090/health/ready
 ```
+
+DT014新增独立 `web` profile，需同时启用 `core`、`platform`；默认同源入口
+`http://127.0.0.1:8091`，8090仍仅是探针。构建、缓存、内部路径封锁和测试边界见
+[`docs/agriculture/SAME_ORIGIN_GATEWAY.md`](../../docs/agriculture/SAME_ORIGIN_GATEWAY.md)。
+恢复树尚无原 `doctor.py`，这里不列出不存在的可执行命令；Compose变量检查不替代
+真实依赖健康检查或迁移验收。
 
 探针查询真实 `flow_geo` 的 PostGIS 及当前角色，不是静态假健康；只有它绑定本机 loopback。`/health/live` 仅存活。其他路径返回 `503 AGRICULTURE_BUSINESS_API_NOT_READY`，不能作为 GIS 功能通过。
 

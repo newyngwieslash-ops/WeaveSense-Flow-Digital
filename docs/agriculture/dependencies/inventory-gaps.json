@@ -1,0 +1,851 @@
+{
+  "commercial_release_approved": false,
+  "node_missing_declaration": [
+    {
+      "profile": "react",
+      "name": "@giscus/react",
+      "version": "3.1.0",
+      "path": "web/node_modules/@giscus/react",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@splinetool/runtime",
+      "version": "1.12.98",
+      "path": "web/node_modules/@splinetool/runtime",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "khroma",
+      "version": "2.1.0",
+      "path": "web/node_modules/khroma",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "webgl-constants",
+      "version": "1.1.1",
+      "path": "web/node_modules/webgl-constants",
+      "agriculture_reachable": false
+    }
+  ],
+  "node_without_package_notice": [
+    {
+      "profile": "react",
+      "name": "@ant-design/icons-svg",
+      "version": "4.5.0",
+      "path": "web/node_modules/@ant-design/icons-svg",
+      "agriculture_reachable": true
+    },
+    {
+      "profile": "react",
+      "name": "@excalidraw/excalidraw",
+      "version": "0.18.1",
+      "path": "web/node_modules/@excalidraw/excalidraw",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@ffmpeg/core",
+      "version": "0.12.10",
+      "path": "web/node_modules/@ffmpeg/core",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@ffmpeg/ffmpeg",
+      "version": "0.12.15",
+      "path": "web/node_modules/@ffmpeg/ffmpeg",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@ffmpeg/types",
+      "version": "0.12.4",
+      "path": "web/node_modules/@ffmpeg/types",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@ffmpeg/util",
+      "version": "0.12.2",
+      "path": "web/node_modules/@ffmpeg/util",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@giscus/react",
+      "version": "3.1.0",
+      "path": "web/node_modules/@giscus/react",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@humanfs/types",
+      "version": "0.15.0",
+      "path": "web/node_modules/@humanfs/types",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@lit-labs/ssr-dom-shim",
+      "version": "1.6.0",
+      "path": "web/node_modules/@lit-labs/ssr-dom-shim",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@lobehub/emojilib",
+      "version": "1.0.0",
+      "path": "web/node_modules/@lobehub/emojilib",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@mediapipe/tasks-vision",
+      "version": "1.0.1",
+      "path": "web/node_modules/@mediapipe/tasks-vision",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@pierre/theming",
+      "version": "0.0.2",
+      "path": "web/node_modules/@pierre/theming",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/primitive",
+      "version": "1.1.1",
+      "path": "web/node_modules/@radix-ui/primitive",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-compose-refs",
+      "version": "1.1.1",
+      "path": "web/node_modules/@radix-ui/react-compose-refs",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-context",
+      "version": "1.1.1",
+      "path": "web/node_modules/@radix-ui/react-context",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-direction",
+      "version": "1.0.0",
+      "path": "web/node_modules/@radix-ui/react-direction",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-use-callback-ref",
+      "version": "1.1.0",
+      "path": "web/node_modules/@radix-ui/react-dismissable-layer/node_modules/@radix-ui/react-use-callback-ref",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-use-escape-keydown",
+      "version": "1.1.0",
+      "path": "web/node_modules/@radix-ui/react-dismissable-layer/node_modules/@radix-ui/react-use-escape-keydown",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-dismissable-layer",
+      "version": "1.1.5",
+      "path": "web/node_modules/@radix-ui/react-dismissable-layer",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-focus-guards",
+      "version": "1.1.1",
+      "path": "web/node_modules/@radix-ui/react-focus-guards",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-use-callback-ref",
+      "version": "1.1.0",
+      "path": "web/node_modules/@radix-ui/react-focus-scope/node_modules/@radix-ui/react-use-callback-ref",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-focus-scope",
+      "version": "1.1.2",
+      "path": "web/node_modules/@radix-ui/react-focus-scope",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-use-layout-effect",
+      "version": "1.1.0",
+      "path": "web/node_modules/@radix-ui/react-id/node_modules/@radix-ui/react-use-layout-effect",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-id",
+      "version": "1.1.0",
+      "path": "web/node_modules/@radix-ui/react-id",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-popover",
+      "version": "1.1.6",
+      "path": "web/node_modules/@radix-ui/react-popover",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-arrow",
+      "version": "1.1.2",
+      "path": "web/node_modules/@radix-ui/react-popper/node_modules/@radix-ui/react-arrow",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-use-callback-ref",
+      "version": "1.1.0",
+      "path": "web/node_modules/@radix-ui/react-popper/node_modules/@radix-ui/react-use-callback-ref",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-use-layout-effect",
+      "version": "1.1.0",
+      "path": "web/node_modules/@radix-ui/react-popper/node_modules/@radix-ui/react-use-layout-effect",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-use-size",
+      "version": "1.1.0",
+      "path": "web/node_modules/@radix-ui/react-popper/node_modules/@radix-ui/react-use-size",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-popper",
+      "version": "1.2.2",
+      "path": "web/node_modules/@radix-ui/react-popper",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-use-layout-effect",
+      "version": "1.1.0",
+      "path": "web/node_modules/@radix-ui/react-portal/node_modules/@radix-ui/react-use-layout-effect",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-portal",
+      "version": "1.1.4",
+      "path": "web/node_modules/@radix-ui/react-portal",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-use-layout-effect",
+      "version": "1.1.0",
+      "path": "web/node_modules/@radix-ui/react-presence/node_modules/@radix-ui/react-use-layout-effect",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-presence",
+      "version": "1.1.2",
+      "path": "web/node_modules/@radix-ui/react-presence",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-primitive",
+      "version": "2.0.2",
+      "path": "web/node_modules/@radix-ui/react-primitive",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/primitive",
+      "version": "1.0.0",
+      "path": "web/node_modules/@radix-ui/react-roving-focus/node_modules/@radix-ui/primitive",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-slot",
+      "version": "1.0.1",
+      "path": "web/node_modules/@radix-ui/react-roving-focus/node_modules/@radix-ui/react-collection/node_modules/@radix-ui/react-slot",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-collection",
+      "version": "1.0.1",
+      "path": "web/node_modules/@radix-ui/react-roving-focus/node_modules/@radix-ui/react-collection",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-compose-refs",
+      "version": "1.0.0",
+      "path": "web/node_modules/@radix-ui/react-roving-focus/node_modules/@radix-ui/react-compose-refs",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-context",
+      "version": "1.0.0",
+      "path": "web/node_modules/@radix-ui/react-roving-focus/node_modules/@radix-ui/react-context",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-use-layout-effect",
+      "version": "1.0.0",
+      "path": "web/node_modules/@radix-ui/react-roving-focus/node_modules/@radix-ui/react-id/node_modules/@radix-ui/react-use-layout-effect",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-id",
+      "version": "1.0.0",
+      "path": "web/node_modules/@radix-ui/react-roving-focus/node_modules/@radix-ui/react-id",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-slot",
+      "version": "1.0.1",
+      "path": "web/node_modules/@radix-ui/react-roving-focus/node_modules/@radix-ui/react-primitive/node_modules/@radix-ui/react-slot",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-primitive",
+      "version": "1.0.1",
+      "path": "web/node_modules/@radix-ui/react-roving-focus/node_modules/@radix-ui/react-primitive",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-use-callback-ref",
+      "version": "1.0.0",
+      "path": "web/node_modules/@radix-ui/react-roving-focus/node_modules/@radix-ui/react-use-callback-ref",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-use-controllable-state",
+      "version": "1.0.0",
+      "path": "web/node_modules/@radix-ui/react-roving-focus/node_modules/@radix-ui/react-use-controllable-state",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-roving-focus",
+      "version": "1.0.2",
+      "path": "web/node_modules/@radix-ui/react-roving-focus",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-slot",
+      "version": "1.1.2",
+      "path": "web/node_modules/@radix-ui/react-slot",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/primitive",
+      "version": "1.0.0",
+      "path": "web/node_modules/@radix-ui/react-tabs/node_modules/@radix-ui/primitive",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-context",
+      "version": "1.0.0",
+      "path": "web/node_modules/@radix-ui/react-tabs/node_modules/@radix-ui/react-context",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-use-layout-effect",
+      "version": "1.0.0",
+      "path": "web/node_modules/@radix-ui/react-tabs/node_modules/@radix-ui/react-id/node_modules/@radix-ui/react-use-layout-effect",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-id",
+      "version": "1.0.0",
+      "path": "web/node_modules/@radix-ui/react-tabs/node_modules/@radix-ui/react-id",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-compose-refs",
+      "version": "1.0.0",
+      "path": "web/node_modules/@radix-ui/react-tabs/node_modules/@radix-ui/react-presence/node_modules/@radix-ui/react-compose-refs",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-use-layout-effect",
+      "version": "1.0.0",
+      "path": "web/node_modules/@radix-ui/react-tabs/node_modules/@radix-ui/react-presence/node_modules/@radix-ui/react-use-layout-effect",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-presence",
+      "version": "1.0.0",
+      "path": "web/node_modules/@radix-ui/react-tabs/node_modules/@radix-ui/react-presence",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-compose-refs",
+      "version": "1.0.0",
+      "path": "web/node_modules/@radix-ui/react-tabs/node_modules/@radix-ui/react-primitive/node_modules/@radix-ui/react-slot/node_modules/@radix-ui/react-compose-refs",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-slot",
+      "version": "1.0.1",
+      "path": "web/node_modules/@radix-ui/react-tabs/node_modules/@radix-ui/react-primitive/node_modules/@radix-ui/react-slot",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-primitive",
+      "version": "1.0.1",
+      "path": "web/node_modules/@radix-ui/react-tabs/node_modules/@radix-ui/react-primitive",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-use-callback-ref",
+      "version": "1.0.0",
+      "path": "web/node_modules/@radix-ui/react-tabs/node_modules/@radix-ui/react-use-controllable-state/node_modules/@radix-ui/react-use-callback-ref",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-use-controllable-state",
+      "version": "1.0.0",
+      "path": "web/node_modules/@radix-ui/react-tabs/node_modules/@radix-ui/react-use-controllable-state",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-tabs",
+      "version": "1.0.2",
+      "path": "web/node_modules/@radix-ui/react-tabs",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-use-callback-ref",
+      "version": "1.1.0",
+      "path": "web/node_modules/@radix-ui/react-use-controllable-state/node_modules/@radix-ui/react-use-callback-ref",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-use-controllable-state",
+      "version": "1.1.0",
+      "path": "web/node_modules/@radix-ui/react-use-controllable-state",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/react-use-rect",
+      "version": "1.1.0",
+      "path": "web/node_modules/@radix-ui/react-use-rect",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@radix-ui/rect",
+      "version": "1.1.0",
+      "path": "web/node_modules/@radix-ui/rect",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@mediapipe/tasks-vision",
+      "version": "0.10.17",
+      "path": "web/node_modules/@react-three/drei/node_modules/@mediapipe/tasks-vision",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@react-three/fiber",
+      "version": "9.6.1",
+      "path": "web/node_modules/@react-three/fiber",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@rolldown/binding-linux-x64-gnu",
+      "version": "1.1.5",
+      "path": "web/node_modules/@rolldown/binding-linux-x64-gnu",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@rolldown/binding-linux-x64-musl",
+      "version": "1.1.5",
+      "path": "web/node_modules/@rolldown/binding-linux-x64-musl",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@splinetool/runtime",
+      "version": "1.12.98",
+      "path": "web/node_modules/@splinetool/runtime",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@stitches/react",
+      "version": "1.2.8",
+      "path": "web/node_modules/@stitches/react",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@tldraw/driver",
+      "version": "5.2.5",
+      "path": "web/node_modules/@tldraw/driver",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@uiw/codemirror-extensions-basic-setup",
+      "version": "4.25.11",
+      "path": "web/node_modules/@uiw/codemirror-extensions-basic-setup",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "@uiw/react-codemirror",
+      "version": "4.25.11",
+      "path": "web/node_modules/@uiw/react-codemirror",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "ahooks",
+      "version": "3.9.7",
+      "path": "web/node_modules/ahooks",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "client-only",
+      "version": "0.0.1",
+      "path": "web/node_modules/client-only",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "dingbat-to-unicode",
+      "version": "1.0.1",
+      "path": "web/node_modules/dingbat-to-unicode",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "draco3d",
+      "version": "1.5.7",
+      "path": "web/node_modules/draco3d",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "esrecurse",
+      "version": "4.3.0",
+      "path": "web/node_modules/esrecurse",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "format",
+      "version": "0.2.2",
+      "path": "web/node_modules/format",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "giscus",
+      "version": "1.6.0",
+      "path": "web/node_modules/giscus",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "highlightjs-vue",
+      "version": "1.0.0",
+      "path": "web/node_modules/highlightjs-vue",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "intersection-observer",
+      "version": "0.12.2",
+      "path": "web/node_modules/intersection-observer",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "keyv",
+      "version": "4.5.4",
+      "path": "web/node_modules/keyv",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "maath",
+      "version": "0.10.8",
+      "path": "web/node_modules/maath",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "natural-compare",
+      "version": "1.4.0",
+      "path": "web/node_modules/natural-compare",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "react-avatar-editor",
+      "version": "15.1.0",
+      "path": "web/node_modules/react-avatar-editor",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "react-remove-scroll-bar",
+      "version": "2.3.8",
+      "path": "web/node_modules/react-remove-scroll-bar",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "rehype-katex",
+      "version": "7.0.1",
+      "path": "web/node_modules/rehype-katex",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "remark-math",
+      "version": "6.0.0",
+      "path": "web/node_modules/remark-math",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "stats-gl",
+      "version": "2.4.2",
+      "path": "web/node_modules/stats-gl",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "react",
+      "name": "victory-vendor",
+      "version": "37.3.6",
+      "path": "web/node_modules/victory-vendor",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "vue",
+      "name": "@ant-design/icons-svg",
+      "version": "4.5.0",
+      "path": "services/agri-gis/frontend/node_modules/@ant-design/icons-svg",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "vue",
+      "name": "@ant-design/icons-vue",
+      "version": "7.0.1",
+      "path": "services/agri-gis/frontend/node_modules/@ant-design/icons-vue",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "vue",
+      "name": "@cesium/wasm-splats",
+      "version": "0.1.0-alpha.2",
+      "path": "services/agri-gis/frontend/node_modules/@cesium/wasm-splats",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "vue",
+      "name": "@esbuild/linux-x64",
+      "version": "0.25.12",
+      "path": "services/agri-gis/frontend/node_modules/@esbuild/linux-x64",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "vue",
+      "name": "@humanfs/types",
+      "version": "0.15.0",
+      "path": "services/agri-gis/frontend/node_modules/@humanfs/types",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "vue",
+      "name": "@rollup/rollup-linux-x64-gnu",
+      "version": "4.62.2",
+      "path": "services/agri-gis/frontend/node_modules/@rollup/rollup-linux-x64-gnu",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "vue",
+      "name": "@rollup/rollup-linux-x64-musl",
+      "version": "4.62.2",
+      "path": "services/agri-gis/frontend/node_modules/@rollup/rollup-linux-x64-musl",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "vue",
+      "name": "@vue/devtools-api",
+      "version": "6.6.4",
+      "path": "services/agri-gis/frontend/node_modules/@vue/devtools-api",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "vue",
+      "name": "array-tree-filter",
+      "version": "2.1.0",
+      "path": "services/agri-gis/frontend/node_modules/array-tree-filter",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "vue",
+      "name": "bitmap-sdf",
+      "version": "1.0.4",
+      "path": "services/agri-gis/frontend/node_modules/bitmap-sdf",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "vue",
+      "name": "boolbase",
+      "version": "1.0.0",
+      "path": "services/agri-gis/frontend/node_modules/boolbase",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "vue",
+      "name": "dom-scroll-into-view",
+      "version": "2.0.1",
+      "path": "services/agri-gis/frontend/node_modules/dom-scroll-into-view",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "vue",
+      "name": "draco3d",
+      "version": "1.5.7",
+      "path": "services/agri-gis/frontend/node_modules/draco3d",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "vue",
+      "name": "esrecurse",
+      "version": "4.3.0",
+      "path": "services/agri-gis/frontend/node_modules/esrecurse",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "vue",
+      "name": "lerc",
+      "version": "3.0.0",
+      "path": "services/agri-gis/frontend/node_modules/geotiff/node_modules/lerc",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "vue",
+      "name": "is-reference",
+      "version": "1.2.1",
+      "path": "services/agri-gis/frontend/node_modules/is-reference",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "vue",
+      "name": "keyv",
+      "version": "4.5.4",
+      "path": "services/agri-gis/frontend/node_modules/keyv",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "vue",
+      "name": "lerc",
+      "version": "2.0.0",
+      "path": "services/agri-gis/frontend/node_modules/lerc",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "vue",
+      "name": "less",
+      "version": "4.7.0",
+      "path": "services/agri-gis/frontend/node_modules/less",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "vue",
+      "name": "mersenne-twister",
+      "version": "1.1.0",
+      "path": "services/agri-gis/frontend/node_modules/mersenne-twister",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "vue",
+      "name": "natural-compare",
+      "version": "1.4.0",
+      "path": "services/agri-gis/frontend/node_modules/natural-compare",
+      "agriculture_reachable": false
+    },
+    {
+      "profile": "vue",
+      "name": "@rollup/pluginutils",
+      "version": "4.2.1",
+      "path": "services/agri-gis/frontend/node_modules/vite-plugin-cesium/node_modules/@rollup/pluginutils",
+      "agriculture_reachable": false
+    }
+  ],
+  "go_without_module_notice": [
+    {
+      "path": "github.com/chzyer/logex",
+      "version": "v1.1.10",
+      "source_available": true,
+      "server_import_graph_reachable": false
+    }
+  ],
+  "python_without_notice": [],
+  "pi_loom_package_notices_not_installed_or_inspected_in_this_recovery": true,
+  "remaining_release_gates": [
+    "Final container reachability and native linked-library inventory",
+    "Per-module review of actual Go LICENSE/NOTICE text; no root-license inheritance",
+    "Missing or absent package notices and unresolved declarations",
+    "GDAL drivers/codecs and bundled library licensing",
+    "Future Vue business profile reachability differs from current session-only build",
+    "Fonts, data, model weights, hosted APIs and redistribution rights independent of code licenses"
+  ]
+}

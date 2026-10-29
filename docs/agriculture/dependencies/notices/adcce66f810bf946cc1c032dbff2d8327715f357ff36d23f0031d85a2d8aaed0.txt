@@ -1,0 +1,11 @@
+Open AI Canvas
+Copyright (C) 2026 ddcat and contributors
+
+This project is licensed under the MIT License.
+The complete license text is provided in LICENSE.
+
+This distribution includes third-party and inherited material under permissive open-source licenses. Required copyright and license notices are retained in LICENSE files and in the corresponding package directories.
+
+Material changes in this repository are maintained by the Open AI Canvas contributors. They include a multi-user Go backend, task processing and analytics, private resource storage, canvas sharing, film-production workflows, canvas UI refactoring, and cloud Agent integrations.
+
+Third-party packages remain subject to the licenses declared by their respective authors. Product names and logos under web/public/icons are the property of their respective owners and do not imply endorsement.

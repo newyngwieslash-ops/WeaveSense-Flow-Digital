@@ -1,0 +1,54 @@
+{
+  "scope": "DT-008 bounded W00 recovery acceptance; not G0 or product acceptance",
+  "source_commit": "b8aa4dcec47cdaebd7f4772adbfb1541fa5e94f6",
+  "date": "2026-10-29",
+  "review": "Independent original-criteria review found no remaining W00 recovery blocker after status synchronization.",
+  "source_hashes": [
+    {
+      "path": "docs/agriculture/W00_RECOVERY_ACCEPTANCE.md",
+      "sha256": "fc7821981fcf578104336157ba228a7d4106f4a0dc3251fae61076dc86326a91"
+    },
+    {
+      "path": "docs/agriculture/evidence/historical-ci-d13-mapping.json",
+      "sha256": "ddfe477a3435d7a1c1e3f65e1d9f1a5578afea41b6e8fc571383dddf5285a1a5"
+    },
+    {
+      "path": "docs/agriculture/evidence/recovery-ci-20261029.json",
+      "sha256": "2481df255f04dd5fe7d70e6a4caf825b714b2e343ce3d835d3bfc4f18b2d1c67"
+    },
+    {
+      "path": "docs/agriculture/evidence/native-environment-isolation-20261029.json",
+      "sha256": "70e75227a6dffce2e8f6c7667441bd98e6a66e6f7d0949b976df7aedbb6dfb4b"
+    },
+    {
+      "path": "docs/agriculture/evidence/w01/dt014-navigation.json",
+      "sha256": "15701cf88ba2edc7e644faf0c306557ca0317b5338c622e1b4ba04dfcfb33131"
+    },
+    {
+      "path": "specs/agriculture/v1.0.0/docs/implementation/RECOVERY_STATUS.json",
+      "sha256": "9d800653837eb79ad82ca7158b38fcfdbea2e02cfd44a14a8233dacf55873bc2"
+    }
+  ],
+  "commands": [
+    {
+      "command": "python scripts/agriculture/spec_status.py --check",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "command": "python scripts/agriculture/spec_status.test.py",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "result": "passed"
+    }
+  ],
+  "tests": 9,
+  "historical_ci_mapping": "Exact c20 overlay/deployment bytes map to d13; original JSON preserved. This closure does not rerun historical CI.",
+  "later_local_evidence": "Real native PostgreSQL and two frontend production builds are separately identified in W00_RECOVERY_ACCEPTANCE.md, not backdated to initial W00.",
+  "remaining_task": "DT-014 in_progress: actual gateway browser and container execution not_run",
+  "release_gates": "G0-G5 not passed; final licenses, real farms/data/payment/model/device acceptance remain pending."
+}

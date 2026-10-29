@@ -2,7 +2,7 @@
   "schema_version": "1.0-reconstructed",
   "kind": "recovery_verification_not_product_acceptance",
   "date": "2026-10-29",
-  "note": "历史 DT001..012 完成已确认；本记录不把历史结果冒充本次恢复后的完整验收。W00 部分产物缺失须恢复及复核；DT012 源码恢复不等于所有验证已重跑。",
+  "note": "DT001–013恢复证据已按各任务原范围核验：保留历史CI与冻结源码精确映射，并独立记录恢复后新执行结果。不是全部144任务完成，不以历史结果替代DT014当前浏览器回归。",
   "acceptance_recovery": {
     "baseline_file_state": "80 not_run",
     "historical_known": "AG-AC-002 running",
@@ -4747,11 +4747,58 @@
     },
     "DT-008": {
       "historical_status": "done",
-      "verification": "pending_revalidation",
-      "evidence": [],
-      "commands": [],
-      "source_hashes": [],
-      "note": "W00 原始交付物及日志未全量恢复；保持历史状态，不宣称本次完成。"
+      "verification": "verified",
+      "source_commit": "b8aa4dcec47cdaebd7f4772adbfb1541fa5e94f6",
+      "evidence": [
+        {
+          "path": "docs/implementation/evidence/DT-008/recovery-acceptance.json",
+          "sha256": "96d2cdd21398b03661645634425a188e037cc98e243c76e8b6477fbbac7c06a1"
+        }
+      ],
+      "commands": [
+        {
+          "command": "python scripts/agriculture/spec_status.py --check",
+          "exit_code": 0,
+          "result": "passed"
+        },
+        {
+          "command": "python scripts/agriculture/spec_status.test.py",
+          "exit_code": 0,
+          "result": "passed"
+        },
+        {
+          "command": "git diff --check",
+          "exit_code": 0,
+          "result": "passed"
+        }
+      ],
+      "source_hashes": [
+        {
+          "path": "docs/agriculture/W00_RECOVERY_ACCEPTANCE.md",
+          "sha256": "fc7821981fcf578104336157ba228a7d4106f4a0dc3251fae61076dc86326a91"
+        },
+        {
+          "path": "docs/agriculture/evidence/historical-ci-d13-mapping.json",
+          "sha256": "ddfe477a3435d7a1c1e3f65e1d9f1a5578afea41b6e8fc571383dddf5285a1a5"
+        },
+        {
+          "path": "docs/agriculture/evidence/recovery-ci-20261029.json",
+          "sha256": "2481df255f04dd5fe7d70e6a4caf825b714b2e343ce3d835d3bfc4f18b2d1c67"
+        },
+        {
+          "path": "docs/agriculture/evidence/native-environment-isolation-20261029.json",
+          "sha256": "70e75227a6dffce2e8f6c7667441bd98e6a66e6f7d0949b976df7aedbb6dfb4b"
+        },
+        {
+          "path": "docs/agriculture/evidence/w01/dt014-navigation.json",
+          "sha256": "15701cf88ba2edc7e644faf0c306557ca0317b5338c622e1b4ba04dfcfb33131"
+        },
+        {
+          "path": "specs/agriculture/v1.0.0/docs/implementation/RECOVERY_STATUS.json",
+          "sha256": "9d800653837eb79ad82ca7158b38fcfdbea2e02cfd44a14a8233dacf55873bc2"
+        }
+      ],
+      "note": "按原任务范围完成恢复首包审查：001–007冻结证据已核验、构建/迁移/回归及真实失败边界齐备，9项状态负例通过。历史CI与新本地执行明确分列；不冒充G0、DT014浏览器或最终商业发布验收。"
     },
     "DT-009": {
       "historical_status": "done",

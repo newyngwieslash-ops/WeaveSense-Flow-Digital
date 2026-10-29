@@ -1,0 +1,26 @@
+{
+  "scope": "single cloud browser cross-tool loopback reachability probe",
+  "source_commit": "26a440eb6487f58aee7486d40c6aaf0391debdf7",
+  "recorded_at": "2026-10-29T15:31:46.930945+00:00",
+  "origin": "http://127.0.0.1:56967",
+  "path": "/agri/",
+  "startup_same_exec_http_ready": true,
+  "startup_readiness_endpoint": "/api/auth/settings",
+  "startup_readiness_status": 200,
+  "later_separate_exec_control": "connection_refused_errno_111",
+  "cloud_browser_observed_at": "2026-10-29T15:30:46Z",
+  "cloud_browser_result": "net::ERR_CONNECTION_REFUSED",
+  "cloud_browser_observation_source": "implementation lead supported createBrowserTab result",
+  "causal_limit": "Both cloud browser and separate exec control refused; cannot attribute failure exclusively to cloud browser network isolation. Startup cell reported ready and remained running.",
+  "public_binding": false,
+  "tunnel": false,
+  "security_flags_changed": false,
+  "browser_acceptance": "not_run",
+  "production_deployment": false,
+  "cleanup": {
+    "backend_exit_code": 0,
+    "nginx_exit_code": 0,
+    "orchestrator_exit_code": 0,
+    "owned_processes_waited": true
+  }
+}

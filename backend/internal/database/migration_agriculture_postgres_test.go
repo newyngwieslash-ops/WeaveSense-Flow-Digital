@@ -2,6 +2,7 @@ package database
 
 import (
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -10,6 +11,7 @@ import (
 
 	"yingce/backend/internal/model"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -136,11 +138,21 @@ func TestAgriculturePostgresAdmissionAndStrictRLS(t *testing.T) {
 			key, value = "id", actor
 		}
 		if err := owner.Table(change.table).Where(key+" = ?", value).Update(change.column, change.invalid).Error; err != nil {
-			t.Fatal("cannot alter negative fixture")
+			var pgError *pgconn.PgError
+			code := "unavailable"
+			if errors.As(err, &pgError) {
+				code = pgError.Code
+			}
+			t.Fatalf("cannot alter negative fixture; fixture_stage=%s.%s SQLSTATE %s", change.table, change.column, code)
 		}
 		resolve(hash, actor, 0)
 		if err := owner.Table(change.table).Where(key+" = ?", value).Update(change.column, change.valid).Error; err != nil {
-			t.Fatal("cannot restore negative fixture")
+			var pgError *pgconn.PgError
+			code := "unavailable"
+			if errors.As(err, &pgError) {
+				code = pgError.Code
+			}
+			t.Fatalf("cannot restore negative fixture; fixture_stage=%s.%s SQLSTATE %s", change.table, change.column, code)
 		}
 	}
 	withScope := func(scope string, fn func(*gorm.DB) error) error {

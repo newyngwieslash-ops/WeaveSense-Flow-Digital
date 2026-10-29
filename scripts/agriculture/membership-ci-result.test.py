@@ -58,6 +58,15 @@ class EvidenceTests(unittest.TestCase):
         for value in ["example.invalid", "secret", "TOKEN", "postgres://"]:
             self.assertNotIn(value, json.dumps(evidence))
 
+    def test_fixture_stage_is_allowlisted_not_arbitrary_output(self):
+        events = postgres_pass() + [
+            event("output", "database", "TestAgriculturePostgresAdmissionAndStrictRLS", Output="    migration_agriculture_postgres_test.go:145: fixture_stage=flow_invites.product fixture_stage=secret.password SQLSTATE 42501"),
+            event("fail", "database", "TestAgriculturePostgresAdmissionAndStrictRLS"),
+        ]
+        evidence = result.verify(events, "postgres")
+        self.assertEqual(evidence["failure_locations"][0]["locations"][0]["fixture_stages"], ["flow_invites.product"])
+        self.assertNotIn("secret", json.dumps(evidence))
+
     def test_legacy_requires_old_and_new_regressions(self):
         events = [event("pass", "flow", name) for name in ["TestOrgInviteSingleUseAndGrantRevocation", "TestP7MembersRoleEditing", "TestAgricultureMembershipOwnerRemovalPreservesWorkspace"]] + [event("pass", "flow")]
         self.assertTrue(result.verify(events, "legacy-flow")["passed"])

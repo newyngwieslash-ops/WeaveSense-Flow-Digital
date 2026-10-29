@@ -26,6 +26,9 @@ def verify(lines, suite):
             for match in re.finditer(r"\b([A-Za-z0-9_]+_test\.go):(\d+):", item.get("Output", "")):
                 location = {"file": match.group(1), "line": int(match.group(2)),
                             "sqlstates": sorted(set(re.findall(r"SQLSTATE ([0-9A-Z]{5})\b", item.get("Output", ""))))}
+                stages = re.findall(r"fixture_stage=((?:flow_invites|flow_workspaces|flow_tenants|users)\.(?:product|accepted_at|revoked_at|expires_at|status|email_verified_at))\b", item.get("Output", ""))
+                if stages:
+                    location["fixture_stages"] = sorted(set(stages))
                 if len(locations.setdefault(key, [])) < 20 and location not in locations[key]:
                     locations[key].append(location)
         if action == "pass":

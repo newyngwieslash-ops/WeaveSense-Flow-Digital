@@ -20,6 +20,7 @@ class NativePostgresPathTests(unittest.TestCase):
             script = repo / 'scripts/agriculture/native-postgres-test.py'
             script.parent.mkdir(parents=True)
             shutil.copyfile(source / 'scripts/agriculture/native-postgres-test.py', script)
+            shutil.copyfile(source / 'scripts/agriculture/native_test_environment.py', script.parent / 'native_test_environment.py')
             manifest = repo / 'deploy/agriculture/native-postgres-packages.json'
             manifest.parent.mkdir(parents=True)
             manifest.write_text('{"packages": []}')

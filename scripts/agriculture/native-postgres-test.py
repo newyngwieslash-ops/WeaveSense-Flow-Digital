@@ -12,6 +12,7 @@ import uuid
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
+from native_test_environment import native_test_environment
 
 repo = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser(description=__doc__)
@@ -52,7 +53,7 @@ passwords = {name: secrets.token_hex(24) for name in (
 with socket.socket() as sock:
     sock.bind(('127.0.0.1',0))
     port = str(sock.getsockname()[1])
-env = {**os.environ, **passwords, 'POSTGRES_USER':'postgres',
+env = {**native_test_environment(os.environ, run), **passwords, 'POSTGRES_USER':'postgres',
        'PGHOST':'127.0.0.1', 'PGPORT':port, 'PGPASSWORD':passwords['POSTGRES_PASSWORD'],
        'PATH':str(binary)+os.pathsep+os.environ['PATH'],
        'LD_LIBRARY_PATH':str(root/'usr/lib/x86_64-linux-gnu'),
@@ -111,6 +112,8 @@ required_pg = {
 }
 missing_pg = sorted(required_pg-{c['name'] for c in cases if c['status']=='pass'})
 scope=['deploy/agriculture/postgres/init.sh', 'deploy/agriculture/native-postgres-packages.json',
+       'scripts/agriculture/native_test_environment.py',
+       'tests/agriculture/test_native_test_environment.py',
        'tests/agriculture/test_native_postgres_helper.py',
        'scripts/agriculture/native-postgres-test.py', 'scripts/agriculture/native-postgres-prepare.py',
        'services/agri-gis/backend/pyproject.toml', 'services/agri-gis/backend/poetry.lock']

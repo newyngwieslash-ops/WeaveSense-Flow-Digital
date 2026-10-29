@@ -1,0 +1,36 @@
+{
+  "scope": "Native fixture parent-environment isolation regression, not product change",
+  "parent_poison": {
+    "PGHOSTADDR": "127.0.0.2",
+    "PGSERVICE": "unusedfixture"
+  },
+  "actual_runs": [
+    {
+      "report": "docs/agriculture/evidence/w01/native-pg-20261029/env-isolated-report.json",
+      "sha256": "c0bc87aef447ae4b04eb6b8189a7a9e4d4fda26937153e716dca1cb1ed20a947",
+      "source_hash_count": 282,
+      "elapsed_seconds": 18.445
+    },
+    {
+      "report": "docs/agriculture/evidence/w01/native-membership-20261029/final-report.json",
+      "sha256": "9663d666d3aafcae867f4f6424347b2113f0d186d959b2788b3d8a28c454b648",
+      "source_hash_count": 1139,
+      "elapsed_seconds": 45.258
+    }
+  ],
+  "commands": [
+    "PGHOSTADDR=127.0.0.2 PGSERVICE=unusedfixture python scripts/agriculture/native-postgres-test.py --package-root .local/native-postgres/package-root-reviewed",
+    "PGHOSTADDR=127.0.0.2 PGSERVICE=unusedfixture python scripts/agriculture/native-membership-test.py --package-root .local/native-postgres/package-root-reviewed --go .local/toolchains/go/bin/go"
+  ],
+  "helper_tests": {
+    "command": ".local/agri-identity-venv/bin/python -m pytest -q tests/agriculture/test_native_test_environment.py tests/agriculture/test_native_postgres_helper.py",
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0,
+    "exit_code": 0
+  },
+  "old_geo_report_unchanged": "1a166a525f9f474e12c9cd0adf3978b417ce2f6b9bd2379ee496a8b0ab8cc25c",
+  "old_platform_report_preserved": "16943b402141668ab246ceaa34cbd5c4185a88ce9bc47c36484bee13bd003102",
+  "no_production_credentials": true,
+  "remote_ci": false
+}

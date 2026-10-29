@@ -49,9 +49,9 @@
 | MCP | `backend/internal/flow/mcp.go`、`mcp_routes.go`、`mcp_secrets.go`：批准工具集、schema hash、服务端凭据、预算与未知结果 | 可复用，不表示农业工具已注册或真实外部调用通过；无新外部服务调用 |
 | 预算 | `backend/internal/flow/billing.go`：预留、子分配、结算、未知结果状态 | 农业价格版本/计算费用/取消竞态/实际收费验收仍需接入，不能直接改余额补账 |
 | Loom | `services/loom-engine/src/lib/db.ts`、`src/lib/server/cron.ts`、`migrations`；平台 `flow/command_outbox.go` | 保留 Node/Pi/Loom，不宣称纯 Go。农业知识授权、范围检索、真实来源链未验收 |
-| 数据库 | `backend/internal/database/flow_rls.go` 仍将空 `app.tenant_ids` 解释为 system；教育/原 Flow 表共用策略 | DT-017 必须先盘点真实系统任务再迁移；新增农业策略不是全量旧表已默认拒绝的证明 |
+| 数据库 | `backend/internal/database/flow_rls.go` 仍将空 `app.tenant_ids` 解释为 system；教育/原 Flow 表共用策略 | DT-018 必须先盘点真实系统任务再迁移，并依赖 DT-017 GIS 独立角色；新增农业策略不是全量旧表已默认拒绝的证明 |
 | GIS 旧身份 | 原 `frontend/src/store/userStore.ts` 读 localStorage、is_default/首用户；`project_user_service.py` 原编码能力链 | DT-013 已阻断生产旧身份路径；`agriculture/actors.py`、`actor_session.py` 和 `operation_authorization.py` 是可信绑定/操作与同事务审计边界，非默认角色恢复 |
-| 空间读取 | `backend/app/dao/plot_dao.py::get_by_bbox` 原查询没有租户参数 | 旧生产路由当前未开放；W03 实际领域映射与 DT-017 全面空间隔离尚缺，不因关闭入口算完整领域实现 |
+| 空间读取 | `backend/app/dao/plot_dao.py::get_by_bbox` 原查询没有租户参数 | 旧生产路由当前未开放；W03 实际领域映射与 DT-019 全量查询范围约束尚缺，不因关闭入口算完整领域实现 |
 | 地块编辑 | `backend/app/services/workbench_service.py` 与 `dao/workbench_dao.py` 原编辑/版本/历史流程 | 已有真实 PostGIS fixture 适配与回滚证据，但 stable parcel→legacy plot 的测试映射不能当生产映射；农场/边界 revision/种植季待 W03 |
 | 栅格 | `growth_monitoring_engine.py` 真实 Rasterio/窗口/对齐/差值算子；`growth_monitoring_service.py` 仍有 `asyncio.to_thread` | 不冒充持久 worker。质量掩膜、insufficient_data、租约/fencing/发布恢复需后续包 |
 | 模型/三维 | `monitoring_network_service.py::create_assessment` 登记外部结果；`CesiumViewer.vue` 固定 extrudedHeight | 不是模型推理或真实仿真；禁用的演示/外部数据不作为 live 证明 |
@@ -93,7 +93,7 @@ DT-001/002/004–012 的恢复证据待补验；`python scripts/agriculture/spec
 - **进行中**：DT-014 的真实 Nginx/Go HTTP 50 检查和导航单测/构建有证据；真实浏览器
   深链接/跨应用回跳仍受环境限制，容器启动未验收。见 `SAME_ORIGIN_GATEWAY.md` 与
   `NATIVE_GATEWAY_TESTING.md`。本次不把 HTTP 等价成浏览器通过。
-- **尚未达成**：DT-015 完整安全负例、DT-017 旧系统角色/RLS 改造、W03 真实农业领域、
+- **尚未达成**：DT-015 完整安全负例、DT-017/018/019 数据库角色与查询范围改造、W03 真实农业领域、
   后续持久遥感/外业/报告/农业 Agent/收费/真实试点。无真实外部数据、支付或设备验收。
 - 历史 DT-001–012 done 与当前恢复核验分开；W00 本次部分产物恢复不等于 G0 全通过，
   更不等于完整 PRD 或可商用。后续以父任务记录、确切源码与实际执行结果推进。

@@ -29,6 +29,30 @@
 
 ## 新ADR模板
 
+## ADR-029R：恢复后的机器契约基线与丢失记录边界（2026-10-29）
+
+这是恢复后新增记录，不是原 ADR-027 的重建原文。恢复的 contracts README 曾引用
+ADR-027，但其原文没有恢复；不能据此杜撰原审批或历史验收结论。当前协议依据仍为
+原 DATA_API_CONTRACTS、ARCHITECTURE 与已存在的
+`docs/agriculture/SERVICE_IDENTITY.md`。不修改原 ADR-001 至 022 或需求范围。
+
+本次比较 c20fa403468951beb2c898a05fb1062337178c33 的 Git blob，9 份 schema、
+7 份示例、OpenAPI 与契约测试共 18 文件全部逐字一致；原 c20 为测试 scaffold
+来源，不把其提交号当作当前产品源码 HEAD。新执行离线契约测试 69 passed、无跳过，
+仅支持 W00 DT-007 的 schema/version/scope 负例基线。证据、当前源码哈希与精确命令见
+`docs/agriculture/CONTRACT_RECOVERY_BASELINE.md` 及其 JSON 记录。
+
+delegation/service-request 已采用 DT012 的 rfc8785-safe-v1；其余协议中的
+sorted-json-v1 仍是待实现冻结的有界协议标签，不通过 schema 正则冒充跨语言签名、
+完整性或完整 API 验收。authority、ownership、重放和业务授权必须分别有真实运行证据。
+Go/flow_platform 拥有身份、组织、授权、账本；GIS/flow_geo 拥有农业事实及计算作业；
+Loom/flow_intel 拥有获准资料采集与证据。禁止跨服务直接写表，API/outbox/inbox
+须独立实现和验证。现有旧 RLS/领域映射缺口不因文档声明而消失。
+
+影响 DT-007 的恢复证据与其引用的需求/验收追溯，不新增或删除功能，不转移任务状态。
+未来改协议必须版本化、明确兼容与拒绝路径、更新示例和负例；回退关闭不支持的入口，
+不回退到信任客户端身份或关闭鉴权。无外部付费、部署、采集或发送授权变化。
+
 ## ADR-028R：环境恢复、旧 GIS 主体绑定与分层证据（2026-10-29）
 
 本节为恢复后重新记录，不冒充丢失的原本地 ADR 字节。原规格 ADR-001 至 022

@@ -22,7 +22,11 @@ domain in `docs/agriculture/SERVICE_IDENTITY.md`. It adds the current policy,
 complete farm set and resource revisions to the signed snapshot; only actor IDs
 allow a numeric first character to preserve real platform account IDs. The
 service subject is `flow-platform`, not the represented user. This pre-runtime
-contract evolution is recorded in ADR-027; it is not signature acceptance.
+contract evolution was formerly referenced as ADR-027, whose original text was
+not recovered. The new recovery record is ADR-029R in
+`specs/agriculture/v1.0.0/docs/DECISIONS.md`; it does not reconstruct that lost ADR
+or constitute signature acceptance. See `docs/agriculture/CONTRACT_RECOVERY_BASELINE.md`
+for byte comparisons and the separately rerun offline contract evidence.
 
 Other W00 `sorted-json-v1` uses still identify a bounded provisional JSON protocol: UTF-8, sorted object
 keys, no insignificant whitespace, no NaN/Infinity, no duplicate keys. Cross-language
@@ -47,5 +51,5 @@ evidence, not PostGIS, signature validation, job scheduling or live API evidence
 Run with the GIS test venv plus pinned jsonschema4.26.0/referencing0.37.0:
 
 ```bash
-.local/agri-venv/bin/python -m pytest -q tests/agriculture/test_contracts.py
+.local/agri-identity-venv/bin/python -m pytest -q tests/agriculture/test_contracts.py
 ```

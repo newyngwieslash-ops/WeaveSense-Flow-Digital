@@ -19,6 +19,13 @@ def test_chain_requires_non_skip_gate_and_preserves_existing_identity_suites():
         assert suite in shell
     assert '2> "$private/chain-stderr.log"' in shell
     assert '> "$private/chain.jsonl"' in shell
+    assert '-p 127.0.0.1::6379 -e REDIS_PASSWORD redis:7.4.2-alpine' in shell
+    assert 'REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli ping' in shell
+    assert 'Non-loopback Redis binding refused' in shell
+    assert 'export REDIS_URL="redis://:$REDIS_PASSWORD@127.0.0.1:' in shell
+    assert 'docker rm -f "$redis_container"' in shell
+    assert 'docker container inspect "$redis_container"' in shell
+    assert "'redis_image_id':os.environ['IDENTITY_REDIS_IMAGE_ID']" in shell
 
 
 def test_chain_ci_is_read_only_builds_actual_profiles_and_uploads_no_raw_diagnostics():

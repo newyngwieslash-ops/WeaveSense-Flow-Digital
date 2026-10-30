@@ -22,20 +22,21 @@ docker info >/dev/null 2>&1 || { echo 'BLOCKED: Docker daemon required'; exit 2;
 "$AGRI_IDENTITY_PYTHON" -c 'import fastapi,uvicorn,httpx,cryptography,rfc8785,asyncpg,pytest'
 private=$(mktemp -d); chmod 700 "$private"
 project="agri-identity-$(python3 -c 'import secrets; print(secrets.token_hex(12))')"
-container="$project-db"; volume="$project-data"; network="$project-net"
-if docker container inspect "$container" >/dev/null 2>&1 || docker volume inspect "$volume" >/dev/null 2>&1 || docker network inspect "$network" >/dev/null 2>&1; then
+container="$project-db"; redis_container="$project-redis"; volume="$project-data"; network="$project-net"
+if docker container inspect "$container" >/dev/null 2>&1 || docker container inspect "$redis_container" >/dev/null 2>&1 || docker volume inspect "$volume" >/dev/null 2>&1 || docker network inspect "$network" >/dev/null 2>&1; then
   rm -rf -- "$private"; echo 'Refusing existing CI resource'; exit 2
 fi
 cleanup() {
   code=$?; trap - EXIT
   docker rm -f "$container" >/dev/null 2>&1 || true
+  docker rm -f "$redis_container" >/dev/null 2>&1 || true
   if docker volume inspect "$volume" >/dev/null 2>&1; then docker volume rm "$volume" >/dev/null 2>&1 || code=1; fi
   if docker network inspect "$network" >/dev/null 2>&1; then docker network rm "$network" >/dev/null 2>&1 || code=1; fi
   rm -rf -- "$private"
   exit "$code"
 }
 trap cleanup EXIT
-for name in POSTGRES_PASSWORD PLATFORM_MIGRATION_PASSWORD PLATFORM_RUNTIME_PASSWORD INTEL_MIGRATION_PASSWORD INTEL_RUNTIME_PASSWORD GEO_MIGRATION_PASSWORD GEO_RUNTIME_PASSWORD; do
+for name in POSTGRES_PASSWORD PLATFORM_MIGRATION_PASSWORD PLATFORM_RUNTIME_PASSWORD INTEL_MIGRATION_PASSWORD INTEL_RUNTIME_PASSWORD GEO_MIGRATION_PASSWORD GEO_RUNTIME_PASSWORD REDIS_PASSWORD; do
   value=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
   if [[ ${GITHUB_ACTIONS:-} == true ]]; then printf '::add-mask::%s\n' "$value"; fi
   export "$name=$value"
@@ -43,6 +44,20 @@ done
 unset value
 docker volume create --label "weavesense.ci.owner=$project" "$volume" >/dev/null
 docker network create --label "weavesense.ci.owner=$project" "$network" >/dev/null
+# PostgreSQL runtime coordination must use the real Redis dependency, not its local fallback.
+docker run -d --name "$redis_container" --label "weavesense.ci.owner=$project" --network "$network" \
+  -p 127.0.0.1::6379 -e REDIS_PASSWORD redis:7.4.2-alpine \
+  sh -c 'exec redis-server --save "" --appendonly no --requirepass "$REDIS_PASSWORD"' >/dev/null
+redis_ready=false
+for ((attempt=0;attempt<30;attempt++)); do
+  if [[ $(docker exec "$redis_container" sh -c 'REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli ping' 2>/dev/null) == PONG ]]; then redis_ready=true; break; fi
+  sleep 1
+done
+[[ $redis_ready == true ]] || { echo 'Redis bootstrap unavailable'; exit 1; }
+redis_port=$(docker port "$redis_container" 6379/tcp)
+[[ $redis_port =~ ^127\.0\.0\.1:([0-9]+)$ ]] || { echo 'Non-loopback Redis binding refused'; exit 1; }
+export REDIS_URL="redis://:$REDIS_PASSWORD@127.0.0.1:${BASH_REMATCH[1]}/0"
+export IDENTITY_REDIS_IMAGE_ID="$(docker inspect --format '{{.Image}}' "$redis_container")"
 docker run -d --name "$container" --label "weavesense.ci.owner=$project" --network "$network" \
   -p 127.0.0.1::5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD \
   -e PLATFORM_MIGRATION_PASSWORD -e PLATFORM_RUNTIME_PASSWORD -e INTEL_MIGRATION_PASSWORD \
@@ -93,6 +108,8 @@ Path('.local/evidence/identity-bootstrap.json').write_text(json.dumps({
  'cross_database_denial_checked':True,'data_class':'fixture','production_deployment':False,
  'postgres_version':os.environ['IDENTITY_PG_VERSION'],'image_id':os.environ['IDENTITY_IMAGE_ID'],
  'image_reference':'postgis/postgis:17-3.5','python':platform.python_version(),
+ 'redis_authenticated_ping':True,'redis_loopback_binding':True,
+ 'redis_image_reference':'redis:7.4.2-alpine','redis_image_id':os.environ['IDENTITY_REDIS_IMAGE_ID'],
  'started_at':datetime.datetime.now(datetime.timezone.utc).isoformat()},indent=2)+'\n')
 PY
 set +e

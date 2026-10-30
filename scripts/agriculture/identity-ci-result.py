@@ -47,6 +47,10 @@ QUERY_MODULES = {"test_agriculture_query_scope", "test_agriculture_query_scope_p
 QUERY_PG_REQUIRED = {"test_postgres_query_scope_same_bbox_and_history",
                      "test_postgres_query_scope_mixed_task_and_core",
                      "test_postgres_query_scope_missing_mapping_and_rebinding"}
+OBJECT_MODULES = {"test_agriculture_object_storage", "test_agriculture_object_gateway", "test_agriculture_objects_postgres"}
+OBJECT_PG_REQUIRED = {"test_postgres_private_objects_scope_immutability", "test_postgres_private_object_http_bytes_and_withdrawal"}
+JOB_MODULES = {"test_agriculture_job_authority", "test_agriculture_jobs_postgres"}
+JOB_PG_REQUIRED = {"test_postgres_job_sidecar_scope_immutable_and_worker_privileges", "test_postgres_job_execution_lease_fencing_and_retry_scope", "test_real_go_python_job_authority_chain"}
 
 
 def safe_locations(text):
@@ -84,6 +88,10 @@ def reduce(kind, raw):
     else:
         required_modules = QUERY_MODULES if kind == "query" else MIGRATION_MODULES if kind == "migration" else DOMAIN_MODULES if kind == "domain" else ACTOR_MODULES if kind == "actors" else PYTHON_MODULES
         required_tests = QUERY_PG_REQUIRED if kind == "query" else MIGRATION_PG_REQUIRED if kind == "migration" else DOMAIN_PG_REQUIRED if kind == "domain" else ACTOR_PG_REQUIRED if kind == "actors" else PG_REQUIRED
+        if kind == "objects":
+            required_modules, required_tests = OBJECT_MODULES, OBJECT_PG_REQUIRED
+        elif kind == "jobs":
+            required_modules, required_tests = JOB_MODULES, JOB_PG_REQUIRED
         try:
             root = ET.fromstring(raw)
         except ET.ParseError:
@@ -105,7 +113,7 @@ def reduce(kind, raw):
         invalid |= not required_tests <= seen or classes != required_modules
         # Collection/setup errors may not be represented by a testcase failure.
         invalid |= any(int(s.get("errors", "0")) or int(s.get("failures", "0")) or int(s.get("skipped", "0")) for s in root.iter("testsuite"))
-    return {"suite": kind, "schema_phase": "post_query_current" if kind == "query" else "independent_fresh_database_migration" if kind == "migration" else "post_domain_current" if kind == "domain" else "pre_domain_component" if kind == "actors" else "identity_component", "passed": bool(results) and not invalid, "data_class": "fixture",
+    return {"suite": kind, "schema_phase": "job_authority_current" if kind == "jobs" else "private_objects_current" if kind == "objects" else "post_query_current" if kind == "query" else "independent_fresh_database_migration" if kind == "migration" else "post_domain_current" if kind == "domain" else "pre_domain_component" if kind == "actors" else "identity_component", "passed": bool(results) and not invalid, "data_class": "fixture",
             "production_acceptance": False, "tests": results,
             "failure_locations": [{"test": item["name"], "locations": locations.get(item["name"], [])[:20]} for item in results if item["result"] == "fail"],
             "passed_count": sum(x["result"] == "pass" for x in results)}
@@ -113,7 +121,7 @@ def reduce(kind, raw):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--kind", choices=["go", "python", "actors", "domain", "migration", "query"], required=True)
+    p.add_argument("--kind", choices=["go", "python", "actors", "domain", "migration", "query", "objects", "jobs"], required=True)
     p.add_argument("--input", type=Path, required=True)
     p.add_argument("--output", type=Path, required=True)
     args = p.parse_args()

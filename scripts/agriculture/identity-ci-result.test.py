@@ -9,6 +9,24 @@ spec.loader.exec_module(module)
 
 
 class GateTests(unittest.TestCase):
+    def test_objects_and_jobs_require_actual_database_and_cross_language_cases(self):
+        for kind, modules, required in (
+            ('objects', module.OBJECT_MODULES, module.OBJECT_PG_REQUIRED),
+            ('jobs', module.JOB_MODULES, module.JOB_PG_REQUIRED),
+        ):
+            cases = [(sorted(modules)[0], name) for name in required]
+            cases += [(name, 'test_module_probe') for name in modules]
+            raw = '<testsuites><testsuite>' + ''.join(
+                f'<testcase classname="{c}" name="{n}"/>' for c, n in cases
+            ) + '</testsuite></testsuites>'
+            self.assertTrue(module.reduce(kind, raw)['passed'])
+            for required_case in required:
+                self.assertFalse(module.reduce(kind, raw.replace(required_case, 'test_unrelated'))['passed'])
+            for marker in ('<skipped/>', '<error>SECRET</error>', '<failure>SECRET</failure>'):
+                report = module.reduce(kind, raw.replace('/>', '>' + marker + '</testcase>', 1))
+                self.assertFalse(report['passed'])
+                self.assertNotIn('SECRET', json.dumps(report))
+
     def go(self):
         return [dict(Action="pass", Test=x) for x in module.GO_CASES] + [dict(Action="pass")]
 

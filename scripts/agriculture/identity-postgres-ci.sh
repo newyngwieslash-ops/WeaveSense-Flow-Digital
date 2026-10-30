@@ -9,7 +9,7 @@ export AGRI_IDENTITY_PYTHON
 [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} =~ ^[01]$ ]] || { echo 'Invalid browser chain gate'; exit 2; }
 [[ ${AGRI_GEO_MIGRATION_ONLY:-0} =~ ^[01]$ ]] || { echo 'Invalid isolated migration gate'; exit 2; }
 mkdir -p .local/evidence
-for suite in go python actors domain query; do
+for suite in go python actors domain query objects jobs; do
   printf '%s\n' '{"passed":false,"status":"not_run","tests":[]}' > ".local/evidence/identity-$suite.json"
 done
 if [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} == 1 ]]; then
@@ -154,6 +154,17 @@ domain_gate=$?
 query_code=$?
 python3 scripts/agriculture/identity-ci-result.py --kind query --input "$private/query.xml" --output .local/evidence/identity-query.json
 query_gate=$?
+(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_object_storage.py tests/test_agriculture_object_gateway.py tests/test_agriculture_objects_postgres.py --junitxml="$private/objects.xml" -q) > "$private/objects.log" 2>&1
+objects_code=$?
+python3 scripts/agriculture/identity-ci-result.py --kind objects --input "$private/objects.xml" --output .local/evidence/identity-objects.json
+objects_gate=$?
+export AGRI_TEST_GO_BIN AGRI_TEST_GO_MOD_CACHE
+AGRI_TEST_GO_BIN=$(command -v "${GO_BIN:-go}")
+AGRI_TEST_GO_MOD_CACHE=$("$AGRI_TEST_GO_BIN" env GOMODCACHE)
+(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_job_authority.py tests/test_agriculture_jobs_postgres.py --junitxml="$private/jobs.xml" -q) > "$private/jobs.log" 2>&1
+jobs_code=$?
+python3 scripts/agriculture/identity-ci-result.py --kind jobs --input "$private/jobs.xml" --output .local/evidence/identity-jobs.json
+jobs_gate=$?
 chain_code=0; chain_gate=0
 if [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} == 1 ]]; then
   "${GO_BIN:-go}" -C backend test ./internal/agriculture -run '^TestIdentityBrowserGISWriteChain$' -count=1 -timeout 12m -json > "$private/chain.jsonl" 2> "$private/chain-stderr.log"
@@ -162,5 +173,5 @@ if [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} == 1 ]]; then
   chain_gate=$?
 fi
 set -e
-[[ $python_code == 0 && $python_gate == 0 && $go_code == 0 && $go_gate == 0 && $actors_code == 0 && $actors_gate == 0 && $domain_code == 0 && $domain_gate == 0 && $query_code == 0 && $query_gate == 0 && $chain_code == 0 && $chain_gate == 0 ]] || { echo 'Identity acceptance failed; inspect sanitized reports, no raw secrets exported'; exit 1; }
+[[ $python_code == 0 && $python_gate == 0 && $go_code == 0 && $go_gate == 0 && $actors_code == 0 && $actors_gate == 0 && $domain_code == 0 && $domain_gate == 0 && $query_code == 0 && $query_gate == 0 && $objects_code == 0 && $objects_gate == 0 && $jobs_code == 0 && $jobs_gate == 0 && $chain_code == 0 && $chain_gate == 0 ]] || { echo 'Identity acceptance failed; inspect sanitized reports, no raw secrets exported'; exit 1; }
 echo 'PASS: actual Go/Python HTTP, PostgreSQL replay and legacy actor boundary; fixture-domain acceptance only'

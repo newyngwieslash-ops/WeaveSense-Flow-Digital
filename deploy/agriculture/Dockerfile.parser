@@ -1,0 +1,15 @@
+# Build context is an explicit temporary whitelist made by parser-docker-ci.sh.
+# BASE_IMAGE must be a resolved immutable official Python image digest.
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+ARG BUILD_INSTANCE=manual-reviewed-build
+LABEL org.weavesense.parser.build=${BUILD_INSTANCE}
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PROJ_NETWORK=OFF \
+    OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+COPY requirements.txt /requirements.txt
+RUN python -m pip install --no-cache-dir --require-hashes --no-deps \
+    --only-binary=:all: -r /requirements.txt && rm /requirements.txt
+COPY app /opt/parser/app
+WORKDIR /opt/parser
+USER 65534:65534
+ENTRYPOINT ["python", "-I", "/opt/parser/app/agriculture/ingestion/worker.py"]

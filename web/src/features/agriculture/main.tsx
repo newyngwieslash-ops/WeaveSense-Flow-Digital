@@ -26,7 +26,7 @@ import { apiClient } from '@/services/api/request';
 import { installAgricultureRequestSecurity } from './request-security';
 import { SESSION_RECHECK_MS, subscribeSessionHints } from '../../../../contracts/agriculture/session-hints';
 import { authoritySnapshot } from '../../../../contracts/agriculture/authority-snapshot';
-import { acceptDisplayedAuthority, acquireBusinessActivity, clearDisplayedAuthority, currentProjectionGeneration, displayedAuthority, reconcileRoutineParticipants, setRoutineChecking, useRoutineChecking, waitForBusinessIdle } from './routine-session';
+import { acceptDisplayedAuthority, acquireBusinessActivity, clearDisplayedAuthority, currentProjectionGeneration, displayedAuthority, needsSessionBootstrap, reconcileRoutineParticipants, setRoutineChecking, useRoutineChecking, waitForBusinessIdle } from './routine-session';
 
 installAgricultureRequestSecurity(apiClient);
 
@@ -36,6 +36,7 @@ function SessionBoundary({ children }: { children: ReactNode }) {
     const hydrated = useUserStore((state) => state.hydrated);
     const actorId = useUserStore((state) => state.user?.id);
     const baseline = useRef<string | null>(null);
+    const baselineActor = useRef<string | undefined>(undefined);
     const generation = useRef(0);
     const routine = useRef<AbortController | null>(null);
     useEffect(() => {
@@ -92,6 +93,9 @@ function SessionBoundary({ children }: { children: ReactNode }) {
         };
     }, []);
     useEffect(() => {
+        // Applying this exact trusted baseline changes the store's actorId too.
+        // That notification is not a second identity change or a new hard event.
+        if (!needsSessionBootstrap(baseline.current, baselineActor.current, actorId)) return;
         let active = true;
         const current = ++generation.current;
         routine.current?.abort(); routine.current = null; setRoutineChecking(false);
@@ -105,6 +109,7 @@ function SessionBoundary({ children }: { children: ReactNode }) {
             const workspaces = session.user ? await agricultureAPI.workspaces(controller.signal) : [];
             if (!active || current !== generation.current) return;
             baseline.current = authoritySnapshot(session.user, workspaces);
+            baselineActor.current = session.user?.id;
             await applyUserSession(session);
         }).catch((error: unknown) => {
             if (!active) return;

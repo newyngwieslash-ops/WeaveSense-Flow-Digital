@@ -44,6 +44,8 @@ export function memberRoleDiagnostics(control) {
         expanded: input?.getAttribute('aria-expanded') === 'true',
         serverViewer: current.includes('viewer'), serverTenantAdmin: current.includes('tenant_admin'),
         draftViewer: draft.includes('viewer'), draftTenantAdmin: draft.includes('tenant_admin'),
+        serverEditor: current.includes('editor'), draftEditor: draft.includes('editor'),
+        authorityChecking: doc?.querySelector('[data-testid="organization-management"]')?.dataset.authorityChecking === 'true',
         submitPresent: !!submit, submitEnabled: !!submit && !submit.disabled,
         targetOptionPresent: !!option, targetOptionVisible: !!option?.getClientRects().length,
         confirmPresent: !!doc?.querySelector('[data-testid="org-confirm"]'),
@@ -318,13 +320,23 @@ async function main() {
         check(initialOwner?.isOwner && initialOwner.canChangeRoles && initialOwner.roles.length === 0, "owner_has_governance_without_implicit_business_role");
         check(initialOwner.assignableRoles.includes("editor") && !initialOwner.assignableRoles.includes("tenant_admin") && !initialOwner.assignableRoles.includes("billing_admin"), "owner_self_edit_has_server_limited_business_roles");
         const ownerRow = 'li[data-user-id="' + actorA + '"] ';
+        memberRoleSelector = ownerRow + selector('org-member-roles');
         for (const granting of [true, false]) {
-            report.stage = granting ? "owner_business_role_grant_ui" : "owner_business_role_clear_ui";
-            await openOrg(a, orgA.id); await openSelect(a, ownerRow + selector("org-member-roles"));
+            const ownerStage = granting ? 'owner_business_role_grant' : 'owner_business_role_clear';
+            report.stage = ownerStage + '_navigate';
+            await openOrg(a, orgA.id);
+            report.stage = ownerStage + '_expand';
+            await openSelect(a, ownerRow + selector("org-member-roles"));
+            report.stage = ownerStage + '_choose_editor';
             await click(a, '.ant-select-dropdown:not(.ant-select-dropdown-hidden) ' + selector("org-member-role-option-editor"));
+            report.stage = ownerStage + '_dismiss_select';
             await a.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
             await a.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 });
-            await click(a, ownerRow + selector("org-member-roles-submit")); await confirm();
+            report.stage = ownerStage + '_submit';
+            await click(a, ownerRow + selector("org-member-roles-submit"));
+            report.stage = ownerStage + '_confirm';
+            await confirm();
+            report.stage = ownerStage + '_server_effect';
             await eventual(async () => { const m = await ownerMember(); return m?.isOwner && (granting ? m.roles.length === 1 && m.roles[0] === "editor" : m.roles.length === 0); }, granting ? "owner_explicit_grant_effective" : "owner_explicit_revoke_effective");
             check((await api(memberPath, cookieA)).status === 200, granting ? "owner_ui_business_grant_preserves_governance" : "owner_ui_empty_business_roles_preserves_governance");
         }

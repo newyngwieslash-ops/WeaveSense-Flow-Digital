@@ -8,6 +8,10 @@
 
 ## 固定内部协议
 
+浏览器只使用平台同源 `GET/HEAD /api/agri/v1/workspaces/{workspace_id}/objects/{object_id}/versions/{version}`。
+平台先用真实会话查询当前工作区成员关系，再从该关系推导租户；请求不能附加查询参数、
+任意存储 key、外部 URL、租户或服务身份。`HEAD` 也执行相同授权，不作为存在性捷径。
+
 - 服务元数据：`POST /internal/agri/v1/objects/resolve`，独立 `object.resolve` 服务断言，最长 30 秒。
 - 请求体严格为 `{tenant_id, workspace_id, object_id, version}`，tenant/workspace 必须与已验证服务断言一致。
 - 响应严格为 `{tenant_id, workspace_id, object_id, version, resource:{kind,id}, resource_revision}`；不返回 key、文件名、MIME、字节、路径或 URL。它不授予用户下载权限。
@@ -36,7 +40,11 @@ canonical key：`tenants/{tenant}/workspaces/{workspace}/objects/{object}/v{vers
 
 每次请求重新验证身份、当前对象状态、独立资源权属及平台 epoch。磁盘读取完成后再次复核清单、权属及权限，再发出任何内容。没有可复用的存储直签 URL，也没有浏览器持有的内部 token。
 
-所有对象响应（含错误、HEAD、206）为 `Cache-Control: private, no-store` 和 `X-Content-Type-Options: nosniff`，不返回 ETag/304，不进入公共 CDN。Range 仅允许单个合法 `bytes=` 区间，不能扩大完整对象授权；多段范围拒绝。浏览器代理使用 attachment/octet-stream，不能依靠上游 MIME 将主动内容变成同源脚本。
+所有对象响应（含错误、HEAD、206）为 `Cache-Control: private, no-store` 和 `X-Content-Type-Options: nosniff`，不返回 ETag/304，不进入公共 CDN。Range 仅允许单个合法 `bytes=` 区间，不能扩大完整对象授权；多段范围拒绝。平台额外设置 `Vary: Cookie` 和 `Content-Security-Policy: default-src 'none'; sandbox`，拒绝 `If-Range`。只有精确白名单 PNG/JPEG/WebP/AVIF 可内联；其余 MIME（包括 SVG/HTML/PDF）一律 attachment/octet-stream，不透传上游 Cookie、跳转、缓存头或凭据。
+
+平台只接受声明且一致的有界 Content-Length，校验 206 范围与请求相符后才转发。
+进程级两个缓冲槽从读取直到浏览器响应完成始终占用，避免慢客户端累计完整对象缓冲。
+这不是大型影像流式引擎或吞吐性能验收，GIS 部署仍需配置其服务并发和内存额度。
 
 撤回后新访问拒绝；检查之后已经发出的字节和客户端已保存副本无法追回。本实现不声称立即取消正在网络发送的响应，也不把平台退出登录等同于抹除已经下载的数据。内部短票据仍有最长 30 秒限制，但新请求同时受当前权属和 epoch 校验。
 

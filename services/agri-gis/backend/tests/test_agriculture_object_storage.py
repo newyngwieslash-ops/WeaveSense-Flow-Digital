@@ -75,6 +75,15 @@ def test_file_and_parent_symlinks_refused(tmp_path):
         provider.read(**kwargs)
 
 
+def test_root_ancestor_replaced_after_configuration_is_refused(tmp_path):
+    root = tmp_path / "parent" / "root"
+    provider, kwargs, _, _ = fixture(root)
+    (tmp_path / "parent").rename(tmp_path / "moved")
+    (tmp_path / "parent").symlink_to(tmp_path / "moved", target_is_directory=True)
+    with pytest.raises(IdentityError):
+        provider.read(**kwargs)
+
+
 @pytest.mark.parametrize(
     "value,expected",
     [

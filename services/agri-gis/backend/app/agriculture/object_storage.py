@@ -8,7 +8,7 @@ from pathlib import Path
 
 from .identity.verify import IdentityError
 
-IDENTIFIER = re.compile(r"[A-Za-z0-9_-]{1,128}\Z")
+IDENTIFIER = re.compile(r"[A-Za-z][A-Za-z0-9_-]{0,127}\Z")
 SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 OBJECT_ID = re.compile(r"[A-Za-z][A-Za-z0-9_-]{0,127}\Z")
 MAX_OBJECT_BYTES = 64 * 1024 * 1024

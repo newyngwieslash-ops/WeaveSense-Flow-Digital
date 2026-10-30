@@ -2,12 +2,12 @@ BEGIN;
 
 -- Immutable byte references, not an asset/farm lifecycle or upload API.
 CREATE TABLE IF NOT EXISTS public.agriculture_private_objects (
- tenant_id varchar(128) NOT NULL CHECK (tenant_id ~ '^[A-Za-z0-9_-]{1,128}$'),
- workspace_id varchar(128) NOT NULL CHECK (workspace_id ~ '^[A-Za-z0-9_-]{1,128}$'),
+ tenant_id varchar(128) NOT NULL CHECK (tenant_id ~ '^[A-Za-z][A-Za-z0-9_-]{0,127}$'),
+ workspace_id varchar(128) NOT NULL CHECK (workspace_id ~ '^[A-Za-z][A-Za-z0-9_-]{0,127}$'),
  object_id varchar(128) NOT NULL CHECK (object_id ~ '^[A-Za-z][A-Za-z0-9_-]{0,127}$'),
  version bigint NOT NULL CHECK (version BETWEEN 1 AND 9007199254740991),
  resource_kind varchar(16) NOT NULL CHECK (resource_kind IN ('asset','report')),
- resource_id varchar(128) NOT NULL CHECK (resource_id ~ '^[A-Za-z0-9_-]{1,128}$'),
+ resource_id varchar(128) NOT NULL CHECK (resource_id ~ '^[A-Za-z][A-Za-z0-9_-]{0,127}$'),
  resource_revision bigint NOT NULL CHECK (resource_revision BETWEEN 1 AND 9007199254740991),
  category varchar(16) NOT NULL CHECK (category IN ('original','thumbnail','tile','report','media')),
  object_key text NOT NULL,

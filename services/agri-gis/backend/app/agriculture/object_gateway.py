@@ -77,7 +77,13 @@ def register_object_routes(app):
             require(item.resource_kind == kind, "object_not_found", 404)
             return [{"kind": kind, "id": item.resource_id}]
 
-        check = delegation_dependency(action, extract)
+        def same_scope(request, proof):
+            return (
+                request.path_params["tenant"] == proof.claims["tenant_id"]
+                and request.path_params["workspace"] == proof.claims["workspace_id"]
+            )
+
+        check = delegation_dependency(action, extract, scope_guard=same_scope)
 
         async def content(request: Request):
             proof = await check(request)

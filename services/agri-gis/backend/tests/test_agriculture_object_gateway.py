@@ -24,8 +24,10 @@ PATH = (
 class FixtureObjectStore:
     def __init__(self, item):
         self.item = item
+        self.calls = 0
 
     async def get(self, tenant, workspace, object_id, version):
+        self.calls += 1
         item = self.item
         if item is None or (tenant, workspace, object_id, version) != (
             item.tenant_id,
@@ -241,3 +243,38 @@ async def test_old_signed_request_cannot_replay_at_other_version_or_tenant(tmp_p
             assert response.status_code == 401 and body not in response.content
         response = await client.get(PATH)
         assert response.status_code == 401 and body not in response.content
+
+
+@pytest.mark.asyncio
+async def test_report_route_has_independent_fixed_action(tmp_path):
+    fixture = object_fixture(tmp_path)
+    services, claims = fixture[1], fixture[3]
+    item = replace(
+        fixture[4], resource_kind="report", resource_id="report_a", category="report"
+    )
+    services.object_store.item = item
+    services.ownership.facts = [
+        Ownership("report", "report_a", "tenant_a", "workspace_a", ("farm_a",), 1)
+    ]
+    claims["resource_scope"] = [{"kind": "report", "id": "report_a"}]
+    claims["resource_versions"] = [
+        {"resource": claims["resource_scope"][0], "revision": 1}
+    ]
+    path = PATH.replace("assets/", "reports/")
+    assert (await request(fixture, path=path)).status_code == 401
+    claims["scopes"] = ["agri.report.read"]
+    response = await request(fixture, path=path)
+    assert response.status_code == 200 and response.content == fixture[-1]
+
+
+@pytest.mark.asyncio
+async def test_signed_foreign_path_scope_denied_before_any_metadata_read(tmp_path):
+    fixture = object_fixture(tmp_path)
+    store = fixture[1].object_store
+    path = PATH.replace("tenant_a", "tenant_foreign")
+    for item in [None, replace(fixture[4], tenant_id="tenant_foreign")]:
+        store.item = item
+        response = await request(fixture, path=path)
+        assert response.status_code == 403
+        assert response.json() == {"code": "request_scope_mismatch"}
+    assert store.calls == 0

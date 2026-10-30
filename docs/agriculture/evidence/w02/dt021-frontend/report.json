@@ -52,8 +52,8 @@
     }
   },
   "logs": {
-    "build.log": "cf71c34fc88b0940cafbf2267fc30fd1e025713b5e0e8b8544a72320424c3450",
-    "tests.log": "d1a90ae0d6f796bb2d55a0fb72a80ae86513db89093a1496988031e614be0afe"
+    "tests.txt": "d1a90ae0d6f796bb2d55a0fb72a80ae86513db89093a1496988031e614be0afe",
+    "build.txt": "cf71c34fc88b0940cafbf2267fc30fd1e025713b5e0e8b8544a72320424c3450"
   },
   "browser_run": false,
   "remote_ci": false,

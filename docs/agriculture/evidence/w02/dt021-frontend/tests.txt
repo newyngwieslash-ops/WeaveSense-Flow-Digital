@@ -1,0 +1,30 @@
+bun test v1.3.9 (cf6cdbbb)
+
+web/test/agriculture-session-security.test.ts:
+(pass) protected confirmation holder is page-owned and structurally unmounted during revalidation [1.93ms]
+(pass) trusted apply actor notification does not bootstrap twice; hard invalidation and external actors still do [3.40ms]
+(pass) authority snapshots reject missing/duplicate digests and ignore unrelated audit metadata [0.62ms]
+(pass) late old actor projection cannot replace the current displayed authority after hard invalidation [0.33ms]
+(pass) routine comparison disables new writes without aborting an already dispatched mutation [5.83ms]
+(pass) page confirmation scope clears repeated dialogs, preserves canceled and unrelated dialogs [0.19ms]
+(pass) hints accept only secret-free invalidation, never identity or roles [0.54ms]
+(pass) same-document channel echo preserves local write result while foreign hints still invalidate [1.31ms]
+(pass) agriculture writes fetch fresh CSRF each time and retain no token in response config [1.07ms]
+(pass) CSRF failure never sends or retries the business write; film client untouched [1.86ms]
+(pass) failed request diagnostics do not retain CSRF header [0.91ms]
+(pass) invalidating while session projection awaits cancellation prevents late identity revival [1.13ms]
+
+web/test/agriculture-profile.test.ts:
+(pass) agriculture production profile > anonymous focus revalidation preserves hydration but hides authenticated state [1.17ms]
+(pass) agriculture production profile > rejects licensed drawing implementations rather than concealing menus [0.32ms]
+(pass) agriculture production profile > uses shared auth pages and API, excludes legacy routing/hydration [0.19ms]
+(pass) agriculture production profile > user switch and logout clear query data; API is authoritative [3.21ms]
+
+web/test/agriculture-projection-query-key.test.ts:
+(pass) workspace directory projection cache identity > actor, workspace authority, revoked grant and session generation cannot alias [0.23ms]
+(pass) workspace directory projection cache identity > actual Home uses trusted boundary and does not retain an unmounted directory [0.25ms]
+
+ 18 pass
+ 0 fail
+ 97 expect() calls
+Ran 18 tests across 3 files. [411.00ms]

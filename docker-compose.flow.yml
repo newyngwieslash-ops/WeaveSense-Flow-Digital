@@ -1,5 +1,8 @@
 # WeaveSense-Flow P0 portable stack. Relative paths + named volumes only.
-# Usage: cp .env.flow.example .env.flow && docker compose -f docker-compose.flow.yml --env-file .env.flow up -d
+# New isolated install: prepare .env.flow AND .env.flow.runtime from their examples,
+# then docker compose -f docker-compose.flow.yml --env-file .env.flow up -d.
+# Existing volumes require the operator role migration; never rerun init blindly.
+# See docs/agriculture/FLOW_ROLE_DEPLOYMENT.md before upgrading.
 # P1: loom-engine/loom-scheduler run the Flow engine (services/loom-engine/flow/main.ts).
 # PRD §14 profiles: core (postgres, redis, minio, platform, web, loom-engine, loom-scheduler; enabled by
 # COMPOSE_PROFILES=core in .env.flow, or pass --profile core), plus the optional

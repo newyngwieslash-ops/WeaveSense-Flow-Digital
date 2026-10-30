@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import axios, { AxiosError } from 'axios';
 import { installAgricultureRequestSecurity } from '../src/features/agriculture/request-security';
-import { SESSION_HINT_KEY, subscribeSessionHints, validSessionHint } from '../../contracts/agriculture/session-hints';
+import { publishSessionHint, SESSION_HINT_KEY, subscribeSessionHints, validSessionHint } from '../../contracts/agriculture/session-hints';
 import { applyUserSession, beginSessionRevalidation } from '../src/features/agriculture/session';
 import { appQueryClient } from '../src/lib/query-client';
 import { useUserStore } from '../src/stores/use-user-store';
@@ -41,6 +41,34 @@ test('hints accept only secret-free invalidation, never identity or roles', () =
     channel.dispatchEvent(new MessageEvent('message', { data: { ...hint, event: 'c'.repeat(32) } }));
     target.dispatchEvent(storage);
     expect(invalidated).toBe(2);
+});
+
+test('same-document channel echo preserves local write result while foreign hints still invalidate', () => {
+    class Channel extends EventTarget { close() {} postMessage() {} }
+    const receiver = new Channel();
+    const values: unknown[] = [];
+    const target = Object.assign(new EventTarget(), { localStorage: {
+        setItem(_key: string, value: string) { values.push(JSON.parse(value)); }, removeItem() {},
+    } as unknown as Storage });
+    let invalidated = 0;
+    const unbind = subscribeSessionHints(() => { invalidated++; }, target as unknown as Window, () => receiver);
+    const sender = () => ({ close() {}, addEventListener() {}, removeEventListener() {}, postMessage(value: unknown) {
+        // BroadcastChannel excludes only the sending object, not its document.
+        receiver.dispatchEvent(new MessageEvent('message', { data: value }));
+    } });
+    try {
+        publishSessionHint(target, sender); publishSessionHint(target, sender);
+        expect(invalidated).toBe(0);
+        expect(values.length).toBe(2);
+        expect(values.every(validSessionHint)).toBe(true);
+        expect(values[0]).not.toEqual(values[1]);
+        // A delayed local echo remains suppressed, without an expiring event cache.
+        receiver.dispatchEvent(new MessageEvent('message', { data: values[0] }));
+        expect(invalidated).toBe(0);
+        const foreign = { version: 1, type: 'invalidate', event: 'd'.repeat(32) };
+        receiver.dispatchEvent(new MessageEvent('message', { data: foreign }));
+        expect(invalidated).toBe(1);
+    } finally { unbind(); }
 });
 
 test('agriculture writes fetch fresh CSRF each time and retain no token in response config', async () => {

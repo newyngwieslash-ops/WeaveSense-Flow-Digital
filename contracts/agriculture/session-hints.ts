@@ -10,12 +10,17 @@ export function validSessionHint(value: unknown): value is Hint {
   return Object.keys(item).sort().join(',') === 'event,type,version' && item.version === 1 && item.type === 'invalidate'
     && typeof item.event === 'string' && /^[a-f0-9]{32}$/.test(item.event)
 }
-export function publishSessionHint() {
-  if (typeof window === 'undefined') return
-  const bytes = crypto.getRandomValues(new Uint8Array(16))
-  const hint: Hint = { version: 1, type: 'invalidate', event: Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('') }
-  try { const channel = new BroadcastChannel(SESSION_HINT_KEY); channel.postMessage(hint); channel.close() } catch { /* storage fallback below */ }
-  try { window.localStorage.setItem(SESSION_HINT_KEY, JSON.stringify(hint)); window.localStorage.removeItem(SESSION_HINT_KEY) } catch { /* focus and bounded recheck remain mandatory */ }
+let documentEventPrefix = ''
+const randomHex = () => Array.from(crypto.getRandomValues(new Uint8Array(8)), b => b.toString(16).padStart(2, '0')).join('')
+export function publishSessionHint(target: Pick<HintWindow, 'localStorage'> | undefined = typeof window === 'undefined' ? undefined : window,
+  createChannel: () => Channel = () => new BroadcastChannel(SESSION_HINT_KEY)) {
+  if (!target) return
+  // A different channel object in this same document also receives broadcasts.
+  // Suppress only our own document's events; other documents still revalidate.
+  documentEventPrefix ||= randomHex()
+  const hint: Hint = { version: 1, type: 'invalidate', event: documentEventPrefix + randomHex() }
+  try { const channel = createChannel(); channel.postMessage(hint); channel.close() } catch { /* storage fallback below */ }
+  try { target.localStorage.setItem(SESSION_HINT_KEY, JSON.stringify(hint)); target.localStorage.removeItem(SESSION_HINT_KEY) } catch { /* focus and bounded recheck remain mandatory */ }
 }
 export function subscribeSessionHints(invalidate: () => void, target: HintWindow = window,
   createChannel: () => Channel = () => new BroadcastChannel(SESSION_HINT_KEY)): () => void {
@@ -23,7 +28,7 @@ export function subscribeSessionHints(invalidate: () => void, target: HintWindow
   // Only deduplicate the same broadcast/storage hint; no identity or permission cache.
   let lastEvent = ''
   const accept = (value: unknown) => {
-    if (!validSessionHint(value) || value.event === lastEvent) return
+    if (!validSessionHint(value) || value.event === lastEvent || (documentEventPrefix && value.event.startsWith(documentEventPrefix))) return
     lastEvent = value.event
     invalidate()
   }

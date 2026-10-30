@@ -1,0 +1,40 @@
+{
+  "scope": "DT015 same-document BroadcastChannel echo correction",
+  "status": "local_pass_browser_pending",
+  "failed_ci": "6363d7a0886ad42373f5ca7211bbe396ec2b4671",
+  "failure": "organization invite_token_result: actual invite POST200 followed by self-echo session invalidation discarded one-time result",
+  "implementation": "Ephemeral per-document random event prefix suppresses own channel-object echo, never carries identity or authority; foreign document hints still trigger trusted revalidation. No retry/timer bypass.",
+  "tests": {
+    "command": ".local/toolchains/bun-1.3.9/package/bin/bun test web/test/agriculture-session-security.test.ts web/test/agriculture-profile.test.ts web/test/auth-session-race.test.ts web/test/auth-return-path.test.ts services/agri-gis/frontend/agriculture/session.test.ts",
+    "passed": 65,
+    "failed": 0,
+    "assertions": 320,
+    "exit_code": 0
+  },
+  "builds": [
+    {
+      "directory": "web",
+      "command": "bun run build:agriculture",
+      "exit_code": 0
+    },
+    {
+      "directory": "services/agri-gis/frontend",
+      "command": "bun run build:agriculture",
+      "exit_code": 0
+    }
+  ],
+  "source_hashes": {
+    "contracts/agriculture/session-hints.ts": "e8fe546abda1d35c49b4faad0d859c1de369c4e983ee9fb14c01ba44ba955521",
+    "web/test/agriculture-session-security.test.ts": "8e0663cc56ed8a858c39bb18b40e6ce8685edae36bb4661954919653b9efce7f"
+  },
+  "browser_after_fix": "not_run",
+  "prior_ci_review": {
+    "gateway_checks": 19,
+    "network_observed": 85,
+    "network_violations": 0,
+    "organization_remaining_demotion_and_portal": "not_run_after_early_failure",
+    "overlay_compared_to_local_commit": "f6814563f6a1ceff8e8d89ad1ad9de693e25aa0b",
+    "overlay_entries": 224,
+    "overlay_mismatches": 0
+  }
+}

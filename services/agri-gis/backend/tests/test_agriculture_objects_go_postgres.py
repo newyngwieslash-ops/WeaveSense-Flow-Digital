@@ -72,7 +72,11 @@ def test_real_go_python_object_gateway_chain():
                 continue
             if event.get("Test") and event.get("Action") in {"pass", "fail", "skip"}:
                 states[event["Test"]] = event["Action"]
-        required = {"TestObjectGatewayRealSessionAndStrictTransport", "TestServiceAssertionsNormalizeNonUTCClock", "TestObjectGatewayRealHTTPPostgres"}
+        required = {
+            "TestObjectGatewayRealSessionAndStrictTransport",
+            "TestServiceAssertionsNormalizeNonUTCClock",
+            "TestObjectGatewayRealHTTPPostgres",
+        }
         for parent, children in {
             "TestObjectGatewayRealSessionAndStrictTransport": (
                 "actual_session_get_head_range_and_filtered_headers",
@@ -87,9 +91,10 @@ def test_real_go_python_object_gateway_chain():
             ),
         }.items():
             required.update(parent + "/" + child for child in children)
-        assert result.returncode == 0 and all(
-            states.get(name) == "pass" for name in required
-        ) and all(state == "pass" for state in states.values()), (
-            "object gateway required roots missing/failed/skipped: "
-            + json.dumps(states, sort_keys=True)
+        assert (
+            result.returncode == 0
+            and all(states.get(name) == "pass" for name in required)
+            and all(state == "pass" for state in states.values())
+        ), "object gateway required roots missing/failed/skipped: " + json.dumps(
+            states, sort_keys=True
         )

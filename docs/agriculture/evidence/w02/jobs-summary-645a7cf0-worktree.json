@@ -1,0 +1,18 @@
+{
+  "task": "DT-022",
+  "status": "passed_local_run_not_frozen_source_acceptance",
+  "remote_ci": false,
+  "report": "docs/agriculture/evidence/w02/jobs-native-645a7cf0-worktree.json",
+  "report_sha256": "bb4bd5e6226b339beadb09898f46d36629996f1dda1ae8f407b23453a1d63fe0",
+  "passed": 7,
+  "failed": 0,
+  "skipped": 0,
+  "exit_code": 0,
+  "shutdown_exit_code": 0,
+  "source_commit": "645a7cf0e8c9d3f71cde46d46f84135a894f9a8b",
+  "frozen_source_verification": "failed: unrelated test file added concurrently, exact git-show check rejected acceptance",
+  "unmatched_paths": [
+    "backend/internal/agriculture/object_gateway_integration_test.go"
+  ],
+  "next_step": "Wait for complete object Go slice freeze; rerun combined source once. This report is preserved, not rewritten."
+}

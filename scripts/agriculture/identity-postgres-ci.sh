@@ -12,6 +12,9 @@ mkdir -p .local/evidence
 for suite in go python actors domain query objects jobs; do
   printf '%s\n' '{"passed":false,"status":"not_run","tests":[]}' > ".local/evidence/identity-$suite.json"
 done
+for suite in agriculture legacy cache; do
+  printf '%s\n' '{"passed":false,"status":"not_run","tests":[]}' > ".local/evidence/scope-stream-$suite.json"
+done
 if [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} == 1 ]]; then
   printf '%s\n' '{"passed":false,"status":"not_run","tests":[]}' > .local/evidence/identity-chain-go.json
   printf '%s\n' '{"result":"not_run","results":[]}' > .local/evidence/identity-chain-browser.json
@@ -165,6 +168,18 @@ objects_gate=$?
 jobs_code=$?
 python3 scripts/agriculture/identity-ci-result.py --kind jobs --input "$private/jobs.xml" --output .local/evidence/identity-jobs.json
 jobs_gate=$?
+"${GO_BIN:-go}" -C backend test ./internal/agriculture -run '^Test(ScopedProjection|JobEvents|JobEventCursor)' -count=1 -json > "$private/scoped-stream.jsonl" 2> "$private/scoped-stream-stderr.log"
+scoped_stream_code=$?
+python3 scripts/agriculture/scope-stream-result.py --kind agriculture --input "$private/scoped-stream.jsonl" --output .local/evidence/scope-stream-agriculture.json
+scoped_stream_gate=$?
+"${GO_BIN:-go}" -C backend test ./internal/handler -run '^Test(ConnectedLegacyStreamsRevalidateAuthority|TaskStreamRevocationDuringConnectedFlush|TaskStreamRevocationBetweenBufferedEvents)$' -count=1 -json > "$private/legacy-stream.jsonl" 2> "$private/legacy-stream-stderr.log"
+legacy_stream_code=$?
+python3 scripts/agriculture/scope-stream-result.py --kind legacy --input "$private/legacy-stream.jsonl" --output .local/evidence/scope-stream-legacy.json
+legacy_stream_gate=$?
+"${GO_BIN:-go}" -C backend test ./internal/app -run '^TestCachedTextReplayIsolatesUsersCursorsAndCopies$' -count=1 -json > "$private/scoped-cache.jsonl" 2> "$private/scoped-cache-stderr.log"
+scoped_cache_code=$?
+python3 scripts/agriculture/scope-stream-result.py --kind cache --input "$private/scoped-cache.jsonl" --output .local/evidence/scope-stream-cache.json
+scoped_cache_gate=$?
 chain_code=0; chain_gate=0
 if [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} == 1 ]]; then
   "${GO_BIN:-go}" -C backend test ./internal/agriculture -run '^TestIdentityBrowserGISWriteChain$' -count=1 -timeout 12m -json > "$private/chain.jsonl" 2> "$private/chain-stderr.log"
@@ -173,5 +188,6 @@ if [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} == 1 ]]; then
   chain_gate=$?
 fi
 set -e
+[[ $scoped_stream_code == 0 && $scoped_stream_gate == 0 && $legacy_stream_code == 0 && $legacy_stream_gate == 0 && $scoped_cache_code == 0 && $scoped_cache_gate == 0 ]] || { echo 'Scoped cache/stream acceptance failed; inspect sanitized reports'; exit 1; }
 [[ $python_code == 0 && $python_gate == 0 && $go_code == 0 && $go_gate == 0 && $actors_code == 0 && $actors_gate == 0 && $domain_code == 0 && $domain_gate == 0 && $query_code == 0 && $query_gate == 0 && $objects_code == 0 && $objects_gate == 0 && $jobs_code == 0 && $jobs_gate == 0 && $chain_code == 0 && $chain_gate == 0 ]] || { echo 'Identity acceptance failed; inspect sanitized reports, no raw secrets exported'; exit 1; }
 echo 'PASS: actual Go/Python HTTP, PostgreSQL replay and legacy actor boundary; fixture-domain acceptance only'

@@ -372,6 +372,22 @@ OVERLAY = (
     "services/agri-gis/backend/tests/test_agriculture_jobs_postgres.py",
     "services/agri-gis/backend/tests/job_fixture_support.py",
     "services/agri-gis/backend/tests/job_http_fixture.py",
+    # DT021: existing stream revocation plus scoped agricultural projections.
+    "backend/internal/handler/routes.go",
+    "backend/internal/handler/agent.go",
+    "backend/internal/handler/text_events_test.go",
+    "backend/internal/handler/stream_revocation_test.go",
+    "backend/internal/app/text_replay_cache.go",
+    "backend/internal/app/read_cache_integration_test.go",
+    "backend/internal/agriculture/job_events.go",
+    "backend/internal/agriculture/job_events_test.go",
+    "backend/internal/agriculture/scoped_projection.go",
+    "backend/internal/agriculture/scoped_projection_test.go",
+    "backend/internal/platform/read_cache.go",
+    "web/src/features/agriculture/projection-query-key.ts",
+    "web/test/agriculture-projection-query-key.test.ts",
+    "scripts/agriculture/scope-stream-result.py",
+    "scripts/agriculture/scope-stream-result.test.py",
 )
 
 

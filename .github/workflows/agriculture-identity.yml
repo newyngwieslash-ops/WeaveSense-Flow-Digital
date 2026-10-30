@@ -8,6 +8,12 @@ on:
       - 'scripts/agriculture/**'
       - 'backend/internal/agriculture/**'
       - 'backend/internal/agricanonical/**'
+      - 'backend/internal/handler/routes.go'
+      - 'backend/internal/handler/agent.go'
+      - 'backend/internal/handler/*stream*test.go'
+      - 'backend/internal/handler/text_events_test.go'
+      - 'backend/internal/app/text_replay_cache.go'
+      - 'backend/internal/app/read_cache_integration_test.go'
       - 'backend/go.*'
       - 'services/agri-gis/backend/**'
       - 'tests/agriculture/fixtures/identity-canonical.json'
@@ -47,6 +53,7 @@ jobs:
           python3 scaffold/scripts/agriculture/session-ci-prepare.test.py
           python3 scaffold/scripts/agriculture/identity-ci-result.test.py
           python3 scaffold/scripts/agriculture/identity-chain-result.test.py
+          python3 scaffold/scripts/agriculture/scope-stream-result.test.py
           python3 scaffold/tests/agriculture/test_identity_chain_configuration.py
           node --test scaffold/scripts/agriculture/identity-chain-browser.test.mjs
       - name: Assemble pinned upstreams and explicit reviewed overlay

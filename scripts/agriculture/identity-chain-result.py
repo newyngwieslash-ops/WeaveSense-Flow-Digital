@@ -13,7 +13,7 @@ REQUIRED = {ROOT} | {ROOT + '/' + name for name in (
 )}
 
 
-def reduce(raw):
+def reduce(raw, required=REQUIRED, suite='actual_browser_go_gis_write_chain'):
     terminal, locations = {}, {}
     invalid, package_pass = False, False
     for line in raw.splitlines():
@@ -29,20 +29,20 @@ def reduce(raw):
             invalid = True
         if not name and action == 'pass':
             package_pass = True
-        if name in REQUIRED and action == 'output':
+        if name in required and action == 'output':
             hits = re.findall(r'\b([A-Za-z0-9_]+\.go):(\d+)\b', str(event.get('Output', '')))
             locations.setdefault(name, set()).update(hits)
         if name and action in {'pass', 'fail', 'skip'}:
-            if name not in REQUIRED or name in terminal:
+            if name not in required or name in terminal:
                 invalid = True
                 continue
             terminal[name] = action
-    passed = not invalid and package_pass and set(terminal) == REQUIRED and all(v == 'pass' for v in terminal.values())
+    passed = not invalid and package_pass and set(terminal) == required and all(v == 'pass' for v in terminal.values())
     return {
-        'suite': 'actual_browser_go_gis_write_chain', 'passed': passed,
+        'suite': suite, 'passed': passed,
         'data_class': 'fixture', 'production_acceptance': False,
         'tests': [{'name': name, 'result': result} for name, result in sorted(terminal.items())],
-        'missing': sorted(REQUIRED - terminal.keys()),
+        'missing': sorted(required - terminal.keys()),
         'failure_locations': [{'test': name, 'locations': [{'file': f, 'line': int(n)} for f, n in sorted(locations.get(name, set()))[:20]]} for name, result in sorted(terminal.items()) if result != 'pass'],
     }
 

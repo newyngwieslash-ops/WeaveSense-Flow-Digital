@@ -9,9 +9,6 @@ export AGRI_IDENTITY_PYTHON
 [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} =~ ^[01]$ ]] || { echo 'Invalid browser chain gate'; exit 2; }
 [[ ${AGRI_GEO_MIGRATION_ONLY:-0} =~ ^[01]$ ]] || { echo 'Invalid isolated migration gate'; exit 2; }
 mkdir -p .local/evidence
-python3 scripts/agriculture/legacy-identity-inventory.test.py
-python3 scripts/agriculture/legacy-identity-inventory.py --check
-(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_query_scope_inventory.py -q)
 for suite in go python actors domain query; do
   printf '%s\n' '{"passed":false,"status":"not_run","tests":[]}' > ".local/evidence/identity-$suite.json"
 done
@@ -19,6 +16,9 @@ if [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} == 1 ]]; then
   printf '%s\n' '{"passed":false,"status":"not_run","tests":[]}' > .local/evidence/identity-chain-go.json
   printf '%s\n' '{"result":"not_run","results":[]}' > .local/evidence/identity-chain-browser.json
 fi
+python3 scripts/agriculture/legacy-identity-inventory.test.py
+python3 scripts/agriculture/legacy-identity-inventory.py --check
+(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_query_scope_inventory.py -q)
 command -v docker >/dev/null
 docker info >/dev/null 2>&1 || { echo 'BLOCKED: Docker daemon required'; exit 2; }
 "$AGRI_IDENTITY_PYTHON" -c 'import fastapi,uvicorn,httpx,cryptography,rfc8785,asyncpg,pytest'

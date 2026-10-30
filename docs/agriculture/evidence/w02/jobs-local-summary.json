@@ -1,0 +1,33 @@
+{
+  "task": "DT-022",
+  "source_commit": "0422eee1cf2a93bf2908f71e7bc1633abbec34f5",
+  "acceptance": "candidate_pending_independent_review",
+  "remote_ci": false,
+  "native_report": "docs/agriculture/evidence/w02/jobs-native-local.json",
+  "native_report_sha256": "d4095c620b25ea063664ac03c4239d070570e1e4092e918fb80a5c9f8afa1c9d",
+  "command": "python scripts/agriculture/native-postgres-test.py --package-root .local/native-postgres-current/root --python .local/identity-rebuild/venv/bin/python --phase jobs --go .local/toolchains/go/bin/go",
+  "native_result": {
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0,
+    "exit_code": 0,
+    "shutdown_exit_code": 0
+  },
+  "source_provenance": {
+    "files": 1458,
+    "current_mismatches": 0,
+    "note": "Source report includes explicitly recorded unrelated object test worktree bytes; no job source dirty."
+  },
+  "go_unit_command": "GOMODCACHE=$ROOT/.local/go-mod-cache GOCACHE=$ROOT/.local/go-cache GOPROXY=off $ROOT/.local/toolchains/go/bin/go test ./internal/agriculture -run ^TestJobAuthority(Internal|Natural|Outlives|Snapshot) -count=1",
+  "go_unit_exit_code": 0,
+  "go_unit_tests": 4,
+  "ruff_exit_code": 0,
+  "boundaries": [
+    "Platform authorization uses real SQLite, not PostgreSQL in this job-chain test.",
+    "GIS sidecar/replay and independently controlled lease fixture use PostgreSQL 17.11/PostGIS 3.5.2.",
+    "Go root and four named HTTP-chain children are mandatory no-skip in Python reducer.",
+    "No live farm/imagery compute, W06 queue/orchestration or atomic production result publication acceptance.",
+    "Missing production execution adapter returns 503; no implicit system role.",
+    "Real PostgreSQL table-lock waits crossing identity and callback deadlines roll back before commit."
+  ]
+}

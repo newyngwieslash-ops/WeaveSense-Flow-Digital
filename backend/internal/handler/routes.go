@@ -321,6 +321,9 @@ func streamTaskTextEvents(c *gin.Context, svc *service.Service, userID string, t
 	lastStatus := replay.Status
 	lastStage := replay.Stage
 	lastProgress := replay.Progress
+	if !authorizeStreamBatch(c, svc, userID, taskID) {
+		return
+	}
 	writeTaskTextSSE(c, "progress", 0, map[string]any{"status": replay.Status, "stage": replay.Stage, "progress": replay.Progress})
 
 	pollTicker := time.NewTicker(750 * time.Millisecond)

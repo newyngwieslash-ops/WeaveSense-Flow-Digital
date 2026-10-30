@@ -142,15 +142,50 @@ func seedStreamIdentity(t *testing.T, db *gorm.DB, id string) {
 
 type revokingStreamWriter struct {
 	*httptest.ResponseRecorder
-	onDelta func()
+	onDelta     func()
+	onConnected func()
 }
 
 func (w *revokingStreamWriter) Flush() {
 	w.ResponseRecorder.Flush()
+	if w.onConnected != nil && strings.Contains(w.Body.String(), ": connected") {
+		fn := w.onConnected
+		w.onConnected = nil
+		fn()
+	}
 	if w.onDelta != nil && strings.Contains(w.Body.String(), "event: delta") {
 		fn := w.onDelta
 		w.onDelta = nil
 		fn()
+	}
+}
+
+func TestTaskStreamRevocationDuringConnectedFlush(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AutoMigrate(&model.User{}, &model.AuthSession{}, &model.Task{}); err != nil {
+		t.Fatal(err)
+	}
+	seedStreamIdentity(t, db, "user")
+	if err := db.Create(&model.Task{ID: "task", UserID: "user"}).Error; err != nil {
+		t.Fatal(err)
+	}
+	svc := service.New(repository.New(db), t.TempDir())
+	t.Cleanup(func() { _ = svc.Close() })
+	w := &revokingStreamWriter{ResponseRecorder: httptest.NewRecorder(), onConnected: func() {
+		if err := svc.Logout("stream-session.stream-secret"); err != nil {
+			t.Fatal(err)
+		}
+	}}
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
+	c.Request.AddCookie(&http.Cookie{Name: service.SessionCookieName, Value: "stream-session.stream-secret"})
+	streamTaskTextEvents(c, svc, "user", "task", 0, &service.TextReplayResult{Complete: true, Stage: "private-stage", Progress: 78, Status: model.TaskStatusSucceeded})
+	body := w.Body.String()
+	if !strings.Contains(body, ": connected") || strings.Contains(body, "event:") || strings.Contains(body, "private-stage") || strings.Contains(body, "status") {
+		t.Fatal("initial flush bypassed revocation before progress")
 	}
 }
 

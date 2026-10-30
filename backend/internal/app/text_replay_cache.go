@@ -25,6 +25,10 @@ func (s *Service) initReadCaches() {
 // SSE 展示专用，不用于写路径和权限决策；userID 进入 key，回源仍检查任务归属。
 // 游标保留在 key 中，避免重连读取到其他客户端已经越过的增量窗口。
 func (s *Service) CachedTaskTextReplay(ctx context.Context, userID, taskID string, after int64) (*TextReplayResult, error) {
+	// Authorization is deliberately outside the content cache, including hits.
+	if err := s.AuthorizeTaskRead(userID, taskID); err != nil {
+		return nil, err
+	}
 	s.initReadCaches()
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
@@ -49,4 +53,18 @@ func (s *Service) CachedTaskTextReplay(ctx context.Context, userID, taskID strin
 	copy := *value
 	copy.Deltas = append([]model.TaskTextDelta(nil), value.Deltas...)
 	return &copy, nil
+}
+
+// AuthorizeTaskRead checks current persisted identity and ownership, not a cached
+// projection. HTTP callers must additionally validate the original session.
+func (s *Service) AuthorizeTaskRead(userID, taskID string) error {
+	user, err := s.repo.User(userID)
+	if err != nil {
+		return err
+	}
+	if user.Status != model.UserStatusActive {
+		return &AppError{Status: 403, Code: 403, Message: "任务不可用"}
+	}
+	_, err = s.repo.TaskForUser(userID, taskID)
+	return err
 }

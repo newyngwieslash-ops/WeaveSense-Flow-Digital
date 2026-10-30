@@ -320,13 +320,16 @@ func RegisterAgentRoutes(r *gin.RouterGroup, svc *service.Service) {
 			return
 		}
 		c.Header("Content-Type", "text/event-stream")
-		c.Header("Cache-Control", "no-cache")
+		c.Header("Cache-Control", "private, no-store")
 		c.Header("X-Accel-Buffering", "no")
 		ticker := time.NewTicker(time.Second)
 		defer ticker.Stop()
 		revision := run.Revision
 		lastWrite := time.Now()
 		for {
+			if !authorizeStreamBatch(c, svc, user.ID, c.Param("id")) {
+				return
+			}
 			if err != nil {
 				c.SSEvent("error", gin.H{"message": "Agent 状态读取失败"})
 				c.Writer.Flush()
@@ -335,6 +338,9 @@ func RegisterAgentRoutes(r *gin.RouterGroup, svc *service.Service) {
 			if run != nil {
 				for _, event := range run.Events {
 					if int64(event.Seq) > after {
+						if !authorizeStreamBatch(c, svc, user.ID, c.Param("id")) {
+							return
+						}
 						writeAgentSSE(c, "agent_event", int64(event.Seq), event)
 						after = int64(event.Seq)
 					}
@@ -343,9 +349,15 @@ func RegisterAgentRoutes(r *gin.RouterGroup, svc *service.Service) {
 				// intentionally have no SSE id and therefore never advance the cursor.
 				snapshot := *run
 				snapshot.Events = nil // Events were sent once above, never in every snapshot too.
+				if !authorizeStreamBatch(c, svc, user.ID, c.Param("id")) {
+					return
+				}
 				writeAgentSSE(c, "run_snapshot", 0, &snapshot)
 				revision, lastWrite = run.Revision, time.Now()
 				if !run.CleanupPending && (run.Status == "completed" || run.Status == "failed" || run.Status == "cancelled" || run.Status == "rejected") {
+					if !authorizeStreamBatch(c, svc, user.ID, c.Param("id")) {
+						return
+					}
 					// Explicit end-of-run marker: clients stop on this instead of
 					// inferring the end from event names or snapshot heuristics.
 					writeAgentSSE(c, "run_terminal", 0, gin.H{"runId": run.ID, "status": run.Status, "lastSeq": after})
@@ -360,6 +372,10 @@ func RegisterAgentRoutes(r *gin.RouterGroup, svc *service.Service) {
 			case <-c.Request.Context().Done():
 				return
 			case <-ticker.C:
+				if !authorizeStreamBatch(c, svc, user.ID, c.Param("id")) {
+					return
+				}
+				options.SinceSeq = int(after)
 				run, err = svc.CloudAgentRunIfChanged(user.ID, c.Param("id"), revision, options)
 			}
 		}

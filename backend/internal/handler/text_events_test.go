@@ -2,11 +2,13 @@ package handler
 
 import (
 	"context"
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
+	"yingce/backend/internal/auth"
 	"yingce/backend/internal/model"
 	"yingce/backend/internal/repository"
 	"yingce/backend/internal/service"
@@ -57,9 +59,10 @@ func TestStreamTaskTextEventsCachedReplayReachesTerminalWithoutDuplicateDelta(t 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := db.AutoMigrate(&model.Task{}, &model.TaskTextDelta{}); err != nil {
+	if err := db.AutoMigrate(&model.User{}, &model.AuthSession{}, &model.Task{}, &model.TaskTextDelta{}); err != nil {
 		t.Fatal(err)
 	}
+	seedStreamIdentity(t, db, "user")
 	if err := db.Create(&model.Task{ID: "task", UserID: "user", Status: model.TaskStatusRunning}).Error; err != nil {
 		t.Fatal(err)
 	}
@@ -80,6 +83,7 @@ func TestStreamTaskTextEventsCachedReplayReachesTerminalWithoutDuplicateDelta(t 
 	response := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(response)
 	c.Request = httptest.NewRequest("GET", "/api/tasks/task/text-events", nil).WithContext(ctx)
+	c.Request.AddCookie(&http.Cookie{Name: service.SessionCookieName, Value: "stream-session.stream-secret"})
 	streamTaskTextEvents(c, svc, "user", "task", 7, initial)
 	body := response.Body.String()
 	if strings.Count(body, "id: 8\nevent: delta") != 1 || !strings.Contains(body, "event: terminal") || !strings.Contains(body, `"progress":100`) {
@@ -92,6 +96,20 @@ func TestStreamTaskTextEventsWritesSequenceAndTerminalEvent(t *testing.T) {
 	response := httptest.NewRecorder()
 	context, _ := gin.CreateTestContext(response)
 	context.Request = httptest.NewRequest("GET", "/api/tasks/task-1/text-events", nil)
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AutoMigrate(&model.User{}, &model.AuthSession{}, &model.Task{}); err != nil {
+		t.Fatal(err)
+	}
+	seedStreamIdentity(t, db, "user-1")
+	if err := db.Create(&model.Task{ID: "task-1", UserID: "user-1"}).Error; err != nil {
+		t.Fatal(err)
+	}
+	svc := service.New(repository.New(db), t.TempDir())
+	t.Cleanup(func() { _ = svc.Close() })
+	context.Request.AddCookie(&http.Cookie{Name: service.SessionCookieName, Value: "stream-session.stream-secret"})
 	replay := &service.TextReplayResult{
 		Deltas:    []model.TaskTextDelta{{Sequence: 8, Content: "增量"}},
 		Complete:  true,
@@ -100,12 +118,66 @@ func TestStreamTaskTextEventsWritesSequenceAndTerminalEvent(t *testing.T) {
 		Stage:     "已完成",
 		Progress:  100,
 	}
-	streamTaskTextEvents(context, nil, "user-1", "task-1", 7, replay)
+	streamTaskTextEvents(context, svc, "user-1", "task-1", 7, replay)
 	if response.Header().Get("Content-Type") != "text/event-stream; charset=utf-8" {
 		t.Fatalf("content type = %q", response.Header().Get("Content-Type"))
 	}
 	body := response.Body.String()
 	if !strings.Contains(body, "event: progress") || !strings.Contains(body, `"progress":100`) || !strings.Contains(body, "id: 8\nevent: delta") || !strings.Contains(body, "event: terminal") {
 		t.Fatalf("unexpected SSE body: %q", body)
+	}
+}
+
+func seedStreamIdentity(t *testing.T, db *gorm.DB, id string) {
+	t.Helper()
+	for _, row := range []any{
+		&model.User{ID: id, Username: id, Status: model.UserStatusActive},
+		&model.AuthSession{ID: "stream-session", UserID: id, TokenHash: auth.HashToken("stream-secret"), ExpiresAt: time.Now().Add(time.Hour)},
+	} {
+		if err := db.Create(row).Error; err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+type revokingStreamWriter struct {
+	*httptest.ResponseRecorder
+	onDelta func()
+}
+
+func (w *revokingStreamWriter) Flush() {
+	w.ResponseRecorder.Flush()
+	if w.onDelta != nil && strings.Contains(w.Body.String(), "event: delta") {
+		fn := w.onDelta
+		w.onDelta = nil
+		fn()
+	}
+}
+
+func TestTaskStreamRevocationBetweenBufferedEvents(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.AutoMigrate(&model.User{}, &model.AuthSession{}, &model.Task{}); err != nil {
+		t.Fatal(err)
+	}
+	seedStreamIdentity(t, db, "user")
+	if err := db.Create(&model.Task{ID: "task", UserID: "user"}).Error; err != nil {
+		t.Fatal(err)
+	}
+	svc := service.New(repository.New(db), t.TempDir())
+	t.Cleanup(func() { _ = svc.Close() })
+	w := &revokingStreamWriter{ResponseRecorder: httptest.NewRecorder(), onDelta: func() {
+		if err := svc.Logout("stream-session.stream-secret"); err != nil {
+			t.Fatal(err)
+		}
+	}}
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
+	c.Request.AddCookie(&http.Cookie{Name: service.SessionCookieName, Value: "stream-session.stream-secret"})
+	streamTaskTextEvents(c, svc, "user", "task", 0, &service.TextReplayResult{Complete: true, Deltas: []model.TaskTextDelta{{Sequence: 1, Content: "already-admitted"}, {Sequence: 2, Content: "must-not-send"}}})
+	if !strings.Contains(w.Body.String(), "already-admitted") || strings.Contains(w.Body.String(), "must-not-send") || strings.Contains(w.Body.String(), "event: terminal") {
+		t.Fatal("buffered events bypassed current session check")
 	}
 }

@@ -19,7 +19,13 @@ func TestCachedTextReplayIsolatesUsersCursorsAndCopies(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := db.AutoMigrate(&model.Task{}, &model.TaskTextDelta{}); err != nil {
+	if err := db.AutoMigrate(&model.User{}, &model.Task{}, &model.TaskTextDelta{}); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Create(&model.User{ID: "user", Username: "user", Status: model.UserStatusActive}).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Create(&model.User{ID: "other", Username: "other", Status: model.UserStatusActive}).Error; err != nil {
 		t.Fatal(err)
 	}
 	if err := db.Create(&model.Task{ID: "task", UserID: "user", Type: "canvas_text", Status: model.TaskStatusRunning}).Error; err != nil {
@@ -53,8 +59,8 @@ func TestCachedTextReplayIsolatesUsersCursorsAndCopies(t *testing.T) {
 		}()
 	}
 	wg.Wait()
-	if queries.Load() != 2 {
-		t.Fatalf("expected one task+delta query, got %d queries", queries.Load())
+	if queries.Load() != 102 {
+		t.Fatalf("expected 50 uncached actor+ownership checks and one task+delta load, got %d queries", queries.Load())
 	}
 	if _, err := svc.CachedTaskTextReplay(context.Background(), "other", "task", 0); err == nil {
 		t.Fatal("cross-user cache leak")
@@ -70,6 +76,21 @@ func TestCachedTextReplayIsolatesUsersCursorsAndCopies(t *testing.T) {
 	result, err = svc.CachedTaskTextReplay(context.Background(), "user", "task", 0)
 	if err != nil || !result.Complete {
 		t.Fatalf("terminal refresh: %#v %v", result, err)
+	}
+	if err := db.Model(&model.Task{}).Where("id = ?", "task").Update("user_id", "other").Error; err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.CachedTaskTextReplay(context.Background(), "user", "task", 0); err == nil {
+		t.Fatal("warm cache bypassed changed ownership")
+	}
+	if err := db.Model(&model.Task{}).Where("id = ?", "task").Update("user_id", "user").Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Model(&model.User{}).Where("id = ?", "user").Update("status", "disabled").Error; err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.CachedTaskTextReplay(context.Background(), "user", "task", 0); err == nil {
+		t.Fatal("warm cache bypassed disabled actor")
 	}
 }
 

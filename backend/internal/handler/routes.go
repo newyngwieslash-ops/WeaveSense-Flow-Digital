@@ -305,8 +305,12 @@ func taskTextEventCursor(c *gin.Context) (int64, error) {
 }
 
 func streamTaskTextEvents(c *gin.Context, svc *service.Service, userID string, taskID string, after int64, replay *service.TextReplayResult) {
+	if !authorizeStreamBatch(c, svc, userID, taskID) {
+		fail(c, http.StatusUnauthorized, errors.New("任务流不可用"))
+		return
+	}
 	c.Header("Content-Type", "text/event-stream; charset=utf-8")
-	c.Header("Cache-Control", "no-cache, no-transform")
+	c.Header("Cache-Control", "private, no-store, no-transform")
 	c.Header("Connection", "keep-alive")
 	c.Header("X-Accel-Buffering", "no")
 	c.Status(http.StatusOK)
@@ -324,11 +328,21 @@ func streamTaskTextEvents(c *gin.Context, svc *service.Service, userID string, t
 	defer pollTicker.Stop()
 	defer heartbeatTicker.Stop()
 	for {
+		if !authorizeStreamBatch(c, svc, userID, taskID) {
+			writeTaskTextSSE(c, "error", 0, map[string]string{"message": "任务流不可用"})
+			return
+		}
 		for _, delta := range replay.Deltas {
+			if !authorizeStreamBatch(c, svc, userID, taskID) {
+				return
+			}
 			writeTaskTextSSE(c, "delta", delta.Sequence, map[string]any{"sequence": delta.Sequence, "content": delta.Content})
 			after = delta.Sequence
 		}
 		if replay.Complete {
+			if !authorizeStreamBatch(c, svc, userID, taskID) {
+				return
+			}
 			writeTaskTextSSE(c, "terminal", 0, replay)
 			return
 		}
@@ -342,9 +356,15 @@ func streamTaskTextEvents(c *gin.Context, svc *service.Service, userID string, t
 			c.Writer.Flush()
 		case <-pollTicker.C:
 		}
+		if !authorizeStreamBatch(c, svc, userID, taskID) {
+			return
+		}
 		next, err := svc.CachedTaskTextReplay(c.Request.Context(), userID, taskID, after)
 		if err != nil {
 			writeTaskTextSSE(c, "error", 0, map[string]string{"message": "任务文本流不可用"})
+			return
+		}
+		if !authorizeStreamBatch(c, svc, userID, taskID) {
 			return
 		}
 		if next.Status != lastStatus || next.Stage != lastStage || next.Progress != lastProgress {
@@ -353,6 +373,17 @@ func streamTaskTextEvents(c *gin.Context, svc *service.Service, userID string, t
 		}
 		replay = next
 	}
+}
+
+// Each sensitive batch linearizes at this current-session/current-owner read,
+// after loading content and immediately before writing. Already sent bytes cannot
+// be recalled; no database transaction is held across a potentially slow client.
+func authorizeStreamBatch(c *gin.Context, svc *service.Service, userID, taskID string) bool {
+	if svc == nil || c.Request.Context().Err() != nil {
+		return false
+	}
+	user, err := currentUser(c, svc)
+	return err == nil && user != nil && user.ID == userID && svc.AuthorizeTaskRead(userID, taskID) == nil
 }
 
 func writeTaskTextSSE(c *gin.Context, event string, id int64, value any) {

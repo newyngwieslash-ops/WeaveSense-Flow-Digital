@@ -1,0 +1,37 @@
+{
+  "scope": "DT015 native lifecycle timer receiver and duplicate accepted-actor bootstrap correction",
+  "failed_ci": "6c617424a1869b845ccc64ef9552f947856c86c9",
+  "local_tests": {
+    "command": "bun test web/test/agriculture-{api,organization,profile,session-security}.test.ts web/test/auth-{session-race,return-path}.test.ts services/agri-gis/frontend/agriculture/session.test.ts",
+    "exit_code": 0,
+    "passed": 93,
+    "failed": 0,
+    "assertions": 425
+  },
+  "builds": [
+    {
+      "directory": "web",
+      "command": "bun run build:agriculture",
+      "exit_code": 0
+    },
+    {
+      "directory": "services/agri-gis/frontend",
+      "command": "bun run build:agriculture",
+      "exit_code": 0
+    }
+  ],
+  "findings": [
+    "Vue clock wrapper must bind native host receiver; receiver-sensitive test rejects old invocation and verifies actual controller initial refresh reaches anonymous response",
+    "Trusted initial apply changes actorId; accepted baseline actor notification must not force a second hard unmount",
+    "External actor changes and cleared baseline on hard invalidation still force bootstrap; late old actor projection test remains enabled"
+  ],
+  "source_hashes": {
+    "services/agri-gis/frontend/agriculture/session-lifecycle.ts": "ef8ff310c1c26caa0c3325267f49fe7dd34865c923df89377c735d59cdd98610",
+    "services/agri-gis/frontend/agriculture/session.test.ts": "8c68582c3d540be8848cab47eb8893cd400153d6b0d354626be48500e4afd7ff",
+    "web/src/features/agriculture/main.tsx": "2af296b88f36298bffff12f7af6f35948b24a9ecb4f2918e4c6601583320c44c",
+    "web/src/features/agriculture/routine-session.ts": "1bef9927b1035f43c53d661ca4ba2863778bdeb92adce238f8efcec6069b7582",
+    "web/test/agriculture-session-security.test.ts": "d66276bc6734260d8150989500584feabe51b596d45b461757046ad6b873e8dc"
+  },
+  "actual_browser_after_fix": "not_run",
+  "organization_failure_causality": "Repeated initial bootstrap is a concrete lifecycle defect, not yet proven to be the only cause of prior owner role-clear browser failure; finer browser stages added independently"
+}

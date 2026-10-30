@@ -7,7 +7,17 @@ import { appQueryClient } from '../src/lib/query-client';
 import { useUserStore } from '../src/stores/use-user-store';
 import { ConfirmationScope } from '../src/features/agriculture/confirmation-scope';
 import { authoritySnapshot } from '../../contracts/agriculture/authority-snapshot';
-import { acceptDisplayedAuthority, clearDisplayedAuthority, currentProjectionGeneration, displayedAuthority, setRoutineChecking } from '../src/features/agriculture/routine-session';
+import { acceptDisplayedAuthority, clearDisplayedAuthority, currentProjectionGeneration, displayedAuthority, needsSessionBootstrap, setRoutineChecking } from '../src/features/agriculture/routine-session';
+
+test('trusted apply actor notification does not bootstrap twice; hard invalidation and external actors still do', () => {
+    expect(needsSessionBootstrap(null, undefined, undefined)).toBe(true);
+    expect(needsSessionBootstrap('trusted-anonymous', undefined, undefined)).toBe(false);
+    expect(needsSessionBootstrap('trusted-a', 'a', 'a')).toBe(false);
+    expect(needsSessionBootstrap(null, 'a', 'a')).toBe(true);
+    expect(needsSessionBootstrap('trusted-a', 'a', 'b')).toBe(true);
+    expect(needsSessionBootstrap('trusted-a', 'a', undefined)).toBe(true);
+    expect(needsSessionBootstrap('trusted-anonymous', undefined, 'a')).toBe(true);
+});
 
 test('authority snapshots reject missing/duplicate digests and ignore unrelated audit metadata', () => {
     const actor = { id: 'a', role: 'user', status: 'active' };

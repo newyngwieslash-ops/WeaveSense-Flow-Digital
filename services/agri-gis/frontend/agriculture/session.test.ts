@@ -1,10 +1,30 @@
 import { describe, expect, test } from 'bun:test'
 import { SessionController, loginURL, selectedWorkspace, workspaceURL } from './session'
-import { bindSessionLifecycle } from './session-lifecycle'
+import { bindLifecycleClock, bindSessionLifecycle } from './session-lifecycle'
 
 const user = { id: 'user-a', username: 'farmer', displayName: 'Test Farmer', role: 'user', status: 'active' }
 const workspace = { id: 'workspace-a', tenantId: 'server-only-tenant', slug: 'farm', name: 'Farm workspace', tenantName: 'Farm organization', tenantStatus: 'active', roles: ['viewer'], canManageMembers: false, canManageOrganization: false, authorityFingerprint: 'a'.repeat(64) }
 const response = (data: unknown, status = 200) => Response.json({ code: 0, data }, { status })
+
+test('lifecycle clock preserves native host receiver and reaches the real initial session refresh', async () => {
+  let started = false, cleared = false
+  const host = {
+    setInterval(this: unknown) { if (this !== host) throw new TypeError('Illegal invocation'); started = true; return 1 },
+    clearInterval(this: unknown) { if (this !== host) throw new TypeError('Illegal invocation'); cleared = true },
+  } as unknown as { setInterval: typeof setInterval; clearInterval: typeof clearInterval }
+  const unbound = { setInterval: host.setInterval }
+  expect(() => unbound.setInterval(() => {}, 30000)).toThrow('Illegal invocation')
+  const clock = bindLifecycleClock(host)
+  const timer = clock.setInterval(() => {}, 30000); clock.clearInterval(timer)
+  expect(started).toBe(true); expect(cleared).toBe(true)
+  let requests = 0
+  const controller = new SessionController(async () => { requests++; return response({ user: null }) })
+  const anonymous = new Promise<void>(resolve => { controller.onChange = state => { if (state.status === 'anonymous') resolve() } })
+  const unbind = bindSessionLifecycle(controller, new EventTarget(), new EventTarget(), () => 'visible', () => '', () => '/agri/', () => '', () => () => {}, clock)
+  await anonymous
+  expect(requests).toBe(1); expect(controller.state.status).toBe('anonymous')
+  unbind()
+})
 
 test('scheduled 30 second routine uses continuity refresh instead of hard lifecycle reset', async () => {
   const controller = new SessionController(async path => response(path.endsWith('/session') ? { user } : [workspace]))

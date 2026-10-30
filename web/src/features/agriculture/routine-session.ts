@@ -6,6 +6,9 @@ let pending = false, businessActivities = 0;
 const idleListeners = new Set<() => void>();
 const listeners = new Set<() => void>();
 const participants = new Set<(signal: AbortSignal) => Promise<void>>();
+export function needsSessionBootstrap(snapshot: string | null, trustedActor: string | undefined, currentActor: string | undefined): boolean {
+    return snapshot === null || trustedActor !== currentActor;
+}
 let displayed: { actorId: string; workspaces: AgricultureWorkspace[] } | null = null;
 let projectionGeneration = 0;
 export const currentProjectionGeneration = () => projectionGeneration;

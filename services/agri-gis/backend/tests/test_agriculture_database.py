@@ -1,5 +1,6 @@
 """Runtime factory boundaries; simulated connections are unit evidence only."""
 
+from contextlib import asynccontextmanager
 from dataclasses import FrozenInstanceError
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
@@ -7,6 +8,7 @@ from types import SimpleNamespace
 import pytest
 from sqlalchemy import text
 
+from app.agriculture import database as database_module
 from app.agriculture.actor_session import prohibit_bulk
 from app.agriculture.database import (
     ROLE_CHECK,
@@ -145,3 +147,45 @@ async def test_no_dsn_or_migration_role_fallback(monkeypatch):
             await GISRuntimeDatabase.open(dsn, role=role)
         with pytest.raises(IdentityError):
             await create_runtime_pool(dsn, role=role)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("role", ["flow_geo_app", "flow_geo_worker"])
+async def test_domain_factory_requires_role_specific_boundary_before_use(
+    monkeypatch, role
+):
+    called = []
+
+    class Connection:
+        async def fetchval(self, *args, **kwargs):
+            return True
+
+        async def close(self):
+            called.append("connection_closed")
+
+    async def connect(*args, **kwargs):
+        return Connection()
+
+    async def unavailable_boundary(connection, *, role):
+        called.append(role)
+        raise IdentityError("gis_domain_boundary_unavailable", 503)
+
+    def engine_factory(*args, **kwargs):
+        class Engine:
+            @asynccontextmanager
+            async def connect(self):
+                yield await kwargs["async_creator"]()
+
+            async def dispose(self):
+                called.append("engine_disposed")
+
+        return Engine()
+
+    monkeypatch.setattr(database_module.asyncpg, "connect", connect)
+    monkeypatch.setattr(
+        database_module, "require_domain_boundary", unavailable_boundary
+    )
+    monkeypatch.setattr(database_module, "create_async_engine", engine_factory)
+    with pytest.raises(IdentityError):
+        await GISRuntimeDatabase.open("unused_test_dsn", role=role)
+    assert called == [role, "connection_closed", "engine_disposed"]

@@ -14,6 +14,7 @@ from sqlalchemy import event, text
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from .actor_session import AgricultureAsyncSession, AgricultureSession
+from .domain_boundary import require_domain_boundary
 from .identity.verify import ID, IdentityError, Verified
 
 RUNTIME_ROLES = frozenset({"flow_geo_app", "flow_geo_worker"})
@@ -144,6 +145,7 @@ class GISRuntimeDatabase:
             connection = await asyncpg.connect(dsn, timeout=3)
             try:
                 await validate_runtime_connection(connection, role)
+                await require_domain_boundary(connection, role=role)
                 return connection
             except Exception:
                 await connection.close()

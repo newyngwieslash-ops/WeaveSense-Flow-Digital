@@ -1,14 +1,13 @@
-"""Real single-connection runtime reuse; explicit synthetic RLS table, not domains."""
+"""Real single-connection reuse and production RLS with explicit domain fixtures."""
 
 import asyncio
 import os
-import uuid
 from datetime import UTC, datetime, timedelta
 
 import asyncpg
 import pytest
-from sqlalchemy import Column, MetaData, String, Table, func, select, text
-from sqlalchemy.exc import DBAPIError
+from domain_fixture_support import install_domain_schema
+from sqlalchemy import func, select, text
 
 from app.agriculture.database import GISRuntimeDatabase, create_runtime_pool
 from app.agriculture.identity.verify import IdentityError, Verified
@@ -37,6 +36,7 @@ def ticket(tenant, workspace):
 def test_postgres_runtime_factory_role_admission():
     async def run():
         owner_dsn, app_dsn = configuration()
+        await install_domain_schema(owner_dsn)
         for factory in (GISRuntimeDatabase.open, create_runtime_pool):
             with pytest.raises(IdentityError):
                 await factory(owner_dsn)
@@ -50,7 +50,8 @@ def test_postgres_runtime_factory_role_admission():
 
 def test_postgres_worker_factory_admission_without_business_privileges():
     async def run():
-        configuration()
+        owner_dsn, _ = configuration()
+        await install_domain_schema(owner_dsn)
         worker_dsn = os.getenv("AGRI_TEST_GEO_WORKER_DSN")
         if not worker_dsn:
             pytest.skip("explicit isolated worker DSN required")
@@ -84,98 +85,103 @@ def test_postgres_worker_factory_admission_without_business_privileges():
 
 def test_postgres_runtime_scope_pool_reuse_and_rollback():
     async def run():
-        owner_dsn, app_dsn = configuration()
-        name = "agri_scope_fixture_" + uuid.uuid4().hex
-        table = Table(
-            name,
-            MetaData(),
-            Column("id", String),
-            Column("tenant_id", String),
-            Column("workspace_id", String),
-        )
-        owner = await asyncpg.connect(owner_dsn)
-        runtime = None
-        try:
-            # Owner creates a test-only relation. These policies verify factory
-            # transaction behavior; production domain policies have separate tests.
-            await owner.execute(f"""CREATE TABLE public.{name}
-                (id text PRIMARY KEY, tenant_id text NOT NULL,
-                 workspace_id text NOT NULL);
-                INSERT INTO public.{name} VALUES
-                ('a','tenant_a','workspace_a'),('b','tenant_a','workspace_b'),
-                ('c','tenant_b','workspace_c');
-                ALTER TABLE public.{name} ENABLE ROW LEVEL SECURITY;
-                ALTER TABLE public.{name} FORCE ROW LEVEL SECURITY;
-                CREATE POLICY scoped ON public.{name}
-                USING (tenant_id=current_setting('app.tenant_ids',true)
-                    AND workspace_id=current_setting('app.workspace_id',true))
-                WITH CHECK (tenant_id=current_setting('app.tenant_ids',true)
-                    AND workspace_id=current_setting('app.workspace_id',true));
-                REVOKE ALL ON public.{name} FROM PUBLIC,flow_geo_app;
-                GRANT SELECT,INSERT ON public.{name} TO flow_geo_app;""")
+        from test_agriculture_domain_rls_postgres import fixtures
+
+        from app.models.plot import FarmlandPlot
+
+        _, app_dsn = configuration()
+        table = FarmlandPlot.__table__
+        async with fixtures() as (items, _, _owner_dsn):
             runtime = await GISRuntimeDatabase.open(app_dsn, pool_size=1)
-            async with runtime._engine.connect() as conn:
-                pid = (await conn.execute(select(func.pg_backend_pid()))).scalar_one()
-                assert (await conn.execute(select(table.c.id))).all() == []
-                with pytest.raises(DBAPIError) as denied:
-                    await conn.execute(
-                        table.insert().values(
-                            id="unscoped",
-                            tenant_id="tenant_a",
-                            workspace_id="workspace_a",
-                        )
-                    )
-                assert denied.value.orig.sqlstate == "42501"
-                await conn.rollback()
-
-            for tenant, workspace, expected in (
-                ("tenant_a", "workspace_a", ["a"]),
-                ("tenant_a", "workspace_b", ["b"]),
-                ("tenant_b", "workspace_c", ["c"]),
-            ):
-                async with runtime.session(ticket(tenant, workspace)) as db:
-                    assert (
-                        await db.execute(select(func.pg_backend_pid()))
-                    ).scalar_one() == pid
-                    assert (
-                        await db.execute(select(table.c.id))
-                    ).scalars().all() == expected
-                    await db.rollback()
-                    # after_begin must reapply scope for the next transaction.
-                    assert (
-                        await db.execute(select(table.c.id))
-                    ).scalars().all() == expected
-
+            try:
                 async with runtime._engine.connect() as conn:
-                    assert (
+                    pid = (
                         await conn.execute(select(func.pg_backend_pid()))
-                    ).scalar_one() == pid
-                    assert (await conn.execute(select(table.c.id))).all() == []
-                    row = (
-                        await conn.execute(
-                            text(
-                                "SELECT current_setting('app.tenant_ids',true), "
-                                "current_setting('app.workspace_id',true)"
-                            )
-                        )
-                    ).one()
-                    assert all(v in (None, "") for v in row)
+                    ).scalar_one()
+                    assert (await conn.execute(select(table.c.plot_code))).all() == []
+                    changed = await conn.execute(
+                        table.update()
+                        .values(crop_type="unscoped_fixture")
+                        .returning(table.c.plot_code)
+                    )
+                    assert changed.all() == []
+                    await conn.rollback()
 
-            with pytest.raises(RuntimeError, match="test_failure"):
-                async with runtime.session(ticket("tenant_a", "workspace_a")) as db:
-                    assert (await db.execute(select(table.c.id))).scalars().all() == [
-                        "a"
-                    ]
-                    raise RuntimeError("test_failure")
-            async with runtime._engine.connect() as conn:
-                assert (await conn.execute(select(table.c.id))).all() == []
-            with pytest.raises(IdentityError):
-                async with runtime.session(None):
-                    pytest.fail("unverified scope admitted")
-        finally:
-            if runtime is not None:
+                for item in items:
+                    expected = [item["plot_code"]]
+                    async with runtime.session(
+                        ticket(item["tenant"], item["workspace"])
+                    ) as db:
+                        actual_pid = (
+                            await db.execute(select(func.pg_backend_pid()))
+                        ).scalar_one()
+                        assert actual_pid == pid
+                        assert (
+                            await db.execute(select(table.c.plot_code))
+                        ).scalars().all() == expected
+                        await db.rollback()
+                        # Same session, new transaction must reapply both scopes.
+                        assert (
+                            await db.execute(select(table.c.plot_code))
+                        ).scalars().all() == expected
+                    async with runtime._engine.connect() as conn:
+                        assert (
+                            await conn.execute(select(func.pg_backend_pid()))
+                        ).scalar_one() == pid
+                        assert (
+                            await conn.execute(select(table.c.plot_code))
+                        ).all() == []
+                        row = (
+                            await conn.execute(
+                                text(
+                                    "SELECT current_setting('app.tenant_ids',true), "
+                                    "current_setting('app.workspace_id',true)"
+                                )
+                            )
+                        ).one()
+                        assert all(v in (None, "") for v in row)
+
+                item = items[0]
+                with pytest.raises(RuntimeError, match="test_failure"):
+                    async with runtime.session(
+                        ticket(item["tenant"], item["workspace"])
+                    ) as db:
+                        assert (
+                            await db.execute(select(table.c.plot_code))
+                        ).scalars().all() == [item["plot_code"]]
+                        raise RuntimeError("test_failure")
+                async with runtime._engine.connect() as conn:
+                    assert (await conn.execute(select(table.c.plot_code))).all() == []
+                with pytest.raises(IdentityError):
+                    async with runtime.session(None):
+                        pytest.fail("unverified scope admitted")
+            finally:
                 await runtime.close()
-            await owner.execute(f"DROP TABLE IF EXISTS public.{name}")
+
+    asyncio.run(run())
+
+
+def test_postgres_domain_factory_rejects_incomplete_boundary():
+    async def run():
+        owner_dsn, app_dsn = configuration()
+        await install_domain_schema(owner_dsn)
+        owner = await asyncpg.connect(owner_dsn)
+        try:
+            await owner.execute(
+                "ALTER TABLE public.farmland_plots NO FORCE ROW LEVEL SECURITY"
+            )
+            with pytest.raises(IdentityError):
+                await GISRuntimeDatabase.open(app_dsn)
+            # The replay-only pool has its own independent identity-table gate;
+            # constructing it is not a claim of domain access readiness.
+            pool = await create_runtime_pool(app_dsn)
+            await pool.close()
+        finally:
+            await owner.execute(
+                "ALTER TABLE public.farmland_plots FORCE ROW LEVEL SECURITY"
+            )
             await owner.close()
+        database = await GISRuntimeDatabase.open(app_dsn)
+        await database.close()
 
     asyncio.run(run())

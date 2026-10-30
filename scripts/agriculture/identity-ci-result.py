@@ -18,6 +18,8 @@ ACTOR_PG_REQUIRED = {
     "test_postgres_actor_binding_lock_blocks_concurrent_revocation",
     "test_postgres_real_workbench_write_commit_and_stable_audit",
     "test_postgres_real_workbench_audit_failure_rolls_back",
+    "test_postgres_runtime_factory_role_admission",
+    "test_postgres_runtime_scope_pool_reuse_and_rollback",
 }
 PYTHON_MODULES = {
     "test_agriculture_identity", "test_agriculture_identity_postgres", "test_identity_canonical"
@@ -27,6 +29,7 @@ ACTOR_MODULES = {
     "test_legacy_actor_gate", "test_agriculture_legacy_write_integration",
     "test_legacy_identity_contracts",
     "test_identity_chain_fixture",
+    "test_agriculture_database", "test_agriculture_database_postgres",
 }
 
 

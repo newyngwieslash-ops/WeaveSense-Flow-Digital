@@ -59,7 +59,8 @@ env = {**native_test_environment(os.environ, run), **passwords, 'POSTGRES_USER':
        'LD_LIBRARY_PATH':str(root/'usr/lib/x86_64-linux-gnu'),
        'AGRI_TEST_PG_ISOLATED':'1'}
 for role,key,target in [('flow_geo_migrate','GEO_MIGRATION_PASSWORD','AGRI_TEST_GEO_MIGRATION_DSN'),
-                        ('flow_geo_app','GEO_RUNTIME_PASSWORD','AGRI_TEST_GEO_RUNTIME_DSN')]:
+                        ('flow_geo_app','GEO_RUNTIME_PASSWORD','AGRI_TEST_GEO_RUNTIME_DSN'),
+                        ('flow_geo_worker','GEO_WORKER_PASSWORD','AGRI_TEST_GEO_WORKER_DSN')]:
     env[target]=f'postgresql://{role}:{passwords[key]}@127.0.0.1:{port}/flow_geo?sslmode=disable'
 pw = run/'bootstrap-password'
 pw.write_text(passwords['POSTGRES_PASSWORD']+'\n')
@@ -70,6 +71,7 @@ files = [
     'tests/test_agriculture_actors_postgres.py',
     'tests/test_agriculture_legacy_write_integration.py',
     'tests/test_legacy_identity_contracts.py',
+    'tests/test_agriculture_database.py', 'tests/test_agriculture_database_postgres.py',
 ]
 started=False
 start=time.monotonic()

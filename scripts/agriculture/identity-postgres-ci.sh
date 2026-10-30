@@ -95,6 +95,7 @@ for domain in platform intel geo; do
 done
 export AGRI_TEST_GEO_MIGRATION_DSN="postgres://flow_geo_migrate:$GEO_MIGRATION_PASSWORD@127.0.0.1:$port/flow_geo?sslmode=disable"
 export AGRI_TEST_GEO_RUNTIME_DSN="postgres://flow_geo_app:$GEO_RUNTIME_PASSWORD@127.0.0.1:$port/flow_geo?sslmode=disable"
+export AGRI_TEST_GEO_WORKER_DSN="postgres://flow_geo_worker:$GEO_WORKER_PASSWORD@127.0.0.1:$port/flow_geo?sslmode=disable"
 export AGRI_TEST_PG_MIGRATION_DSN="postgres://flow_platform_migrate:$PLATFORM_MIGRATION_PASSWORD@127.0.0.1:$port/flow_platform?sslmode=disable"
 export AGRI_TEST_PG_RUNTIME_DSN="postgres://flow_platform_app:$PLATFORM_RUNTIME_PASSWORD@127.0.0.1:$port/flow_platform?sslmode=disable"
 export AGRI_TEST_PG_ISOLATED=1
@@ -121,7 +122,7 @@ python_gate=$?
 go_code=$?
 python3 scripts/agriculture/identity-ci-result.py --kind go --input "$private/go.jsonl" --output .local/evidence/identity-go.json
 go_gate=$?
-(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_actors.py tests/test_agriculture_actors_postgres.py tests/test_legacy_actor_gate.py tests/test_legacy_identity_contracts.py tests/test_agriculture_legacy_write_integration.py tests/test_identity_chain_fixture.py --junitxml="$private/actors.xml" -q) > "$private/actors.log" 2>&1
+(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_actors.py tests/test_agriculture_actors_postgres.py tests/test_legacy_actor_gate.py tests/test_legacy_identity_contracts.py tests/test_agriculture_legacy_write_integration.py tests/test_identity_chain_fixture.py tests/test_agriculture_database.py tests/test_agriculture_database_postgres.py --junitxml="$private/actors.xml" -q) > "$private/actors.log" 2>&1
 actors_code=$?
 python3 scripts/agriculture/identity-ci-result.py --kind actors --input "$private/actors.xml" --output .local/evidence/identity-actors.json
 actors_gate=$?

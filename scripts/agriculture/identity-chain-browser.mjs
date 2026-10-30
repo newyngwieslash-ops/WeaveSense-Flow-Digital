@@ -54,6 +54,10 @@ export function safeIdentityFailure(error) {
     return /^assertion failed: [a-z0-9_]+$/.test(error?.message || '') ? error.message : 'identity chain browser fixture failed; private diagnostics withheld';
 }
 
+export function validNetworkEvidence(value) {
+    return Boolean(value && Number.isSafeInteger(value.observed) && value.observed > 0 && value.violations === 0);
+}
+
 function parentContinuation(input) {
     const lines = createInterface({ input, crlfDelay: Infinity });
     let released = false, failed = false, waiter;
@@ -206,7 +210,7 @@ export async function main(configPath = process.argv[2]) {
         const revoked = await browserWrite(cdp, payload);
         check(revoked.csrf && revoked.status === 403 && revoked.reason === 'forbidden' && !revoked.secretLeak, 'revoked_same_browser_write_denied_not_csrf_failure');
         report.network = observer.counts();
-        check(report.network.violations === 0 && cdp.exceptions.length === 0 && cdp.outboundBlocked() === 0, 'no_browser_internal_credentials_or_external_requests');
+        check(validNetworkEvidence(report.network) && cdp.exceptions.length === 0 && cdp.outboundBlocked() === 0, 'no_browser_internal_credentials_or_external_requests');
         report.stage = 'complete'; report.result = 'pass';
     } catch (error) { report.result = 'fail'; report.failure = safeIdentityFailure(error); process.exitCode = 1; }
     finally {

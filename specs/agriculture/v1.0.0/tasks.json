@@ -1175,7 +1175,7 @@
         "检查瓦片与预览不因公开缓存泄露内容"
       ],
       "blockers": [],
-      "status": "in_progress"
+      "status": "done"
     },
     {
       "id": "DT-021",
@@ -1218,7 +1218,7 @@
         "使用过期游标、他租户任务ID检查SSE拒绝"
       ],
       "blockers": [],
-      "status": "not_started"
+      "status": "in_progress"
     },
     {
       "id": "DT-022",
@@ -1261,7 +1261,7 @@
         "验证任务重试仍使用同一受控范围"
       ],
       "blockers": [],
-      "status": "in_progress"
+      "status": "done"
     },
     {
       "id": "DT-023",
@@ -1306,7 +1306,7 @@
         "检查进程超限退出后的临时文件与任务状态"
       ],
       "blockers": [],
-      "status": "not_started"
+      "status": "in_progress"
     },
     {
       "id": "DT-024",

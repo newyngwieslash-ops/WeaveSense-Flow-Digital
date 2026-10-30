@@ -1,0 +1,29 @@
+{
+  "task": "DT-022",
+  "source_commit": "bc07d1c7b30ee4468c907c68f16b9ccdbd3154c7",
+  "report_recorded_head": "c8106dfcaef2949e5271aa94cae5213224faa0c5",
+  "head_note": "An unrelated documentation-only commit landed during execution. Every recorded source byte independently equals frozen bc07d1c7; original report retained unchanged.",
+  "source_verification": "git show <source_commit>:<path> for every recorded file; not current-worktree inference",
+  "verified_source_files": 1459,
+  "source_mismatches": [],
+  "report": "docs/agriculture/evidence/w02/jobs-native-bc07d1c7.json",
+  "report_sha256": "581ef8f649898b84d162626e9f36fa7748dcb662875e2337f2db572682794e19",
+  "command": "python scripts/agriculture/native-postgres-test.py --package-root .local/native-postgres-current/root --python .local/identity-rebuild/venv/bin/python --phase jobs --go .local/toolchains/go/bin/go",
+  "passed": 7,
+  "failed": 0,
+  "skipped": 0,
+  "exit_code": 0,
+  "shutdown_exit_code": 0,
+  "remote_ci": false,
+  "acceptance": "pending_independent_review",
+  "prior_evidence_retained": [
+    "jobs-native-local.json",
+    "jobs-native-645a7cf0-worktree.json"
+  ],
+  "boundaries": [
+    "Platform real SQLite authorization; GIS PostgreSQL 17.11/PostGIS 3.5.2 sidecar, replay and fixture lease.",
+    "Go real HTTP root and four children are mandatory non-skipped in pytest reducer.",
+    "Not a W06 production scheduler or atomic result publication acceptance.",
+    "Real PostgreSQL locks held across short identity and current-authority deadlines prove rollback before commit."
+  ]
+}

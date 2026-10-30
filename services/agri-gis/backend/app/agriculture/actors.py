@@ -3,9 +3,10 @@
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
-from app.models.workbench import MonitoringProject, ProjectUser
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.workbench import MonitoringProject, ProjectUser
 
 from .actor_models import ActorBinding, ProjectBinding
 from .identity.verify import IdentityError, Verified, require
@@ -97,8 +98,11 @@ async def lock_binding(db, claims, project_id):
         safe = (await db.execute(select(text(readiness)))).scalar_one()
         require(safe is True, "actor_binding_unavailable", 503)
         await db.execute(
-            text("SELECT set_config('app.tenant_ids', :tenant, true)"),
-            {"tenant": claims["tenant_id"]},
+            text(
+                "SELECT set_config('app.tenant_ids', :tenant, true), "
+                "set_config('app.workspace_id', :workspace, true)"
+            ),
+            {"tenant": claims["tenant_id"], "workspace": claims["workspace_id"]},
         )
         locked = (
             await db.execute(

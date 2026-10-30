@@ -25,8 +25,8 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from fastapi import Depends
 from test_agriculture_legacy_write_integration import legacy_fixture_context
 
-from app.agriculture.actor_session import AgricultureAsyncSession
 from app.agriculture.actors import resolve_trusted_actor
+from app.agriculture.database import GISRuntimeDatabase, create_runtime_pool
 from app.agriculture.identity.callback import CallbackKey, PlatformAuthority
 from app.agriculture.identity.dependency import IdentityServices, delegation_dependency
 from app.agriculture.identity.keys import KeyRing, utc_second
@@ -209,8 +209,10 @@ async def build_chain(config, stack):
                 "farm_id": farm,
             }
         )
-    pool = await asyncpg.create_pool(config["geo_runtime_dsn"], min_size=1, max_size=4)
+    pool = await create_runtime_pool(config["geo_runtime_dsn"], max_size=4)
     stack.push_async_callback(pool.close)
+    runtime = await GISRuntimeDatabase.open(config["geo_runtime_dsn"])
+    stack.push_async_callback(runtime.close)
     replay = PostgresReplayLedger(pool)
     await replay.require_safe_runtime()
     ownership = DatabaseOwnership(pool)
@@ -247,12 +249,11 @@ async def build_chain(config, stack):
     async def mutate(verified=verified_dependency):
         row = await ownership.target(verified.body)
         fixture = next(f for f in fixtures if f["project"] == row["project_id"])
-        async with AgricultureAsyncSession(
-            fixture["runtime"],
+        async with runtime.session(
+            verified,
             audit_adapters=fixture["adapters"],
-            expire_on_commit=False,
+            operation_adapters=fixture["registry"],
         ) as db:
-            db.info["agriculture_operation_adapters"] = fixture["registry"]
             actor = await resolve_trusted_actor(db, verified, row["project_id"])
             await WorkbenchService().update_plot_attributes(
                 db,

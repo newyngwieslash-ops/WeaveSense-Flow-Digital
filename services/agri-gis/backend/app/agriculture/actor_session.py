@@ -69,10 +69,20 @@ def prohibit_bulk(state):
     statement = state.statement
     if isinstance(statement, TextClause):
         require(
-            str(statement) == "SELECT set_config('app.tenant_ids', :tenant, true)",
+            str(statement) == "SELECT set_config('app.tenant_ids', :tenant, true), "
+            "set_config('app.workspace_id', :workspace, true)",
             "unadapted_database_operation",
             403,
         )
+        scope = getattr(state.session, "_database_scope", None)
+        if scope is not None:
+            scope.validate()
+            require(
+                state.parameters
+                == {"tenant": scope.tenant_id, "workspace": scope.workspace_id},
+                "database_scope_rebinding_denied",
+                403,
+            )
     else:
         require(state.is_select, "unadapted_database_operation", 403)
 

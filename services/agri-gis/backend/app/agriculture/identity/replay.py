@@ -47,8 +47,10 @@ class PostgresReplayLedger:
             async with self.pool.acquire(timeout=2) as connection:
                 async with connection.transaction():
                     await connection.execute(
-                        "SELECT set_config('app.tenant_ids', $1, true)",
+                        "SELECT set_config('app.tenant_ids', $1, true), "
+                        "set_config('app.workspace_id', $2, true)",
                         tenant_id,
+                        workspace_id,
                         timeout=2,
                     )
                     claimed = await connection.fetchval(

@@ -26,6 +26,7 @@ services:
       INTEL_RUNTIME_PASSWORD: ${INTEL_RUNTIME_PASSWORD:?configure local secret}
       GEO_MIGRATION_PASSWORD: ${GEO_MIGRATION_PASSWORD:?configure local secret}
       GEO_RUNTIME_PASSWORD: ${GEO_RUNTIME_PASSWORD:?configure local secret}
+      GEO_WORKER_PASSWORD: ${GEO_WORKER_PASSWORD:?configure independent worker secret}
     volumes:
       - agriculture_pgdata:/var/lib/postgresql/data
       - ./deploy/agriculture/postgres/init.sh:/docker-entrypoint-initdb.d/10-agriculture.sh:ro

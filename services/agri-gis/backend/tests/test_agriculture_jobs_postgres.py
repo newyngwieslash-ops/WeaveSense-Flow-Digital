@@ -238,6 +238,27 @@ def test_postgres_job_execution_lease_fencing_and_retry_scope():
     asyncio.run(run())
 
 
+def configured_go_mod_cache(root, value):
+    path = Path(value) if value is not None else root / ".local/go-mod-cache"
+    if not path.is_absolute() or not path.is_dir() or path == Path("/"):
+        raise ValueError("explicit existing absolute Go module cache required")
+    return str(path.resolve(strict=True))
+
+
+def test_job_cache_configuration_accepts_only_explicit_existing_directory(tmp_path):
+    default = tmp_path / ".local/go-mod-cache"
+    default.mkdir(parents=True)
+    assert configured_go_mod_cache(tmp_path, None) == str(default)
+    actual_ci = tmp_path / "runner/go/pkg/mod"
+    actual_ci.mkdir(parents=True)
+    assert configured_go_mod_cache(tmp_path, str(actual_ci)) == str(actual_ci)
+    file = tmp_path / "not_directory"
+    file.write_text("not a cache")
+    for invalid in ("", "relative/cache", "/", str(file), str(tmp_path / "absent")):
+        with pytest.raises(ValueError):
+            configured_go_mod_cache(tmp_path, invalid)
+
+
 def test_real_go_python_job_authority_chain():
     pg_config()
     go = os.environ.get("AGRI_TEST_GO_BIN")
@@ -245,6 +266,7 @@ def test_real_go_python_job_authority_chain():
     if not go or not python:
         pytest.fail("required explicit Go/Python executables missing")
     root = Path(__file__).resolve().parents[4]
+    module_cache = configured_go_mod_cache(root, os.getenv("AGRI_TEST_GO_MOD_CACHE"))
     with tempfile.TemporaryDirectory(prefix="job-chain-") as private:
         output = Path(private) / "go.json"
         with output.open("wb") as log:
@@ -277,7 +299,7 @@ def test_real_go_python_job_authority_chain():
                         )
                         if key in os.environ
                     },
-                    "GOMODCACHE": str(root / ".local/go-mod-cache"),
+                    "GOMODCACHE": module_cache,
                     "GOCACHE": str(root / ".local/go-cache"),
                     "GOTOOLCHAIN": "local",
                     "GOPROXY": "off",

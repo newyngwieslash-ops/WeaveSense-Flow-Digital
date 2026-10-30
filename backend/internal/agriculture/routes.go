@@ -62,6 +62,9 @@ func envDefault(name, value string) string {
 type API struct {
 	Service Service
 	User    flow.UserFunc
+	// Trusted server composition only. Production has no W06 event adapter yet;
+	// nil keeps the authenticated route closed instead of fabricating events.
+	JobEvents *JobEventStream
 }
 
 var ErrUnauthenticated = errors.New("agriculture: unauthenticated")
@@ -168,6 +171,7 @@ func (a API) sessionMiddleware(response func(*gin.Context, any, error)) gin.Hand
 func (a API) Register(api gin.IRouter) {
 	a.registerAuthorizationV1(api)
 	a.registerObjectGateway(api)
+	RegisterJobEvents(api, a, a.JobEvents)
 	g := api.Group("/agriculture")
 	g.Use(a.sessionMiddleware(respond))
 	actor := func(c *gin.Context) string { return c.GetString("agriculture.actor") }

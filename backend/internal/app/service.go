@@ -30,6 +30,7 @@ type Service struct {
 	flowEngine               flow.EngineCaller
 	flowMCP                  *flow.MCPGateway
 	flowModel                flow.ModelGateway
+	flowBackgroundScanner    *flow.BackgroundScanner
 	dataDir                  string
 	cancelMu                 sync.Mutex
 	registrationMu           sync.Mutex

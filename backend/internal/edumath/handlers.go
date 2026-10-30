@@ -590,7 +590,21 @@ func (h *API) file(c *gin.Context) {
 		return
 	}
 	var art model.EduArtifact
-	if err := h.DB.First(&art, "id = ?", id).Error; err != nil || !canFetch(h.DB, art, uid) {
+	tenants, err := eduTenantIDs(h.DB, uid)
+	if err != nil || len(tenants) == 0 {
+		reply(c, 403, nil, "access revoked")
+		return
+	}
+	err = flow.TenantTx(h.DB, strings.Join(tenants, ","), func(tx *gorm.DB) error {
+		if err := tx.First(&art, "id = ?", id).Error; err != nil {
+			return err
+		}
+		if !canFetch(tx, art, uid) {
+			return ErrForbidden
+		}
+		return nil
+	})
+	if err != nil {
 		reply(c, 403, nil, "access revoked")
 		return
 	}

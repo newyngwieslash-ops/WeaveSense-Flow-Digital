@@ -42,16 +42,21 @@ func (a Actor) Has(roles ...string) bool {
 
 // eduTenantIDs = platform tenants of the user plus tenants where the user holds
 // an active education role binding (students are not tenant members). Read in
-// system context, filtered by user id — same pattern as flow.UserTenantIDs.
+// a fixed admission resolver for the trusted session actor, never empty scope.
 func eduTenantIDs(db *gorm.DB, userID string) ([]string, error) {
 	ids, err := flow.UserTenantIDs(db, userID)
 	if err != nil {
 		return nil, err
 	}
 	var edu []string
-	if err := db.Model(&model.EduRoleBinding{}).Where("user_id = ? AND status = ? AND (expires_at IS NULL OR expires_at > ?)", userID, "active", time.Now().UTC()).
-		Distinct().Pluck("tenant_id", &edu).Error; err != nil {
-		return nil, err
+	if db.Dialector.Name() == "postgres" {
+		if err := db.Raw("SELECT tenant_id FROM flow_system.resolve_edu_user_tenants(?)", userID).Scan(&edu).Error; err != nil {
+			return nil, err
+		}
+	} else {
+		if err := db.Table("edu_role_bindings b").Joins("JOIN flow_tenants t ON t.id=b.tenant_id AND t.status='active'").Where("b.user_id = ? AND b.status = ? AND (b.expires_at IS NULL OR b.expires_at > ?)", userID, "active", time.Now().UTC()).Distinct().Pluck("b.tenant_id", &edu).Error; err != nil {
+			return nil, err
+		}
 	}
 	seen := map[string]bool{}
 	out := []string{}
@@ -69,8 +74,8 @@ func eduTenantIDs(db *gorm.DB, userID string) ([]string, error) {
 // still authorize explicitly (role, class, enrollment, assignment, state).
 func Middleware(db *gorm.DB, user flow.UserFunc) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if strings.HasPrefix(c.Request.URL.Path, "/api/edu/files/") {
-			c.Next() // signed-URL fetch: authorized by signature + access recheck in system context
+		if c.Request.Method == http.MethodGet && c.FullPath() == "/api/edu/files/:id" {
+			c.Next() // exact signed route establishes its own verified-user TenantTx
 			return
 		}
 		u, err := user(c)
@@ -82,6 +87,11 @@ func Middleware(db *gorm.DB, user flow.UserFunc) gin.HandlerFunc {
 		tenants, err := eduTenantIDs(db, u.ID)
 		if err != nil {
 			reply(c, http.StatusInternalServerError, nil, "tenant resolution failed")
+			c.Abort()
+			return
+		}
+		if len(tenants) == 0 {
+			reply(c, http.StatusForbidden, nil, "tenant access denied")
 			c.Abort()
 			return
 		}
@@ -122,7 +132,9 @@ func reqDB(c *gin.Context, base *gorm.DB) *gorm.DB {
 			return tx
 		}
 	}
-	return base
+	denied := base.Session(&gorm.Session{NewDB: true})
+	denied.AddError(ErrForbidden)
+	return denied
 }
 
 func reply(c *gin.Context, status int, data any, msg string) {

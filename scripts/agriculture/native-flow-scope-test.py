@@ -18,11 +18,22 @@ from native_test_environment import native_test_environment
 REPO = Path(__file__).resolve().parents[2]
 
 
+def source_hashes():
+    scope = ["scripts/agriculture/native-flow-scope-test.py", "scripts/agriculture/membership-ci-result.py",
+             "scripts/agriculture/native_test_environment.py", "tests/agriculture/test_native_test_environment.py",
+             "deploy/agriculture/postgres/init.sh", "deploy/flow/postgres/init-databases.sh", "deploy/agriculture/native-postgres-packages.json",
+             "backend/go.mod", "backend/go.sum"]
+    scope += [str(p.relative_to(REPO)) for p in (REPO / "backend").rglob("*.go") if ".local" not in p.parts]
+    return {p: hashlib.sha256((REPO / p).read_bytes()).hexdigest() for p in sorted(set(scope))}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--package-root", type=Path, required=True)
     parser.add_argument("--go", type=Path, required=True)
+    parser.add_argument("--bootstrap", choices=("agriculture", "flow"), default="agriculture")
     args = parser.parse_args()
+    initial_sources = source_hashes()
     allowed = (REPO / ".local").resolve()
     root, go = args.package_root.resolve(), args.go.resolve()
     run = REPO / ".local/native-flow-scope" / ("run_" + uuid.uuid4().hex)
@@ -64,13 +75,17 @@ def main():
     # Only the migration subprocess receives a generic DATABASE_URL.
     env.pop("DATABASE_URL", None)
     env.pop("CANVAS_DATABASE_DRIVER", None)
+    if args.bootstrap == "flow":
+        env["PLATFORM_DB_PASSWORD"] = passwords["PLATFORM_RUNTIME_PASSWORD"]
+        env["INTEL_DB_PASSWORD"] = passwords["INTEL_RUNTIME_PASSWORD"]
     for kind, key, target in [("migrate", "PLATFORM_MIGRATION_PASSWORD", "AGRI_TEST_PG_MIGRATION_DSN"),
-                              ("app", "PLATFORM_RUNTIME_PASSWORD", "AGRI_TEST_PG_RUNTIME_DSN")]:
+                              ("app", "PLATFORM_RUNTIME_PASSWORD", "AGRI_TEST_PG_RUNTIME_DSN"),
+                              ("system", "PLATFORM_SYSTEM_PASSWORD", "AGRI_TEST_PG_SYSTEM_DSN")]:
         env[target] = f"postgres://flow_platform_{kind}:{passwords[key]}@127.0.0.1:{port}/flow_platform?sslmode=disable"
     pw = run / "bootstrap-password"
     pw.write_text(passwords["POSTGRES_PASSWORD"] + "\n")
     report = {"kind": "local_real_flow_scope_postgres_fixture", "remote_ci": False,
-              "fresh_cluster": True, "production_deployment": False, "browser_test": False,
+              "fresh_cluster": True, "bootstrap": args.bootstrap, "production_deployment": False, "browser_test": False,
               "started_at": datetime.now(timezone.utc).isoformat(), "packages": manifest["packages"],
               "source_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip(),
               "commands": [], "checks": [], "test_reports": {}, "result": "failed"}
@@ -101,22 +116,26 @@ def main():
             command([binary / "pg_ctl", "-D", run / "cluster", "-l", run / "server.log", "-o",
                      f"-h 127.0.0.1 -p {port} -c unix_socket_directories='' -c jit=off", "-w", "start"])
             stage = "production_init_and_role_checks"
-            command(["sh", REPO / "deploy/agriculture/postgres/init.sh"])
-            for domain in ("platform", "intel", "geo"):
+            bootstrap = "deploy/agriculture/postgres/init.sh" if args.bootstrap == "agriculture" else "deploy/flow/postgres/init-databases.sh"
+            command(["sh", REPO / bootstrap])
+            domains = ("platform", "intel", "geo") if args.bootstrap == "agriculture" else ("platform", "intel")
+            for domain in domains:
                 for kind in ("migrate", "app"):
                     assert sql(domain, kind, "SELECT current_user") == f"flow_{domain}_{kind}"
                     assert sql(domain, kind, "SELECT NOT (rolsuper OR rolbypassrls OR rolcreatedb OR rolcreaterole OR rolreplication) FROM pg_roles WHERE rolname=current_user") == "t"
                     if kind == "app":
                         assert sql(domain, kind, "SELECT datdba <> (SELECT oid FROM pg_roles WHERE rolname=current_user) FROM pg_database WHERE datname=current_database()") == "t"
                         assert sql(domain, kind, f"SELECT NOT pg_has_role(current_user,'flow_{domain}_migrate','MEMBER') AND NOT has_schema_privilege(current_user,'public','CREATE')") == "t"
-                    for other in ("platform", "intel", "geo"):
+                    for other in domains:
                         if other != domain:
                             sql(domain, kind, "SELECT 1", f"flow_{other}", denied=True)
             assert sql("platform", "migrate", "SELECT NOT pg_has_role(current_user,'flow_platform_admission','USAGE') AND pg_has_role(current_user,'flow_platform_admission','SET')") == "t"
-            assert sql("geo", "app", "SELECT ST_SRID(ST_SetSRID(ST_Point(0,0),4326))") == "4326"
-            report["checks"] += ["six_restricted_database_roles", "runtime_not_owner_no_set_role", "cross_database_denied", "admission_membership_no_inherit", "postgis"]
+            report["checks"] += [f"{len(domains)*2}_restricted_database_roles", "runtime_not_owner_no_set_role", "cross_database_denied", "admission_membership_no_inherit"]
+            if args.bootstrap == "agriculture":
+                assert sql("geo", "app", "SELECT ST_SRID(ST_SetSRID(ST_Point(0,0),4326))") == "4326"
+                report["checks"].append("postgis")
+                report["postgis"] = sql("geo", "app", "SELECT postgis_lib_version()")
             report["postgres"] = sql("platform", "app", "SELECT version()")
-            report["postgis"] = sql("geo", "app", "SELECT postgis_lib_version()")
             report["go"] = subprocess.check_output([str(go), "version"], env=env, text=True).strip()
             stage = "real_platform_migrations"
             migrate_env = {**env, "CANVAS_DATABASE_DRIVER": "postgres", "DATABASE_URL": env["AGRI_TEST_PG_MIGRATION_DSN"]}
@@ -124,20 +143,31 @@ def main():
             command(argv, migrate_env)
             query = "SELECT md5(string_agg(version::text || ':' || checksum, ',' ORDER BY version)) FROM schema_migrations"
             before = sql("platform", "migrate", query)
-            for version in (82, 83, 84):
+            for version in (82, 83, 84, 85):
                 assert sql("platform", "migrate", f"SELECT count(*) FROM schema_migrations WHERE version={version}") == "1"
             command(argv, migrate_env)
             assert sql("platform", "migrate", query) == before
             command([go, "-C", "backend", "run", "./cmd/migrate-schema", "verify"], migrate_env)
-            report["checks"].append("migration_82_83_84_applied_replayed_verified")
+            report["checks"].append("migration_82_83_84_85_applied_replayed_verified")
             report["commands"] += ["go -C backend run ./cmd/migrate-schema up (twice)", "go -C backend run ./cmd/migrate-schema verify"]
             for suite, packages, pattern in [
-                ("flow-scope", ["./internal/flow"], "^TestFlowPostgresStrictScopeAndProviderAtomicity$")]:
+                ("flow-scope", ["./internal/flow"], "^TestFlowPostgresStrictScopeAndProviderAtomicity$"),
+                ("flow-admission", ["./internal/flow"], "^TestFlowPostgresCallbackAndLegacyAdmission$"),
+                ("flow-workers", ["./internal/flow"], "^TestFlowPostgresWorkerShortTransactions$"),
+                ("flow-continuations", ["./internal/flow"], "^TestFlowPostgresWaitAndNotificationScopes$"),
+                ("edu-artifacts", ["./internal/edumath"], "^TestEduPostgresSignedArtifactAdmission$"),
+                ("edu-onboarding", ["./internal/edumath"], "^TestEduPostgresOnboardingAdmission$"),
+                ("flow-scanner", ["./internal/flow"], "^TestFlowPostgresScannerAndRuntimeAdmission$")]:
                 stage = suite
                 argv = [str(go), "-C", "backend", "test", "-p", "1", "-count=1", "-json", *packages, "-run", pattern]
                 report["commands"].append("go " + " ".join(argv[1:]))
-                raw = subprocess.run(argv, cwd=REPO, env=env, stdout=subprocess.PIPE, stderr=log, timeout=300)
-                (run / "private-test.jsonl").write_bytes(raw.stdout)
+                test_env = dict(env)
+                if suite == "flow-scanner":
+                    # This dedicated negative setup root alone can construct and
+                    # restore privilege drift. Never passed to product processes.
+                    test_env["AGRI_TEST_PG_FIXTURE_BOOTSTRAP_DSN"] = f"postgres://postgres:{passwords['POSTGRES_PASSWORD']}@127.0.0.1:{port}/flow_platform?sslmode=disable"
+                raw = subprocess.run(argv, cwd=REPO, env=test_env, stdout=subprocess.PIPE, stderr=log, timeout=300)
+                (run / ("private-" + suite + ".jsonl")).write_bytes(raw.stdout)
                 output = run / (suite + ".json")
                 reduced = subprocess.run([sys.executable, "scripts/agriculture/membership-ci-result.py",
                                           "--suite", suite, "--output", str(output)], cwd=REPO,
@@ -158,12 +188,14 @@ def main():
                         report["result"] = "failed"
             finally:
                 pw.unlink(missing_ok=True)
-    scope = ["scripts/agriculture/native-flow-scope-test.py", "scripts/agriculture/membership-ci-result.py",
-             "scripts/agriculture/native_test_environment.py", "tests/agriculture/test_native_test_environment.py",
-             "deploy/agriculture/postgres/init.sh", "deploy/agriculture/native-postgres-packages.json",
-             "backend/go.mod", "backend/go.sum"]
-    scope += [str(p.relative_to(REPO)) for p in (REPO / "backend").rglob("*.go") if ".local" not in p.parts]
-    report["source_files"] = {p: digest((REPO / p).read_bytes()) for p in sorted(set(scope))}
+    report["source_files"] = source_hashes()
+    report["source_files_at_start"] = initial_sources
+    report["source_stable"] = initial_sources == report["source_files"]
+    if not report["source_stable"]:
+        report["changed_source_paths"] = sorted(p for p in set(initial_sources) | set(report["source_files"]) if initial_sources.get(p) != report["source_files"].get(p))
+        if report["result"] == "pass":
+            report["result"] = "failed"
+            report["failure"] = {"stage": "source_changed_during_run", "type": "SourceMutation"}
     report["worktree_changes_included"] = True
     report["elapsed_seconds"] = round(time.monotonic() - started_at, 3)
     report["finished_at"] = datetime.now(timezone.utc).isoformat()

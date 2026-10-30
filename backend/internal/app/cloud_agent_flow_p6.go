@@ -121,12 +121,16 @@ func (s *Service) resumeFlowWait(w model.FlowExternalWait) (string, error) {
 }
 
 // RunFlowAutoContinue resumes ready waits until ctx ends.
+func (s *Service) ConfigureFlowBackgroundScanner(scanner *flow.BackgroundScanner) {
+	s.flowBackgroundScanner = scanner
+}
+
 func (s *Service) RunFlowAutoContinue(ctx context.Context, every time.Duration) {
 	t := time.NewTicker(every)
 	defer t.Stop()
 	for {
 		if s.repo != nil && s.repo.DB() != nil {
-			if _, err := (flow.Waits{DB: s.repo.DB()}).ResumeReady(s.resumeFlowWait); err != nil {
+			if _, err := (flow.Waits{DB: s.repo.DB(), Scanner: s.flowBackgroundScanner}).ResumeReadyContext(ctx, s.resumeFlowWait); err != nil {
 				slog.Warn("flow: auto-continue", "error", err)
 			}
 		}

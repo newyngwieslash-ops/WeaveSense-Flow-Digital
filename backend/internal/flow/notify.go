@@ -161,11 +161,13 @@ type Mailer func(ctx context.Context, to, subject, body string, headers map[stri
 
 // Notifier delivers due notifications.
 type Notifier struct {
-	DB      *gorm.DB
-	Mail    Mailer
-	HTTP    *http.Client
-	Now     func() time.Time
-	Backoff time.Duration
+	DB       *gorm.DB
+	Scanner  *BackgroundScanner
+	tenantID string
+	Mail     Mailer
+	HTTP     *http.Client
+	Now      func() time.Time
+	Backoff  time.Duration
 	// BaseURL links reports in messages (e.g. https://flow.example.com).
 	BaseURL string
 }
@@ -179,34 +181,68 @@ func (n Notifier) now() time.Time {
 
 // RunDue claims due deliveries (lease) and sends them. Returns the number attempted.
 func (n Notifier) RunDue(ctx context.Context) (int, error) {
+	if n.DB.Dialector.Name() == "postgres" && n.tenantID == "" {
+		tenants, err := n.Scanner.Next(ctx, ScanNotifications)
+		if err != nil {
+			return 0, err
+		}
+		total := 0
+		for _, tenant := range tenants {
+			child := n
+			child.tenantID = tenant
+			count, e := child.RunDue(ctx)
+			total += count
+			if e != nil {
+				return total, e
+			}
+		}
+		return total, nil
+	}
+	work := func(fn func(*gorm.DB) error) error { return shortTenantWork(n.DB.WithContext(ctx), n.tenantID, fn) }
 	now := n.now()
 	var due []model.FlowNotificationDelivery
-	if err := n.DB.Where("status IN ? AND next_attempt_at <= ?", []string{"pending", StatusRetryWait}, now).Order("next_attempt_at").Limit(20).Find(&due).Error; err != nil {
+	if err := work(func(tx *gorm.DB) error {
+		if err := tx.Model(&model.FlowNotificationDelivery{}).Where("status = ? AND lease_until < ?", "sending", now).Updates(map[string]any{"status": StatusReconciliation, "last_error": "sender lease expired", "updated_at": now}).Error; err != nil {
+			return err
+		}
+		return tx.Where("status IN ? AND next_attempt_at <= ?", []string{"pending", StatusRetryWait}, now).Order("next_attempt_at").Limit(20).Find(&due).Error
+	}); err != nil {
 		return 0, err
 	}
-	// A crashed sender's lease: the send may have happened → reconciliation_required.
-	n.DB.Model(&model.FlowNotificationDelivery{}).Where("status = ? AND lease_until < ?", "sending", now).
-		Updates(map[string]any{"status": StatusReconciliation, "last_error": "sender lease expired", "updated_at": now})
 	done := 0
 	for _, d := range due {
-		claim := n.DB.Model(&model.FlowNotificationDelivery{}).Where("id = ? AND status = ?", d.ID, d.Status).
-			Updates(map[string]any{"status": "sending", "lease_until": now.Add(2 * time.Minute), "attempts": gorm.Expr("attempts + 1"), "updated_at": now})
-		if claim.Error != nil || claim.RowsAffected == 0 {
+		claimed := false
+		if err := work(func(tx *gorm.DB) error {
+			claim := tx.Model(&model.FlowNotificationDelivery{}).Where("id = ? AND status = ?", d.ID, d.Status).Updates(map[string]any{"status": "sending", "lease_until": now.Add(2 * time.Minute), "attempts": gorm.Expr("attempts + 1"), "updated_at": now})
+			claimed = claim.RowsAffected == 1
+			return claim.Error
+		}); err != nil {
+			return done, err
+		}
+		if !claimed {
 			continue
 		}
 		d.Attempts++
 		done++
-		n.deliver(ctx, d)
+		if err := n.deliver(ctx, d); err != nil {
+			return done, err
+		}
 	}
 	return done, nil
 }
 
-func (n Notifier) deliver(ctx context.Context, d model.FlowNotificationDelivery) {
+func (n Notifier) deliver(ctx context.Context, d model.FlowNotificationDelivery) error {
+	work := func(fn func(*gorm.DB) error) error { return shortTenantWork(n.DB.WithContext(ctx), n.tenantID, fn) }
 	now := n.now()
 	var t model.FlowNotificationTarget
-	if err := n.DB.First(&t, "id = ? AND tenant_id = ?", d.TargetID, d.TenantID).Error; err != nil || t.Status != "active" {
-		n.DB.Model(&model.FlowNotificationDelivery{}).Where("id = ?", d.ID).Updates(map[string]any{"status": "cancelled", "last_error": "target not active", "lease_until": nil, "updated_at": now})
-		return
+	readErr := work(func(tx *gorm.DB) error { return tx.First(&t, "id = ? AND tenant_id = ?", d.TargetID, d.TenantID).Error })
+	if readErr != nil && !errors.Is(readErr, gorm.ErrRecordNotFound) {
+		return readErr
+	}
+	if readErr != nil || t.Status != "active" {
+		return work(func(tx *gorm.DB) error {
+			return tx.Model(&model.FlowNotificationDelivery{}).Where("id = ?", d.ID).Updates(map[string]any{"status": "cancelled", "last_error": "target not active", "lease_until": nil, "updated_at": now}).Error
+		})
 	}
 	var receipt string
 	var err error
@@ -222,19 +258,19 @@ func (n Notifier) deliver(ctx context.Context, d model.FlowNotificationDelivery)
 	switch {
 	case err == nil:
 		upd["status"], upd["receipt"], upd["delivered_at"], upd["last_error"] = "delivered", truncRunes(receipt, 300), now, ""
-		_, _ = DefaultUsageRecorder.Record(n.DB, UsageInput{TenantID: d.TenantID, WorkspaceID: d.WorkspaceID, UsageType: UsageNotifications, Quantity: 1, CostMicro: -1,
-			SubjectRef: t.Channel + ":" + d.ID, IdemKey: "notify:" + d.ID, Charge: true}, now)
 	case errors.Is(err, errAmbiguous):
 		upd["status"], upd["last_error"] = StatusReconciliation, truncRunes(err.Error(), 480)
 	case errors.Is(err, errPermanent):
 		upd["status"], upd["last_error"] = "failed", truncRunes(err.Error(), 480)
 		// Target invalid: stop it; never re-route to another address.
-		_ = n.DB.Transaction(func(tx *gorm.DB) error {
+		if e := work(func(tx *gorm.DB) error {
 			if e := tx.Model(&model.FlowNotificationTarget{}).Where("id = ?", t.ID).Updates(map[string]any{"status": "disabled", "disabled_reason": truncRunes(err.Error(), 300), "updated_at": now}).Error; e != nil {
 				return e
 			}
 			return cancelTargetDeliveries(tx, t.ID, "target disabled", now)
-		})
+		}); e != nil {
+			return e
+		}
 	case d.Attempts >= d.MaxAttempts:
 		upd["status"], upd["last_error"] = "failed", truncRunes(err.Error(), 480)
 	default:
@@ -244,7 +280,14 @@ func (n Notifier) deliver(ctx context.Context, d model.FlowNotificationDelivery)
 		}
 		upd["status"], upd["last_error"], upd["next_attempt_at"] = StatusRetryWait, truncRunes(err.Error(), 480), now.Add(backoff*time.Duration(1<<(d.Attempts-1)))
 	}
-	n.DB.Model(&model.FlowNotificationDelivery{}).Where("id = ? AND status = ?", d.ID, "sending").Updates(upd)
+	return work(func(tx *gorm.DB) error {
+		if err == nil {
+			if _, e := DefaultUsageRecorder.Record(tx, UsageInput{TenantID: d.TenantID, WorkspaceID: d.WorkspaceID, UsageType: UsageNotifications, Quantity: 1, CostMicro: -1, SubjectRef: t.Channel + ":" + d.ID, IdemKey: "notify:" + d.ID, Charge: true}, now); e != nil {
+				return e
+			}
+		}
+		return tx.Model(&model.FlowNotificationDelivery{}).Where("id = ? AND status = ?", d.ID, "sending").Updates(upd).Error
+	})
 }
 
 func (n Notifier) message(d model.FlowNotificationDelivery) (subject, body string) {

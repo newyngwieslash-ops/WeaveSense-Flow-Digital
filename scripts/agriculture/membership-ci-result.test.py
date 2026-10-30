@@ -26,6 +26,22 @@ def postgres_pass():
 
 
 class EvidenceTests(unittest.TestCase):
+    def test_new_fixed_suites_require_each_case_and_no_skip(self):
+        suites = {
+            "flow-admission": ("flow", "TestFlowPostgresCallbackAndLegacyAdmission", ["first_personal_admission_and_disabled_no_resurrection"]),
+            "flow-workers": ("flow", "TestFlowPostgresWorkerShortTransactions", ["missing_scanner_fails_closed", "model_gateway_and_notification_outside_transaction", "model_reconciliation_http_outside_transaction", "command_http_outside_transaction_and_retry_receipt_commits"]),
+            "flow-scanner": ("flow", "TestFlowPostgresScannerAndRuntimeAdmission", ["fixed_scanner_no_business_access", "privilege_drift_rejected_and_restored", "bounded_keyset_reaches_all_tenants"]),
+            "flow-continuations": ("flow", "TestFlowPostgresWaitAndNotificationScopes", ["wait_continuation_outside_short_transaction", "notifications_outside_short_transaction"]),
+            "edu-artifacts": ("edumath", "TestEduPostgresSignedArtifactAdmission", ["active_nonmember_student", "signature_negatives_no_http", "revoked_actor_or_role_no_http", "pooled_scope_and_cross_school"]),
+            "edu-onboarding": ("edumath", "TestEduPostgresOnboardingAdmission", ["class_invite_hash_and_atomic_limit", "roster_claim_single_use", "disabled_or_revoked_actor_denied", "metadata_scope_and_no_platform_grants"]),
+        }
+        for suite, (package, root, children) in suites.items():
+            events = [event("pass", package, name) for name in [root] + [root + "/" + child for child in children]] + [event("pass", package)]
+            self.assertTrue(result.verify(events, suite)["passed"], suite)
+            for index in range(len(events)):
+                self.assertFalse(result.verify(events[:index] + events[index+1:], suite)["passed"], suite)
+            self.assertFalse(result.verify(events + [event("skip", package, root + "/extra")], suite)["passed"], suite)
+
     def test_flow_scope_requires_real_root_and_every_child(self):
         root = "TestFlowPostgresStrictScopeAndProviderAtomicity"
         names = [root] + [root + "/" + child for child in ("empty_scope_and_pool_reuse", "provider_and_wallet_rollback_together", "provider_state_idempotency_and_quota", "unknown_provider_and_cross_tenant", "child_release_and_suspended_provider_preserve_legacy_math")]

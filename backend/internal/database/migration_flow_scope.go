@@ -15,13 +15,19 @@ func RequireFlowScope(db *gorm.DB) error {
 		return nil
 	}
 	var safe bool
-	err := db.Raw(`SELECT r.rolname='flow_platform_app' AND r.rolcanlogin
+	err := db.Raw(`SELECT current_user=session_user AND r.rolname='flow_platform_app' AND r.rolcanlogin
  AND NOT (r.rolsuper OR r.rolbypassrls OR r.rolinherit OR r.rolcreatedb OR r.rolcreaterole OR r.rolreplication)
  AND NOT pg_catalog.pg_has_role(current_user,'flow_platform_guard','MEMBER')
  AND NOT pg_catalog.pg_has_role(current_user,'flow_platform_system','MEMBER')
  AND NOT pg_catalog.pg_has_role(current_user,'flow_platform_migrate','MEMBER')
+ AND NOT pg_catalog.pg_has_role(current_user,'flow_platform_admission','MEMBER')
+ AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_database d WHERE d.datname=current_database() AND d.datdba=r.oid)
+ AND NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+ WHERE n.nspname='public' AND c.relkind IN ('r','p','v','m','f') AND c.relowner=r.oid)
  AND NOT has_table_privilege(current_user,'public.flow_provider_accounts','SELECT,INSERT,UPDATE,DELETE')
  AND NOT has_table_privilege(current_user,'public.flow_provider_account_periods','SELECT,INSERT,UPDATE,DELETE')
+ AND NOT has_any_column_privilege(current_user,'public.flow_provider_accounts','SELECT,INSERT,UPDATE,REFERENCES')
+ AND NOT has_any_column_privilege(current_user,'public.flow_provider_account_periods','SELECT,INSERT,UPDATE,REFERENCES')
  AND EXISTS(SELECT 1 FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_roles g ON g.oid=p.proowner
   WHERE p.oid=to_regprocedure('flow_system.provider_exists(text)') AND p.prosecdef
   AND p.proconfig @> ARRAY['search_path=pg_catalog']::text[] AND g.rolname='flow_platform_guard'

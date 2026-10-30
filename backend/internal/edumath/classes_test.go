@@ -74,7 +74,7 @@ func TestClassesInvitesConsentAuthorization(t *testing.T) {
 	if code, _, _, _ := h.call("u_bob", "POST", "/api/edu-join", map[string]any{"code": one}); code != 200 {
 		t.Fatalf("re-join while active must be idempotent, got %d", code)
 	}
-	h.db.Create(&model.User{ID: "u_dan", Username: "u_dan"})
+	// u_dan is an active persisted user in testDB, not a header-only actor.
 	if code, _, _, _ := h.call("u_dan", "POST", "/api/edu-join", map[string]any{"code": one}); code != 404 {
 		t.Fatalf("exhausted invite must be 404, got %d", code)
 	}

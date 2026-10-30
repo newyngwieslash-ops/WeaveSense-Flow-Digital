@@ -9,7 +9,44 @@
 
 `flow_platform_guard` 是预建 NOLOGIN/NOINHERIT、无 BYPASSRLS 的固定函数 owner；
 `flow_platform_system` 是另一个受限 LOGIN 后台身份，不能作为请求数据库。后台扫描
-固定接口及旧任务调用方迁移需独立完成，不能因为 provider 测试通过便标 DT018 完成。
+固定接口及旧任务调用方迁移见下文；不能因为 provider 测试通过便标 DT018 完成。
+
+## 受限后台发现与运行时校验（迁移 85）
+
+`BackgroundScanner` 私有持有独立 system 连接，只公开固定 `Next(ScanKind)`；没有可供 HTTP、
+Agent 参数选择连接或执行 SQL 的接口。`flow_system.pending_tenants` 仅返回最多 100 个 tenant ID，
+closed kind 列表覆盖 billing、notification、model、command、external wait、math jobs/ledger。
+每类任务独立 keyset cursor，避免只处理前 100 个租户。函数 owner 是无登录 guard，system 没有
+业务表/列 CRUD、TRUNCATE 或角色继承权限，app 也不能调用全域 scanner。
+
+启动校验拒绝 `current_user != session_user`、危险角色属性、迁移/admission/guard 成员关系，
+以及 app 拥有数据库/业务表的配置。scanner 额外扫描全部 public relations 的表和列权限，
+拒绝误授予其他业务表的权限，不仅检查 provider 表。新部署和已有卷都不能靠角色名称冒充安全配置。
+
+main 保留同一进程原运行链，但只向后台对象注入私有 scanner；HTTP/工具仍使用 app 池。
+ModelTasks、CommandDispatcher、Notifier 和 Waits 按租户短事务领取/读写，provider/Engine/邮件/
+continuation 外部调用不持有这些数据库事务，完成后另开同租户事务记录 receipt。未知结果、
+重试和结算继续原状态机。真实单连接 PostgreSQL 回调探针验证外部调用期间可复用连接且 scope 已清除。
+
+**数学既有边界**：`edumath.SyncOnce`/`ReconcileAll` 只将跨租户发现替换成固定 scanner；
+`Sync`、`HandleMathEvent` 以及既有 StartJob/CancelJob 调用的部分 HTTP 仍在原租户事务内。
+这不是新增长事务，但尚未完成这部分调度/网络拆分，不能声称全部数学 I/O 已移出事务。
+
+## 数学旧入口保持可用但不恢复空 scope
+
+`resolve_edu_user_tenants` 只为可信平台会话或已验证 artifact 签名中的 user ID 返回当前有效
+教育角色所处的 active 租户；学生无需假造平台组织成员。已撤销/过期角色、disabled 用户或学校
+不会获得 scope。普通数学 API 必须使用该 scope 的请求事务，遗漏 middleware 默认拒绝。
+
+签名文件仍使用既有 `edu-artifact` HMAC、artifact/user/expiry 绑定和最多 5 分钟链接。
+只有精确 GET `/api/edu/files/:id` 进入专用签名流程；校验后以签名绑定用户的 scope 开短事务，
+按精确 artifact ID 查询并执行 `canFetch` 当前授权复核，结束数据库事务后再下载字节。
+签名失效、角色撤销等拒绝不调用 artifact HTTP；不声称已经开始的传输可被追溯取消。
+
+班级邀请和名册 claim 使用 hash+active actor/学校/班级绑定的固定 resolver，仅返回 tenant ID，
+随后 scoped transaction 锁定原记录，重新检查状态、身份、次数/expiry 并执行原业务操作。
+班级 code 已达到次数上限时，原 active 已入班学生的幂等重复请求仍保留，但新学生不能占用。
+service math event 继续先校验原签名和租户绑定，再执行 `TenantTx`，不是浏览器身份入口。
 
 ## 同事务 provider 计量
 
@@ -41,7 +78,7 @@ SQLite 保留原计算实现用于旧逻辑回归，不作为 PostgreSQL 权限�
 ## 部署与回退边界
 
 先预建 guard/system 最小角色，准备与新调用方兼容的服务二进制及私有配置；维护窗口
-停止旧后台实例后备份数据库/角色清单，再运行 84、验证 runtime readiness、启动新实例。
+停止旧后台实例后备份数据库/角色清单，再运行 84/85、验证 runtime readiness、启动新实例。
 不能混跑依赖空 scope 的旧后台，否则会遗漏任务或错误处理结算。
 若兼容回归未完成，停止农业上线并继续修复，不用空 scope=system 或关闭 RLS 临时兜底。
 回退须在停写/停后台下恢复经过验证的数据库与匹配二进制备份；不向正在使用新财务
@@ -55,3 +92,9 @@ SQLite 保留原计算实现用于旧逻辑回归，不作为 PostgreSQL 权限�
 2026-10-30 本地 run `58b093c394494cc0b2e7b63d514d6288` 已真实通过；不是远程 CI、生产
 部署或整个 DT018 验收。原首次 run 因旧缓存目录缺模块失败，保留失败记录，没有改变
 断言或在线拉取未锁定依赖来掩盖错误。
+
+后续 native runner 可选 `--bootstrap agriculture|flow`，后者真实调用旧影视 Flow 的独立角色
+初始化脚本，仍执行相同平台迁移/provider/callback/scanner/worker 门禁。fixture bootstrap
+管理凭据只注入专门的权限漂移负例子进程，用于构造后恢复错误授权/ownership；不会传入产品。
+报告分别保留开始/结束源码 SHA，运行期间源码变化必须重新验证，不能用结束时哈希冒充实际执行版本。
+本文件列出的实现边界不替代最终整包验收状态，实际结果以对应归档报告为准。

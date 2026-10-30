@@ -18,7 +18,7 @@ func runHelp(t *testing.T, h *harness) {
 	tenant := h.setupTeacher()
 	pubID, _ := publishG1(t, h)
 	stu := []string{"X-Edu-Tenant", tenant}
-	h.db.Create(&model.User{ID: "u_dan", Username: "u_dan", DisplayName: "张小明"})
+	h.db.Model(&model.User{}).Where("id = ?", "u_dan").Update("display_name", "张小明")
 	_, out, _, _ := h.call("u_alice", "POST", "/api/edu/classes", map[string]any{"name": "高二(6)班"})
 	classID := data(out)["id"].(string)
 	_, out, _, _ = h.call("u_alice", "POST", "/api/edu/classes/"+classID+"/assignments", map[string]any{"publicationId": pubID, "title": "求助测试", "answerPolicy": "after_submission"})

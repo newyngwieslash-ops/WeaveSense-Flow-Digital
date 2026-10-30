@@ -47,7 +47,8 @@ func (s *Service) VerifyURL(artifactID, userID, expS, sig string) bool {
 	return hmac.Equal([]byte(sig), []byte(s.urlSig(artifactID, userID, exp)))
 }
 
-// canFetch re-evaluates authorization for the bound user (system context, explicit filters).
+// canFetch re-evaluates authorization for the bound user in the verified-user
+// tenant transaction. Signature validity alone is not current authorization.
 func canFetch(db *gorm.DB, art model.EduArtifact, userID string) bool {
 	if art.RevokedAt != nil {
 		return false

@@ -42,8 +42,10 @@ func testDB(t *testing.T) *gorm.DB {
 	if err := db.AutoMigrate(&model.User{}); err != nil {
 		t.Fatal(err)
 	}
-	for _, id := range []string{"u_alice", "u_bob", "u_carol"} {
-		if err := db.Create(&model.User{ID: id, Username: id}).Error; err != nil {
+	for _, id := range []string{"u_alice", "u_bob", "u_carol", "u_dave", "u_dan"} {
+		// The trusted-session fixture must represent an active persisted actor;
+		// an arbitrary header alone is not admission to a tenant.
+		if err := db.Create(&model.User{ID: id, Username: id, Status: "active"}).Error; err != nil {
 			t.Fatal(err)
 		}
 	}

@@ -81,9 +81,21 @@ func run(ctx context.Context) error {
 		return err
 	}
 
+	if err := database.RequireFlowScope(db); err != nil {
+		return err
+	}
+	var backgroundScanner *flow.BackgroundScanner
+	if db.Dialector.Name() == "postgres" {
+		backgroundScanner, err = flow.OpenBackgroundScanner(os.Getenv("FLOW_PLATFORM_SYSTEM_DSN"))
+		if err != nil {
+			return err
+		}
+		defer backgroundScanner.Close()
+	}
 	repo := repository.New(db)
 	addr := env("CANVAS_BACKEND_ADDR", ":8080")
 	svc := service.New(repo, dataDir)
+	svc.ConfigureFlowBackgroundScanner(backgroundScanner)
 	if updaterToken := strings.TrimSpace(os.Getenv("CANVAS_UPDATER_TOKEN")); updaterToken != "" {
 		svc.ConfigureUpdateManager(updaterclient.New(env("CANVAS_UPDATER_SOCKET", "/run/open-ai-canvas-updater/updater.sock"), updaterToken))
 	}
@@ -158,13 +170,13 @@ func run(ctx context.Context) error {
 	if g := flow.ModelGatewayFromEnv(); g != nil {
 		modelGW = g
 		svc.ConfigureFlowModel(g)
-		tasks := flow.ModelTasks{DB: db, GW: g, Status: flow.ModelStatusFromEnv()}
+		tasks := flow.ModelTasks{DB: db, GW: g, Status: flow.ModelStatusFromEnv(), Scanner: backgroundScanner}
 		if flowCfg.Enabled() {
 			// Push completion: a finished brief summarization wakes the engine's
 			// brief generator for that window (its scheduler tick stays the fallback).
 			tasks.Notify = flow.BriefWakeNotifier(flow.EngineClient{Cfg: flowCfg})
 		}
-		go flow.RunModelTaskWorker(context.Background(), tasks, 2*time.Second)
+		go flow.RunModelTaskWorker(ctx, tasks, 2*time.Second)
 	}
 	flow.RegisterModelTaskRoutes(flowAPI, db, flowUser)
 	flow.RegisterP5Routes(flowAPI, db, flowCfg, flowUser, modelGW)
@@ -176,16 +188,17 @@ func run(ctx context.Context) error {
 	// Education math workbench (docs/math-workbench): own middleware (students are
 	// not tenant members); disabled unless FLOW_MATH_SERVICE_URL/KEY are set.
 	if mathSvc := edumath.FromEnv(db); mathSvc != nil {
+		mathSvc.Scanner = backgroundScanner
 		(&edumath.API{Svc: mathSvc, DB: db, User: flowUser}).Register(api)
 		mathSvc.ConfigureGateway(mcpGateway)
-		go mathSvc.Run(context.Background(), 2*time.Second)
+		go mathSvc.Run(ctx, 2*time.Second)
 	}
-	go flow.RunNotifier(context.Background(), flow.Notifier{DB: db, Mail: flow.SMTPMailerFromEnv(), BaseURL: os.Getenv("FLOW_PUBLIC_BASE_URL")}, 10*time.Second)
-	go flow.RunBillingMaintenance(context.Background(), db, 15*time.Minute)
+	go flow.RunNotifier(ctx, flow.Notifier{DB: db, Scanner: backgroundScanner, Mail: flow.SMTPMailerFromEnv(), BaseURL: os.Getenv("FLOW_PUBLIC_BASE_URL")}, 10*time.Second)
+	go flow.RunBillingMaintenance(ctx, db, 15*time.Minute, backgroundScanner)
 	if flowCfg.Enabled() {
-		go flow.RunCommandDispatcher(context.Background(), flow.CommandDispatcher{DB: db, Engine: flow.EngineClient{Cfg: flowCfg}}, 2*time.Second)
+		go flow.RunCommandDispatcher(ctx, flow.CommandDispatcher{DB: db, Scanner: backgroundScanner, Engine: flow.EngineClient{Cfg: flowCfg}}, 2*time.Second)
 	}
-	go svc.RunFlowAutoContinue(context.Background(), 5*time.Second)
+	go svc.RunFlowAutoContinue(ctx, 5*time.Second)
 	r.NoRoute(handler.SystemProxyNoRouteHandler(svc))
 
 	listener, err := net.Listen("tcp", addr)

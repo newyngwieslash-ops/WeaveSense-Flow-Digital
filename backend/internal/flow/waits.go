@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -13,7 +14,11 @@ import (
 // Waits implements waiting_external auto-continue: an agent run parks on an
 // engine operation with a checkpoint; the (deduplicated) completion event marks
 // it ready; ResumeReady re-authorizes the grant and resumes it exactly once.
-type Waits struct{ DB *gorm.DB }
+type Waits struct {
+	DB       *gorm.DB
+	Scanner  *BackgroundScanner
+	tenantID string
+}
 
 // Park is idempotent per operation.
 func (w Waits) Park(row model.FlowExternalWait) (model.FlowExternalWait, error) {
@@ -40,19 +45,53 @@ func markWaitsReady(tx *gorm.DB, tenantID, operationID, outcome string) error {
 // promoted from the projection. Each wait is claimed with a conditional
 // update, so concurrent workers and repeated calls resume it once.
 func (w Waits) ResumeReady(resume func(model.FlowExternalWait) (string, error)) (int, error) {
-	w.DB.Exec(`UPDATE flow_external_waits SET status = 'ready', outcome = (SELECT p.status FROM flow_operation_projections p WHERE p.operation_id = flow_external_waits.operation_id)
-		WHERE status = 'waiting' AND EXISTS (SELECT 1 FROM flow_operation_projections p WHERE p.operation_id = flow_external_waits.operation_id AND p.tenant_id = flow_external_waits.tenant_id AND p.status IN ('succeeded','failed','cancelled'))`)
-	// Fallback for the push path (ModelTasks.NotifyDone): waits on finished model tasks.
-	w.DB.Exec(`UPDATE flow_external_waits SET status = 'ready', outcome = (SELECT t.status FROM flow_model_tasks t WHERE t.id = flow_external_waits.operation_id)
-		WHERE status = 'waiting' AND EXISTS (SELECT 1 FROM flow_model_tasks t WHERE t.id = flow_external_waits.operation_id AND t.tenant_id = flow_external_waits.tenant_id AND t.status IN ('succeeded','failed'))`)
+	return w.ResumeReadyContext(context.Background(), resume)
+}
+func (w Waits) ResumeReadyContext(ctx context.Context, resume func(model.FlowExternalWait) (string, error)) (int, error) {
+	if w.DB.Dialector.Name() == "postgres" && w.tenantID == "" {
+		tenants, err := w.Scanner.Next(ctx, ScanExternalWaits)
+		if err != nil {
+			return 0, err
+		}
+		total := 0
+		for _, tenant := range tenants {
+			child := w
+			child.tenantID = tenant
+			n, e := child.ResumeReadyContext(ctx, resume)
+			total += n
+			if e != nil {
+				return total, e
+			}
+		}
+		return total, nil
+	}
+	work := func(fn func(*gorm.DB) error) error { return shortTenantWork(w.DB.WithContext(ctx), w.tenantID, fn) }
 	var rows []model.FlowExternalWait
-	if err := w.DB.Where("status = 'ready'").Order("created_at").Limit(50).Find(&rows).Error; err != nil {
+	if err := work(func(tx *gorm.DB) error {
+		if err := tx.Exec(`UPDATE flow_external_waits SET status = 'ready', outcome = (SELECT p.status FROM flow_operation_projections p WHERE p.operation_id = flow_external_waits.operation_id)
+		WHERE status = 'waiting' AND EXISTS (SELECT 1 FROM flow_operation_projections p WHERE p.operation_id = flow_external_waits.operation_id AND p.tenant_id = flow_external_waits.tenant_id AND p.status IN ('succeeded','failed','cancelled'))`).Error; err != nil {
+			return err
+		}
+		// Fallback for the push path (ModelTasks.NotifyDone): waits on finished model tasks.
+		if err := tx.Exec(`UPDATE flow_external_waits SET status = 'ready', outcome = (SELECT t.status FROM flow_model_tasks t WHERE t.id = flow_external_waits.operation_id)
+		WHERE status = 'waiting' AND EXISTS (SELECT 1 FROM flow_model_tasks t WHERE t.id = flow_external_waits.operation_id AND t.tenant_id = flow_external_waits.tenant_id AND t.status IN ('succeeded','failed'))`).Error; err != nil {
+			return err
+		}
+		return tx.Where("status = 'ready'").Order("created_at").Limit(50).Find(&rows).Error
+	}); err != nil {
 		return 0, err
 	}
 	n := 0
 	for _, r := range rows {
-		claim := w.DB.Model(&model.FlowExternalWait{}).Where("id = ? AND status = 'ready'", r.ID).Update("status", "resuming")
-		if claim.Error != nil || claim.RowsAffected != 1 {
+		claimed := false
+		if err := work(func(tx *gorm.DB) error {
+			claim := tx.Model(&model.FlowExternalWait{}).Where("id = ? AND status = 'ready'", r.ID).Update("status", "resuming")
+			claimed = claim.RowsAffected == 1
+			return claim.Error
+		}); err != nil {
+			return n, err
+		}
+		if !claimed {
 			continue
 		}
 		// Grant re-check runs RLS-scoped to the wait's tenant; the continuation
@@ -60,16 +99,28 @@ func (w Waits) ResumeReady(resume func(model.FlowExternalWait) (string, error)) 
 		if err := TenantTx(w.DB, r.TenantID, func(tx *gorm.DB) error {
 			return AuthorizeGrant(tx, "user:"+r.UserID, r.TenantID, r.WorkspaceID, "intel.collect")
 		}); err != nil {
-			w.DB.Model(&model.FlowExternalWait{}).Where("id = ?", r.ID).Update("status", "denied")
+			if e := work(func(tx *gorm.DB) error {
+				return tx.Model(&model.FlowExternalWait{}).Where("id = ?", r.ID).Update("status", "denied").Error
+			}); e != nil {
+				return n, e
+			}
 			continue
 		}
 		runID, err := resume(r)
 		if err != nil {
-			w.DB.Model(&model.FlowExternalWait{}).Where("id = ? AND status = 'resuming'", r.ID).Update("status", "ready")
+			if e := work(func(tx *gorm.DB) error {
+				return tx.Model(&model.FlowExternalWait{}).Where("id = ? AND status = 'resuming'", r.ID).Update("status", "ready").Error
+			}); e != nil {
+				return n, e
+			}
 			continue
 		}
 		now := time.Now()
-		w.DB.Model(&model.FlowExternalWait{}).Where("id = ?", r.ID).Updates(map[string]any{"status": "resumed", "resume_run_id": runID, "resumed_at": now})
+		if e := work(func(tx *gorm.DB) error {
+			return tx.Model(&model.FlowExternalWait{}).Where("id = ?", r.ID).Updates(map[string]any{"status": "resumed", "resume_run_id": runID, "resumed_at": now}).Error
+		}); e != nil {
+			return n, e
+		}
 		n++
 	}
 	return n, nil

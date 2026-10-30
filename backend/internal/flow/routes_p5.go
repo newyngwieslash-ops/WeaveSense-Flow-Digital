@@ -360,11 +360,13 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 // RunBillingMaintenance closes reservations of runs that died without
 // completing, and conservatively charges unknown outcomes older than 24h
 // (the gateway offers no status lookup, so the reserved amount is billed).
-func RunBillingMaintenance(ctx context.Context, db *gorm.DB, every time.Duration) {
+func RunBillingMaintenance(ctx context.Context, db *gorm.DB, every time.Duration, scanners ...*BackgroundScanner) {
 	t := time.NewTicker(every)
 	defer t.Stop()
 	for {
-		BillingMaintenancePass(db)
+		if err := BillingMaintenancePass(db.WithContext(ctx), scanners...); err != nil {
+			slog.Warn("flow: billing maintenance", "error", err)
+		}
 		select {
 		case <-ctx.Done():
 			return
@@ -376,23 +378,39 @@ func RunBillingMaintenance(ctx context.Context, db *gorm.DB, every time.Duration
 // BillingMaintenancePass sweeps stale reservations and conservatively charges
 // unknown outcomes older than 24h. The tenant list is discovered once; all
 // reads and writes then run per tenant inside TenantTx, so RLS applies.
-func BillingMaintenancePass(db *gorm.DB) {
+func BillingMaintenancePass(db *gorm.DB, scanners ...*BackgroundScanner) error {
 	var tenants []string
-	db.Model(&model.FlowBudgetReservation{}).Where("status IN ?", []string{"reserved", StatusReconciliation}).Distinct().Pluck("tenant_id", &tenants)
+	if db.Dialector.Name() == "postgres" {
+		var scanner *BackgroundScanner
+		if len(scanners) == 1 {
+			scanner = scanners[0]
+		}
+		var err error
+		tenants, err = scanner.Next(db.Statement.Context, ScanBilling)
+		if err != nil {
+			return err
+		}
+	} else if err := db.Model(&model.FlowBudgetReservation{}).Where("status IN ?", []string{"reserved", StatusReconciliation}).Distinct().Pluck("tenant_id", &tenants).Error; err != nil {
+		return err
+	}
 	for _, tenant := range tenants {
 		if tenant == "" {
 			continue
 		}
 		if err := TenantTx(db, tenant, func(tx *gorm.DB) error {
 			b := Billing{DB: tx}
-			_, _ = b.SweepStale(6 * time.Hour)
+			if _, err := b.SweepStale(6 * time.Hour); err != nil {
+				return err
+			}
 			// No status endpoint / still unknown after 24h: charge conservatively.
-			_, _ = b.Reconcile(24*time.Hour, func(r model.FlowBudgetReservation) (Outcome, error) {
+			_, err := b.Reconcile(24*time.Hour, func(r model.FlowBudgetReservation) (Outcome, error) {
 				return Outcome{Known: true, Succeeded: true, Cost: r.ReservedMicro}, nil
 			})
-			return nil
+			return err
 		}); err != nil {
 			slog.Warn("flow: billing maintenance", "tenant", tenant, "error", err)
+			return err
 		}
 	}
+	return nil
 }

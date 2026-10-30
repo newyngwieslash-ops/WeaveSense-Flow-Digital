@@ -18,9 +18,23 @@ import (
 // submits. Restart-safe: everything it needs is in the database.
 func (s *Service) SyncOnce(ctx context.Context, limit int) (int, error) {
 	var jobs []model.EduMathJob
-	err := s.DB.Where("status IN ? OR settlement = ?", []string{"queued", "running", "reconciliation_required"}, "open").
-		Order("updated_at").Limit(limit).Find(&jobs).Error
-	if err != nil {
+	load := func(tx *gorm.DB) error {
+		var batch []model.EduMathJob
+		err := tx.Where("status IN ? OR settlement = ?", []string{"queued", "running", "reconciliation_required"}, "open").Order("updated_at").Limit(limit).Find(&batch).Error
+		jobs = append(jobs, batch...)
+		return err
+	}
+	if s.DB.Dialector.Name() == "postgres" {
+		tenants, err := s.Scanner.Next(ctx, flow.ScanEduJobs)
+		if err != nil {
+			return 0, err
+		}
+		for _, tenant := range tenants {
+			if err := flow.TenantTx(s.DB.WithContext(ctx), tenant, load); err != nil {
+				return 0, err
+			}
+		}
+	} else if err := load(s.DB.WithContext(ctx)); err != nil {
 		return 0, err
 	}
 	n := 0
@@ -100,7 +114,12 @@ func (s *Service) ReconcileAll(ctx context.Context, window time.Duration) (tenan
 	now := s.now()
 	from := now.Add(-window)
 	var ids []string
-	if err = s.DB.Model(&model.EduMathJob{}).Where("created_at >= ?", from).Distinct().Pluck("tenant_id", &ids).Error; err != nil {
+	if s.DB.Dialector.Name() == "postgres" {
+		ids, err = s.Scanner.Next(ctx, flow.ScanEduLedger)
+		if err != nil {
+			return 0, 0, err
+		}
+	} else if err = s.DB.Model(&model.EduMathJob{}).Where("created_at >= ?", from).Distinct().Pluck("tenant_id", &ids).Error; err != nil {
 		return 0, 0, err
 	}
 	for _, tenant := range ids {

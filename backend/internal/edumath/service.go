@@ -35,10 +35,11 @@ func appErr(status int, code, msg, next string) *AppError {
 
 // Service holds the platform-side math workbench operations.
 type Service struct {
-	DB     *gorm.DB // base handle (system context) for background work
-	Client Client
-	URLKey []byte
-	Now    func() time.Time
+	DB      *gorm.DB // ordinary runtime; background work must establish tenant scope
+	Scanner *flow.BackgroundScanner
+	Client  Client
+	URLKey  []byte
+	Now     func() time.Time
 }
 
 func (s *Service) now() time.Time {

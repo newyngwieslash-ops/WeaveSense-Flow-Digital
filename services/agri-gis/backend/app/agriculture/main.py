@@ -18,6 +18,7 @@ from .identity.verify import (
     require,
     resource_refs,
 )
+from .job_routes import install_job_routes
 from .object_gateway import register_object_routes
 
 
@@ -101,6 +102,7 @@ def create_app(services: IdentityServices | None = None) -> FastAPI:
         )
 
     register_object_routes(app)
+    install_job_routes(app, None)
     return app
 
 

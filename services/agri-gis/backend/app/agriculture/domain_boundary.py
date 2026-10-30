@@ -34,6 +34,12 @@ IDENTITY_TABLES = frozenset(
 OWNERSHIP_TABLE = "agriculture_legacy_plot_ownership"
 REFERENCE_TABLE = "agriculture_legacy_resource_references"
 OBJECT_TABLE = "agriculture_private_objects"
+JOB_AUTHORITY_TABLES = frozenset(
+    {
+        "agriculture_job_authorities",
+        "agriculture_job_authority_checks",
+    }
+)
 
 
 def actual_model_inventory():
@@ -78,6 +84,7 @@ async def require_domain_boundary(connection, role="flow_geo_app"):
             LEGACY_TABLES
             | IDENTITY_TABLES
             | {OWNERSHIP_TABLE, REFERENCE_TABLE, OBJECT_TABLE}
+            | JOB_AUTHORITY_TABLES
         )
         rows = await connection.fetch(
             "SELECT c.relname,c.relrowsecurity,c.relforcerowsecurity,"
@@ -85,6 +92,8 @@ async def require_domain_boundary(connection, role="flow_geo_app"):
             "has_table_privilege(current_user,c.oid,'SELECT') AS can_read,"
             "has_table_privilege(current_user,c.oid,'INSERT') AS can_insert,"
             "has_table_privilege(current_user,c.oid,'UPDATE') AS can_update,"
+            "has_table_privilege(current_user,c.oid,'REFERENCES,TRIGGER') "
+            "AS can_manage,"
             "has_table_privilege(current_user,c.oid,'DELETE,TRUNCATE') AS can_delete "
             "FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n "
             "ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname=ANY($1)",
@@ -98,10 +107,29 @@ async def require_domain_boundary(connection, role="flow_geo_app"):
                 raise ValueError("domain RLS required")
             if row["owner"] != "flow_geo_migrate":
                 raise ValueError("unexpected domain owner")
+            if name in JOB_AUTHORITY_TABLES:
+                expected_insert = (
+                    role == "flow_geo_app" or name == "agriculture_job_authority_checks"
+                )
+                if (
+                    row["can_read"],
+                    row["can_insert"],
+                    row["can_update"],
+                    row["can_delete"],
+                    row["can_manage"],
+                ) != (True, expected_insert, False, False, False):
+                    raise ValueError("job authority privilege boundary mismatch")
+                continue
             if role == "flow_geo_worker":
                 if any(
                     row[key]
-                    for key in ("can_read", "can_insert", "can_update", "can_delete")
+                    for key in (
+                        "can_read",
+                        "can_insert",
+                        "can_update",
+                        "can_delete",
+                        "can_manage",
+                    )
                 ):
                     raise ValueError("worker has no domain CRUD in this phase")
                 continue
@@ -123,6 +151,7 @@ async def require_domain_boundary(connection, role="flow_geo_app"):
                 or row["can_insert"]
                 or row["can_update"]
                 or row["can_delete"]
+                or row["can_manage"]
             ):
                 raise ValueError("ownership must be read only")
         count = await connection.fetchval(
@@ -135,6 +164,26 @@ async def require_domain_boundary(connection, role="flow_geo_app"):
         )
         if count != len(OPEN_TABLES) + len(IDENTITY_TABLES) + 1:
             raise ValueError("restrictive domain policy required")
+        sidecar_policies = await connection.fetchval(
+            "SELECT count(*) FROM pg_catalog.pg_policy p "
+            "JOIN pg_catalog.pg_class c ON c.oid=p.polrelid "
+            "JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace "
+            "WHERE n.nspname='public' AND c.relname=ANY($1) "
+            "AND NOT p.polpermissive AND p.polname='agriculture_job_scope'",
+            sorted(JOB_AUTHORITY_TABLES),
+        )
+        if sidecar_policies != len(JOB_AUTHORITY_TABLES):
+            raise ValueError("restrictive job authority policy required")
+        object_policy = await connection.fetchval(
+            "SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_policy "
+            "WHERE polrelid='public.agriculture_private_objects'::regclass "
+            "AND polname='agriculture_object_scope' AND NOT polpermissive) "
+            "AND EXISTS(SELECT 1 FROM pg_catalog.pg_trigger "
+            "WHERE tgrelid='public.agriculture_private_objects'::regclass "
+            "AND tgname='agriculture_object_immutable' AND tgenabled='O')"
+        )
+        if object_policy is not True:
+            raise ValueError("private object boundary required")
         unsafe_extra = await connection.fetchval(
             "SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c "
             "JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace "

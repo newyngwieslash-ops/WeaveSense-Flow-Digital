@@ -1,0 +1,12 @@
+{
+  "kind": "disposable_local_docker_web_smoke",
+  "authenticated_e2e": false,
+  "production_deployment": false,
+  "registry_push": false,
+  "checks": [],
+  "failure": {
+    "phase": "build",
+    "type": "TimeoutExpired"
+  },
+  "passed": false
+}

@@ -1,0 +1,1 @@
+{"diagnostic_only":true,"result":"fail","results":[{"name":"production_nginx_configuration_valid","result":"pass"},{"name":"anonymous_browser_write_rejected","result":"pass"}],"schema_version":"1.0","stage":"real_login"}

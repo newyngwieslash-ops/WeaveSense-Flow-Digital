@@ -1,0 +1,33 @@
+{
+  "suite": "legacy-flow",
+  "passed": true,
+  "tests_passed": [
+    "yingce/backend/internal/flow/TestAgricultureMembershipInactiveTenantExcludedFromDatabaseScope",
+    "yingce/backend/internal/flow/TestAgricultureMembershipInactiveTenantExcludedFromWorkspaceList",
+    "yingce/backend/internal/flow/TestAgricultureMembershipInviteCannotReadmitInactiveMembership",
+    "yingce/backend/internal/flow/TestAgricultureMembershipInviteDatabaseFailureRollsBack",
+    "yingce/backend/internal/flow/TestAgricultureMembershipInviteExpiredOrDisabledRejected",
+    "yingce/backend/internal/flow/TestAgricultureMembershipInviteExpiredOrDisabledRejected/disabled",
+    "yingce/backend/internal/flow/TestAgricultureMembershipInviteExpiredOrDisabledRejected/expired",
+    "yingce/backend/internal/flow/TestAgricultureMembershipInviteExpiredOrDisabledRejected/revoked",
+    "yingce/backend/internal/flow/TestAgricultureMembershipInviteReturnsOnlyPersistedRole",
+    "yingce/backend/internal/flow/TestAgricultureMembershipLegacyCannotResolveProductWorkspaceOrConsumeInvite",
+    "yingce/backend/internal/flow/TestAgricultureMembershipListErrorsAreNotInventedRoles",
+    "yingce/backend/internal/flow/TestAgricultureMembershipListErrorsAreNotInventedRoles/flow_workspace_memberships",
+    "yingce/backend/internal/flow/TestAgricultureMembershipListErrorsAreNotInventedRoles/users",
+    "yingce/backend/internal/flow/TestAgricultureMembershipMissingWorkspaceCannotBeReportedAsEditor",
+    "yingce/backend/internal/flow/TestAgricultureMembershipNoActiveTenantsCannotBecomeSystemScope",
+    "yingce/backend/internal/flow/TestAgricultureMembershipOwnerRemovalPreservesWorkspace",
+    "yingce/backend/internal/flow/TestAgricultureMembershipRemovalPreservesOtherWorkspace",
+    "yingce/backend/internal/flow/TestAgricultureMembershipScopedRoutesUseRequestTransaction",
+    "yingce/backend/internal/flow/TestAgricultureMembershipWorkspaceAdminCannotChangeOtherWorkspace",
+    "yingce/backend/internal/flow/TestOrgInviteSingleUseAndGrantRevocation",
+    "yingce/backend/internal/flow/TestP7MembersRoleEditing"
+  ],
+  "tests_failed": [],
+  "tests_skipped": [],
+  "missing_required": [],
+  "failure_locations": [],
+  "data_class": "fixture",
+  "live_farm_or_production_acceptance": false
+}

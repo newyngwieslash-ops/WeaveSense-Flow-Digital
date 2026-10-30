@@ -17,7 +17,11 @@ from native_test_environment import native_test_environment
 repo = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--package-root', type=Path, required=True)
+parser.add_argument('--python', type=Path, default=repo/'.local/agri-identity-venv/bin/python')
 args = parser.parse_args()
+test_python = args.python.absolute()
+if not test_python.is_file():
+    raise SystemExit('explicit locked Python test environment required')
 base = repo / '.local/native-postgres'
 root = args.package_root.resolve()
 allowed = (repo/'.local').resolve()
@@ -89,7 +93,7 @@ with (run/'private.log').open('w') as log:
                        stdout=log,stderr=log,check=True)
         version=subprocess.check_output([str(binary/'psql'),'-U','postgres','-d','flow_geo',
                          '-Atc',"SELECT version(); SELECT postgis_lib_version();"],env=env,text=True).splitlines()
-        args=[str(repo/'.local/agri-identity-venv/bin/pytest'),'-q',*files,
+        args=[str(test_python),'-m','pytest','-q',*files,
               '--junitxml='+str(run/'tests.xml')]
         result=subprocess.run(args,cwd=repo/'services/agri-gis/backend',env=env,
                               stdout=log,stderr=log,timeout=180)

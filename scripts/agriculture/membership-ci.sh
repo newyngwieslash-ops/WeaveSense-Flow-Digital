@@ -65,6 +65,7 @@ port=$(docker port "$container" 5432/tcp)
 port=${BASH_REMATCH[1]}
 export AGRI_TEST_PG_MIGRATION_DSN="postgres://flow_platform_migrate:$PLATFORM_MIGRATION_PASSWORD@127.0.0.1:$port/flow_platform?sslmode=disable"
 export AGRI_TEST_PG_RUNTIME_DSN="postgres://flow_platform_app:$PLATFORM_RUNTIME_PASSWORD@127.0.0.1:$port/flow_platform?sslmode=disable"
+export AGRI_TEST_PG_SYSTEM_DSN="postgres://flow_platform_system:$PLATFORM_SYSTEM_PASSWORD@127.0.0.1:$port/flow_platform?sslmode=disable"
 export AGRI_TEST_PG_ISOLATED=1
 export CANVAS_DATABASE_DRIVER=postgres DATABASE_URL="$AGRI_TEST_PG_MIGRATION_DSN"
 
@@ -138,6 +139,23 @@ go -C backend test -p 1 -count=1 -json ./internal/database ./internal/agricultur
   | python3 scripts/agriculture/membership-ci-result.py --suite postgres --output .local/evidence/membership-postgres.json
 go -C backend test -count=1 -json ./internal/flow -run '^Test(OrgInviteSingleUseAndGrantRevocation|P7MembersRoleEditing|AgricultureMembership)' \
   | python3 scripts/agriculture/membership-ci-result.py --suite legacy-flow --output .local/evidence/membership-legacy-flow.json
+# Exact current scope roots; each reducer rejects missing/skipped children.
+run_scope_suite() {
+  local suite=$1 package=$2 pattern=$3
+  go -C backend test -p 1 -count=1 -json "$package" -run "$pattern" \
+    | python3 scripts/agriculture/membership-ci-result.py --suite "$suite" --output ".local/evidence/membership-$suite.json"
+}
+run_scope_suite flow-scope ./internal/flow '^TestFlowPostgresStrictScopeAndProviderAtomicity$'
+run_scope_suite flow-admission ./internal/flow '^TestFlowPostgresCallbackAndLegacyAdmission$'
+run_scope_suite flow-workers ./internal/flow '^TestFlowPostgresWorkerShortTransactions$'
+run_scope_suite flow-continuations ./internal/flow '^TestFlowPostgresWaitAndNotificationScopes$'
+run_scope_suite edu-artifacts ./internal/edumath '^TestEduPostgresSignedArtifactAdmission$'
+run_scope_suite edu-onboarding ./internal/edumath '^TestEduPostgresOnboardingAdmission$'
+# Only this isolated drift-negative process receives fixture bootstrap authority;
+# it constructs/restores bad grants. No product service receives this credential.
+AGRI_TEST_PG_FIXTURE_BOOTSTRAP_DSN="postgres://postgres:$POSTGRES_PASSWORD@127.0.0.1:$port/flow_platform?sslmode=disable" \
+  go -C backend test -p 1 -count=1 -json ./internal/flow -run '^TestFlowPostgresScannerAndRuntimeAdmission$' \
+  | python3 scripts/agriculture/membership-ci-result.py --suite flow-scanner --output .local/evidence/membership-flow-scanner.json
 python3 - <<'PY'
 import datetime,json
 from pathlib import Path

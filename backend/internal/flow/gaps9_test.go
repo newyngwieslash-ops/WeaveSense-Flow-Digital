@@ -147,7 +147,8 @@ func TestGaps9RoutesForwardAndRender(t *testing.T) {
 	t.Cleanup(srv.Close)
 	cfg := Config{EngineURL: srv.URL, SigningKey: key, Issuer: "flow-platform", Audience: "loom-engine", TTL: MaxTokenTTL}
 	r := gin.New()
-	RegisterRoutes(r.Group("/api"), db, cfg, func(*gin.Context) (*model.User, error) { return &model.User{ID: "u_alice"}, nil })
+	user := func(*gin.Context) (*model.User, error) { return &model.User{ID: "u_alice"}, nil }
+	RegisterRoutes(r.Group("/api", TenantMiddleware(db, user)), db, cfg, user)
 	do := func(method, path, idem, body string) *httptest.ResponseRecorder {
 		w := httptest.NewRecorder()
 		req := httptest.NewRequest(method, path, strings.NewReader(body))

@@ -204,13 +204,14 @@ func TestCanvasHandoffRESTRoute(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	db := testDB(t)
 	r := gin.New()
-	RegisterRoutes(r.Group("/api"), db, Config{}, func(c *gin.Context) (*model.User, error) {
+	user := func(c *gin.Context) (*model.User, error) {
 		uid := c.GetHeader("X-Test-User")
 		if uid == "" {
 			uid = "u_alice"
 		}
 		return &model.User{ID: uid, Username: uid}, nil
-	})
+	}
+	RegisterRoutes(r.Group("/api", TenantMiddleware(db, user)), db, Config{}, user)
 
 	body := map[string]any{
 		"kind":        "brief",

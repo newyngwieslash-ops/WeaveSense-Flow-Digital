@@ -231,7 +231,8 @@ func TestCanvasConversationDocOptimisticConcurrency(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
 	who := "u_alice"
-	RegisterCanvasConversationRoutes(r.Group("/api"), db, func(*gin.Context) (*model.User, error) { return &model.User{ID: who}, nil })
+	user := func(*gin.Context) (*model.User, error) { return &model.User{ID: who}, nil }
+	RegisterCanvasConversationRoutes(r.Group("/api", TenantMiddleware(db, user)), db, user)
 	do := func(method, body string) (int, string) {
 		w := httptest.NewRecorder()
 		req := httptest.NewRequest(method, "/api/agent/canvas-conversations/cv1", strings.NewReader(body))

@@ -241,8 +241,6 @@ func RegisterRoutes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc) {
 	// Engine → platform outbox delivery. Authenticated with a context token
 	// whose audience is the platform issuer; tenant must match the event.
 	api.POST("/internal/flow/events", func(c *gin.Context) {
-		db := reqDB(c, db)
-		_ = db
 		tok := strings.TrimPrefix(c.GetHeader("Authorization"), "Bearer ")
 		ctx, err := Verify(cfg.SigningKey, tok, cfg.Issuer, time.Now())
 		if err != nil || ctx.Actor.Type != "service_principal" {
@@ -258,7 +256,12 @@ func RegisterRoutes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc) {
 			reply(c, http.StatusForbidden, nil, "tenant mismatch")
 			return
 		}
-		applied, err := ConsumeEvent(db, "platform-projection", ev)
+		var applied bool
+		err = TenantTx(db, ctx.TenantID, func(tx *gorm.DB) error {
+			var err error
+			applied, err = ConsumeEvent(tx, "platform-projection", ev)
+			return err
+		})
 		if err != nil {
 			reply(c, http.StatusInternalServerError, nil, "consume failed")
 			return

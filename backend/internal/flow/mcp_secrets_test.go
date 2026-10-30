@@ -113,7 +113,8 @@ func TestMCPSecretAPIAndPRDPathAlias(t *testing.T) {
 	var u model.User
 	tools.DB.First(&u, "id = ?", "u_alice")
 	r := gin.New()
-	RegisterMCPRoutes(r.Group("/api"), tools.DB, gw, func(*gin.Context) (*model.User, error) { return &u, nil })
+	user := func(*gin.Context) (*model.User, error) { return &u, nil }
+	RegisterMCPRoutes(r.Group("/api", TenantMiddleware(tools.DB, user)), tools.DB, gw, user)
 	call := func(method, path string, body any) (int, string) {
 		b, _ := json.Marshal(body)
 		req := httptest.NewRequest(method, path, bytes.NewReader(b))

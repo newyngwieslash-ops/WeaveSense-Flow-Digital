@@ -20,12 +20,12 @@ var ErrInviteInvalid = errors.New("flow: invite invalid, expired or already used
 // a default workspace (caller admin) and a shared billing account paid by the owner.
 func CreateOrganization(db *gorm.DB, ownerID, name string) (model.Tenant, model.Workspace, error) {
 	name = strings.TrimSpace(name)
-	if name == "" || len(name) > 120 {
+	if ownerID == "" || name == "" || len(name) > 120 {
 		return model.Tenant{}, model.Workspace{}, errors.New("flow: organization name required")
 	}
 	t := model.Tenant{ID: NewID("tn_"), Kind: "organization", Name: name, OwnerUserID: ownerID, Status: "active"}
 	w := model.Workspace{ID: NewID("ws_"), TenantID: t.ID, Slug: "default", Name: name}
-	err := db.Transaction(func(tx *gorm.DB) error {
+	err := TenantTx(db, t.ID, func(tx *gorm.DB) error {
 		for _, r := range []any{&t, &model.Membership{ID: NewID("mb_"), TenantID: t.ID, UserID: ownerID, Role: "owner", Status: "active"}, &w,
 			&model.WorkspaceMembership{ID: NewID("wm_"), WorkspaceID: w.ID, UserID: ownerID, Role: "admin"}} {
 			if err := tx.Create(r).Error; err != nil {
@@ -76,16 +76,74 @@ func CreateInvite(db *gorm.DB, scope Scope, inviterID, email, role string, ttl t
 	return inv, tok, db.Create(&inv).Error
 }
 
+// resolveLegacyInvite is a narrow admission lookup, not a general unscoped
+// tenant query. PostgreSQL executes only the guard-owned resolver; SQLite is
+// a development/test implementation of the same recipient checks.
+func resolveLegacyInvite(db *gorm.DB, userID, tokenHash string) (Scope, error) {
+	var out Scope
+	if userID == "" || tokenHash == "" {
+		return out, ErrInviteInvalid
+	}
+	if db.Dialector.Name() == "postgres" {
+		err := db.Raw("SELECT tenant_id, workspace_id FROM flow_system.resolve_legacy_invite(?, ?)", tokenHash, userID).Scan(&out).Error
+		if err != nil {
+			return out, err
+		}
+	} else {
+		var user model.User
+		if err := db.First(&user, "id = ? AND status = ?", userID, "active").Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return out, ErrInviteInvalid
+			}
+			return out, err
+		}
+		if user.EmailVerifiedAt == nil || strings.TrimSpace(user.Email) == "" {
+			return out, ErrInviteInvalid
+		}
+		var inv model.FlowInvite
+		err := db.Where("token_hash = ? AND product = '' AND accepted_at IS NULL AND revoked_at IS NULL AND expires_at > ?", tokenHash, time.Now().UTC()).First(&inv).Error
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return out, ErrInviteInvalid
+			}
+			return out, err
+		}
+		if !strings.EqualFold(strings.TrimSpace(inv.Email), strings.TrimSpace(user.Email)) {
+			return out, ErrInviteInvalid
+		}
+		if err := requireActiveWorkspace(db, inv.TenantID, inv.WorkspaceID); err != nil {
+			return out, err
+		}
+		out.TenantID, out.WorkspaceID = inv.TenantID, inv.WorkspaceID
+	}
+	if out.TenantID == "" || out.WorkspaceID == "" {
+		return Scope{}, ErrInviteInvalid
+	}
+	return out, nil
+}
+
 // AcceptInvite joins the user to the tenant and workspace. Single use.
 func AcceptInvite(db *gorm.DB, userID, token string) (Scope, error) {
 	var out Scope
-	err := db.Transaction(func(tx *gorm.DB) error {
+	admitted, err := resolveLegacyInvite(db, userID, hashToken(token))
+	if err != nil {
+		return out, err
+	}
+	err = TenantTx(db, admitted.TenantID, func(tx *gorm.DB) error {
 		var inv model.FlowInvite
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&inv, "token_hash = ?", hashToken(token)).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return ErrInviteInvalid
 			}
 			return err
+		}
+		// Recheck current recipient/account state after taking the invite lock.
+		current, err := resolveLegacyInvite(tx, userID, hashToken(token))
+		if err != nil {
+			return err
+		}
+		if current.TenantID != admitted.TenantID || current.WorkspaceID != admitted.WorkspaceID || inv.TenantID != admitted.TenantID || inv.WorkspaceID != admitted.WorkspaceID {
+			return ErrInviteInvalid
 		}
 		now := time.Now().UTC()
 		if inv.Product != "" || inv.AcceptedAt != nil || inv.RevokedAt != nil || !now.Before(inv.ExpiresAt) {
@@ -95,7 +153,7 @@ func AcceptInvite(db *gorm.DB, userID, token string) (Scope, error) {
 			return err
 		}
 		var m model.Membership
-		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&m, "tenant_id = ? AND user_id = ?", inv.TenantID, userID).Error
+		err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&m, "tenant_id = ? AND user_id = ?", inv.TenantID, userID).Error
 		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return err
 		}

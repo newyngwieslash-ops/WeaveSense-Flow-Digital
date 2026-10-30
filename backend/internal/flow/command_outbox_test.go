@@ -197,9 +197,10 @@ func TestCommandOutboxRESTAsyncAndConflict(t *testing.T) {
 	fe, client := newFakeEngine(t)
 	cfg := client.Cfg
 	r := gin.New()
-	RegisterRoutes(r.Group("/api"), db, cfg, func(*gin.Context) (*model.User, error) {
+	user := func(*gin.Context) (*model.User, error) {
 		return &model.User{ID: "u_alice"}, nil
-	})
+	}
+	RegisterRoutes(r.Group("/api", TenantMiddleware(db, user)), db, cfg, user)
 
 	// 1. Async outbox mode enqueues without calling Engine immediately and returns 202 Accepted.
 	w := httptest.NewRecorder()

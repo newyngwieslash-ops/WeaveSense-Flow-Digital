@@ -17,29 +17,40 @@ const reqDBKey = "flow.reqdb"
 // transaction whose app.tenant_ids is the caller's active tenants, so the
 // Postgres RLS policies (schema v58/v59) are enforced on everything the
 // handler reads or writes — even a query that forgets its tenant filter.
-// Unauthenticated requests pass through untouched (handlers reject them);
-// engine callbacks (/internal/...) authenticate by token and stay in system
-// context. The transaction commits for status < 500 and rolls back otherwise.
+// Only the explicitly registered service callbacks defer admission to their
+// signed-context handler. They never inherit an unscoped business handle.
+// The transaction commits for status < 500 and rolls back otherwise.
 func TenantMiddleware(db *gorm.DB, user UserFunc) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if strings.Contains(c.Request.URL.Path, "/internal/") {
+		if deferredServiceAdmission(c) {
 			c.Next()
 			return
 		}
 		u, err := user(c)
 		if err != nil || u == nil {
+			reply(c, http.StatusUnauthorized, nil, "unauthorized")
+			c.Abort()
+			return
+		}
+		if independentAdmission(c) {
+			// Create/accept performs its own narrow admission and transaction,
+			// never switches the scope of an existing user transaction.
 			c.Next()
 			return
 		}
 		tenants, err := UserTenantIDs(db, u.ID)
 		if err != nil {
-			reply(c, http.StatusInternalServerError, nil, "tenant resolution failed")
+			if errors.Is(err, ErrForbidden) {
+				reply(c, http.StatusForbidden, nil, "no active tenant membership")
+			} else {
+				reply(c, http.StatusInternalServerError, nil, "tenant resolution failed")
+			}
 			c.Abort()
 			return
 		}
 		if len(tenants) == 0 {
-			// Legacy RLS still treats empty scope as system. Never turn an
-			// inactive user's empty tenant set into that privileged context.
+			// Empty scope is never an authenticated business context, even
+			// when the database independently rejects all tenant rows.
 			reply(c, http.StatusForbidden, nil, "no active tenant membership")
 			c.Abort()
 			return
@@ -74,15 +85,34 @@ func TenantMiddleware(db *gorm.DB, user UserFunc) gin.HandlerFunc {
 	}
 }
 
-// reqDB returns the request's tenant-scoped transaction, or base when the
-// request is not tenant-scoped (unauthenticated, internal, background).
+func deferredServiceAdmission(c *gin.Context) bool {
+	if c.Request.Method != http.MethodPost {
+		return false
+	}
+	switch c.FullPath() {
+	case "/api/internal/flow/events", "/api/internal/flow/authorize",
+		"/api/internal/flow/budget/reserve", "/api/internal/flow/budget/close",
+		"/api/internal/flow/summarize":
+		return true
+	}
+	return false
+}
+
+func independentAdmission(c *gin.Context) bool {
+	return c.Request.Method == http.MethodPost &&
+		(c.FullPath() == "/api/intelligence/orgs" || c.FullPath() == "/api/intelligence/invites/accept")
+}
+
+// Missing middleware is a configuration error, never an unscoped fallback.
 func reqDB(c *gin.Context, base *gorm.DB) *gorm.DB {
 	if v, ok := c.Get(reqDBKey); ok {
-		if tx, ok := v.(*gorm.DB); ok {
+		if tx, ok := v.(*gorm.DB); ok && tx != nil {
 			return tx
 		}
 	}
-	return base
+	denied := base.Session(&gorm.Session{NewDB: true})
+	denied.AddError(ErrForbidden)
+	return denied
 }
 
 func (t Tools) withDB(db *gorm.DB) Tools {
@@ -107,6 +137,19 @@ func UserTenantIDs(db *gorm.DB, userID string) ([]string, error) {
 		return nil, ErrForbidden
 	}
 	var tenants []string
+	if db.Dialector.Name() == "postgres" {
+		if err := db.Raw("SELECT tenant_id FROM flow_system.resolve_user_tenants(?)", userID).Scan(&tenants).Error; err != nil {
+			return nil, err
+		}
+		return tenants, nil
+	}
+	var actor model.User
+	if err := db.First(&actor, "id = ? AND status = ?", userID, "active").Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrForbidden
+		}
+		return nil, err
+	}
 	if err := db.Table("flow_memberships m").
 		Joins("JOIN flow_tenants t ON t.id = m.tenant_id AND t.status = 'active'").
 		Where("m.user_id = ? AND m.status = ?", userID, "active").Pluck("m.tenant_id", &tenants).Error; err != nil {
@@ -135,6 +178,9 @@ func UserTx(db *gorm.DB, userID string, fn func(tx *gorm.DB) error) error {
 	tenants, err := UserTenantIDs(db, userID)
 	if err != nil {
 		return err
+	}
+	if len(tenants) == 0 {
+		return ErrForbidden
 	}
 	return TenantTx(db, strings.Join(tenants, ","), fn)
 }

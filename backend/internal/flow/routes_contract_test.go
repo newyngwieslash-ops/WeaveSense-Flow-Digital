@@ -36,7 +36,8 @@ func TestContractRoutesForwardToEngine(t *testing.T) {
 	t.Cleanup(srv.Close)
 	cfg := Config{EngineURL: srv.URL, SigningKey: key, Issuer: "flow-platform", Audience: "loom-engine", TTL: MaxTokenTTL}
 	r := gin.New()
-	RegisterRoutes(r.Group("/api"), db, cfg, func(*gin.Context) (*model.User, error) { return &model.User{ID: "u_alice"}, nil })
+	user := func(*gin.Context) (*model.User, error) { return &model.User{ID: "u_alice"}, nil }
+	RegisterRoutes(r.Group("/api", TenantMiddleware(db, user)), db, cfg, user)
 	cases := []struct{ method, path, idem, body, wantURI string }{
 		{"PATCH", "/api/intelligence/sources/src_1", "", `{"expected_revision":1,"title":"x"}`, "/v1/sources/src_1"},
 		{"GET", "/api/intelligence/sources/health", "", "", "/v1/sources/health"},

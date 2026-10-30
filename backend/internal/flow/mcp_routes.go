@@ -20,7 +20,7 @@ func RegisterMCPRoutes(api gin.IRouter, db *gorm.DB, gw *MCPGateway, user UserFu
 			reply(c, http.StatusUnauthorized, nil, "unauthorized")
 			return Scope{}, nil, false
 		}
-		s, err := ResolveScope(db, u.ID, c.GetHeader("X-Workspace-Id"))
+		s, err := ResolveScope(reqDB(c, db), u.ID, c.GetHeader("X-Workspace-Id"))
 		if err != nil {
 			reply(c, http.StatusNotFound, nil, "workspace not found")
 			return Scope{}, nil, false

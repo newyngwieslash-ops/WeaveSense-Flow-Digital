@@ -31,8 +31,9 @@ func testDB(t *testing.T) *gorm.DB {
 	if err := db.AutoMigrate(&model.User{}); err != nil {
 		t.Fatal(err)
 	}
+	verifiedAt := time.Now().UTC()
 	for _, id := range []string{"u_alice", "u_bob"} {
-		if err := db.Create(&model.User{ID: id, Username: id}).Error; err != nil {
+		if err := db.Create(&model.User{ID: id, Username: id, Status: "active", Email: strings.TrimPrefix(id, "u_") + "@x", EmailVerifiedAt: &verifiedAt}).Error; err != nil {
 			t.Fatal(err)
 		}
 	}

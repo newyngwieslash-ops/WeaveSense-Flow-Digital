@@ -26,6 +26,7 @@ DOMAIN_PG_REQUIRED = {
     "test_postgres_domain_factory_rejects_incomplete_boundary",
     "test_postgres_domain_scope_inventory_and_unmapped_denial",
     "test_postgres_domain_cross_workspace_parent_and_policy_denial",
+    "test_postgres_domain_workbench_commit_and_audit_rollback",
 }
 PYTHON_MODULES = {
     "test_agriculture_identity", "test_agriculture_identity_postgres", "test_identity_canonical"

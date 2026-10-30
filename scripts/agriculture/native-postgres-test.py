@@ -120,6 +120,7 @@ required_pg = {
     'test_postgres_domain_factory_rejects_incomplete_boundary',
     'test_postgres_domain_scope_inventory_and_unmapped_denial',
     'test_postgres_domain_cross_workspace_parent_and_policy_denial',
+    'test_postgres_domain_workbench_commit_and_audit_rollback',
 }
 missing_pg = sorted(required_pg-{c['name'] for c in cases if c['status']=='pass'})
 scope=['deploy/agriculture/postgres/init.sh', 'deploy/agriculture/native-postgres-packages.json',

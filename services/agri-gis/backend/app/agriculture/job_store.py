@@ -76,6 +76,12 @@ WHERE n.nspname='public' AND c.relname IN
                     snapshot["job_id"],
                 )
                 require(existing == digest, "job_snapshot_conflict", 409)
+                # A lock wait must not turn an expired request into a commit.
+                require(
+                    verified.expires_at > datetime.now(UTC),
+                    "expired_job_identity",
+                    401,
+                )
 
     async def get(self, verified, job_id):
         async with self.pool.acquire(timeout=3) as connection:
@@ -122,4 +128,9 @@ WHERE n.nspname='public' AND c.relname IN
                     checkpoint.phase,
                     checked,
                     expires,
+                )
+                require(
+                    datetime.now(UTC) < min(expires, verified.expires_at),
+                    "job_authority_expired",
+                    403,
                 )

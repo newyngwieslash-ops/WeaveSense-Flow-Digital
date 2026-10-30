@@ -8,6 +8,7 @@ import os
 import subprocess
 import tempfile
 from dataclasses import asdict
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import uuid4
 
@@ -86,6 +87,40 @@ def test_postgres_job_sidecar_scope_immutable_and_worker_privileges():
                     hashlib.sha256(snapshot_bytes(changed)).hexdigest(),
                 )
             assert conflict.value.status == 409
+            # Genuine PostgreSQL lock wait crosses the short identity deadline.
+            # Releasing the lock must roll back rather than commit a stale job.
+            delayed = copy.deepcopy(snapshot)
+            delayed["job_id"] = "job_delayed"
+            until = datetime.now(UTC) + timedelta(milliseconds=150)
+            short = Verified(verified.claims, until, verified.body)
+            async with owner.transaction():
+                await owner.execute(
+                    "LOCK TABLE public.agriculture_job_authorities "
+                    "IN ACCESS EXCLUSIVE MODE"
+                )
+                pending = asyncio.create_task(
+                    store.insert(
+                        short,
+                        delayed,
+                        hashlib.sha256(snapshot_bytes(delayed)).hexdigest(),
+                    )
+                )
+                await asyncio.sleep(0.03)
+                assert not pending.done(), "write did not encounter held PG lock"
+                await asyncio.sleep(
+                    max(0, (until - datetime.now(UTC)).total_seconds()) + 0.02
+                )
+            with pytest.raises(IdentityError) as expired:
+                await pending
+            assert expired.value.code == "expired_job_identity"
+            assert (
+                await owner.fetchval(
+                    "SELECT count(*) FROM public.agriculture_job_authorities "
+                    "WHERE tenant_id=$1 AND job_id='job_delayed'",
+                    snapshot["tenant_id"],
+                )
+                == 0
+            )
         finally:
             await worker.close()
             await app.close()

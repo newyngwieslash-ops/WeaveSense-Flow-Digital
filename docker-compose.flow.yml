@@ -304,8 +304,8 @@ services:
     entrypoint: ["/bin/bash", "/b/daily.sh"]
     environment:
       BACKUP_DATABASE_URLS: >-
-        platform=postgres://${POSTGRES_SUPERUSER:-postgres}:${POSTGRES_SUPERUSER_PASSWORD}@postgres:5432/${PLATFORM_DB_NAME:-flow_platform}
-        intel=postgres://${POSTGRES_SUPERUSER:-postgres}:${POSTGRES_SUPERUSER_PASSWORD}@postgres:5432/${INTEL_DB_NAME:-flow_intel}
+        platform=postgres://${POSTGRES_SUPERUSER:-postgres}:${POSTGRES_SUPERUSER_PASSWORD}@postgres:5432/flow_platform
+        intel=postgres://${POSTGRES_SUPERUSER:-postgres}:${POSTGRES_SUPERUSER_PASSWORD}@postgres:5432/flow_intel
       BACKUP_AT: ${BACKUP_AT:-03:00}
       BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
       BACKUP_KEEP_MIN: ${BACKUP_KEEP_MIN:-3}

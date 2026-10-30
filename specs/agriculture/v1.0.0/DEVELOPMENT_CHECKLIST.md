@@ -693,7 +693,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-021 · 隔离缓存SSE和检索投影
 
-- 状态：`in_progress`；阶段：`S0`；优先级：`P0`。
+- 状态：`done`；阶段：`S0`；优先级：`P0`。
 - 需求：AG-FR-005、AG-FR-047、AG-FR-064、AG-NFR-001、AG-NFR-008。
 - 验收用例：AG-AC-005、AG-AC-047、AG-AC-064。
 - 前置任务：DT-018、DT-019、DT-020。
@@ -4816,8 +4816,8 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 | 状态 | 数量 |
 | --- | ---: |
-| done | 21 |
-| in_progress | 2 |
+| done | 22 |
+| in_progress | 1 |
 | not_started | 121 |
 
 历史 done、恢复证据待补验：无。
@@ -4845,7 +4845,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 | DT-018 | done |
 | DT-019 | done |
 | DT-020 | done |
-| DT-021 | in_progress |
+| DT-021 | done |
 | DT-022 | done |
 | DT-023 | in_progress |
 | DT-024 | not_started |

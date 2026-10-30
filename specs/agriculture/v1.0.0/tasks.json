@@ -1218,7 +1218,7 @@
         "使用过期游标、他租户任务ID检查SSE拒绝"
       ],
       "blockers": [],
-      "status": "in_progress"
+      "status": "done"
     },
     {
       "id": "DT-022",

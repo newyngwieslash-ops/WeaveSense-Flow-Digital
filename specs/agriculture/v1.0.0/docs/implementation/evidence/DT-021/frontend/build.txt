@@ -1,0 +1,29 @@
+$ tsc --noEmit -p tsconfig.agriculture.json && vite build --config vite.agriculture.config.ts && bun scripts/check-agriculture-artifact.ts
+vite v8.1.5 building client environment for production...
+[2Ktransforming...
+/logo.svg referenced in /logo.svg didn't resolve at build time, it will remain unchanged to be resolved at runtime
+✓ 4936 modules transformed.
+rendering chunks...
+computing gzip size...
+dist-agriculture/index.html                                                3.32 kB │ gzip:   1.30 kB
+dist-agriculture/assets/inter-vietnamese-wght-normal-CBcvBZtf.woff2       10.25 kB
+dist-agriculture/assets/inter-greek-ext-wght-normal-DlzME5K_.woff2        11.23 kB
+dist-agriculture/assets/inter-cyrillic-wght-normal-DqGufNeO.woff2         18.74 kB
+dist-agriculture/assets/inter-greek-wght-normal-CkhJZR-_.woff2            18.99 kB
+dist-agriculture/assets/inter-cyrillic-ext-wght-normal-BOeWTOD4.woff2     25.96 kB
+dist-agriculture/assets/inter-latin-wght-normal-Dx4kXJAl.woff2            48.25 kB
+dist-agriculture/THIRD_PARTY_NOTICES.txt                                  66.05 kB │ gzip:   5.16 kB
+dist-agriculture/assets/inter-latin-ext-wght-normal-DO1Apj_S.woff2        85.06 kB
+dist-agriculture/agriculture-build-graph.json                             94.44 kB │ gzip:   8.88 kB
+dist-agriculture/assets/index-CXQKdzD4.css                               977.54 kB │ gzip: 132.48 kB
+dist-agriculture/assets/index-D5gBgNE4.js                              1,110.07 kB │ gzip: 361.76 kB
+
+[33m[INEFFECTIVE_DYNAMIC_IMPORT] [0msrc/features/agriculture/session.ts is dynamically imported by src/pages/auth/login.tsx, src/pages/auth/register.tsx but also statically imported by src/features/agriculture/main.tsx, dynamic import will not move module into another chunk.
+
+[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 2.01s
+{"profile":"agriculture","modules":1243,"packages":53,"excluded_drawing_runtime":"absent","source_commit":"2189663f1e5bd9c3ce56ede60e26eb3286bcc938"}

@@ -132,6 +132,8 @@ def test_delegation_freezes_canonicalization_and_single_action():
 @pytest.mark.parametrize("capability,issuer,audience,path", [
     ("ownership.resolve", "flow-platform", "agri-gis", "/internal/agri/v1/ownership/resolve"),
     ("authority.check", "agri-gis", "flow-platform", "/internal/agri/v1/authority/check"),
+    ("object.resolve", "flow-platform", "agri-gis", "/internal/agri/v1/objects/resolve"),
+    ("job.authority.check", "agri-gis", "flow-platform", "/internal/agri/v1/jobs/authority/check"),
 ])
 def test_service_request_separates_direction_and_capability(capability, issuer, audience, path):
     value = {
@@ -150,6 +152,10 @@ def test_service_request_separates_direction_and_capability(capability, issuer, 
         altered = {**value, field: bad}
         with pytest.raises(ValidationError):
             validate("service-request", altered)
+    for wrong_path in ("/internal/agri/v1/ownership/resolve", "/internal/agri/v1/authority/check", "/internal/agri/v1/objects/resolve", "/internal/agri/v1/jobs/authority/check"):
+        if wrong_path != path:
+            with pytest.raises(ValidationError):
+                validate("service-request", {**value, "request": {**value["request"], "path": wrong_path}})
 
 
 @pytest.mark.parametrize("field", ["tenant_id", "user_id", "operator_code", "requester_code", "role", "price", "object_key", "signed_url"])

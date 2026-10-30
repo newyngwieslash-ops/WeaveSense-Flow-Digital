@@ -9,7 +9,7 @@
     "issuer": {"enum": ["flow-platform", "agri-gis"]},
     "subject": {"enum": ["flow-platform", "agri-gis"]},
     "audience": {"enum": ["flow-platform", "agri-gis"]},
-    "capability": {"enum": ["ownership.resolve", "authority.check"]},
+    "capability": {"enum": ["ownership.resolve", "authority.check", "object.resolve", "job.authority.check"]},
     "tenant_id": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"},
     "workspace_id": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"},
     "issued_at": {"type": "string", "format": "date-time", "pattern": "Z$"},
@@ -23,7 +23,7 @@
       "required": ["method", "path", "canonicalization_version", "payload_hash"],
       "properties": {
         "method": {"const": "POST"},
-        "path": {"enum": ["/internal/agri/v1/ownership/resolve", "/internal/agri/v1/authority/check"]},
+        "path": {"enum": ["/internal/agri/v1/ownership/resolve", "/internal/agri/v1/authority/check", "/internal/agri/v1/objects/resolve", "/internal/agri/v1/jobs/authority/check"]},
         "canonicalization_version": {"const": "rfc8785-safe-v1"},
         "payload_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
       }
@@ -32,8 +32,19 @@
   "allOf": [
     {
       "if": {"properties": {"capability": {"const": "ownership.resolve"}}},
-      "then": {"properties": {"issuer": {"const": "flow-platform"}, "subject": {"const": "flow-platform"}, "audience": {"const": "agri-gis"}, "request": {"properties": {"path": {"const": "/internal/agri/v1/ownership/resolve"}}}}},
-      "else": {"properties": {"issuer": {"const": "agri-gis"}, "subject": {"const": "agri-gis"}, "audience": {"const": "flow-platform"}, "request": {"properties": {"path": {"const": "/internal/agri/v1/authority/check"}}}}}
+      "then": {"properties": {"issuer": {"const": "flow-platform"}, "subject": {"const": "flow-platform"}, "audience": {"const": "agri-gis"}, "request": {"properties": {"path": {"const": "/internal/agri/v1/ownership/resolve"}}}}}
+    },
+    {
+      "if": {"properties": {"capability": {"const": "authority.check"}}},
+      "then": {"properties": {"issuer": {"const": "agri-gis"}, "subject": {"const": "agri-gis"}, "audience": {"const": "flow-platform"}, "request": {"properties": {"path": {"const": "/internal/agri/v1/authority/check"}}}}}
+    },
+    {
+      "if": {"properties": {"capability": {"const": "object.resolve"}}},
+      "then": {"properties": {"issuer": {"const": "flow-platform"}, "subject": {"const": "flow-platform"}, "audience": {"const": "agri-gis"}, "request": {"properties": {"path": {"const": "/internal/agri/v1/objects/resolve"}}}}}
+    },
+    {
+      "if": {"properties": {"capability": {"const": "job.authority.check"}}},
+      "then": {"properties": {"issuer": {"const": "agri-gis"}, "subject": {"const": "agri-gis"}, "audience": {"const": "flow-platform"}, "request": {"properties": {"path": {"const": "/internal/agri/v1/jobs/authority/check"}}}}}
     }
   ]
 }

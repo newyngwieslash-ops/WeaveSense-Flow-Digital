@@ -18,7 +18,8 @@ repo = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--package-root', type=Path, required=True)
 parser.add_argument('--python', type=Path, default=repo/'.local/agri-identity-venv/bin/python')
-parser.add_argument('--phase', choices=('components', 'migration', 'query'), default='components')
+parser.add_argument('--phase', choices=('components', 'migration', 'query', 'objects', 'jobs'), default='components')
+parser.add_argument('--go', type=Path, help='explicit local Go binary for the fixed jobs integration suite')
 args = parser.parse_args()
 phase_mode = args.phase
 test_python = args.python.absolute()
@@ -27,6 +28,11 @@ if not test_python.is_file():
 base = repo / '.local/native-postgres'
 root = args.package_root.resolve()
 allowed = (repo/'.local').resolve()
+test_go = args.go.resolve() if args.go else None
+if phase_mode == 'jobs' and (test_go is None or not test_go.is_file() or not test_go.is_relative_to(allowed)):
+    raise SystemExit('jobs phase requires an explicit prepared Go binary inside repository .local')
+if phase_mode != 'jobs' and test_go is not None:
+    raise SystemExit('--go is only supported for the fixed jobs phase')
 if not allowed.is_relative_to(repo.resolve()) or not root.is_relative_to(allowed) or not base.resolve().is_relative_to(allowed):
     raise SystemExit('fixture paths must remain inside repository .local')
 if os.geteuid() == 0:
@@ -68,6 +74,14 @@ for role,key,target in [('flow_geo_migrate','GEO_MIGRATION_PASSWORD','AGRI_TEST_
                         ('flow_geo_app','GEO_RUNTIME_PASSWORD','AGRI_TEST_GEO_RUNTIME_DSN'),
                         ('flow_geo_worker','GEO_WORKER_PASSWORD','AGRI_TEST_GEO_WORKER_DSN')]:
     env[target]=f'postgresql://{role}:{passwords[key]}@127.0.0.1:{port}/flow_geo?sslmode=disable'
+# Only the exact fixture identities needed by tests cross the subprocess edge.
+# Bootstrap secrets/PGPASSWORD stay in initialization/version/shutdown processes.
+test_env = {k: env[k] for k in ('PATH','HOME','LANG','LANGUAGE','LC_ALL','LC_CTYPE','TZ',
+            'LD_LIBRARY_PATH','AGRI_TEST_PG_ISOLATED','AGRI_TEST_GEO_MIGRATION_DSN',
+            'AGRI_TEST_GEO_RUNTIME_DSN','AGRI_TEST_GEO_WORKER_DSN') if k in env}
+test_env['AGRI_IDENTITY_PYTHON'] = str(test_python)
+if test_go is not None:
+    test_env['AGRI_TEST_GO_BIN'] = str(test_go)
 pw = run/'bootstrap-password'
 pw.write_text(passwords['POSTGRES_PASSWORD']+'\n')
 files = [
@@ -84,6 +98,10 @@ if phase_mode == 'migration':
     files = ['tests/test_agriculture_migration.py', 'tests/test_agriculture_migration_postgres.py']
 elif phase_mode == 'query':
     files = ['tests/test_agriculture_query_scope.py', 'tests/test_agriculture_query_scope_postgres.py']
+elif phase_mode == 'objects':
+    files = ['tests/test_agriculture_object_storage.py', 'tests/test_agriculture_object_gateway.py', 'tests/test_agriculture_objects_postgres.py']
+elif phase_mode == 'jobs':
+    files = ['tests/test_agriculture_job_authority.py', 'tests/test_agriculture_jobs_postgres.py']
 started=False
 start=time.monotonic()
 with (run/'private.log').open('w') as log:
@@ -101,7 +119,7 @@ with (run/'private.log').open('w') as log:
                          '-Atc',"SELECT version(); SELECT postgis_lib_version();"],env=env,text=True).splitlines()
         args=[str(test_python),'-m','pytest','-q',*files,
               '--junitxml='+str(run/'tests.xml')]
-        result=subprocess.run(args,cwd=repo/'services/agri-gis/backend',env=env,
+        result=subprocess.run(args,cwd=repo/'services/agri-gis/backend',env=test_env,
                               stdout=log,stderr=log,timeout=180)
     finally:
         try:
@@ -114,7 +132,7 @@ cases=[]
 for t in ET.parse(run/'tests.xml').getroot().iter('testcase'):
     statuses=[e.tag for e in t if e.tag in {'failure','error','skipped'}]
     module=t.attrib.get('classname','').split('.')[-1]
-    phase='independent_fresh_database_migration' if phase_mode == 'migration' else 'post_query_current' if phase_mode == 'query' else 'post_domain_current' if module in {'test_agriculture_database','test_agriculture_database_postgres','test_agriculture_domain_boundary','test_agriculture_domain_rls_postgres'} else 'pre_domain_component'
+    phase='job_authority_current' if phase_mode == 'jobs' else 'private_objects_current' if phase_mode == 'objects' else 'independent_fresh_database_migration' if phase_mode == 'migration' else 'post_query_current' if phase_mode == 'query' else 'post_domain_current' if module in {'test_agriculture_database','test_agriculture_database_postgres','test_agriculture_domain_boundary','test_agriculture_domain_rls_postgres'} else 'pre_domain_component'
     cases.append({'name':t.attrib['name'],'schema_phase':phase,'status':statuses[0] if statuses else 'pass',
                   'seconds':float(t.attrib.get('time','0'))})
 required_pg = {
@@ -138,6 +156,13 @@ elif phase_mode == 'query':
     required_pg = {'test_postgres_query_scope_same_bbox_and_history',
                    'test_postgres_query_scope_mixed_task_and_core',
                    'test_postgres_query_scope_missing_mapping_and_rebinding'}
+elif phase_mode == 'objects':
+    required_pg = {'test_postgres_private_objects_scope_immutability',
+                   'test_postgres_private_object_http_bytes_and_withdrawal'}
+elif phase_mode == 'jobs':
+    required_pg = {'test_postgres_job_sidecar_scope_immutable_and_worker_privileges',
+                   'test_postgres_job_execution_lease_fencing_and_retry_scope',
+                   'test_real_go_python_job_authority_chain'}
 missing_pg = sorted(required_pg-{c['name'] for c in cases if c['status']=='pass'})
 scope=['deploy/agriculture/postgres/init.sh', 'deploy/agriculture/native-postgres-packages.json',
        'scripts/agriculture/native_test_environment.py',
@@ -151,6 +176,14 @@ for directory in ['services/agri-gis/backend/app',
               if p.is_file() and p.suffix in {'.py','.sql','.json'}]
 scope += ['services/agri-gis/backend/'+f for f in files]
 scope += ['services/agri-gis/backend/tests/domain_fixture_support.py']
+if phase_mode in {'objects', 'jobs'}:
+    scope += ['services/agri-gis/backend/tests/test_agriculture_identity.py',
+              'services/agri-gis/backend/tests/test_agriculture_actors_postgres.py']
+if phase_mode == 'jobs':
+    scope += ['backend/go.mod', 'backend/go.sum',
+              'services/agri-gis/backend/tests/job_fixture_support.py',
+              'services/agri-gis/backend/tests/job_http_fixture.py']
+    scope += [str(p.relative_to(repo)) for p in (repo/'backend').rglob('*.go') if '.local' not in p.parts]
 scope += ['services/agri-gis/backend/app/dao/workbench_dao.py',
           'services/agri-gis/backend/app/services/workbench_service.py',
           'services/agri-gis/backend/app/services/project_user_service.py']

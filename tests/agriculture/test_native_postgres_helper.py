@@ -35,7 +35,8 @@ class NativePostgresPathTests(unittest.TestCase):
             runs = repo / '.local/native-postgres/runs'
             runs.parent.mkdir(parents=True)
             runs.symlink_to(outside, target_is_directory=True)
-            result = subprocess.run([sys.executable, str(script), '--package-root', str(packages)],
+            result = subprocess.run([sys.executable, str(script), '--package-root', str(packages),
+                                     '--python', sys.executable],
                                     capture_output=True, text=True, timeout=10)
             self.assertNotEqual(result.returncode, 0)
             self.assertIn('fixture run path escapes repository .local', result.stderr)

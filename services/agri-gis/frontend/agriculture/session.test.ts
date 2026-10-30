@@ -101,7 +101,7 @@ describe('platform cookie session boundary', () => {
     expect(selectedWorkspace('')).toBeNull()
     expect(loginURL('')).toBe('/login?next=%2Fagri%2F')
     expect(loginURL('?workspace_id=a')).toBe('/login?next=%2Fagri%2F%3Fworkspace_id%3Da')
-    expect(workspaceURL('abc-123')).toBe('/agri/?workspace_id=abc-123')
+    expect(workspaceURL('abc-123')).toBe('/agri/workspaces/abc-123')
     expect(() => workspaceURL('https://evil.example')).toThrow()
   })
   test('does not allow a stale session response to replace a newer account', async () => {
@@ -120,6 +120,52 @@ describe('platform cookie session boundary', () => {
     expect(controller.state.user?.id).toBe('user-b')
     expect(controller.state.workspaces[0].id).toBe('workspace-b')
     expect(calls).toBe(3)
+  })
+})
+
+describe('bounded agricultural deep links', () => {
+  test('login preserves actual authorized-route path and legacy workspace context', () => {
+    expect(loginURL('', '/agri/workspaces/workspace-a')).toBe('/login?next=%2Fagri%2Fworkspaces%2Fworkspace-a')
+    expect(loginURL('?workspace_id=workspace-a', '/agri/workspaces')).toBe('/login?next=%2Fagri%2Fworkspaces%3Fworkspace_id%3Dworkspace-a')
+    expect(() => loginURL('?workspace_id=b', '/agri/workspaces/a')).toThrow()
+    expect(() => loginURL('', '/agri/unknown')).toThrow()
+    expect(() => loginURL('', '/agri/workspaces/a', '#operator_code=admin')).toThrow()
+  })
+  test('deep workspace selection requires fresh server membership', async () => {
+    const { controller, requests } = client([response({ user }), response([workspace]), response({ user }), response([])])
+    await controller.refresh('', '/agri/workspaces/workspace-a')
+    expect(controller.state.selected?.id).toBe('workspace-a')
+    await controller.refresh('', '/agri/workspaces/workspace-a')
+    expect(controller.state.error?.code).toBe('WORKSPACE_FORBIDDEN')
+    expect(controller.state.user).toBeNull()
+    expect(controller.state.selected).toBeNull()
+    expect(requests).toHaveLength(4)
+  })
+  test('unknown/conflicting/encoded paths never fetch identity or resources', async () => {
+    for (const [path, query] of [['/agri/unknown', ''], ['/agri/workspaces/a', '?workspace_id=b'], ['/agri/%2e%2e/organization', ''], ['/agri//workspaces', ''], ['/agri/workspaces/a/', ''], ['//evil.invalid/agri/', ''], ['/agri/workspaces/../a', ''], ['/agri/workspaces/a', '?workspace_id=a&workspace_id=a'], ['/agri/', '?workspace_id=a%0a'], ['/agri/', '?workspace_id=a&operator_code=owner']]) {
+      const { controller, requests } = client([])
+      await controller.refresh(query, path)
+      expect(controller.state.status).toBe('error')
+      expect(requests).toHaveLength(0)
+    }
+  })
+  test('back navigation invalidates old content before fetching new path and unmount cancels listeners', async () => {
+    const { controller, requests } = client([response({ user }), response([workspace]), response({ user: null })])
+    const events = new EventTarget()
+    let path = '/agri/workspaces/workspace-a'
+    const ready = new Promise<void>(resolve => { controller.onChange = state => { if (state.status === 'ready') resolve() } })
+    const unbind = bindSessionLifecycle(controller, events, new EventTarget(), () => 'visible', () => '', () => path)
+    await ready
+    path = '/agri/workspaces'
+    const anonymous = new Promise<void>(resolve => { controller.onChange = state => { if (state.status === 'anonymous') resolve() } })
+    events.dispatchEvent(new Event('popstate'))
+    expect(controller.state.selected).toBeNull()
+    await anonymous
+    expect(loginURL('', path)).toBe('/login?next=%2Fagri%2Fworkspaces')
+    unbind()
+    events.dispatchEvent(new Event('popstate'))
+    events.dispatchEvent(new Event('hashchange'))
+    expect(requests).toHaveLength(3)
   })
 })
 

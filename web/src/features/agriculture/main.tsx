@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { App, Alert, Button, ConfigProvider } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
-import { createBrowserRouter, RouterProvider, Link, Navigate, Outlet } from "react-router";
+import { createBrowserRouter, RouterProvider, Link, Navigate, Outlet, useSearchParams } from "react-router";
 import "@fontsource-variable/inter";
 import "antd/dist/reset.css";
 import "@/styles/globals.css";
@@ -15,6 +15,8 @@ import ForgotPasswordPage from "@/pages/auth/forgot-password";
 import { RequireAuth } from "@/components/auth/require-auth";
 import { getAuthSession, invalidateAuthSessionCache, logout } from "@/services/api/auth";
 import { agricultureAPI } from "@/services/api/agriculture";
+import { agricultureWorkspaceURL } from '../../../../contracts/agriculture/navigation';
+import { safeAuthReturnPath } from '@/lib/auth-return-path';
 import { useUserStore } from "@/stores/use-user-store";
 import { appQueryClient } from "@/lib/query-client";
 import { getAntThemeConfig } from "@/lib/app-theme";
@@ -60,7 +62,9 @@ function SessionBoundary({ children }: { children: ReactNode }) {
 }
 
 function AuthLayout() {
-    return <main className="agri-profile agri-auth"><h1>WeaveSense-DigitalTwin</h1><p>使用统一平台账号登录农业工作台。</p><nav aria-label="账号操作"><Link to="/login">登录</Link><Link to="/register">注册</Link></nav><Outlet /></main>;
+    const [params] = useSearchParams();
+    const next = encodeURIComponent(safeAuthReturnPath(params.get('next')));
+    return <main className="agri-profile agri-auth"><h1>WeaveSense-DigitalTwin</h1><p>使用统一平台账号登录农业工作台。</p><nav aria-label="账号操作"><Link to={`/login?next=${next}`}>登录</Link><Link to={`/register?next=${next}`}>注册</Link></nav><Outlet /></main>;
 }
 
 function Home() {
@@ -77,7 +81,7 @@ function Home() {
         <nav aria-label="农业组织导航"><Link to="/organization">管理组织与成员</Link></nav>
         <Alert type="info" title="农业构建基线" description="GIS 工作台集成与业务验收仍在实施。此页展示平台返回的真实工作区，不提供模拟农场或遥感结果。" />
         <h2>可访问工作区</h2>
-        {workspaces.isPending ? <p role="status">正在读取工作区…</p> : workspaces.isError ? <Alert type="error" title="工作区读取失败" action={<Button onClick={() => void workspaces.refetch()}>重试</Button>} /> : <ul>{workspaces.data.length ? workspaces.data.map((workspace) => <li key={workspace.id}><a href={`/agri/?workspace_id=${encodeURIComponent(workspace.id)}`}>{workspace.name}</a><span> · {workspace.slug}</span></li>) : <li>尚无可访问工作区。</li>}</ul>}
+        {workspaces.isPending ? <p role="status">正在读取工作区…</p> : workspaces.isError ? <Alert type="error" title="工作区读取失败" action={<Button onClick={() => void workspaces.refetch()}>重试</Button>} /> : <ul>{workspaces.data.length ? workspaces.data.map((workspace) => <li key={workspace.id}><a href={agricultureWorkspaceURL(workspace.id)}>{workspace.name}</a><span> · {workspace.slug}</span></li>) : <li>尚无可访问工作区。</li>}</ul>}
         <p>农业子应用使用同域 /agri；工作区选择只用于请求，资源权限仍由服务端验证。</p>
     </main>;
 }

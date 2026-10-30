@@ -43,6 +43,18 @@ class GateTests(unittest.TestCase):
         self.assertNotIn("SECRET", json.dumps(report))
         self.assertNotIn("/private", json.dumps(report))
 
+    def test_actors_require_real_pg_and_actual_service_module(self):
+        cases = [("test_agriculture_actors_postgres", n) for n in module.ACTOR_PG_REQUIRED]
+        cases += [(m, "test_module_probe") for m in module.ACTOR_MODULES - {"test_agriculture_actors_postgres"}]
+        raw = '<testsuites><testsuite>' + ''.join(
+            f'<testcase classname="{c}" name="{n}"/>' for c, n in cases
+        ) + '</testsuite></testsuites>'
+        self.assertTrue(module.reduce("actors", raw)["passed"])
+        for required in module.ACTOR_PG_REQUIRED:
+            self.assertFalse(module.reduce("actors", raw.replace(required, "test_unrelated"))["passed"])
+        self.assertFalse(module.reduce("actors", raw.replace("test_agriculture_legacy_write_integration", "test_unknown"))["passed"])
+        self.assertFalse(module.reduce("actors", raw.replace('/>', '><skipped/></testcase>', 1))["passed"])
+
 
 if __name__ == "__main__":
     unittest.main()

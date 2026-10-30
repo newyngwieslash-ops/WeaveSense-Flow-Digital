@@ -1,0 +1,91 @@
+worker_processes auto;
+pid /tmp/agriculture-nginx.pid;
+# Nginx error messages can contain raw request targets. Discard request error
+# logs; retain sanitized status access logs and external availability monitoring.
+error_log /dev/null crit;
+events { worker_connections 1024; }
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+    server_tokens off;
+    client_body_temp_path /tmp/agriculture-client;
+    proxy_temp_path /tmp/agriculture-proxy;
+    fastcgi_temp_path /tmp/agriculture-fastcgi;
+    uwsgi_temp_path /tmp/agriculture-uwsgi;
+    scgi_temp_path /tmp/agriculture-scgi;
+    # Preserve the original port for platform same-origin mutation checks.
+    map $http_host $agriculture_host {
+        default $http_host;
+        "" $host;
+    }
+    # Never log query strings, cookies, Authorization or Referer.
+    log_format agriculture '$request_method $uri $status $body_bytes_sent';
+    access_log /dev/stdout agriculture;
+    server {
+        listen ${AGRI_LISTEN};
+        server_name _;
+        root ${AGRI_STATIC_ROOT};
+        index index.html;
+        absolute_redirect off;
+        client_max_body_size 2m;
+        add_header Cache-Control "no-store" always;
+        add_header Referrer-Policy "no-referrer" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        error_page 404 /_agri_errors/404.html;
+        error_page 500 502 503 504 /_agri_errors/50x.html;
+
+        location = /internal { return 404; }
+        location ^~ /internal/ { return 404; }
+        location = /api/internal { return 404; }
+        location ^~ /api/internal/ { return 404; }
+        # No old GIS passthrough or browser access to service credentials.
+        location = /api/v1 { return 404; }
+        location ^~ /api/v1/ { return 404; }
+        location = /api { return 404; }
+        location = /agri/api { return 404; }
+        location ^~ /agri/api/ { return 404; }
+        location ^~ /api/ {
+            proxy_pass http://${AGRI_PLATFORM_UPSTREAM};
+            proxy_http_version 1.1;
+            proxy_set_header Host $agriculture_host;
+            proxy_set_header X-Forwarded-Host $agriculture_host;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Real-IP $remote_addr;
+            # Do not trust a caller-supplied forwarding chain.
+            proxy_set_header X-Forwarded-For $remote_addr;
+            proxy_set_header Connection "";
+            proxy_cache off;
+            proxy_buffering off;
+            proxy_intercept_errors off;
+            proxy_hide_header Cache-Control;
+            proxy_hide_header Expires;
+            proxy_connect_timeout 5s;
+            proxy_read_timeout 60s;
+        }
+
+        location = /agri { return 308 /agri/$is_args$args; }
+        location = /agri/ { try_files /agri/index.html =404; }
+        location = /agri/index.html { try_files $uri =404; }
+        location = /index.html { try_files $uri =404; }
+        location = / { try_files /index.html =404; }
+
+        # Deny hidden files before any static extension/hash regex can match.
+        location ~ /\. { return 404; }
+        # Only content-hashed build assets receive public immutable caching.
+        location ~ "^/(?:agri/)?assets/[^/]+-[A-Za-z0-9_-]{8,}\.(?:js|css|woff2?|ttf|svg|png|jpe?g|webp|gif|ico)$" {
+            try_files $uri =404;
+            add_header Cache-Control "public, max-age=31536000, immutable";
+            add_header Referrer-Policy "no-referrer" always;
+            add_header X-Content-Type-Options "nosniff" always;
+        }
+        location /assets/ { try_files $uri =404; }
+        location /agri/assets/ { try_files $uri =404; }
+        # A missing file never becomes successful SPA HTML.
+        location ~* \.(?:js|css|map|json|woff2?|ttf|svg|png|jpe?g|webp|gif|ico|html)$ {
+            try_files $uri =404;
+        }
+        location ^~ /_agri_errors/ { internal; }
+        location /agri/ { try_files $uri $uri/ /agri/index.html; }
+        location / { try_files $uri $uri/ /index.html; }
+    }
+}

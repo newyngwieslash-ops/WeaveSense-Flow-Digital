@@ -101,7 +101,7 @@ export async function startProxy({ apiPort, reactRoot, vueRoot }) {
     return server;
 }
 
-async function freePort() {
+export async function freePort() {
     const server = createPortServer();
     await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
     const { port } = server.address();
@@ -109,7 +109,7 @@ async function freePort() {
     return port;
 }
 
-async function ready(url, child, timeout = 120000) {
+export async function ready(url, child, timeout = 120000) {
     const deadline = Date.now() + timeout;
     while (Date.now() < deadline) {
         if (child.exitCode !== null) throw new Error("owned process exited before readiness");
@@ -119,7 +119,7 @@ async function ready(url, child, timeout = 120000) {
     throw new Error("owned process readiness timeout");
 }
 
-async function stop(child) {
+export async function stop(child) {
     if (!child || child.exitCode !== null || child.signalCode !== null) return;
     child.kill("SIGTERM");
     const deadline = Date.now() + 5000;
@@ -127,7 +127,7 @@ async function stop(child) {
     if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
 }
 
-async function connect(cdpPort, origin) {
+export async function connect(cdpPort, origin) {
     const targets = await (await fetch(`http://127.0.0.1:${cdpPort}/json/list`)).json();
     const socket = new WebSocket(targets.find(t => t.type === "page").webSocketDebuggerUrl);
     await new Promise((resolve, reject) => { socket.addEventListener("open", resolve, { once: true }); socket.addEventListener("error", reject, { once: true }); });

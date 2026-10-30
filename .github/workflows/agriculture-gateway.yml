@@ -1,0 +1,114 @@
+name: Agriculture gateway browser and disposable image
+on:
+  workflow_dispatch:
+  push:
+    branches: [ci/agriculture-w00, feat/agriculture-v1]
+    paths:
+      - '.github/workflows/agriculture-gateway.yml'
+      - 'deploy/agriculture/**'
+      - 'docker-compose.agriculture.yml'
+      - 'contracts/agriculture/navigation.ts'
+      - 'scripts/agriculture/*gateway*'
+      - 'scripts/agriculture/session-*'
+      - 'scripts/agriculture/browser-navigation.mjs'
+      - 'web/**'
+      - 'services/agri-gis/frontend/**'
+  pull_request:
+    branches: [ci/agriculture-w00, feat/agriculture-v1]
+permissions:
+  contents: read
+jobs:
+  gateway:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          path: scaffold
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.9'
+          cache: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.22.1'
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.9'
+      - name: Prepare fixed or actual full source without publishing
+        id: prepare
+        env:
+          SCAFFOLD_MODE: ${{ github.ref_name == 'ci/agriculture-w00' || github.head_ref == 'ci/agriculture-w00' }}
+        run: |
+          set -euo pipefail
+          python3 scaffold/scripts/agriculture/session-ci-prepare.test.py
+          mode=full
+          if [[ "$SCAFFOLD_MODE" == true ]]; then mode=scaffold; fi
+          python3 scaffold/scripts/agriculture/session-ci-prepare.py --scaffold scaffold --destination product --mode "$mode"
+          echo "CANVAS_BUILD_COMMIT=$(python3 -c 'import json; print(json.load(open("product/.local/evidence/session-ci-provenance.json"))["source_commit"])')" >> "$GITHUB_ENV"
+          echo "AGRI_E2E_SOURCE_COMMIT=$(python3 -c 'import json; print(json.load(open("product/.local/evidence/session-ci-provenance.json"))["source_commit"])')" >> "$GITHUB_ENV"
+      - name: Compile actual platform and both frontend profiles
+        working-directory: product
+        run: |
+          set -euo pipefail
+          mkdir -p .local/bin
+          go -C backend build -o "$PWD/.local/bin/agriculture-platform" ./cmd/server
+          (cd web && bun install --frozen-lockfile --ignore-scripts && bun test test/agriculture-profile.test.ts test/auth-return-path.test.ts test/auth-session-race.test.ts && bun run build:agriculture)
+          (cd services/agri-gis/frontend && npm ci --ignore-scripts --no-audit --no-fund && bun run test:agriculture && npm run build:agriculture)
+      - name: Hash-pinned configuration tests
+        working-directory: product
+        run: |
+          set -euo pipefail
+          python3 -m venv .local/gateway-test-venv
+          .local/gateway-test-venv/bin/pip install --require-hashes --no-deps --only-binary :all: --index-url https://pypi.org/simple -r scripts/agriculture/python-test-requirements.txt
+          .local/gateway-test-venv/bin/python -m pytest tests/agriculture/test_gateway_configuration.py -q
+      - name: Obtain official runner nginx packages without starting a daemon
+        working-directory: product
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          mkdir -p .local/nginx/download .local/nginx/root
+          (cd .local/nginx/download && apt-get download nginx nginx-common)
+          for package in .local/nginx/download/*.deb; do dpkg-deb -x "$package" .local/nginx/root; done
+          nginx="$PWD/.local/nginx/root/usr/sbin/nginx"
+          test -x "$nginx"
+          "$nginx" -v
+          echo "NGINX_BIN=$nginx" >> "$GITHUB_ENV"
+          echo "NGINX_MIME_TYPES=$PWD/.local/nginx/root/etc/nginx/mime.types" >> "$GITHUB_ENV"
+          python3 - <<'PY'
+          import hashlib, json, pathlib, subprocess
+          files = pathlib.Path('.local/nginx/download').glob('*.deb')
+          records = [{'name': p.name, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest(), 'version': subprocess.check_output(['dpkg-deb', '-f', str(p), 'Version'], text=True).strip()} for p in sorted(files)]
+          pathlib.Path('.local/evidence/gateway-nginx-packages.json').write_text(json.dumps({'source': 'Ubuntu runner configured official apt repositories', 'packages': records, 'same_version_as_docker_image': False}, indent=2) + '\n')
+          PY
+      - name: Actual production-template nginx and Chromium lifecycle
+        working-directory: product
+        run: |
+          set -euo pipefail
+          chrome="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          test -n "$chrome"
+          export CHROME_BIN="$chrome"
+          "$chrome" --version
+          node --test scripts/agriculture/session-e2e.test.mjs scripts/agriculture/gateway-browser-e2e.test.mjs
+          node scripts/agriculture/gateway-browser-e2e.mjs
+      - name: Independent local-only Docker build and static failure smoke
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+        working-directory: product
+        run: |
+          set -euo pipefail
+          python3 scripts/agriculture/gateway-container-smoke.test.py
+          docker version
+          python3 scripts/agriculture/gateway-container-smoke.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agriculture-gateway-sanitized-evidence
+          path: |
+            product/.local/evidence/session-ci-provenance.json
+            product/.local/evidence/gateway-browser-e2e.json
+            product/.local/evidence/gateway-nginx-packages.json
+            product/.local/evidence/gateway-container-smoke.json
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14

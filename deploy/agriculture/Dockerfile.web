@@ -1,0 +1,28 @@
+# syntax=docker/dockerfile:1.7
+FROM oven/bun:1.3.9 AS bun
+FROM node:24.22.1-bookworm-slim AS build
+COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
+WORKDIR /app/web
+COPY web/package.json web/bun.lock ./
+RUN bun install --frozen-lockfile --ignore-scripts
+COPY web ./
+COPY contracts/agriculture/navigation.ts /app/contracts/agriculture/navigation.ts
+COPY docs/agriculture/profile/licenses /app/docs/agriculture/profile/licenses
+RUN bun run build:agriculture
+WORKDIR /app/services/agri-gis/frontend
+COPY services/agri-gis/frontend/package.json services/agri-gis/frontend/package-lock.json ./
+RUN npm ci --ignore-scripts --no-audit --no-fund
+COPY services/agri-gis/frontend ./
+RUN npm run build:agriculture
+
+FROM nginx:1.27-alpine
+COPY --from=build /app/web/dist-agriculture /usr/share/nginx/html
+COPY --from=build /app/services/agri-gis/frontend/dist-agriculture /usr/share/nginx/html/agri
+COPY deploy/agriculture/errors /usr/share/nginx/html/_agri_errors
+COPY deploy/agriculture/nginx.conf.template /etc/agriculture/nginx.conf.template
+COPY --chmod=0555 deploy/agriculture/web-entrypoint.sh /usr/local/bin/agriculture-web
+ENV AGRI_LISTEN=8080 AGRI_STATIC_ROOT=/usr/share/nginx/html AGRI_PLATFORM_UPSTREAM=platform:8080
+USER nginx
+EXPOSE 8080
+ENTRYPOINT ["/usr/local/bin/agriculture-web"]
+HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 CMD wget -qO- http://127.0.0.1:8080/ >/dev/null || exit 1

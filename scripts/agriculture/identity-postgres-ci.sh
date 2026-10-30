@@ -7,7 +7,9 @@ cd "$(dirname "$0")/../.."
 AGRI_IDENTITY_PYTHON="$(cd "$(dirname "$AGRI_IDENTITY_PYTHON")" && pwd)/$(basename "$AGRI_IDENTITY_PYTHON")"
 export AGRI_IDENTITY_PYTHON
 mkdir -p .local/evidence
-for suite in go python; do
+python3 scripts/agriculture/legacy-identity-inventory.test.py
+python3 scripts/agriculture/legacy-identity-inventory.py --check
+for suite in go python actors; do
   printf '%s\n' '{"passed":false,"status":"not_run","tests":[]}' > ".local/evidence/identity-$suite.json"
 done
 command -v docker >/dev/null
@@ -95,6 +97,10 @@ python_gate=$?
 go_code=$?
 python3 scripts/agriculture/identity-ci-result.py --kind go --input "$private/go.jsonl" --output .local/evidence/identity-go.json
 go_gate=$?
+(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_actors.py tests/test_agriculture_actors_postgres.py tests/test_legacy_actor_gate.py tests/test_legacy_identity_contracts.py tests/test_agriculture_legacy_write_integration.py --junitxml="$private/actors.xml" -q) > "$private/actors.log" 2>&1
+actors_code=$?
+python3 scripts/agriculture/identity-ci-result.py --kind actors --input "$private/actors.xml" --output .local/evidence/identity-actors.json
+actors_gate=$?
 set -e
-[[ $python_code == 0 && $python_gate == 0 && $go_code == 0 && $go_gate == 0 ]] || { echo 'Identity acceptance failed; inspect sanitized reports, no raw secrets exported'; exit 1; }
-echo 'PASS: actual Go/Python HTTP and isolated PostgreSQL replay; fixture-domain acceptance only'
+[[ $python_code == 0 && $python_gate == 0 && $go_code == 0 && $go_gate == 0 && $actors_code == 0 && $actors_gate == 0 ]] || { echo 'Identity acceptance failed; inspect sanitized reports, no raw secrets exported'; exit 1; }
+echo 'PASS: actual Go/Python HTTP, PostgreSQL replay and legacy actor boundary; fixture-domain acceptance only'

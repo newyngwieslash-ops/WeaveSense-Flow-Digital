@@ -11,6 +11,23 @@ spec.loader.exec_module(prepare)
 
 
 class PreparationTests(unittest.TestCase):
+    def test_gateway_dependency_closure_is_explicit_and_unique(self):
+        required = {
+            "contracts/agriculture/navigation.ts",
+            "deploy/agriculture/Dockerfile.web", "deploy/agriculture/Dockerfile.web.dockerignore",
+            "deploy/agriculture/nginx.conf.template", "deploy/agriculture/web-entrypoint.sh",
+            "deploy/agriculture/errors/404.html", "deploy/agriculture/errors/50x.html",
+            "scripts/agriculture/gateway-browser-e2e.mjs", "scripts/agriculture/gateway-browser-e2e.test.mjs",
+            "scripts/agriculture/gateway-container-smoke.py", "scripts/agriculture/gateway-container-smoke.test.py",
+            "scripts/agriculture/session-e2e.mjs", "scripts/agriculture/browser-navigation.mjs",
+            "services/agri-gis/frontend/agriculture/session-lifecycle.ts",
+            "services/agri-gis/frontend/agriculture/App.vue", "web/src/lib/auth-return-path.ts",
+            "tests/agriculture/test_gateway_configuration.py",
+        }
+        self.assertTrue(required <= set(prepare.OVERLAY))
+        self.assertEqual(len(prepare.OVERLAY), len(set(prepare.OVERLAY)))
+        self.assertFalse(any("*" in path for path in prepare.OVERLAY))
+
     def test_membership_overlay_includes_dependency_closure_explicitly(self):
         required = {
             "backend/cmd/server/main.go", "backend/internal/agriculture/roles.go",

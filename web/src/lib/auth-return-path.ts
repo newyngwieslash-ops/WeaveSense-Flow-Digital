@@ -1,4 +1,5 @@
 import type { NavigateFunction } from "react-router";
+import { agricultureRoute } from '../../../contracts/agriculture/navigation';
 
 const origin = "https://auth-return.invalid";
 
@@ -11,6 +12,7 @@ export function safeAuthReturnPath(value: string | null): string {
     try {
         const target = new URL(value, origin);
         if (target.origin !== origin || ["/login", "/register", "/forgot-password"].includes(target.pathname)) return "/";
+        if (target.pathname === '/agri' || target.pathname.startsWith('/agri/')) return agricultureRoute(path, target.search, target.hash).href;
         return target.pathname + target.search + target.hash;
     } catch {
         return "/";

@@ -23,6 +23,7 @@ DOMAIN_PG_REQUIRED = {
     "test_postgres_runtime_factory_role_admission",
     "test_postgres_runtime_scope_pool_reuse_and_rollback",
     "test_postgres_worker_factory_admission_without_business_privileges",
+    "test_postgres_domain_factory_rejects_incomplete_boundary",
     "test_postgres_domain_scope_inventory_and_unmapped_denial",
     "test_postgres_domain_cross_workspace_parent_and_policy_denial",
 }

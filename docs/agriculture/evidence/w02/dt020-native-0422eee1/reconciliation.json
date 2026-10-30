@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "source_commit": "0422eee1cf2a93bf2908f71e7bc1633abbec34f5",
+  "reports": {
+    "objects": {
+      "sha256": "c3f0962e6a54488c5aeebcfbf88e9da1c823fb8b796b10b900df26b282bfb786",
+      "passed": 46,
+      "source_file_count": 297,
+      "source_mismatches": []
+    },
+    "components": {
+      "sha256": "e6c222c294c7d804e9de5dc74bc027d5eccf9e58557ed397c39800057faf2999",
+      "passed": 152,
+      "source_file_count": 304,
+      "source_mismatches": []
+    },
+    "migration": {
+      "sha256": "d76f98ba909e585f8a80e3b52e35e3eca1f0b54a97f000242ef67728407aae60",
+      "passed": 6,
+      "source_file_count": 294,
+      "source_mismatches": []
+    }
+  },
+  "supplemental_fixture_source": {
+    "services/agri-gis/backend/tests/object_http_fixture.py": "dfd42dd30244eedf866e7a0d9a578696d7894401c2496cdd3ae7238570e3cb38"
+  },
+  "supplemental_note": "objects 纯测试从此已提交夹具导入 private_config；本次 runner 尚未把该传递依赖加入默认源码列表，因此另行记录完整文件 SHA，并逐字节对不可变提交验证。",
+  "remote_ci": false,
+  "live_data": false,
+  "go_object_chain_run": false,
+  "scoped_evidence_only": true,
+  "all_recorded_source_hashes_match": true
+}

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
+
 	"yingce/backend/internal/model"
 
 	"gorm.io/gorm"
@@ -38,18 +40,28 @@ type Billing struct {
 }
 
 // providerTag is the provider account id recorded on a reservation (only when that account exists).
-func (b Billing) providerTag(tx *gorm.DB) string {
+func (b Billing) providerTag(tx *gorm.DB) (string, error) {
 	if b.ProviderAccountID == "" {
-		return ""
+		return "", nil
+	}
+	if tx.Dialector.Name() == "postgres" {
+		var exists bool
+		if err := tx.Raw("SELECT flow_system.provider_exists(?)", b.ProviderAccountID).Scan(&exists).Error; err != nil {
+			return "", err
+		}
+		if exists {
+			return b.ProviderAccountID, nil
+		}
+		return "", nil
 	}
 	var n int64
-	_ = withSystemContext(tx, func(tx *gorm.DB) error {
-		return tx.Model(&model.FlowProviderAccount{}).Where("id = ?", b.ProviderAccountID).Count(&n).Error
-	})
-	if n == 0 {
-		return ""
+	if err := tx.Model(&model.FlowProviderAccount{}).Where("id = ?", b.ProviderAccountID).Count(&n).Error; err != nil {
+		return "", err
 	}
-	return b.ProviderAccountID
+	if n == 0 {
+		return "", nil
+	}
+	return b.ProviderAccountID, nil
 }
 
 func (b Billing) period() string { return b.now().UTC().Format("2006-01") }
@@ -57,10 +69,15 @@ func (b Billing) period() string { return b.now().UTC().Format("2006-01") }
 // holdProvider atomically adds amount to the provider account's reserved total
 // for this month, failing when reserved+consumed would exceed its budget.
 func (b Billing) holdProvider(tx *gorm.DB, accountID string, amount int64) error {
+	// PostgreSQL v84 binds the hold to the actual reservation INSERT in this
+	// same transaction. Never clear tenant scope or mutate a separate pool.
+	if tx.Dialector.Name() == "postgres" {
+		return nil
+	}
 	if accountID == "" || amount <= 0 {
 		return nil
 	}
-	return withSystemContext(tx, func(tx *gorm.DB) error { return b.holdProviderSys(tx, accountID, amount) })
+	return b.holdProviderSys(tx, accountID, amount)
 }
 
 func (b Billing) holdProviderSys(tx *gorm.DB, accountID string, amount int64) error {
@@ -91,39 +108,23 @@ func (b Billing) holdProviderSys(tx *gorm.DB, accountID string, amount int64) er
 
 // closeProvider moves a reservation's provider hold to consumed (actual) and frees the rest.
 func (b Billing) closeProvider(tx *gorm.DB, r model.FlowBudgetReservation, actual int64) error {
+	if tx.Dialector.Name() == "postgres" {
+		return nil
+	} // exact state-transition trigger
 	if r.ProviderAccountID == "" {
 		return nil
 	}
 	per := r.CreatedAt.UTC().Format("2006-01")
-	return withSystemContext(tx, func(tx *gorm.DB) error {
-		return tx.Model(&model.FlowProviderAccountPeriod{}).Where("account_id = ? AND period = ?", r.ProviderAccountID, per).
-			Updates(map[string]any{"reserved_micro": gorm.Expr("CASE WHEN reserved_micro > ? THEN reserved_micro - ? ELSE 0 END", r.ReservedMicro, r.ReservedMicro), "consumed_micro": gorm.Expr("consumed_micro + ?", actual), "updated_at": b.now()}).Error
-	})
+	return tx.Model(&model.FlowProviderAccountPeriod{}).Where("account_id = ? AND period = ?", r.ProviderAccountID, per).
+		Updates(map[string]any{"reserved_micro": gorm.Expr("CASE WHEN reserved_micro > ? THEN reserved_micro - ? ELSE 0 END", r.ReservedMicro, r.ReservedMicro), "consumed_micro": gorm.Expr("consumed_micro + ?", actual), "updated_at": b.now()}).Error
 }
 
-// withSystemContext runs fn with app.tenant_ids cleared (system context) for
-// the platform-wide provider-account tables, then restores the caller's tenant
-// scope on the same transaction (tenant scope only exists inside a
-// transaction, see TenantTx). No-op on SQLite.
-func withSystemContext(tx *gorm.DB, fn func(*gorm.DB) error) error {
-	if tx.Dialector.Name() != "postgres" {
-		return fn(tx)
+func providerBudgetError(err error) error {
+	var pg *pgconn.PgError
+	if errors.As(err, &pg) && pg.Code == "P0001" && pg.Message == "flow_provider_budget_exhausted" {
+		return ErrBudgetProvider
 	}
-	var prev string
-	if err := tx.Raw("SELECT coalesce(current_setting('app.tenant_ids', true), '')").Scan(&prev).Error; err != nil {
-		return err
-	}
-	if prev == "" {
-		return fn(tx)
-	}
-	if err := tx.Exec("SELECT set_config('app.tenant_ids', '', true)").Error; err != nil {
-		return err
-	}
-	ferr := fn(tx)
-	if err := tx.Exec("SELECT set_config('app.tenant_ids', ?, true)", prev).Error; err != nil && ferr == nil {
-		ferr = err
-	}
-	return ferr
+	return err
 }
 
 func (b Billing) now() time.Time {
@@ -166,7 +167,7 @@ func (b Billing) ledger(tx *gorm.DB, userID string, typ model.CreditLedgerType, 
 
 // Reserve opens a root reservation for the tenant (idempotent by key).
 func (b Billing) Reserve(tenantID, key, purpose, refID string, amount int64) (out model.FlowBudgetReservation, err error) {
-	defer func() { CountBudgetDenied(err) }()
+	defer func() { err = providerBudgetError(err); CountBudgetDenied(err) }()
 	if amount <= 0 || key == "" {
 		return out, fmt.Errorf("flow: invalid reservation")
 	}
@@ -207,8 +208,12 @@ func (b Billing) Reserve(tenantID, key, purpose, refID string, amount int64) (ou
 		if err := b.holdProvider(tx, b.ProviderAccountID, amount); err != nil {
 			return err
 		}
+		tag, err := b.providerTag(tx)
+		if err != nil {
+			return err
+		}
 		out = model.FlowBudgetReservation{ID: NewID("rsv_"), TenantID: tenantID, AccountID: acc.ID, Purpose: purpose, RefID: refID, IdempotencyKey: key, PriceVersion: CurrentPriceBook().Version,
-			ReservedMicro: amount, Status: "reserved", ProviderAccountID: b.providerTag(tx), CreatedAt: b.now(), UpdatedAt: b.now()}
+			ReservedMicro: amount, Status: "reserved", ProviderAccountID: tag, CreatedAt: b.now(), UpdatedAt: b.now()}
 		if err := tx.Create(&out).Error; err != nil {
 			return err
 		}
@@ -220,7 +225,7 @@ func (b Billing) Reserve(tenantID, key, purpose, refID string, amount int64) (ou
 // Allocate carves a child reservation out of the parent's remaining budget
 // atomically (conditional UPDATE), idempotent by key.
 func (b Billing) Allocate(parentID, key, purpose, refID string, amount int64) (out model.FlowBudgetReservation, err error) {
-	defer func() { CountBudgetDenied(err) }()
+	defer func() { err = providerBudgetError(err); CountBudgetDenied(err) }()
 	err = b.DB.Transaction(func(tx *gorm.DB) error {
 		var p model.FlowBudgetReservation
 		if err := tx.First(&p, "id = ?", parentID).Error; err != nil {
@@ -241,8 +246,12 @@ func (b Billing) Allocate(parentID, key, purpose, refID string, amount int64) (o
 		if err := b.holdProvider(tx, b.ProviderAccountID, amount); err != nil {
 			return err
 		}
+		tag, err := b.providerTag(tx)
+		if err != nil {
+			return err
+		}
 		out = model.FlowBudgetReservation{ID: NewID("rsv_"), TenantID: p.TenantID, AccountID: p.AccountID, ParentID: p.ID, PriceVersion: p.PriceVersion, Purpose: purpose, RefID: refID,
-			IdempotencyKey: key, ReservedMicro: amount, Status: "reserved", ProviderAccountID: b.providerTag(tx), CreatedAt: b.now(), UpdatedAt: b.now()}
+			IdempotencyKey: key, ReservedMicro: amount, Status: "reserved", ProviderAccountID: tag, CreatedAt: b.now(), UpdatedAt: b.now()}
 		return tx.Create(&out).Error
 	})
 	return out, err

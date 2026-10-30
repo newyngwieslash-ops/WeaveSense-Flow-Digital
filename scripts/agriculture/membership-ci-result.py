@@ -11,6 +11,7 @@ def verify(lines, suite):
     required = {
         "postgres": {"yingce/backend/internal/database", "yingce/backend/internal/agriculture"},
         "legacy-flow": {"yingce/backend/internal/flow"},
+        "flow-scope": {"yingce/backend/internal/flow"},
     }[suite]
     passed, failed, skipped, packages = set(), set(), set(), set()
     locations = {}
@@ -55,6 +56,11 @@ def verify(lines, suite):
                 missing.append(test)
         if not any(test.startswith("TestAgricultureMembership") for _, test in passed):
             missing.append("TestAgricultureMembership*")
+    if suite == "flow-scope":
+        root = "TestFlowPostgresStrictScopeAndProviderAtomicity"
+        for test in [root] + [root + "/" + child for child in ("empty_scope_and_pool_reuse", "provider_and_wallet_rollback_together", "provider_state_idempotency_and_quota", "unknown_provider_and_cross_tenant", "child_release_and_suspended_provider_preserve_legacy_math")]:
+            if ("yingce/backend/internal/flow", test) not in passed:
+                missing.append(test)
     return {"suite": suite, "passed": not (failed or skipped or missing),
             "tests_passed": [f"{p}/{t}" for p, t in sorted(passed)],
             "tests_failed": [f"{p}/{t}" for p, t in sorted(failed)],
@@ -66,7 +72,7 @@ def verify(lines, suite):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--suite", choices=["postgres", "legacy-flow"], required=True)
+    parser.add_argument("--suite", choices=["postgres", "legacy-flow", "flow-scope"], required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     try:

@@ -1,0 +1,18 @@
+{
+  "suite": "flow-scope",
+  "passed": true,
+  "tests_passed": [
+    "yingce/backend/internal/flow/TestFlowPostgresStrictScopeAndProviderAtomicity",
+    "yingce/backend/internal/flow/TestFlowPostgresStrictScopeAndProviderAtomicity/child_release_and_suspended_provider_preserve_legacy_math",
+    "yingce/backend/internal/flow/TestFlowPostgresStrictScopeAndProviderAtomicity/empty_scope_and_pool_reuse",
+    "yingce/backend/internal/flow/TestFlowPostgresStrictScopeAndProviderAtomicity/provider_and_wallet_rollback_together",
+    "yingce/backend/internal/flow/TestFlowPostgresStrictScopeAndProviderAtomicity/provider_state_idempotency_and_quota",
+    "yingce/backend/internal/flow/TestFlowPostgresStrictScopeAndProviderAtomicity/unknown_provider_and_cross_tenant"
+  ],
+  "tests_failed": [],
+  "tests_skipped": [],
+  "missing_required": [],
+  "failure_locations": [],
+  "data_class": "fixture",
+  "live_farm_or_production_acceptance": false
+}

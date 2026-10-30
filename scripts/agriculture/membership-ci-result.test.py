@@ -26,6 +26,15 @@ def postgres_pass():
 
 
 class EvidenceTests(unittest.TestCase):
+    def test_flow_scope_requires_real_root_and_every_child(self):
+        root = "TestFlowPostgresStrictScopeAndProviderAtomicity"
+        names = [root] + [root + "/" + child for child in ("empty_scope_and_pool_reuse", "provider_and_wallet_rollback_together", "provider_state_idempotency_and_quota", "unknown_provider_and_cross_tenant", "child_release_and_suspended_provider_preserve_legacy_math")]
+        events = [event("pass", "flow", name) for name in names] + [event("pass", "flow")]
+        self.assertTrue(result.verify(events, "flow-scope")["passed"])
+        for index in range(len(events)):
+            self.assertFalse(result.verify(events[:index] + events[index + 1:], "flow-scope")["passed"])
+        self.assertFalse(result.verify(events + [event("skip", "flow", root + "/optional")], "flow-scope")["passed"])
+
     def test_accepts_required_actual_test_passes(self):
         evidence = result.verify(postgres_pass(), "postgres")
         self.assertTrue(evidence["passed"])

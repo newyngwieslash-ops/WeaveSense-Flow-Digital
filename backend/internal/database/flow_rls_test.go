@@ -55,7 +55,12 @@ func TestFlowRLSPostgres(t *testing.T) {
 		}
 	}
 	for _, tn := range []string{"tn_a", "tn_b"} {
-		if err := db.Create(&model.FlowTopic{ID: "tp_" + tn, TenantID: tn, WorkspaceID: "ws", Title: "t"}).Error; err != nil {
+		if err := db.Transaction(func(tx *gorm.DB) error {
+			if err := tx.Exec("SELECT set_config('app.tenant_ids',?,true)", tn).Error; err != nil {
+				return err
+			}
+			return tx.Create(&model.FlowTopic{ID: "tp_" + tn, TenantID: tn, WorkspaceID: "ws", Title: "t"}).Error
+		}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -69,7 +74,12 @@ func TestFlowRLSPostgres(t *testing.T) {
 		return nil
 	})
 	for _, tn := range []string{"tn_a", "tn_b"} {
-		if err := db.Create(&model.FlowNotification{ID: "n_" + tn, TenantID: tn, WorkspaceID: "ws", EventID: "ev_" + tn, Type: "x", CreatedAt: time.Now()}).Error; err != nil {
+		if err := db.Transaction(func(tx *gorm.DB) error {
+			if err := tx.Exec("SELECT set_config('app.tenant_ids',?,true)", tn).Error; err != nil {
+				return err
+			}
+			return tx.Create(&model.FlowNotification{ID: "n_" + tn, TenantID: tn, WorkspaceID: "ws", EventID: "ev_" + tn, Type: "x", CreatedAt: time.Now()}).Error
+		}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -104,7 +114,9 @@ func TestFlowRLSPostgres(t *testing.T) {
 	}
 	var all int64
 	db.Model(&model.FlowNotification{}).Count(&all)
-	if all != 2 {
-		t.Fatalf("system context sees %d", all)
+	// v84 intentionally removes the old empty=system convention. This is a
+	// stricter negative assertion; authorized fixture insertion is scoped above.
+	if all != 0 {
+		t.Fatalf("empty ordinary context sees %d", all)
 	}
 }

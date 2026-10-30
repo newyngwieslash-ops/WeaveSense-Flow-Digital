@@ -26,6 +26,8 @@ def test_chain_ci_is_read_only_builds_actual_profiles_and_uploads_no_raw_diagnos
     assert 'contents: read' in workflow
     assert 'persist-credentials: false' in workflow
     assert "AGRI_IDENTITY_CHAIN_REQUIRED: '1'" in workflow
+    assert 'echo "AGRI_E2E_SOURCE_COMMIT=$(python3' in workflow
+    assert 'echo "CANVAS_BUILD_COMMIT=$(python3' in workflow
     assert 'bun install --frozen-lockfile --ignore-scripts' in workflow
     assert 'npm ci --ignore-scripts --no-audit --no-fund' in workflow
     assert 'apt-get download nginx nginx-common' in workflow

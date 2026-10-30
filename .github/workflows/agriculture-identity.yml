@@ -57,6 +57,8 @@ jobs:
           mode=full
           if [[ "$SCAFFOLD_MODE" == true ]]; then mode=scaffold; fi
           python3 scaffold/scripts/agriculture/session-ci-prepare.py --scaffold scaffold --destination product --mode "$mode"
+          echo "CANVAS_BUILD_COMMIT=$(python3 -c 'import json; print(json.load(open("product/.local/evidence/session-ci-provenance.json"))["source_commit"])')" >> "$GITHUB_ENV"
+          echo "AGRI_E2E_SOURCE_COMMIT=$(python3 -c 'import json; print(json.load(open("product/.local/evidence/session-ci-provenance.json"))["source_commit"])')" >> "$GITHUB_ENV"
       - name: Rebuild hash-locked Python environment without lock changes
         working-directory: product
         run: |

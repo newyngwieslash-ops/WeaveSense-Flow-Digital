@@ -1,21 +1,21 @@
 # WeaveSense-DigitalTwin 实施状态
 
-更新日期：2026-10-29（Asia/Shanghai）  
+更新日期：2026-10-30（Asia/Shanghai）
 规格版本：1.0.0  
 当前状态：recovery_evidence_verified_implementation_in_progress
 
 应用实现状态：in_progress
 
-当前工作包：W01 同域农业工作台集成（DT-014）；W00 恢复核验已完成
+当前工作包：W01；DT-014 同域农业工作台集成完成，进入会话请求安全加固
 
-下一任务：实现 DT-014 的真实网关、构建集成、深链接和会话导航；后续以 tasks.json 依赖和恢复条件为准。
+下一任务：DT-015 会话 Cookie、Origin/CSRF、CORS 及权限撤销传播；后续以 tasks.json 依赖为准。
 
 ## 1 基线
 
 - Flow：206c82af7ae007f45da4c582f373fbabf027f1b8。
 - AgriScope：571a2dcd9abf8b8a22b66c750ee710b61d482051。
-- 目标远程：https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital（此记录不声称当前变更已推送）。
-- 当前恢复目录：`/workspace/scratch/8cdfee496491/WeaveSense-DigitalTwin-Recovery-20261029`；实际分支/HEAD 以恢复检查点记录为准。
+- 目标远程：https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital；已发布 CI scaffold 512e963e 和仅测试修正 91c76b89，完整本地产品历史与 scaffold 区分，不声称产品分支已同步。
+- 当前恢复目录：`/workspace/scratch/8cdfee496491/WeaveSense-DigitalTwin-Recovery-20261030`；实际分支/HEAD 以恢复检查点记录为准。
 - 规格位置：推荐PROJECT_ROOT/specs/agriculture/v1.0.0。
 
 ## 2 任务与验收记录边界
@@ -44,9 +44,9 @@ RECOVERY_STATUS 的 verified 在此仅表示历史执行证据恢复与冻结来
 原 W00 仅六角色/核心 readiness 及 Flow206/Loom 迁移重放，不含后续农业82/83或完整
 应用服务器启动；当前重建 env.example 另属后续源码。详见
 `docs/agriculture/RECOVERED_CI_EVIDENCE.md` 与规格证据 `historical-ci/d13-mapping.json`。
-DT008 门禁及当前 DT014 真实 Nginx 浏览器回归不因本次证据补齐而通过。
+上述历史证据补齐本身不代表新网关回归；DT014 使用下述独立新运行结果。
 
-DT-014 代码与部分验证已落地：真实 Nginx + Go（明确 SQLite 开发 fixture）+ React/Vue 构建的 50 项 HTTP 检查通过，导航单测 59 项通过并完成两端类型检查/生产构建。真实浏览器因执行器 Unix socket 限制尚未运行；Docker 构建和容器启动亦未验证。因此任务保持 in_progress，不能用 HTTP 或单测替代浏览器深链接/跨应用闭环。已准备专用真实浏览器测试，等待可执行环境与获准发布链路。
+DT-014 已按原任务范围完成：2026-10-30 实际 CI 41007114373 中真实 Nginx/Chromium 15 项检查通过、71 请求零违规，独立 Docker 构建/静态 smoke 16 项通过；211 运行源码逐项映射到冻结本地 53ddad05/856af8f3。W00 首次因旧端口断言失败，修正为精确 Web 回环白名单并补负例后，41008181499 的 contracts/core/migrations 三 job 全部通过；原失败保留。证据见 `evidence/DT-014/` 和项目 `docs/agriculture/GATEWAY_ACCEPTANCE.md`。浏览器使用 SQLite fixture，不替代真实 PostgreSQL 隔离、农场验收、DT015 或 G0；CI 组装目录不是完整产品历史已发布的证明。
 
 恢复验证独立记录于 `RECOVERY_STATUS.json`；历史例外严格限定 DT-001–012，新增 done 必须提供当前真实证据文件、命令/退出码/结果、源码哈希和已完成依赖。`spec_status.py --require-evidence` 要求所有当前 done 的证据完整；检查通过仍只表示状态与证据一致，不冒充全部产品验收。
 
@@ -85,12 +85,11 @@ DT-014 代码与部分验证已落地：真实 Nginx + Go（明确 SQLite 开发
 
 | 状态 | 数量 |
 | --- | ---: |
-| done | 13 |
-| in_progress | 1 |
+| done | 14 |
 | not_started | 130 |
 
 历史 done、恢复证据待补验：无。
-依赖状态就绪但仍须检查恢复条件：无。
+依赖状态就绪但仍须检查恢复条件：DT-015。
 
 | 任务 | 状态 |
 | --- | --- |
@@ -107,7 +106,7 @@ DT-014 代码与部分验证已落地：真实 Nginx + Go（明确 SQLite 开发
 | DT-011 | done |
 | DT-012 | done |
 | DT-013 | done |
-| DT-014 | in_progress |
+| DT-014 | done |
 | DT-015 | not_started |
 | DT-016 | not_started |
 | DT-017 | not_started |

@@ -1,0 +1,777 @@
+{
+  "scaffold_commit": "512e963e97cc8282cfcd9c59045cf78ade0a331e",
+  "product_commit": "53ddad0536351b77a2acb2eb26d0839f4644c26c",
+  "artifacts": [
+    {
+      "id": 12955738630,
+      "name": "agriculture-gateway-sanitized-evidence",
+      "size_in_bytes": 13068,
+      "url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/12955738630",
+      "archive_download_url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/12955738630/zip",
+      "expired": false,
+      "created_at": "2026-10-30T05:15:22Z",
+      "expires_at": "2026-11-13T05:15:21Z",
+      "updated_at": "2026-10-30T05:15:22Z",
+      "digest": "sha256:91e3bd5767d5c6e91edfe4d5d012ebfd6dec546634c2276194384b74b11f5d55",
+      "workflow_run": {
+        "id": 41007114373,
+        "repository_id": 1437883917,
+        "head_repository_id": 1437883917,
+        "head_branch": "ci/agriculture-w00",
+        "head_sha": "512e963e97cc8282cfcd9c59045cf78ade0a331e"
+      }
+    },
+    {
+      "id": 12955599081,
+      "name": "agriculture-identity-sanitized-evidence",
+      "size_in_bytes": 15783,
+      "url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/12955599081",
+      "archive_download_url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/12955599081/zip",
+      "expired": false,
+      "created_at": "2026-10-30T05:15:07Z",
+      "expires_at": "2026-11-13T05:15:06Z",
+      "updated_at": "2026-10-30T05:15:07Z",
+      "digest": "sha256:476d9278492d4c9d8522764e1410c5f0dfe71811714bcc4fe8595c7605885077",
+      "workflow_run": {
+        "id": 41007114465,
+        "repository_id": 1437883917,
+        "head_repository_id": 1437883917,
+        "head_branch": "ci/agriculture-w00",
+        "head_sha": "512e963e97cc8282cfcd9c59045cf78ade0a331e"
+      }
+    },
+    {
+      "id": 12956640102,
+      "name": "agriculture-membership-sanitized-evidence",
+      "size_in_bytes": 12814,
+      "url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/12956640102",
+      "archive_download_url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/12956640102/zip",
+      "expired": false,
+      "created_at": "2026-10-30T05:15:28Z",
+      "expires_at": "2026-11-13T05:15:28Z",
+      "updated_at": "2026-10-30T05:15:28Z",
+      "digest": "sha256:b8fa0433535cef3844e088babac6860850216bb3bec8cee9ce4a00b15a491ff8",
+      "workflow_run": {
+        "id": 41007114314,
+        "repository_id": 1437883917,
+        "head_repository_id": 1437883917,
+        "head_branch": "ci/agriculture-w00",
+        "head_sha": "512e963e97cc8282cfcd9c59045cf78ade0a331e"
+      }
+    },
+    {
+      "id": 12955239548,
+      "name": "agriculture-organization-browser-sanitized-evidence",
+      "size_in_bytes": 23370,
+      "url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/12955239548",
+      "archive_download_url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/12955239548/zip",
+      "expired": false,
+      "created_at": "2026-10-30T05:14:57Z",
+      "expires_at": "2026-11-13T05:14:56Z",
+      "updated_at": "2026-10-30T05:14:57Z",
+      "digest": "sha256:5a0ce4155cef005557d76f40f879acf062783059eef307dfb0fc7776c84ab3ec",
+      "workflow_run": {
+        "id": 41007114314,
+        "repository_id": 1437883917,
+        "head_repository_id": 1437883917,
+        "head_branch": "ci/agriculture-w00",
+        "head_sha": "512e963e97cc8282cfcd9c59045cf78ade0a331e"
+      }
+    },
+    {
+      "id": 12955349069,
+      "name": "agriculture-session-sanitized-evidence",
+      "size_in_bytes": 23432,
+      "url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/12955349069",
+      "archive_download_url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/12955349069/zip",
+      "expired": false,
+      "created_at": "2026-10-30T05:15:11Z",
+      "expires_at": "2026-11-13T05:15:11Z",
+      "updated_at": "2026-10-30T05:15:11Z",
+      "digest": "sha256:9d795c8b943f90e07d72e61c851772482466175a052ec8d89e95779233a215d4",
+      "workflow_run": {
+        "id": 41007114341,
+        "repository_id": 1437883917,
+        "head_repository_id": 1437883917,
+        "head_branch": "ci/agriculture-w00",
+        "head_sha": "512e963e97cc8282cfcd9c59045cf78ade0a331e"
+      }
+    }
+  ],
+  "jobs": [
+    {
+      "run_id": 41007114373,
+      "jobs": [
+        {
+          "id": 123904415044,
+          "name": "gateway",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 41007114373,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/setup-go@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Run oven-sh/setup-bun@v2",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Prepare fixed or actual full source without publishing",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Compile actual platform and both frontend profiles",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Hash-pinned configuration tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Obtain official runner nginx packages without starting a daemon",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Actual production-template nginx and Chromium lifecycle",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Independent local-only Docker build and static failure smoke",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12
+            },
+            {
+              "name": "Post Run oven-sh/setup-bun@v2",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 22
+            },
+            {
+              "name": "Post Run actions/setup-go@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23
+            },
+            {
+              "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "run_id": 41007114465,
+      "jobs": [
+        {
+          "id": 123904414990,
+          "name": "signed-identity",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 41007114465,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/setup-go@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Run astral-sh/setup-uv@v6",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Verify source preparation and fail-closed result gate",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Assemble pinned upstreams and explicit reviewed overlay",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Rebuild hash-locked Python environment without lock changes",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Actual signed HTTP and PostgreSQL replay acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Sanitized reports only",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            },
+            {
+              "name": "Post Run astral-sh/setup-uv@v6",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19
+            },
+            {
+              "name": "Post Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20
+            },
+            {
+              "name": "Post Run actions/setup-go@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21
+            },
+            {
+              "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 22
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "run_id": 41007114314,
+      "jobs": [
+        {
+          "id": 123904415025,
+          "name": "membership-postgres",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 41007114314,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/setup-go@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Validate safe preparation and skipped-test rejection",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Assemble explicit reviewed source overlay or actual full checkout",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Actual fresh PostgreSQL migration, admission, RLS and membership service tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Sanitized evidence only",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Post Run actions/setup-go@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15
+            },
+            {
+              "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 16
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 17
+            }
+          ]
+        },
+        {
+          "id": 123904415385,
+          "name": "organization-browser",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 41007114314,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/setup-go@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Run oven-sh/setup-bun@v2",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Assemble exact reviewed source and authored membership UI",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Build actual platform and production React/Vue profiles",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Actual dual-account Chromium organization lifecycle",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Sanitized browser evidence only",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Post Run oven-sh/setup-bun@v2",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 17
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18
+            },
+            {
+              "name": "Post Run actions/setup-go@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19
+            },
+            {
+              "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "run_id": 41007114341,
+      "jobs": [
+        {
+          "id": 123904415006,
+          "name": "browser-session",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 41007114341,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/setup-go@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Run oven-sh/setup-bun@v2",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Test safe source preparation and assemble disposable product",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Compile actual Go authentication server",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Build and test actual React production profile",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Build and test actual Vue production profile",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Actual Chromium same-origin session lifecycle",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Sanitized result only",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12
+            },
+            {
+              "name": "Post Run oven-sh/setup-bun@v2",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 22
+            },
+            {
+              "name": "Post Run actions/setup-go@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23
+            },
+            {
+              "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "run_id": 41007114333,
+      "jobs": [
+        {
+          "id": 123904414963,
+          "name": "contracts",
+          "status": "completed",
+          "conclusion": "failure",
+          "run_id": 41007114333,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Install isolated schema-test dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Contract negatives and trusted source policy",
+              "status": "completed",
+              "conclusion": "failure",
+              "number": 4
+            },
+            {
+              "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            }
+          ]
+        },
+        {
+          "id": 123904492047,
+          "name": "compose",
+          "status": "completed",
+          "conclusion": "skipped",
+          "run_id": 41007114333,
+          "logs_url": null,
+          "steps": null
+        }
+      ]
+    }
+  ],
+  "w00_failure": {
+    "run_id": 41007114333,
+    "job_id": 123904414963,
+    "file": "tests/agriculture/test_compose_policy.py",
+    "line": 21,
+    "test": "ComposePolicyTests::test_no_database_or_business_api_host_ports",
+    "passed": 93,
+    "failed": 1,
+    "cause": "Existing blanket no-host-ports assertion includes new explicit web gateway 127.0.0.1:${AGRI_WEB_PORT:-8091}:8080; compose dependency job skipped. No test changed in this evidence collection."
+  },
+  "recorded_at": "2026-10-30T05:17:02.262918+00:00",
+  "archives": [
+    {
+      "artifact_id": 12955738630,
+      "run_id": 41007114373,
+      "archive_sha256": "91e3bd5767d5c6e91edfe4d5d012ebfd6dec546634c2276194384b74b11f5d55",
+      "zip_crc_verified": true,
+      "path_safety_verified": true,
+      "original_json_files": {
+        "docs/agriculture/evidence/w01/ci-512e963-20261030/agriculture-gateway-sanitized-evidence/gateway-browser-e2e.json": "2ad342a1f39e62113819ed1f1cb3c6dd2eb999743f810763a87cbbbcd418c54a",
+        "docs/agriculture/evidence/w01/ci-512e963-20261030/agriculture-gateway-sanitized-evidence/session-ci-provenance.json": "c535b54d8ff4ae6b90f932ebf9f714658617ba18059b4da4df0548fa95833d05",
+        "docs/agriculture/evidence/w01/ci-512e963-20261030/agriculture-gateway-sanitized-evidence/gateway-container-smoke.json": "2d13636cde6f74ac90f895737cb5143763ab0f9cad7005d6dc10475dc82ca736",
+        "docs/agriculture/evidence/w01/ci-512e963-20261030/agriculture-gateway-sanitized-evidence/gateway-nginx-packages.json": "31e6a4fff2f8445394d98e488754ac2165579bd0574e8f6094561ed92d362c3f"
+      },
+      "product_source_hashes_matched": 211,
+      "current_tree_different_paths": []
+    },
+    {
+      "artifact_id": 12955599081,
+      "run_id": 41007114465,
+      "archive_sha256": "476d9278492d4c9d8522764e1410c5f0dfe71811714bcc4fe8595c7605885077",
+      "zip_crc_verified": true,
+      "path_safety_verified": true,
+      "original_json_files": {
+        "docs/agriculture/evidence/w01/ci-512e963-20261030/agriculture-identity-sanitized-evidence/identity-actors.json": "b1210550ef04c1980f7842540d3f89e8e93dff07deb63d477a3898e84b340e77",
+        "docs/agriculture/evidence/w01/ci-512e963-20261030/agriculture-identity-sanitized-evidence/identity-go.json": "a7a36d214ebf259ea3b438aaa1d10221195b09d39a56f38fd56ebade1e9f73be",
+        "docs/agriculture/evidence/w01/ci-512e963-20261030/agriculture-identity-sanitized-evidence/session-ci-provenance.json": "c535b54d8ff4ae6b90f932ebf9f714658617ba18059b4da4df0548fa95833d05",
+        "docs/agriculture/evidence/w01/ci-512e963-20261030/agriculture-identity-sanitized-evidence/identity-bootstrap.json": "d9e3b741a81c48669112f107d4efb544bd4bebf634e751d8d97d78443549bb39",
+        "docs/agriculture/evidence/w01/ci-512e963-20261030/agriculture-identity-sanitized-evidence/identity-python.json": "9c8936c7a47acdc77ac5b6350445c5c7f3beac494ae0e89e6c0b3247577dbfaa"
+      },
+      "product_source_hashes_matched": 211,
+      "current_tree_different_paths": []
+    },
+    {
+      "artifact_id": 12956640102,
+      "run_id": 41007114314,
+      "archive_sha256": "b8fa0433535cef3844e088babac6860850216bb3bec8cee9ce4a00b15a491ff8",
+      "zip_crc_verified": true,
+      "path_safety_verified": true,
+      "original_json_files": {
+        "docs/agriculture/evidence/w01/ci-512e963-20261030/agriculture-membership-sanitized-evidence/membership-legacy-flow.json": "30cad83f9f7705dc02bae07561225f8d3dbcf199eb38326f0bb9d10d44f3f22e",
+        "docs/agriculture/evidence/w01/ci-512e963-20261030/agriculture-membership-sanitized-evidence/membership-bootstrap.json": "e40f4fd9a52517f1afa507ece2614e79526ae3edc6e1f69437e0051c560a1ab2",
+        "docs/agriculture/evidence/w01/ci-512e963-20261030/agriculture-membership-sanitized-evidence/session-ci-provenance.json": "c535b54d8ff4ae6b90f932ebf9f714658617ba18059b4da4df0548fa95833d05",
+        "docs/agriculture/evidence/w01/ci-512e963-20261030/agriculture-membership-sanitized-evidence/membership-postgres.json": "99a3b3894a4661b48278cd8414db4c6e507a862e194a93974c9d58c36b230bcb"
+      },
+      "product_source_hashes_matched": 211,
+      "current_tree_different_paths": []
+    },
+    {
+      "artifact_id": 12955239548,
+      "run_id": 41007114314,
+      "archive_sha256": "5a0ce4155cef005557d76f40f879acf062783059eef307dfb0fc7776c84ab3ec",
+      "zip_crc_verified": true,
+      "path_safety_verified": true,
+      "original_json_files": {
+        "docs/agriculture/evidence/w01/ci-512e963-20261030/agriculture-organization-browser-sanitized-evidence/session-ci-provenance.json": "c535b54d8ff4ae6b90f932ebf9f714658617ba18059b4da4df0548fa95833d05",
+        "docs/agriculture/evidence/w01/ci-512e963-20261030/agriculture-organization-browser-sanitized-evidence/organization-browser-e2e.json": "db4a8863e15e2aac0ceaf69e6f36760b59d8f024c7f5a1d19a7f4442a4a6d772"
+      },
+      "product_source_hashes_matched": 211,
+      "current_tree_different_paths": []
+    },
+    {
+      "artifact_id": 12955349069,
+      "run_id": 41007114341,
+      "archive_sha256": "9d795c8b943f90e07d72e61c851772482466175a052ec8d89e95779233a215d4",
+      "zip_crc_verified": true,
+      "path_safety_verified": true,
+      "original_json_files": {
+        "docs/agriculture/evidence/w01/ci-512e963-20261030/agriculture-session-sanitized-evidence/session-ci-provenance.json": "c535b54d8ff4ae6b90f932ebf9f714658617ba18059b4da4df0548fa95833d05",
+        "docs/agriculture/evidence/w01/ci-512e963-20261030/agriculture-session-sanitized-evidence/session-browser-e2e.json": "06fb7294cecb34194c27b462d40fc51aa65ec4b6084385ea0f7bc806610a9fca"
+      },
+      "product_source_hashes_matched": 211,
+      "current_tree_different_paths": []
+    }
+  ],
+  "whole_batch_passed": false,
+  "boundary": "Gateway browser and disposable Docker passed; W00 contracts failed and Compose skipped. No production deployment or live-farm acceptance.",
+  "identity_xml_archived": false
+}

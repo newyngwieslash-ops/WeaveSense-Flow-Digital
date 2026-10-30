@@ -244,6 +244,15 @@ func RegisterJobEvents(api gin.IRouter, a API, s *JobEventStream) {
 				started = true
 			}
 			for _, event := range events {
+				// A prior write can block, or complete immediately before logout.
+				// Recheck at EVERY sensitive write boundary, not just per batch.
+				_, _, current, e := resolve()
+				if e != nil || current != digest || ctx.Err() != nil {
+					return
+				}
+				if e = controller.SetWriteDeadline(time.Now().Add(2 * time.Second)); e != nil {
+					return
+				}
 				cursor, e := s.cursor(digest, event.Sequence)
 				if e != nil {
 					return

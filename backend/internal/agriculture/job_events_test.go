@@ -113,7 +113,7 @@ func seedEventScope(t *testing.T, s Service, o OrganizationResult, actor, job, v
 		t.Fatal(e)
 	}
 }
-func eventServer(t *testing.T, s Service, p JobEventProvider) (*httptest.Server, *JobEventStream, *auth.Service, map[string]*http.Cookie) {
+func eventServer(t *testing.T, s Service, p JobEventProvider, middleware ...gin.HandlerFunc) (*httptest.Server, *JobEventStream, *auth.Service, map[string]*http.Cookie) {
 	t.Helper()
 	authentication := auth.New(repository.New(s.DB), nil, nil)
 	cookies := map[string]*http.Cookie{}
@@ -141,6 +141,7 @@ func eventServer(t *testing.T, s Service, p JobEventProvider) (*httptest.Server,
 		stream.duration = 500 * time.Millisecond
 	}
 	r := gin.New()
+	r.Use(middleware...)
 	a := API{Service: s, User: func(c *gin.Context) (*model.User, error) {
 		cookie, _ := c.Cookie(auth.SessionCookieName)
 		return authentication.CurrentUser(cookie)
@@ -434,4 +435,62 @@ func TestJobEventsProviderCancellationAndMalformedBatch(t *testing.T) {
 			t.Fatal("malformed batch exposed events")
 		}
 	})
+}
+
+// This wraps the REAL net/http response writer. The first sensitive write is
+// completed before the durable session/membership is revoked synchronously.
+type eventBoundaryWriter struct {
+	gin.ResponseWriter
+	hook  func()
+	fired bool
+}
+
+func (w *eventBoundaryWriter) Unwrap() http.ResponseWriter { return w.ResponseWriter }
+func (w *eventBoundaryWriter) Write(b []byte) (int, error) {
+	n, e := w.ResponseWriter.Write(b)
+	if !w.fired && strings.Contains(string(b), "event: job\n") {
+		w.fired = true
+		w.hook()
+	}
+	return n, e
+}
+func TestJobEventsEachWriteRechecksCurrentAuthority(t *testing.T) {
+	for _, mode := range []string{"logout", "membership"} {
+		t.Run(mode, func(t *testing.T) {
+			s, o, p := eventSetup(t)
+			if e := s.DB.Create(&eventFixtureRow{Tenant: o.Tenant.ID, Workspace: o.Workspace.ID, Actor: "bob", Job: "job_a", Sequence: 2, Data: `{"fixture":"SECOND_MUST_NOT_ESCAPE"}`}).Error; e != nil {
+				t.Fatal(e)
+			}
+			var revoke func()
+			middleware := func(c *gin.Context) {
+				c.Writer = &eventBoundaryWriter{ResponseWriter: c.Writer, hook: func() { revoke() }}
+				c.Next()
+			}
+			srv, _, authentication, cookies := eventServer(t, s, p, middleware)
+			revoke = func() {
+				if mode == "logout" {
+					if e := authentication.Logout(cookies["bob"].Value); e != nil {
+						t.Error(e)
+					}
+				} else {
+					status := "suspended"
+					if e := s.ChangeMember(context.Background(), "owner", o.Workspace.ID, "bob", nil, &status); e != nil {
+						t.Error(e)
+					}
+				}
+			}
+			res := eventRequest(t, srv, cookies["bob"], "/api/agri/v1/workspaces/"+o.Workspace.ID+"/jobs/job_a/events", "")
+			b, e := io.ReadAll(res.Body)
+			res.Body.Close()
+			if e != nil {
+				t.Fatal(e)
+			}
+			if res.StatusCode != 200 || !strings.Contains(string(b), `"sequence":1`) {
+				t.Fatal("first actual event was not written")
+			}
+			if strings.Contains(string(b), "SECOND_MUST_NOT_ESCAPE") {
+				t.Fatal("second event escaped after first-write revocation")
+			}
+		})
+	}
 }

@@ -1132,7 +1132,7 @@
         "通过关联表和历史revision请求检查间接越权"
       ],
       "blockers": [],
-      "status": "in_progress"
+      "status": "done"
     },
     {
       "id": "DT-020",
@@ -1175,7 +1175,7 @@
         "检查瓦片与预览不因公开缓存泄露内容"
       ],
       "blockers": [],
-      "status": "not_started"
+      "status": "in_progress"
     },
     {
       "id": "DT-021",
@@ -1261,7 +1261,7 @@
         "验证任务重试仍使用同一受控范围"
       ],
       "blockers": [],
-      "status": "not_started"
+      "status": "in_progress"
     },
     {
       "id": "DT-023",

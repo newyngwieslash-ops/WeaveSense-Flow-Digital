@@ -6,9 +6,11 @@
 
 应用实现状态：in_progress
 
-当前工作包：W02；DT-017 已以真实本地 PostgreSQL 完成数据库缺省拒绝验收，推进平台空范围迁移与 GIS 查询范围
+当前工作包：W02；DT-017、DT-019 已按原范围完成真实本地 PostgreSQL 验收；DT-018 兼容迁移仍在执行，不能把任务编号 19 当成已完成数量。
 
-下一任务：依赖就绪的 DT-018 Flow/Loom 空范围策略兼容迁移及 DT-019 GIS 查询范围；远程新 schema 签名浏览器回归仍单独等待审批/执行。
+下一任务：继续 DT-018 Flow/Loom 兼容回归，同时推进依赖就绪的 DT-020 私有对象网关与 DT-022 后台身份快照；远程新 schema 签名浏览器回归仍单独等待审批/执行。
+
+DT-019 已完成：冻结源码 `26343a0c` 的三个独立 fresh PostgreSQL 阶段分别为查询 17、旧组件回归 152、正式迁移 6 项通过，均零失败/跳过，退出及集群关闭为 0。主实现和独立审查分别核对 299 项报告源码并精确映射冻结提交；查询清单包含 215 个应用源文件、412 个数据库执行函数。原 DAO 同 bbox 列表/详情、聚合、历史/关联与导出源行受到实际数据库资源策略约束，嵌套 SQL 重绑与缺资源项目投影漏洞已修复且实际验证。证据见 `evidence/DT-019/`，保留三份真实早期失败；84 个未适配业务仍关闭，不代表 W03 领域 CRUD、真实农场、远程 CI 或新签名浏览器整链已通过，也不将完整 AG-AC/W02/G0 置为完成。
 
 DT-016 新整链验收完成：冻结产品 `d43899d2`、scaffold `56c1f7c8` 的三个实际触发 workflow 全部成功；235 项源码映射一致。真实浏览器登录→Go 授权→GIS 验签/归属/当前权限→原 Workbench 写入及稳定主体审计，主测试和四个必需子项全部通过，无跳过。浏览器 15 项检查、42 请求零违规；两个租户三个工作区，跨范围/伪造主体/撤权后同 cookie 写入均拒绝且无领域副作用，16 个农业公开入口匿名均为 401。证据见 `evidence/DT-016/` 和 `docs/agriculture/IDENTITY_CHAIN_ACCEPTANCE.md`。首轮登录装配失败保留，不回写成功；旧批次单独运行的 Docker 结果不并入本轮三 workflow 结论。W01 任务闭环完成不等于 G0；测试专用写桥不代表生产农场 UI，旧下载/预览/审核未开放，W02 全模型 RLS 和空范围系统策略仍待实现。
 
@@ -18,7 +20,7 @@ DT-017 已按原任务验收完成：冻结 `2e3d43a6` 的实际本地 PostgreSQ
 
 - Flow：206c82af7ae007f45da4c582f373fbabf027f1b8。
 - AgriScope：571a2dcd9abf8b8a22b66c750ee710b61d482051。
-- 目标远程：https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital；最新已验 CI scaffold 为 56c1f7c8，映射本地冻结产品源码 d43899d2。完整本地产品历史与 scaffold 区分，不声称产品分支已同步。
+- 目标远程：https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital；最新已复核 CI scaffold 为 `3f6f97b9`（源码 `332c4ba1`），该批 identity 因清单漂移失败，其他实际作业成功，不称整批通过。后续普通清单上传仍由原单次审批操作持有；本地 DT018/019 新结果未冒充远端结果。完整本地产品历史与 scaffold 区分，不声称产品分支已同步。
 - 当前恢复目录：`/workspace/scratch/8cdfee496491/WeaveSense-DigitalTwin-Recovery-20261030`；实际分支/HEAD 以恢复检查点记录为准。
 - 规格位置：推荐PROJECT_ROOT/specs/agriculture/v1.0.0。
 
@@ -93,9 +95,9 @@ DT-015 已按原任务范围完成：冻结 `574d48f02e96b43c01f0cd3ee2b90a95671
 
 | 状态 | 数量 |
 | --- | ---: |
-| done | 17 |
-| in_progress | 2 |
-| not_started | 125 |
+| done | 18 |
+| in_progress | 3 |
+| not_started | 123 |
 
 历史 done、恢复证据待补验：无。
 依赖状态就绪但仍须检查恢复条件：无。
@@ -120,10 +122,10 @@ DT-015 已按原任务范围完成：冻结 `574d48f02e96b43c01f0cd3ee2b90a95671
 | DT-016 | done |
 | DT-017 | done |
 | DT-018 | in_progress |
-| DT-019 | in_progress |
-| DT-020 | not_started |
+| DT-019 | done |
+| DT-020 | in_progress |
 | DT-021 | not_started |
-| DT-022 | not_started |
+| DT-022 | in_progress |
 | DT-023 | not_started |
 | DT-024 | not_started |
 | DT-025 | not_started |

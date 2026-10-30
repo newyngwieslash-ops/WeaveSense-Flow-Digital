@@ -629,7 +629,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-019 · 为GIS全量查询建立资源范围约束
 
-- 状态：`in_progress`；阶段：`S0`；优先级：`P0`。
+- 状态：`done`；阶段：`S0`；优先级：`P0`。
 - 需求：AG-FR-005、AG-FR-026、AG-NFR-001。
 - 验收用例：AG-AC-005、AG-AC-026。
 - 前置任务：DT-013、DT-017。
@@ -661,7 +661,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-020 · 建立私有对象下载与瓦片鉴权基础
 
-- 状态：`not_started`；阶段：`S0`；优先级：`P0`。
+- 状态：`in_progress`；阶段：`S0`；优先级：`P0`。
 - 需求：AG-FR-005、AG-FR-021、AG-FR-053、AG-NFR-001、AG-NFR-015。
 - 验收用例：AG-AC-005、AG-AC-021、AG-AC-053。
 - 前置任务：DT-012、DT-017、DT-019。
@@ -725,7 +725,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-022 · 固化后台作业身份与租户传播
 
-- 状态：`not_started`；阶段：`S0`；优先级：`P0`。
+- 状态：`in_progress`；阶段：`S0`；优先级：`P0`。
 - 需求：AG-FR-005、AG-FR-006、AG-FR-031、AG-NFR-001、AG-NFR-004。
 - 验收用例：AG-AC-005、AG-AC-006、AG-AC-031。
 - 前置任务：DT-012、DT-017、DT-019。
@@ -4816,9 +4816,9 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 | 状态 | 数量 |
 | --- | ---: |
-| done | 17 |
-| in_progress | 2 |
-| not_started | 125 |
+| done | 18 |
+| in_progress | 3 |
+| not_started | 123 |
 
 历史 done、恢复证据待补验：无。
 依赖状态就绪但仍须检查恢复条件：无。
@@ -4843,10 +4843,10 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 | DT-016 | done |
 | DT-017 | done |
 | DT-018 | in_progress |
-| DT-019 | in_progress |
-| DT-020 | not_started |
+| DT-019 | done |
+| DT-020 | in_progress |
 | DT-021 | not_started |
-| DT-022 | not_started |
+| DT-022 | in_progress |
 | DT-023 | not_started |
 | DT-024 | not_started |
 | DT-025 | not_started |

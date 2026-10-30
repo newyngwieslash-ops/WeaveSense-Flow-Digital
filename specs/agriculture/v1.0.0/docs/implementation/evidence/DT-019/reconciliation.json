@@ -1,0 +1,115 @@
+{
+  "schema_version": "1.0",
+  "source_commit": "26343a0cc89c82ffef92558b5a3a9ed18d62618a",
+  "recorded_at": "2026-10-30T10:20:18.109860+00:00",
+  "remote_ci": false,
+  "signed_browser_chain_rerun": false,
+  "production_acceptance": false,
+  "live_farm_data": false,
+  "final_three_fresh_phases_passed": true,
+  "records": [
+    {
+      "file": "query-final.json",
+      "sha256": "38fc2163031d8b5d8babddc430c5619f03fa0b3ed74aa2187ed3e08c0da9cd57",
+      "run": "run_422bf1a24dc04aaa9fdf2b6215b82460",
+      "final_current_source": true,
+      "source_files_matched_to_frozen_commit": 285,
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "shutdown_exit_code": 0
+    },
+    {
+      "file": "components-final.json",
+      "sha256": "ea98441c5261ce3205944598819ea3244d1be67292a07267206f5d2e64fd4ddc",
+      "run": "run_caa1b31ab3474681b4df493fa7bc3735",
+      "final_current_source": true,
+      "source_files_matched_to_frozen_commit": 295,
+      "passed": 152,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "shutdown_exit_code": 0
+    },
+    {
+      "file": "migration-final.json",
+      "sha256": "6ffbea76ae4c4c1d22f60b53d2d5702e6ef909789f27c75459a03eaef5fd030e",
+      "run": "run_7c3765846092452282717de8705c4a33",
+      "final_current_source": true,
+      "source_files_matched_to_frozen_commit": 285,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "shutdown_exit_code": 0
+    },
+    {
+      "file": "initial-migration-failure.json",
+      "sha256": "9271a3f554dbfab088475628fba6f36f0a290726b7b2a00714ddb53cbc6ac59c",
+      "run": "run_d1369d582a224478a933b0bae3694046",
+      "final_current_source": false,
+      "source_files_matched_to_frozen_commit": 0,
+      "passed": 5,
+      "failed": 1,
+      "skipped": 0,
+      "exit_code": 1,
+      "shutdown_exit_code": 0
+    },
+    {
+      "file": "initial-query-replay-failure.json",
+      "sha256": "166bf1ffb71aa03beb6e24243ebd93ca8299ff307d3cd6ffe4fbb844d911fc57",
+      "run": "run_f2f937e2f9c6404da677500a8a8a37e9",
+      "final_current_source": false,
+      "source_files_matched_to_frozen_commit": 0,
+      "passed": 12,
+      "failed": 2,
+      "skipped": 0,
+      "exit_code": 1,
+      "shutdown_exit_code": 0
+    },
+    {
+      "file": "strict-text-regression-failure.json",
+      "sha256": "893a1a2f322eb4e6f7d4762a221ebad0761e63aecd0b20aff75be828d93b8c2a",
+      "run": "run_f5538ac75f574a7eba755b1f399df8e9",
+      "final_current_source": false,
+      "source_files_matched_to_frozen_commit": 0,
+      "passed": 15,
+      "failed": 1,
+      "skipped": 0,
+      "exit_code": 1,
+      "shutdown_exit_code": 0
+    }
+  ],
+  "inventory": {
+    "source_files": 215,
+    "database_entry_functions": 412,
+    "component_tests_passed": 2,
+    "command": "python -m pytest tests/test_query_scope_inventory.py -q"
+  },
+  "commands": [
+    "python scripts/agriculture/native-postgres-test.py --package-root .local/native-postgres-current/root --python .local/identity-rebuild/venv/bin/python --phase query",
+    "python scripts/agriculture/native-postgres-test.py --package-root .local/native-postgres-current/root --python .local/identity-rebuild/venv/bin/python --phase components",
+    "python scripts/agriculture/native-postgres-test.py --package-root .local/native-postgres-current/root --python .local/identity-rebuild/venv/bin/python --phase migration"
+  ],
+  "historical_failures": [
+    {
+      "file": "initial-migration-failure.json",
+      "safe_observation": "New SQL referred to nonexistent review_records.plot_code (42703); task-level history now requires full task scope."
+    },
+    {
+      "file": "initial-query-replay-failure.json",
+      "safe_observation": "Repeated old domain migration quarantined the new reference table; new migration explicitly reopens only that reviewed table under strict policies."
+    },
+    {
+      "file": "strict-text-regression-failure.json",
+      "safe_observation": "Strict nested TextClause denial also denied the fixed internal actor readiness probe; allow only the exact complete parameter-free probe, retain generic nested-text rejection."
+    }
+  ],
+  "limits": [
+    "Native actual PostgreSQL/PostGIS fixtures, not Docker/GitHub CI or live farm acceptance.",
+    "Historical pre-domain synthetic actor component remains separate from current post-domain permission evidence.",
+    "Other authors had unrelated worktree changes; every recorded final source file hash matches frozen source_commit.",
+    "No raw server logs, credentials, DSNs or database directories archived."
+  ]
+}

@@ -100,10 +100,19 @@ jobs:
           records = [{'name': p.name, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest(), 'version': subprocess.check_output(['dpkg-deb', '-f', str(p), 'Version'], text=True).strip()} for p in sorted(pathlib.Path('.local/chain-nginx/download').glob('*.deb'))]
           pathlib.Path('.local/evidence/identity-chain-nginx.json').write_text(json.dumps({'source': 'Ubuntu runner official apt repositories', 'packages': records, 'same_version_as_docker_image': False}, indent=2) + '\n')
           PY
+      - name: Explicit GIS migration command on an independent fresh database
+        working-directory: product
+        env:
+          AGRI_GEO_MIGRATION_ONLY: '1'
+          AGRI_IDENTITY_CHAIN_REQUIRED: '0'
+        run: |
+          export AGRI_IDENTITY_PYTHON="$PWD/.local/identity-rebuild/venv/bin/python"
+          bash scripts/agriculture/identity-postgres-ci.sh
       - name: Actual signed HTTP and PostgreSQL replay acceptance
         working-directory: product
         env:
           AGRI_IDENTITY_CHAIN_REQUIRED: '1'
+          AGRI_GEO_MIGRATION_ONLY: '0'
         run: |
           export AGRI_IDENTITY_PYTHON="$PWD/.local/identity-rebuild/venv/bin/python"
           bash scripts/agriculture/identity-postgres-ci.sh

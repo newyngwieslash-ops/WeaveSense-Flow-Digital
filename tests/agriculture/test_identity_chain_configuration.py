@@ -26,6 +26,11 @@ def test_chain_requires_non_skip_gate_and_preserves_existing_identity_suites():
     assert 'docker rm -f "$redis_container"' in shell
     assert 'docker container inspect "$redis_container"' in shell
     assert "'redis_image_id':os.environ['IDENTITY_REDIS_IMAGE_ID']" in shell
+    assert 'AGRI_GEO_MIGRATION_ONLY:-0' in shell
+    assert '--kind migration' in shell
+    assert 'identity-migration-bootstrap.json' in shell
+    assert '$migration_code == 0 && $migration_gate == 0' in shell
+    assert shell.index('--kind migration') < shell.index("-run '^TestIdentityRealHTTPGoPython$'")
 
 
 def test_chain_ci_is_read_only_builds_actual_profiles_and_uploads_no_raw_diagnostics():
@@ -33,6 +38,8 @@ def test_chain_ci_is_read_only_builds_actual_profiles_and_uploads_no_raw_diagnos
     assert 'contents: read' in workflow
     assert 'persist-credentials: false' in workflow
     assert "AGRI_IDENTITY_CHAIN_REQUIRED: '1'" in workflow
+    assert "AGRI_GEO_MIGRATION_ONLY: '1'" in workflow
+    assert "AGRI_GEO_MIGRATION_ONLY: '0'" in workflow
     assert 'echo "AGRI_E2E_SOURCE_COMMIT=$(python3' in workflow
     assert 'echo "CANVAS_BUILD_COMMIT=$(python3' in workflow
     assert 'bun install --frozen-lockfile --ignore-scripts' in workflow

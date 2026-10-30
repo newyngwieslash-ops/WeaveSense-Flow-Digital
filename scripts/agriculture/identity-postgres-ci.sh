@@ -7,6 +7,7 @@ cd "$(dirname "$0")/../.."
 AGRI_IDENTITY_PYTHON="$(cd "$(dirname "$AGRI_IDENTITY_PYTHON")" && pwd)/$(basename "$AGRI_IDENTITY_PYTHON")"
 export AGRI_IDENTITY_PYTHON
 [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} =~ ^[01]$ ]] || { echo 'Invalid browser chain gate'; exit 2; }
+[[ ${AGRI_GEO_MIGRATION_ONLY:-0} =~ ^[01]$ ]] || { echo 'Invalid isolated migration gate'; exit 2; }
 mkdir -p .local/evidence
 python3 scripts/agriculture/legacy-identity-inventory.test.py
 python3 scripts/agriculture/legacy-identity-inventory.py --check
@@ -113,6 +114,20 @@ Path('.local/evidence/identity-bootstrap.json').write_text(json.dumps({
  'redis_image_reference':'redis:7.4.2-alpine','redis_image_id':os.environ['IDENTITY_REDIS_IMAGE_ID'],
  'started_at':datetime.datetime.now(datetime.timezone.utc).isoformat()},indent=2)+'\n')
 PY
+if [[ ${AGRI_GEO_MIGRATION_ONLY:-0} == 1 ]]; then
+  # A separate invocation owns this new database. Never reset the historical
+  # component database to make an empty-schema migration test appear fresh.
+  cp .local/evidence/identity-bootstrap.json .local/evidence/identity-migration-bootstrap.json
+  set +e
+  (cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_migration.py tests/test_agriculture_migration_postgres.py --junitxml="$private/migration.xml" -q) > "$private/migration.log" 2>&1
+  migration_code=$?
+  python3 scripts/agriculture/identity-ci-result.py --kind migration --input "$private/migration.xml" --output .local/evidence/identity-migration-command.json
+  migration_gate=$?
+  set -e
+  [[ $migration_code == 0 && $migration_gate == 0 ]] || { echo 'Explicit GIS migration acceptance failed; inspect sanitized report'; exit 1; }
+  echo 'PASS: explicit GIS migration command on its own fresh database; fixture only'
+  exit 0
+fi
 set +e
 (cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_identity_canonical.py tests/test_agriculture_identity.py tests/test_agriculture_identity_postgres.py --junitxml="$private/python.xml" -q) > "$private/python.log" 2>&1
 python_code=$?

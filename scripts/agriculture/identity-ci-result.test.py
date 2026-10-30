@@ -72,6 +72,17 @@ class GateTests(unittest.TestCase):
             self.assertNotIn("SECRET", json.dumps(result))
         self.assertFalse(module.reduce("actors", raw)["passed"])
 
+    def test_explicit_migration_has_its_own_required_database_proof(self):
+        raw = '<testsuites><testsuite><testcase classname="test_agriculture_migration" name="test_probe"/><testcase classname="test_agriculture_migration_postgres" name="test_postgres_migration_command_new_repeat_and_drift"/></testsuite></testsuites>'
+        report = module.reduce("migration", raw)
+        self.assertTrue(report["passed"])
+        self.assertEqual(report["schema_phase"], "independent_fresh_database_migration")
+        self.assertFalse(module.reduce("migration", raw.replace("test_postgres_migration_command_new_repeat_and_drift", "test_not_the_real_migration"))["passed"])
+        for marker in ('<skipped/>', '<error>SECRET</error>'):
+            report = module.reduce("migration", raw.replace('/>', '>'+marker+'</testcase>', 1))
+            self.assertFalse(report["passed"])
+            self.assertNotIn("SECRET", json.dumps(report))
+
 
 if __name__ == "__main__":
     unittest.main()

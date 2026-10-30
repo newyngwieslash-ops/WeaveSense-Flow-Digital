@@ -155,6 +155,51 @@ async function connect(cdpPort, origin) {
 }
 
 
+export async function revalidateThroughRealTabSwitch(client) {
+    const original = (await client.send('Target.getTargetInfo')).targetInfo.targetId;
+    const before = (await client.send('Page.getFrameTree')).frameTree.frame;
+    const alternate = (await client.send('Target.createTarget', { url: 'about:blank', background: false })).targetId;
+    try {
+        await client.send('Target.activateTarget', { targetId: alternate });
+        await client.poll("document.visibilityState === 'hidden'", 'original account tab actually hidden');
+        await client.send('Target.activateTarget', { targetId: original });
+        await client.send('Page.bringToFront');
+        await client.poll("document.visibilityState === 'visible' && document.hasFocus()", 'original account tab actually visible and focused');
+        const after = (await client.send('Page.getFrameTree')).frameTree.frame;
+        if (!before.loaderId || after.id !== before.id || after.loaderId !== before.loaderId || after.url !== before.url) throw new Error('assertion failed: account_tab_switch_must_not_reload');
+        return { hiddenObserved: true, visibleObserved: true, sameDocument: true };
+    } finally { await client.send('Target.closeTarget', { targetId: alternate }); }
+}
+
+// Wait through the production 30-second cadence without synthesizing lifecycle
+// events. Secrets stay in memory; the report contains only fixed booleans/counts.
+export async function observeRoutineRetention(client, token, draft, timing = {}) {
+    const now = timing.now ?? Date.now, pause = timing.pause ?? sleep;
+    const before = (await client.send('Page.getFrameTree')).frameTree.frame;
+    const start = now(), offset = client.statuses.length;
+    let samples = 0;
+    while (now() - start < 55000) {
+        const retained = await client.evaluate(`(() => {
+            const token = document.querySelector('[data-testid=org-invite-token]');
+            const draft = document.querySelector('[data-testid=org-create-name]');
+            return document.visibilityState === 'visible' && !!token && !!draft
+                && token.value === ${JSON.stringify(token)} && draft.value === ${JSON.stringify(draft)};
+        })()`, 'routine invitation and draft retention');
+        if (!retained) throw new Error('assertion failed: routine_must_preserve_unchanged_invitation_and_draft');
+        samples++;
+        const observed = client.statuses.slice(offset);
+        const session = observed.some(x => x.path === '/api/auth/session' && x.status === 200 && x.completed);
+        const workspaces = observed.some(x => x.path === '/api/agriculture/workspaces' && x.status === 200 && x.completed);
+        if (now() - start >= 35000 && session && workspaces) {
+            const after = (await client.send('Page.getFrameTree')).frameTree.frame;
+            if (!before.loaderId || after.id !== before.id || after.loaderId !== before.loaderId || after.url !== before.url) throw new Error('assertion failed: routine_retention_must_not_reload');
+            return { elapsedMs: now() - start, samples, sessionCompleted: true, workspacesCompleted: true, invitationRetained: true, draftRetained: true, sameDocument: true };
+        }
+        await pause(100);
+    }
+    throw new Error('assertion failed: production_routine_refresh_not_observed');
+}
+
 async function main() {
     const binary = resolve(process.env.AGRI_E2E_BINARY || join(ROOT, ".local/bin/agriculture-platform"));
     const reactRoot = resolve(process.env.AGRI_E2E_REACT_DIST || join(ROOT, "web/dist-agriculture"));
@@ -300,6 +345,11 @@ async function main() {
         check(expiry.status === 0, "owned_invite_expiry_fixture_only");
         check(await accept(expired) === 400, "expired_invite_real_ui_http_400");
         const token = await invite();
+        report.stage = 'routine_invitation_and_draft_retention';
+        const unsavedDraft = 'Unsubmitted organization draft';
+        await a.fill(selector('org-create-name'), unsavedDraft, 'unsaved organization draft');
+        report.routine_retention = await observeRoutineRetention(a, token, unsavedDraft);
+        check(true, 'production_30_second_refresh_preserves_unchanged_invitation_and_draft');
         check(await accept(token) === 200, "manual_invite_real_ui_acceptance");
         check((await list(cookieB)).some(x => x.id === orgA.id), "accepted_membership_visible_to_original_session");
         check(await accept(token) === 400, "replayed_invite_real_ui_http_400");
@@ -352,7 +402,10 @@ async function main() {
             const body = await response.json(); return { csrf: true, status: response.status, reason: body.reason };
         })()`, "old privileged request after demotion");
         check(staleWrite.csrf === true && staleWrite.status === 403 && staleWrite.reason === 'forbidden', "downgraded_same_session_old_privileged_write_rejected_not_csrf_failure");
-        await b.send("Page.bringToFront");
+        report.stage = 'role_demotion_real_tab_visibility';
+        report.demotion_visibility = await revalidateThroughRealTabSwitch(b);
+        check(true, 'same_account_tab_real_hidden_visible_without_reload');
+        report.stage = 'role_demotion_display_revalidated';
         await b.poll("!!document.querySelector('[data-testid=organization-management]') && !document.querySelector('[data-testid=org-create-name]')?.disabled && !document.querySelector('[data-testid=org-invite-create]')", "same user demotion revalidates and removes old controls");
         check(await b.evaluate("!document.querySelector('[data-testid=org-invite-email]')"), "same_user_demotion_clears_unsubmitted_privileged_draft");
         check(await b.evaluate("!document.querySelector('[data-testid=org-confirm]')"), "session_revalidation_destroys_privileged_confirmation_portal");

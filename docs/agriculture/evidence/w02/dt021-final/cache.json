@@ -1,0 +1,14 @@
+{
+  "suite": "scoped_cache_sse_cache",
+  "passed": true,
+  "data_class": "fixture",
+  "production_acceptance": false,
+  "tests": [
+    {
+      "name": "TestCachedTextReplayIsolatesUsersCursorsAndCopies",
+      "result": "pass"
+    }
+  ],
+  "missing": [],
+  "failure_locations": []
+}

@@ -303,7 +303,7 @@ func chainPlatformSnapshot(db *gorm.DB) (map[string]string, error) {
 
 func TestIdentityBrowserGISWriteChain(t *testing.T) {
 	required := os.Getenv("AGRI_IDENTITY_CHAIN_REQUIRED") == "1"
-	for _, key := range []string{"AGRI_IDENTITY_PYTHON", "AGRI_TEST_PG_MIGRATION_DSN", "AGRI_TEST_PG_RUNTIME_DSN", "AGRI_TEST_GEO_MIGRATION_DSN", "AGRI_TEST_GEO_RUNTIME_DSN", "CHROME_BIN", "NGINX_BIN", "NGINX_MIME_TYPES"} {
+	for _, key := range []string{"AGRI_IDENTITY_PYTHON", "AGRI_TEST_PG_MIGRATION_DSN", "AGRI_TEST_PG_RUNTIME_DSN", "AGRI_TEST_GEO_MIGRATION_DSN", "AGRI_TEST_GEO_RUNTIME_DSN", "REDIS_URL", "CHROME_BIN", "NGINX_BIN", "NGINX_MIME_TYPES"} {
 		if os.Getenv(key) == "" {
 			if required {
 				t.Fatalf("required chain dependency missing: %s", key)
@@ -461,6 +461,9 @@ func TestIdentityBrowserGISWriteChain(t *testing.T) {
 	}
 	svc := platformservice.New(repository.New(s.DB), filepath.Join(private, "platform"))
 	t.Cleanup(func() { svc.Close() })
+	if err := svc.ValidateRuntime(); err != nil {
+		t.Fatalf("real platform runtime initialization failed: %T", err)
+	}
 	// Match cmd/server/main.go: shared authentication handlers use the real
 	// runtime coordinator for rate limits, not merely their service argument.
 	handler.ConfigureRuntime(svc)

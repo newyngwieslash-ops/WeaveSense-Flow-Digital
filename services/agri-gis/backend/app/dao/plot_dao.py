@@ -6,8 +6,9 @@ from sqlalchemy import Select, func, select
 from sqlalchemy.engine import RowMapping
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.agriculture.query_scope import task_locator
 from app.models.plot import FarmlandPlot
-from app.models.workbench import MonitoringTask, TaskPlot
+from app.models.workbench import TaskPlot
 
 
 class FarmlandPlotDAO:
@@ -28,8 +29,8 @@ class FarmlandPlotDAO:
             bool: 任务存在时为 True。
         """
         result = await db.execute(
-            select(MonitoringTask.id).where(
-                MonitoringTask.task_code == task_code
+            select(task_locator(db).id).where(
+                task_locator(db).task_code == task_code
             )
         )
         return result.scalar_one_or_none() is not None
@@ -81,9 +82,9 @@ class FarmlandPlotDAO:
         statement = (
             self._base_query()
             .join(TaskPlot, TaskPlot.plot_code == FarmlandPlot.plot_code)
-            .join(MonitoringTask, MonitoringTask.id == TaskPlot.task_id)
+            .join(task_locator(db).id.table, task_locator(db).id == TaskPlot.task_id)
             .where(
-                MonitoringTask.task_code == task_code,
+                task_locator(db).task_code == task_code,
                 func.ST_Contains(FarmlandPlot.geom, point),
                 FarmlandPlot.interpretation_status != "deleted",
             )
@@ -151,9 +152,9 @@ class FarmlandPlotDAO:
                 func.ST_YMax(func.Box3D(FarmlandPlot.geom)).label("max_lat"),
             )
             .join(TaskPlot, TaskPlot.plot_code == FarmlandPlot.plot_code)
-            .join(MonitoringTask, MonitoringTask.id == TaskPlot.task_id)
+            .join(task_locator(db).id.table, task_locator(db).id == TaskPlot.task_id)
             .where(
-                MonitoringTask.task_code == task_code,
+                task_locator(db).task_code == task_code,
                 FarmlandPlot.interpretation_status != "deleted",
                 FarmlandPlot.district_code.is_not(None),
             )
@@ -194,9 +195,9 @@ class FarmlandPlotDAO:
         statement = (
             select(func.count(FarmlandPlot.id))
             .join(TaskPlot, TaskPlot.plot_code == FarmlandPlot.plot_code)
-            .join(MonitoringTask, MonitoringTask.id == TaskPlot.task_id)
+            .join(task_locator(db).id.table, task_locator(db).id == TaskPlot.task_id)
             .where(
-                MonitoringTask.task_code == task_code,
+                task_locator(db).task_code == task_code,
                 FarmlandPlot.interpretation_status != "deleted",
                 func.ST_Intersects(FarmlandPlot.geom, envelope),
             )
@@ -237,9 +238,9 @@ class FarmlandPlotDAO:
         statement = (
             self._base_query()
             .join(TaskPlot, TaskPlot.plot_code == FarmlandPlot.plot_code)
-            .join(MonitoringTask, MonitoringTask.id == TaskPlot.task_id)
+            .join(task_locator(db).id.table, task_locator(db).id == TaskPlot.task_id)
             .where(
-                MonitoringTask.task_code == task_code,
+                task_locator(db).task_code == task_code,
                 FarmlandPlot.interpretation_status != "deleted",
                 func.ST_Intersects(FarmlandPlot.geom, envelope),
             )
@@ -268,9 +269,9 @@ class FarmlandPlotDAO:
         statement = (
             self._base_query()
             .join(TaskPlot, TaskPlot.plot_code == FarmlandPlot.plot_code)
-            .join(MonitoringTask, MonitoringTask.id == TaskPlot.task_id)
+            .join(task_locator(db).id.table, task_locator(db).id == TaskPlot.task_id)
             .where(
-                MonitoringTask.task_code == task_code,
+                task_locator(db).task_code == task_code,
                 FarmlandPlot.plot_code == plot_code,
                 FarmlandPlot.interpretation_status != "deleted",
             )

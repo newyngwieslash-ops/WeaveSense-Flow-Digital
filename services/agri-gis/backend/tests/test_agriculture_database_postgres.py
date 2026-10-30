@@ -110,7 +110,7 @@ def test_postgres_runtime_scope_pool_reuse_and_rollback():
                 for item in items:
                     expected = [item["plot_code"]]
                     async with runtime.session(
-                        ticket(item["tenant"], item["workspace"])
+                        item["proof"]()
                     ) as db:
                         actual_pid = (
                             await db.execute(select(func.pg_backend_pid()))
@@ -144,7 +144,7 @@ def test_postgres_runtime_scope_pool_reuse_and_rollback():
                 item = items[0]
                 with pytest.raises(RuntimeError, match="test_failure"):
                     async with runtime.session(
-                        ticket(item["tenant"], item["workspace"])
+                        item["proof"]()
                     ) as db:
                         assert (
                             await db.execute(select(table.c.plot_code))

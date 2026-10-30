@@ -105,11 +105,12 @@ def test_each_transaction_uses_parameterized_local_scope_without_actor_rebinding
     conn = Connection()
     apply_transaction_scope(session, None, conn)
     apply_transaction_scope(session, None, conn)
-    assert len(conn.calls) == 2
-    assert conn.calls[0] == conn.calls[1]
+    assert len(conn.calls) == 4
+    assert conn.calls[:2] == conn.calls[2:]
     assert conn.calls[0][1] == {"tenant": "tenant_a", "workspace": "workspace_a"}
     assert "set_config('app.workspace_id', :workspace, true)" in conn.calls[0][0]
     assert "agriculture_resolved_actor" not in session.info
+    assert conn.calls[1][1]["query_parcels"] == "[]"
     session.close()
 
 

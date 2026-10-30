@@ -20,6 +20,7 @@ MIGRATIONS = (
     "20261029_agriculture_actor_bindings.sql",
     "20261029_agriculture_identity_replay.sql",
     "20261030_agriculture_domain_rls.sql",
+    "20261030_agriculture_query_scope.sql",
 )
 LEDGER = "agriculture_schema_migrations"
 ROLE_CHECK = """
@@ -30,7 +31,8 @@ SELECT current_database()='flow_geo' AND current_user='flow_geo_migrate'
  SELECT 1 FROM pg_catalog.pg_auth_members m
  JOIN pg_catalog.pg_roles granted ON granted.oid=m.roleid
  WHERE m.member=pg_roles.oid
- AND (granted.rolname<>'flow_geo_actor_guard' OR m.inherit_option))
+ AND (granted.rolname NOT IN ('flow_geo_actor_guard','flow_geo_query_guard')
+ OR m.inherit_option))
 FROM pg_catalog.pg_roles WHERE rolname=current_user
 """
 APPLICATION_TABLES = """

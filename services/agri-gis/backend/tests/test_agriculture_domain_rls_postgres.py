@@ -28,12 +28,42 @@ async def fixture_context(owner_dsn, runtime_dsn, identity):
         await generator.aclose()
 
 
-async def scope(connection, tenant, workspace):
+async def scope(connection, tenant, workspace, fixture=None):
     await connection.execute(
         "SELECT set_config('app.tenant_ids',$1,tru"
         "e),set_config('app.workspace_id',$2,true)",
         tenant,
         workspace,
+    )
+    from app.agriculture.query_scope import QueryScope
+
+    params = (
+        QueryScope.from_verified(fixture["proof"]()).parameters()
+        if fixture
+        else {
+            "query_parcels": "[]",
+            "query_farms": "[]",
+            "query_parent_farms": "[]",
+            "query_actor": "",
+            "query_expiry": "",
+        }
+    )
+    await connection.execute(
+        "SELECT set_config('app.query_parcels',$1,true), "
+        "set_config('app.query_farms',$2,true), "
+        "set_config('app.query_parent_farms',$3,true), "
+        "set_config('app.query_actor',$4,true), "
+        "set_config('app.query_expiry',$5,true)",
+        *(
+            params[key]
+            for key in (
+                "query_parcels",
+                "query_farms",
+                "query_parent_farms",
+                "query_actor",
+                "query_expiry",
+            )
+        ),
     )
 
 
@@ -112,7 +142,7 @@ async def test_postgres_domain_scope_inventory_and_unmapped_denial():
         )
         assert count == 93
         assert await runtime.fetchval("SELECT count(*) FROM farmland_plots") == 0
-        assert await runtime.fetchval("SELECT count(*) FROM monitoring_projects") == 0
+        assert await runtime.fetchval("SELECT count(id) FROM monitoring_projects") == 0
         for table in IDENTITY_TABLES:
             assert await runtime.fetchval(f"SELECT count(*) FROM public.{table}") == 0
         with pytest.raises(asyncpg.InsufficientPrivilegeError):
@@ -139,7 +169,7 @@ async def test_postgres_domain_scope_inventory_and_unmapped_denial():
         )
         for item in items:
             async with runtime.transaction():
-                await scope(runtime, item["tenant"], item["workspace"])
+                await scope(runtime, item["tenant"], item["workspace"], item)
                 for table in IDENTITY_TABLES:
                     assert (
                         await runtime.fetchval(
@@ -206,7 +236,7 @@ async def test_postgres_domain_scope_inventory_and_unmapped_denial():
                     await runtime.fetchval(f"SELECT count(*) FROM public.{table}") == 0
                 )
         async with runtime.transaction():
-            await scope(runtime, a["tenant"], a["workspace"])
+            await scope(runtime, a["tenant"], a["workspace"], a)
             with pytest.raises(asyncpg.InsufficientPrivilegeError):
                 async with runtime.transaction():
                     await runtime.execute(
@@ -255,7 +285,7 @@ async def test_postgres_domain_cross_workspace_parent_and_policy_denial():
         try:
             assert await runtime.fetchval("SELECT count(*) FROM farmland_plots") == 0
             async with runtime.transaction():
-                await scope(runtime, a["tenant"], a["workspace"])
+                await scope(runtime, a["tenant"], a["workspace"], a)
                 assert (
                     await runtime.fetchval(
                         "SELECT count(*) FROM farmland_plots WHERE plot_code=$1",
@@ -290,7 +320,7 @@ async def test_postgres_domain_cross_workspace_parent_and_policy_denial():
                 b["plot_code"],
             )
             async with runtime.transaction():
-                await scope(runtime, a["tenant"], a["workspace"])
+                await scope(runtime, a["tenant"], a["workspace"], a)
                 assert (
                     await runtime.fetchval(
                         "SELECT count(*) FROM task_plots "
@@ -327,7 +357,7 @@ async def test_postgres_domain_workbench_commit_and_audit_rollback():
         assert after[1] == before[1] + 1 and after[2] == before[2] + 1
         assert after[3] > before[3] and after[4:6] == before[4:6]
         async with runtime.transaction():
-            await scope(runtime, a["tenant"], a["workspace"])
+            await scope(runtime, a["tenant"], a["workspace"], a)
             assert (
                 await runtime.fetchval(
                     "SELECT user_code FROM project_users WHERE id=$1", a["member"]

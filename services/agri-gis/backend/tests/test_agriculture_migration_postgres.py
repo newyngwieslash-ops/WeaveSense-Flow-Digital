@@ -64,7 +64,7 @@ async def test_postgres_migration_command_new_repeat_and_drift(monkeypatch):
             await owner.fetchval(
                 "SELECT count(*) FROM public.agriculture_schema_migrations"
             )
-            == 3
+            == len(migrate.MIGRATIONS)
         )
         assert (
             await owner.fetchval(

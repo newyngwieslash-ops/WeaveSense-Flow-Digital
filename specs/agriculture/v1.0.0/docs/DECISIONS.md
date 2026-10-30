@@ -176,3 +176,26 @@ Sync/Reconcile 中的 HTTP 轮询/启动/取消，以及部分同步 REST 等待
 角色/所有权并执行受控升级；当前仅开发隔离环境授权。回滚不得恢复空范围 system、
 放宽 RLS 或把 owner 密码重新注入 API，应停止受影响入口并恢复已验证检查点。
 
+## ADR-032：GIS 纯引用查询范围与完整聚合保护（2026-10-30）
+
+DT019 依赖 DT013/017，不以 W03 新 Farm 实体为前置。新增 owner-only 的旧 plot 到
+已存在 canonical parcel/farm 纯引用适配，无几何、生命周期、公开创建、默认农场
+或自动认领。实际 GIS 引用与 Verified 的 typed refs/farm ids 精确相交；未知或
+混合越权范围拒绝，不能从票据生成归属事实。
+
+查询边界进入事务级资源范围及 restrictive RLS，而不是仅 ORM 返回后过滤。保留
+原 84 个未适配领域关闭，清单覆盖 DAO 和服务直接查询及全部 app 源码变化；新表
+和新路由必须审查，关闭状态不算领域业务可用。
+
+完整任务和项目缓存计数不可按“至少一个已授权 plot”返回。专用 NOLOGIN、
+NOBYPASS query guard 在精确 tenant/workspace/project 下读取真实关联全集，仅以
+布尔证明 any/all。完整 task 行要求 all，部分授权旧写整体拒绝，不能过滤子集后
+覆盖全任务进度。受控 security_barrier locator 只开放 id/task_code/project_id，
+使合法 bbox/list 查询可在 mixed-task 下正常执行而不产生 RLS 循环。项目全局
+progress 无 app 列授权；task 级 review 历史要求 all，parcel 历史沿真实 PlotVersion。
+
+验证要求真实相同坐标跨租户、同 workspace 多 farm、Core/alias/aggregate/history
+和未映射/跨父链负例；实际导出源行通过不等于正式导出包或 W03 CRUD 已发布。
+生产配置缺归属时拒绝，不启用 fixture provider；数据库角色新增只能由受控 DBA
+步骤执行，既有迁移文件校验和不改写。详见 GIS_QUERY_SCOPE.md。
+

@@ -52,3 +52,30 @@ async def bind_fixture_plot(owner, fixture):
         fixture["workspace"],
         fixture["project"],
     )
+
+
+async def bind_fixture_reference(owner, fixture):
+    """Explicit test facts only; never infer a canonical ID from a request."""
+    values = (
+        fixture["plot_code"],
+        fixture["tenant"],
+        fixture["workspace"],
+        fixture["project"],
+        fixture["parcel_id"],
+        fixture["farm_id"],
+    )
+    existing = await owner.fetchrow(
+        "SELECT plot_code,tenant_id,workspace_id,project_id,parcel_id,farm_id "
+        "FROM agriculture_legacy_resource_references WHERE plot_code=$1",
+        values[0],
+    )
+    if existing is not None:
+        if tuple(existing) != values:
+            raise ValueError("explicit reference fixture conflict")
+        return
+    await owner.execute(
+        "INSERT INTO agriculture_legacy_resource_references "
+        "(plot_code,tenant_id,workspace_id,project_id,parcel_id,farm_id,state) "
+        "VALUES($1,$2,$3,$4,$5,$6,'active')",
+        *values,
+    )

@@ -13,7 +13,15 @@ GRANT CONNECT ON DATABASE flow_geo TO flow_geo_worker;
 GRANT USAGE ON SCHEMA public TO flow_geo_worker;
 ```
 
-不得授予角色成员资格、表 CRUD、默认表权限或 schema CREATE。迁移命令只验证/使用预建角色，不自动提权或生成长期凭据。既有 actor guard 的 NOLOGIN、NOBYPASS 与迁移角色 `INHERIT FALSE` 成员关系也必须保留。此处为受控升级说明，不代表已经在用户生产数据库执行或通过 live 升级验收。
+不得给 worker 授予角色成员资格、表 CRUD、默认表权限或 schema CREATE。DT019 还要求 DBA 显式预建无密码、不可登录的 `flow_geo_query_guard`，不重用 actor guard：
+
+```sql
+CREATE ROLE flow_geo_query_guard NOLOGIN NOINHERIT NOSUPERUSER NOCREATEDB
+ NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+GRANT flow_geo_query_guard TO flow_geo_migrate WITH INHERIT FALSE, SET TRUE;
+```
+
+普通 app/worker 不得获得该角色成员资格。迁移命令只验证/使用预建角色，不自动提权或生成长期凭据。既有 actor guard 的 NOLOGIN、NOBYPASS 与迁移角色 `INHERIT FALSE` 成员关系也必须保留。此处为受控升级说明，不代表已经在用户生产数据库执行或通过 live 升级验收。
 
 ## 执行
 
@@ -23,7 +31,7 @@ GRANT USAGE ON SCHEMA public TO flow_geo_worker;
 python -m app.agriculture.migrate --mode new
 ```
 
-`new` 仅接受没有任何非扩展业务表的新库。创建固定 AgriScope 审查基线的 93 张 ORM 表，随后在同一个数据库事务中安装三个农业 SQL 边界。不创建租户、项目、用户或图斑归属；现有图斑不自动认领。
+`new` 仅接受没有任何非扩展业务表的新库。创建固定 AgriScope 审查基线的 93 张 ORM 表，随后在同一个数据库事务中安装 `migrate.MIGRATIONS` 明确列出的农业 SQL 边界（DT019 新增第四份查询范围迁移，前三份校验和不变）。不创建租户、项目、用户或图斑归属；现有图斑不自动认领。
 
 已有兼容基线或重试已完成安装：
 
@@ -38,7 +46,7 @@ python -m app.agriculture.migrate --mode existing
 ## 原子性与重试
 
 - 单连接、单事务、固定事务级 advisory lock；锁等待 10 秒、单 SQL 120 秒上限。连接异常不报告成功。
-- 账本 `agriculture_schema_migrations` 记录三个原始 SQL 文件的 SHA-256 与首次安装时间；未知版本或校验和改变直接失败。不修改旧版校验和。
+- 账本 `agriculture_schema_migrations` 记录所有明确版本原始 SQL 文件的 SHA-256 与首次安装时间；未知版本或校验和改变直接失败。新增版本追加，不修改旧版校验和。
 - 账本 ENABLE/FORCE RLS，只迁移 owner 可维护；PUBLIC、app、worker 无读写授权。它不包含业务资料或秘密。
 - SQL 边界可重复安装；既有 actor guard 函数保留原 NOLOGIN 所有权，不增加迁移角色继承权，不给 runtime 角色成员资格。
 - 事务中任何错误回滚本次操作；网络中断导致提交结果未知时，保留错误，恢复连接后显式用 `existing` 核验。不要删除账本或强改余额、归属、角色以绕过失败。

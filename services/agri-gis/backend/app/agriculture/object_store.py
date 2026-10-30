@@ -40,7 +40,8 @@ class PostgresObjectStore:
     async def require_ready(self):
         try:
             async with self.pool.acquire(timeout=3) as connection:
-                ready = await connection.fetchval("""
+                ready = await connection.fetchval(
+                    """
 SELECT current_user='flow_geo_app' AND c.relrowsecurity AND c.relforcerowsecurity
  AND pg_get_userbyid(c.relowner)='flow_geo_migrate'
  AND has_table_privilege(current_user,c.oid,'SELECT')
@@ -51,7 +52,9 @@ SELECT current_user='flow_geo_app' AND c.relrowsecurity AND c.relforcerowsecurit
   AND t.tgname='agriculture_object_immutable' AND t.tgenabled='O')
 FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
 WHERE n.nspname='public' AND c.relname='agriculture_private_objects'
-""")
+""",
+                    timeout=3,
+                )
                 if ready is not True:
                     raise ValueError("object storage boundary unavailable")
         except Exception:
@@ -70,6 +73,7 @@ WHERE n.nspname='public' AND c.relname='agriculture_private_objects'
                         "set_config('app.workspace_id',$2,true)",
                         tenant,
                         workspace,
+                        timeout=2,
                     )
                     row = await connection.fetchrow(
                         "SELECT tenant_id,workspace_id,object_id,version,resource_kind,"
@@ -83,6 +87,7 @@ WHERE n.nspname='public' AND c.relname='agriculture_private_objects'
                         workspace,
                         object_id,
                         version,
+                        timeout=2,
                     )
             if row is None:
                 raise IdentityError("object_not_found", 404)

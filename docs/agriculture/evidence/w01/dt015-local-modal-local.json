@@ -1,0 +1,28 @@
+{
+  "scope": "DT015 protected organization confirmation holder lifetime",
+  "failed_ci": "2c3899a",
+  "finding": "App-level imperative modal holder survives page unmount; batched clear/update plus close may preserve cached closing-animation children. Page-owned holder unmount removes its portal subtree instead of waiting on animation.",
+  "change": "OrganizationPage uses Modal.useModal and renders its holder only when not revalidating. Existing page-scoped confirmation cleanup remains. No global destroyAll, DOM deletion, sleeps, timeout increases or assertion removal.",
+  "tests": {
+    "command": "bun test web/test/agriculture-{api,organization,profile,session-security}.test.ts web/test/auth-{session-race,return-path}.test.ts services/agri-gis/frontend/agriculture/session.test.ts",
+    "exit_code": 0,
+    "passed": 94,
+    "failed": 0,
+    "assertions": 429,
+    "portal_test_scope": "Structural ownership invariant only, not rendered React portal proof"
+  },
+  "build": {
+    "directory": "web",
+    "command": "bun run build:agriculture",
+    "exit_code": 0
+  },
+  "source_hashes": {
+    "web/src/features/agriculture/organization.tsx": "fe5310188f52ebde7e088420f3d81bc100db2c5bf64bfdb74187fd2958d4c6ef",
+    "web/test/agriculture-session-security.test.ts": "668249461cac5ac39df745232fe6a5c0ff96859b8d2ab2478c2989e87b0daf76"
+  },
+  "actual_browser_after_fix": "not_run",
+  "required_browser_checks": [
+    "routine same-authority resume does not revive confirmation and retains invitation/draft",
+    "hard demotion removes old privileged confirmation after same-document visibility cycle"
+  ]
+}

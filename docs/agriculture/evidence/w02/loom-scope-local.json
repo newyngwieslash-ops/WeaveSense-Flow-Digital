@@ -1,0 +1,194 @@
+{
+  "kind": "local_real_loom_postgres_fixture",
+  "fresh_cluster": true,
+  "production_deployment": false,
+  "remote_ci": false,
+  "passed": true,
+  "required_tests": [
+    "A18: backup/restore dump → restore into an empty database → manifest and app reads match",
+    "RLS: HTTP API end-to-end on real Postgres as non-superuser",
+    "RLS: tenant context hides and blocks other tenants' rows (non-superuser role)",
+    "legacy import (PGlite): analyses, notes, schedules, objects; dry run; idempotent",
+    "legacy import (real PostgreSQL, FORCE RLS app role)",
+    "media retry writes real scoped rows and transactional outbox with fixture transport",
+    "migration applies and repeats without changing ledger",
+    "pooled scope reset rollback and escaped transaction handles fail closed",
+    "real HTTP and Agent parameters cannot select system scope or pool",
+    "scheduler report and enrichment loops use explicit tenant scopes",
+    "scoped collection claim commit cursor and ordered at least once outbox",
+    "system scanner has only bounded tenant metadata and no table writes or content",
+    "two scoped tenants create sources and ordinary unscoped access denies"
+  ],
+  "tests": [
+    {
+      "name": "migration applies and repeats without changing ledger",
+      "status": "pass"
+    },
+    {
+      "name": "two scoped tenants create sources and ordinary unscoped access denies",
+      "status": "pass"
+    },
+    {
+      "name": "system scanner has only bounded tenant metadata and no table writes or content",
+      "status": "pass"
+    },
+    {
+      "name": "pooled scope reset rollback and escaped transaction handles fail closed",
+      "status": "pass"
+    },
+    {
+      "name": "real HTTP and Agent parameters cannot select system scope or pool",
+      "status": "pass"
+    },
+    {
+      "name": "scoped collection claim commit cursor and ordered at least once outbox",
+      "status": "pass"
+    },
+    {
+      "name": "scheduler report and enrichment loops use explicit tenant scopes",
+      "status": "pass"
+    },
+    {
+      "name": "media retry writes real scoped rows and transactional outbox with fixture transport",
+      "status": "pass"
+    },
+    {
+      "name": "legacy import (PGlite): analyses, notes, schedules, objects; dry run; idempotent",
+      "status": "pass"
+    },
+    {
+      "name": "legacy import (real PostgreSQL, FORCE RLS app role)",
+      "status": "pass"
+    },
+    {
+      "name": "RLS: tenant context hides and blocks other tenants' rows (non-superuser role)",
+      "status": "pass"
+    },
+    {
+      "name": "A18: backup/restore dump → restore into an empty database → manifest and app reads match",
+      "status": "pass"
+    },
+    {
+      "name": "RLS: HTTP API end-to-end on real Postgres as non-superuser",
+      "status": "pass"
+    }
+  ],
+  "source_files": {
+    "deploy/agriculture/native-postgres-packages.json": "a1b54a7a5899b938fb41b05288d992b5c9c2c0193e0ec08eae5a48f60589f2e9",
+    "deploy/agriculture/postgres/init.sh": "40be22d82631ae6cdc2ad3e1109ec3965c060f02d3e3d405ff4f256acd079015",
+    "scripts/agriculture/native-loom-test.py": "6f63619ef6122d417b198db2c6a04613275a9e042e793ca759585a9bfad4e281",
+    "scripts/agriculture/native_test_environment.py": "ccb983e5cf0d08e872e73f154502c61762581f8fbf0f8e16a1a3078f506133d7",
+    "services/loom-engine/flow/a20.test.ts": "6fd624fc861bfaa9a56c63e701a87e23777ee8c45676f042b7e86543a7b8dc17",
+    "services/loom-engine/flow/auth.ts": "0c02e32f1f52c410f140d15526a4082bc57991824bb45727d154c9f30824de85",
+    "services/loom-engine/flow/connectors.ts": "725a8f58a31ac40414ace6f279050cf3ae915a758761e6fedc4d5a2c04c7b1be",
+    "services/loom-engine/flow/cron.ts": "fcfcebbd8709d119cb37dc586ad61b20454de595b208654fa5de8dc2ff0aea2c",
+    "services/loom-engine/flow/db.ts": "44b6cb28280c16d9c03257db7f4ce773bceafa76d570526e39481923dc83eccc",
+    "services/loom-engine/flow/engine.test.ts": "5582ea4b1f8100d30fd0ca88ffbc1224ef289fc0f9e8d572a5c537476189a639",
+    "services/loom-engine/flow/engine.ts": "781fbca12333ffb8a21391f0c830afa05cf2b92da8297bd40316692fdf11195a",
+    "services/loom-engine/flow/enrichment.test.ts": "420e6d6a5640772ba024ea1f8042004a8b9e79434fe462e835e75a6049f9c638",
+    "services/loom-engine/flow/enrichment.ts": "5f7bdffab1bfeddfea7345cbd29671fcc9336f3d707e5a2a3e32d4ba0dc393d0",
+    "services/loom-engine/flow/errors.ts": "8d8f62a50547102ff0d3f3afd750bea905164b6a8e3d61cb78397e82aa8c1c6c",
+    "services/loom-engine/flow/gaps1.test.ts": "814eb2780200ba343d70dbcdf9119bd1197777d260fa0b44329ff49d1f949e22",
+    "services/loom-engine/flow/gaps2.test.ts": "9edbdbf4ccf0c6b58a223a80baae5d2a6027e10e367d4adedcf2c6afcbbc800e",
+    "services/loom-engine/flow/gaps5.test.ts": "18dd56dfd92193de8932563d19d5b409a622d9088b1666e973e4f5d65dddb65b",
+    "services/loom-engine/flow/gaps6.test.ts": "2ff72c23bafc58d67b5326b23a27b97e82963e256801c55ae096169d5d9387d7",
+    "services/loom-engine/flow/gaps7.test.ts": "cb236922c9e2170a817c1962408501be1d4094427ccf80197bfb0eadd105b0c0",
+    "services/loom-engine/flow/gaps7ops.test.ts": "39107dd4c87582164a9d9424c9dd80d4c8f909488f6347b37d0b17a990b76aae",
+    "services/loom-engine/flow/gaps9.test.ts": "aa2b7fbe215a2270237ca51f1e8b0cb49a7d3c741412ea92a560a036cf39509e",
+    "services/loom-engine/flow/gaps9.ts": "bd0ab6275208c717a8d7391169ef995ee9b2c9434d76a9a9a9b38224eb6516c5",
+    "services/loom-engine/flow/install-system-role.sql": "4ecdb4da9769f10ad756803edc78171008d20170a9c1d22b9b591a5f073b1ae6",
+    "services/loom-engine/flow/legacy-import-full.test.ts": "5d756e1a221540e74f22ff4185b9ac73d76065fec864e35161e4fdc15f7baef1",
+    "services/loom-engine/flow/legacy-import.test.ts": "21b515394e5580f42feaf6943d16802e7beb63868b2c56869b4faae34b63b55a",
+    "services/loom-engine/flow/main.ts": "74a9a9349e452eff6d68a3ed92829a549c57c238843a29e801911544df0ed068",
+    "services/loom-engine/flow/metrics-snapshot.test.ts": "5ac559b6aecd849d25e35300fab9da365d4d2af5002f2f2f8990b4a299524ab6",
+    "services/loom-engine/flow/metrics-snapshot.ts": "e02ef34d4b09a1df149a7ac03bfbecc936dedabfbb767276866a8e6b83002b05",
+    "services/loom-engine/flow/metrics.ts": "c36e9998d1976fdd11ff211b992a2c27d4538c06efa3c405c44d3780b2d6ad47",
+    "services/loom-engine/flow/migrations/0001_flow_intel.sql": "50aaef245cf73d7c91ff7a7309f2e0a5cf9f6997187ec3900fdb22239279e529",
+    "services/loom-engine/flow/migrations/0002_chunks_evidence_monitors.sql": "3a0755c9158e845c482db1e345d8178e8e4abd113aaf9ceea5fbfea816aa7abd",
+    "services/loom-engine/flow/migrations/0003_reports_research_briefs.sql": "2e382fa058598f92dd696c889027932eaf65f52672176c9c3a18d5b00024f0a4",
+    "services/loom-engine/flow/migrations/0004_connectors.sql": "2aaa4a792ab820bad95247b7f95aa166a3fb357e18dd566d8a18f96a8a2ff47d",
+    "services/loom-engine/flow/migrations/0005_grant_recheck.sql": "df58a4209ac905645fa6325f1371ae60853f5dcf0e671dd8e5dce7365e37a451",
+    "services/loom-engine/flow/migrations/0006_rls.sql": "07755be8840fec51bce2a3c77013daa47b149c1732ca0cea04cbafbda5c5ec7a",
+    "services/loom-engine/flow/migrations/0007_source_backoff.sql": "2409eaad7f74e10b08188e68099e92b6f85513b5730a41894fecfda79249dbe0",
+    "services/loom-engine/flow/migrations/0008_feed_validators.sql": "54cb142e562c03cfb58d67a680cde6c35b896951a01007cc8651787c8f70b087",
+    "services/loom-engine/flow/migrations/0009_terms_research_sources.sql": "ba04ad669a77944f1e1f2d845a6702c83589f12c8f16b3c72f2930bf7bd153fa",
+    "services/loom-engine/flow/migrations/0010_media_ocr.sql": "73aa5880d74dca1c2af1f7557025febff81d8f91714b10095f3334fd61b85089",
+    "services/loom-engine/flow/migrations/0011_legacy_import.sql": "2ac62bb0c1c7d402906afc0519078794b4e0aabca7cd7cb7824c0a76f5697215",
+    "services/loom-engine/flow/migrations/0012_job_states_misfire.sql": "9a3a3bbe759924ddfececa5e18005aaa542e630dad2b8829ff31be6ce26099c9",
+    "services/loom-engine/flow/migrations/0013_budget_fairness_events.sql": "e61695968075ea36dc86bdef4fea5a6189e6a9d71b596ec591c02494de86ca47",
+    "services/loom-engine/flow/migrations/0014_media_asr.sql": "22d954447e70569b1ab68c7833b0ee63f2ca4747f52b15109538321eaa637b88",
+    "services/loom-engine/flow/migrations/0015_legacy_archive.sql": "b1778ed4eb3e382b1c4a5547e42f96db923e1a91b46261fb124ff23f97df3a57",
+    "services/loom-engine/flow/migrations/0016_gaps9.sql": "41497482febb525a283e8f6e222594557d657ef7d842d04fa19b408de7f5d1bb",
+    "services/loom-engine/flow/migrations/0017_raw_response_archive.sql": "3c0f49336c028983ebb4aac0e210e599085e7206fe62753b3f44a5bcb1074522",
+    "services/loom-engine/flow/migrations/0018_composite_keys_and_fk.sql": "8e0ad873a3d973208f7d0e214021a1230490a8041e6d32ef51348bf5af58db16",
+    "services/loom-engine/flow/migrations/0019_scope_required.sql": "c1b24be106e07852656a813096f97abe57197fbd89ddcf3e853e1a498b96e5de",
+    "services/loom-engine/flow/ops.test.ts": "74cb3eae93942af6262749b0839d86afa22d51dda057adc46523144177e1c865",
+    "services/loom-engine/flow/p2.test.ts": "76f7b24b07569cf10c2a19a4e7c37bed758938b19d142170fb672dccf70294de",
+    "services/loom-engine/flow/p3.test.ts": "b5f5885db492d5e870cf5d65b2c4109b860f40793c85479eff112e6d1f8b0be7",
+    "services/loom-engine/flow/p4.test.ts": "7c5c3ec4473f8d0b62d15d0fc2cc40f64be27eb1fd30319cf0bbe71501bb2af5",
+    "services/loom-engine/flow/p5.test.ts": "1bbb9db0b496c15535a9c75c7f960b6d856d60eda56517f0851f4dbbc6d885a7",
+    "services/loom-engine/flow/pg.test.ts": "a8315b72f7f0e6177ef30652e6eac17d470824b2b17c5e05ff0b61890b917175",
+    "services/loom-engine/flow/reliability.test.ts": "580c78f9085f0e0e6032525047b966bb8053f7b1fd4e4e5441f28ea4596bd56d",
+    "services/loom-engine/flow/reports.ts": "460b93e4a4596d7b574442b75f04527a84b950988938cf5961a2b2327e0d9bb6",
+    "services/loom-engine/flow/rss-reuse.test.ts": "02e656eeed0ac3b2e844e643ba0d9a1dbefd0f12edfedbb3166df750fc91d31b",
+    "services/loom-engine/flow/runtime-role.ts": "01542b1f185759e6754e77263be2a07603bc04c55a62c8e07ad0ecaa185085b3",
+    "services/loom-engine/flow/scope-postgres.test.ts": "df1245626078456c40d0eb6c36cdb6467e14094bf8d3492149d3bf639bcee4f3",
+    "services/loom-engine/flow/server.ts": "101e379ed4f2f54d3ae5c613b85cb93ddd5d114622e5819449b3aa2dd5a2ade2",
+    "services/loom-engine/flow/tenant-dispatch.test.ts": "3f94c7dcebf061ac521fd7ce1a638c6c61a9c9ce6e87b5d1f186d542513de61b",
+    "services/loom-engine/flow/tenant-dispatch.ts": "4bd09c25ef3f71eabac597c2bb06d11d98d5b316616108c88af1f5259cb18879",
+    "services/loom-engine/flow/terms.ts": "98270dfab934be8b007505cc6c55a50b47cf91b69ca59c1d7517c897f1174716",
+    "services/loom-engine/flow/tools/legacy-import.ts": "0093689cc6b57fe3b4fd01c6be5fcb5abd766cc1880502c79a15f89881069812",
+    "services/loom-engine/flow/tools/media-keys.ts": "fb875ae430334ae9d9cf9f703acacfaadefad5bcf81a528adba20621525fc208",
+    "services/loom-engine/flow/tools/migrate.ts": "bbfece93b08208c56ce0b5bd21db2d4b24927c9862f2b2da18961f8f0e90cd9b",
+    "services/loom-engine/package-lock.json": "05b31509cccb7ecb7993ba750d495c84e7c2c95846de36a95de810f9e050ad4c"
+  },
+  "test_exit_code": 0,
+  "legacy_exit_code": 0,
+  "shutdown_exit_code": 0,
+  "source_commit": "36dc8d767b681dcbe8b77339946848c5779b7917",
+  "worktree_changes_included": true,
+  "elapsed_seconds": 10.447,
+  "validation_commands": [
+    {
+      "command": "python scripts/agriculture/native-loom-test.py --package-root .local/native-postgres-current/root --legacy",
+      "exit_code": 0,
+      "required_passed": 13,
+      "skipped": 0
+    },
+    {
+      "command": "cd services/loom-engine && node --experimental-strip-types --test --test-concurrency=2 flow/*.test.ts",
+      "exit_code": 0,
+      "passed": 100,
+      "failed": 0,
+      "skipped": 5,
+      "note": "Environment-gated PG tests were separately executed successfully by native fixture; this broad run preceded only the final metrics sampling-duration guard, which subsequent 8 focused tests and native fixture cover."
+    },
+    {
+      "command": "cd services/loom-engine && node --experimental-strip-types --test flow/metrics-snapshot.test.ts flow/tenant-dispatch.test.ts flow/ops.test.ts flow/a20.test.ts",
+      "exit_code": 0,
+      "passed": 8,
+      "skipped": 0
+    },
+    {
+      "command": "cd services/loom-engine && tsc --noEmit --allowImportingTsExtensions --module nodenext --moduleResolution nodenext --target ESNext --skipLibCheck flow/db.ts flow/tenant-dispatch.ts flow/runtime-role.ts flow/metrics-snapshot.ts flow/tenant-dispatch.test.ts flow/metrics-snapshot.test.ts",
+      "exit_code": 0
+    },
+    {
+      "command": "ad-hoc tsc with same flags plus flow/main.ts and flow/scope-postgres.test.ts",
+      "exit_code": 2,
+      "note": "Entire imported legacy graph has existing reports/src type and alias errors; no whole-project TypeScript acceptance claimed."
+    },
+    {
+      "command": "python -m py_compile scripts/agriculture/native-loom-test.py; git diff --check",
+      "exit_code": 0
+    }
+  ],
+  "boundaries": [
+    "No remote CI claimed; native isolated PostgreSQL only.",
+    "Fixture connector/media transport, no external collection/model/payment.",
+    "13 required cases comprise 12 real-PostgreSQL cases and one preserved PGlite legacy import regression.",
+    "ASR/OCR queues empty in native loop smoke; existing PGlite behavioral regressions retained.",
+    "Same-process private scanner is separate restricted identity/pool; HTTP only receives app Db and read-only ops snapshot.",
+    "DT018 overall platform compatibility and independent review remain lead-owned; this evidence is only Loom slice."
+  ]
+}

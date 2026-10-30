@@ -1,7 +1,7 @@
 // §10.4 compat: moves legacy Telegram media keys (telegram/<channel>/<id>, shared prefix) to
 // tenants/<tenant>/workspaces/<workspace>/telegram/<channel>/<id>.
 //
-//   node --experimental-strip-types flow/tools/media-keys.ts plan  > plan.jsonl     # read-only
+//   FLOW_OPERATOR_TENANT_ID=<tenant> node --experimental-strip-types flow/tools/media-keys.ts plan > plan.jsonl
 //   (operator copies objects, e.g. the printed `mc cp` lines, and verifies them)
 //   node --experimental-strip-types flow/tools/media-keys.ts apply plan.jsonl       # rewrites document media refs
 //
@@ -49,17 +49,19 @@ export async function applyMediaKeyMigration(db: Db, plan: MediaKeyMove[], copie
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const { pgDb } = await import("../db.ts");
+  const { pgDb, validTenant, withTenant } = await import("../db.ts");
+  const tenant = process.env.FLOW_OPERATOR_TENANT_ID;
+  if (!validTenant(tenant)) throw new Error("explicit FLOW_OPERATOR_TENANT_ID required");
   const db = await pgDb(process.env.DATABASE_URL ?? "");
   const bucket = process.env.MINIO_BUCKET ?? "flow-media";
   try {
     if (process.argv[2] === "plan") {
-      const plan = await planMediaKeyMigration(db);
+      const plan = await withTenant(tenant, () => planMediaKeyMigration(db));
       for (const m of plan) console.log(JSON.stringify(m));
       for (const m of plan) console.error(`mc cp "flow/${bucket}/${m.from}" "flow/${bucket}/${m.to}"`);
     } else if (process.argv[2] === "apply" && process.argv[3]) {
       const plan = readFileSync(process.argv[3], "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
-      console.log(JSON.stringify(await applyMediaKeyMigration(db, plan)));
+      console.log(JSON.stringify(await withTenant(tenant, () => applyMediaKeyMigration(db, plan))));
     } else {
       console.error("usage: media-keys.ts plan | apply <plan.jsonl>"); process.exitCode = 2;
     }

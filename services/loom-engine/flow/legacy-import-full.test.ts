@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { pgliteDb, pgDb, migrate, type Db } from "./db.ts";
+import { pgliteDb, pgDb, pgMaintenanceDb, withTenant, migrate, type Db } from "./db.ts";
 import { importLegacy } from "./tools/legacy-import.ts";
 
 const LEGACY = [
@@ -74,12 +74,19 @@ test("legacy import (PGlite): analyses, notes, schedules, objects; dry run; idem
 const admin = process.env.FLOW_TEST_PG_ADMIN_URL ?? "";
 const [appUser, appPass] = (process.env.FLOW_TEST_PG_APP_ROLE ?? "").split(":");
 test("legacy import (real PostgreSQL, FORCE RLS app role)", { skip: !admin || !appUser ? "FLOW_TEST_PG_ADMIN_URL / FLOW_TEST_PG_APP_ROLE not set" : false }, async () => {
+  assert.match(appUser, /^[a-z_][a-z0-9_]*$/);
   const sql = (url: string, s: string) => execFileSync("psql", [url, "-v", "ON_ERROR_STOP=1", "-Atc", s], { encoding: "utf8" });
   const urls = ["legacy_src_t", "legacy_dst_t"].map((name) => {
-    sql(admin, `DROP DATABASE IF EXISTS ${name}`); sql(admin, `CREATE DATABASE ${name} OWNER ${appUser}`);
-    const u = new URL(admin); u.pathname = `/${name}`; u.username = appUser; u.password = appPass; return u.toString();
+    sql(admin, `DROP DATABASE IF EXISTS ${name}`); sql(admin, `CREATE DATABASE ${name}`);
+    const u = new URL(admin); u.pathname = `/${name}`; return u.toString();
   });
-  const legacy = await pgDb(urls[0]); const db = await pgDb(urls[1]); await migrate(db);
-  await scenario(legacy, db);
-  await legacy.close(); await db.close();
+  const target = new URL(urls[1]); target.username = appUser; target.password = appPass;
+  sql(urls[1], `GRANT CONNECT ON DATABASE legacy_dst_t TO ${appUser}; GRANT USAGE ON SCHEMA public TO ${appUser}`);
+  const legacy = await pgMaintenanceDb(urls[0]); const db = await pgDb(target.toString());
+  const migration = await pgMaintenanceDb(urls[1]);
+  try {
+    await migrate(migration);
+    sql(urls[1], `GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA public TO ${appUser}; GRANT USAGE,SELECT ON ALL SEQUENCES IN SCHEMA public TO ${appUser}`);
+    await withTenant("tn_a", () => scenario(legacy, db));
+  } finally { await legacy.close(); await db.close(); await migration.close(); }
 });

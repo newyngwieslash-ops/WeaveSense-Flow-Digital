@@ -224,12 +224,13 @@ export async function importLegacy(legacy: Q, target: Db, s: Scope, opts: { appl
 if (import.meta.url === `file://${process.argv[1]}`) {
   const [tenant, workspace, ...flags] = process.argv.slice(2);
   if (!tenant || !workspace) { console.error("usage: legacy-import.ts <tenant_id> <workspace_id> [--apply] [--activate] [--import-keywords]"); process.exit(2); }
-  const { pgDb, migrate } = await import("../db.ts");
-  const legacy = await pgDb(process.env.LEGACY_DATABASE_URL ?? "");
+  const { pgDb, pgMaintenanceDb, withTenant } = await import("../db.ts");
+  // Explicit offline legacy-source credential; target schema is migrated separately.
+  const legacy = await pgMaintenanceDb(process.env.LEGACY_DATABASE_URL ?? "");
   const target = await pgDb(process.env.DATABASE_URL ?? "");
-  await migrate(target);
-  const rep = await importLegacy(legacy, target, { tenant_id: tenant, workspace_id: workspace }, { apply: flags.includes("--apply"), activate: flags.includes("--activate"), importKeywords: flags.includes("--import-keywords") });
+  try {
+  const rep = await withTenant(tenant, () => importLegacy(legacy, target, { tenant_id: tenant, workspace_id: workspace }, { apply: flags.includes("--apply"), activate: flags.includes("--activate"), importKeywords: flags.includes("--import-keywords") }));
   for (const e of rep.entries) console.log(JSON.stringify(e));
   console.error(JSON.stringify({ import_id: rep.import_id, dry_run: rep.dry_run, counts: rep.counts }));
-  await legacy.close(); await target.close();
+  } finally { await legacy.close(); await target.close(); }
 }

@@ -1,5 +1,5 @@
-// Prometheus text exposition for the Loom Engine (§14 monitoring). System context
-// (no tenant set), aggregate counts only: no tenant ids, titles or content leave here.
+// Prometheus projection for one explicitly scoped tenant. Main aggregates these
+// in a private background sampler; HTTP cannot request an unscoped Db fallback.
 import type { Db } from "./db.ts";
 
 const started = Date.now();

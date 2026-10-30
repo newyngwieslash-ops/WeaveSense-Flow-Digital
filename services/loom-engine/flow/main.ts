@@ -1,11 +1,15 @@
-// Loom Engine (WeaveSense-Flow) entrypoint. LOOM_ROLE=api|scheduler|enrich|research|all.
+// Loom Engine (WeaveSense-Flow) entrypoint. LOOM_ROLE=api|worker|scheduler|enrich|research|all.
 //  enrich:    attachment retry + OCR loops only (compose profile "extract")
 //  research:  periodic briefs only (compose profile "research")
 // With LOOM_SPLIT_ROLES=true the api/scheduler roles leave those loops to the dedicated roles.
 //  api:       internal HTTP API + collection worker + outbox dispatcher
+//  worker:    collection worker + outbox dispatcher
 //  scheduler: the single due-window scanner (guarded by a PG advisory lock)
 import { derivedTick, embedderFromEnv } from "./gaps9.ts";
-import { pgDb, migrate } from "./db.ts";
+import { pgDb } from "./db.ts";
+import { pgTenantScanner, tenantDispatch } from "./tenant-dispatch.ts";
+import { runtimeRole } from "./runtime-role.ts";
+import { metricsSnapshot } from "./metrics-snapshot.ts";
 import { Engine } from "./engine.ts";
 import { createApiServer } from "./server.ts";
 import { Reports } from "./reports.ts";
@@ -18,13 +22,10 @@ const env = (k: string, d?: string) => {
   if (d !== undefined) return d;
   throw new Error(`missing env ${k}`);
 };
-const role = env("LOOM_ROLE", "api");
-if (!["api", "scheduler", "enrich", "research", "all"].includes(role)) throw new Error(`invalid LOOM_ROLE ${role}`);
-const split = env("LOOM_SPLIT_ROLES", "false") === "true";
-const runEnrich = role === "enrich" || role === "all" || (role === "api" && !split);
-const runBriefs = role === "research" || role === "all" || (role === "scheduler" && !split);
+const { role, runEnrich, runBriefs } = runtimeRole(process.env);
 const db = await pgDb(env("DATABASE_URL"));
-if (env("LOOM_AUTO_MIGRATE", "true") === "true") console.log("[loom] migrations applied:", await migrate(db));
+// Private startup-only scanner, never passed to Engine/handler/request context.
+const scanner = await pgTenantScanner(env("LOOM_SYSTEM_DATABASE_URL"));
 const engine = new Engine(db);
 const key = env("FLOW_INTERNAL_JWT_SIGNING_KEY");
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -32,8 +33,10 @@ let stopping = false;
 process.on("SIGTERM", () => { stopping = true; });
 
 async function loop(name: string, ms: number, fn: () => Promise<unknown>) {
+  if (!scanner) throw new Error("background scanner missing");
+  const dispatch = tenantDispatch(scanner);
   while (!stopping) {
-    try { await fn(); } catch (e) { console.error(`[loom:${name}]`, e); }
+    try { await dispatch(fn); } catch { console.error(`[loom:${name}] background iteration failed`); }
     await sleep(ms);
   }
 }
@@ -81,9 +84,21 @@ const summarize: Reports["summarize"] = platformBase ? async (input) => {
 } : undefined;
 if (role === "api" || role === "all") {
   const port = Number(env("LOOM_PORT", "8080"));
-  createApiServer(engine, { signingKey: key, audience: env("FLOW_INTERNAL_JWT_AUDIENCE", "loom-engine"), summarize }).listen(port, () => console.log(`[loom] api on :${port}`));
+  const metrics = metricsSnapshot(db, scanner);
+  const metricsToken = env("METRICS_TOKEN", "");
+  if (metricsToken) void (async () => {
+    while (!stopping) {
+      try { await metrics.refresh(); } catch { console.error("[loom:metrics] snapshot unavailable"); }
+      await sleep(30_000);
+    }
+  })();
+  createApiServer(engine, { signingKey: key, audience: env("FLOW_INTERNAL_JWT_AUDIENCE", "loom-engine"), summarize,
+    metricsToken, metrics: metrics.read }).listen(port, () => console.log(`[loom] api on :${port}`));
+}
+if (role === "api" || role === "worker" || role === "all") {
   const owner = `${hostname()}:${process.pid}`;
-  void loop("worker", 1000, async () => { while (!stopping && (await engine.workOnce(owner))); });
+  // One bounded claim per tenant per round; a busy tenant cannot drain forever.
+  void loop("worker", 1000, async () => { if (!stopping) await engine.workOnce(owner); });
   const platform = env("FLOW_PLATFORM_EVENTS_URL", "");
   if (platform) {
     const iss = env("FLOW_INTERNAL_JWT_ISSUER", "flow-platform");

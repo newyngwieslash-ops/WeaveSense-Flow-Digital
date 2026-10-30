@@ -4,9 +4,16 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { AsyncLocalStorage } from "node:async_hooks";
 
-/** Tenant of the current API request; drives Postgres RLS (app.tenant_id). Empty = system/worker context. */
+/** Trusted request or dispatcher tenant. Missing is never a system capability. */
 const tenantStore = new AsyncLocalStorage<string>();
-export const withTenant = <T>(tenantId: string, fn: () => Promise<T>) => tenantStore.run(tenantId, fn);
+export function validTenant(tenantId: unknown): tenantId is string {
+  return typeof tenantId === "string" && /^[A-Za-z0-9_-]{1,128}$/.test(tenantId);
+}
+export const withTenant = <T>(tenantId: string, fn: () => Promise<T>) => {
+  if (!validTenant(tenantId)) throw new Error("tenant scope required");
+  if (currentTenant() && currentTenant() !== tenantId) throw new Error("tenant scope switch denied");
+  return tenantStore.run(tenantId, fn);
+};
 export const currentTenant = () => tenantStore.getStore() ?? "";
 
 export interface Q {
@@ -18,24 +25,62 @@ export interface Db extends Q {
 }
 
 export async function pgDb(url: string): Promise<Db> {
+  return connectPg(url, false);
+}
+
+/** Operator-only connection. No implicit app fallback; its DSN must have DDL rights.
+ * RLS still applies. Only migration/explicit offline import entrypoints use this.
+ */
+export async function pgMaintenanceDb(url: string): Promise<Db> {
+  if (!url) throw new Error("explicit maintenance database URL required");
+  return connectPg(url, true);
+}
+
+async function connectPg(url: string, maintenance: boolean): Promise<Db> {
+  if (!url) throw new Error("explicit database URL required");
   const pg = (await import("pg")).default;
-  const pool = new pg.Pool({ connectionString: url, max: 10 });
+  const pool = new pg.Pool({ connectionString: url, max: 10, connectionTimeoutMillis: 10_000 });
+  const admit = async (q: Q) => {
+    const result = await q.query(`SELECT current_user = session_user
+      AND NOT (r.rolsuper OR r.rolbypassrls OR r.rolcreaterole OR r.rolcreatedb OR r.rolreplication)
+      AND NOT EXISTS (SELECT 1 FROM pg_database d WHERE d.datname=current_database() AND d.datdba=r.oid)
+      AND NOT EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+        WHERE n.nspname='public' AND c.relkind IN ('r','p') AND c.relowner=r.oid)
+      AND NOT EXISTS (SELECT 1 FROM pg_roles privileged
+        WHERE (privileged.rolsuper OR privileged.rolbypassrls OR privileged.rolcreaterole
+          OR privileged.rolname IN ('flow_intel_guard','flow_intel_migrate','flow_intel_system'))
+          AND pg_has_role(r.oid,privileged.oid,'MEMBER')) AS allowed
+      FROM pg_roles r WHERE r.rolname=current_user`);
+    if (result.rows[0]?.allowed !== true) throw new Error("runtime database role not permitted");
+  };
+  if (!maintenance) {
+    try { await admit(pool as unknown as Q); }
+    catch (error) { await pool.end(); throw error; }
+  }
   const db: Db = {
-    // Inside a tenant request every statement runs in a transaction with app.tenant_id set locally,
-    // so RLS policies apply; system context (workers, scheduler) leaves it empty.
-    query: (s, p) => (currentTenant() ? db.tx((q) => q.query(s, p)) : (pool.query(s, p as any[]) as any)),
+    query: (s, p) => db.tx((q) => q.query(s, p)),
     async tx(fn) {
+      const tenant = currentTenant();
+      if (!maintenance && !validTenant(tenant)) throw new Error("tenant scope required");
       const c = await pool.connect();
+      let active = true;
       try {
+        if (!maintenance) await admit(c as unknown as Q);
         await c.query("BEGIN");
-        if (currentTenant()) await c.query("SELECT set_config('app.tenant_id', $1, true)", [currentTenant()]);
-        const r = await fn({ query: (s, p) => c.query(s, p as any[]) as any });
+        // Explicitly overwrite even an inherited session GUC; SET LOCAL unwinds on both outcomes.
+        await c.query("SELECT set_config('app.tenant_id', $1, true)", [tenant]);
+        const r = await fn({ query: (s, p) => {
+          if (!active || currentTenant() !== tenant) return Promise.reject(new Error("transaction scope expired"));
+          return c.query(s, p as any[]) as any;
+        } });
+        active = false;
         await c.query("COMMIT");
         return r;
       } catch (e) {
         await c.query("ROLLBACK").catch(() => {});
         throw e;
       } finally {
+        active = false;
         c.release();
       }
     },
@@ -45,6 +90,7 @@ export async function pgDb(url: string): Promise<Db> {
 }
 
 export async function pgliteDb(): Promise<Db> {
+  // Isolated fixture/admin adapter, NOT evidence of runtime role/RLS enforcement.
   const { PGlite } = await import("@electric-sql/pglite");
   const pg = new PGlite();
   let chain: Promise<unknown> = Promise.resolve();

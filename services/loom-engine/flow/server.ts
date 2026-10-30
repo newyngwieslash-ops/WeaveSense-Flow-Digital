@@ -1,5 +1,4 @@
 // Internal HTTP API for the Go platform. Every /v1 call needs a verified execution context.
-import { metricsText } from "./metrics.ts";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { verify, requireScope, AuthError, type ExecutionContext } from "./auth.ts";
 import { Engine, HttpError } from "./engine.ts";
@@ -12,6 +11,9 @@ export interface ServerConfig {
   audience: string;
   /** Platform Model Gateway hook so a pushed brief wake-up can complete the window here. */
   summarize?: Reports["summarize"];
+  /** Restricted ops credential and read-only completed snapshot; never a scanner/Db. */
+  metricsToken?: string;
+  metrics?: () => string | Promise<string>;
 }
 
 async function readJson(req: IncomingMessage): Promise<any> {
@@ -34,11 +36,14 @@ export function handler(engine: Engine, cfg: ServerConfig) {
       const url = new URL(req.url ?? "/", "http://engine");
       if (url.pathname === "/healthz") return send(res, 200, { ok: true });
       if (url.pathname === "/metrics" && req.method === "GET") {
-        // Internal network only; optional bearer (METRICS_TOKEN) for scrapers.
-        const mt = process.env.METRICS_TOKEN ?? "";
-        if (mt && (req.headers.authorization ?? "") !== `Bearer ${mt}`) return send(res, 401, null, "unauthorized");
+        res.setHeader("Cache-Control", "no-store");
+        const mt = cfg.metricsToken ?? "";
+        if (!mt) return send(res, 503, null, "metrics disabled");
+        if ((req.headers.authorization ?? "") !== `Bearer ${mt}`) return send(res, 401, null, "unauthorized");
+        if (!cfg.metrics) return send(res, 503, null, "metrics snapshot unavailable");
+        const text = await cfg.metrics();
         res.writeHead(200, { "content-type": "text/plain; version=0.0.4" });
-        return res.end(await metricsText(engine.db));
+        return res.end(text);
       }
       const auth = req.headers.authorization ?? "";
       const ctx: ExecutionContext = verify(cfg.signingKey, auth.replace(/^Bearer /, ""), cfg.audience);

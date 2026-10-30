@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.0",
+  "result": "pass",
+  "stage": "complete",
+  "results": [
+    {
+      "name": "production_nginx_configuration_valid",
+      "result": "pass"
+    },
+    {
+      "name": "anonymous_browser_write_rejected",
+      "result": "pass"
+    },
+    {
+      "name": "real_react_form_login_and_trusted_vue_workspace",
+      "result": "pass"
+    },
+    {
+      "name": "platform_session_cookie_is_httponly",
+      "result": "pass"
+    },
+    {
+      "name": "browser_to_gis_single_authorized_write",
+      "result": "pass"
+    },
+    {
+      "name": "foreign_tenant_workspace_rejected",
+      "result": "pass"
+    },
+    {
+      "name": "same_tenant_other_workspace_rejected",
+      "result": "pass"
+    },
+    {
+      "name": "forged_operator_body_rejected",
+      "result": "pass"
+    },
+    {
+      "name": "forged_user_body_rejected",
+      "result": "pass"
+    },
+    {
+      "name": "forged_tenant_body_rejected",
+      "result": "pass"
+    },
+    {
+      "name": "browser_write_without_csrf_rejected",
+      "result": "pass"
+    },
+    {
+      "name": "cross_origin_http_write_rejected",
+      "result": "pass"
+    },
+    {
+      "name": "same_browser_cookie_no_relogin_after_revocation",
+      "result": "pass"
+    },
+    {
+      "name": "revoked_same_browser_write_denied_not_csrf_failure",
+      "result": "pass"
+    },
+    {
+      "name": "no_browser_internal_credentials_or_external_requests",
+      "result": "pass"
+    }
+  ],
+  "limitations": [
+    "Test-only orchestration bridge, not a completed farm-editing UI",
+    "Fixture data only; no farm, external provider or production deployment acceptance",
+    "Browser uses actual React form and production nginx; internal service credentials never enter browser"
+  ],
+  "artifact_hashes": {
+    "nginx_template": "30a1b2fce7e5ec7eedb38d9bd5b8d459ee7bf850970da370631585a2d7b17782",
+    "react_index": "e0693c696c106c830de0becb0f93b7594117b922fb6a10056440145e6df1c9d9",
+    "vue_index": "129c9ab541542b166b1ada72e5a87e40da24214f36ffc48ca553220b825c5cd7"
+  },
+  "source_commit": "56c1f7c8c7f6a13e632b76d5cb6a99ca8536e590",
+  "ci_provenance_sha256": "6ba864be277e4e1efcad48686e18e02b6af2be18f0fa5b252f3bf02019913b21",
+  "operation_correlation_sha256": "c48ddf0c72d8285041977110813955f3322f0f37d35a66b62b8f166a04c32d1e",
+  "network": {
+    "observed": 42,
+    "violations": 0
+  }
+}

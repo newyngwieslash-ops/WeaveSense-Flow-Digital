@@ -1,0 +1,626 @@
+{
+  "schema_version": "1.0",
+  "scaffold_commit": "56c1f7c8c7f6a13e632b76d5cb6a99ca8536e590",
+  "product_source": "d43899d2b94f34588b650d57a6fe5e7dd2b77792",
+  "artifacts": [
+    {
+      "id": 12962564469,
+      "name": "agriculture-organization-browser-sanitized-evidence",
+      "size_in_bytes": 26093,
+      "url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/12962564469",
+      "archive_download_url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/12962564469/zip",
+      "expired": false,
+      "created_at": "2026-10-30T08:07:31Z",
+      "expires_at": "2026-11-13T08:07:31Z",
+      "updated_at": "2026-10-30T08:07:31Z",
+      "digest": "sha256:4628c41df2bfd2d34edcecfb7f247d5b8c0d58cd3d5fcff3d6d8a55657aa34d7",
+      "workflow_run": {
+        "id": 41023894509,
+        "repository_id": 1437883917,
+        "head_repository_id": 1437883917,
+        "head_branch": "ci/agriculture-w00",
+        "head_sha": "56c1f7c8c7f6a13e632b76d5cb6a99ca8536e590"
+      }
+    },
+    {
+      "id": 12962314899,
+      "name": "agriculture-membership-sanitized-evidence",
+      "size_in_bytes": 14033,
+      "url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/12962314899",
+      "archive_download_url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/12962314899/zip",
+      "expired": false,
+      "created_at": "2026-10-30T08:06:43Z",
+      "expires_at": "2026-11-13T08:06:42Z",
+      "updated_at": "2026-10-30T08:06:43Z",
+      "digest": "sha256:84aaacf561dfa6870e28ef196713773452015ec9f43f1f9cffd29bc6d9759aeb",
+      "workflow_run": {
+        "id": 41023894509,
+        "repository_id": 1437883917,
+        "head_repository_id": 1437883917,
+        "head_branch": "ci/agriculture-w00",
+        "head_sha": "56c1f7c8c7f6a13e632b76d5cb6a99ca8536e590"
+      }
+    },
+    {
+      "id": 12962768856,
+      "name": "agriculture-identity-sanitized-evidence",
+      "size_in_bytes": 19994,
+      "url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/12962768856",
+      "archive_download_url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/12962768856/zip",
+      "expired": false,
+      "created_at": "2026-10-30T08:07:43Z",
+      "expires_at": "2026-11-13T08:07:42Z",
+      "updated_at": "2026-10-30T08:07:43Z",
+      "digest": "sha256:2d248cbaee2f1fc1fbc02cf533ed0c5486482c26f87d2c8ad0592f15ded3ccf0",
+      "workflow_run": {
+        "id": 41023894503,
+        "repository_id": 1437883917,
+        "head_repository_id": 1437883917,
+        "head_branch": "ci/agriculture-w00",
+        "head_sha": "56c1f7c8c7f6a13e632b76d5cb6a99ca8536e590"
+      }
+    }
+  ],
+  "runs": {
+    "membership": 41023894509,
+    "identity": 41023894503,
+    "W00": 41023894470
+  },
+  "jobs": {
+    "membership": [
+      {
+        "id": 123957339959,
+        "name": "membership-postgres",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 41023894509,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run actions/setup-go@v5",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Validate safe preparation and skipped-test rejection",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Assemble explicit reviewed source overlay or actual full checkout",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Actual fresh PostgreSQL migration, admission, RLS and membership service tests",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Sanitized evidence only",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Post Run actions/setup-go@v5",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 15
+          },
+          {
+            "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 16
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 17
+          }
+        ]
+      },
+      {
+        "id": 123957340365,
+        "name": "organization-browser",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 41023894509,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run actions/setup-go@v5",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Run oven-sh/setup-bun@v2",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Assemble exact reviewed source and authored membership UI",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Build actual platform and production React/Vue profiles",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Actual dual-account Chromium organization lifecycle",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Sanitized browser evidence only",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10
+          },
+          {
+            "name": "Post Run oven-sh/setup-bun@v2",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 17
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 18
+          },
+          {
+            "name": "Post Run actions/setup-go@v5",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 19
+          },
+          {
+            "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 20
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 21
+          }
+        ]
+      }
+    ],
+    "identity": [
+      {
+        "id": 123957340061,
+        "name": "signed-identity",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 41023894503,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run actions/setup-go@v5",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Run actions/setup-python@v5",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Run oven-sh/setup-bun@v2",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Run astral-sh/setup-uv@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Verify source preparation and fail-closed result gate",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Assemble pinned upstreams and explicit reviewed overlay",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          },
+          {
+            "name": "Rebuild hash-locked Python environment without lock changes",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10
+          },
+          {
+            "name": "Build actual browser profiles for the signed write chain",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11
+          },
+          {
+            "name": "Obtain runner nginx without starting a daemon",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 12
+          },
+          {
+            "name": "Actual signed HTTP and PostgreSQL replay acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 13
+          },
+          {
+            "name": "Sanitized reports only",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 14
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 15
+          },
+          {
+            "name": "Post Run astral-sh/setup-uv@v6",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 25
+          },
+          {
+            "name": "Post Run oven-sh/setup-bun@v2",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 26
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 27
+          },
+          {
+            "name": "Post Run actions/setup-python@v5",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 28
+          },
+          {
+            "name": "Post Run actions/setup-go@v5",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 29
+          },
+          {
+            "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 30
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 31
+          }
+        ]
+      }
+    ],
+    "W00": [
+      {
+        "id": 123957339774,
+        "name": "contracts",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 41023894470,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Install isolated schema-test dependencies",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Contract negatives and trusted source policy",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          }
+        ]
+      },
+      {
+        "id": 123957417309,
+        "name": "compose (core)",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 41023894470,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Explicit scaffold bootstrap or existing full product checkout",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Fresh-volume database and migration smoke",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          }
+        ]
+      },
+      {
+        "id": 123957417448,
+        "name": "compose (migrations)",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 41023894470,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Explicit scaffold bootstrap or existing full product checkout",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Fresh-volume database and migration smoke",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          }
+        ]
+      }
+    ]
+  },
+  "w00_safe_log_markers": {
+    "123957339774": [
+      "2026-10-30T08:03:35.2510821Z 98 passed in 1.49s"
+    ],
+    "123957417309": [
+      "2026-10-30T08:04:18.8874455Z PASS: fresh database roles, password connections, cross-database denial, runtime DDL denial, default DML privileges, PostGIS and bounded readiness",
+      "2026-10-30T08:04:18.8876019Z PASS: W00 core smoke; NOT tenant isolation, GIS migration, live data or product acceptance"
+    ],
+    "123957417448": [
+      "2026-10-30T08:04:25.0000558Z PASS: fresh database roles, password connections, cross-database denial, runtime DDL denial, default DML privileges, PostGIS and bounded readiness",
+      "2026-10-30T08:06:48.7730810Z PASS: platform-migrate applied and replayed, tables=186",
+      "2026-10-30T08:06:49.7327736Z PASS: loom-migrate applied and replayed, tables=28",
+      "2026-10-30T08:06:50.2004379Z PASS: W00 migrations smoke; NOT tenant isolation, GIS migration, live data or product acceptance"
+    ]
+  },
+  "whole_batch_passed": true,
+  "triggered_workflow_count": 3,
+  "not_triggered": [
+    "gateway",
+    "session"
+  ],
+  "scope_notes": [
+    "本轮仅触发 identity、membership、W00 三个工作流；未声称 gateway/session 在本 SHA 重新运行。",
+    "真实浏览器→Go 会话/授权/签名→Python 验证/回调/PG 防重→真实 Workbench 内部提交与稳定身份审计均为隔离 fixture 验收，不是 W03 业务 UI 或真实农场上线。",
+    "原 9f6c903 identity real_login 失败单独保留；本修复显式装配生产 runtime 配置及独立 Redis，不修改登录或安全断言。",
+    "W00 仅基础组件与真实 Flow/Loom 迁移 apply/replay，不声称全部业务服务器启动或跨数据库 exactly-once。"
+  ],
+  "source_manifest_verification": {
+    "overlay_count": 235,
+    "all_match_product_source": true
+  },
+  "original_json_files": [
+    {
+      "path": "agriculture-identity-sanitized-evidence/identity-actors.json",
+      "sha256": "740d70d8003164a2c5a3e277d0c3717ac1793c54fffe55d817cbd2f010ae8f7b"
+    },
+    {
+      "path": "agriculture-identity-sanitized-evidence/identity-bootstrap.json",
+      "sha256": "1ba2bf6246fabd0203d32da7e5365f5a2e482ab916213fcd1c8c496bd7fa0865"
+    },
+    {
+      "path": "agriculture-identity-sanitized-evidence/identity-chain-boundary.json",
+      "sha256": "96bfd1f47cd42a22f65f191c3085a9630ca3a517913b7441c614acef63245531"
+    },
+    {
+      "path": "agriculture-identity-sanitized-evidence/identity-chain-browser.json",
+      "sha256": "6795166a8faee6e67083b608ab4c694bf9d5ad752afde062f48a8bb6fdffb895"
+    },
+    {
+      "path": "agriculture-identity-sanitized-evidence/identity-chain-go.json",
+      "sha256": "8a7109723599d8433bfa18b2b8361ffc55742b4bfd933b122570d87411130891"
+    },
+    {
+      "path": "agriculture-identity-sanitized-evidence/identity-chain-nginx.json",
+      "sha256": "7b950b5633cddc8bbd8dec0f35b61b2ad5ed9420844877eb3d38452fa908de6a"
+    },
+    {
+      "path": "agriculture-identity-sanitized-evidence/identity-go.json",
+      "sha256": "a7a36d214ebf259ea3b438aaa1d10221195b09d39a56f38fd56ebade1e9f73be"
+    },
+    {
+      "path": "agriculture-identity-sanitized-evidence/identity-python.json",
+      "sha256": "9c8936c7a47acdc77ac5b6350445c5c7f3beac494ae0e89e6c0b3247577dbfaa"
+    },
+    {
+      "path": "agriculture-identity-sanitized-evidence/session-ci-provenance.json",
+      "sha256": "6ba864be277e4e1efcad48686e18e02b6af2be18f0fa5b252f3bf02019913b21"
+    },
+    {
+      "path": "agriculture-membership-sanitized-evidence/membership-bootstrap.json",
+      "sha256": "bf4026f4e4af41c08af76824b268f1fc24e789243c54aa275274f52fdc660227"
+    },
+    {
+      "path": "agriculture-membership-sanitized-evidence/membership-legacy-flow.json",
+      "sha256": "30cad83f9f7705dc02bae07561225f8d3dbcf199eb38326f0bb9d10d44f3f22e"
+    },
+    {
+      "path": "agriculture-membership-sanitized-evidence/membership-postgres.json",
+      "sha256": "3b771b5b3fee64a058bc60faa08327714f0c42e9d6acebc33d4191fda88a7e41"
+    },
+    {
+      "path": "agriculture-membership-sanitized-evidence/session-ci-provenance.json",
+      "sha256": "6ba864be277e4e1efcad48686e18e02b6af2be18f0fa5b252f3bf02019913b21"
+    },
+    {
+      "path": "agriculture-organization-browser-sanitized-evidence/organization-browser-e2e.json",
+      "sha256": "704d8c84df499fd6276d0e22772824c78313c684d641108d41b6200c4f8c5d08"
+    },
+    {
+      "path": "agriculture-organization-browser-sanitized-evidence/session-ci-provenance.json",
+      "sha256": "6ba864be277e4e1efcad48686e18e02b6af2be18f0fa5b252f3bf02019913b21"
+    }
+  ]
+}

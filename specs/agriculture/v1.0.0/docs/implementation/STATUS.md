@@ -6,15 +6,17 @@
 
 应用实现状态：in_progress
 
-当前工作包：W01；DT-015 会话请求安全与撤权加固完成，进入身份链整体验收
+当前工作包：W02；W01 的 DT-009–016 已按各任务范围完成，进入数据库缺省拒绝与隔离
 
-下一任务：DT-016 浏览器登录、Go 授权、GIS 验证与稳定审计主体的单次跨服务整链；后续以 tasks.json 依赖为准。
+下一任务：DT-017 GIS 独立角色、事务局部 scope、全量租户表 RLS 与池复用负例；后续以 tasks.json 依赖为准。
+
+DT-016 新整链验收完成：冻结产品 `d43899d2`、scaffold `56c1f7c8` 的三个实际触发 workflow 全部成功；235 项源码映射一致。真实浏览器登录→Go 授权→GIS 验签/归属/当前权限→原 Workbench 写入及稳定主体审计，主测试和四个必需子项全部通过，无跳过。浏览器 15 项检查、42 请求零违规；两个租户三个工作区，跨范围/伪造主体/撤权后同 cookie 写入均拒绝且无领域副作用，16 个农业公开入口匿名均为 401。证据见 `evidence/DT-016/` 和 `docs/agriculture/IDENTITY_CHAIN_ACCEPTANCE.md`。首轮登录装配失败保留，不回写成功；旧批次单独运行的 Docker 结果不并入本轮三 workflow 结论。W01 任务闭环完成不等于 G0；测试专用写桥不代表生产农场 UI，旧下载/预览/审核未开放，W02 全模型 RLS 和空范围系统策略仍待实现。
 
 ## 1 基线
 
 - Flow：206c82af7ae007f45da4c582f373fbabf027f1b8。
 - AgriScope：571a2dcd9abf8b8a22b66c750ee710b61d482051。
-- 目标远程：https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital；最新已验 CI scaffold 为 fd5fa31d，映射本地冻结产品源码 574d48f0。完整本地产品历史与 scaffold 区分，不声称产品分支已同步。
+- 目标远程：https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital；最新已验 CI scaffold 为 56c1f7c8，映射本地冻结产品源码 d43899d2。完整本地产品历史与 scaffold 区分，不声称产品分支已同步。
 - 当前恢复目录：`/workspace/scratch/8cdfee496491/WeaveSense-DigitalTwin-Recovery-20261030`；实际分支/HEAD 以恢复检查点记录为准。
 - 规格位置：推荐PROJECT_ROOT/specs/agriculture/v1.0.0。
 
@@ -89,9 +91,9 @@ DT-015 已按原任务范围完成：冻结 `574d48f02e96b43c01f0cd3ee2b90a95671
 
 | 状态 | 数量 |
 | --- | ---: |
-| done | 15 |
+| done | 16 |
 | in_progress | 1 |
-| not_started | 128 |
+| not_started | 127 |
 
 历史 done、恢复证据待补验：无。
 依赖状态就绪但仍须检查恢复条件：无。
@@ -113,8 +115,8 @@ DT-015 已按原任务范围完成：冻结 `574d48f02e96b43c01f0cd3ee2b90a95671
 | DT-013 | done |
 | DT-014 | done |
 | DT-015 | done |
-| DT-016 | in_progress |
-| DT-017 | not_started |
+| DT-016 | done |
+| DT-017 | in_progress |
 | DT-018 | not_started |
 | DT-019 | not_started |
 | DT-020 | not_started |

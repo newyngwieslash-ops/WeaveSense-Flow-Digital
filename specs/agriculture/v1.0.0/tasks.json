@@ -1015,7 +1015,7 @@
         "对照API清单检查遗漏的下载、预览及审核路由"
       ],
       "blockers": [],
-      "status": "in_progress"
+      "status": "done"
     },
     {
       "id": "DT-017",
@@ -1056,7 +1056,7 @@
         "复用连接后切换租户并检查scope不会串用"
       ],
       "blockers": [],
-      "status": "not_started"
+      "status": "in_progress"
     },
     {
       "id": "DT-018",

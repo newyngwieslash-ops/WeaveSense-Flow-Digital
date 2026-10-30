@@ -531,7 +531,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-016 · 完成身份链跨服务集成验收
 
-- 状态：`in_progress`；阶段：`S0`；优先级：`P0`。
+- 状态：`done`；阶段：`S0`；优先级：`P0`。
 - 需求：AG-FR-001、AG-FR-002、AG-FR-003、AG-FR-004、AG-FR-006、AG-NFR-001、AG-NFR-020。
 - 验收用例：AG-AC-001、AG-AC-002、AG-AC-003、AG-AC-004、AG-AC-006。
 - 前置任务：DT-010、DT-011、DT-012、DT-013、DT-014、DT-015。
@@ -565,7 +565,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-017 · 建立GIS数据库独立角色与缺省拒绝
 
-- 状态：`not_started`；阶段：`S0`；优先级：`P0`。
+- 状态：`in_progress`；阶段：`S0`；优先级：`P0`。
 - 需求：AG-FR-005、AG-FR-006、AG-NFR-001、AG-NFR-019。
 - 验收用例：AG-AC-005、AG-AC-006。
 - 前置任务：DT-007、DT-012、DT-016。
@@ -4816,9 +4816,9 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 | 状态 | 数量 |
 | --- | ---: |
-| done | 15 |
+| done | 16 |
 | in_progress | 1 |
-| not_started | 128 |
+| not_started | 127 |
 
 历史 done、恢复证据待补验：无。
 依赖状态就绪但仍须检查恢复条件：无。
@@ -4840,8 +4840,8 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 | DT-013 | done |
 | DT-014 | done |
 | DT-015 | done |
-| DT-016 | in_progress |
-| DT-017 | not_started |
+| DT-016 | done |
+| DT-017 | in_progress |
 | DT-018 | not_started |
 | DT-019 | not_started |
 | DT-020 | not_started |

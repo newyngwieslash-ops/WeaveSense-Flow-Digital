@@ -23364,6 +23364,10 @@
       "sha256": "0b45a09af8dc7609f55356a89da79d623f7cc346efca0de78f9a3b6507fe4d4d"
     },
     {
+      "path": "services/agri-gis/backend/app/agriculture/migrate.py",
+      "sha256": "588cf66ac8f72fb78ea4ffa0058a9e3fed5f78f171339cff463fe68ebe5f15d6"
+    },
+    {
       "path": "services/agri-gis/backend/app/agriculture/operation_authorization.py",
       "sha256": "88037f6e7fd71fbc80c9fb41533861c51d692669996abe274bd06f4606bfa83a"
     },

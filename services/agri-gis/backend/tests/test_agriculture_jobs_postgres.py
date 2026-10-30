@@ -124,7 +124,7 @@ def test_postgres_job_sidecar_scope_immutable_and_worker_privileges():
             # A fresh caller must also not commit after the callback's shorter
             # current-authority deadline (independent of request expiry).
             checked = datetime.now(UTC).replace(microsecond=0)
-            current_until = checked + timedelta(seconds=1)
+            current_until = checked + timedelta(seconds=2)
             checkpoint = JobCheckpoint(
                 snapshot["job_id"],
                 digest,

@@ -1,0 +1,20 @@
+{
+  "kind": "dt020_object_chain_evidence_reconciliation",
+  "source_commit": "c8106dfcaef2949e5271aa94cae5213224faa0c5",
+  "method": "git show <source_commit>:<path> bytes SHA256 for every final source_files entry",
+  "checked_files": 1464,
+  "mismatches": [],
+  "final_report": "dt020-object-chain-final.json",
+  "final_report_sha256": "df0b8bb48a738ca1c87c623056031db29aad4cd654f0019de870eab81821620e",
+  "final_result": {
+    "passed": 47,
+    "failed": 0,
+    "skipped": 0,
+    "exit_code": 0,
+    "shutdown_exit_code": 0
+  },
+  "historical_report": "initial-object-chain-worktree.json",
+  "historical_report_sha256": "2a0a804f7ec4b29c58c6213e68dc43fd9daec22e96ccda67ab46090f89b5c3ce",
+  "historical_limit": "First run passed, but native helper provenance list changed while its interpreter was already running. Retained as historical worktree evidence only, NOT a final immutable-source proof. Final report is a separate fresh-cluster execution after helper freeze.",
+  "scope": "Fixture cookie-session -> actual Go gateway authorization/signatures -> actual Python verifier/live authority callback -> PostgreSQL private-object registry and private local bytes. HTTP malicious-peer matrix is separately named fixture coverage, not live GIS. No production deployment, real farm data or commercial object-storage acceptance claimed."
+}

@@ -278,3 +278,35 @@ async def test_signed_foreign_path_scope_denied_before_any_metadata_read(tmp_pat
         assert response.status_code == 403
         assert response.json() == {"code": "request_scope_mismatch"}
     assert store.calls == 0
+
+
+def test_cross_language_fixture_configuration_requires_private_file(tmp_path):
+    from object_http_fixture import private_config
+
+    path = tmp_path / "config.json"
+    value = dict.fromkeys(
+        [
+            "owner_dsn",
+            "app_dsn",
+            "tenant",
+            "workspace",
+            "platform",
+            "platform_keys",
+            "callback_key",
+        ],
+        None,
+    )
+    path.write_text(json.dumps(value))
+    path.chmod(0o600)
+    assert private_config(path) == value
+    path.chmod(0o644)
+    with pytest.raises(ValueError, match="private fixture"):
+        private_config(path)
+    path.chmod(0o600)
+    link = tmp_path / "link.json"
+    link.symlink_to(path)
+    with pytest.raises(ValueError, match="private fixture"):
+        private_config(link)
+    path.write_text(json.dumps(value | {"object_key": "not_allowed"}))
+    with pytest.raises(ValueError, match="invalid fixture"):
+        private_config(path)

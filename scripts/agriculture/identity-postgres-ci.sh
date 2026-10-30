@@ -11,7 +11,7 @@ export AGRI_IDENTITY_PYTHON
 mkdir -p .local/evidence
 python3 scripts/agriculture/legacy-identity-inventory.test.py
 python3 scripts/agriculture/legacy-identity-inventory.py --check
-for suite in go python actors domain; do
+for suite in go python actors domain query; do
   printf '%s\n' '{"passed":false,"status":"not_run","tests":[]}' > ".local/evidence/identity-$suite.json"
 done
 if [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} == 1 ]]; then
@@ -149,6 +149,10 @@ actors_gate=$?
 domain_code=$?
 python3 scripts/agriculture/identity-ci-result.py --kind domain --input "$private/domain.xml" --output .local/evidence/identity-domain.json
 domain_gate=$?
+(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_query_scope.py tests/test_agriculture_query_scope_postgres.py --junitxml="$private/query.xml" -q) > "$private/query.log" 2>&1
+query_code=$?
+python3 scripts/agriculture/identity-ci-result.py --kind query --input "$private/query.xml" --output .local/evidence/identity-query.json
+query_gate=$?
 chain_code=0; chain_gate=0
 if [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} == 1 ]]; then
   "${GO_BIN:-go}" -C backend test ./internal/agriculture -run '^TestIdentityBrowserGISWriteChain$' -count=1 -timeout 12m -json > "$private/chain.jsonl" 2> "$private/chain-stderr.log"
@@ -157,5 +161,5 @@ if [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} == 1 ]]; then
   chain_gate=$?
 fi
 set -e
-[[ $python_code == 0 && $python_gate == 0 && $go_code == 0 && $go_gate == 0 && $actors_code == 0 && $actors_gate == 0 && $domain_code == 0 && $domain_gate == 0 && $chain_code == 0 && $chain_gate == 0 ]] || { echo 'Identity acceptance failed; inspect sanitized reports, no raw secrets exported'; exit 1; }
+[[ $python_code == 0 && $python_gate == 0 && $go_code == 0 && $go_gate == 0 && $actors_code == 0 && $actors_gate == 0 && $domain_code == 0 && $domain_gate == 0 && $query_code == 0 && $query_gate == 0 && $chain_code == 0 && $chain_gate == 0 ]] || { echo 'Identity acceptance failed; inspect sanitized reports, no raw secrets exported'; exit 1; }
 echo 'PASS: actual Go/Python HTTP, PostgreSQL replay and legacy actor boundary; fixture-domain acceptance only'

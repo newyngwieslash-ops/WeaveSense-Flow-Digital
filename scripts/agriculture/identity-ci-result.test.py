@@ -72,6 +72,23 @@ class GateTests(unittest.TestCase):
             self.assertNotIn("SECRET", json.dumps(result))
         self.assertFalse(module.reduce("actors", raw)["passed"])
 
+    def test_query_requires_all_real_pg_and_both_modules(self):
+        cases = [('test_agriculture_query_scope_postgres', n) for n in module.QUERY_PG_REQUIRED]
+        cases += [('test_agriculture_query_scope', 'test_contract')]
+        raw = '<testsuites><testsuite>' + ''.join(
+            f'<testcase classname="{c}" name="{n}"/>' for c, n in cases
+        ) + '</testsuite></testsuites>'
+        self.assertTrue(module.reduce('query', raw)['passed'])
+        self.assertEqual(module.reduce('query', raw)['schema_phase'], 'post_query_current')
+        for required in module.QUERY_PG_REQUIRED:
+            self.assertFalse(module.reduce('query', raw.replace(required, 'test_other'))['passed'])
+        self.assertFalse(module.reduce('domain', raw)['passed'])
+        self.assertFalse(module.reduce('query', raw.replace('test_agriculture_query_scope"', 'test_unknown"'))['passed'])
+        for marker in ('<skipped/>', '<error>SECRET</error>', '<failure>SECRET</failure>'):
+            result = module.reduce('query', raw.replace('/>', '>' + marker + '</testcase>', 1))
+            self.assertFalse(result['passed'])
+            self.assertNotIn('SECRET', json.dumps(result))
+
     def test_explicit_migration_has_its_own_required_database_proof(self):
         raw = '<testsuites><testsuite><testcase classname="test_agriculture_migration" name="test_probe"/><testcase classname="test_agriculture_migration_postgres" name="test_postgres_migration_command_new_repeat_and_drift"/></testsuite></testsuites>'
         report = module.reduce("migration", raw)

@@ -11,6 +11,24 @@ spec.loader.exec_module(prepare)
 
 
 class PreparationTests(unittest.TestCase):
+    def test_scope_cutover_dependency_closure_is_explicit(self):
+        required = {
+            'backend/internal/database/migration_flow_scope.go',
+            'backend/internal/database/migration_flow_scanner.go',
+            'backend/internal/flow/background_scanner.go',
+            'backend/internal/flow/worker_scope_postgres_test.go',
+            'services/loom-engine/flow/db.ts',
+            'services/loom-engine/flow/install-system-role.sql',
+            'services/loom-engine/flow/tools/migrate.ts',
+            'services/loom-engine/flow/migrations/0019_scope_required.sql',
+            'deploy/agriculture/loom-migrate.mjs',
+            'services/agri-gis/backend/app/agriculture/query_inventory.json',
+            'services/agri-gis/backend/scripts/query_scope_inventory.py',
+            'services/agri-gis/backend/tests/test_query_scope_inventory.py',
+            'services/agri-gis/backend/tests/test_agriculture_query_scope_postgres.py',
+        }
+        self.assertTrue(required <= set(prepare.OVERLAY))
+
     def test_gateway_dependency_closure_is_explicit_and_unique(self):
         required = {
             "contracts/agriculture/navigation.ts",

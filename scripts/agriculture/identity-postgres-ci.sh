@@ -11,6 +11,7 @@ export AGRI_IDENTITY_PYTHON
 mkdir -p .local/evidence
 python3 scripts/agriculture/legacy-identity-inventory.test.py
 python3 scripts/agriculture/legacy-identity-inventory.py --check
+(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_query_scope_inventory.py -q)
 for suite in go python actors domain query; do
   printf '%s\n' '{"passed":false,"status":"not_run","tests":[]}' > ".local/evidence/identity-$suite.json"
 done

@@ -526,6 +526,42 @@ func TestIdentityBrowserGISWriteChain(t *testing.T) {
 	server := httptest.NewServer(router)
 	t.Cleanup(server.Close)
 	reportPath := filepath.Join(private, "browser-report.json")
+	// Registered before child cleanup: stop owned processes first, then retain
+	// only fixed-shape diagnostics before testing removes private credentials.
+	t.Cleanup(func() {
+		if !t.Failed() {
+			return
+		}
+		raw, e := os.ReadFile(reportPath)
+		if e != nil || len(raw) > 1024*1024 {
+			return
+		}
+		var report struct {
+			Result  string `json:"result"`
+			Stage   string `json:"stage"`
+			Results []struct {
+				Name   string `json:"name"`
+				Result string `json:"result"`
+			} `json:"results"`
+		}
+		if json.Unmarshal(raw, &report) != nil {
+			return
+		}
+		stages := map[string]bool{"preflight": true, "anonymous_request": true, "real_login": true, "authorized_chain_write": true, "scope_and_identity_negatives": true, "awaiting_real_platform_revocation": true, "same_cookie_after_revocation": true, "complete": true}
+		if !stages[report.Stage] || (report.Result != "pass" && report.Result != "fail") || len(report.Results) > 100 {
+			return
+		}
+		for _, check := range report.Results {
+			if check.Result != "pass" || !regexp.MustCompile(`^[a-z0-9_]{1,120}$`).MatchString(check.Name) {
+				return
+			}
+		}
+		clean, _ := json.Marshal(map[string]any{"schema_version": "1.0", "result": report.Result, "stage": report.Stage, "results": report.Results, "diagnostic_only": true})
+		dir := filepath.Join(root, ".local/evidence")
+		if os.MkdirAll(dir, 0700) == nil {
+			_ = os.WriteFile(filepath.Join(dir, "identity-chain-browser.json"), clean, 0600)
+		}
+	})
 	browserConfig := filepath.Join(private, "browser.json")
 	chainPrivate(t, browserConfig, map[string]any{"platform_url": server.URL, "gateway_port": gatewayPort, "username": actor, "password": password, "workspace_id": org.Workspace.ID, "foreign_workspace_id": foreign.Workspace.ID, "second_workspace_id": second, "operation_id": operationID, "task_code": mainDomain.TaskCode, "plot_code": mainDomain.PlotCode, "parcel_id": mainDomain.ParcelID, "crop_type": "玉米", "report_path": reportPath})
 	nodeChild := chainStart(t, node, root, filepath.Join(root, "scripts/agriculture/identity-chain-browser.mjs"), browserConfig)

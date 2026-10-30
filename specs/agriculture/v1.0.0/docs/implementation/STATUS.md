@@ -6,15 +6,15 @@
 
 应用实现状态：in_progress
 
-当前工作包：W01；DT-014 同域农业工作台集成完成，进入会话请求安全加固
+当前工作包：W01；DT-015 会话请求安全与撤权加固完成，进入身份链整体验收
 
-下一任务：DT-015 会话 Cookie、Origin/CSRF、CORS 及权限撤销传播；后续以 tasks.json 依赖为准。
+下一任务：DT-016 浏览器登录、Go 授权、GIS 验证与稳定审计主体的单次跨服务整链；后续以 tasks.json 依赖为准。
 
 ## 1 基线
 
 - Flow：206c82af7ae007f45da4c582f373fbabf027f1b8。
 - AgriScope：571a2dcd9abf8b8a22b66c750ee710b61d482051。
-- 目标远程：https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital；已发布 CI scaffold 512e963e 和仅测试修正 91c76b89，完整本地产品历史与 scaffold 区分，不声称产品分支已同步。
+- 目标远程：https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital；最新已验 CI scaffold 为 fd5fa31d，映射本地冻结产品源码 574d48f0。完整本地产品历史与 scaffold 区分，不声称产品分支已同步。
 - 当前恢复目录：`/workspace/scratch/8cdfee496491/WeaveSense-DigitalTwin-Recovery-20261030`；实际分支/HEAD 以恢复检查点记录为准。
 - 规格位置：推荐PROJECT_ROOT/specs/agriculture/v1.0.0。
 
@@ -49,6 +49,10 @@ RECOVERY_STATUS 的 verified 在此仅表示历史执行证据恢复与冻结来
 DT-014 已按原任务范围完成：2026-10-30 实际 CI 41007114373 中真实 Nginx/Chromium 15 项检查通过、71 请求零违规，独立 Docker 构建/静态 smoke 16 项通过；211 运行源码逐项映射到冻结本地 53ddad05/856af8f3。W00 首次因旧端口断言失败，修正为精确 Web 回环白名单并补负例后，41008181499 的 contracts/core/migrations 三 job 全部通过；原失败保留。证据见 `evidence/DT-014/` 和项目 `docs/agriculture/GATEWAY_ACCEPTANCE.md`。浏览器使用 SQLite fixture，不替代真实 PostgreSQL 隔离、农场验收、DT015 或 G0；CI 组装目录不是完整产品历史已发布的证明。
 
 恢复验证独立记录于 `RECOVERY_STATUS.json`；历史例外严格限定 DT-001–012，新增 done 必须提供当前真实证据文件、命令/退出码/结果、源码哈希和已完成依赖。`spec_status.py --require-evidence` 要求所有当前 done 的证据完整；检查通过仍只表示状态与证据一致，不冒充全部产品验收。
+
+DT-015 已按原任务范围完成：冻结 `574d48f02e96b43c01f0cd3ee2b90a956713b5cb` 的 228 项源码与五份 CI provenance 完全匹配。最终 fd5fa31d 的五个 workflow 全部成功：真实组织浏览器 71 项、会话 44 项、同域网关 19 项及独立 Docker 16 项；PostgreSQL 六项主测试及 reciprocal 子项全部通过、无跳过。包含 CSRF/Origin 负例、降权后旧 cookie 的旧写请求 403、真实多标签失效、服务重建后的撤权检查。生产 30 秒例行重验实际观察 35038ms/347 次采样，权限未变时保留邀请码/草稿，重验后旧确认弹窗不复活，随后同邀请码确实接受成功。历史失败及修正分别保留，不回写为成功。
+
+证据见 `evidence/DT-015/` 与项目 `docs/agriculture/BROWSER_SECURITY_ACCEPTANCE.md`。平台权限输入指纹仅供显示连续性比较，不是授权凭证，也不替代 GIS 资源归属；所有实际操作继续校验。已签服务票据最长 30 秒且检查当前权限 epoch，退出不声称追溯撤回已签票据或中断已开始的任务。浏览器使用隔离 SQLite fixture，真实 PostgreSQL 授权另有证据；不代表 W01、G0、全部 AG-AC-004 或真实农场商用验收。
 
 新增完成记录的 `source_commit` 必须是本地权威历史中已存在且为当前 HEAD 祖先的完整 40 位提交号；`source_hashes` 针对此冻结提交读取，而不是未来工作树。后续任务合法修改源码不改写旧证据。远程连接器提交号可能不同，必须另记映射，不混作本地源码提交或 CI 通过证据。未提交源码的测试只能作为进行中记录，不能用于新增 done。
 
@@ -85,9 +89,9 @@ DT-014 已按原任务范围完成：2026-10-30 实际 CI 41007114373 中真实 
 
 | 状态 | 数量 |
 | --- | ---: |
-| done | 14 |
+| done | 15 |
 | in_progress | 1 |
-| not_started | 129 |
+| not_started | 128 |
 
 历史 done、恢复证据待补验：无。
 依赖状态就绪但仍须检查恢复条件：无。
@@ -108,8 +112,8 @@ DT-014 已按原任务范围完成：2026-10-30 实际 CI 41007114373 中真实 
 | DT-012 | done |
 | DT-013 | done |
 | DT-014 | done |
-| DT-015 | in_progress |
-| DT-016 | not_started |
+| DT-015 | done |
+| DT-016 | in_progress |
 | DT-017 | not_started |
 | DT-018 | not_started |
 | DT-019 | not_started |

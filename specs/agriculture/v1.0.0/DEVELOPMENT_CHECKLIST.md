@@ -499,7 +499,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-015 · 加固会话请求和权限撤销
 
-- 状态：`in_progress`；阶段：`S0`；优先级：`P0`。
+- 状态：`done`；阶段：`S0`；优先级：`P0`。
 - 需求：AG-FR-002、AG-FR-004、AG-NFR-001、AG-NFR-002。
 - 验收用例：AG-AC-002、AG-AC-004。
 - 前置任务：DT-010、DT-014。
@@ -531,7 +531,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-016 · 完成身份链跨服务集成验收
 
-- 状态：`not_started`；阶段：`S0`；优先级：`P0`。
+- 状态：`in_progress`；阶段：`S0`；优先级：`P0`。
 - 需求：AG-FR-001、AG-FR-002、AG-FR-003、AG-FR-004、AG-FR-006、AG-NFR-001、AG-NFR-020。
 - 验收用例：AG-AC-001、AG-AC-002、AG-AC-003、AG-AC-004、AG-AC-006。
 - 前置任务：DT-010、DT-011、DT-012、DT-013、DT-014、DT-015。
@@ -4816,9 +4816,9 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 | 状态 | 数量 |
 | --- | ---: |
-| done | 14 |
+| done | 15 |
 | in_progress | 1 |
-| not_started | 129 |
+| not_started | 128 |
 
 历史 done、恢复证据待补验：无。
 依赖状态就绪但仍须检查恢复条件：无。
@@ -4839,8 +4839,8 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 | DT-012 | done |
 | DT-013 | done |
 | DT-014 | done |
-| DT-015 | in_progress |
-| DT-016 | not_started |
+| DT-015 | done |
+| DT-016 | in_progress |
 | DT-017 | not_started |
 | DT-018 | not_started |
 | DT-019 | not_started |

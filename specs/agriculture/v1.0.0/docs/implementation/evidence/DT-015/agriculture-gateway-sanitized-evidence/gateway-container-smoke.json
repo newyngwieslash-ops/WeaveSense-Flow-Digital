@@ -1,0 +1,88 @@
+{
+  "kind": "disposable_local_docker_web_smoke",
+  "authenticated_e2e": false,
+  "production_deployment": false,
+  "registry_push": false,
+  "checks": [
+    {
+      "path": "/",
+      "status": 200,
+      "no_store": true
+    },
+    {
+      "asset": "react",
+      "immutable": true
+    },
+    {
+      "path": "/agri/",
+      "status": 200,
+      "no_store": true
+    },
+    {
+      "asset": "vue",
+      "immutable": true
+    },
+    {
+      "path": "/agri/workspaces",
+      "status": 200,
+      "no_store": true
+    },
+    {
+      "path": "/login",
+      "status": 200,
+      "no_store": true
+    },
+    {
+      "path": "/assets/missing-12345678.js",
+      "status": 404,
+      "no_store": true
+    },
+    {
+      "path": "/agri/assets/missing-12345678.js",
+      "status": 404,
+      "no_store": true
+    },
+    {
+      "path": "/internal",
+      "status": 404,
+      "no_store": true
+    },
+    {
+      "path": "/internal/agri/v1/authority/check",
+      "status": 404,
+      "no_store": true
+    },
+    {
+      "path": "/api/internal",
+      "status": 404,
+      "no_store": true
+    },
+    {
+      "path": "/api/internal/test",
+      "status": 404,
+      "no_store": true
+    },
+    {
+      "path": "/api/v1/project-users",
+      "status": 404,
+      "no_store": true
+    },
+    {
+      "path": "/agri/api/x",
+      "status": 404,
+      "no_store": true
+    },
+    {
+      "path": "/.env",
+      "status": 404,
+      "no_store": true
+    },
+    {
+      "platform_intentionally_absent": true,
+      "status": 502
+    }
+  ],
+  "build_log_sha256": "e9c1eb5862768b8bcbb9bfbe7a11f89e645d336db9ac5ed313d69d3d422d6d57",
+  "image_id": "sha256:6586cc33ec55ad93cfcf696c198492e040873e6f381d44b9f2832e4d03d67b65",
+  "passed": true
+}

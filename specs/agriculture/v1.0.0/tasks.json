@@ -965,7 +965,7 @@
         "检查多标签页、刷新和服务重启时会话行为"
       ],
       "blockers": [],
-      "status": "in_progress"
+      "status": "done"
     },
     {
       "id": "DT-016",
@@ -1015,7 +1015,7 @@
         "对照API清单检查遗漏的下载、预览及审核路由"
       ],
       "blockers": [],
-      "status": "not_started"
+      "status": "in_progress"
     },
     {
       "id": "DT-017",

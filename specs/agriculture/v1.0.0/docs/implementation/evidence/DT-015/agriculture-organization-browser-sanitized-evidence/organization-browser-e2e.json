@@ -1,0 +1,1247 @@
+{
+  "schema_version": "1.0.0",
+  "scope": "real Go SQLite and production React/Vue; two browser profiles; no mocks",
+  "source_commit": "fd5fa31d26f7de3bc02b4269711619ec744af36a",
+  "source_kind": "scaffold_commit_plus_pinned_upstreams_and_overlay",
+  "source_manifest": {
+    "mode": "read_only_pinned_sources_plus_allowlisted_overlay",
+    "source_commit": "fd5fa31d26f7de3bc02b4269711619ec744af36a",
+    "flow_sha": "206c82af7ae007f45da4c582f373fbabf027f1b8",
+    "gis_sha": "571a2dcd9abf8b8a22b66c750ee710b61d482051",
+    "source_git_history_published": false,
+    "overlay": [
+      {
+        "path": "backend/cmd/server/main.go",
+        "sha256": "69a203aa3e8a7ad614fe7b472b032e38af7304b53a660775195e869c5ecc4e30"
+      },
+      {
+        "path": "backend/internal/browsersecurity/policy.go",
+        "sha256": "2239d7cf23feae6f9052e5884c6107882a377969e897d5aec4d7b782800e6580"
+      },
+      {
+        "path": "backend/internal/browsersecurity/middleware.go",
+        "sha256": "db46217f90e01e4e25757233d1bc1e0dc84bf955b7462c7af7d41be7485d82b7"
+      },
+      {
+        "path": "backend/internal/browsersecurity/policy_test.go",
+        "sha256": "601680ffc7c6e88b0d5fc5bd9bef1f1c0ee88005cb5a787e8924b9f58ad3b179"
+      },
+      {
+        "path": "backend/internal/handler/agriculture_browser_security_test.go",
+        "sha256": "80a7edffeb5b9af4d6d8a8d23f9303f3e7affd315f615a001a3f0649cb06b9dd"
+      },
+      {
+        "path": "backend/internal/agriculture/revocation_postgres_test.go",
+        "sha256": "4067c1ee00bbc539887af728b18b3337dfe5fe28a95525af67cd914e6844565e"
+      },
+      {
+        "path": "backend/internal/agriculture/authority_fingerprint.go",
+        "sha256": "423fe6cd0c7dbc0230877ec3da495f86b180a80240eedaad7629decf8488aa52"
+      },
+      {
+        "path": "backend/internal/agriculture/authority_fingerprint_test.go",
+        "sha256": "ec8499ee8573e1da4190d07997009c4fb869a64b69e8eba049519dee27da8562"
+      },
+      {
+        "path": "backend/internal/model/models_agriculture.go",
+        "sha256": "0e519c4edd2213138675e2450c231bc0b7ccf16700ed798fe7d8a907b2373505"
+      },
+      {
+        "path": "backend/internal/model/models_agriculture_authorization.go",
+        "sha256": "fa8588bb8dea7417f3dcf2a5866c600f6d6bd52d1c5490cd02aa68cfa845c6f0"
+      },
+      {
+        "path": "backend/internal/model/models_tenancy.go",
+        "sha256": "68ebab18bd0bc2cef863fa3fd07991f9fa6540f092af6abaa7e414ec6f8e58bc"
+      },
+      {
+        "path": "backend/internal/model/models_flow_billing.go",
+        "sha256": "be96cf5d7250b13f4528f2a9f35036d0e9fdc3dc0202af277f69fb424802ad2b"
+      },
+      {
+        "path": "backend/internal/database/migrations.go",
+        "sha256": "6d67eee01f2c1e9605a3e93ad3aa30acc89535d3faa7a2e06db91996c4317a3e"
+      },
+      {
+        "path": "backend/internal/database/migration_agriculture.go",
+        "sha256": "d072c22577626174320f26637f26a1308ddf4c1b9e72fe8c0ad030c6b42c8844"
+      },
+      {
+        "path": "backend/internal/database/migration_agriculture_test.go",
+        "sha256": "d8b29eddc75d6087f370f580b3e21ec8a7d0e4e89cb94dd7dc14d1fdee1502cd"
+      },
+      {
+        "path": "backend/internal/database/migration_agriculture_postgres_test.go",
+        "sha256": "2ca892447bb5a48f4a439d51a172b2a2ef533af0f03c7126f2f0ea6d7a39b67e"
+      },
+      {
+        "path": "backend/internal/database/migration_agriculture_authorization.go",
+        "sha256": "a955c0c085e5948ff407e1568decf93cb6b220daf09f7f6e8033cc75898984b0"
+      },
+      {
+        "path": "backend/internal/database/migration_agriculture_authorization_test.go",
+        "sha256": "71365f0b8ddf653999c48d490b7f69600e5d0d6ac434b6031d3e06dad08251f1"
+      },
+      {
+        "path": "backend/internal/database/migration_agriculture_authorization_postgres_test.go",
+        "sha256": "60796e5ca2d42d89ea4cfb2093b703b8f5212bcbca9985fb0219508eb3cafc57"
+      },
+      {
+        "path": "backend/internal/agriculture/roles.go",
+        "sha256": "6bf35e1aa3407f1bc0a6387dcdcf16e55712fb9e51c68355af2047526c0f4d75"
+      },
+      {
+        "path": "backend/internal/agriculture/routes.go",
+        "sha256": "efd7696a983e4b79857e415e94314f7679fc84f63121b98c464ad97cd7fe050a"
+      },
+      {
+        "path": "backend/internal/agriculture/service.go",
+        "sha256": "151cffff5a36223a3db523ba621d83e09c024a4576037248dd255d37fb65826b"
+      },
+      {
+        "path": "backend/internal/agriculture/service_test.go",
+        "sha256": "7a9efa140a3c50b9695a5769564fc7ce49c7db0ecb69e9b7f5c51f82eaf16132"
+      },
+      {
+        "path": "backend/internal/agriculture/postgres_test.go",
+        "sha256": "5b8843f3751001454a7eef446f55e7dcc9e9114817c532a26617e192f4aa3b1b"
+      },
+      {
+        "path": "backend/internal/agriculture/authorization.go",
+        "sha256": "742534dd9a8659e28d0e75999d6fd097436e45f719ca9c7e5c137f03a5e42212"
+      },
+      {
+        "path": "backend/internal/agriculture/authorization_test.go",
+        "sha256": "c90275347216f6454c050ec04aad90023e0f45fbab23682356ee629b7323ef57"
+      },
+      {
+        "path": "backend/internal/agriculture/authorization_http_test.go",
+        "sha256": "35e4770416b2bd4958c5566333bf4c7d3f1476ff2ea97df3af48d2e32c5953d9"
+      },
+      {
+        "path": "backend/internal/agriculture/authorization_v1.go",
+        "sha256": "0b13b24211ad1f2bb429d57a6d6ce026e1718649ec1196ad849b40b9a5eb8e41"
+      },
+      {
+        "path": "backend/internal/agriculture/authorization_v1_test.go",
+        "sha256": "251646a6f37583716df1fbb606aad594f565095d8d6a4f1608d0e60b35777940"
+      },
+      {
+        "path": "backend/internal/agriculture/binding_pagination.go",
+        "sha256": "33a9467e64d0518ab656da48ad433d1321cf537e83856ef02d8b7492dc4e056b"
+      },
+      {
+        "path": "backend/internal/agriculture/binding_pagination_test.go",
+        "sha256": "b04d28ee69ac00da61079fdf60bcb5d576ef52b32c8d8247f367ec2a28cec8cf"
+      },
+      {
+        "path": "backend/internal/agriculture/authorization_postgres_test.go",
+        "sha256": "c49489b149dae0868b5011717efe1a6ddbc73e426993784067d4fe2818176824"
+      },
+      {
+        "path": "backend/internal/agriculture/resource_ownership.go",
+        "sha256": "bfd8a89776fd28800bfbbf45d066c158e752cc5ae8ca4d0c8d706a2a4763bba4"
+      },
+      {
+        "path": "backend/internal/agriculture/resource_ownership_test.go",
+        "sha256": "c32a3485eb2ca2fb525a6cea612e6dd4a3a715c2d60bd3d1a3a8849c1fea6f86"
+      },
+      {
+        "path": "backend/internal/agriculture/resource_bindings.go",
+        "sha256": "e87df2db92a9663f9fcb79d75998809d9a4ac73671053e394478774f24add2b3"
+      },
+      {
+        "path": "backend/internal/agriculture/resource_bindings_test.go",
+        "sha256": "26110127c3c6666360a0e49d1cf0bfffb1988ade87da1c5eb9c8c320ed9926de"
+      },
+      {
+        "path": "backend/internal/agriculture/policy.go",
+        "sha256": "452838029162a664378873c03a6989b2a137ddcc8b4dc6a8f93dc78c62375286"
+      },
+      {
+        "path": "backend/internal/agriculture/policy_test.go",
+        "sha256": "a864cf896d131d6fe4be0d8431829af706bba81a29f10d4fa9452a255ce405eb"
+      },
+      {
+        "path": "backend/internal/flow/orgs.go",
+        "sha256": "e1cd99b521d9340651bce3536f01968e35cd608a1f5d310fbaeaa37b8f214850"
+      },
+      {
+        "path": "backend/internal/flow/p7.go",
+        "sha256": "885dc5231bcd91293c01c05cabffc35af16973ac1c992adc3ac4cae8bc87b023"
+      },
+      {
+        "path": "backend/internal/flow/rls_runtime.go",
+        "sha256": "bf8b38878f398d62082b8ffe511fe958817c4a46c11a6838d5d04f2e4d5fd9b8"
+      },
+      {
+        "path": "backend/internal/flow/routes.go",
+        "sha256": "9d30ab5e17add292b2cc8b95f5ce14635873a3fbb78580c77f7e9ab0dcadf46f"
+      },
+      {
+        "path": "backend/internal/flow/routes_p5.go",
+        "sha256": "f48b4f3af6f17941a791c4da80743e48cf8915753ad17e822df560a579f41f09"
+      },
+      {
+        "path": "backend/internal/flow/routes_p7.go",
+        "sha256": "0d6fe278adef2d3a07812c7eb3daabb90711dcc960fdf0045b81b87190b2195e"
+      },
+      {
+        "path": "backend/internal/flow/scope.go",
+        "sha256": "8c7e390a1a83e96642f5e04ef47b169856ade7efb92cfd16d9d6fdaf9bb62b7a"
+      },
+      {
+        "path": "backend/internal/flow/agriculture_membership_regression_test.go",
+        "sha256": "6618bf8934e685498337cfceba61e3a4c8459565b4f234d8c9bcfac62a836c80"
+      },
+      {
+        "path": "deploy/agriculture/postgres/init.sh",
+        "sha256": "5811e9795e811058e5fa70f40486b430e42d0184afd8e48ebb74a5568b3451aa"
+      },
+      {
+        "path": "scripts/agriculture/membership-ci.sh",
+        "sha256": "df0b03b74acf7f9459a1d50c062ce62d4ffbb1e9c86a4422af1019a110bba8c6"
+      },
+      {
+        "path": "scripts/agriculture/membership-ci-result.py",
+        "sha256": "247fde5d7d48220c8994822dc1d7448777f3edf61ddc2151906588211e3439e6"
+      },
+      {
+        "path": "scripts/agriculture/membership-ci-result.test.py",
+        "sha256": "b1eabce25ccb4a66f7a254bf9dbaa09358376733880c4b13cf355636091d68e2"
+      },
+      {
+        "path": "backend/internal/auth/auth.go",
+        "sha256": "597d6dce98d4e8a6f9f4e968652715df6d06dc4aa4ec6a6fd5cb8206f2069b2a"
+      },
+      {
+        "path": "backend/internal/auth/password_reset_test.go",
+        "sha256": "49545261641fcbd7376551b9f364e42aff74abd1231cfa300c2d06e056acd736"
+      },
+      {
+        "path": "backend/internal/auth/session_security_test.go",
+        "sha256": "7b43b35eca30a31b6c4cb05f902445d244992e0f042354ad90dad24a9d94397e"
+      },
+      {
+        "path": "backend/internal/handler/auth.go",
+        "sha256": "7abc3f42e131bf3a2a38462a39c3ad746bec89051ea74bbc82ca75efad6133b3"
+      },
+      {
+        "path": "backend/internal/handler/logout_security_test.go",
+        "sha256": "4354d6ff39c95d256df79b1e7385316367ef7ed58df03b2785062b278ea8aaac"
+      },
+      {
+        "path": "web/package.json",
+        "sha256": "4d8928e67bafe1aac41c45a608942c078c3ba3bc0e78ec84edbf4db0824902af"
+      },
+      {
+        "path": "web/vite.agriculture.config.ts",
+        "sha256": "096db3925699576173ef81f1e5ea4f615bb5851493e8e45d9e94bda018c11152"
+      },
+      {
+        "path": "web/tsconfig.agriculture.json",
+        "sha256": "dbbe3ab9286e694fc66ff0595bf313f774c4599b1d7572ab15a68caf3e20e1fe"
+      },
+      {
+        "path": "web/scripts/agriculture-build-policy.ts",
+        "sha256": "5f320809bb5280f482bd4c930b58ac6d990965c315beb23450b0c5289b785cfa"
+      },
+      {
+        "path": "web/scripts/check-agriculture-artifact.ts",
+        "sha256": "4b429eb1d9723e404093696c0278e2299c227697b15c85eb7f322c66ba26fc84"
+      },
+      {
+        "path": "web/src/features/agriculture/main.tsx",
+        "sha256": "2af296b88f36298bffff12f7af6f35948b24a9ecb4f2918e4c6601583320c44c"
+      },
+      {
+        "path": "web/src/features/agriculture/session.ts",
+        "sha256": "b9a509133d8f85fbfd6e03637caf2c9f8fca79def8bc86c71ee4fd77e19ecb77"
+      },
+      {
+        "path": "web/src/features/agriculture/profile.css",
+        "sha256": "c81b775414e3d04dcb2562396a46cef626be70b8139e3e0b2878322d4ea1b8c9"
+      },
+      {
+        "path": "web/src/features/agriculture/organization-controller.ts",
+        "sha256": "406041ae3b3bdea41ef5c6abfd00a0d330e8abfb6d91f224d945ecd926bf74b4"
+      },
+      {
+        "path": "web/src/features/agriculture/organization.tsx",
+        "sha256": "fe5310188f52ebde7e088420f3d81bc100db2c5bf64bfdb74187fd2958d4c6ef"
+      },
+      {
+        "path": "web/src/services/api/agriculture.ts",
+        "sha256": "c688d908935f1ce1f903f9b69653fb4a74d072708b9cb11da46ea482596c21d3"
+      },
+      {
+        "path": "web/test/agriculture-api.test.ts",
+        "sha256": "72d54af4ca7ece00b26fea5104253fc11757b8166569eb4eb8be1b19dab556ca"
+      },
+      {
+        "path": "web/test/agriculture-organization.test.ts",
+        "sha256": "23267cbfd2ef1f9375bc6fb639e6c62aa9e9c1a06ec6025cb5b424fbeed13780"
+      },
+      {
+        "path": "web/src/lib/auth-return-path.ts",
+        "sha256": "bf030dc293c22cf667306d7e592c9f7f54191d14db4e5e50f80b63dcdf8370b3"
+      },
+      {
+        "path": "web/src/pages/auth/login.tsx",
+        "sha256": "2b30a832b2d41a5ad5ea6716d113ebb4cdf6acdde7065be6f9436507c9af0029"
+      },
+      {
+        "path": "web/src/pages/auth/register.tsx",
+        "sha256": "0d293877e1f86d52a5f110d1a443f834fb5133e0a309d58f7624350666a67885"
+      },
+      {
+        "path": "web/src/pages/auth/forgot-password.tsx",
+        "sha256": "40b88d82a1cc3101dc77315874cdaf61eeafedd73fd0a29b7edb9b26623807dc"
+      },
+      {
+        "path": "web/src/services/live2d-loader.ts",
+        "sha256": "e4306077b95f89908efb613e5fc299089b01cd2c11eb02f6aedda82d29d2e4a2"
+      },
+      {
+        "path": "web/src/services/api/auth.ts",
+        "sha256": "bca680b4d1d14d5ab9d3f605c846e45721982f0b27ff9d8373c446c542f032a1"
+      },
+      {
+        "path": "web/test/agriculture-profile.test.ts",
+        "sha256": "ba6162d40b79b03b131a93058858cdc7bf12e732382a065e03cba760fec43560"
+      },
+      {
+        "path": "web/test/auth-return-path.test.ts",
+        "sha256": "362b19ae33f75a7df42958c8ae69ae2b2b79def10e917db117a71c86f5f89194"
+      },
+      {
+        "path": "web/test/auth-session-race.test.ts",
+        "sha256": "0240a893fcd93177ff169b234dc133d951ea1ab2a129518f397b610fae0a595f"
+      },
+      {
+        "path": "web/test/live2d-loader-cleanup.test.ts",
+        "sha256": "98e12dab3e8d3647a4b145701c9045ad77e70d6b667b1f22908d10ed4d9c2ca2"
+      },
+      {
+        "path": "docs/agriculture/profile/licenses/ant-design-icons-svg-4.5.0.LICENSE",
+        "sha256": "5d367fb0a07340571542eb4ee8eb1add62d37b71bad6786a57c2e9a86bf76c70"
+      },
+      {
+        "path": "services/agri-gis/frontend/package.json",
+        "sha256": "8754de04388d16bbacb9363c40138396b7c074f42535f4f7892469e41e434897"
+      },
+      {
+        "path": "services/agri-gis/frontend/vite.agriculture.config.ts",
+        "sha256": "882a8e2b9827aee136019a6fd761501cd0ab550ddf021f9935f3f4529c6280ae"
+      },
+      {
+        "path": "services/agri-gis/frontend/tsconfig.agriculture.json",
+        "sha256": "534dfa04edffd02148149df8ac11f51e37a96e46fc603fb019ab732c3f6e3343"
+      },
+      {
+        "path": "services/agri-gis/frontend/agriculture/main.ts",
+        "sha256": "376d6b79d3eb52d0193d316f5b32e23251fc6d54ff0fa84094a3552e28e1286b"
+      },
+      {
+        "path": "services/agri-gis/frontend/agriculture/App.vue",
+        "sha256": "975b5a31ff401f91017454ba070c7f8c8b911a9b945b4d9897eba493e6449d82"
+      },
+      {
+        "path": "services/agri-gis/frontend/agriculture/session.ts",
+        "sha256": "a6f669fca546f247ca30a701a8147c11c949c966a16c4092aaf65c7bac45d032"
+      },
+      {
+        "path": "services/agri-gis/frontend/agriculture/session-lifecycle.ts",
+        "sha256": "ef8ff310c1c26caa0c3325267f49fe7dd34865c923df89377c735d59cdd98610"
+      },
+      {
+        "path": "services/agri-gis/frontend/agriculture/session.test.ts",
+        "sha256": "8c68582c3d540be8848cab47eb8893cd400153d6b0d354626be48500e4afd7ff"
+      },
+      {
+        "path": "services/agri-gis/frontend/agriculture/index.html",
+        "sha256": "d0c2ba2fa7ca54f5f2b6d12a36aff6b34e9e679bc37b00ab3c1c81e32c655e36"
+      },
+      {
+        "path": "services/agri-gis/frontend/agriculture/style.css",
+        "sha256": "fb128ecc61549889507f1e5f4dfde3ce286822f0aa209182a7f4b0aff9dcad74"
+      },
+      {
+        "path": "scripts/agriculture/session-e2e.mjs",
+        "sha256": "9458abc6bddbb87d28ed2b88242b466616c2df6289133b381f74d3cd87e84a2e"
+      },
+      {
+        "path": "scripts/agriculture/csrf-fixture.mjs",
+        "sha256": "c0c6ff17f89c4b2d7bff45c3c50b78cdf1e4b44e3a96c6e051b6f2b2efd9ef7c"
+      },
+      {
+        "path": "scripts/agriculture/csrf-fixture.test.mjs",
+        "sha256": "7d509b3bdde147ae024d4941fd376875e7b7c9c177c152d62d22ffb788e2f9aa"
+      },
+      {
+        "path": "contracts/agriculture/session-hints.ts",
+        "sha256": "e8fe546abda1d35c49b4faad0d859c1de369c4e983ee9fb14c01ba44ba955521"
+      },
+      {
+        "path": "contracts/agriculture/authority-snapshot.ts",
+        "sha256": "1aeb97c893940938c06626ea8d2593d1cb5ca19e57101233112913e52cc83300"
+      },
+      {
+        "path": "web/src/features/agriculture/request-security.ts",
+        "sha256": "2845496005fb9fb2d38aae5425978d5a5f3767b56a7ab93ccc92727a32e4b6ab"
+      },
+      {
+        "path": "web/src/features/agriculture/routine-session.ts",
+        "sha256": "1bef9927b1035f43c53d661ca4ba2863778bdeb92adce238f8efcec6069b7582"
+      },
+      {
+        "path": "web/src/features/agriculture/confirmation-scope.ts",
+        "sha256": "6a1b06744aa1bc349faae8b9c2e55f3f0d948c6a951af7a0e23719fad92e2818"
+      },
+      {
+        "path": "web/test/agriculture-session-security.test.ts",
+        "sha256": "668249461cac5ac39df745232fe6a5c0ff96859b8d2ab2478c2989e87b0daf76"
+      },
+      {
+        "path": "docs/agriculture/BROWSER_SECURITY.md",
+        "sha256": "138464174ab3a630b246756c14868838d2a18b9336c2f4978b505c36f925133d"
+      },
+      {
+        "path": "docs/agriculture/SESSION_REVALIDATION.md",
+        "sha256": "01aeff3bbbec77b9180fe44810bd21719ec59c3e7dcae26e0eac6a86e4e8557e"
+      },
+      {
+        "path": "scripts/agriculture/browser-navigation.mjs",
+        "sha256": "8df240e019e3ce4c3ed3f814a89ae21773955a3e33bafbd5eca88d3a6a684f2f"
+      },
+      {
+        "path": "scripts/agriculture/session-e2e.test.mjs",
+        "sha256": "6e6dc09cdb3365edb872812950377b8276181123ca3c1d7bb0809dfd39846c0c"
+      },
+      {
+        "path": "scripts/agriculture/organization-e2e.mjs",
+        "sha256": "2d991291e3455bc29d4b2a08254e2a1b79f86356a6d7060877587324c9e3179e"
+      },
+      {
+        "path": "scripts/agriculture/organization-e2e.test.mjs",
+        "sha256": "fdfdea18781269278f2441fd406d8593235f7197692b64ce734328c1439277d0"
+      },
+      {
+        "path": "scripts/agriculture/ORGANIZATION_E2E.md",
+        "sha256": "a6f9e226d935bffe6b2a7b355fa768acaff5aa14a2f1dfc0960c782a5c481082"
+      },
+      {
+        "path": "scripts/agriculture/session-ci-prepare.py",
+        "sha256": "16b9b4a752f2cd7f699241ab8caee2a700899703c60cbd9f30ebc91efc57ec60"
+      },
+      {
+        "path": "scripts/agriculture/session-ci-prepare.test.py",
+        "sha256": "99bc7a19474f0d6d5b94ec0d54fa9e4c4b73ec9b389423a89315230ac6b6d8ab"
+      },
+      {
+        "path": "scripts/agriculture/SESSION_E2E.md",
+        "sha256": "9d517afb59f0f144154d7403f7fc0c6849477f45cbae701c2b09cee0d4e2b8ff"
+      },
+      {
+        "path": "backend/go.mod",
+        "sha256": "c2458011cd426d7dac61d02f6dd212efa9dd5cceb5947bb1dfed10998687fd6e"
+      },
+      {
+        "path": "backend/go.sum",
+        "sha256": "4840c140d5a1cb68eacf1057e85ad495bcd00c63c4f32fc465bcad5459fde684"
+      },
+      {
+        "path": "backend/internal/agricanonical/canonical.go",
+        "sha256": "ea3ed9d547db6b9bc0a5b254923e3f842025ce70b5b8d931a3d2ed28023699e0"
+      },
+      {
+        "path": "backend/internal/agricanonical/canonical_test.go",
+        "sha256": "583581adbb8e6feb57cbe7a69d25bd3abae3055b51fc43e62533ea97853f2ed7"
+      },
+      {
+        "path": "backend/internal/agriculture/delegation.go",
+        "sha256": "c4e416c5706513bec7c36c8994b2f2c37f9cc4beb8868c944d2b85147f8a978f"
+      },
+      {
+        "path": "backend/internal/agriculture/delegation_test.go",
+        "sha256": "7d67c776bb9a09d790f2e8b1ccf47ed8d7804e6ad2e910473e14bc862ad0f509"
+      },
+      {
+        "path": "backend/internal/agriculture/service_identity.go",
+        "sha256": "c8fbb872ad9fbe87995e7fa3f7aad73530a60648fc87a28da379c29d613036b0"
+      },
+      {
+        "path": "backend/internal/agriculture/service_identity_config.go",
+        "sha256": "0089a340cb1efb269fde235e8a8e80932dbe8a08178f49d179dee682bd62117d"
+      },
+      {
+        "path": "backend/internal/agriculture/service_identity_keys.go",
+        "sha256": "242f466b26d53c3a1a50929fbcf1620058bd87ac8ce83962f7f183d8abfe1f32"
+      },
+      {
+        "path": "backend/internal/agriculture/service_identity_test.go",
+        "sha256": "7e38e7468e5a2c0f051a45d8205bbaf57581d151d2dec4dd8b710aaff90baee1"
+      },
+      {
+        "path": "backend/internal/agriculture/service_identity_transport.go",
+        "sha256": "0edeb0e02e963227764c14ee6d018759f0d86f8e5807c5a02be4034ba1a6cb64"
+      },
+      {
+        "path": "backend/internal/agriculture/service_identity_transport_test.go",
+        "sha256": "fd113dc12ce3f45f7b18ce95b30ec1e3ccbf547ada0665c7fe2cd83f8624715c"
+      },
+      {
+        "path": "backend/internal/agriculture/identity_http_integration_test.go",
+        "sha256": "2485eb98030270ae90a44ead98ef11cc356940ca41a6b265a561db00f52dd1d2"
+      },
+      {
+        "path": "services/agri-gis/backend/pyproject.toml",
+        "sha256": "25ba43f87576814128bffd8b19f1a1f5cf9a673a6da9aa1a01ed6d1837b7abd2"
+      },
+      {
+        "path": "services/agri-gis/backend/poetry.lock",
+        "sha256": "e5e287271ef6c5fb56185dfcd07f12eedae144a908ec1483ab877696259a26df"
+      },
+      {
+        "path": "services/agri-gis/backend/app/agriculture/__init__.py",
+        "sha256": "77951ad82dc95f2e08716330d61902e73a231f0e5f085d66bb41e5d78533d66a"
+      },
+      {
+        "path": "services/agri-gis/backend/app/agriculture/main.py",
+        "sha256": "0b45a09af8dc7609f55356a89da79d623f7cc346efca0de78f9a3b6507fe4d4d"
+      },
+      {
+        "path": "services/agri-gis/backend/app/agriculture/identity/__init__.py",
+        "sha256": "d03d955b9eb9e56df428f42184a344f127292c29553a6183c34bc19224217cf2"
+      },
+      {
+        "path": "services/agri-gis/backend/app/agriculture/identity/callback.py",
+        "sha256": "fe99446e720f89e01147c55c8a0a47bfa57b613e5f75dd46ab4846bdeae83fee"
+      },
+      {
+        "path": "services/agri-gis/backend/app/agriculture/identity/canonical.py",
+        "sha256": "bd09a9c7fcdd20a783d09abd122f9c268c7e7f01a70a7d75f30d5d538b61c1d2"
+      },
+      {
+        "path": "services/agri-gis/backend/app/agriculture/identity/config.py",
+        "sha256": "e00ee1b1c9832b76d5860a05ddd6610e21ea0010e5be26a6373513914e7e1030"
+      },
+      {
+        "path": "services/agri-gis/backend/app/agriculture/identity/dependency.py",
+        "sha256": "ad25e7bc5729dadefeef0991eed177680c8b1851d378fa7ee36ad36a69919ccc"
+      },
+      {
+        "path": "services/agri-gis/backend/app/agriculture/identity/keys.py",
+        "sha256": "3153d9b0ef99dc38cdd8d124d090dcdfc74cebca735f22a4b5e9b0de44905f2e"
+      },
+      {
+        "path": "services/agri-gis/backend/app/agriculture/identity/providers.py",
+        "sha256": "bc4953cfeeb7c28b7531a00c8297f2b3961126c5787241a04e96769f4b37c6af"
+      },
+      {
+        "path": "services/agri-gis/backend/app/agriculture/identity/replay.py",
+        "sha256": "5b92364b15eb8c430128c606c0c0e147b7ed59f2a77804510510c41834417886"
+      },
+      {
+        "path": "services/agri-gis/backend/app/agriculture/identity/verify.py",
+        "sha256": "45af0835ccac582e88b8a2c555c64b4cdb71ef0f9fde6362add90ddace630277"
+      },
+      {
+        "path": "services/agri-gis/backend/scripts/migrations/20261029_agriculture_identity_replay.sql",
+        "sha256": "3986211d1fb38b711ed0c6071400b620e6bc12fe724628b8cdfdff17d019fcfa"
+      },
+      {
+        "path": "services/agri-gis/backend/tests/identity_http_fixture.py",
+        "sha256": "64251d0daeb58342e7610132022ab26192308e9171db8fa37a58568d994b91ba"
+      },
+      {
+        "path": "services/agri-gis/backend/tests/test_identity_canonical.py",
+        "sha256": "0380af33376c4646e8a1c05c62fd302a88bddb51174d31021945618b8985792d"
+      },
+      {
+        "path": "services/agri-gis/backend/tests/test_agriculture_identity.py",
+        "sha256": "53b23497edd63a1b62bc89c7094d6df7d3e242ad961a94df93623350a37f8a81"
+      },
+      {
+        "path": "services/agri-gis/backend/tests/test_agriculture_identity_postgres.py",
+        "sha256": "269d7e1e46629378d7c6259edf1c256321c060c55f366bfb5e43f88f639d682b"
+      },
+      {
+        "path": "scripts/agriculture/identity-ci.sh",
+        "sha256": "b00764fa4e9eebccc7138ccc426391338b437c9007a00e4bf9d4261597a96185"
+      },
+      {
+        "path": "scripts/agriculture/identity-postgres-ci.sh",
+        "sha256": "ce53a54141b6fc498c9497b16881fafddc6c5cf65a39329bde05ffeac859befc"
+      },
+      {
+        "path": "scripts/agriculture/identity-ci-result.py",
+        "sha256": "ad8227765ccf84657f67cac39604393db5a9ba216a1539b13fdd6feac5558d6e"
+      },
+      {
+        "path": "scripts/agriculture/identity-ci-result.test.py",
+        "sha256": "f7047c33daf7a44f31c56b90cd7f47404b85a1aeb33b1d233d5f77cfd6917887"
+      },
+      {
+        "path": "scripts/agriculture/export-python-lock.py",
+        "sha256": "479108ab50874cb42c5e18798293f7595a511879d02d26e921193d2ee3a487e6"
+      },
+      {
+        "path": "scripts/agriculture/python-test-requirements.txt",
+        "sha256": "c546aca9e8293cbfce086a58ea722c6c70a4665a7034732a2f287806d9dcbdce"
+      },
+      {
+        "path": "deploy/agriculture/platform-identity.template.json",
+        "sha256": "f4e3778f3535a79d6b4ea009c46e10ae749b41dcef0882bda524cd8b8a68f500"
+      },
+      {
+        "path": "deploy/agriculture/gis-identity.template.json",
+        "sha256": "c97dce09907636b1fb6d41d9d46c9fdbabbd68334458af773f0e54fe838b3d60"
+      },
+      {
+        "path": "docs/agriculture/SERVICE_IDENTITY.md",
+        "sha256": "fafde15333f2104d9f17ebac197696a3ab21dbda147f8962e61050e8f9a4274f"
+      },
+      {
+        "path": "docs/agriculture/PLATFORM_SERVICE_IDENTITY.md",
+        "sha256": "b8f3de5dbcc3b70fa1ec4f11711d3904d2cf6921a00e0790afef75e9f89896d4"
+      },
+      {
+        "path": "docs/agriculture/GIS_SERVICE_IDENTITY.md",
+        "sha256": "2ff3621ef1b8e9acf18ef5e360b62a2213acab569d628def248dd038ed31bc33"
+      },
+      {
+        "path": "tests/agriculture/fixtures/identity-canonical.json",
+        "sha256": "13d5a9abf9b9cbbbee498abf63919a0073c47f676aa9ccaeb0ea681003cab060"
+      },
+      {
+        "path": "tests/agriculture/test_contracts.py",
+        "sha256": "313c83ec888578c84ee4482bc593940525c0fc28d0a055a2d4e13e4c2341b041"
+      },
+      {
+        "path": "tests/agriculture/test_python_lock_export.py",
+        "sha256": "6d66debd4b52684f24255cad792d276e7381e36b632673e02abae221c84a1dd1"
+      },
+      {
+        "path": "contracts/agriculture/README.md",
+        "sha256": "76abbee0c802d370b13776da4d18632ec456aa8e8c052a2c1dbd3f31627463c0"
+      },
+      {
+        "path": "contracts/agriculture/analysis-submit.schema.json",
+        "sha256": "e1b442e6a40dddb18a582485dd9ef387fabcd6ce214297a4f0c4699e66794f43"
+      },
+      {
+        "path": "contracts/agriculture/common.schema.json",
+        "sha256": "6d717f62e5988b075f1b9461f38e98fbc2ee746e82bf81b69f54a856771e604e"
+      },
+      {
+        "path": "contracts/agriculture/delegation.schema.json",
+        "sha256": "7996790cd15111dde37d93f31943987000393dec81ed8e68a8206b082fbb1817"
+      },
+      {
+        "path": "contracts/agriculture/event-envelope.schema.json",
+        "sha256": "519943d3a4f71eb4497d81416d147e051c41bc4d996f771a0ed26b923fe511f2"
+      },
+      {
+        "path": "contracts/agriculture/job.schema.json",
+        "sha256": "e1da22c8930672387db7a23c3d617a488272c90c30eed264ae8fbd7406545e9a"
+      },
+      {
+        "path": "contracts/agriculture/manifest.schema.json",
+        "sha256": "a0c61b96f4322e639b4bc209f13d837790f84e31986388462c7eb17bba7a4adf"
+      },
+      {
+        "path": "contracts/agriculture/result.schema.json",
+        "sha256": "b358caba41bb2f1ebd101ce6501ce95aa87d9160388529a4a0582fef8bee0f37"
+      },
+      {
+        "path": "contracts/agriculture/service-request.schema.json",
+        "sha256": "06d578b9c1f18691fe0e74d0dd8c0c1cfc295f64c580ccddfaaad7aa5335fc30"
+      },
+      {
+        "path": "contracts/agriculture/source-rights.schema.json",
+        "sha256": "543452243e26b328a996038dbfbd6024fae10a36bec144c7a755be57293c257d"
+      },
+      {
+        "path": "contracts/agriculture/source-rights.py",
+        "sha256": "117c28096e5d29e2831b5ad8590f6cd43017c92a2a57599f851e3feef17481c7"
+      },
+      {
+        "path": "contracts/agriculture/source-rights.template.json",
+        "sha256": "519be63b860f65ee9ee8cb5f031e67d507d3bfc255d7ab66299f374d49cd120a"
+      },
+      {
+        "path": "contracts/agriculture/openapi.json",
+        "sha256": "116c6dc019b8ae022b30e8b266231b89c886fee39c7843175f607f192a25e2ca"
+      },
+      {
+        "path": "contracts/agriculture/examples/analysis-submit.json",
+        "sha256": "16fd7b82c440fd130b1beb1bba8389672135be391524044672676f1f2793de68"
+      },
+      {
+        "path": "contracts/agriculture/examples/delegation-read.json",
+        "sha256": "50a4517d95ba085b9ae2bdd30d22eba8261c5a28a876023866e356fe31323804"
+      },
+      {
+        "path": "contracts/agriculture/examples/delegation-write.json",
+        "sha256": "a5f11537534e22a7856bd66880b2e7565d20e5a6ed8afff2a183b24d70de3f90"
+      },
+      {
+        "path": "contracts/agriculture/examples/event-envelope.json",
+        "sha256": "f3a0ea024d74ae0a9055e0c7c7c0e46ef3bbc7426831165e902dc38edf166b4f"
+      },
+      {
+        "path": "contracts/agriculture/examples/job.json",
+        "sha256": "bb3f76695289dc3c0fecc3daa51c8a5d83d952b00ec0bf5ee5e88ccb6aa58269"
+      },
+      {
+        "path": "contracts/agriculture/examples/manifest.json",
+        "sha256": "6a9481a08e35b7106ce1dc50b4324c2537571d89c04d53b1782f7b5dbc491c54"
+      },
+      {
+        "path": "contracts/agriculture/examples/result.json",
+        "sha256": "b89e3a988287c81d8cf30ddc7ec7c930ebab31c15e4681d046eea451d8e20e62"
+      },
+      {
+        "path": "services/agri-gis/backend/app/main.py",
+        "sha256": "bb846a1d2550a1799aa655c8e6cbb5249441ae7af8294f3833e1fae11480a45a"
+      },
+      {
+        "path": "services/agri-gis/backend/app/agriculture/actor_models.py",
+        "sha256": "4fab33a9b4508fbf2eafc5155735ade7a6b16895933ecf16ae0cea8aef48567e"
+      },
+      {
+        "path": "services/agri-gis/backend/app/agriculture/actor_session.py",
+        "sha256": "fd09f61a5f04264f528e07128e5c92a128feae75999ebc7fd854b88f9f3eedf6"
+      },
+      {
+        "path": "services/agri-gis/backend/app/agriculture/actors.py",
+        "sha256": "1dab157bce90650c3ac2138a1f50e5bbc491ae8940f59b1ecf0662cf39922389"
+      },
+      {
+        "path": "services/agri-gis/backend/app/agriculture/operation_authorization.py",
+        "sha256": "88037f6e7fd71fbc80c9fb41533861c51d692669996abe274bd06f4606bfa83a"
+      },
+      {
+        "path": "services/agri-gis/backend/app/services/project_user_service.py",
+        "sha256": "6f36c4be95f8a69140d1da9e642fb91929439e32505e3d42d7d9e3a5971fbb2c"
+      },
+      {
+        "path": "services/agri-gis/backend/app/services/service_sharing_service.py",
+        "sha256": "2bbe43d66473d0f7af73cb3e2b02ae0d855d5d901827be5abaab5642034d99e7"
+      },
+      {
+        "path": "services/agri-gis/backend/app/services/workbench_service.py",
+        "sha256": "5c9913dd03fe804a2f8f97e34f9b5346e3439bd78e73a677375a8086b8446e90"
+      },
+      {
+        "path": "services/agri-gis/backend/app/dao/workbench_dao.py",
+        "sha256": "f06ab69b815452029ca0d13be29463d40a634a68fe93bde9371c07bb39325469"
+      },
+      {
+        "path": "services/agri-gis/backend/scripts/migrations/20261029_agriculture_actor_bindings.sql",
+        "sha256": "6508f3c646221ba3e2edec489015ec11849ad0a95fcac363bf422852cb698757"
+      },
+      {
+        "path": "services/agri-gis/backend/tests/test_agriculture_actors.py",
+        "sha256": "0c1053a09a70fda0136bc91414710ef22835f0efd39cd769a23a705a3b28544c"
+      },
+      {
+        "path": "services/agri-gis/backend/tests/test_agriculture_actors_postgres.py",
+        "sha256": "b27faeb0f286e749dfb0ad4ce0fef3a66b0255c6cb25f4a2f9d16f594addfb7d"
+      },
+      {
+        "path": "services/agri-gis/backend/tests/test_legacy_actor_gate.py",
+        "sha256": "2abfd681d381e6c087ded71bf61a5cefb263d8146af54d31a71466a03f97645c"
+      },
+      {
+        "path": "services/agri-gis/backend/tests/test_legacy_identity_contracts.py",
+        "sha256": "58cb49dc94c4fb89b09fbddad8ba96a4a8fb27fa81221f8e908bae64fb234547"
+      },
+      {
+        "path": "services/agri-gis/backend/tests/test_agriculture_legacy_write_integration.py",
+        "sha256": "94c8520a84a7ed5c05ee4bcef2ae89d11b5b5457ed7de98519a6100a4e14a648"
+      },
+      {
+        "path": "services/agri-gis/backend/tests/test_boundary_delivery_services.py",
+        "sha256": "82b0af3e1880237f2f3a535655c7e992a0c1939a16eed46be5c066f6b39f381c"
+      },
+      {
+        "path": "services/agri-gis/backend/tests/test_rule_config.py",
+        "sha256": "3ef72049503e347ef04b8295a3a9584b35a0537d1302f8bceede35cb872e1bf5"
+      },
+      {
+        "path": "services/agri-gis/backend/tests/test_service_sharing.py",
+        "sha256": "41b4e9ea910afb0e63a4def2a544734ff719aa51dbd9c69c31ee95c22fbd689e"
+      },
+      {
+        "path": "services/agri-gis/backend/tests/test_workbench.py",
+        "sha256": "38427514ea980dec9f0c51e1820882ea212ab094efa072bba05d59c38cecad41"
+      },
+      {
+        "path": "services/agri-gis/frontend/src/api/request.ts",
+        "sha256": "3e579c12a9f123a17b4ead36c0a5b7e5005c672540c6bbc8d881828298f32610"
+      },
+      {
+        "path": "services/agri-gis/frontend/src/main.ts",
+        "sha256": "197592c09c7f72c849318ba0368b489e7a55dd9660f002dcb4d46b296a39fcd7"
+      },
+      {
+        "path": "services/agri-gis/frontend/src/security/legacyIdentity.ts",
+        "sha256": "84c8e3acc9dca7344baad02f5a3f95998142a23906f20dfeb0db05068f74efcf"
+      },
+      {
+        "path": "services/agri-gis/frontend/src/store/userStore.ts",
+        "sha256": "e5bd7e6894e713eb78a3f09e4195dc0d7c97a3d343f454533b980018c9355a57"
+      },
+      {
+        "path": "services/agri-gis/frontend/src/store/fieldCaptureStore.ts",
+        "sha256": "759abd4f4559c0c92e474cfec15cd25ebc980866dd765ddbb84206775494f52a"
+      },
+      {
+        "path": "services/agri-gis/frontend/src/store/uavCaptureStore.ts",
+        "sha256": "765011b88e75d4dd020687ec0fe9c29d9a92c953115b4214333e36da9b3d9a33"
+      },
+      {
+        "path": "services/agri-gis/frontend/src/components/layout/UserIdentitySwitcher.vue",
+        "sha256": "fa0ce8a234f9741dac34d1a285f1987daf2e8d738586ea3b30cf0f6383e9889a"
+      },
+      {
+        "path": "services/agri-gis/frontend/src/components/field/mobile/MobileFieldCaptureForm.vue",
+        "sha256": "430535c29a60d616468994659bd3a3611d6e4966092be3545f3fe4e640c3dec1"
+      },
+      {
+        "path": "services/agri-gis/frontend/src/components/uav/mobile/MobileUavCaptureForm.vue",
+        "sha256": "4d8232c6157ce805631951acd7f720c97d6830acd6d6e479ed34535b19520938"
+      },
+      {
+        "path": "services/agri-gis/frontend/src/views/FieldCaptureView.vue",
+        "sha256": "ba51bd80cd9c957a493be1f6ddafbfa4f02e07b0d46ba07623dc150b1e84c752"
+      },
+      {
+        "path": "services/agri-gis/frontend/src/views/UavCaptureView.vue",
+        "sha256": "5e7645aee210e7e6928f8ca64edfb5b4824a86ffbf0f005cec841e4e8af077ba"
+      },
+      {
+        "path": "services/agri-gis/frontend/agriculture/legacy-identity.test.ts",
+        "sha256": "ae22c43d7a6c33c0ccbc02212a27e6a951381349311f350390287e5fb7a33ce4"
+      },
+      {
+        "path": "scripts/agriculture/legacy-identity-inventory.py",
+        "sha256": "0ad742123f156583d262de98c5080a5d7e825c864943e513a8fa97e35b770326"
+      },
+      {
+        "path": "scripts/agriculture/legacy-identity-inventory.test.py",
+        "sha256": "56b3e43f888ba8a4289f33889f030c5abba48eb140febd12aed856edc3d976bc"
+      },
+      {
+        "path": "docs/agriculture/evidence/w01/legacy-identity-inventory.json",
+        "sha256": "f8541320019b7f293eaa565113e244476cf2c61cdf42d62adeb3c2183ca965f8"
+      },
+      {
+        "path": "docs/agriculture/LEGACY_ACTOR_MIGRATION.md",
+        "sha256": "e1476c807119e6ce5f63bf7b3b2fb946356edb0fb08a3bab9db4c077c02a59a1"
+      },
+      {
+        "path": "docs/agriculture/W01_LEGACY_ACTOR_GATE.md",
+        "sha256": "27c9ea6d72ea13ba4132379bf83825a64cfe0cd4e7262eaf18aedcbe245b47a6"
+      },
+      {
+        "path": "docs/agriculture/GIS_ACTOR_BINDINGS.md",
+        "sha256": "81241a8505b48fe8088f7ced95fc93518f629448795a3cd6cc105bf689726a84"
+      },
+      {
+        "path": "docs/agriculture/LEGACY_IDENTITY_INVENTORY.md",
+        "sha256": "e233111c0ea9efa3eb626543dc8e7dbea303bcffdeecb866f8c1f1dc97e3a4c1"
+      },
+      {
+        "path": "contracts/agriculture/navigation.ts",
+        "sha256": "4fb1d786be8622592635b78a25628cd276b1845ef19969ef79702758b6fcd360"
+      },
+      {
+        "path": "deploy/agriculture/Dockerfile.web",
+        "sha256": "0af7b59cd81ded789c2ac9dc3b9fc2971cbc3fb3f4c4292c572a1c26a1953fe8"
+      },
+      {
+        "path": "deploy/agriculture/Dockerfile.web.dockerignore",
+        "sha256": "0361bcc47ca7d8b17f5c728b970d77e3d246f5b2d1a25af96cb94cd93b27e971"
+      },
+      {
+        "path": "deploy/agriculture/nginx.conf.template",
+        "sha256": "30a1b2fce7e5ec7eedb38d9bd5b8d459ee7bf850970da370631585a2d7b17782"
+      },
+      {
+        "path": "deploy/agriculture/web-entrypoint.sh",
+        "sha256": "85063885b31599e3bd383869047a2db5d15c1540b08fc8a1327a28e888211e07"
+      },
+      {
+        "path": "deploy/agriculture/env.example",
+        "sha256": "c2935c27944913c40c0f2f5f3fc955978b901a7fc1cd7253e0116ef4dc2be6d7"
+      },
+      {
+        "path": "deploy/agriculture/errors/404.html",
+        "sha256": "76318cbbdc388a901ed478d4c47860481f6bdd70db45f999967436a6a5f0a0e8"
+      },
+      {
+        "path": "deploy/agriculture/errors/50x.html",
+        "sha256": "254f231c9cd6a243251c8698b33cb7212edf6c941bb4cfb3b022fac3d00aa6ec"
+      },
+      {
+        "path": "deploy/agriculture/README.md",
+        "sha256": "2468d0515d581fba1c66af45b5ee2a520ddea9b8cb9ea089b36507a238d1a925"
+      },
+      {
+        "path": "docker-compose.agriculture.yml",
+        "sha256": "616a0a6e2da643de14b00b937d10bdf2a7efc4b4ced0506c7141fa47151f5179"
+      },
+      {
+        "path": "scripts/agriculture/gateway-browser-e2e.mjs",
+        "sha256": "cfc8f21b26caf751e8e930abb5e746d6c3515bebee00b19e62280104eb621b1f"
+      },
+      {
+        "path": "scripts/agriculture/gateway-browser-e2e.test.mjs",
+        "sha256": "9052ca14137253d3f09c9a663de3973b1237232b69ed4e098b23235a98e1a2e8"
+      },
+      {
+        "path": "scripts/agriculture/gateway-container-smoke.py",
+        "sha256": "454ebb03a3d6358cb5065e79010697df4626c761c3b0f82f5263c0847ac7a486"
+      },
+      {
+        "path": "scripts/agriculture/gateway-container-smoke.test.py",
+        "sha256": "a41122d77e9b817ed15931bc3f47198e5e3f270933d03298a6fcb5c5cb79efdb"
+      },
+      {
+        "path": "scripts/agriculture/native-gateway-test.py",
+        "sha256": "4df7593fd7ee29207c9dfff8d054c22c674e3cfa1438ef62f6e930a8ce9f9536"
+      },
+      {
+        "path": "tests/agriculture/test_gateway_configuration.py",
+        "sha256": "01cf06c1f7e2da8b2d146a71ca38c4e4c33a478a598c9825dfd65d84b9e75876"
+      },
+      {
+        "path": "docs/agriculture/SAME_ORIGIN_GATEWAY.md",
+        "sha256": "3f3d3271ab6740aa851ab43e3e2c09f8bc0f6acd8e3f57ad0585120b9bcb2700"
+      }
+    ]
+  },
+  "working_tree_modified": null,
+  "environment": {
+    "node": "v24.22.1",
+    "chrome": "Google Chrome 156.0.8078.47",
+    "platform": "linux",
+    "arch": "x64"
+  },
+  "backend_sha256": "ecadaefdff6314c517ca7439fbe75711c19885704808ee95d3af1f64050c0192",
+  "react_index_sha256": "e0693c696c106c830de0becb0f93b7594117b922fb6a10056440145e6df1c9d9",
+  "vue_index_sha256": "129c9ab541542b166b1ada72e5a87e40da24214f36ffc48ca553220b825c5cd7",
+  "command": "node scripts/agriculture/organization-e2e.mjs",
+  "started_at": "2026-10-30T07:16:33.327Z",
+  "results": [
+    {
+      "name": "real_bootstrap_account",
+      "result": "pass"
+    },
+    {
+      "name": "loopback_only_registration_email_configured",
+      "result": "pass"
+    },
+    {
+      "name": "isolated_registration_enabled",
+      "result": "pass"
+    },
+    {
+      "name": "real_registration_smtp_message",
+      "result": "pass"
+    },
+    {
+      "name": "real_registration_code_in_memory",
+      "result": "pass"
+    },
+    {
+      "name": "real_verified_second_account",
+      "result": "pass"
+    },
+    {
+      "name": "anonymous_agriculture_http_401",
+      "result": "pass"
+    },
+    {
+      "name": "two_isolated_real_form_sessions",
+      "result": "pass"
+    },
+    {
+      "name": "two_real_ui_created_organizations",
+      "result": "pass"
+    },
+    {
+      "name": "platform_admin_has_no_cross_tenant_backdoor",
+      "result": "pass"
+    },
+    {
+      "name": "uninvited_workspace_http_404",
+      "result": "pass"
+    },
+    {
+      "name": "owner_has_governance_without_implicit_business_role",
+      "result": "pass"
+    },
+    {
+      "name": "owner_self_edit_has_server_limited_business_roles",
+      "result": "pass"
+    },
+    {
+      "name": "owner_ui_business_grant_preserves_governance",
+      "result": "pass"
+    },
+    {
+      "name": "owner_ui_empty_business_roles_preserves_governance",
+      "result": "pass"
+    },
+    {
+      "name": "owned_invite_expiry_fixture_only",
+      "result": "pass"
+    },
+    {
+      "name": "expired_invite_real_ui_http_400",
+      "result": "pass"
+    },
+    {
+      "name": "routine_confirmation_prepared_without_submission",
+      "result": "pass"
+    },
+    {
+      "name": "production_30_second_refresh_preserves_unchanged_invitation_and_draft",
+      "result": "pass"
+    },
+    {
+      "name": "routine_resume_does_not_restore_old_confirmation_portal",
+      "result": "pass"
+    },
+    {
+      "name": "manual_invite_real_ui_acceptance",
+      "result": "pass"
+    },
+    {
+      "name": "authoritative_workspace_list",
+      "result": "pass"
+    },
+    {
+      "name": "accepted_membership_visible_to_original_session",
+      "result": "pass"
+    },
+    {
+      "name": "replayed_invite_real_ui_http_400",
+      "result": "pass"
+    },
+    {
+      "name": "viewer_governance_http_403",
+      "result": "pass"
+    },
+    {
+      "name": "viewer_cannot_self_escalate",
+      "result": "pass"
+    },
+    {
+      "name": "owner_status_or_self_governance_mutation_http_403",
+      "result": "pass"
+    },
+    {
+      "name": "owner_status_or_self_governance_mutation_http_403",
+      "result": "pass"
+    },
+    {
+      "name": "owner_status_or_self_governance_mutation_http_403",
+      "result": "pass"
+    },
+    {
+      "name": "owner_status_or_self_governance_mutation_http_403",
+      "result": "pass"
+    },
+    {
+      "name": "accepted_workspace_real_vue_entry",
+      "result": "pass"
+    },
+    {
+      "name": "real_ui_promotion_grants_governance",
+      "result": "pass"
+    },
+    {
+      "name": "privileged_draft_prepared_before_demotion",
+      "result": "pass"
+    },
+    {
+      "name": "privileged_confirmation_prepared_without_submission",
+      "result": "pass"
+    },
+    {
+      "name": "old_cookie_loses_governance_after_ui_demotion",
+      "result": "pass"
+    },
+    {
+      "name": "downgraded_same_session_old_privileged_write_rejected_not_csrf_failure",
+      "result": "pass"
+    },
+    {
+      "name": "same_account_tab_real_hidden_visible_without_reload",
+      "result": "pass"
+    },
+    {
+      "name": "same_user_demotion_clears_unsubmitted_privileged_draft",
+      "result": "pass"
+    },
+    {
+      "name": "session_revalidation_destroys_privileged_confirmation_portal",
+      "result": "pass"
+    },
+    {
+      "name": "authoritative_workspace_list",
+      "result": "pass"
+    },
+    {
+      "name": "cancelled_suspension_does_not_mutate_membership",
+      "result": "pass"
+    },
+    {
+      "name": "suspended_old_cookie_http_404",
+      "result": "pass"
+    },
+    {
+      "name": "authoritative_workspace_list",
+      "result": "pass"
+    },
+    {
+      "name": "suspended_workspace_absent",
+      "result": "pass"
+    },
+    {
+      "name": "suspended_global_session_still_valid",
+      "result": "pass"
+    },
+    {
+      "name": "suspended_other_organization_unchanged",
+      "result": "pass"
+    },
+    {
+      "name": "suspended_old_vue_link_rejected",
+      "result": "pass"
+    },
+    {
+      "name": "suspended_old_react_link_rejected",
+      "result": "pass"
+    },
+    {
+      "name": "authoritative_workspace_list",
+      "result": "pass"
+    },
+    {
+      "name": "real_ui_restore_reinstates_authorized_workspace",
+      "result": "pass"
+    },
+    {
+      "name": "organization_disabled_old_cookie_http_404",
+      "result": "pass"
+    },
+    {
+      "name": "authoritative_workspace_list",
+      "result": "pass"
+    },
+    {
+      "name": "organization_disabled_workspace_absent",
+      "result": "pass"
+    },
+    {
+      "name": "organization_disabled_global_session_still_valid",
+      "result": "pass"
+    },
+    {
+      "name": "organization_disabled_other_organization_unchanged",
+      "result": "pass"
+    },
+    {
+      "name": "organization_disabled_old_vue_link_rejected",
+      "result": "pass"
+    },
+    {
+      "name": "organization_disabled_old_react_link_rejected",
+      "result": "pass"
+    },
+    {
+      "name": "authoritative_workspace_list",
+      "result": "pass"
+    },
+    {
+      "name": "owner_ui_restores_organization",
+      "result": "pass"
+    },
+    {
+      "name": "removed_old_cookie_http_404",
+      "result": "pass"
+    },
+    {
+      "name": "authoritative_workspace_list",
+      "result": "pass"
+    },
+    {
+      "name": "removed_workspace_absent",
+      "result": "pass"
+    },
+    {
+      "name": "removed_global_session_still_valid",
+      "result": "pass"
+    },
+    {
+      "name": "removed_other_organization_unchanged",
+      "result": "pass"
+    },
+    {
+      "name": "removed_old_vue_link_rejected",
+      "result": "pass"
+    },
+    {
+      "name": "removed_old_react_link_rejected",
+      "result": "pass"
+    },
+    {
+      "name": "ordinary_invite_cannot_restore_removed_member",
+      "result": "pass"
+    },
+    {
+      "name": "failed_reinvite_does_not_regrant_scope",
+      "result": "pass"
+    },
+    {
+      "name": "governance_invites_send_no_external_email",
+      "result": "pass"
+    },
+    {
+      "name": "no_browser_runtime_exceptions",
+      "result": "pass"
+    },
+    {
+      "name": "no_outbound_request_attempts",
+      "result": "pass"
+    }
+  ],
+  "limitations": [
+    "SQLite fixture is not PostgreSQL RLS acceptance",
+    "cross-organization workspace checks do not prove same-tenant multi-workspace isolation",
+    "no GIS resource access, external email, production deployment or real farm acceptance"
+  ],
+  "stage": "complete",
+  "routine_retention": {
+    "elapsedMs": 35038,
+    "samples": 347,
+    "sessionCompleted": true,
+    "workspacesCompleted": true,
+    "invitationRetained": true,
+    "draftRetained": true,
+    "sameDocument": true
+  },
+  "demotion_visibility": {
+    "hiddenObserved": true,
+    "visibleObserved": true,
+    "sameDocument": true
+  },
+  "result": "pass",
+  "finished_at": "2026-10-30T07:17:41.228Z"
+}

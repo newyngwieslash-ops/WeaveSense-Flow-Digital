@@ -1,0 +1,16 @@
+{
+  "source_commit": "574d48f02e96b43c01f0cd3ee2b90a956713b5cb",
+  "command": "GOTOOLCHAIN=local GOPROXY=off go test ./internal/browsersecurity ./internal/auth ./internal/handler ./internal/agriculture -count=1",
+  "exit_code": 0,
+  "result": "passed",
+  "packages": [
+    "browsersecurity",
+    "auth",
+    "handler",
+    "agriculture"
+  ],
+  "output": "ok  \tyingce/backend/internal/browsersecurity\t0.009s\nok  \tyingce/backend/internal/auth\t1.102s\nok  \tyingce/backend/internal/handler\t20.897s\nok  \tyingce/backend/internal/agriculture\t0.787s\n",
+  "limitations": [
+    "Local PostgreSQL-dependent cases skip without DSNs; actual required PG acceptance is separate CI artifact, not this package exit code."
+  ]
+}

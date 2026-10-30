@@ -86,10 +86,11 @@ DT-014 已按原任务范围完成：2026-10-30 实际 CI 41007114373 中真实 
 | 状态 | 数量 |
 | --- | ---: |
 | done | 14 |
-| not_started | 130 |
+| in_progress | 1 |
+| not_started | 129 |
 
 历史 done、恢复证据待补验：无。
-依赖状态就绪但仍须检查恢复条件：DT-015。
+依赖状态就绪但仍须检查恢复条件：无。
 
 | 任务 | 状态 |
 | --- | --- |
@@ -107,7 +108,7 @@ DT-014 已按原任务范围完成：2026-10-30 实际 CI 41007114373 中真实 
 | DT-012 | done |
 | DT-013 | done |
 | DT-014 | done |
-| DT-015 | not_started |
+| DT-015 | in_progress |
 | DT-016 | not_started |
 | DT-017 | not_started |
 | DT-018 | not_started |

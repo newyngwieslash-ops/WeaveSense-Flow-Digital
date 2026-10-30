@@ -50,6 +50,7 @@ type WorkspaceView struct {
 	Roles                 []string `json:"roles"`
 	CanManageMembers      bool     `json:"canManageMembers"`
 	CanManageOrganization bool     `json:"canManageOrganization"`
+	AuthorityFingerprint  string   `json:"authorityFingerprint,omitempty"`
 }
 type OrganizationResult struct {
 	Tenant    model.Tenant  `json:"tenant"`
@@ -211,7 +212,16 @@ func (s Service) ListWorkspaces(ctx context.Context, actorID string) ([]Workspac
 	}
 	out := []WorkspaceView{}
 	for _, w := range candidates {
-		err = s.withWorkspace(ctx, actorID, w.ID, true, func(tx *gorm.DB, scope workspaceContext) error { out = append(out, view(scope)); return nil })
+		err = s.withWorkspace(ctx, actorID, w.ID, true, func(tx *gorm.DB, scope workspaceContext) error {
+			item := view(scope)
+			fingerprint, e := authorityFingerprint(tx, scope, actorID, s.now())
+			if e != nil {
+				return e
+			}
+			item.AuthorityFingerprint = fingerprint
+			out = append(out, item)
+			return nil
+		})
 		if errors.Is(err, ErrNotFound) {
 			continue
 		}

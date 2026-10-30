@@ -69,10 +69,12 @@ def test_two_real_builds_and_shared_navigation_are_in_image():
     )
     assert "USER nginx" in docker
     assert "COPY contracts/agriculture/session-hints.ts /app/contracts/agriculture/session-hints.ts" in docker
+    assert "COPY contracts/agriculture/authority-snapshot.ts /app/contracts/agriculture/authority-snapshot.ts" in docker
     ignore = (DEPLOY / "Dockerfile.web.dockerignore").read_text()
     assert "!deploy/agriculture/**" not in ignore
     assert "!deploy/agriculture/nginx.conf.template" in ignore
     assert "!contracts/agriculture/session-hints.ts" in ignore
+    assert "!contracts/agriculture/authority-snapshot.ts" in ignore
     for pattern in (
         "**/node_modules",
         "**/.env*",

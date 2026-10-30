@@ -1,14 +1,16 @@
 // Display-only projection of the platform cookie session. Never an authority for GIS.
 import { AgricultureNavigationError, agricultureRoute, agricultureWorkspaceURL } from '../../../../contracts/agriculture/navigation'
 import { publishSessionHint } from '../../../../contracts/agriculture/session-hints'
+import { authoritySnapshot } from '../../../../contracts/agriculture/authority-snapshot'
 export type User = { id: string; username: string; displayName: string; role: 'admin' | 'user'; status: 'active' }
-export type Workspace = { id: string; name: string; slug: string }
+export type Workspace = { id: string; name: string; slug: string; authorityFingerprint: string }
 export type State = {
   status: 'loading' | 'ready' | 'anonymous' | 'disabled' | 'error' | 'logging_out'
   user: User | null
   workspaces: Workspace[]
   selected: Workspace | null
   error: SessionError | null
+  checking?: boolean
 }
 export class SessionError extends Error {
   constructor(public readonly code: string, message: string) { super(message) }
@@ -70,10 +72,11 @@ function workspacesFrom(payload: unknown): Workspace[] {
     const roles = ['viewer', 'analyst', 'editor', 'field_operator', 'reviewer', 'farm_manager', 'tenant_admin', 'billing_admin']
     if (!record(item) || !id(item.id) || !id(item.tenantId) || !text(item.name) || !text(item.slug) || !text(item.tenantName)
       || !['active', 'disabled'].includes(String(item.tenantStatus)) || typeof item.canManageMembers !== 'boolean' || typeof item.canManageOrganization !== 'boolean'
+      || typeof item.authorityFingerprint !== 'string' || !/^[a-f0-9]{64}$/.test(item.authorityFingerprint)
       || !Array.isArray(item.roles) || item.roles.some(role => typeof role !== 'string' || !roles.includes(role)) || new Set(item.roles).size !== item.roles.length || seen.has(item.id)) throw invalid()
     seen.add(item.id)
     // tenantId is intentionally not retained or forwarded. GIS authority comes later from Go.
-    return item.tenantStatus === 'active' ? { id: item.id, name: item.name, slug: item.slug } : null
+    return item.tenantStatus === 'active' ? { id: item.id, name: item.name, slug: item.slug, authorityFingerprint: item.authorityFingerprint } : null
   }).filter((item): item is Workspace => item !== null)
 }
 
@@ -83,16 +86,21 @@ export class SessionController {
   private generation = 0
   private active: AbortController | null = null
   private deadline: ReturnType<typeof setTimeout> | undefined
+  private snapshot: string | null = null
   constructor(private readonly fetcher: Fetcher = fetch) {}
   private publish(state: State) { this.state = state; this.onChange(state) }
-  private begin(status: State['status']) {
+  private begin(status: State['status'], preserve = false) {
     this.active?.abort()
     clearTimeout(this.deadline)
     const controller = new AbortController()
     this.active = controller
-    this.deadline = setTimeout(() => controller.abort(), 20000)
-    this.publish(empty(status))
-    return { generation: ++this.generation, signal: controller.signal }
+    const generation = ++this.generation
+    this.deadline = setTimeout(() => {
+      controller.abort()
+      if (this.generation === generation) { ++this.generation; this.failure(new SessionError('TIMEOUT', '平台权限验证超时。')) }
+    }, 20000)
+    this.publish(preserve ? { ...this.state, checking: true } : empty(status))
+    return { generation, signal: controller.signal }
   }
   private failure(error: unknown, logout = false) {
     const failure = logout ? new SessionError('LOGOUT_FAILED', '退出未确认，不能认为服务器会话已注销。请重试或重新检查登录状态。')
@@ -101,9 +109,11 @@ export class SessionController {
     const status = ['AUTH_REQUIRED', 'AUTH_EXPIRED'].includes(failure.code) ? 'anonymous' : failure.code === 'ACCOUNT_DISABLED' ? 'disabled' : 'error'
     this.publish(empty(status, failure))
   }
-  async refresh(search = '', pathname = '/agri/', hash = '') {
+  async refresh(search = '', pathname = '/agri/', hash = '', routine = false) {
     if (this.state.status === 'logging_out') return
-    const { generation, signal } = this.begin('loading')
+    if (routine && this.state.checking) return
+    const preserve = routine && this.state.status === 'ready' && this.snapshot !== null
+    const { generation, signal } = this.begin('loading', preserve)
     try {
       const requested = agricultureRoute(pathname, search, hash).workspaceId
       const user = userFrom(await request(this.fetcher, '/api/auth/session', signal))
@@ -112,7 +122,15 @@ export class SessionController {
       const workspaces = workspacesFrom(await request(this.fetcher, '/api/agriculture/workspaces', signal))
       const selected = requested === null ? null : workspaces.find((workspace) => workspace.id === requested)
       if (selected === undefined) throw new SessionError('WORKSPACE_FORBIDDEN', '该工作区不存在或当前账号无权访问。')
-      if (generation === this.generation) this.publish({ status: 'ready', user, workspaces, selected, error: null })
+      if (generation !== this.generation) return
+      const snapshot = authoritySnapshot(user, workspaces)
+      if (preserve && snapshot !== this.snapshot) {
+        this.invalidate()
+        await this.refresh(search, pathname, hash)
+        return
+      }
+      this.snapshot = snapshot
+      this.publish(preserve ? { ...this.state, checking: false } : { status: 'ready', user, workspaces, selected, error: null })
     } catch (error) {
       if (generation === this.generation) this.failure(error)
     } finally {
@@ -139,6 +157,6 @@ export class SessionController {
       if (generation === this.generation) clearTimeout(this.deadline)
     }
   }
-  invalidate() { ++this.generation; this.active?.abort(); clearTimeout(this.deadline); this.publish(empty('loading')) }
+  invalidate() { ++this.generation; this.snapshot = null; this.active?.abort(); clearTimeout(this.deadline); this.publish(empty('loading')) }
   dispose() { this.invalidate() }
 }

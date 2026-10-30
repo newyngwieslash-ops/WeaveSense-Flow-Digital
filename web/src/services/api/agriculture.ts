@@ -7,6 +7,7 @@ export interface AgricultureWorkspace {
     id: string; tenantId: string; name: string; slug: string; tenantName: string;
     tenantStatus: "active" | "disabled"; roles: string[];
     canManageMembers: boolean; canManageOrganization: boolean;
+    authorityFingerprint: string;
 }
 export interface AgricultureMember { userId: string; name: string; roles: string[]; status: MemberStatus; isOwner: boolean; canChangeRoles: boolean; assignableRoles: string[] }
 export interface AgricultureMembers { members: AgricultureMember[]; assignableRoles: string[] }
@@ -18,7 +19,7 @@ export function validateAgricultureWorkspaces(value: unknown): AgricultureWorksp
     for (const row of value) {
         if (!row || typeof row !== "object" || ![row.id, row.tenantId].every(id => typeof id === "string" && /^[A-Za-z0-9_-]{1,128}$/.test(id))
             || ![row.name, row.slug, row.tenantName].every(text => typeof text === "string" && text.length > 0 && text.length <= 256)
-            || !["active", "disabled"].includes(row.tenantStatus) || typeof row.canManageMembers !== "boolean" || typeof row.canManageOrganization !== "boolean"
+            || !["active", "disabled"].includes(row.tenantStatus) || typeof row.canManageMembers !== "boolean" || typeof row.canManageOrganization !== "boolean" || typeof row.authorityFingerprint !== 'string' || !/^[a-f0-9]{64}$/.test(row.authorityFingerprint)
             || !Array.isArray(row.roles) || row.roles.some((role: unknown) => !agricultureRoles.includes(role as AgricultureRole)) || new Set(row.roles).size !== row.roles.length || seen.has(row.id)) throw new Error("农业工作区返回格式异常。");
         seen.add(row.id);
     }

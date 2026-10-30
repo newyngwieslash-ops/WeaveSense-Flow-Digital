@@ -1,4 +1,5 @@
 import { agricultureAPI, canChangeAgricultureMemberRoles, type AgricultureInvite, type AgricultureMembers, type AgricultureWorkspace } from "@/services/api/agriculture";
+import { acquireBusinessActivity } from './routine-session';
 
 export interface OrganizationState {
     workspaces: AgricultureWorkspace[]; selectedId: string; members: AgricultureMembers | null;
@@ -7,6 +8,7 @@ export interface OrganizationState {
 export class OrganizationController {
     state: OrganizationState = { workspaces: [], selectedId: "", members: null, loading: false, busy: false, error: "", notice: "", invitation: null };
     onChange = (_: OrganizationState) => {};
+    onAuthorityProjection = (_: AgricultureWorkspace[]) => {};
     private generation = 0;
     private disposed = false;
     private request?: AbortController;
@@ -14,6 +16,22 @@ export class OrganizationController {
     constructor(private api = agricultureAPI, private key = () => crypto.randomUUID()) {}
     private update(change: Partial<OrganizationState>) { if (!this.disposed) { this.state = { ...this.state, ...change }; this.onChange(this.state); } }
     dispose() { this.disposed = true; this.generation++; this.request?.abort(); this.state = { ...this.state, invitation: null, members: null, workspaces: [] }; }
+    async reconcileMembers(signal: AbortSignal): Promise<boolean> {
+        // Do not supersede a write's one-time receipt or its own authoritative refresh.
+        if (this.disposed || this.state.busy || this.state.loading || !this.state.members || !this.state.selectedId) return false;
+        const generation = this.generation;
+        const members = await this.api.members(this.state.selectedId, signal);
+        if (signal.aborted || this.disposed || generation !== this.generation) return false;
+        if (!Array.isArray(members?.members) || !Array.isArray(members.assignableRoles)) throw new Error('成员权限返回格式异常。');
+        const previous = this.state.members!;
+        if (JSON.stringify(members) === JSON.stringify(previous)) return false;
+        const rows = members.members.map(row => {
+            const old = previous.members.find(value => value.userId === row.userId);
+            return old && JSON.stringify(old) === JSON.stringify(row) ? old : row;
+        });
+        this.update({ members: { ...members, members: rows } });
+        return true;
+    }
     async refresh(preferred = this.state.selectedId) {
         if (this.disposed) return;
         const generation = ++this.generation;
@@ -32,10 +50,15 @@ export class OrganizationController {
             }
         } catch (error) {
             if (generation === this.generation && !this.disposed) this.update({ members: null, workspaces: [], selectedId: "", error: error instanceof Error ? error.message : "读取失败，请重试。" });
-        } finally { if (generation === this.generation) this.update({ loading: false }); }
+        } finally { if (generation === this.generation && !this.disposed) {
+            if (!this.state.error) this.onAuthorityProjection(this.state.workspaces);
+            this.update({ loading: false });
+        } }
     }
     async mutate(action: () => Promise<unknown>, success: string, preferred?: string) {
         if (this.disposed || this.state.busy || this.state.loading) return false;
+        const release = acquireBusinessActivity();
+        if (!release) return false;
         const generation = this.generation;
         this.update({ busy: true, error: "", notice: "", invitation: null });
         try {
@@ -48,7 +71,7 @@ export class OrganizationController {
         } catch (error) {
             if (generation === this.generation) this.update({ members: null, workspaces: [], selectedId: "", error: error instanceof Error ? error.message : "操作失败，尚未确认完成。" });
             return false;
-        } finally { this.update({ busy: false }); }
+        } finally { this.update({ busy: false }); release(); }
     }
     create(name: string) {
         const normalized = name.trim();
@@ -65,10 +88,12 @@ export class OrganizationController {
     async invite(email: string, role: string) {
         const workspace = this.state.workspaces.find(w => w.id === this.state.selectedId);
         if (!workspace?.canManageMembers || !this.state.members?.assignableRoles.includes(role) || this.state.busy || this.state.loading || this.disposed) return;
+        const release = acquireBusinessActivity();
+        if (!release) return;
         const generation = this.generation;
         this.update({ busy: true, invitation: null, error: "", notice: "" });
         try { const invitation = await this.api.invite(workspace.id, email.trim(), role); if (generation === this.generation) this.update({ invitation }); }
         catch (error) { if (generation === this.generation) this.update({ members: null, workspaces: [], selectedId: "", error: error instanceof Error ? error.message : "邀请创建失败。" }); }
-        finally { this.update({ busy: false }); }
+        finally { this.update({ busy: false }); release(); }
     }
 }

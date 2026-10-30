@@ -27,9 +27,13 @@ func TestAgriculturePostgresRoleDowngradeRevokesPendingDelegation(t *testing.T) 
 	if err != nil {
 		t.Fatal("fixture organization creation failed")
 	}
+	ownerFingerprint := fingerprintFor(t, s, owner, org.Workspace.ID)
 	invite, err := s.CreateInvite(ctx, owner, org.Workspace.ID, actor+"@fixture.invalid", "editor")
 	if err != nil {
 		t.Fatal("fixture editor invitation failed")
+	}
+	if fingerprintFor(t, s, owner, org.Workspace.ID) != ownerFingerprint {
+		t.Fatal("invite audit changed unchanged owner's authority fingerprint")
 	}
 	if _, err := s.AcceptInvite(ctx, actor, invite.Token); err != nil {
 		t.Fatal("fixture editor admission failed")
@@ -88,8 +92,12 @@ func TestAgriculturePostgresRoleDowngradeRevokesPendingDelegation(t *testing.T) 
 		t.Fatal("initial current authority denied")
 	}
 	viewer := []string{"viewer"}
+	editorFingerprint := fingerprintFor(t, s, actor, org.Workspace.ID)
 	if err := s.ChangeMember(ctx, owner, org.Workspace.ID, actor, &viewer, nil); err != nil {
 		t.Fatal("editor downgrade failed")
+	}
+	if fingerprintFor(t, s, actor, org.Workspace.ID) == editorFingerprint {
+		t.Fatal("persisted role downgrade did not change authority fingerprint")
 	}
 	if _, err := s.Reauthorize(ctx, actor, decision); !errors.Is(err, ErrForbidden) {
 		t.Fatal("old editor decision retained write capability after downgrade")

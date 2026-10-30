@@ -17,7 +17,7 @@ onUnmounted(() => { unbind() })
 </script>
 
 <template>
-  <main :data-session-status="state.status">
+  <main :data-session-status="state.status" :data-authority-checking="!!state.checking">
     <header><a class="brand" href="/">WeaveSense · DigitalTwin</a><nav aria-label="产品导航"><a href="/">平台工作区</a><a href="/organization">组织与成员</a><a href="/agri/">农业工作台</a><a href="/agri/workspaces">农业工作区列表</a></nav></header>
     <p class="eyebrow">农业数字孪生 / 统一账号接入</p>
     <h1>农业工作台</h1>
@@ -27,7 +27,7 @@ onUnmounted(() => { unbind() })
     <section v-if="state.status === 'ready' && state.user">
       <h2>当前平台账号</h2><p data-testid="session-user" :data-user-id="state.user.id">{{ state.user.displayName }} · {{ state.user.username }}</p>
       <p class="muted">身份来自服务器会话。显示账号不代表已获得农业资源访问权限。</p>
-      <button type="button" data-testid="session-logout" @click="controller.logout()">退出统一账号</button>
+      <button type="button" data-testid="session-logout" :disabled="state.checking" @click="controller.logout()">退出统一账号</button>
       <h2>可访问的平台工作区</h2>
       <ul v-if="state.workspaces.length"><li v-for="workspace in state.workspaces" :key="workspace.id"><a :href="workspaceURL(workspace.id)" :aria-current="state.selected?.id === workspace.id ? 'page' : undefined">{{ workspace.name }}</a><span class="muted"> · {{ workspace.slug }}</span></li></ul>
       <p v-else>尚无可访问工作区，请在平台中创建或申请加入。</p>

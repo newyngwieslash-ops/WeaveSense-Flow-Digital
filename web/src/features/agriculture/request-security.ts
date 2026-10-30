@@ -1,5 +1,6 @@
 import type { AxiosInstance } from 'axios';
 import { publishSessionHint } from '../../../../contracts/agriculture/session-hints';
+import { isRoutineChecking } from './routine-session';
 
 // Installed only by the agriculture entry. Film's existing HTTP policy is unchanged.
 export function installAgricultureRequestSecurity(client: AxiosInstance, fetcher: typeof fetch = fetch) {
@@ -7,6 +8,7 @@ export function installAgricultureRequestSecurity(client: AxiosInstance, fetcher
     const requestId = client.interceptors.request.use(async config => {
         if (config.baseURL !== '/api' || !config.url?.startsWith('/') || config.url.startsWith('//')) throw new Error('农业请求必须使用同源平台接口。');
         if (!writing(config.method)) return config;
+        if (isRoutineChecking()) throw new Error('正在重新验证当前权限，请稍后操作。');
         const response = await fetcher('/api/auth/csrf', { credentials: 'same-origin', cache: 'no-store', redirect: 'error', signal: config.signal as AbortSignal, headers: { Accept: 'application/json' } });
         if (!response.ok) throw new Error('请求安全验证失败，请重新验证会话。');
         let envelope: unknown;

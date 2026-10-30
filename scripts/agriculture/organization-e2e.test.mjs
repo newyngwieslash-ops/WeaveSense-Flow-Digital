@@ -1,8 +1,62 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { runInNewContext } from "node:vm";
-import { routeClass, safeFailure, memberRoleDiagnostics } from "./organization-e2e.mjs";
+import { routeClass, safeFailure, memberRoleDiagnostics, revalidateThroughRealTabSwitch, observeRoutineRetention } from "./organization-e2e.mjs";
 import { navigationCommitted } from "./browser-navigation.mjs";
+
+test('routine retention requires a real cadence, fresh completed requests, and an unchanged document', async () => {
+    for (const fault of ['none', 'lost-draft', 'no-refresh', 'incomplete', 'reloaded', 'old-inflight-response']) {
+        let clock = 0, frames = 0;
+        const client = {
+            statuses: [],
+            requestSequence: () => 2,
+            async send(method) {
+                assert.equal(method, 'Page.getFrameTree');
+                return { frameTree: { frame: { id: 'frame', loaderId: fault === 'reloaded' && frames++ ? 'new' : 'old', url: 'http://127.0.0.1/organization' } } };
+            },
+            async evaluate() {
+                if (clock === 30000 && fault !== 'no-refresh') client.statuses.push(
+                    { path: '/api/auth/session', status: 200, completed: fault !== 'incomplete', startedSequence: fault === 'old-inflight-response' ? 1 : 3 },
+                    { path: '/api/agriculture/workspaces', status: 200, completed: fault !== 'incomplete', startedSequence: fault === 'old-inflight-response' ? 2 : 4 },
+                );
+                return !(fault === 'lost-draft' && clock >= 30000);
+            },
+        };
+        const run = () => observeRoutineRetention(client, 'private-fixture-token', 'private-fixture-draft', { now: () => clock, pause: async ms => { clock += ms; } });
+        if (fault === 'none') {
+            const result = await run();
+            assert.equal(result.elapsedMs, 35000);
+            assert.ok(result.samples > 300);
+            assert.equal(result.sameDocument, true);
+            assert.ok(!JSON.stringify(result).includes('private-fixture'));
+        } else await assert.rejects(run);
+    }
+});
+
+test('real tab switch requires observed hidden and visible states without a new loader', async () => {
+    for (const fault of ['none', 'never-hidden', 'reloaded']) {
+        let active = 'original', frameReads = 0;
+        const calls = [];
+        const client = {
+            async send(method, args) {
+                calls.push([method, args]);
+                if (method === 'Target.getTargetInfo') return { targetInfo: { targetId: 'original' } };
+                if (method === 'Page.getFrameTree') return { frameTree: { frame: { id: 'frame', loaderId: fault === 'reloaded' && frameReads++ ? 'new' : 'old', url: 'http://127.0.0.1/organization' } } };
+                if (method === 'Target.createTarget') return { targetId: 'alternate' };
+                if (method === 'Target.activateTarget') active = args.targetId;
+                return {};
+            },
+            async poll(expression) {
+                if (expression.includes("=== 'hidden'")) assert.ok(active === 'alternate' && fault !== 'never-hidden');
+                else assert.equal(active, 'original');
+            },
+        };
+        if (fault === 'none') assert.deepEqual(await revalidateThroughRealTabSwitch(client), { hiddenObserved: true, visibleObserved: true, sameDocument: true });
+        else await assert.rejects(revalidateThroughRealTabSwitch(client));
+        assert.equal(calls.at(-1)[0], 'Target.closeTarget');
+        assert.ok(!calls.some(([method]) => method === 'Page.navigate' || method === 'Page.reload' || method === 'Runtime.evaluate'));
+    }
+});
 
 test("diagnostic classes remove workspace and user identifiers", () => {
     assert.equal(routeClass("/api/agriculture/workspaces/private-id/members/private-user"), "agriculture_members");

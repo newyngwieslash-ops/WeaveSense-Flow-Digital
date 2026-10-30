@@ -3,7 +3,7 @@ import { agricultureAPI, validateAgricultureWorkspaces } from "../src/services/a
 import { http } from "../src/services/api/request";
 
 test("agriculture workspace contract rejects legacy projections and unknown role authority", () => {
-    const row = { id: "w", tenantId: "t", name: "Farm", slug: "default", tenantName: "Org", tenantStatus: "active", roles: ["billing_admin"], canManageMembers: false, canManageOrganization: false };
+    const row = { id: "w", tenantId: "t", name: "Farm", slug: "default", tenantName: "Org", tenantStatus: "active", roles: ["billing_admin"], canManageMembers: false, canManageOrganization: false, authorityFingerprint: 'a'.repeat(64) };
     expect(validateAgricultureWorkspaces([row])).toEqual([row]);
     expect(validateAgricultureWorkspaces([{ ...row, tenantStatus: "disabled", roles: [], canManageOrganization: true }])[0].tenantStatus).toBe("disabled");
     for (const bad of [null, [{ id: "old", name: "Film", slug: "default" }], [{ ...row, roles: ["owner"] }], [{ ...row, roles: ["viewer", "viewer"] }], [{ ...row, canManageMembers: "true" }], [row, row]]) expect(() => validateAgricultureWorkspaces(bad)).toThrow();

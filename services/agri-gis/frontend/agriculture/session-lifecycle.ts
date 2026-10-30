@@ -12,6 +12,7 @@ export function bindSessionLifecycle(
   pathname: () => string = () => '/agri/',
   hash: () => string = () => '',
   listenHints: (invalidate: () => void) => () => void = invalidate => typeof window === 'undefined' ? () => {} : subscribeSessionHints(invalidate),
+  clock: { setInterval: typeof setInterval; clearInterval: typeof clearInterval } = { setInterval, clearInterval },
 ): () => void {
   const refresh = () => {
     if (visibility() !== 'visible') { controller.invalidate(); return }
@@ -19,7 +20,7 @@ export function bindSessionLifecycle(
   }
   const visible = () => { refresh() }
   const unlisten = listenHints(() => { controller.invalidate(); refresh() })
-  const timer = setInterval(() => { if (visibility() === 'visible') refresh() }, SESSION_RECHECK_MS)
+  const timer = clock.setInterval(() => { if (visibility() === 'visible') void controller.refresh(search(), pathname(), hash(), true) }, SESSION_RECHECK_MS)
   windowEvents.addEventListener('focus', refresh)
   windowEvents.addEventListener('pageshow', refresh)
   windowEvents.addEventListener('popstate', refresh)
@@ -27,7 +28,7 @@ export function bindSessionLifecycle(
   documentEvents.addEventListener('visibilitychange', visible)
   refresh()
   return () => {
-    clearInterval(timer)
+    clock.clearInterval(timer)
     unlisten()
     windowEvents.removeEventListener('focus', refresh)
     windowEvents.removeEventListener('pageshow', refresh)

@@ -252,8 +252,8 @@ func RegisterRoutes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc) {
 			reply(c, http.StatusBadRequest, nil, "bad event")
 			return
 		}
-		if ev.TenantID != ctx.TenantID {
-			reply(c, http.StatusForbidden, nil, "tenant mismatch")
+		if ev.TenantID != ctx.TenantID || ev.WorkspaceID != ctx.WorkspaceID {
+			reply(c, http.StatusForbidden, nil, "tenant or workspace mismatch")
 			return
 		}
 		var applied bool

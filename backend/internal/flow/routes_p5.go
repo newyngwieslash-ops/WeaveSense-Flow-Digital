@@ -192,6 +192,10 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 			reply(c, http.StatusBadRequest, nil, "bad request")
 			return
 		}
+		if body.WorkspaceID != ctx.WorkspaceID {
+			reply(c, http.StatusForbidden, nil, "workspace mismatch")
+			return
+		}
 		if err := TenantTx(db, ctx.TenantID, func(tx *gorm.DB) error {
 			return AuthorizeGrant(tx, body.GrantActor, ctx.TenantID, body.WorkspaceID, body.Scope)
 		}); err != nil {
@@ -216,6 +220,10 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 		}
 		if err := json.NewDecoder(io.LimitReader(c.Request.Body, 1<<16)).Decode(&body); err != nil || body.Key == "" || body.AmountMicro <= 0 {
 			reply(c, http.StatusBadRequest, nil, "bad request")
+			return
+		}
+		if body.WorkspaceID != ctx.WorkspaceID {
+			reply(c, http.StatusForbidden, nil, "workspace mismatch")
 			return
 		}
 		var rsv model.FlowBudgetReservation
@@ -297,6 +305,10 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 		}
 		if err := json.NewDecoder(io.LimitReader(c.Request.Body, 4<<20)).Decode(&body); err != nil || body.Key == "" {
 			reply(c, http.StatusBadRequest, nil, "bad request")
+			return
+		}
+		if body.WorkspaceID != ctx.WorkspaceID {
+			reply(c, http.StatusForbidden, nil, "workspace mismatch")
 			return
 		}
 		if gw == nil {

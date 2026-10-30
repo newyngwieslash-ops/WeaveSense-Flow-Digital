@@ -127,6 +127,9 @@ func TestFlowPostgresCallbackAndLegacyAdmission(t *testing.T) {
 	if code, _ := request("", "/api/internal/flow/authorize", body, ""); code != 401 {
 		t.Fatal("unsigned callback admitted")
 	}
+	if code, _ := request("", "/api/internal/flow/authorize", body, sign(scope.TenantID, "wrong_workspace")); code != 403 {
+		t.Fatal("signed workspace restriction ignored")
+	}
 	// Actual ledger callback paths run with only the signed tenant, including
 	// nested transaction/savepoint behavior and cross-tenant close rejection.
 	fund(t, Billing{DB: owner}, alice, 10000)
@@ -150,6 +153,10 @@ func TestFlowPostgresCallbackAndLegacyAdmission(t *testing.T) {
 	}
 	event := Event{EventID: "event_" + suffix, OperationID: "op_" + suffix, JobID: "job_" + suffix, TenantID: scope.TenantID, WorkspaceID: scope.WorkspaceID, Sequence: 1, Type: "research.completed", OccurredAt: time.Now().UTC(), PayloadVersion: 1, Payload: json.RawMessage(`{"research_run_id":"fixture","status":"succeeded"}`)}
 	eventBytes, _ := json.Marshal(event)
+	if code, _ := request("", "/api/internal/flow/events", string(eventBytes), sign(scope.TenantID, "wrong_workspace")); code != 403 {
+		t.Fatal("event ignored signed workspace restriction")
+	}
+
 	if code, _ := request("", "/api/internal/flow/events", string(eventBytes), sign(scope.TenantID, scope.WorkspaceID)); code != 200 {
 		t.Fatalf("real event callback failed %d", code)
 	}

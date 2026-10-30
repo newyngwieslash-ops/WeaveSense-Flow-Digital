@@ -6,7 +6,7 @@ cd "$(dirname "$0")/../.."
 mkdir -p .local/evidence
 for report in membership-postgres membership-legacy-flow membership-bootstrap \
   membership-flow-scope membership-flow-admission membership-flow-workers \
-  membership-flow-continuations membership-edu-artifacts membership-edu-onboarding membership-flow-scanner; do
+  membership-flow-continuations membership-edu-artifacts membership-edu-onboarding membership-edu-ledger membership-flow-scanner; do
   printf '%s\n' '{"passed":false,"status":"not_run","data_class":"fixture"}' > ".local/evidence/$report.json"
 done
 command -v docker >/dev/null || { echo 'BLOCKED: Docker CLI is required' >&2; exit 2; }
@@ -153,6 +153,7 @@ run_scope_suite flow-workers ./internal/flow '^TestFlowPostgresWorkerShortTransa
 run_scope_suite flow-continuations ./internal/flow '^TestFlowPostgresWaitAndNotificationScopes$'
 run_scope_suite edu-artifacts ./internal/edumath '^TestEduPostgresSignedArtifactAdmission$'
 run_scope_suite edu-onboarding ./internal/edumath '^TestEduPostgresOnboardingAdmission$'
+run_scope_suite edu-ledger ./internal/edumath '^TestEduPostgresDailyLedgerPagination$'
 # Only this isolated drift-negative process receives fixture bootstrap authority;
 # it constructs/restores bad grants. No product service receives this credential.
 AGRI_TEST_PG_FIXTURE_BOOTSTRAP_DSN="postgres://postgres:$POSTGRES_PASSWORD@127.0.0.1:$port/flow_platform?sslmode=disable" \

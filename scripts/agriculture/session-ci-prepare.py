@@ -162,7 +162,6 @@ OVERLAY = (
     "scripts/agriculture/identity-ci-result.test.py",
     "scripts/agriculture/identity-chain-result.py",
     "scripts/agriculture/identity-chain-result.test.py",
-    "tests/agriculture/test_identity_chain_configuration.py",
     "scripts/agriculture/export-python-lock.py",
     "scripts/agriculture/python-test-requirements.txt",
     "deploy/agriculture/platform-identity.template.json",

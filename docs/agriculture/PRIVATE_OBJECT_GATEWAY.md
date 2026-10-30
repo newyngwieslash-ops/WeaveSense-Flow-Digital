@@ -55,7 +55,8 @@ canonical key：`tenants/{tenant}/workspaces/{workspace}/objects/{object}/v{vers
 ```sh
 python scripts/agriculture/native-postgres-test.py \
   --package-root .local/native-postgres-current/root \
-  --python .local/identity-rebuild/venv/bin/python --phase objects
+  --python .local/identity-rebuild/venv/bin/python --phase objects \
+  --go .local/toolchains/go/bin/go
 ```
 
-必需 PG 用例：`test_postgres_private_objects_scope_immutability`、`test_postgres_private_object_http_bytes_and_withdrawal`。验证真实相同 object ID 在另一 tenant/workspace 的独立行、无 scope/连接复用、runtime 写入拒绝、元数据不可变、权属/对象撤回、精确字节和 Range。实际结果与冻结源码哈希另存证据，不以本说明代替执行结果。
+必需 PG 用例：`test_postgres_private_objects_scope_immutability`、`test_postgres_private_object_http_bytes_and_withdrawal`、`test_real_go_python_object_gateway_chain`。最后一项执行真实平台会话入口、Go 授权与签发、Python 验签与 PG 清单/独立权属及实际文件，不用固定 actor 请求头替代会话；平台测试使用 SQLite，不能把它记为平台 PG 证明。验证真实相同 object ID 在另一 tenant/workspace 的独立行、无 scope/连接复用、runtime 写入拒绝、元数据不可变、权属/对象撤回、精确字节和 Range。实际结果与冻结源码哈希另存证据，不以本说明代替执行结果。

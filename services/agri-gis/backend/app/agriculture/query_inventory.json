@@ -7,18 +7,32 @@
     "app/agriculture/actor_session.py": "9a99b632f6dacb3c9dbd2a4a6e75a1c5391c13f35f1b8cd7ed7e40a86c46990f",
     "app/agriculture/actors.py": "4f8a5993160c7c53ae95cf1f9dd8abc1289ed2c052f391f3aa3456d83d692434",
     "app/agriculture/database.py": "559c70e1fd755fb332840984c5c48d448152a4ee7b5d7e3c1975134945c3985b",
-    "app/agriculture/domain_boundary.py": "f4fd69a6a9197654e73a51b48e2bbff7ef8202d50947767687765a165ba60938",
+    "app/agriculture/domain_boundary.py": "19cceb8b14476e628f037da3a662b12946a4db3361eb0cb6a1370eb49c294e6d",
     "app/agriculture/identity/__init__.py": "d03d955b9eb9e56df428f42184a344f127292c29553a6183c34bc19224217cf2",
     "app/agriculture/identity/callback.py": "fe99446e720f89e01147c55c8a0a47bfa57b613e5f75dd46ab4846bdeae83fee",
     "app/agriculture/identity/canonical.py": "bd09a9c7fcdd20a783d09abd122f9c268c7e7f01a70a7d75f30d5d538b61c1d2",
-    "app/agriculture/identity/config.py": "fb8dd7c7998c5c16ed15ed30843f271c0a4d398db4ace2688da89700c409cb56",
-    "app/agriculture/identity/dependency.py": "ad25e7bc5729dadefeef0991eed177680c8b1851d378fa7ee36ad36a69919ccc",
+    "app/agriculture/identity/config.py": "205365a9257c49e9acd78ad454cb32e909005866e4236d1877a61fe43e26dafd",
+    "app/agriculture/identity/dependency.py": "dafb3f0ac731f00d58f14963cf35d123c3b1219f4a209bcdb2db73c03eb75a21",
     "app/agriculture/identity/keys.py": "3153d9b0ef99dc38cdd8d124d090dcdfc74cebca735f22a4b5e9b0de44905f2e",
     "app/agriculture/identity/providers.py": "bc4953cfeeb7c28b7531a00c8297f2b3961126c5787241a04e96769f4b37c6af",
     "app/agriculture/identity/replay.py": "4d8cd1af86f6260602860f2635859e8cba83f5b69e7c53138dae18724a326f1d",
-    "app/agriculture/identity/verify.py": "45af0835ccac582e88b8a2c555c64b4cdb71ef0f9fde6362add90ddace630277",
-    "app/agriculture/main.py": "0b45a09af8dc7609f55356a89da79d623f7cc346efca0de78f9a3b6507fe4d4d",
-    "app/agriculture/migrate.py": "da43a4ff8d4df896d38e1fbcf08450f501dc06dac19c7689148eec599d1836ba",
+    "app/agriculture/identity/verify.py": "75a467a36fc34dd3599c352b95835d988b895cea53ea361ddf99475c36d026cf",
+    "app/agriculture/ingestion/__init__.py": "d01c018733658b4ad68b33339d255db9d6d2d898cc53460aaa16c890c9551b26",
+    "app/agriculture/ingestion/archive.py": "50b85959d2a00b0f640749b32591a2cad93d761df8108fa241990835072f970b",
+    "app/agriculture/ingestion/download.py": "c7a06716a4bde8799601df91282bff1027a329b4165adc4278ad96e792c99409",
+    "app/agriculture/ingestion/limits.py": "5eab552bbff53366d8de5fec7e56f6b8b65ee5ef3f9f7bf95cbda55568585713",
+    "app/agriculture/ingestion/runner.py": "31a0c1c1e9f7b41eb4ff65c3be71bcad2194509aac47656ecf94c551a1a8582b",
+    "app/agriculture/ingestion/source_policy.py": "0ae55b1e2cd30661bac0f87e4ece2d5768bccbdd1f78d076c09db26c786f3871",
+    "app/agriculture/ingestion/worker.py": "906456b43b10f8750cfd2d058e8f7a2225e102847dad0742e13380eb49789441",
+    "app/agriculture/job_authority.py": "64ef9b9b7446bb531171ed55bf04332edd1307fc34c083b2814177ec4d5f8d72",
+    "app/agriculture/job_callback.py": "a601ea65b51f71ee323b012ef28e16cbfb609b9b9fc25783cdabef920315fb29",
+    "app/agriculture/job_routes.py": "54b012c541daf9e13a094991961804f7a3f6eeb0ae8b9efaf016a34f9d69468f",
+    "app/agriculture/job_store.py": "f56f5eb9d3aa09b834fed9d0dc6fffe6b4ae8f7c14a42fbfba5b118ec30a3ba4",
+    "app/agriculture/main.py": "f33b42d48c3587fb08fa4e5d70db489352510a2252e011a629e9214e048dae89",
+    "app/agriculture/migrate.py": "9cc72565396553b807d3ff8f227ed662f6d3b35b5b4969d490993a8479443d93",
+    "app/agriculture/object_gateway.py": "b5d8b72cb79b7aa2128bb9081f4564e20e82c13003ad0661f946ead6e7525be5",
+    "app/agriculture/object_storage.py": "f3669f51d8bc3649ddc19588dc6daf409f046472f4bb5a7641c3968eecb46461",
+    "app/agriculture/object_store.py": "92a5ecbde7ad50b2f043609e84e6e0ac33aaf4a40d265703e052a3a0a3209077",
     "app/agriculture/operation_authorization.py": "88037f6e7fd71fbc80c9fb41533861c51d692669996abe274bd06f4606bfa83a",
     "app/agriculture/query_scope.py": "5a7d3e9b04e7cf151fd0d59d2af97b490b327852e538eecc7b84c7365b437097",
     "app/api/__init__.py": "76d6a9fe009585ffd61a5837295cb2f74ff3fca589ca70f4bc3c9847a7ec138a",
@@ -353,12 +367,12 @@
     {
       "path": "app/agriculture/identity/dependency.py",
       "function": "verify_request",
-      "line": 30,
-      "sha256": "ad25e7bc5729dadefeef0991eed177680c8b1851d378fa7ee36ad36a69919ccc",
+      "line": 32,
+      "sha256": "dafb3f0ac731f00d58f14963cf35d123c3b1219f4a209bcdb2db73c03eb75a21",
       "boundary": "explicit_identity_owner_or_internal_boundary_review",
       "calls": [
         {
-          "line": 46,
+          "line": 48,
           "receiver": "request",
           "method": "stream"
         }
@@ -379,39 +393,95 @@
       ]
     },
     {
-      "path": "app/agriculture/migrate.py",
-      "function": "validate_legacy_schema",
-      "line": 80,
-      "sha256": "da43a4ff8d4df896d38e1fbcf08450f501dc06dac19c7689148eec599d1836ba",
+      "path": "app/agriculture/job_callback.py",
+      "function": "check",
+      "line": 22,
+      "sha256": "a601ea65b51f71ee323b012ef28e16cbfb609b9b9fc25783cdabef920315fb29",
       "boundary": "explicit_identity_owner_or_internal_boundary_review",
       "calls": [
         {
-          "line": 155,
+          "line": 71,
+          "receiver": "self.client",
+          "method": "stream"
+        }
+      ]
+    },
+    {
+      "path": "app/agriculture/job_store.py",
+      "function": "_scope",
+      "line": 41,
+      "sha256": "f56f5eb9d3aa09b834fed9d0dc6fffe6b4ae8f7c14a42fbfba5b118ec30a3ba4",
+      "boundary": "explicit_identity_owner_or_internal_boundary_review",
+      "calls": [
+        {
+          "line": 47,
+          "receiver": "connection",
+          "method": "execute"
+        }
+      ]
+    },
+    {
+      "path": "app/agriculture/job_store.py",
+      "function": "insert",
+      "line": 54,
+      "sha256": "f56f5eb9d3aa09b834fed9d0dc6fffe6b4ae8f7c14a42fbfba5b118ec30a3ba4",
+      "boundary": "explicit_identity_owner_or_internal_boundary_review",
+      "calls": [
+        {
+          "line": 61,
+          "receiver": "connection",
+          "method": "execute"
+        }
+      ]
+    },
+    {
+      "path": "app/agriculture/job_store.py",
+      "function": "record",
+      "line": 107,
+      "sha256": "f56f5eb9d3aa09b834fed9d0dc6fffe6b4ae8f7c14a42fbfba5b118ec30a3ba4",
+      "boundary": "explicit_identity_owner_or_internal_boundary_review",
+      "calls": [
+        {
+          "line": 116,
+          "receiver": "connection",
+          "method": "execute"
+        }
+      ]
+    },
+    {
+      "path": "app/agriculture/migrate.py",
+      "function": "validate_legacy_schema",
+      "line": 82,
+      "sha256": "9cc72565396553b807d3ff8f227ed662f6d3b35b5b4969d490993a8479443d93",
+      "boundary": "explicit_identity_owner_or_internal_boundary_review",
+      "calls": [
+        {
+          "line": 157,
           "receiver": "connection",
           "method": "execute"
         },
         {
-          "line": 184,
+          "line": 186,
           "receiver": "connection",
           "method": "execute"
         },
         {
-          "line": 193,
+          "line": 195,
           "receiver": "connection.execute(text(\"SELECT pg_get_constraintdef(oid,true) FROM pg_catalog.pg_constraint WHERE conrelid=to_regclass(:name) AND contype='c'\"), {'name': 'pg_temp.' + probe})",
           "method": "scalars"
         },
         {
-          "line": 193,
+          "line": 195,
           "receiver": "connection",
           "method": "execute"
         },
         {
-          "line": 205,
+          "line": 207,
           "receiver": "connection.execute(text(\"SELECT pg_get_constraintdef(oid,true) FROM pg_catalog.pg_constraint WHERE conrelid=to_regclass(:name) AND contype='c'\"), {'name': 'public.' + name})",
           "method": "scalars"
         },
         {
-          "line": 205,
+          "line": 207,
           "receiver": "connection",
           "method": "execute"
         }
@@ -420,33 +490,47 @@
     {
       "path": "app/agriculture/migrate.py",
       "function": "migrate_schema",
-      "line": 221,
-      "sha256": "da43a4ff8d4df896d38e1fbcf08450f501dc06dac19c7689148eec599d1836ba",
+      "line": 223,
+      "sha256": "9cc72565396553b807d3ff8f227ed662f6d3b35b5b4969d490993a8479443d93",
       "boundary": "explicit_identity_owner_or_internal_boundary_review",
       "calls": [
         {
-          "line": 246,
+          "line": 248,
           "receiver": "raw",
           "method": "execute"
         },
         {
-          "line": 249,
+          "line": 251,
           "receiver": "raw",
           "method": "execute"
         },
         {
-          "line": 270,
+          "line": 272,
           "receiver": "raw",
           "method": "execute"
         },
         {
-          "line": 289,
+          "line": 291,
           "receiver": "raw",
           "method": "execute"
         },
         {
-          "line": 290,
+          "line": 292,
           "receiver": "raw",
+          "method": "execute"
+        }
+      ]
+    },
+    {
+      "path": "app/agriculture/object_store.py",
+      "function": "get",
+      "line": 63,
+      "sha256": "92a5ecbde7ad50b2f043609e84e6e0ac33aaf4a40d265703e052a3a0a3209077",
+      "boundary": "explicit_identity_owner_or_internal_boundary_review",
+      "calls": [
+        {
+          "line": 71,
+          "receiver": "connection",
           "method": "execute"
         }
       ]

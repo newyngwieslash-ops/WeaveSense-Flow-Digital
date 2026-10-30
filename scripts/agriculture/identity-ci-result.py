@@ -20,6 +20,7 @@ ACTOR_PG_REQUIRED = {
     "test_postgres_real_workbench_audit_failure_rolls_back",
     "test_postgres_runtime_factory_role_admission",
     "test_postgres_runtime_scope_pool_reuse_and_rollback",
+    "test_postgres_worker_factory_admission_without_business_privileges",
 }
 PYTHON_MODULES = {
     "test_agriculture_identity", "test_agriculture_identity_postgres", "test_identity_canonical"

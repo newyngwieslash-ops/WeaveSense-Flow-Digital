@@ -1,4 +1,5 @@
 import { expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
 import axios, { AxiosError } from 'axios';
 import { installAgricultureRequestSecurity } from '../src/features/agriculture/request-security';
 import { publishSessionHint, SESSION_HINT_KEY, subscribeSessionHints, validSessionHint } from '../../contracts/agriculture/session-hints';
@@ -8,6 +9,15 @@ import { useUserStore } from '../src/stores/use-user-store';
 import { ConfirmationScope } from '../src/features/agriculture/confirmation-scope';
 import { authoritySnapshot } from '../../contracts/agriculture/authority-snapshot';
 import { acceptDisplayedAuthority, clearDisplayedAuthority, currentProjectionGeneration, displayedAuthority, needsSessionBootstrap, setRoutineChecking } from '../src/features/agriculture/routine-session';
+
+test('protected confirmation holder is page-owned and structurally unmounted during revalidation', () => {
+    // Architecture regression only; real portal lifetime is asserted by browser CI.
+    const page = readFileSync(new URL('../src/features/agriculture/organization.tsx', import.meta.url), 'utf8');
+    expect(page).toContain('const [modal, modalHolder] = Modal.useModal()');
+    expect(page).toContain('{!checking && modalHolder}');
+    expect(page).not.toContain('App.useApp()');
+    expect(page).not.toContain('destroyAll');
+});
 
 test('trusted apply actor notification does not bootstrap twice; hard invalidation and external actors still do', () => {
     expect(needsSessionBootstrap(null, undefined, undefined)).toBe(true);

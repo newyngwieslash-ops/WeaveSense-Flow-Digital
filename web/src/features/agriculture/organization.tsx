@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Alert, App, Button, Card, Input, Select, Space, Tag } from "antd";
+import { Alert, Button, Card, Input, Modal, Select, Space, Tag } from "antd";
 import { Link, useSearchParams } from "react-router";
 import { agricultureAPI, assignableAgricultureRoles, canChangeAgricultureMemberRoles, type AgricultureMember } from "@/services/api/agriculture";
 import { useUserStore } from "@/stores/use-user-store";
@@ -29,7 +29,9 @@ export default function OrganizationPage() {
     const checking = useRoutineChecking();
     const [params] = useSearchParams();
     const preferred = params.get("workspace_id") ?? "";
-    const { modal } = App.useApp();
+    // The holder belongs to this protected page, not the longer-lived App shell.
+    // Unmount removes its portal even while a closing animation is in progress.
+    const [modal, modalHolder] = Modal.useModal();
     const confirmations = useRef(new ConfirmationScope());
     const [controller, setController] = useState<OrganizationController | null>(null);
     const [state, setState] = useState<OrganizationState | null>(null);
@@ -71,6 +73,7 @@ export default function OrganizationPage() {
         confirm("修改成员角色？", `${selected.tenantName} / ${selected.name}：${member.name || member.userId}；${member.roles.map(roleLabel).join("、") || "无业务角色"} → ${roles.map(roleLabel).join("、") || "撤销全部业务角色"}。${member.isOwner ? "只调整自己的业务角色，不改变所有者身份或组织治理权。" : "治理角色会影响组织成员管理；"}农业内容仍需独立资源授权。`, () => controller.changeRoles(id, member.userId, roles));
     };
     return <main className="agri-profile" data-testid="organization-management" data-authority-checking={checking}>
+        {!checking && modalHolder}
         <header><h1>组织与成员</h1><Link to="/">返回平台工作区</Link></header>
         <p>使用当前平台账号。这里只管理组织关系与角色，不授予未经验证的农场内容访问权。</p>
         {state?.error && <Alert type="error" role="alert" title="操作未完成" description={state.error} action={<Button disabled={state.busy} onClick={() => void controller?.refresh()}>重新读取权限</Button>} />}

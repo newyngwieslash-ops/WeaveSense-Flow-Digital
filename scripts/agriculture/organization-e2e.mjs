@@ -366,8 +366,12 @@ async function main() {
         report.stage = 'routine_invitation_and_draft_retention';
         const unsavedDraft = 'Unsubmitted organization draft';
         await a.fill(selector('org-create-name'), unsavedDraft, 'unsaved organization draft');
+        await click(a, selector('org-invite-revoke'));
+        await a.poll("!!document.querySelector('[data-testid=org-confirm]')", 'unsubmitted invitation revocation preview');
+        check(true, 'routine_confirmation_prepared_without_submission');
         report.routine_retention = await observeRoutineRetention(a, token, unsavedDraft);
         check(true, 'production_30_second_refresh_preserves_unchanged_invitation_and_draft');
+        check(await a.evaluate("document.querySelector('[data-testid=organization-management]')?.dataset.authorityChecking === 'false' && !document.querySelector('[data-testid=org-confirm]') && !document.querySelector('[data-testid=org-cancel]')"), 'routine_resume_does_not_restore_old_confirmation_portal');
         check(await accept(token) === 200, "manual_invite_real_ui_acceptance");
         check((await list(cookieB)).some(x => x.id === orgA.id), "accepted_membership_visible_to_original_session");
         check(await accept(token) === 400, "replayed_invite_real_ui_http_400");

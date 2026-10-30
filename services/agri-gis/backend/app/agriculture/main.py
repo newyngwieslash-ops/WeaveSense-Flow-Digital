@@ -18,6 +18,7 @@ from .identity.verify import (
     require,
     resource_refs,
 )
+from .object_gateway import register_object_routes
 
 
 def create_app(services: IdentityServices | None = None) -> FastAPI:
@@ -99,6 +100,7 @@ def create_app(services: IdentityServices | None = None) -> FastAPI:
             {"resources": result}, headers={"Cache-Control": "no-store"}
         )
 
+    register_object_routes(app)
     return app
 
 

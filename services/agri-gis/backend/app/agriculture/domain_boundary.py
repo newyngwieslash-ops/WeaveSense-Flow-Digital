@@ -33,6 +33,7 @@ IDENTITY_TABLES = frozenset(
 )
 OWNERSHIP_TABLE = "agriculture_legacy_plot_ownership"
 REFERENCE_TABLE = "agriculture_legacy_resource_references"
+OBJECT_TABLE = "agriculture_private_objects"
 
 
 def actual_model_inventory():
@@ -74,7 +75,9 @@ async def require_domain_boundary(connection, role="flow_geo_app"):
             raise ValueError("domain runtime role mismatch")
         validate_model_inventory()
         expected = sorted(
-            LEGACY_TABLES | IDENTITY_TABLES | {OWNERSHIP_TABLE, REFERENCE_TABLE}
+            LEGACY_TABLES
+            | IDENTITY_TABLES
+            | {OWNERSHIP_TABLE, REFERENCE_TABLE, OBJECT_TABLE}
         )
         rows = await connection.fetch(
             "SELECT c.relname,c.relrowsecurity,c.relforcerowsecurity,"
@@ -115,7 +118,7 @@ async def require_domain_boundary(connection, role="flow_geo_app"):
                     False,
                 ):
                     raise ValueError("domain privilege boundary mismatch")
-            if name in {OWNERSHIP_TABLE, REFERENCE_TABLE} and (
+            if name in {OWNERSHIP_TABLE, REFERENCE_TABLE, OBJECT_TABLE} and (
                 not row["can_read"]
                 or row["can_insert"]
                 or row["can_update"]

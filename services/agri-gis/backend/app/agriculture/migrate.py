@@ -21,6 +21,7 @@ MIGRATIONS = (
     "20261029_agriculture_identity_replay.sql",
     "20261030_agriculture_domain_rls.sql",
     "20261030_agriculture_query_scope.sql",
+    "20261030_agriculture_private_objects.sql",
 )
 LEDGER = "agriculture_schema_migrations"
 ROLE_CHECK = """

@@ -25,6 +25,8 @@ class IdentityServices:
     ownership: OwnershipProvider | None = None
     authority: AuthorityProvider | None = None
     replay: ReplayLedger | None = None
+    object_store: object | None = None
+    object_storage: object | None = None
 
 
 async def verify_request(request: Request, typ: str, action: str) -> Verified:
@@ -81,6 +83,8 @@ def delegation_dependency(action: str, resource_extractor):
             actual = resource_refs(
                 sorted(actual, key=lambda ref: (ref["kind"], ref["id"]))
             )
+        except IdentityError:
+            raise
         except Exception:
             raise IdentityError("invalid_route_resources", 400) from None
         require(actual == c["resource_scope"], "request_scope_mismatch", 403)

@@ -10,6 +10,8 @@ import httpx
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from ..database import create_runtime_pool
+from ..object_storage import PrivateLocalStorage
+from ..object_store import PostgresObjectStore
 from .callback import CallbackKey, PlatformAuthority
 from .dependency import IdentityServices
 from .keys import KeyRing, utc_second
@@ -64,12 +66,22 @@ async def configured_services():
             if dsn:
                 pool = await create_runtime_pool(dsn)
                 await PostgresReplayLedger(pool).require_safe_runtime()
+            object_store = object_storage = None
+            object_root = os.environ.get("AGRI_PRIVATE_OBJECT_ROOT")
+            if object_root:
+                if pool is None:
+                    raise ValueError("private object database required")
+                object_store = PostgresObjectStore(pool)
+                await object_store.require_ready()
+                object_storage = PrivateLocalStorage(object_root)
             # Real GIS ownership is intentionally unconfigured until its domain
             # provider exists; neither config nor environment can select a fixture.
             yield IdentityServices(
                 Verifier(ring),
                 authority=authority,
                 replay=PostgresReplayLedger(pool) if pool else None,
+                object_store=object_store,
+                object_storage=object_storage,
             )
         except Exception:
             raise RuntimeError(

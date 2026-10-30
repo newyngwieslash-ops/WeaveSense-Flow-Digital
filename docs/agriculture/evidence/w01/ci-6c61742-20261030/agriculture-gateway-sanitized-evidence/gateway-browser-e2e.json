@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0",
+  "result": "fail",
+  "stage": "deep_link_authentication",
+  "command": "node scripts/agriculture/gateway-browser-e2e.mjs",
+  "results": [
+    {
+      "name": "production_nginx_configuration_valid",
+      "result": "pass"
+    },
+    {
+      "name": "anonymous_api_denied",
+      "result": "pass"
+    },
+    {
+      "name": "reserved_local_fixture_registration",
+      "result": "pass"
+    },
+    {
+      "name": "actual_authorized_workspace_created",
+      "result": "pass"
+    },
+    {
+      "name": "same_origin_write_without_csrf_rejected",
+      "result": "pass"
+    },
+    {
+      "name": "cross_site_write_with_valid_csrf_rejected",
+      "result": "pass"
+    }
+  ],
+  "limitations": [
+    "Local SQLite fixture is not PostgreSQL RLS or live farm acceptance",
+    "No external email, provider, payment or deployment",
+    "Browser sandbox remains enabled; unsupported environment fails, never substitutes a mocked browser"
+  ],
+  "artifact_hashes": {
+    "backend": "ecadaefdff6314c517ca7439fbe75711c19885704808ee95d3af1f64050c0192",
+    "nginx_template": "30a1b2fce7e5ec7eedb38d9bd5b8d459ee7bf850970da370631585a2d7b17782",
+    "react_index": "5f2133901f15916ce34446e33501a797435a57f1b94bd3039735eafc4006a7ee",
+    "vue_index": "8c0ab4edc6cb049a5f0d1d9f321f7330953e7f92d1288c0f9fd7f3ff16518e40"
+  },
+  "checkout_head": "",
+  "source_commit": "6c617424a1869b845ccc64ef9552f947856c86c9",
+  "working_tree_changes_included": false,
+  "ci_provenance_sha256": "f9e055e6da69ae901e6982dff874c4a843a4b98be1f9ea0437e6c41759c91346",
+  "failure": "gateway browser step unavailable or failed; raw diagnostics withheld"
+}

@@ -51,7 +51,7 @@ WHERE n.nspname='public' AND c.relname IN
             verified.claims["workspace_id"],
         )
 
-    async def insert(self, verified, snapshot, digest):
+    async def insert(self, verified, snapshot, digest, current_until):
         match_snapshot(verified, snapshot)
         raw = snapshot_bytes(snapshot)
         require(hashlib.sha256(raw).hexdigest() == digest, "job_scope_mismatch", 403)
@@ -78,7 +78,7 @@ WHERE n.nspname='public' AND c.relname IN
                 require(existing == digest, "job_snapshot_conflict", 409)
                 # A lock wait must not turn an expired request into a commit.
                 require(
-                    verified.expires_at > datetime.now(UTC),
+                    min(verified.expires_at, current_until) > datetime.now(UTC),
                     "expired_job_identity",
                     401,
                 )

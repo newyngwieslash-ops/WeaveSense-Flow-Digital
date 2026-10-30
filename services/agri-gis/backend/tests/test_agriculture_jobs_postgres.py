@@ -42,11 +42,13 @@ def test_postgres_job_sidecar_scope_immutable_and_worker_privileges():
                 "tenant_" + uuid4().hex, "workspace_" + uuid4().hex
             )
             digest = hashlib.sha256(snapshot_bytes(snapshot)).hexdigest()
-            await store.insert(verified, snapshot, digest)
-            await store.insert(verified, snapshot, digest)
+            await store.insert(verified, snapshot, digest, verified.expires_at)
+            await store.insert(verified, snapshot, digest, verified.expires_at)
             assert await worker_store.get(verified, snapshot["job_id"]) == snapshot
             with pytest.raises(asyncpg.InsufficientPrivilegeError):
-                await worker_store.insert(verified, snapshot, digest)
+                await worker_store.insert(
+                    verified, snapshot, digest, verified.expires_at
+                )
             other = copy.deepcopy(verified.claims)
             other["tenant_id"] = "tenant_foreign"
             with pytest.raises(IdentityError):
@@ -85,6 +87,7 @@ def test_postgres_job_sidecar_scope_immutable_and_worker_privileges():
                     verified,
                     changed,
                     hashlib.sha256(snapshot_bytes(changed)).hexdigest(),
+                    verified.expires_at,
                 )
             assert conflict.value.status == 409
             # Genuine PostgreSQL lock wait crosses the short identity deadline.
@@ -103,6 +106,7 @@ def test_postgres_job_sidecar_scope_immutable_and_worker_privileges():
                         short,
                         delayed,
                         hashlib.sha256(snapshot_bytes(delayed)).hexdigest(),
+                        short.expires_at,
                     )
                 )
                 await asyncio.sleep(0.03)

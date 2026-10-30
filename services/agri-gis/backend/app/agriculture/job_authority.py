@@ -201,8 +201,10 @@ class JobAuthority:
             403,
         )
         # Network finishes before opening the append-only DB transaction.
-        await self.callback.check(snapshot, digest, "claim")
-        await self.store.insert(verified, snapshot, digest)
+        current = await self.callback.check(snapshot, digest, "claim")
+        await self.store.insert(
+            verified, snapshot, digest, utc_second(current["valid_until"])
+        )
         return {"job_id": snapshot["job_id"], "snapshot_hash": digest}
 
     async def checkpoint(self, verified: Verified):

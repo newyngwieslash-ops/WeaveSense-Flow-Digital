@@ -42,5 +42,6 @@
     }
   ],
   "signed_browser_chain_after_domain": "not_run_pending_remote_approval",
-  "dt017_done": false
+  "task_completion_not_assessed_by_report": true,
+  "task_status_reference": "specs/agriculture/v1.0.0/tasks.json; task completion is an independent original-criteria review, not a report assertion"
 }

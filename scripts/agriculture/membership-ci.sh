@@ -4,7 +4,9 @@ set -euo pipefail
 set +x
 cd "$(dirname "$0")/../.."
 mkdir -p .local/evidence
-for report in membership-postgres membership-legacy-flow membership-bootstrap; do
+for report in membership-postgres membership-legacy-flow membership-bootstrap \
+  membership-flow-scope membership-flow-admission membership-flow-workers \
+  membership-flow-continuations membership-edu-artifacts membership-edu-onboarding membership-flow-scanner; do
   printf '%s\n' '{"passed":false,"status":"not_run","data_class":"fixture"}' > ".local/evidence/$report.json"
 done
 command -v docker >/dev/null || { echo 'BLOCKED: Docker CLI is required' >&2; exit 2; }

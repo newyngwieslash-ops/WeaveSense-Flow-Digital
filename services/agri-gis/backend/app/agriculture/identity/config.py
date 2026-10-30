@@ -6,10 +6,10 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-import asyncpg
 import httpx
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
+from ..database import create_runtime_pool
 from .callback import CallbackKey, PlatformAuthority
 from .dependency import IdentityServices
 from .keys import KeyRing, utc_second
@@ -62,7 +62,7 @@ async def configured_services():
             authority = PlatformAuthority(config["platform_base_url"], key, client)
             dsn = os.environ.get("AGRI_GEO_DATABASE_URL")
             if dsn:
-                pool = await asyncpg.create_pool(dsn, min_size=1, max_size=5, timeout=3)
+                pool = await create_runtime_pool(dsn)
                 await PostgresReplayLedger(pool).require_safe_runtime()
             # Real GIS ownership is intentionally unconfigured until its domain
             # provider exists; neither config nor environment can select a fixture.

@@ -16,6 +16,71 @@ import uuid
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def build_progress(stdout=None, stderr=None):
+    """Bounded structural evidence only, never commands or BuildKit error text.
+
+    Stage names match Dockerfile.web (its unnamed final stage is stage-2).
+    Unknown lines are discarded. This describes observed progress, not success.
+    """
+    events = []
+    truncated = False
+    for raw in (stdout, stderr):
+        if raw is None:
+            continue
+        if isinstance(raw, str):
+            raw = raw.encode("utf-8")
+        truncated |= len(raw) > 262144
+        tail = raw[-262144:]
+        if len(raw) > len(tail):
+            # Do not interpret a partial first line as a real progress record.
+            tail = tail.partition(b"\n")[2]
+        for line in tail.splitlines():
+            if len(line) > 4096:
+                continue
+            text = line.decode("ascii", errors="replace")
+            step = re.match(
+                r"^#([1-9][0-9]{0,3}) \[(bun|build|stage-2) "
+                r"([1-9][0-9]{0,2})/([1-9][0-9]{0,2})\] "
+                r"(FROM|RUN|COPY|WORKDIR|ENV|USER|EXPOSE|ENTRYPOINT|HEALTHCHECK)(?: |$)",
+                text,
+            )
+            status = re.fullmatch(
+                r"#([1-9][0-9]{0,3}) (DONE|CACHED|CANCELED)"
+                r"(?: ([0-9]{1,5}(?:\.[0-9]{1,3})?)s)?", text
+            )
+            internal = re.match(
+                r"^#([1-9][0-9]{0,3}) \[internal\] "
+                r"(load build definition from|load metadata for|load build context|load \.dockerignore)(?: |$)",
+                text,
+            )
+            if step:
+                number, stage, index, total, operation = step.groups()
+                if int(index) > int(total):
+                    continue
+                events.append({"step_id": int(number), "stage": stage,
+                               "index": int(index), "total": int(total),
+                               "operation": operation})
+            elif internal:
+                number, operation = internal.groups()
+                events.append({"step_id": int(number), "stage": "internal",
+                               "operation": {
+                                   "load build definition from": "LOAD_DEFINITION",
+                                   "load metadata for": "LOAD_METADATA",
+                                   "load build context": "LOAD_CONTEXT",
+                                   "load .dockerignore": "LOAD_IGNORE",
+                               }[operation]})
+            elif status:
+                number, state, elapsed = status.groups()
+                event = {"step_id": int(number), "status": state}
+                if elapsed is not None:
+                    event["elapsed_seconds"] = float(elapsed)
+                events.append(event)
+            if len(events) > 128:
+                events.pop(0)
+                truncated = True
+    return {"events": events, "truncated": truncated}
+
+
 def command(*args, timeout=60):
     return subprocess.run(
         args, cwd=ROOT, capture_output=True, timeout=timeout, check=True
@@ -70,6 +135,7 @@ def main():
         result = command(
             "docker",
             "build",
+            "--progress=plain",
             "--file",
             "deploy/agriculture/Dockerfile.web",
             "--tag",
@@ -80,6 +146,7 @@ def main():
         report["build_log_sha256"] = hashlib.sha256(
             result.stdout + result.stderr
         ).hexdigest()
+        report["build_progress"] = build_progress(result.stdout, result.stderr)
         report["image_id"] = (
             command("docker", "image", "inspect", "--format", "{{.Id}}", tag)
             .stdout.decode()
@@ -159,6 +226,10 @@ def main():
         success = True
     except Exception as error:
         report["failure"] = {"phase": phase, "type": type(error).__name__}
+        if phase == "build" and isinstance(
+            error, (subprocess.TimeoutExpired, subprocess.CalledProcessError)
+        ):
+            report["build_progress"] = build_progress(error.stdout, error.stderr)
         if isinstance(error, subprocess.CalledProcessError):
             report["failure"]["exit_code"] = error.returncode
         # Never upload captured container/build output or response bodies.

@@ -99,6 +99,13 @@ async def prepare(owner_dsn, identity=None):
 @pytest.mark.asyncio
 async def test_postgres_actor_mapping_strict_scope_and_atomic_audit():
     owner_dsn, runtime_dsn = pg_config()
+    probe = await asyncpg.connect(owner_dsn)
+    try:
+        assert await probe.fetchval(
+            "SELECT to_regclass('public.agriculture_legacy_plot_ownership') IS NULL"
+        ), "DT013 synthetic ProjectUser-write evidence requires a fresh pre-domain stage"
+    finally:
+        await probe.close()
     owner, tenant, workspace, actor, project, member = await prepare(owner_dsn)
     runtime = await asyncpg.connect(runtime_dsn)
     engine = engine_for(runtime_dsn)

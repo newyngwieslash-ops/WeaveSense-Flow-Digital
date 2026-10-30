@@ -14,7 +14,7 @@ command -v python3 >/dev/null
 # Do not read .env or reuse caller passwords, ports, or a caller Compose project.
 for name in POSTGRES_PASSWORD PLATFORM_MIGRATION_PASSWORD PLATFORM_RUNTIME_PASSWORD \
   INTEL_MIGRATION_PASSWORD INTEL_RUNTIME_PASSWORD GEO_MIGRATION_PASSWORD \
-  GEO_RUNTIME_PASSWORD REDIS_PASSWORD FLOW_INTERNAL_JWT_SIGNING_KEY; do
+  GEO_RUNTIME_PASSWORD GEO_WORKER_PASSWORD REDIS_PASSWORD FLOW_INTERNAL_JWT_SIGNING_KEY; do
   value=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
   if [[ ${GITHUB_ACTIONS:-} == true ]]; then printf '::add-mask::%s\n' "$value"; fi
   export "$name=$value"
@@ -58,6 +58,7 @@ sql() {
     intel:app) password_var=INTEL_RUNTIME_PASSWORD;;
     geo:migrate) password_var=GEO_MIGRATION_PASSWORD;;
     geo:app) password_var=GEO_RUNTIME_PASSWORD;;
+    geo:worker) password_var=GEO_WORKER_PASSWORD;;
     *) return 2;;
   esac
   "${compose[@]}" exec -T postgres sh -c \
@@ -95,6 +96,7 @@ for domain in platform intel geo; do
   deny "$domain" app "$db" 'DROP TABLE public.ci_privilege_probe'
   sql "$domain" migrate "$db" 'DROP TABLE public.ci_privilege_probe' >/dev/null
 done
+source scripts/agriculture/geo-worker-role-test.sh
 [[ $(sql geo app flow_geo 'SELECT ST_SRID(ST_SetSRID(ST_Point(0,0),4326))') == 4326 ]]
 "${compose[@]}" exec -T geo-readiness python -c '
 import json, urllib.request, urllib.error

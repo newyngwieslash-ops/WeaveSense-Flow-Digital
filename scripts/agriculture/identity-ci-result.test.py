@@ -55,6 +55,23 @@ class GateTests(unittest.TestCase):
         self.assertFalse(module.reduce("actors", raw.replace("test_agriculture_legacy_write_integration", "test_unknown"))["passed"])
         self.assertFalse(module.reduce("actors", raw.replace('/>', '><skipped/></testcase>', 1))["passed"])
 
+    def test_domain_is_separate_current_schema_with_all_real_pg_required(self):
+        cases = [("test_agriculture_domain_rls_postgres", n) for n in module.DOMAIN_PG_REQUIRED]
+        cases += [(m, "test_module_probe") for m in module.DOMAIN_MODULES - {"test_agriculture_domain_rls_postgres"}]
+        raw = '<testsuites><testsuite>' + ''.join(
+            f'<testcase classname="{c}" name="{n}"/>' for c, n in cases
+        ) + '</testsuite></testsuites>'
+        report = module.reduce("domain", raw)
+        self.assertTrue(report["passed"])
+        self.assertEqual(report["schema_phase"], "post_domain_current")
+        for required in module.DOMAIN_PG_REQUIRED:
+            self.assertFalse(module.reduce("domain", raw.replace(required, "test_unrelated"))["passed"])
+        for marker in ('<skipped/>', '<failure>SECRET</failure>', '<error>SECRET</error>'):
+            result = module.reduce("domain", raw.replace('/>', '>'+marker+'</testcase>', 1))
+            self.assertFalse(result["passed"])
+            self.assertNotIn("SECRET", json.dumps(result))
+        self.assertFalse(module.reduce("actors", raw)["passed"])
+
 
 if __name__ == "__main__":
     unittest.main()

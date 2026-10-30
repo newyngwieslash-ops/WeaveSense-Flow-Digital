@@ -22,11 +22,12 @@ import asyncpg
 import httpx
 import uvicorn
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from domain_fixture_support import bind_fixture_plot, install_domain_schema
 from fastapi import Depends
 from test_agriculture_legacy_write_integration import legacy_fixture_context
 
-from app.agriculture.actor_session import AgricultureAsyncSession
 from app.agriculture.actors import resolve_trusted_actor
+from app.agriculture.database import GISRuntimeDatabase, create_runtime_pool
 from app.agriculture.identity.callback import CallbackKey, PlatformAuthority
 from app.agriculture.identity.dependency import IdentityServices, delegation_dependency
 from app.agriculture.identity.keys import KeyRing, utc_second
@@ -106,7 +107,7 @@ class DatabaseOwnership:
             for ref in resources:
                 row = await connection.fetchrow(
                     "SELECT tenant_id,workspace_id,parcel_id,farm_id FROM "
-                    "public.identity_chain_fixture_resources WHERE tenant_id=$1 "
+                    "agriculture_test_fixture.resources WHERE tenant_id=$1 "
                     "AND workspace_id=$2 AND parcel_id=$3 AND $4='parcel'",
                     tenant_id,
                     workspace_id,
@@ -140,19 +141,36 @@ class DatabaseOwnership:
         )
         async with self.pool.acquire() as connection:
             row = await connection.fetchrow(
-                "SELECT r.* FROM public.identity_chain_fixture_resources r "
-                "JOIN public.monitoring_tasks t ON t.id=r.task_id "
-                "JOIN public.task_plots p ON p.task_id=t.id "
-                "AND p.plot_code=r.plot_code "
-                "WHERE t.task_code=$1 AND p.plot_code=$2 AND t.project_id=r.project_id",
+                "SELECT * FROM agriculture_test_fixture.resources "
+                "WHERE task_code=$1 AND plot_code=$2",
                 body["task_code"],
                 body["plot_code"],
             )
+            require(row is not None, "resource_not_found", 404)
+            # The test-owned immutable catalog supplies independent domain facts,
+            # never claims. Actual relationships are checked under runtime RLS.
+            async with connection.transaction():
+                await connection.execute(
+                    "SELECT set_config('app.tenant_ids',$1,true), "
+                    "set_config('app.workspace_id',$2,true)",
+                    row["tenant_id"],
+                    row["workspace_id"],
+                )
+                actual = await connection.fetchval(
+                    "SELECT EXISTS(SELECT 1 FROM public.monitoring_tasks t "
+                    "JOIN public.task_plots p ON p.task_id=t.id "
+                    "WHERE t.id=$1 AND t.project_id=$2 AND p.plot_code=$3)",
+                    row["task_id"],
+                    row["project_id"],
+                    row["plot_code"],
+                )
+                require(actual, "resource_not_found", 404)
         require(row is not None, "resource_not_found", 404)
         return row
 
 
 async def build_chain(config, stack):
+    await install_domain_schema(config["geo_migration_dsn"])
     fixtures = []
     for identity in config["contexts"]:
         fixtures.append(
@@ -172,19 +190,23 @@ async def build_chain(config, stack):
     )
     # This catalog is test-owned synthetic metadata, not a new domain model or
     # production provisioning endpoint. Runtime has SELECT only; no write path.
-    await owner.execute("""CREATE TABLE IF NOT EXISTS
-        public.identity_chain_fixture_resources (
+    await owner.execute("""CREATE SCHEMA IF NOT EXISTS agriculture_test_fixture;
+        REVOKE ALL ON SCHEMA agriculture_test_fixture FROM PUBLIC;
+        GRANT USAGE ON SCHEMA agriculture_test_fixture TO flow_geo_app;
+        CREATE TABLE IF NOT EXISTS agriculture_test_fixture.resources (
         tenant_id text NOT NULL,workspace_id text NOT NULL,project_id integer NOT NULL,
         task_id integer PRIMARY KEY,plot_code text UNIQUE NOT NULL,
-        parcel_id text UNIQUE NOT NULL,farm_id text NOT NULL);
-        REVOKE ALL ON public.identity_chain_fixture_resources FROM PUBLIC,flow_geo_app;
-        GRANT SELECT ON public.identity_chain_fixture_resources TO flow_geo_app;""")
+        parcel_id text UNIQUE NOT NULL,farm_id text NOT NULL,
+        task_code text UNIQUE NOT NULL);
+        REVOKE ALL ON agriculture_test_fixture.resources FROM PUBLIC,flow_geo_app;
+        GRANT SELECT ON agriculture_test_fixture.resources TO flow_geo_app;""")
     ready = []
     for fixture in fixtures:
+        await bind_fixture_plot(owner, fixture)
         farm = "farm_" + fixture["parcel_id"].removeprefix("parcel_")
         await owner.execute(
-            "INSERT INTO public.identity_chain_fixture_resources "
-            "VALUES($1,$2,$3,$4,$5,$6,$7)",
+            "INSERT INTO agriculture_test_fixture.resources "
+            "VALUES($1,$2,$3,$4,$5,$6,$7,$8)",
             fixture["tenant"],
             fixture["workspace"],
             fixture["project"],
@@ -192,6 +214,7 @@ async def build_chain(config, stack):
             fixture["plot_code"],
             fixture["parcel_id"],
             farm,
+            fixture["task_code"],
         )
         ready.append(
             {
@@ -209,8 +232,10 @@ async def build_chain(config, stack):
                 "farm_id": farm,
             }
         )
-    pool = await asyncpg.create_pool(config["geo_runtime_dsn"], min_size=1, max_size=4)
+    pool = await create_runtime_pool(config["geo_runtime_dsn"], max_size=4)
     stack.push_async_callback(pool.close)
+    runtime = await GISRuntimeDatabase.open(config["geo_runtime_dsn"])
+    stack.push_async_callback(runtime.close)
     replay = PostgresReplayLedger(pool)
     await replay.require_safe_runtime()
     ownership = DatabaseOwnership(pool)
@@ -247,12 +272,11 @@ async def build_chain(config, stack):
     async def mutate(verified=verified_dependency):
         row = await ownership.target(verified.body)
         fixture = next(f for f in fixtures if f["project"] == row["project_id"])
-        async with AgricultureAsyncSession(
-            fixture["runtime"],
+        async with runtime.session(
+            verified,
             audit_adapters=fixture["adapters"],
-            expire_on_commit=False,
+            operation_adapters=fixture["registry"],
         ) as db:
-            db.info["agriculture_operation_adapters"] = fixture["registry"]
             actor = await resolve_trusted_actor(db, verified, row["project_id"])
             await WorkbenchService().update_plot_attributes(
                 db,

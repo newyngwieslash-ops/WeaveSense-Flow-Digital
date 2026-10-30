@@ -19,6 +19,15 @@ ACTOR_PG_REQUIRED = {
     "test_postgres_real_workbench_write_commit_and_stable_audit",
     "test_postgres_real_workbench_audit_failure_rolls_back",
 }
+DOMAIN_PG_REQUIRED = {
+    "test_postgres_runtime_factory_role_admission",
+    "test_postgres_runtime_scope_pool_reuse_and_rollback",
+    "test_postgres_worker_factory_admission_without_business_privileges",
+    "test_postgres_domain_factory_rejects_incomplete_boundary",
+    "test_postgres_domain_scope_inventory_and_unmapped_denial",
+    "test_postgres_domain_cross_workspace_parent_and_policy_denial",
+    "test_postgres_domain_workbench_commit_and_audit_rollback",
+}
 PYTHON_MODULES = {
     "test_agriculture_identity", "test_agriculture_identity_postgres", "test_identity_canonical"
 }
@@ -27,6 +36,10 @@ ACTOR_MODULES = {
     "test_legacy_actor_gate", "test_agriculture_legacy_write_integration",
     "test_legacy_identity_contracts",
     "test_identity_chain_fixture",
+}
+DOMAIN_MODULES = {
+    "test_agriculture_database", "test_agriculture_database_postgres",
+    "test_agriculture_domain_boundary", "test_agriculture_domain_rls_postgres",
 }
 
 
@@ -63,8 +76,8 @@ def reduce(kind, raw):
         seen = set(terminal)
         invalid |= seen != GO_CASES or not package_pass
     else:
-        required_modules = ACTOR_MODULES if kind == "actors" else PYTHON_MODULES
-        required_tests = ACTOR_PG_REQUIRED if kind == "actors" else PG_REQUIRED
+        required_modules = DOMAIN_MODULES if kind == "domain" else ACTOR_MODULES if kind == "actors" else PYTHON_MODULES
+        required_tests = DOMAIN_PG_REQUIRED if kind == "domain" else ACTOR_PG_REQUIRED if kind == "actors" else PG_REQUIRED
         try:
             root = ET.fromstring(raw)
         except ET.ParseError:
@@ -86,7 +99,7 @@ def reduce(kind, raw):
         invalid |= not required_tests <= seen or classes != required_modules
         # Collection/setup errors may not be represented by a testcase failure.
         invalid |= any(int(s.get("errors", "0")) or int(s.get("failures", "0")) or int(s.get("skipped", "0")) for s in root.iter("testsuite"))
-    return {"suite": kind, "passed": bool(results) and not invalid, "data_class": "fixture",
+    return {"suite": kind, "schema_phase": "post_domain_current" if kind == "domain" else "pre_domain_component" if kind == "actors" else "identity_component", "passed": bool(results) and not invalid, "data_class": "fixture",
             "production_acceptance": False, "tests": results,
             "failure_locations": [{"test": item["name"], "locations": locations.get(item["name"], [])[:20]} for item in results if item["result"] == "fail"],
             "passed_count": sum(x["result"] == "pass" for x in results)}
@@ -94,7 +107,7 @@ def reduce(kind, raw):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--kind", choices=["go", "python", "actors"], required=True)
+    p.add_argument("--kind", choices=["go", "python", "actors", "domain"], required=True)
     p.add_argument("--input", type=Path, required=True)
     p.add_argument("--output", type=Path, required=True)
     args = p.parse_args()

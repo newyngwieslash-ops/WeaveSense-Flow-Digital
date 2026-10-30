@@ -296,11 +296,19 @@ async def legacy_fixture_context(owner_dsn, runtime_dsn, identity=None):
             )
 
     async def mutate(value=None, operator="legacy_a"):
-        async with AgricultureAsyncSession(
-            runtime, audit_adapters=adapters, expire_on_commit=False
-        ) as db:
+        verified = value or proof()
+        context = (
+            runtime_factory.session(
+                verified, audit_adapters=adapters, operation_adapters=registry
+            )
+            if runtime_factory is not None
+            else AgricultureAsyncSession(
+                runtime, audit_adapters=adapters, expire_on_commit=False
+            )
+        )
+        async with context as db:
             db.info["agriculture_operation_adapters"] = registry
-            await resolve_trusted_actor(db, value or proof(), project)
+            await resolve_trusted_actor(db, verified, project)
             result = await WorkbenchService().update_plot_attributes(
                 db,
                 task_code,
@@ -312,9 +320,29 @@ async def legacy_fixture_context(owner_dsn, runtime_dsn, identity=None):
             assert "agriculture_resolved_actor" not in db.info  # actual internal commit
             return result
 
+    domain_migrated = await owner.fetchval(
+        "SELECT to_regclass('public.agriculture_legacy_plot_ownership') IS NOT NULL"
+    )
+    runtime_factory = None
+    if domain_migrated:
+        from domain_fixture_support import bind_fixture_plot
+        from app.agriculture.database import GISRuntimeDatabase
+
+        await bind_fixture_plot(
+            owner,
+            {
+                "plot_code": plot_code,
+                "tenant": tenant,
+                "workspace": workspace,
+                "project": project,
+            },
+        )
+        runtime_factory = await GISRuntimeDatabase.open(runtime_dsn)
     try:
         yield locals()
     finally:
+        if runtime_factory is not None:
+            await runtime_factory.close()
         await runtime.dispose()
         await owner_engine.dispose()
         await owner.close()
@@ -408,6 +436,10 @@ async def test_postgres_real_workbench_write_commit_and_stable_audit(legacy_fixt
             )
         )
         await db.commit()
+    if f["domain_migrated"]:
+        from domain_fixture_support import bind_fixture_plot
+
+        await bind_fixture_plot(owner, {**f, "plot_code": other_plot})
     after = await f["snapshot"]()
     with pytest.raises(IdentityError, match="resource_scope_mismatch"):
         await f["mutate"]()

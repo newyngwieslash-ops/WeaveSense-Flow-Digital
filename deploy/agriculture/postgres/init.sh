@@ -1,6 +1,7 @@
 #!/bin/sh
 # First boot only; SQL identifiers are fixed, passwords are psql literal variables.
 set -eu
+: "${GEO_WORKER_PASSWORD:?configure independent geo worker secret}"
 for domain in platform intel geo; do
   case "$domain" in
     platform) owner_password=$PLATFORM_MIGRATION_PASSWORD; runtime_password=$PLATFORM_RUNTIME_PASSWORD ;;
@@ -38,9 +39,16 @@ CREATE ROLE flow_platform_admission NOLOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOC
 -- this role would also apply its restrictive invitation policy to migrations.
 GRANT flow_platform_admission TO flow_platform_migrate WITH INHERIT FALSE;
 SQL
+export AGRI_WORKER_PASSWORD="$GEO_WORKER_PASSWORD"
 psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d flow_geo <<'SQL'
+\getenv worker_password AGRI_WORKER_PASSWORD
+-- No default table grants or role memberships. This is not a system bypass.
+CREATE ROLE flow_geo_worker LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD :'worker_password';
+GRANT CONNECT ON DATABASE flow_geo TO flow_geo_worker;
+GRANT USAGE ON SCHEMA public TO flow_geo_worker;
 CREATE ROLE flow_geo_actor_guard NOLOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
 GRANT flow_geo_actor_guard TO flow_geo_migrate WITH INHERIT FALSE;
 CREATE EXTENSION IF NOT EXISTS postgis;
 GRANT USAGE ON SCHEMA public TO flow_geo_app;
 SQL
+unset AGRI_WORKER_PASSWORD

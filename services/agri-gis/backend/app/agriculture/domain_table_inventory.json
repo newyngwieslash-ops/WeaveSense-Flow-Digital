@@ -1,0 +1,718 @@
+{
+  "schema_version": "1.0",
+  "legacy_tables": [
+    {
+      "table": "acceptance_reports",
+      "ownership_class": "task_only",
+      "foreign_keys": [
+        "delivery_package_id->delivery_packages.id",
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "administrative_boundaries",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id"
+      ]
+    },
+    {
+      "table": "area_statistics_import_batches",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id"
+      ]
+    },
+    {
+      "table": "area_statistics_snapshots",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "import_batch_id->area_statistics_import_batches.id",
+        "project_id->monitoring_projects.id"
+      ]
+    },
+    {
+      "table": "change_candidates",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "run_id->change_detection_runs.id"
+      ]
+    },
+    {
+      "table": "change_detection_events",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "candidate_id->change_candidates.id",
+        "run_id->change_detection_runs.id"
+      ]
+    },
+    {
+      "table": "change_detection_runs",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "baseline_asset_id->imagery_assets.id",
+        "project_id->monitoring_projects.id",
+        "registration_job_id->imagery_registration_jobs.id",
+        "target_asset_id->imagery_assets.id",
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "dataset_asset_import_batch_items",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "asset_id->dataset_assets.id",
+        "batch_id->dataset_asset_import_batches.id",
+        "verification_id->dataset_asset_verifications.id"
+      ]
+    },
+    {
+      "table": "dataset_asset_import_batches",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id",
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "dataset_asset_verifications",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "asset_id->dataset_assets.id"
+      ]
+    },
+    {
+      "table": "dataset_assets",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id",
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "dataset_lineages",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "derived_asset_id->dataset_assets.id",
+        "parent_asset_id->dataset_assets.id"
+      ]
+    },
+    {
+      "table": "delivery_packages",
+      "ownership_class": "task_only",
+      "foreign_keys": [
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "device_faults",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "device_id->monitoring_devices.id",
+        "project_id->monitoring_projects.id"
+      ]
+    },
+    {
+      "table": "device_telemetry",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "device_id->monitoring_devices.id"
+      ]
+    },
+    {
+      "table": "disaster_patches",
+      "ownership_class": "task_only",
+      "foreign_keys": [
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "disaster_reports",
+      "ownership_class": "task_only",
+      "foreign_keys": [
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "expert_consultations",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id",
+        "report_id->pest_reports.id"
+      ]
+    },
+    {
+      "table": "farmland_plots",
+      "ownership_class": "global_plot",
+      "foreign_keys": []
+    },
+    {
+      "table": "field_verification_artifact_events",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "artifact_id->field_verification_artifacts.id",
+        "field_verification_id->field_verifications.id"
+      ]
+    },
+    {
+      "table": "field_verification_artifacts",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "field_verification_id->field_verifications.id"
+      ]
+    },
+    {
+      "table": "field_verifications",
+      "ownership_class": "task_only",
+      "foreign_keys": [
+        "matched_plot_code->farmland_plots.plot_code",
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "growth_monitoring_events",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id",
+        "run_id->growth_monitoring_runs.id"
+      ]
+    },
+    {
+      "table": "growth_monitoring_runs",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "baseline_asset_id->imagery_assets.id",
+        "baseline_step_id->imagery_processing_steps.id",
+        "current_asset_id->imagery_assets.id",
+        "current_step_id->imagery_processing_steps.id",
+        "project_id->monitoring_projects.id",
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "growth_monitoring_zones",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "run_id->growth_monitoring_runs.id"
+      ]
+    },
+    {
+      "table": "imagery_assets",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id"
+      ]
+    },
+    {
+      "table": "imagery_fusion_events",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "job_id->imagery_fusion_jobs.id",
+        "project_id->monitoring_projects.id"
+      ]
+    },
+    {
+      "table": "imagery_fusion_jobs",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "multispectral_asset_id->imagery_assets.id",
+        "panchromatic_asset_id->imagery_assets.id",
+        "project_id->monitoring_projects.id",
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "imagery_import_batch_items",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "asset_id->imagery_assets.id",
+        "batch_id->imagery_import_batches.id"
+      ]
+    },
+    {
+      "table": "imagery_import_batches",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id",
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "imagery_mosaic_events",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "job_id->imagery_mosaic_jobs.id",
+        "project_id->monitoring_projects.id"
+      ]
+    },
+    {
+      "table": "imagery_mosaic_inputs",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "asset_id->imagery_assets.id",
+        "job_id->imagery_mosaic_jobs.id"
+      ]
+    },
+    {
+      "table": "imagery_mosaic_jobs",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id",
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "imagery_processing_steps",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "asset_id->imagery_assets.id"
+      ]
+    },
+    {
+      "table": "imagery_registration_events",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "job_id->imagery_registration_jobs.id",
+        "project_id->monitoring_projects.id"
+      ]
+    },
+    {
+      "table": "imagery_registration_jobs",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "moving_asset_id->imagery_assets.id",
+        "project_id->monitoring_projects.id",
+        "reference_asset_id->imagery_assets.id",
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "monitoring_devices",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id",
+        "station_id->monitoring_stations.id"
+      ]
+    },
+    {
+      "table": "monitoring_events",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id"
+      ]
+    },
+    {
+      "table": "monitoring_projects",
+      "ownership_class": "root",
+      "foreign_keys": []
+    },
+    {
+      "table": "monitoring_stations",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id"
+      ]
+    },
+    {
+      "table": "monitoring_tasks",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id"
+      ]
+    },
+    {
+      "table": "offline_archive_events",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "archive_id->offline_archives.id"
+      ]
+    },
+    {
+      "table": "offline_archive_sources",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "archive_id->offline_archives.id"
+      ]
+    },
+    {
+      "table": "offline_archive_volumes",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "archive_id->offline_archives.id"
+      ]
+    },
+    {
+      "table": "offline_archives",
+      "ownership_class": "task_only",
+      "foreign_keys": [
+        "delivery_package_id->delivery_packages.id",
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "pest_alerts",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "assessment_id->pest_assessments.id",
+        "project_id->monitoring_projects.id"
+      ]
+    },
+    {
+      "table": "pest_assessments",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "device_id->monitoring_devices.id",
+        "model_version_id->pest_model_versions.id",
+        "project_id->monitoring_projects.id"
+      ]
+    },
+    {
+      "table": "pest_model_versions",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id"
+      ]
+    },
+    {
+      "table": "pest_report_items",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "assessment_id->pest_assessments.id",
+        "report_id->pest_reports.id"
+      ]
+    },
+    {
+      "table": "pest_reports",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id"
+      ]
+    },
+    {
+      "table": "plot_attribute_import_batches",
+      "ownership_class": "task_only",
+      "foreign_keys": [
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "plot_edit_operation_events",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "operation_id->plot_edit_operations.id"
+      ]
+    },
+    {
+      "table": "plot_edit_operations",
+      "ownership_class": "task_only",
+      "foreign_keys": [
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "plot_quality_checks",
+      "ownership_class": "task_only",
+      "foreign_keys": [
+        "plot_code->farmland_plots.plot_code",
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "plot_versions",
+      "ownership_class": "global_plot",
+      "foreign_keys": [
+        "plot_code->farmland_plots.plot_code"
+      ]
+    },
+    {
+      "table": "production_audit_events",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id",
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "production_batches",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id",
+        "source_asset_id->dataset_assets.id",
+        "target_asset_id->dataset_assets.id",
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "project_plot_attribute_field_audits",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "field_id->project_plot_attribute_fields.id",
+        "project_id->monitoring_projects.id"
+      ]
+    },
+    {
+      "table": "project_plot_attribute_fields",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id"
+      ]
+    },
+    {
+      "table": "project_rule_config_audits",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id"
+      ]
+    },
+    {
+      "table": "project_rule_configs",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id"
+      ]
+    },
+    {
+      "table": "project_users",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id"
+      ]
+    },
+    {
+      "table": "quality_issues",
+      "ownership_class": "task_only",
+      "foreign_keys": [
+        "plot_code->farmland_plots.plot_code",
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "review_records",
+      "ownership_class": "task_only",
+      "foreign_keys": [
+        "quality_run_code->task_quality_runs.run_code",
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "service_access_requests",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "service_id->shared_services.id"
+      ]
+    },
+    {
+      "table": "service_credentials",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "access_request_id->service_access_requests.id",
+        "service_id->shared_services.id"
+      ]
+    },
+    {
+      "table": "service_health_checks",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "service_id->shared_services.id"
+      ]
+    },
+    {
+      "table": "service_usage_events",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "access_request_id->service_access_requests.id",
+        "credential_id->service_credentials.id",
+        "service_id->shared_services.id"
+      ]
+    },
+    {
+      "table": "shared_services",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id"
+      ]
+    },
+    {
+      "table": "statistics_reports",
+      "ownership_class": "task_only",
+      "foreign_keys": [
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "supervision_county_evaluations",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "plan_id->supervision_plans.id"
+      ]
+    },
+    {
+      "table": "supervision_events",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "plan_id->supervision_plans.id"
+      ]
+    },
+    {
+      "table": "supervision_findings",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "inspection_id->supervision_inspections.id",
+        "sample_id->supervision_samples.id"
+      ]
+    },
+    {
+      "table": "supervision_inspections",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "plan_id->supervision_plans.id"
+      ]
+    },
+    {
+      "table": "supervision_plans",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id",
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "supervision_reinspections",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "finding_id->supervision_findings.id"
+      ]
+    },
+    {
+      "table": "supervision_reports",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "plan_id->supervision_plans.id"
+      ]
+    },
+    {
+      "table": "supervision_samples",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "plan_id->supervision_plans.id",
+        "plot_code->farmland_plots.plot_code"
+      ]
+    },
+    {
+      "table": "task_plots",
+      "ownership_class": "task_only",
+      "foreign_keys": [
+        "plot_code->farmland_plots.plot_code",
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "task_quality_runs",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id",
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "thematic_map_atlas_items",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "atlas_id->thematic_map_atlases.id",
+        "product_id->thematic_map_products.id"
+      ]
+    },
+    {
+      "table": "thematic_map_atlases",
+      "ownership_class": "task_only",
+      "foreign_keys": [
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "thematic_map_events",
+      "ownership_class": "task_only",
+      "foreign_keys": [
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "thematic_map_products",
+      "ownership_class": "task_only",
+      "foreign_keys": [
+        "asset_id->imagery_assets.id",
+        "task_id->monitoring_tasks.id",
+        "template_id->thematic_map_templates.id"
+      ]
+    },
+    {
+      "table": "thematic_map_templates",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id"
+      ]
+    },
+    {
+      "table": "uav_aircraft",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "project_id->monitoring_projects.id"
+      ]
+    },
+    {
+      "table": "uav_artifacts",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "mission_id->uav_missions.id"
+      ]
+    },
+    {
+      "table": "uav_events",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "mission_id->uav_missions.id",
+        "project_id->monitoring_projects.id"
+      ]
+    },
+    {
+      "table": "uav_findings",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "artifact_id->uav_artifacts.id",
+        "mission_id->uav_missions.id",
+        "plot_code->farmland_plots.plot_code"
+      ]
+    },
+    {
+      "table": "uav_missions",
+      "ownership_class": "project",
+      "foreign_keys": [
+        "aircraft_id->uav_aircraft.id",
+        "project_id->monitoring_projects.id",
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "vector_export_packages",
+      "ownership_class": "task_only",
+      "foreign_keys": [
+        "task_id->monitoring_tasks.id"
+      ]
+    },
+    {
+      "table": "work_package_plots",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "plot_code->farmland_plots.plot_code",
+        "work_package_id->work_packages.id"
+      ]
+    },
+    {
+      "table": "work_packages",
+      "ownership_class": "parent_only",
+      "foreign_keys": [
+        "batch_id->production_batches.id"
+      ]
+    }
+  ]
+}

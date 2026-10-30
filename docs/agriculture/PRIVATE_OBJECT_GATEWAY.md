@@ -40,7 +40,7 @@ canonical key：`tenants/{tenant}/workspaces/{workspace}/objects/{object}/v{vers
 
 每次请求重新验证身份、当前对象状态、独立资源权属及平台 epoch。磁盘读取完成后再次复核清单、权属及权限，再发出任何内容。没有可复用的存储直签 URL，也没有浏览器持有的内部 token。
 
-所有对象响应（含错误、HEAD、206）为 `Cache-Control: private, no-store` 和 `X-Content-Type-Options: nosniff`，不返回 ETag/304，不进入公共 CDN。Range 仅允许单个合法 `bytes=` 区间，不能扩大完整对象授权；多段范围拒绝。平台额外设置 `Vary: Cookie` 和 `Content-Security-Policy: default-src 'none'; sandbox`，拒绝 `If-Range`。只有精确白名单 PNG/JPEG/WebP/AVIF 可内联；其余 MIME（包括 SVG/HTML/PDF）一律 attachment/octet-stream，不透传上游 Cookie、跳转、缓存头或凭据。
+所有对象响应（含错误、HEAD、206）均含 `Cache-Control: no-store`（GIS 字节响应另带 `private`）和 `X-Content-Type-Options: nosniff`，不返回 ETag/304，不进入公共 CDN。平台统一会话中间件可能将 `private, no-store` 规范为 `no-store`，两者都禁止缓存，而不是允许公共缓存。Range 仅允许单个合法 `bytes=` 区间，不能扩大完整对象授权；多段范围拒绝。平台额外设置 `Vary: Cookie` 和 `Content-Security-Policy: default-src 'none'; sandbox`，拒绝 `If-Range`。只有精确白名单 PNG/JPEG/WebP/AVIF 可内联；其余 MIME（包括 SVG/HTML/PDF）一律 attachment/octet-stream，不透传上游 Cookie、跳转、缓存头或凭据。
 
 平台只接受声明且一致的有界 Content-Length，校验 206 范围与请求相符后才转发。
 进程级两个缓冲槽从读取直到浏览器响应完成始终占用，避免慢客户端累计完整对象缓冲。

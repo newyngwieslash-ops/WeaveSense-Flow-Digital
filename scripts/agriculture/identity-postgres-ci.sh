@@ -104,7 +104,7 @@ python_gate=$?
 go_code=$?
 python3 scripts/agriculture/identity-ci-result.py --kind go --input "$private/go.jsonl" --output .local/evidence/identity-go.json
 go_gate=$?
-(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_actors.py tests/test_agriculture_actors_postgres.py tests/test_legacy_actor_gate.py tests/test_legacy_identity_contracts.py tests/test_agriculture_legacy_write_integration.py --junitxml="$private/actors.xml" -q) > "$private/actors.log" 2>&1
+(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_actors.py tests/test_agriculture_actors_postgres.py tests/test_legacy_actor_gate.py tests/test_legacy_identity_contracts.py tests/test_agriculture_legacy_write_integration.py tests/test_identity_chain_fixture.py --junitxml="$private/actors.xml" -q) > "$private/actors.log" 2>&1
 actors_code=$?
 python3 scripts/agriculture/identity-ci-result.py --kind actors --input "$private/actors.xml" --output .local/evidence/identity-actors.json
 actors_gate=$?

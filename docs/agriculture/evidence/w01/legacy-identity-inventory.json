@@ -36,7 +36,7 @@
       "evidence": "legacy_user_code=actor.legacy_user_code",
       "field": "legacy_user_code",
       "kind": "keyword",
-      "line": 168,
+      "line": 178,
       "path": "services/agri-gis/backend/app/agriculture/actor_session.py",
       "scope": "audit_flush"
     },
@@ -46,7 +46,7 @@
       "evidence": "actor.legacy_user_code",
       "field": "legacy_user_code",
       "kind": "Attribute",
-      "line": 168,
+      "line": 178,
       "path": "services/agri-gis/backend/app/agriculture/actor_session.py",
       "scope": "audit_flush"
     },
@@ -56,7 +56,7 @@
       "evidence": "legacy_user_code",
       "field": "legacy_user_code",
       "kind": "Name",
-      "line": 21,
+      "line": 22,
       "path": "services/agri-gis/backend/app/agriculture/actors.py",
       "scope": "TrustedActor"
     },
@@ -66,7 +66,7 @@
       "evidence": "user.user_code",
       "field": "user_code",
       "kind": "Attribute",
-      "line": 157,
+      "line": 161,
       "path": "services/agri-gis/backend/app/agriculture/actors.py",
       "scope": "resolve_trusted_actor"
     },
@@ -76,7 +76,7 @@
       "evidence": "user.user_code",
       "field": "user_code",
       "kind": "Attribute",
-      "line": 193,
+      "line": 197,
       "path": "services/agri-gis/backend/app/agriculture/actors.py",
       "scope": "recheck_trusted_actor"
     },
@@ -86,7 +86,7 @@
       "evidence": "actor.legacy_user_code",
       "field": "legacy_user_code",
       "kind": "Attribute",
-      "line": 193,
+      "line": 197,
       "path": "services/agri-gis/backend/app/agriculture/actors.py",
       "scope": "recheck_trusted_actor"
     },
@@ -23309,11 +23309,19 @@
     },
     {
       "path": "services/agri-gis/backend/app/agriculture/actor_session.py",
-      "sha256": "fd09f61a5f04264f528e07128e5c92a128feae75999ebc7fd854b88f9f3eedf6"
+      "sha256": "9a99b632f6dacb3c9dbd2a4a6e75a1c5391c13f35f1b8cd7ed7e40a86c46990f"
     },
     {
       "path": "services/agri-gis/backend/app/agriculture/actors.py",
-      "sha256": "1dab157bce90650c3ac2138a1f50e5bbc491ae8940f59b1ecf0662cf39922389"
+      "sha256": "b3b8a86c6ddea90256029383970802bdfef58e15d9e3a92de1f512c950586342"
+    },
+    {
+      "path": "services/agri-gis/backend/app/agriculture/database.py",
+      "sha256": "5147915907de3df33afaef3523e5a856bd0cc7adffa38e81ef71539ea24114c5"
+    },
+    {
+      "path": "services/agri-gis/backend/app/agriculture/domain_boundary.py",
+      "sha256": "3b23bcbaa157a28572135586b5ff57a13bc990abcdb6bcfc024d726c03d4664e"
     },
     {
       "path": "services/agri-gis/backend/app/agriculture/identity/__init__.py",
@@ -23329,7 +23337,7 @@
     },
     {
       "path": "services/agri-gis/backend/app/agriculture/identity/config.py",
-      "sha256": "e00ee1b1c9832b76d5860a05ddd6610e21ea0010e5be26a6373513914e7e1030"
+      "sha256": "fb8dd7c7998c5c16ed15ed30843f271c0a4d398db4ace2688da89700c409cb56"
     },
     {
       "path": "services/agri-gis/backend/app/agriculture/identity/dependency.py",
@@ -23345,7 +23353,7 @@
     },
     {
       "path": "services/agri-gis/backend/app/agriculture/identity/replay.py",
-      "sha256": "5b92364b15eb8c430128c606c0c0e147b7ed59f2a77804510510c41834417886"
+      "sha256": "4d8cd1af86f6260602860f2635859e8cba83f5b69e7c53138dae18724a326f1d"
     },
     {
       "path": "services/agri-gis/backend/app/agriculture/identity/verify.py",

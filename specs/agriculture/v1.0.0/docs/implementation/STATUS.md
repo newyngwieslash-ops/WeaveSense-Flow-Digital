@@ -6,11 +6,13 @@
 
 应用实现状态：in_progress
 
-当前工作包：W02；W01 的 DT-009–016 已按各任务范围完成，进入数据库缺省拒绝与隔离
+当前工作包：W02；DT-017 已以真实本地 PostgreSQL 完成数据库缺省拒绝验收，推进平台空范围迁移与 GIS 查询范围
 
-下一任务：DT-017 GIS 独立角色、事务局部 scope、全量租户表 RLS 与池复用负例；后续以 tasks.json 依赖为准。
+下一任务：依赖就绪的 DT-018 Flow/Loom 空范围策略兼容迁移及 DT-019 GIS 查询范围；远程新 schema 签名浏览器回归仍单独等待审批/执行。
 
 DT-016 新整链验收完成：冻结产品 `d43899d2`、scaffold `56c1f7c8` 的三个实际触发 workflow 全部成功；235 项源码映射一致。真实浏览器登录→Go 授权→GIS 验签/归属/当前权限→原 Workbench 写入及稳定主体审计，主测试和四个必需子项全部通过，无跳过。浏览器 15 项检查、42 请求零违规；两个租户三个工作区，跨范围/伪造主体/撤权后同 cookie 写入均拒绝且无领域副作用，16 个农业公开入口匿名均为 401。证据见 `evidence/DT-016/` 和 `docs/agriculture/IDENTITY_CHAIN_ACCEPTANCE.md`。首轮登录装配失败保留，不回写成功；旧批次单独运行的 Docker 结果不并入本轮三 workflow 结论。W01 任务闭环完成不等于 G0；测试专用写桥不代表生产农场 UI，旧下载/预览/审核未开放，W02 全模型 RLS 和空范围系统策略仍待实现。
+
+DT-017 已按原任务验收完成：冻结 `2e3d43a6` 的实际本地 PostgreSQL 17.11/PostGIS 3.5.2 组件 152 项及独立新集群正式迁移 CLI 6 项均通过，零失败/跳过/遗漏，退出和集群关闭为 0；292/282 源码哈希独立核实。93 旧领域表、4 身份表和显式地块归属表共 98 表 FORCE RLS，范围、连接池复用、受限角色及正式迁移漂移/回滚已有真实证据。84 旧表默认关闭，不宣称领域功能全部可用；worker 没有默认业务 CRUD。证据见 `evidence/DT-017/` 和 `docs/agriculture/DATABASE_BOUNDARY_ACCEPTANCE.md`。新 schema 远程签名浏览器回归仍未运行，不将本地证据冒充 CI；该独立回归不改变本任务原文 PG 验收已完成的事实，也不代表 W02/G0 或完整 AG-AC-005/006 通过。
 
 ## 1 基线
 
@@ -91,9 +93,9 @@ DT-015 已按原任务范围完成：冻结 `574d48f02e96b43c01f0cd3ee2b90a95671
 
 | 状态 | 数量 |
 | --- | ---: |
-| done | 16 |
-| in_progress | 1 |
-| not_started | 127 |
+| done | 17 |
+| in_progress | 2 |
+| not_started | 125 |
 
 历史 done、恢复证据待补验：无。
 依赖状态就绪但仍须检查恢复条件：无。
@@ -116,9 +118,9 @@ DT-015 已按原任务范围完成：冻结 `574d48f02e96b43c01f0cd3ee2b90a95671
 | DT-014 | done |
 | DT-015 | done |
 | DT-016 | done |
-| DT-017 | in_progress |
-| DT-018 | not_started |
-| DT-019 | not_started |
+| DT-017 | done |
+| DT-018 | in_progress |
+| DT-019 | in_progress |
 | DT-020 | not_started |
 | DT-021 | not_started |
 | DT-022 | not_started |

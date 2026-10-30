@@ -1,0 +1,46 @@
+{
+  "scope": "local native PostgreSQL fixtures, not remote CI or live farm acceptance",
+  "latest_source": "2e3d43a6",
+  "reports": [
+    {
+      "file": "components-initial.json",
+      "sha256": "d19d11e37c267537e244647e0bf9679b5efbd737115b8251c2de98f76dd76f20",
+      "source_commit": "3525c288f9068573c30d8b29d7038a38aac5c8ca",
+      "source_hashes_matched": 292,
+      "passed": 152,
+      "phase_counts": {
+        "pre_domain_component": 123,
+        "post_domain_current": 29
+      },
+      "exit_code": 0,
+      "shutdown_exit_code": 0
+    },
+    {
+      "file": "migration-fresh.json",
+      "sha256": "bc352db960990fb155bff7a705c0ac35ae55095c884990a706e0dfe462f30589",
+      "source_commit": "2e3d43a60f960d3735c0c4a4a4bb42f698cfa24e",
+      "source_hashes_matched": 282,
+      "passed": 6,
+      "phase_counts": {
+        "independent_fresh_database_migration": 6
+      },
+      "exit_code": 0,
+      "shutdown_exit_code": 0
+    },
+    {
+      "file": "components-final.json",
+      "sha256": "4c2fc3f4882cdb1e6f2ec2f63d5ee64afb1b05278f2e052e16c5fd08f926c79c",
+      "source_commit": "2e3d43a60f960d3735c0c4a4a4bb42f698cfa24e",
+      "source_hashes_matched": 292,
+      "passed": 152,
+      "phase_counts": {
+        "pre_domain_component": 123,
+        "post_domain_current": 29
+      },
+      "exit_code": 0,
+      "shutdown_exit_code": 0
+    }
+  ],
+  "signed_browser_chain_after_domain": "not_run_pending_remote_approval",
+  "dt017_done": false
+}

@@ -1056,7 +1056,7 @@
         "复用连接后切换租户并检查scope不会串用"
       ],
       "blockers": [],
-      "status": "in_progress"
+      "status": "done"
     },
     {
       "id": "DT-018",
@@ -1093,7 +1093,7 @@
         "回归已有Flow Agent、数学和Loom的关键流程"
       ],
       "blockers": [],
-      "status": "not_started"
+      "status": "in_progress"
     },
     {
       "id": "DT-019",
@@ -1132,7 +1132,7 @@
         "通过关联表和历史revision请求检查间接越权"
       ],
       "blockers": [],
-      "status": "not_started"
+      "status": "in_progress"
     },
     {
       "id": "DT-020",

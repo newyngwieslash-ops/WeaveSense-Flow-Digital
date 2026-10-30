@@ -1,0 +1,1278 @@
+{
+  "kind": "local_real_postgres_fixture",
+  "remote_ci": false,
+  "recorded_at": "2026-10-30T09:22:57.576249+00:00",
+  "elapsed_seconds": 23.946,
+  "fresh_cluster": true,
+  "source_commit": "3525c288f9068573c30d8b29d7038a38aac5c8ca",
+  "worktree_changes_included": true,
+  "production_acceptance": false,
+  "live_farm_data": false,
+  "postgres": "PostgreSQL 17.11 (Debian 17.11-0+deb13u1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+  "postgis": "3.5.2",
+  "python": "3.12.14",
+  "exit_code": 0,
+  "shutdown_exit_code": 0,
+  "missing_required_pg_pass": [],
+  "passed": 152,
+  "failed": 0,
+  "skipped": 0,
+  "tests": [
+    {
+      "name": "test_golden[empty]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.001
+    },
+    {
+      "name": "test_golden[coordinates]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.001
+    },
+    {
+      "name": "test_golden[fraction]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_golden[safe_edge]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_golden[utf16]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_golden[no_normalization]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_golden[surrogate_pair]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_golden[escape]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_golden[underflow]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_golden[zero_exponent]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_invalid[duplicate]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_invalid[unsafe_integer]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_invalid[unsafe_fraction]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_invalid[unsafe_exponent]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_invalid[unsafe_negative]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_invalid[huge]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_invalid[nan]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_invalid[infinity]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_invalid[leading_zero]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_invalid[plus]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_invalid[hex]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_invalid[lone_high]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_invalid[lone_low]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_invalid[reverse]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_invalid[trailing]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_invalid[array_root]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_invalid[scalar]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_invalid_utf8",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_bounds",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.049
+    },
+    {
+      "name": "test_valid_signature_raw_numeric_first_actor_and_replay",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.007
+    },
+    {
+      "name": "test_signed_but_invalid_or_stale_claims[issuer-client]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.002
+    },
+    {
+      "name": "test_signed_but_invalid_or_stale_claims[subject-browser]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.002
+    },
+    {
+      "name": "test_signed_but_invalid_or_stale_claims[audience-flow-platform]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.002
+    },
+    {
+      "name": "test_signed_but_invalid_or_stale_claims[authorization_version-True]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.002
+    },
+    {
+      "name": "test_signed_but_invalid_or_stale_claims[policy_version-old/1.0.0]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.002
+    },
+    {
+      "name": "test_signed_but_invalid_or_stale_claims[scopes-value5]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.081
+    },
+    {
+      "name": "test_signed_but_invalid_or_stale_claims[actor-value6]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.003
+    },
+    {
+      "name": "test_signed_but_invalid_or_stale_claims[farm_ids-value7]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.002
+    },
+    {
+      "name": "test_signed_but_invalid_or_stale_claims[resource_versions-value8]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.002
+    },
+    {
+      "name": "test_algorithm_type_and_untrusted_key_headers[header0]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.001
+    },
+    {
+      "name": "test_algorithm_type_and_untrusted_key_headers[header1]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.001
+    },
+    {
+      "name": "test_algorithm_type_and_untrusted_key_headers[header2]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.002
+    },
+    {
+      "name": "test_algorithm_type_and_untrusted_key_headers[header3]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.002
+    },
+    {
+      "name": "test_algorithm_type_and_untrusted_key_headers[header4]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.001
+    },
+    {
+      "name": "test_request_time_key_binding_failures[expired]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.002
+    },
+    {
+      "name": "test_request_time_key_binding_failures[future]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.002
+    },
+    {
+      "name": "test_request_time_key_binding_failures[long_ttl]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.002
+    },
+    {
+      "name": "test_request_time_key_binding_failures[revoked]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.002
+    },
+    {
+      "name": "test_request_time_key_binding_failures[wrong_signature]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.003
+    },
+    {
+      "name": "test_request_time_key_binding_failures[query]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.002
+    },
+    {
+      "name": "test_request_time_key_binding_failures[body]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.002
+    },
+    {
+      "name": "test_authority_and_domain_revalidation_precede_nonce",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.003
+    },
+    {
+      "name": "test_missing_dependency_fails_closed[ownership]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.002
+    },
+    {
+      "name": "test_missing_dependency_fails_closed[authority]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.002
+    },
+    {
+      "name": "test_missing_dependency_fails_closed[replay]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.002
+    },
+    {
+      "name": "test_claim_before_handler_failure_is_not_rolled_back",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.003
+    },
+    {
+      "name": "test_get_empty_body_does_not_claim_write_nonce",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.002
+    },
+    {
+      "name": "test_production_profile_has_no_probe_or_legacy_routes",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.001
+    },
+    {
+      "name": "test_service_metadata_credential_cannot_be_business_ticket",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.002
+    },
+    {
+      "name": "test_key_rotation_overlap_and_explicit_revocation",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.006
+    },
+    {
+      "name": "test_duplicate_json_fields_even_with_valid_signature_rejected[header]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.002
+    },
+    {
+      "name": "test_duplicate_json_fields_even_with_valid_signature_rejected[claims]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.002
+    },
+    {
+      "name": "test_decoded_claim_limit_is_enforced_without_truncation",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.003
+    },
+    {
+      "name": "test_expiry_during_claim_never_enters_handler_or_releases_nonce",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 2.105
+    },
+    {
+      "name": "test_callback_origin_requires_tls_or_literal_loopback[http://127.0.0.1:1234-True]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.009
+    },
+    {
+      "name": "test_callback_origin_requires_tls_or_literal_loopback[http://[::1]:1234-True]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.006
+    },
+    {
+      "name": "test_callback_origin_requires_tls_or_literal_loopback[http://localhost:1234-False]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.006
+    },
+    {
+      "name": "test_callback_origin_requires_tls_or_literal_loopback[http://10.0.0.1:1234-False]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.006
+    },
+    {
+      "name": "test_callback_origin_requires_tls_or_literal_loopback[http://[::1%25eth0]:1234-False]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.006
+    },
+    {
+      "name": "test_callback_origin_requires_tls_or_literal_loopback[https://platform.example-True]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.007
+    },
+    {
+      "name": "test_route_extractor_is_mandatory_configuration",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_signed_actual_path_cannot_authorize_a_different_resource",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.003
+    },
+    {
+      "name": "test_custom_payload_extractor_checks_complete_batch",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.003
+    },
+    {
+      "name": "test_explicit_mapping_no_name_code_default_claim",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.06
+    },
+    {
+      "name": "test_actor_128_char_not_truncated_and_revocation_rechecked",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.011
+    },
+    {
+      "name": "test_audit_commits_atomically_and_context_cleared",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.011
+    },
+    {
+      "name": "test_audit_failure_rolls_back_business_and_business_failure_rolls_back_audit",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.015
+    },
+    {
+      "name": "test_raw_bulk_and_mapping_writes_closed",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.01
+    },
+    {
+      "name": "test_unknown_model_and_reparent_and_resource_mismatch_denied",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.011
+    },
+    {
+      "name": "test_read_action_cannot_mutate_and_context_cannot_be_swapped",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.008
+    },
+    {
+      "name": "test_exact_actor_and_action_intersection",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.008
+    },
+    {
+      "name": "test_other_actual_resource_denied_even_with_same_actor_project",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.007
+    },
+    {
+      "name": "test_missing_adapter_is_not_authorized_by_ticket_alone",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.008
+    },
+    {
+      "name": "test_signed_download_does_not_override_legacy_domain_capability",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.008
+    },
+    {
+      "name": "test_supplied_identity_cannot_select_actor[admin]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.006
+    },
+    {
+      "name": "test_supplied_identity_cannot_select_actor[]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.008
+    },
+    {
+      "name": "test_supplied_identity_cannot_select_actor[legacy_same_other]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.006
+    },
+    {
+      "name": "test_unknown_or_wrong_action_is_not_legacy_role_authority[edit_plots-None]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.006
+    },
+    {
+      "name": "test_unknown_or_wrong_action_is_not_legacy_role_authority[edit_plots-agri.parcel.delete]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.006
+    },
+    {
+      "name": "test_unknown_or_wrong_action_is_not_legacy_role_authority[manage_rules-agri.farm.update]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.006
+    },
+    {
+      "name": "test_unknown_or_wrong_action_is_not_legacy_role_authority[review_client-agri.report.review]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.008
+    },
+    {
+      "name": "test_unknown_or_wrong_action_is_not_legacy_role_authority[download_delivery-agri.asset_download.read]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.007
+    },
+    {
+      "name": "test_direct_unscoped_service_and_cross_project_denied",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.008
+    },
+    {
+      "name": "test_session_action_mutation_cannot_escalate",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.006
+    },
+    {
+      "name": "test_resolver_wait_cannot_extend_ticket_lifetime",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.09
+    },
+    {
+      "name": "test_legacy_identity_directory_rejects_before_project_lookup",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.001
+    },
+    {
+      "name": "test_postgres_replay_parallel_persistence_scope_and_fail_closed",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.701
+    },
+    {
+      "name": "test_postgres_actual_verifier_dependency_nonce_order_and_parallel_http",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.085
+    },
+    {
+      "name": "test_postgres_actor_mapping_strict_scope_and_atomic_audit",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.173
+    },
+    {
+      "name": "test_postgres_actor_binding_lock_blocks_concurrent_revocation",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.603
+    },
+    {
+      "name": "test_postgres_real_workbench_write_commit_and_stable_audit",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.304
+    },
+    {
+      "name": "test_postgres_real_workbench_audit_failure_rolls_back",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.211
+    },
+    {
+      "name": "test_request_actor_spelling_never_selects_trusted_actor[operator_code]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.012
+    },
+    {
+      "name": "test_request_actor_spelling_never_selects_trusted_actor[reviewer_code]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.009
+    },
+    {
+      "name": "test_request_actor_spelling_never_selects_trusted_actor[uploader_code]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.007
+    },
+    {
+      "name": "test_request_actor_spelling_never_selects_trusted_actor[requester_code]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.007
+    },
+    {
+      "name": "test_request_actor_spelling_never_selects_trusted_actor[user_code]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.008
+    },
+    {
+      "name": "test_request_actor_spelling_never_selects_trusted_actor[investigator_code]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.008
+    },
+    {
+      "name": "test_all_download_capabilities_reject_forged_actor[download_statistics_report]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.12
+    },
+    {
+      "name": "test_all_download_capabilities_reject_forged_actor[download_vector_export]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.008
+    },
+    {
+      "name": "test_all_download_capabilities_reject_forged_actor[download_supervision_report]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.008
+    },
+    {
+      "name": "test_all_download_capabilities_reject_forged_actor[download_delivery]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.008
+    },
+    {
+      "name": "test_all_download_capabilities_reject_forged_actor[download_disaster_report]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.007
+    },
+    {
+      "name": "test_all_download_capabilities_reject_forged_actor[download_pest_report]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.009
+    },
+    {
+      "name": "test_all_download_capabilities_reject_forged_actor[download_uav_artifacts]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.008
+    },
+    {
+      "name": "test_all_download_capabilities_reject_forged_actor[download_thematic_maps]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.009
+    },
+    {
+      "name": "test_all_download_capabilities_reject_forged_actor[download_acceptance_report]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.007
+    },
+    {
+      "name": "test_all_download_capabilities_reject_forged_actor[download_growth_monitoring]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.007
+    },
+    {
+      "name": "test_all_download_capabilities_reject_forged_actor[export_plot_attributes]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.007
+    },
+    {
+      "name": "test_all_download_capabilities_reject_forged_actor[export_statistics]",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.007
+    },
+    {
+      "name": "test_actual_review_and_assignment_schema_values_are_not_identity",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.007
+    },
+    {
+      "name": "test_service_credential_is_not_human_actor_adapter",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 0.007
+    },
+    {
+      "name": "test_actual_old_app_rejects_all_declared_business_routes",
+      "schema_phase": "pre_domain_component",
+      "status": "pass",
+      "seconds": 3.201
+    },
+    {
+      "name": "test_no_unverified_or_absent_scope[None]",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_no_unverified_or_absent_scope[value1]",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_no_unverified_or_absent_scope[tenant_a]",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_single_tenant_and_workspace_only[None]",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_single_tenant_and_workspace_only[]",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_single_tenant_and_workspace_only[a,b]",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_single_tenant_and_workspace_only[*]",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_single_tenant_and_workspace_only[a b]",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_single_tenant_and_workspace_only[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_service_assertion_not_business_session_and_no_mutable_alias",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_expired_and_naive_scope_rejected",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_fixed_session_scope_cannot_be_rebound_by_later_verified_actor_call",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 0.001
+    },
+    {
+      "name": "test_each_transaction_uses_parameterized_local_scope_without_actor_rebinding",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_role_guard_requires_exact_true_and_sanitizes_driver_error",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 0.001
+    },
+    {
+      "name": "test_no_dsn_or_migration_role_fallback",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_domain_factory_requires_role_specific_boundary_before_use[flow_geo_app]",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 0.001
+    },
+    {
+      "name": "test_domain_factory_requires_role_specific_boundary_before_use[flow_geo_worker]",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 0.001
+    },
+    {
+      "name": "test_postgres_runtime_factory_role_admission",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 1.173
+    },
+    {
+      "name": "test_postgres_worker_factory_admission_without_business_privileges",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 0.845
+    },
+    {
+      "name": "test_postgres_runtime_scope_pool_reuse_and_rollback",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 1.348
+    },
+    {
+      "name": "test_postgres_domain_factory_rejects_incomplete_boundary",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 0.867
+    },
+    {
+      "name": "test_all_legacy_models_and_foreign_keys_are_in_explicit_inventory",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 0.003
+    },
+    {
+      "name": "test_missing_model_or_changed_parent_contract_fails_closed",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 0.001
+    },
+    {
+      "name": "test_migration_covers_inventory_and_restricts_existing_permissive_policies",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 0.001
+    },
+    {
+      "name": "test_inventory_file_is_data_not_an_executable_policy_source",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_identity_metadata_requires_new_restrictive_single_scope",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 0.0
+    },
+    {
+      "name": "test_postgres_domain_scope_inventory_and_unmapped_denial",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 2.094
+    },
+    {
+      "name": "test_postgres_domain_cross_workspace_parent_and_policy_denial",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 1.409
+    },
+    {
+      "name": "test_postgres_domain_workbench_commit_and_audit_rollback",
+      "schema_phase": "post_domain_current",
+      "status": "pass",
+      "seconds": 1.455
+    }
+  ],
+  "source_files": {
+    "deploy/agriculture/native-postgres-packages.json": "a1b54a7a5899b938fb41b05288d992b5c9c2c0193e0ec08eae5a48f60589f2e9",
+    "deploy/agriculture/postgres/init.sh": "f7b74cde0e590505e0f4c1556456af96bea35ef9f1530a01886a89c31f747c2d",
+    "scripts/agriculture/native-postgres-prepare.py": "e19cad0d0248f6020d4337bcb083fd9be8787464ee8cca909cfbfdd40e5fb38b",
+    "scripts/agriculture/native-postgres-test.py": "a661f5a71db515c83f9d4776a7c3f8f5b78539e927300d31b90a287fc07f5c21",
+    "scripts/agriculture/native_test_environment.py": "ccb983e5cf0d08e872e73f154502c61762581f8fbf0f8e16a1a3078f506133d7",
+    "services/agri-gis/backend/app/__init__.py": "9408096060f01f8e8e69dd293ce8a234ec32f561a50d152e1e0e5ca1b401cc55",
+    "services/agri-gis/backend/app/agriculture/__init__.py": "77951ad82dc95f2e08716330d61902e73a231f0e5f085d66bb41e5d78533d66a",
+    "services/agri-gis/backend/app/agriculture/actor_models.py": "4fab33a9b4508fbf2eafc5155735ade7a6b16895933ecf16ae0cea8aef48567e",
+    "services/agri-gis/backend/app/agriculture/actor_session.py": "9a99b632f6dacb3c9dbd2a4a6e75a1c5391c13f35f1b8cd7ed7e40a86c46990f",
+    "services/agri-gis/backend/app/agriculture/actors.py": "b3b8a86c6ddea90256029383970802bdfef58e15d9e3a92de1f512c950586342",
+    "services/agri-gis/backend/app/agriculture/database.py": "5147915907de3df33afaef3523e5a856bd0cc7adffa38e81ef71539ea24114c5",
+    "services/agri-gis/backend/app/agriculture/domain_boundary.py": "3b23bcbaa157a28572135586b5ff57a13bc990abcdb6bcfc024d726c03d4664e",
+    "services/agri-gis/backend/app/agriculture/domain_table_inventory.json": "6d94b373ff1bfb0c3c4924c25a8a116cd13ae1234b0357d966b7b0bf807010bd",
+    "services/agri-gis/backend/app/agriculture/identity/__init__.py": "d03d955b9eb9e56df428f42184a344f127292c29553a6183c34bc19224217cf2",
+    "services/agri-gis/backend/app/agriculture/identity/callback.py": "fe99446e720f89e01147c55c8a0a47bfa57b613e5f75dd46ab4846bdeae83fee",
+    "services/agri-gis/backend/app/agriculture/identity/canonical.py": "bd09a9c7fcdd20a783d09abd122f9c268c7e7f01a70a7d75f30d5d538b61c1d2",
+    "services/agri-gis/backend/app/agriculture/identity/config.py": "fb8dd7c7998c5c16ed15ed30843f271c0a4d398db4ace2688da89700c409cb56",
+    "services/agri-gis/backend/app/agriculture/identity/dependency.py": "ad25e7bc5729dadefeef0991eed177680c8b1851d378fa7ee36ad36a69919ccc",
+    "services/agri-gis/backend/app/agriculture/identity/keys.py": "3153d9b0ef99dc38cdd8d124d090dcdfc74cebca735f22a4b5e9b0de44905f2e",
+    "services/agri-gis/backend/app/agriculture/identity/providers.py": "bc4953cfeeb7c28b7531a00c8297f2b3961126c5787241a04e96769f4b37c6af",
+    "services/agri-gis/backend/app/agriculture/identity/replay.py": "4d8cd1af86f6260602860f2635859e8cba83f5b69e7c53138dae18724a326f1d",
+    "services/agri-gis/backend/app/agriculture/identity/verify.py": "45af0835ccac582e88b8a2c555c64b4cdb71ef0f9fde6362add90ddace630277",
+    "services/agri-gis/backend/app/agriculture/main.py": "0b45a09af8dc7609f55356a89da79d623f7cc346efca0de78f9a3b6507fe4d4d",
+    "services/agri-gis/backend/app/agriculture/migrate.py": "588cf66ac8f72fb78ea4ffa0058a9e3fed5f78f171339cff463fe68ebe5f15d6",
+    "services/agri-gis/backend/app/agriculture/operation_authorization.py": "88037f6e7fd71fbc80c9fb41533861c51d692669996abe274bd06f4606bfa83a",
+    "services/agri-gis/backend/app/api/__init__.py": "76d6a9fe009585ffd61a5837295cb2f74ff3fca589ca70f4bc3c9847a7ec138a",
+    "services/agri-gis/backend/app/api/deps.py": "ca1dacf542bb0039d8289f6c5baae07e03f1006ce9c937c14066a5c3ad0d4725",
+    "services/agri-gis/backend/app/api/v1/__init__.py": "36aaed545fc5f8de61e36b0c0afa135a4817b6a52a857fa83185325e175ce812",
+    "services/agri-gis/backend/app/api/v1/endpoints/__init__.py": "6aa9ccdf6ff82c12aabfb46d1bd73ef630414c5f3701b7f2c2e6e67eb27fecd5",
+    "services/agri-gis/backend/app/api/v1/endpoints/acceptance_report.py": "a90e20506d666a77b5a290d38ac67edb591b097b043c8316539482ae8e69666a",
+    "services/agri-gis/backend/app/api/v1/endpoints/boundary.py": "114182c1144d9afb3bce41917991a4a77769d68a5e37abd61cc533376d44a996",
+    "services/agri-gis/backend/app/api/v1/endpoints/change_detection.py": "e0156ebc242919a2f809405e841adccf0e17fb4e30bebd5fccfe4742eb3b5bdb",
+    "services/agri-gis/backend/app/api/v1/endpoints/delivery.py": "673301540409b7588d53b1d0ef7ef1c45c7f70daa77272845d5175981b77301a",
+    "services/agri-gis/backend/app/api/v1/endpoints/disaster.py": "259910ba7b00b4abb1972d0f6adb755f92a76f620e67e58427d8579d79567222",
+    "services/agri-gis/backend/app/api/v1/endpoints/field_verification.py": "40c2b568ca5d6fc5f7c5995e8a2ac62ad7b0975bdd7bdeaa8e5cd7a4d7cc8d1e",
+    "services/agri-gis/backend/app/api/v1/endpoints/growth_monitoring.py": "5c9bfef4f1cf97c85387b88d13c6c0b317162630abd85d49060a002e84a82112",
+    "services/agri-gis/backend/app/api/v1/endpoints/health.py": "0bb5909adcb543ee65221e467adfc6308ca82aeb4e739135336eea1c9f3e79e1",
+    "services/agri-gis/backend/app/api/v1/endpoints/imagery.py": "679b7164f12905938a5c402155cf362350b80aed4a9a0e4ba96af5b6bb810f89",
+    "services/agri-gis/backend/app/api/v1/endpoints/imagery_fusion.py": "ee14f4673b7b24109707a73f1d93d11ccb0febec16e73e44b1288a37911359d2",
+    "services/agri-gis/backend/app/api/v1/endpoints/imagery_history.py": "5d897d648af766bcaf39e88ef25c6014ad4958924e6bf68beca39781d6119065",
+    "services/agri-gis/backend/app/api/v1/endpoints/imagery_mosaic.py": "3dcfe5989ba4b20c6964fdeeda93588d7fd2d400919f17a5d9a0b20570a567b2",
+    "services/agri-gis/backend/app/api/v1/endpoints/imagery_registration.py": "848e0072153229e7035a6b7bcc980442001e1df7b21407ef0905d1e90fdc9870",
+    "services/agri-gis/backend/app/api/v1/endpoints/monitoring_network.py": "44458f5e2366e6c0c4f713a9a474ab9bf1be455425f18c0b41f75b0f87ee40c1",
+    "services/agri-gis/backend/app/api/v1/endpoints/offline_archive.py": "ef675972b66203b543d89d9f08f595844c5805f1cdea3c62cfec26b90b645136",
+    "services/agri-gis/backend/app/api/v1/endpoints/plot.py": "3258b525757631529c8d9954255f79e772975758dcac22e3cf1171db267cfd7b",
+    "services/agri-gis/backend/app/api/v1/endpoints/plot_attribute_field.py": "9e07b5892cc1bb3aca6af4f5a21d0234c1a90ea50ba087c92512355e1e53789b",
+    "services/agri-gis/backend/app/api/v1/endpoints/plot_attribute_workbook.py": "131f512f38c8b2fd08910505e63f18714382398e1e66151f37c2fce237eddaac",
+    "services/agri-gis/backend/app/api/v1/endpoints/production.py": "7b8a71e1f89034a47e0e162796836c6649de51a35debfb4c0533e44200af8372",
+    "services/agri-gis/backend/app/api/v1/endpoints/project_user.py": "a6fe279cc9124fe958f137edcdab71d0b144586aaa0f2484218ffa43cda7f345",
+    "services/agri-gis/backend/app/api/v1/endpoints/public_imagery.py": "ab2b43fc6b50bfe39bd656edaca7042d2e33ae4d425119d5b55ab26b01588acf",
+    "services/agri-gis/backend/app/api/v1/endpoints/review.py": "77f56af06ccccbff39af4997542179fb319c2b358fb05478daaa6aef5541e26c",
+    "services/agri-gis/backend/app/api/v1/endpoints/rule_config.py": "e3b16f88fa2e4ab1898bc438cb586128a40cdebc753e0d2d388af8c6862dd10e",
+    "services/agri-gis/backend/app/api/v1/endpoints/service_sharing.py": "7122f35e3de3e42e90a4c5a69cd4b3a6c600275a8211e9fe874b7dacb98812ee",
+    "services/agri-gis/backend/app/api/v1/endpoints/statistics.py": "ffa5d156ccd698524929e002984b7f4a11a32958e5bfc1d1efe2837ff8833e33",
+    "services/agri-gis/backend/app/api/v1/endpoints/supervision.py": "1e87aaf747b790526f4dc918b9bb5c4e144a4c27253ed04b24cf6ab83b89d4be",
+    "services/agri-gis/backend/app/api/v1/endpoints/thematic_map.py": "ad5b5078667df87fda21579b635195c355257537e15b1642ad09bf3256199b5e",
+    "services/agri-gis/backend/app/api/v1/endpoints/uav.py": "42d538813d2076b2b98f7de5c902a210269a40ce45db53e0efc5ac56c77761c2",
+    "services/agri-gis/backend/app/api/v1/endpoints/vector_export.py": "3c217d3e20f013f3a84ffcf1470d80a1c823b6b3181c2705ac51d9f3a8c1e04d",
+    "services/agri-gis/backend/app/api/v1/endpoints/workbench.py": "5ec0cd479895fae93081cb2b80bdb3fda02af614a93e33a9f7feb1029d1db7ae",
+    "services/agri-gis/backend/app/core/__init__.py": "1820a44b6e0682da8670ad49a500d638919dbd0a85157ba25ecee0d82529ffb3",
+    "services/agri-gis/backend/app/core/api_envelope.py": "1f23b91cf171249604590b7a715d248a2280413b736cf343da4fe552bf48de55",
+    "services/agri-gis/backend/app/core/config.py": "d158ed71d493966426dc7004700c7ba9fc640b88c3798bf328f50789bb5efd16",
+    "services/agri-gis/backend/app/core/database.py": "75df1d47b69f747e87e8f84e556e39480a3e12292001e8d4d18af02d12bd0f72",
+    "services/agri-gis/backend/app/core/dataset_files.py": "3fe167db8e87d0ff86aa302233344c61b6a557d1864a23d6b8054534a25e6f4d",
+    "services/agri-gis/backend/app/core/exceptions.py": "330c76adf9043d9ff877586abc010c39804bb83f09317b75f29901fa52b8fe8e",
+    "services/agri-gis/backend/app/core/imagery_files.py": "cb094a325ff60f2b4c59aab847bc44f00d01adc59c886616f0b541a8a303a0c3",
+    "services/agri-gis/backend/app/core/rule_defaults.py": "8995b5c48ee78afd7e2faaa337284c5fbf7448418ebc8e077231780fdca72ceb",
+    "services/agri-gis/backend/app/dao/__init__.py": "3c183bed11829f246c84b5a0730e8714535591bef6bf45d38e3bd3f238e1e3e5",
+    "services/agri-gis/backend/app/dao/acceptance_report_dao.py": "111193f96f2cc83f0140838867091db18e0fc8994063c9287551db272b22d0cb",
+    "services/agri-gis/backend/app/dao/boundary_dao.py": "2aa892a7a77c96434805a40eee838d470d770770e86aa4af03e98c4b0d21182e",
+    "services/agri-gis/backend/app/dao/change_detection_dao.py": "83a344145168d2fec5269151ff928041d80f4a79ba1f43899c497bf5f84153eb",
+    "services/agri-gis/backend/app/dao/delivery_dao.py": "7476ce6d523c8a19d64ec77d32fec7efb552bcffd6700204f44cbf257f531625",
+    "services/agri-gis/backend/app/dao/disaster_dao.py": "3ca6818d7f2aa400f342c91c8d765001d2e81620326f2cba00259dc6359d938f",
+    "services/agri-gis/backend/app/dao/disaster_report_dao.py": "3688b5c7e05bab76a56e688750af70e13c4df5d8f1f8b08cdd65f4dd1c9a1b5d",
+    "services/agri-gis/backend/app/dao/field_verification_artifact_dao.py": "cc55d5e500f6b5946432f4d842b497ab10608818e9e175e0a872719fff2993c6",
+    "services/agri-gis/backend/app/dao/field_verification_dao.py": "0bc13f08603a67a97ad4987f2d2e43dc26b72a8f0411a59c6cca28ff6bb9ba4e",
+    "services/agri-gis/backend/app/dao/growth_monitoring_dao.py": "d28ee64e9feb35fdec66865bff75e5035d2caec803a7ff12e605a8727bc3e195",
+    "services/agri-gis/backend/app/dao/imagery_dao.py": "f4dfe8ed7e330f598c9fb3fb9341c8c0a15df1c9a27195d283d37d9786e33fc0",
+    "services/agri-gis/backend/app/dao/imagery_fusion_dao.py": "099a91ae4990843a78668023634cfa5ed91594e4a1ae584df3051155fd9c89e8",
+    "services/agri-gis/backend/app/dao/imagery_history_dao.py": "053f7a4b3820a8cc848856db50f088ea8dfd771786a8e3173a8109ec5af2475c",
+    "services/agri-gis/backend/app/dao/imagery_mosaic_dao.py": "5bb18e6a42b735d7b69b74351bfbb44be2918064e90bd33dc6e90ef23df52108",
+    "services/agri-gis/backend/app/dao/imagery_registration_dao.py": "66402b6652ef9d7afc83823fdb1135b1a4b083c3798231b1507faa13abf66c64",
+    "services/agri-gis/backend/app/dao/monitoring_network_dao.py": "2177ed660d3dbe6c0bbb787173d46061b0729e9eb0077e79d4ee974935329387",
+    "services/agri-gis/backend/app/dao/offline_archive_dao.py": "1f5a6ef578e9f8431d0d5e509fd1838281b7ef6d7f4ca817cd6f3d62c0581448",
+    "services/agri-gis/backend/app/dao/plot_attribute_field_dao.py": "3040440a23ef1830776be8d497672203662744be71593fbed91b54e79ae0e498",
+    "services/agri-gis/backend/app/dao/plot_attribute_workbook_dao.py": "60c1c89c22e95bf4c9f112dd0fe1f84a62ce424e3530ed1c3b933dcd6985d041",
+    "services/agri-gis/backend/app/dao/plot_dao.py": "4ec9f8a940d054257a0517ed397d08d2b1a9fef2e70b2fd6cf386dd02b0dfd7a",
+    "services/agri-gis/backend/app/dao/production_dao.py": "749f97f5fd9e72ebc4e1e5cd8db01524a335a1dcf7bf3da4288df6f25217aee6",
+    "services/agri-gis/backend/app/dao/project_user_dao.py": "86712fe00216bc2cddd6ea6e0be5021e9f8269f79dfbe29dd1c29ad9757e7c88",
+    "services/agri-gis/backend/app/dao/public_imagery_dao.py": "51874f29b9274cebf87cf6cc57e2acdec85b2d49bdf8a29cc8b52adf07aeeddc",
+    "services/agri-gis/backend/app/dao/quality_evidence_dao.py": "a32405595a621331e3c616cf7cb04aca27c8c838f3755cdeadd9547b836d8a9d",
+    "services/agri-gis/backend/app/dao/review_dao.py": "e363003fa3a9dc343c670764906f38017eb119748d3ab11537b920c8bc7b0c40",
+    "services/agri-gis/backend/app/dao/rule_config_dao.py": "44cfa084291eda8325d43ef14d904992819805891a3b5176509933432624af5f",
+    "services/agri-gis/backend/app/dao/service_sharing_dao.py": "2854fddbff8da635600646f0d300837ab3ef8876ae69eefd441d441f34a537d3",
+    "services/agri-gis/backend/app/dao/statistics_dao.py": "a93d6a838d7067db504d905d08d45f8da61ce39c561b062864b043e1d9230f0e",
+    "services/agri-gis/backend/app/dao/statistics_report_dao.py": "7b715fd51d6f6aac7a849e5bc0f8c1da24a84d3f2cd5d245fcc17be40009c600",
+    "services/agri-gis/backend/app/dao/supervision_dao.py": "79889d771560ea40b09d78fda815959eb744c93f537e7b39bc31293ee9e40145",
+    "services/agri-gis/backend/app/dao/thematic_map_dao.py": "51240752adc9ca809fa4fac93e351467cb42bc3c49c6f2841200511d4d6dea7c",
+    "services/agri-gis/backend/app/dao/uav_dao.py": "6d64e43e8df604357aa5b4baf35319af5ee75d419c8a3e91c2518783afecf36e",
+    "services/agri-gis/backend/app/dao/vector_export_dao.py": "c173ed61e08cb8abbd7cd9d5f1627798cb06c655107a3ae585c4e9439236c848",
+    "services/agri-gis/backend/app/dao/workbench_dao.py": "f06ab69b815452029ca0d13be29463d40a634a68fe93bde9371c07bb39325469",
+    "services/agri-gis/backend/app/main.py": "bb846a1d2550a1799aa655c8e6cbb5249441ae7af8294f3833e1fae11480a45a",
+    "services/agri-gis/backend/app/models/__init__.py": "0f07eb11cd8fdd4084000dbd8efa852a652dcfe9349dc4dc49a289cbe88db5fd",
+    "services/agri-gis/backend/app/models/acceptance_report.py": "696b09c0cd20c03c42834a333850d0b99a77cbd5daf072bc4a33861c132aaef6",
+    "services/agri-gis/backend/app/models/change_detection.py": "47872106fc43642e376cbfc906b69f54900a2df8aea70d74c3aafd879d5e2282",
+    "services/agri-gis/backend/app/models/dataset_asset_import.py": "389dcbe8c80fe692ab2a5e60182d1e085896d8feffe6975e61241ad37eb0be8d",
+    "services/agri-gis/backend/app/models/dataset_asset_verification.py": "668300ac46f429bd06a067cccdc6ff9d47277a3f5ea42faef57945d3b0585c82",
+    "services/agri-gis/backend/app/models/disaster_report.py": "232fbaf036fa74e2159add99c41af6e428d00ffe6816d66c9fd3a22287c61e1b",
+    "services/agri-gis/backend/app/models/growth_monitoring.py": "aaa284db26d5b96d699f5f590e2a5b8803d6a6573406a688c89982af9fb4a4b3",
+    "services/agri-gis/backend/app/models/imagery_fusion.py": "42b0253ca0eee5ffc5a37ee761e6d9e11c9497ea93026c69f1327ff81dec4c49",
+    "services/agri-gis/backend/app/models/imagery_import.py": "8afadc4f6ddabbfa8b85aecde879cf0fa0e85996beab7dc59630d3039edd458c",
+    "services/agri-gis/backend/app/models/imagery_mosaic.py": "2508be86106f2a66be0fd727e6caafeae1377bfb581f677a7dc9934b1ce2d705",
+    "services/agri-gis/backend/app/models/imagery_registration.py": "2af8ba13dcc977ce462de75fa35a89621988820da9db5c5eb01364a442a7868a",
+    "services/agri-gis/backend/app/models/monitoring_network.py": "c094918664655740fe390af104ee65eee50f104ac2d3bc35515a32c198a6a375",
+    "services/agri-gis/backend/app/models/offline_archive.py": "b242d1ee4270492f76d7c05a7020733f8604e3445f590d248bf7772cc3fa7a25",
+    "services/agri-gis/backend/app/models/plot.py": "6071f9717f08b7da9aa8f45228a5e65770373dc223807108153cbafb666d7fba",
+    "services/agri-gis/backend/app/models/plot_attribute_field.py": "b6b3b079b19301340990d2a224027da151efdfa60f1e32e10470f80ff8b935d7",
+    "services/agri-gis/backend/app/models/plot_attribute_workbook.py": "6f19763160d549ec64c7f6e597432c11b0f5ca463e80fe0414b3ff5a98207c9a",
+    "services/agri-gis/backend/app/models/service_sharing.py": "70be75b7f38cdb7abe29251f466e014ee5e180d1f882d5a5bf8ab49eca18915f",
+    "services/agri-gis/backend/app/models/statistics_report.py": "d7e99b4496e5b6c29c8a84456e42ac5988c20dddb96009f5b56caaf3af7670b7",
+    "services/agri-gis/backend/app/models/supervision.py": "f5bcc0c797834835ec34bfff325ad201d2f10ded9cf2f5579fa456b3a1636782",
+    "services/agri-gis/backend/app/models/thematic_map.py": "567fe79f70d827318b449635164d13309e921372e85b042af727270ae737c844",
+    "services/agri-gis/backend/app/models/uav.py": "2cf7d0a4c37c162f45cc71782924c307608aea50bd9a9c4c505be75f68926c21",
+    "services/agri-gis/backend/app/models/vector_export.py": "d3ca9368d9606053aa847953f220446d32b25046ae1b92f3a3f6c7fa6148ff7e",
+    "services/agri-gis/backend/app/models/workbench.py": "cd169e8d9bea562608d73f7bfe52517066f667220eefbc0e7e67241b45249f77",
+    "services/agri-gis/backend/app/schemas/__init__.py": "2c11e1c640938bd3bfe8b2ad10e1fc871fc82f4317e94c97f0b8c8b1ec632d6d",
+    "services/agri-gis/backend/app/schemas/acceptance_report.py": "b4d25bb3d254541e9ee574b82a9547f013cfdc7702c81c724e514637f77942b5",
+    "services/agri-gis/backend/app/schemas/boundary.py": "3ab463b3178881cca66f3f25f8256b0d097956f0fb879c9805b9b7230fc4869b",
+    "services/agri-gis/backend/app/schemas/change_detection.py": "f798cc700917e36addec3251265fcfc2b8ffa41af597b8b6cd454643becfba12",
+    "services/agri-gis/backend/app/schemas/delivery.py": "03238f0ea41c37f09172bdde8a9899526cf8811419899e3ecc5e3824bdee0232",
+    "services/agri-gis/backend/app/schemas/disaster.py": "3eaf8e341796c3bc2ee80b50f82ad2d4442e6ce41be88ed94da633c41e88a645",
+    "services/agri-gis/backend/app/schemas/field_verification.py": "1f5cee35ce513085013c29bd89354a87061dbd6d623fcacf5d868f65a8a9795b",
+    "services/agri-gis/backend/app/schemas/growth_monitoring.py": "0f0488aae76a7774a0c843cc51d86bbec3c7cff73f8ed7d94a91fa4a0d4650ae",
+    "services/agri-gis/backend/app/schemas/imagery.py": "b50ec8fd7460c4d2000f73b760f22f0cd64da5abd08c9edf7c5cada32fdc6506",
+    "services/agri-gis/backend/app/schemas/imagery_fusion.py": "0ca45bc309c2871cb862b3704b629a7302b921fdddc1909023f4d5573297d065",
+    "services/agri-gis/backend/app/schemas/imagery_history.py": "19dbff972535fb3f6d46f3d99347d0bcd9ca7b750514e13a8b5182701b619859",
+    "services/agri-gis/backend/app/schemas/imagery_mosaic.py": "8035082f12d58d1423a586c5867fc2843716c27e68be22e02fd19cbc4d8ab1ce",
+    "services/agri-gis/backend/app/schemas/imagery_registration.py": "01effc359fbec416caaf3a992dfe8dbdc0e4748a246814ce557159d0f7bb661e",
+    "services/agri-gis/backend/app/schemas/monitoring_network.py": "8656a673d44e2c099b3de3f77c95ce494ef640d6c1a3d52c2ca1b2a4f4951c39",
+    "services/agri-gis/backend/app/schemas/offline_archive.py": "22e5c9793555c9cc6d8abcc81e0dabea6b687e5017e8bfc9c30c5cda2e05e0a3",
+    "services/agri-gis/backend/app/schemas/plot_attribute_field.py": "99bd3fc5c854af1b2a94fbd94805fc092ec137a521c3ac51453b5542de33cac2",
+    "services/agri-gis/backend/app/schemas/plot_attribute_workbook.py": "8ff1e31a6e52b50d49972df43e258401e7df6cde1ee6046857c891bbfccfd408",
+    "services/agri-gis/backend/app/schemas/production.py": "ac42e999d375af6ba9656de5bed3326e87b9440ffc3f96b0f4c1e47e436bae8d",
+    "services/agri-gis/backend/app/schemas/project_user.py": "4aeac4707c42849bd30fe8fd0cc169caf22a1aa09baf91366c2f141231b4d437",
+    "services/agri-gis/backend/app/schemas/public_imagery.py": "b6ad708c86cd35038168a97ecdf7ac308bbe9b16a929f3e83f9c92ccb8f28e8f",
+    "services/agri-gis/backend/app/schemas/request.py": "23eee6956b8643f83d407f6a6aef873a7783032d6bf28b46df7a11c2e035719a",
+    "services/agri-gis/backend/app/schemas/response.py": "df140f9e86cc2256adc28caa81866059644699995fe94360cf8bbe7da156028d",
+    "services/agri-gis/backend/app/schemas/review.py": "3103958a43811e66a2d7f54bf48dbb702cc6c829211a21c7e9662ad38230cc83",
+    "services/agri-gis/backend/app/schemas/rule_config.py": "5744e8ad1d99408fa4faaa518de5af59d0547847aa80dbecc129147f57e5654a",
+    "services/agri-gis/backend/app/schemas/service_sharing.py": "06c217470f6ebf94b6b7025f980bb2de84f5c30753a25fe3d171bbc49d23249c",
+    "services/agri-gis/backend/app/schemas/statistics.py": "1cd3b6c9843b1b5cb8a06055df0102e49b9e28e131594d10c780b1473622bab8",
+    "services/agri-gis/backend/app/schemas/supervision.py": "e4a1b20ef10dbafbfb3170742872ee51f97d4c1af437a47e289c7712fecd028e",
+    "services/agri-gis/backend/app/schemas/thematic_map.py": "66fc5190933bcf21ef85bcd30349dc94f814633b34e79accc0d3f6373468c8e1",
+    "services/agri-gis/backend/app/schemas/uav.py": "dd64431c4a3d34a34e8303bd55743da682f7bb1d213ccaff8c6c8dc5eb980e4b",
+    "services/agri-gis/backend/app/schemas/vector_export.py": "ed3e38876794896d3c71dcb58b87c8a5d8be0cfd7e682bceb668716df7eaa454",
+    "services/agri-gis/backend/app/schemas/workbench.py": "a3f1dbea7f2a0d4fc88ee4ee3fc1d99d82333892d83781fadf3afa87f6340a2a",
+    "services/agri-gis/backend/app/services/__init__.py": "22a22dce4f8f50d16fcabba1074267c1fe566a7492fa4adfc22fe370f0c3b30a",
+    "services/agri-gis/backend/app/services/acceptance_report_renderer.py": "885289828c8542b611722b354c5188df8249b37d496a280702fb8aa265972b22",
+    "services/agri-gis/backend/app/services/acceptance_report_service.py": "7fb713ab979e976940d78fe1b7c35954d44587be23426b14962eef533c5f8c50",
+    "services/agri-gis/backend/app/services/boundary_service.py": "b57b0b7a168c290e1d6abd3d5191cef4c8a40833c5ad64f0c5eddd29d68b6b2a",
+    "services/agri-gis/backend/app/services/change_candidate_discovery_engine.py": "2d4a9e6c16bfff20fe10699a961a760a7104eefa5256e41a30368992ffa7335d",
+    "services/agri-gis/backend/app/services/change_candidate_discovery_service.py": "671719f72e1c3b0616961b21ea164b6e2b6a6b1dee3e8d6e3de1d4d58d47ce1a",
+    "services/agri-gis/backend/app/services/change_comparison_renderer.py": "9fbeeb33dacc23da447b0ac06798140730645f594d7bd99acd205df5f62e2c98",
+    "services/agri-gis/backend/app/services/change_comparison_service.py": "7cc0f95e0a6f07f8a9e9c260fce594e98f0f46e6c3ff6915e01c76fe386d5190",
+    "services/agri-gis/backend/app/services/change_detection_service.py": "b04fb68217f537b179c529256895fcda609b08ca685cfe88f924097318512fe1",
+    "services/agri-gis/backend/app/services/dataset_asset_batch_service.py": "1bc4da17d9b0b7967fe1079c3352d20502b8033772b5170c5d6af68bb9f71d9d",
+    "services/agri-gis/backend/app/services/dataset_asset_service.py": "bbab6c2e38d137682fbab01f46d1493124a822a9bbc26f5a260afc4a89a9abec",
+    "services/agri-gis/backend/app/services/delivery_service.py": "023b58221a96745f6d4749f595fb848f8e7d7d06474d7c1c6bf12ee6ad04fcf3",
+    "services/agri-gis/backend/app/services/disaster_report_service.py": "fe4d822d143ec5f495094aab3483cfbb3072b262fe929b9252a6ead16d33c3a6",
+    "services/agri-gis/backend/app/services/disaster_service.py": "95c8bba89235c604df6f2fd0bc7d977206eacf9321621bd9a5814455e90815f6",
+    "services/agri-gis/backend/app/services/field_verification_artifact_service.py": "650facf55670707b24de6137ab03eb596fd0c606f4b3c52222a53104d482e40c",
+    "services/agri-gis/backend/app/services/field_verification_service.py": "861ea628e4cfb39b0d4d9b7a3dbf093b7f04edd6acdab262a82023ad98dc4747",
+    "services/agri-gis/backend/app/services/field_workbook_parser.py": "06f0554111d8fdf074af90ebc4798a35c9712c15aa300d095838b11d327a16b6",
+    "services/agri-gis/backend/app/services/growth_monitoring_engine.py": "1a90c6e19dcf0f2151560c39507d9e3fe89f5aa320433bc7032e2e7888067573",
+    "services/agri-gis/backend/app/services/growth_monitoring_service.py": "998bb7dcc1fd7873df6a15b858cee5bef73506ef987a09566119d09ed3d9f9c6",
+    "services/agri-gis/backend/app/services/imagery_asset_service.py": "a2d54a5ca990543b70227fbaa0386af1e08cb8f3dad4ad34f9b3e13183ce8f54",
+    "services/agri-gis/backend/app/services/imagery_fusion_engine.py": "671de33c3bf13bb9c92601b570c5c7c68d7e6e4d398737651ef43683a5d17116",
+    "services/agri-gis/backend/app/services/imagery_fusion_service.py": "15e2ecab7df1d340671dc01bcf263cae6b2ee73c877dde51266b3e5170881ebc",
+    "services/agri-gis/backend/app/services/imagery_history_service.py": "826ba2955a11df37bcd0c243a911293b8b091dcefbaef44b6df35fa0a6251d72",
+    "services/agri-gis/backend/app/services/imagery_mosaic_engine.py": "a2d406a623ecb1abc92d6340278ecc4070d6a6ad50a413337d2c64e000aa88c6",
+    "services/agri-gis/backend/app/services/imagery_mosaic_service.py": "837f3fa3c46e96fcd3e97e188b641c6bae9dfd85a543de876874f0b29106158e",
+    "services/agri-gis/backend/app/services/imagery_processing_engine.py": "f945361e8ef623eac251230da95dbc519185afe67c040e485674803c5570383e",
+    "services/agri-gis/backend/app/services/imagery_quicklook_renderer.py": "a8859da21f928f8c4e94036e6a4fc5651d7e376de9773dfe49ffc07fe41bd573",
+    "services/agri-gis/backend/app/services/imagery_quicklook_service.py": "0b65f54e3a09352d110a59136f2c3cedb0502c8a08c775b7c944792fd9eb087a",
+    "services/agri-gis/backend/app/services/imagery_registration_engine.py": "f50bde75ab6ab93e6db2a24d88ca6a693fe882fa0a1fbf6a352310be49d15f10",
+    "services/agri-gis/backend/app/services/imagery_registration_service.py": "ecc9256813a0f58fb0d83bed4e6e16f5995bb5932c1af0aa9206e6c40fbe6ec2",
+    "services/agri-gis/backend/app/services/imagery_service.py": "f6c80916df44b9fc5c8bb6b790a641982e59a15eade94b9158270c166b246dd4",
+    "services/agri-gis/backend/app/services/monitoring_network_service.py": "451623a2569c4f1ea927825973084c7bda46069b43f4587f0d212e133cd1db0c",
+    "services/agri-gis/backend/app/services/offline_archive_inventory_service.py": "23cfcc5cd238078a899397654c91c569dd44a0ff6438a37ab49b83edb4ac69d2",
+    "services/agri-gis/backend/app/services/offline_archive_model_factory.py": "42dcd4e4265d0a77049a3939c71caf617bb437ee2d96199492615b8e4719140c",
+    "services/agri-gis/backend/app/services/offline_archive_response_builder.py": "6e89f44530c2fec35080bcb70ac6894a85bf96e5ffe92ebadbbc5c0e7c999c72",
+    "services/agri-gis/backend/app/services/offline_archive_service.py": "73249db00cdb73f9d6305a6c84541af65516bf961e08b93988a4236a65a1b163",
+    "services/agri-gis/backend/app/services/offline_archive_writer.py": "fb08b274cda4c55e3b6b5e8a8f47a6a0a8a931df6b5f02be9d1082bf9d8d8814",
+    "services/agri-gis/backend/app/services/plot_attribute_field_service.py": "c2013dfab405611aceba8656b2d1c802eeb2682d7c5429f9621c63f85e3c8a5e",
+    "services/agri-gis/backend/app/services/plot_attribute_workbook_parser.py": "87b22305482df61696f6e77a0dd9c705c1e87cd7717ae85cc48ba6199b60289d",
+    "services/agri-gis/backend/app/services/plot_attribute_workbook_service.py": "0aa25b23d56f963e6032a4396809d9a4d621eca7872ca3d7ea4b0d3d5872d555",
+    "services/agri-gis/backend/app/services/plot_attribute_workbook_storage.py": "bc501da3739afa2aae633e444225f4bfff326b3495f602328ffaceee1e30a313",
+    "services/agri-gis/backend/app/services/plot_service.py": "c64479bd30eb8cbca35f4f06e6ef99f4e962ddf7e8fed481ad7a32c84f06de3b",
+    "services/agri-gis/backend/app/services/production_service.py": "6653f40e0b4bf54ed0e802dc955cda792590ba143ad0abd8487bb8488a406a9b",
+    "services/agri-gis/backend/app/services/project_user_service.py": "6f36c4be95f8a69140d1da9e642fb91929439e32505e3d42d7d9e3a5971fbb2c",
+    "services/agri-gis/backend/app/services/public_imagery_client.py": "765fca39bae540e49c9ce40a07a9d341f8c6647491c5122dc8efa0ef9ac1a3c3",
+    "services/agri-gis/backend/app/services/public_imagery_engine.py": "47658bf03d04e5cc43b999cb24a43fdf37c7384ce2f80c731a6500e7237f9078",
+    "services/agri-gis/backend/app/services/public_imagery_service.py": "19dd9ac7746eeab283f09f1f5334b0449edae288189fd907eeec31a757985689",
+    "services/agri-gis/backend/app/services/review_service.py": "1dbc8e28d96a26535399090bd5188f7f08cbab779ac376ac6136c9617bdaa1fe",
+    "services/agri-gis/backend/app/services/rule_config_service.py": "5c3c58ae33e514bc99f0d0028574bb884062b1073155ad39f3c335583ce354da",
+    "services/agri-gis/backend/app/services/service_sharing_service.py": "2bbe43d66473d0f7af73cb3e2b02ae0d855d5d901827be5abaab5642034d99e7",
+    "services/agri-gis/backend/app/services/statistics_report_renderer.py": "88e9cfe9ca99fcbbbfa43065945a962b1873b7c3601c7a2f81332be73418c919",
+    "services/agri-gis/backend/app/services/statistics_report_service.py": "a47f2029f987527fa512d8c421ce2859c05b371dcc1d87599e6c60b725384f81",
+    "services/agri-gis/backend/app/services/statistics_service.py": "e9f02525eafe41c3e364da83f737bb8d310ddff143d17d5e457aa69ad96f3da8",
+    "services/agri-gis/backend/app/services/statistics_snapshot_parser.py": "f4136c1ceecb6449088983670ef8836183c4fcac70af2ce94b207acf4f924aaa",
+    "services/agri-gis/backend/app/services/supervision_service.py": "daaddf7d10b567ad1dc81eb9296d7e9ebb0141fffa80aab07d9ae97b6057dc81",
+    "services/agri-gis/backend/app/services/thematic_map_atlas_renderer.py": "f965cd8d0812117cf5eba84f82a52204d79f2488701ad7507d1c7a44ff269128",
+    "services/agri-gis/backend/app/services/thematic_map_atlas_service.py": "348a36012243e6784d2c1f41866e23c3edeaa7a0a6b27835d71511b767c6c3d4",
+    "services/agri-gis/backend/app/services/thematic_map_renderer.py": "59d7c15c2bd17f5589fcc0e08874de0b4a362a353075e1f422c48c679edb6f79",
+    "services/agri-gis/backend/app/services/thematic_map_service.py": "4aecc4b54359af55c64953f3ecf176b9a4b93384d00fcd4e912df2bafc3fcfeb",
+    "services/agri-gis/backend/app/services/uav_mobile_capture_service.py": "1b2667b4470fac47f1e71f31ceb5604ad56a8f85b570f8217491436c93c39c77",
+    "services/agri-gis/backend/app/services/uav_service.py": "48cfcfa6bd9cf8309522b9656cc6bd1f456eed4b78de347b6dd6060f6f4a3617",
+    "services/agri-gis/backend/app/services/vector_export_renderer.py": "1509a3cdba9add7f51972c9af4541c38defe87cfb029aff83a6d6fb64d1f0611",
+    "services/agri-gis/backend/app/services/vector_export_service.py": "d0d234d30bd3234fbdc3017b9bb06d1116f38efc26745745dc47f8b1b6a9cf33",
+    "services/agri-gis/backend/app/services/workbench_service.py": "5c9913dd03fe804a2f8f97e34f9b5346e3439bd78e73a677375a8086b8446e90",
+    "services/agri-gis/backend/poetry.lock": "e5e287271ef6c5fb56185dfcd07f12eedae144a908ec1483ab877696259a26df",
+    "services/agri-gis/backend/pyproject.toml": "25ba43f87576814128bffd8b19f1a1f5cf9a673a6da9aa1a01ed6d1837b7abd2",
+    "services/agri-gis/backend/scripts/migrations/20260721_delivery_role_scope.sql": "ba854f12ae3f68058f455d14c5273378b29a22f246488bf3aa41ed5db84464ce",
+    "services/agri-gis/backend/scripts/migrations/20260721_heilongjiang_boundaries.sql": "e5597d8ddf8d03bfed52caeb497bc3aebaf11393bad531316c59c55aeb6409ec",
+    "services/agri-gis/backend/scripts/migrations/20260721_imagery_artifact_evidence.sql": "1fbcbe67f70040a8faea151063f4b95038a900e4120148d9f7346a1548275741",
+    "services/agri-gis/backend/scripts/migrations/20260721_imagery_asset_files.sql": "679da50ec1bf69c2ca8290249f86f8ceb5d52963809327947e59d1c9b7d6939d",
+    "services/agri-gis/backend/scripts/migrations/20260721_operational_role_audits.sql": "ccffbc751c2c325606eff3ab328607691226db6faa4c3dbb7b0946ef446d8cba",
+    "services/agri-gis/backend/scripts/migrations/20260721_project_rule_configs.sql": "7519c3fd25b2d2b11c2fcd29b9d2f6160a66994c249262ab85c52ab760ebc2df",
+    "services/agri-gis/backend/scripts/migrations/20260721_project_user_roles.sql": "5b132881f7ff7f51998d9bcd2183f874dc26cd8bbe4ac153c59127df2fa4a24f",
+    "services/agri-gis/backend/scripts/migrations/20260721_review_issue_resolution.sql": "406542610604a29240f628e67a4e752324b4c5fe0864505795ed2de7c9e36ae9",
+    "services/agri-gis/backend/scripts/migrations/20260721_task_plot_scope.sql": "cb0651f1a617ee8f0e90c06bc650d9c498fc3bc8c7918c76f37a21e331a1bb40",
+    "services/agri-gis/backend/scripts/migrations/20260722_add_production_foundation.sql": "70c1db48085df294c9ca97990847839e8815ca0fd33a338eca8d1f63af48e365",
+    "services/agri-gis/backend/scripts/migrations/20260722_backfill_system_review_identity.sql": "3aa7ef06145b1355c57198ddf613d276f59e250f593baa108acbf51bc81feafe",
+    "services/agri-gis/backend/scripts/migrations/20260722_change_detection_registration_binding.sql": "97bd4acbbaf4f2c899a94606ff32a79e60cbaa122015ca47e6b71368203130fc",
+    "services/agri-gis/backend/scripts/migrations/20260722_change_detection_workflow.sql": "f038d494e7cf630aa01b3a82d3be17524f6a56e754b109b4c736cd227ec78803",
+    "services/agri-gis/backend/scripts/migrations/20260722_disaster_geojson_import.sql": "601b458ff1e8c66b48b8183be4a8271963112df226051a8511ebd8c527b2d061",
+    "services/agri-gis/backend/scripts/migrations/20260722_dynamic_workflow_progress.sql": "89e206282d2df7a153bb18e9e4759c124461668da59e1b0bdb4423b236c9e940",
+    "services/agri-gis/backend/scripts/migrations/20260722_field_csv_import.sql": "f65f17dc05b1f101bad786a4c177e3b8196aa5bcb88b61958662ff75599ccdf2",
+    "services/agri-gis/backend/scripts/migrations/20260722_imagery_enhancement_step.sql": "af7dc3f5cb328e8596ac971b60d207087b89227ff8fbee57f41a41257a3b0706",
+    "services/agri-gis/backend/scripts/migrations/20260722_imagery_mosaic_workflow.sql": "fb69133a7036ff115b50048b8c15c7da80f9c368a1dfdfd8fa887e454aa75fe3",
+    "services/agri-gis/backend/scripts/migrations/20260722_imagery_registration_workflow.sql": "fdcf49966f721b791d20178f787e6e5a410ebfb34b1499fb858a202de82d5915",
+    "services/agri-gis/backend/scripts/migrations/20260722_independent_supervision_workflow.sql": "34b2f51f19f55e2d4aa263598af7484059a942b8c56cf9c13d69e7d13f1535b1",
+    "services/agri-gis/backend/scripts/migrations/20260722_invalidate_legacy_quality_cycle.sql": "7881f5687d5392141fca74b3de6cdcd0e57ec68fa515d841f52d95fade04f625",
+    "services/agri-gis/backend/scripts/migrations/20260722_monitoring_network_workflow.sql": "20a028f16c4df82233f17f525aa5dda456ddc2d9f8568eefaa6b9626aece841b",
+    "services/agri-gis/backend/scripts/migrations/20260722_pest_report_workflow.sql": "11e12670621e2e25b52c633235bed783c92605cf6c4bb33c2026bdc374865e66",
+    "services/agri-gis/backend/scripts/migrations/20260722_plot_operation_history.sql": "0c2955a7421d0da78623dd329a11da79237da91bbcd1287ef38bf1501dfe7c4e",
+    "services/agri-gis/backend/scripts/migrations/20260722_plot_operation_role_audits.sql": "be4d70a2ee40b03f857e515090b476c5ca4633c5f434037200767119cd827b08",
+    "services/agri-gis/backend/scripts/migrations/20260722_plot_split_operations.sql": "48ac60121fc229138ed62260062351b0cc6744fc1f6beb22d2bf6eaeac3e023c",
+    "services/agri-gis/backend/scripts/migrations/20260722_remove_placeholder_imagery.sql": "e5b2019e6d032ff8a1d7da85eaf8b45fcce43eab0f5ccdc2f0377a2f67006098",
+    "services/agri-gis/backend/scripts/migrations/20260722_remove_seeded_task_audit.sql": "ab43a76d1953091ba76b90f6bf9dc7327e13f656dfb95275614be695663c442b",
+    "services/agri-gis/backend/scripts/migrations/20260722_service_sharing_workflow.sql": "f6936ea55b2583e414c81d8832825c3e05a5c25e28ec3e90995f62067d0a44ab",
+    "services/agri-gis/backend/scripts/migrations/20260722_statistics_history_import.sql": "7f0bded03a7180b89fcb3312846616f66af05f9742911d627eea166534666c12",
+    "services/agri-gis/backend/scripts/migrations/20260722_statistics_task_scope.sql": "33fbb6c704a67bd84924f8f3f41d1911eb2378dbd77a1d7435ccf5f22453739c",
+    "services/agri-gis/backend/scripts/migrations/20260722_thematic_map_workflow.sql": "0999942b5d4cc1f75e68cf336640cbd49d195da0eb94eafba0746206ff9daeba",
+    "services/agri-gis/backend/scripts/migrations/20260722_uav_workflow.sql": "e9000552e404e83538ab9bb348e6a2ac572a52063d574d9389d3deddc77ddb3b",
+    "services/agri-gis/backend/scripts/migrations/20260723_acceptance_reports.sql": "0e54d8f457723cd4f0f4ceae6d119959fac5782323b17669b866326435a85937",
+    "services/agri-gis/backend/scripts/migrations/20260723_dataset_asset_batch_import.sql": "5ab4d8a31108070a83bc0e8b49e6c12e7ceeeecd82b8135318a065d2a7fc51b8",
+    "services/agri-gis/backend/scripts/migrations/20260723_dataset_asset_physical_verification.sql": "040aeea912df8941772d4099965c95da5131e1c4f66c3c7420b244f30ad4dcf9",
+    "services/agri-gis/backend/scripts/migrations/20260723_disaster_reports.sql": "4fb3b499d4dcb3ed00ed71532339afcc90897c462bbe54a2f4cc425a388bb600",
+    "services/agri-gis/backend/scripts/migrations/20260723_field_mobile_capture.sql": "9879fc0d879935a8f0e1d46147b9cfca80dd13f3898bdfb724c7ea543baaf371",
+    "services/agri-gis/backend/scripts/migrations/20260723_field_verification_artifacts.sql": "6b736c40098fbd50e173a9fe3151a5272f621ad98c1d25ef333a6ac0655ab857",
+    "services/agri-gis/backend/scripts/migrations/20260723_growth_monitoring_coverage_semantics.sql": "dca51041680fedf12c61192d46d2cd916b62f88386dcb856c6aca96fb39b9a8e",
+    "services/agri-gis/backend/scripts/migrations/20260723_growth_monitoring_workflow.sql": "19e1d042e9b0abbfad0e21e45539ed5182c767f676cbcc86763dcb50099af622",
+    "services/agri-gis/backend/scripts/migrations/20260723_imagery_batch_import.sql": "9fc1c14d901852a6b20f8d222c101a81b4ddc9bb5b1bdee4e292522b4fa7fc23",
+    "services/agri-gis/backend/scripts/migrations/20260723_imagery_fusion_workflow.sql": "8c1e15bb988233129995170341739c957c0e7a670db7f9e80bf196c8fe6b4356",
+    "services/agri-gis/backend/scripts/migrations/20260723_offline_raster_archives.sql": "c93db59370eb7954bd4d908c56b09cdef3d7fce6d42914bf5fdddc73e1e4fe61",
+    "services/agri-gis/backend/scripts/migrations/20260723_plot_attribute_workbooks.sql": "7e2124d29baf9631965553873bca681f511678d837613b045304e7929ef562ec",
+    "services/agri-gis/backend/scripts/migrations/20260723_project_plot_attribute_fields.sql": "00da5f8d3e5040cf1b999f1209a1a37b9a98c9563db8cb4a64220f82e35c796e",
+    "services/agri-gis/backend/scripts/migrations/20260723_quality_imagery_snapshot_invalidation.sql": "2bc36e188d2488c7e8ed3458bf9d79e12f8cfc0f76f5d2e45a52d96c66f2cf4f",
+    "services/agri-gis/backend/scripts/migrations/20260723_quality_submission_run_binding.sql": "6f60f342b4d271545deea4ef9d2011723d6837ee28ad4ec391bd148583beb145",
+    "services/agri-gis/backend/scripts/migrations/20260723_statistics_reports.sql": "150b526278de2270853fbf102584057aa0060cfd2156cf9cd3db83da2c9265f7",
+    "services/agri-gis/backend/scripts/migrations/20260723_task_quality_runs.sql": "008875957281de7593b62f33ea1761dc96d5314a826f918b89cb67dd4fcdc73f",
+    "services/agri-gis/backend/scripts/migrations/20260723_thematic_map_atlas.sql": "b9c339f9d1945787498e4c5557b7b3badf314eaada22ab3027de7778db75e4ea",
+    "services/agri-gis/backend/scripts/migrations/20260723_vector_export_packages.sql": "c89f48711ef7bbb2b541c7c4e4770ad3bd82f67e5147a7979045e59c1f93d8b0",
+    "services/agri-gis/backend/scripts/migrations/20261029_agriculture_actor_bindings.sql": "6508f3c646221ba3e2edec489015ec11849ad0a95fcac363bf422852cb698757",
+    "services/agri-gis/backend/scripts/migrations/20261029_agriculture_identity_replay.sql": "3986211d1fb38b711ed0c6071400b620e6bc12fe724628b8cdfdff17d019fcfa",
+    "services/agri-gis/backend/scripts/migrations/20261030_agriculture_domain_rls.sql": "8aa4057ff7cca2ee42bcf53e636cc363c0b55b0ecb21999c7a94591647d0f454",
+    "services/agri-gis/backend/tests/domain_fixture_support.py": "2756e0e8cb6b0fb118aa3e83a10bdad3ce92cab391adaf5df67886be4d6fc3bb",
+    "services/agri-gis/backend/tests/test_agriculture_actors.py": "0c1053a09a70fda0136bc91414710ef22835f0efd39cd769a23a705a3b28544c",
+    "services/agri-gis/backend/tests/test_agriculture_actors_postgres.py": "84371360104a8577f3e4a177f58278d92bfb034e306cadf492b46a6788d1e300",
+    "services/agri-gis/backend/tests/test_agriculture_database.py": "45b9b13c5377fe87e1535bab86e485eca27266bd2c784f51004a98ac88addabc",
+    "services/agri-gis/backend/tests/test_agriculture_database_postgres.py": "993fbb1f4db29f3024e89a62e074ab7e8424b83286cc92615a5f0f82e43e4207",
+    "services/agri-gis/backend/tests/test_agriculture_domain_boundary.py": "6579f1ad2882e91845489ad2d8beb47ed71c356b3f9da7c952d92d26f8029656",
+    "services/agri-gis/backend/tests/test_agriculture_domain_rls_postgres.py": "b1c575d44afb510a0e7ef267f2e8e8367d4c41a4f0b29937387463e734f51e1d",
+    "services/agri-gis/backend/tests/test_agriculture_identity.py": "53b23497edd63a1b62bc89c7094d6df7d3e242ad961a94df93623350a37f8a81",
+    "services/agri-gis/backend/tests/test_agriculture_identity_postgres.py": "269d7e1e46629378d7c6259edf1c256321c060c55f366bfb5e43f88f639d682b",
+    "services/agri-gis/backend/tests/test_agriculture_legacy_write_integration.py": "5673b513ebacb54765e74b5bccc07ae6ff030254cf68a8ad5f075371f5d2442f",
+    "services/agri-gis/backend/tests/test_identity_canonical.py": "0380af33376c4646e8a1c05c62fd302a88bddb51174d31021945618b8985792d",
+    "services/agri-gis/backend/tests/test_legacy_actor_gate.py": "2abfd681d381e6c087ded71bf61a5cefb263d8146af54d31a71466a03f97645c",
+    "services/agri-gis/backend/tests/test_legacy_identity_contracts.py": "58cb49dc94c4fb89b09fbddad8ba96a4a8fb27fa81221f8e908bae64fb234547",
+    "tests/agriculture/test_native_postgres_helper.py": "1bd7fff1ecaaf0170eb502c09de9f9a2b7776ba41565d6c29d5722ff78fcef2b",
+    "tests/agriculture/test_native_test_environment.py": "174755fb480740f24243e03d7d73617f2dcb6b6b6b2ac2a5e00c9351c9b14c54"
+  },
+  "packages": [
+    {
+      "Package": "postgresql-17",
+      "Version": "17.11-0+deb13u1",
+      "Filename": "pool/main/p/postgresql-17/postgresql-17_17.11-0+deb13u1_amd64.deb",
+      "SHA256": "d2ce1ddffafa783f9acda4c92c86fc21e8288bff3782d739294f14fa797d7886"
+    },
+    {
+      "Package": "postgresql-client-17",
+      "Version": "17.11-0+deb13u1",
+      "Filename": "pool/main/p/postgresql-17/postgresql-client-17_17.11-0+deb13u1_amd64.deb",
+      "SHA256": "9d8558f8dd57c8e92e218a20698383575d53742ca3f9e7c2b7fe5f246d5216ae"
+    },
+    {
+      "Package": "postgresql-17-postgis-3",
+      "Version": "3.5.2+dfsg-1",
+      "Filename": "pool/main/p/postgis/postgresql-17-postgis-3_3.5.2+dfsg-1_amd64.deb",
+      "SHA256": "4e59c5c0c27b98675ea65c7018166b1f8e48282e17801b149bf3e241e3d1b30d"
+    },
+    {
+      "Package": "postgresql-17-postgis-3-scripts",
+      "Version": "3.5.2+dfsg-1",
+      "Filename": "pool/main/p/postgis/postgresql-17-postgis-3-scripts_3.5.2+dfsg-1_all.deb",
+      "SHA256": "e19b04d69f856f339f3813ac2b5fdc8b0e6708dd4c3abe0aa5ebf128736a2edf"
+    },
+    {
+      "Package": "libsfcgal2",
+      "Version": "2.0.0-1",
+      "Filename": "pool/main/s/sfcgal/libsfcgal2_2.0.0-1_amd64.deb",
+      "SHA256": "0b1a8a6da16cda8988a242c8704f7faf54a1516307dd336938781452baeace89"
+    },
+    {
+      "Package": "libpq5",
+      "Version": "17.11-0+deb13u1",
+      "Filename": "pool/main/p/postgresql-17/libpq5_17.11-0+deb13u1_amd64.deb",
+      "SHA256": "20a4c9ef58b4baf90deda67cfb2cc062871c062830dddc234d28f5ac7931b86b"
+    },
+    {
+      "Package": "libprotobuf-c1",
+      "Version": "1.5.1-1",
+      "Filename": "pool/main/p/protobuf-c/libprotobuf-c1_1.5.1-1_amd64.deb",
+      "SHA256": "9fa7e6932f620c7155aab365ed277f04cae3e04ac80ee048fb09d1e838738d14"
+    },
+    {
+      "Package": "libboost-serialization1.83.0",
+      "Version": "1.83.0-4.2",
+      "Filename": "pool/main/b/boost1.83/libboost-serialization1.83.0_1.83.0-4.2_amd64.deb",
+      "SHA256": "5c0f28f2464e72c16c01440db47122e23ae0b4147e11e0e6d3b4ced86190324c"
+    }
+  ]
+}

@@ -13,12 +13,12 @@
   "source_scope": "six changed legacy files; not exhaustive transitive manifest",
   "results": [
     {
-      "command": "go test ./internal/app -count=1 -timeout 10m",
+      "command": "GOTOOLCHAIN=local GOPROXY=off GOCACHE=$PWD/.local/go-cache GOMODCACHE=$PWD/.local/go-mod-cache .local/toolchains/go/bin/go -C backend test ./internal/app -count=1 -timeout=10m",
       "exit_code": 0,
       "seconds": 239.126
     },
     {
-      "command": "go test ./internal/handler -count=1 -timeout 3m",
+      "command": "GOTOOLCHAIN=local GOPROXY=off GOCACHE=$PWD/.local/go-cache GOMODCACHE=$PWD/.local/go-mod-cache .local/toolchains/go/bin/go -C backend test ./internal/handler -count=1 -timeout=120s",
       "exit_code": 0,
       "seconds": 47.898
     }

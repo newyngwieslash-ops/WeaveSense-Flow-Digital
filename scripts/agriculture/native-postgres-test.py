@@ -72,6 +72,7 @@ files = [
     'tests/test_agriculture_legacy_write_integration.py',
     'tests/test_legacy_identity_contracts.py',
     'tests/test_agriculture_database.py', 'tests/test_agriculture_database_postgres.py',
+    'tests/test_agriculture_domain_boundary.py', 'tests/test_agriculture_domain_rls_postgres.py',
 ]
 started=False
 start=time.monotonic()
@@ -102,7 +103,9 @@ with (run/'private.log').open('w') as log:
 cases=[]
 for t in ET.parse(run/'tests.xml').getroot().iter('testcase'):
     statuses=[e.tag for e in t if e.tag in {'failure','error','skipped'}]
-    cases.append({'name':t.attrib['name'],'status':statuses[0] if statuses else 'pass',
+    module=t.attrib.get('classname','').split('.')[-1]
+    phase='post_domain_current' if module in {'test_agriculture_database','test_agriculture_database_postgres','test_agriculture_domain_boundary','test_agriculture_domain_rls_postgres'} else 'pre_domain_component'
+    cases.append({'name':t.attrib['name'],'schema_phase':phase,'status':statuses[0] if statuses else 'pass',
                   'seconds':float(t.attrib.get('time','0'))})
 required_pg = {
     'test_postgres_replay_parallel_persistence_scope_and_fail_closed',
@@ -111,6 +114,11 @@ required_pg = {
     'test_postgres_actor_binding_lock_blocks_concurrent_revocation',
     'test_postgres_real_workbench_write_commit_and_stable_audit',
     'test_postgres_real_workbench_audit_failure_rolls_back',
+    'test_postgres_runtime_factory_role_admission',
+    'test_postgres_runtime_scope_pool_reuse_and_rollback',
+    'test_postgres_worker_factory_admission_without_business_privileges',
+    'test_postgres_domain_scope_inventory_and_unmapped_denial',
+    'test_postgres_domain_cross_workspace_parent_and_policy_denial',
 }
 missing_pg = sorted(required_pg-{c['name'] for c in cases if c['status']=='pass'})
 scope=['deploy/agriculture/postgres/init.sh', 'deploy/agriculture/native-postgres-packages.json',
@@ -122,8 +130,9 @@ scope=['deploy/agriculture/postgres/init.sh', 'deploy/agriculture/native-postgre
 for directory in ['services/agri-gis/backend/app',
                   'services/agri-gis/backend/scripts/migrations']:
     scope += [str(p.relative_to(repo)) for p in (repo/directory).rglob('*')
-              if p.is_file() and p.suffix in {'.py','.sql'}]
+              if p.is_file() and p.suffix in {'.py','.sql','.json'}]
 scope += ['services/agri-gis/backend/'+f for f in files]
+scope += ['services/agri-gis/backend/tests/domain_fixture_support.py']
 scope += ['services/agri-gis/backend/app/dao/workbench_dao.py',
           'services/agri-gis/backend/app/services/workbench_service.py',
           'services/agri-gis/backend/app/services/project_user_service.py']

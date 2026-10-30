@@ -10,7 +10,7 @@ export AGRI_IDENTITY_PYTHON
 mkdir -p .local/evidence
 python3 scripts/agriculture/legacy-identity-inventory.test.py
 python3 scripts/agriculture/legacy-identity-inventory.py --check
-for suite in go python actors; do
+for suite in go python actors domain; do
   printf '%s\n' '{"passed":false,"status":"not_run","tests":[]}' > ".local/evidence/identity-$suite.json"
 done
 if [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} == 1 ]]; then
@@ -122,10 +122,18 @@ python_gate=$?
 go_code=$?
 python3 scripts/agriculture/identity-ci-result.py --kind go --input "$private/go.jsonl" --output .local/evidence/identity-go.json
 go_gate=$?
-(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_actors.py tests/test_agriculture_actors_postgres.py tests/test_legacy_actor_gate.py tests/test_legacy_identity_contracts.py tests/test_agriculture_legacy_write_integration.py tests/test_identity_chain_fixture.py tests/test_agriculture_database.py tests/test_agriculture_database_postgres.py --junitxml="$private/actors.xml" -q) > "$private/actors.log" 2>&1
+# Historical actor component tests explicitly assert that domain hardening has
+# not yet been installed. Their synthetic write is not post-migration authority.
+(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_actors.py tests/test_agriculture_actors_postgres.py tests/test_legacy_actor_gate.py tests/test_legacy_identity_contracts.py tests/test_agriculture_legacy_write_integration.py tests/test_identity_chain_fixture.py --junitxml="$private/actors.xml" -q) > "$private/actors.log" 2>&1
 actors_code=$?
 python3 scripts/agriculture/identity-ci-result.py --kind actors --input "$private/actors.xml" --output .local/evidence/identity-actors.json
 actors_gate=$?
+# This separate phase installs the real domain boundary, then checks current
+# privileges. The final signed browser chain also runs after that migration.
+(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_database.py tests/test_agriculture_database_postgres.py tests/test_agriculture_domain_boundary.py tests/test_agriculture_domain_rls_postgres.py --junitxml="$private/domain.xml" -q) > "$private/domain.log" 2>&1
+domain_code=$?
+python3 scripts/agriculture/identity-ci-result.py --kind domain --input "$private/domain.xml" --output .local/evidence/identity-domain.json
+domain_gate=$?
 chain_code=0; chain_gate=0
 if [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} == 1 ]]; then
   "${GO_BIN:-go}" -C backend test ./internal/agriculture -run '^TestIdentityBrowserGISWriteChain$' -count=1 -timeout 12m -json > "$private/chain.jsonl" 2> "$private/chain-stderr.log"
@@ -134,5 +142,5 @@ if [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} == 1 ]]; then
   chain_gate=$?
 fi
 set -e
-[[ $python_code == 0 && $python_gate == 0 && $go_code == 0 && $go_gate == 0 && $actors_code == 0 && $actors_gate == 0 && $chain_code == 0 && $chain_gate == 0 ]] || { echo 'Identity acceptance failed; inspect sanitized reports, no raw secrets exported'; exit 1; }
+[[ $python_code == 0 && $python_gate == 0 && $go_code == 0 && $go_gate == 0 && $actors_code == 0 && $actors_gate == 0 && $domain_code == 0 && $domain_gate == 0 && $chain_code == 0 && $chain_gate == 0 ]] || { echo 'Identity acceptance failed; inspect sanitized reports, no raw secrets exported'; exit 1; }
 echo 'PASS: actual Go/Python HTTP, PostgreSQL replay and legacy actor boundary; fixture-domain acceptance only'

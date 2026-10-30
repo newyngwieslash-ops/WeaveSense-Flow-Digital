@@ -1,0 +1,19 @@
+{
+  "suite": "postgres",
+  "passed": true,
+  "tests_passed": [
+    "yingce/backend/internal/agriculture/TestAgriculturePostgresConcurrentAcceptance",
+    "yingce/backend/internal/agriculture/TestAgriculturePostgresMembershipLifecycle",
+    "yingce/backend/internal/agriculture/TestAgriculturePostgresResourceAuthorization",
+    "yingce/backend/internal/agriculture/TestAgriculturePostgresResourceAuthorization/reciprocal_grants",
+    "yingce/backend/internal/agriculture/TestAgriculturePostgresRoleDowngradeRevokesPendingDelegation",
+    "yingce/backend/internal/database/TestAgriculturePostgresAdmissionAndStrictRLS",
+    "yingce/backend/internal/database/TestAgriculturePostgresAuthorizationBindingsAndEpoch"
+  ],
+  "tests_failed": [],
+  "tests_skipped": [],
+  "missing_required": [],
+  "failure_locations": [],
+  "data_class": "fixture",
+  "live_farm_or_production_acceptance": false
+}

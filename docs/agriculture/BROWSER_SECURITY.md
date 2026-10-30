@@ -67,3 +67,23 @@ CSRF key 多实例共享后匿名 token 可跨实例/重启；轮换后旧匿名
 匿名 nonce 的签发 TTL 固定 600 秒；接收副本对未来上界允许最多 5 秒时钟偏差，
 但 `expires <= 接收方当前时间` 一律拒绝，不延长已过期票据。运维仍须校时；测试以
 注入时钟覆盖慢 5/6 秒、到期前及到期边界，无 sleep 依赖。
+
+## 工作区权限输入快照
+
+`GET /api/agriculture/workspaces` 中每个工作区增加 `authorityFingerprint`，为 64 位小写
+十六进制，只用于 UI 后台重验时判断是否需要失效当前权限上下文。创建组织的立即响应
+不包含此字段；客户端随后重新获取工作区列表。后端不接收该字段作为授权、版本或审批凭证。
+
+摘要在原 `withWorkspace` 短事务中生成，复用 actor/member/workspace 活跃校验与规范角色。
+固定版本 `platform-authority-inputs-v1` 纳入 actor、tenant、workspace ID、组织状态、
+owner/治理布尔值、排序角色、实际 `authorizationPolicyVersion`，以及本工作区本人
+active 且未过期资源绑定的 kind/id、严格解析并排序的 capabilities、expiry、receipt hash/revision。
+能力未知、重复、格式损坏或数据库查询失败均 fail closed，不伪装为空权限快照。
+
+不纳入 audit epoch、绑定 auth_version/数据库ID/更新时间、显示名称、其他成员或邀请。
+因此单纯创建邀请不再周期性清除未提交草稿；本人角色、资源绑定撤销/到期或 receipt
+改变则产生不同摘要。绑定/能力返回顺序不改变摘要。角色/成员失效后原真实写仍拒绝。
+
+这不是 GIS 实时有效授权证明：列表刷新不批量请求 GIS ownership，未把 GIS 归属、未来
+外业 assignment 或其他成员列表变化冒充为该摘要的覆盖范围。组织成员投影由 UI 独立
+比较刷新，并只重置变化行；不能将其他成员变化混入本人摘要后又清除整个组织表单。

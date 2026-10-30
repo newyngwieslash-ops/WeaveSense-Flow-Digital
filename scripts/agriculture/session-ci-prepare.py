@@ -22,6 +22,8 @@ OVERLAY = (
     "backend/internal/browsersecurity/policy_test.go",
     "backend/internal/handler/agriculture_browser_security_test.go",
     "backend/internal/agriculture/revocation_postgres_test.go",
+    "backend/internal/agriculture/authority_fingerprint.go",
+    "backend/internal/agriculture/authority_fingerprint_test.go",
     "backend/internal/model/models_agriculture.go",
     "backend/internal/model/models_agriculture_authorization.go",
     "backend/internal/model/models_tenancy.go",

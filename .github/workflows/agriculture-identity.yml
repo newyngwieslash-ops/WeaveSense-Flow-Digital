@@ -47,6 +47,7 @@ jobs:
           python3 scaffold/scripts/agriculture/session-ci-prepare.test.py
           python3 scaffold/scripts/agriculture/identity-ci-result.test.py
           python3 scaffold/scripts/agriculture/identity-chain-result.test.py
+          python3 scaffold/tests/agriculture/test_identity_chain_configuration.py
       - name: Assemble pinned upstreams and explicit reviewed overlay
         env:
           SCAFFOLD_MODE: ${{ github.ref_name == 'ci/agriculture-w00' || github.head_ref == 'ci/agriculture-w00' }}
@@ -67,7 +68,6 @@ jobs:
           uv pip install --python .local/identity-rebuild/venv/bin/python --require-hashes --no-deps --only-binary :all: --index-url https://pypi.org/simple \
             -r .local/identity-rebuild/main.txt -r .local/identity-rebuild/dev.txt -r scripts/agriculture/python-test-requirements.txt
           uv pip check --python .local/identity-rebuild/venv/bin/python
-          .local/identity-rebuild/venv/bin/python -m pytest tests/agriculture/test_identity_chain_configuration.py -q
       - name: Build actual browser profiles for the signed write chain
         working-directory: product
         run: |

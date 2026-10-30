@@ -1,5 +1,6 @@
 """Configuration contracts, not evidence that a browser or database ran."""
 from pathlib import Path
+import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -34,3 +35,15 @@ def test_chain_ci_is_read_only_builds_actual_profiles_and_uploads_no_raw_diagnos
                    'systemctl start', 'service nginx start', 'chain.jsonl', 'chain-stderr.log'):
         assert unsafe not in workflow
     assert 'product/.local/evidence/identity-*.json' in workflow
+
+
+class IdentityChainConfigurationTests(unittest.TestCase):
+    def test_shell_contract(self):
+        test_chain_requires_non_skip_gate_and_preserves_existing_identity_suites()
+
+    def test_workflow_contract(self):
+        test_chain_ci_is_read_only_builds_actual_profiles_and_uploads_no_raw_diagnostics()
+
+
+if __name__ == '__main__':
+    unittest.main()

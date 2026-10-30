@@ -19,7 +19,7 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--package-root', type=Path, required=True)
 parser.add_argument('--python', type=Path, default=repo/'.local/agri-identity-venv/bin/python')
 parser.add_argument('--phase', choices=('components', 'migration', 'query', 'objects', 'jobs'), default='components')
-parser.add_argument('--go', type=Path, help='explicit local Go binary for the fixed jobs integration suite')
+parser.add_argument('--go', type=Path, help='explicit local Go binary for the fixed object/job integration suites')
 args = parser.parse_args()
 phase_mode = args.phase
 test_python = args.python.absolute()
@@ -29,10 +29,10 @@ base = repo / '.local/native-postgres'
 root = args.package_root.resolve()
 allowed = (repo/'.local').resolve()
 test_go = args.go.resolve() if args.go else None
-if phase_mode == 'jobs' and (test_go is None or not test_go.is_file() or not test_go.is_relative_to(allowed)):
-    raise SystemExit('jobs phase requires an explicit prepared Go binary inside repository .local')
-if phase_mode != 'jobs' and test_go is not None:
-    raise SystemExit('--go is only supported for the fixed jobs phase')
+if phase_mode in {'objects', 'jobs'} and (test_go is None or not test_go.is_file() or not test_go.is_relative_to(allowed)):
+    raise SystemExit('object/job phase requires an explicit prepared Go binary inside repository .local')
+if phase_mode not in {'objects', 'jobs'} and test_go is not None:
+    raise SystemExit('--go is only supported for the fixed object/job phases')
 if not allowed.is_relative_to(repo.resolve()) or not root.is_relative_to(allowed) or not base.resolve().is_relative_to(allowed):
     raise SystemExit('fixture paths must remain inside repository .local')
 if os.geteuid() == 0:
@@ -99,7 +99,7 @@ if phase_mode == 'migration':
 elif phase_mode == 'query':
     files = ['tests/test_agriculture_query_scope.py', 'tests/test_agriculture_query_scope_postgres.py']
 elif phase_mode == 'objects':
-    files = ['tests/test_agriculture_object_storage.py', 'tests/test_agriculture_object_gateway.py', 'tests/test_agriculture_objects_postgres.py']
+    files = ['tests/test_agriculture_object_storage.py', 'tests/test_agriculture_object_gateway.py', 'tests/test_agriculture_objects_postgres.py', 'tests/test_agriculture_objects_go_postgres.py']
 elif phase_mode == 'jobs':
     files = ['tests/test_agriculture_job_authority.py', 'tests/test_agriculture_jobs_postgres.py']
 started=False
@@ -158,7 +158,8 @@ elif phase_mode == 'query':
                    'test_postgres_query_scope_missing_mapping_and_rebinding'}
 elif phase_mode == 'objects':
     required_pg = {'test_postgres_private_objects_scope_immutability',
-                   'test_postgres_private_object_http_bytes_and_withdrawal'}
+                   'test_postgres_private_object_http_bytes_and_withdrawal',
+                   'test_real_go_python_object_gateway_chain'}
 elif phase_mode == 'jobs':
     required_pg = {'test_postgres_job_sidecar_scope_immutable_and_worker_privileges',
                    'test_postgres_job_execution_lease_fencing_and_retry_scope',
@@ -179,10 +180,15 @@ scope += ['services/agri-gis/backend/tests/domain_fixture_support.py']
 if phase_mode in {'objects', 'jobs'}:
     scope += ['services/agri-gis/backend/tests/test_agriculture_identity.py',
               'services/agri-gis/backend/tests/test_agriculture_actors_postgres.py']
-if phase_mode == 'jobs':
-    scope += ['backend/go.mod', 'backend/go.sum',
+if phase_mode == 'objects':
+    scope += ['services/agri-gis/backend/tests/object_http_fixture.py',
+              'services/agri-gis/backend/tests/test_agriculture_jobs_postgres.py']
+if phase_mode in {'objects', 'jobs'}:
+    scope += [
               'services/agri-gis/backend/tests/job_fixture_support.py',
               'services/agri-gis/backend/tests/job_http_fixture.py']
+if phase_mode in {'objects', 'jobs'}:
+    scope += ['backend/go.mod', 'backend/go.sum']
     scope += [str(p.relative_to(repo)) for p in (repo/'backend').rglob('*.go') if '.local' not in p.parts]
 scope += ['services/agri-gis/backend/app/dao/workbench_dao.py',
           'services/agri-gis/backend/app/services/workbench_service.py',

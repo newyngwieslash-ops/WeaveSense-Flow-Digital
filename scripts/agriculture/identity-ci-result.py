@@ -47,8 +47,8 @@ QUERY_MODULES = {"test_agriculture_query_scope", "test_agriculture_query_scope_p
 QUERY_PG_REQUIRED = {"test_postgres_query_scope_same_bbox_and_history",
                      "test_postgres_query_scope_mixed_task_and_core",
                      "test_postgres_query_scope_missing_mapping_and_rebinding"}
-OBJECT_MODULES = {"test_agriculture_object_storage", "test_agriculture_object_gateway", "test_agriculture_objects_postgres"}
-OBJECT_PG_REQUIRED = {"test_postgres_private_objects_scope_immutability", "test_postgres_private_object_http_bytes_and_withdrawal"}
+OBJECT_MODULES = {"test_agriculture_object_storage", "test_agriculture_object_gateway", "test_agriculture_objects_postgres", "test_agriculture_objects_go_postgres"}
+OBJECT_PG_REQUIRED = {"test_postgres_private_objects_scope_immutability", "test_postgres_private_object_http_bytes_and_withdrawal", "test_real_go_python_object_gateway_chain"}
 JOB_MODULES = {"test_agriculture_job_authority", "test_agriculture_jobs_postgres"}
 JOB_PG_REQUIRED = {"test_postgres_job_sidecar_scope_immutable_and_worker_privileges", "test_postgres_job_execution_lease_fencing_and_retry_scope", "test_real_go_python_job_authority_chain"}
 

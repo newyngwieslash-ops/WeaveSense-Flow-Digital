@@ -154,13 +154,13 @@ domain_gate=$?
 query_code=$?
 python3 scripts/agriculture/identity-ci-result.py --kind query --input "$private/query.xml" --output .local/evidence/identity-query.json
 query_gate=$?
-(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_object_storage.py tests/test_agriculture_object_gateway.py tests/test_agriculture_objects_postgres.py --junitxml="$private/objects.xml" -q) > "$private/objects.log" 2>&1
-objects_code=$?
-python3 scripts/agriculture/identity-ci-result.py --kind objects --input "$private/objects.xml" --output .local/evidence/identity-objects.json
-objects_gate=$?
 export AGRI_TEST_GO_BIN AGRI_TEST_GO_MOD_CACHE
 AGRI_TEST_GO_BIN=$(command -v "${GO_BIN:-go}")
 AGRI_TEST_GO_MOD_CACHE=$("$AGRI_TEST_GO_BIN" env GOMODCACHE)
+(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_object_storage.py tests/test_agriculture_object_gateway.py tests/test_agriculture_objects_postgres.py tests/test_agriculture_objects_go_postgres.py --junitxml="$private/objects.xml" -q) > "$private/objects.log" 2>&1
+objects_code=$?
+python3 scripts/agriculture/identity-ci-result.py --kind objects --input "$private/objects.xml" --output .local/evidence/identity-objects.json
+objects_gate=$?
 (cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_job_authority.py tests/test_agriculture_jobs_postgres.py --junitxml="$private/jobs.xml" -q) > "$private/jobs.log" 2>&1
 jobs_code=$?
 python3 scripts/agriculture/identity-ci-result.py --kind jobs --input "$private/jobs.xml" --output .local/evidence/identity-jobs.json

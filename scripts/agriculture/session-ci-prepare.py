@@ -347,6 +347,7 @@ OVERLAY = (
     # Private byte gateway and immutable background authority components.
     "backend/internal/agriculture/object_gateway.go",
     "backend/internal/agriculture/object_gateway_test.go",
+    "backend/internal/agriculture/object_gateway_integration_test.go",
     "backend/internal/agriculture/job_authority.go",
     "backend/internal/agriculture/job_authority_http.go",
     "backend/internal/agriculture/job_authority_transport.go",
@@ -365,6 +366,7 @@ OVERLAY = (
     "services/agri-gis/backend/tests/test_agriculture_object_storage.py",
     "services/agri-gis/backend/tests/test_agriculture_object_gateway.py",
     "services/agri-gis/backend/tests/test_agriculture_objects_postgres.py",
+    "services/agri-gis/backend/tests/test_agriculture_objects_go_postgres.py",
     "services/agri-gis/backend/tests/object_http_fixture.py",
     "services/agri-gis/backend/tests/test_agriculture_job_authority.py",
     "services/agri-gis/backend/tests/test_agriculture_jobs_postgres.py",

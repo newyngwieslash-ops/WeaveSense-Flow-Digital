@@ -17,6 +17,7 @@ from sqlalchemy.sql.elements import ColumnClause, TextClause
 from sqlalchemy.sql.functions import FunctionElement
 
 from .actor_session import AgricultureAsyncSession, AgricultureSession
+from .actors import ACTOR_BINDING_READINESS
 from .domain_boundary import require_domain_boundary
 from .identity.verify import ID, IdentityError, Verified
 from .query_scope import QueryScope, validate_reference_scope
@@ -131,6 +132,10 @@ class ScopedAgricultureAsyncSession(AgricultureAsyncSession):
 
 @event.listens_for(ScopedAgricultureSession, "do_orm_execute")
 def reject_scope_mutating_queries(state):
+    # One fixed, parameter-free internal role probe is not an arbitrary SQL API.
+    # No other TextClause, extra projection, WHERE or suffix receives this path.
+    if str(state.statement) == "SELECT " + ACTOR_BINDING_READINESS:
+        return
     for node in visitors.iterate(state.statement):
         if isinstance(node, TextClause) and node is not state.statement:
             raise IdentityError("unadapted_database_operation", 403)

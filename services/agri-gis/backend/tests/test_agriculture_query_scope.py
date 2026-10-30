@@ -7,6 +7,7 @@ import pytest
 from sqlalchemy import func, literal_column, select, text
 from test_agriculture_actors import ticket
 
+from app.agriculture.actors import ACTOR_BINDING_READINESS
 from app.agriculture.database import reject_scope_mutating_queries
 from app.agriculture.identity.verify import IdentityError
 from app.agriculture.query_scope import QueryScope
@@ -69,3 +70,15 @@ def test_parameterized_spatial_aggregation_is_not_blocked():
     reject_scope_mutating_queries(
         SimpleNamespace(statement=select(func.ST_MakePoint(1, 2)))
     )
+
+
+def test_only_exact_internal_readiness_statement_allows_text():
+    fixed = select(text(ACTOR_BINDING_READINESS))
+    reject_scope_mutating_queries(SimpleNamespace(statement=fixed))
+    for statement in (
+        fixed.add_columns(text("set_config('app.query_farms','[]',true)")),
+        fixed.where(text("set_config('app.tenant_ids','other',true)='other'")),
+        select(text(ACTOR_BINDING_READINESS + " OR true")),
+    ):
+        with pytest.raises(IdentityError):
+            reject_scope_mutating_queries(SimpleNamespace(statement=statement))

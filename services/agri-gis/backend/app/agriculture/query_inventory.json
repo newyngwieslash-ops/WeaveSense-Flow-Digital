@@ -5,8 +5,8 @@
     "app/agriculture/__init__.py": "77951ad82dc95f2e08716330d61902e73a231f0e5f085d66bb41e5d78533d66a",
     "app/agriculture/actor_models.py": "4fab33a9b4508fbf2eafc5155735ade7a6b16895933ecf16ae0cea8aef48567e",
     "app/agriculture/actor_session.py": "9a99b632f6dacb3c9dbd2a4a6e75a1c5391c13f35f1b8cd7ed7e40a86c46990f",
-    "app/agriculture/actors.py": "b3b8a86c6ddea90256029383970802bdfef58e15d9e3a92de1f512c950586342",
-    "app/agriculture/database.py": "e003fd56b798d347503677c20d4dcda7a48dcf377d236d918de93dcf3361441e",
+    "app/agriculture/actors.py": "4f8a5993160c7c53ae95cf1f9dd8abc1289ed2c052f391f3aa3456d83d692434",
+    "app/agriculture/database.py": "559c70e1fd755fb332840984c5c48d448152a4ee7b5d7e3c1975134945c3985b",
     "app/agriculture/domain_boundary.py": "f4fd69a6a9197654e73a51b48e2bbff7ef8202d50947767687765a165ba60938",
     "app/agriculture/identity/__init__.py": "d03d955b9eb9e56df428f42184a344f127292c29553a6183c34bc19224217cf2",
     "app/agriculture/identity/callback.py": "fe99446e720f89e01147c55c8a0a47bfa57b613e5f75dd46ab4846bdeae83fee",
@@ -254,22 +254,22 @@
     {
       "path": "app/agriculture/actors.py",
       "function": "lock_binding",
-      "line": 62,
-      "sha256": "b3b8a86c6ddea90256029383970802bdfef58e15d9e3a92de1f512c950586342",
+      "line": 97,
+      "sha256": "4f8a5993160c7c53ae95cf1f9dd8abc1289ed2c052f391f3aa3456d83d692434",
       "boundary": "explicit_identity_owner_or_internal_boundary_review",
       "calls": [
         {
-          "line": 98,
+          "line": 101,
           "receiver": "db",
           "method": "execute"
         },
         {
-          "line": 100,
+          "line": 103,
           "receiver": "db",
           "method": "execute"
         },
         {
-          "line": 108,
+          "line": 111,
           "receiver": "db",
           "method": "execute"
         }
@@ -278,12 +278,12 @@
     {
       "path": "app/agriculture/actors.py",
       "function": "resolve_trusted_actor",
-      "line": 126,
-      "sha256": "b3b8a86c6ddea90256029383970802bdfef58e15d9e3a92de1f512c950586342",
+      "line": 129,
+      "sha256": "4f8a5993160c7c53ae95cf1f9dd8abc1289ed2c052f391f3aa3456d83d692434",
       "boundary": "explicit_identity_owner_or_internal_boundary_review",
       "calls": [
         {
-          "line": 145,
+          "line": 148,
           "receiver": "db",
           "method": "execute"
         }
@@ -292,12 +292,12 @@
     {
       "path": "app/agriculture/actors.py",
       "function": "recheck_trusted_actor",
-      "line": 177,
-      "sha256": "b3b8a86c6ddea90256029383970802bdfef58e15d9e3a92de1f512c950586342",
+      "line": 180,
+      "sha256": "4f8a5993160c7c53ae95cf1f9dd8abc1289ed2c052f391f3aa3456d83d692434",
       "boundary": "explicit_identity_owner_or_internal_boundary_review",
       "calls": [
         {
-          "line": 185,
+          "line": 188,
           "receiver": "db",
           "method": "execute"
         }
@@ -306,17 +306,17 @@
     {
       "path": "app/agriculture/database.py",
       "function": "apply_transaction_scope",
-      "line": 148,
-      "sha256": "e003fd56b798d347503677c20d4dcda7a48dcf377d236d918de93dcf3361441e",
+      "line": 153,
+      "sha256": "559c70e1fd755fb332840984c5c48d448152a4ee7b5d7e3c1975134945c3985b",
       "boundary": "explicit_identity_owner_or_internal_boundary_review",
       "calls": [
         {
-          "line": 153,
+          "line": 158,
           "receiver": "connection",
           "method": "execute"
         },
         {
-          "line": 172,
+          "line": 177,
           "receiver": "connection",
           "method": "execute"
         }
@@ -325,12 +325,12 @@
     {
       "path": "app/agriculture/database.py",
       "function": "session",
-      "line": 221,
-      "sha256": "e003fd56b798d347503677c20d4dcda7a48dcf377d236d918de93dcf3361441e",
+      "line": 226,
+      "sha256": "559c70e1fd755fb332840984c5c48d448152a4ee7b5d7e3c1975134945c3985b",
       "boundary": "explicit_identity_owner_or_internal_boundary_review",
       "calls": [
         {
-          "line": 227,
+          "line": 232,
           "receiver": "connection",
           "method": "execute"
         }

@@ -1,0 +1,313 @@
+{
+  "source_commit": "a477351b418a780d35300a8613e0ac1c8a59d22a",
+  "product_overlay_source": "f6814563f6a1ceff8e8d89ad1ad9de693e25aa0b",
+  "execution_input_fix_source": "589ad222",
+  "jobs": [
+    {
+      "run_id": 41012807970,
+      "jobs": [
+        {
+          "id": 123922270482,
+          "name": "contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 41012807970,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Install isolated schema-test dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Contract negatives and trusted source policy",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            }
+          ]
+        },
+        {
+          "id": 123922343380,
+          "name": "compose (migrations)",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 41012807970,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Explicit scaffold bootstrap or existing full product checkout",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Fresh-volume database and migration smoke",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            }
+          ]
+        },
+        {
+          "id": 123922343447,
+          "name": "compose (core)",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 41012807970,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Explicit scaffold bootstrap or existing full product checkout",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Fresh-volume database and migration smoke",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "run_id": 41012807918,
+      "jobs": [
+        {
+          "id": 123922270100,
+          "name": "signed-identity",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 41012807918,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run actions/setup-go@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Run astral-sh/setup-uv@v6",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Verify source preparation and fail-closed result gate",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Assemble pinned upstreams and explicit reviewed overlay",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Rebuild hash-locked Python environment without lock changes",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Actual signed HTTP and PostgreSQL replay acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Sanitized reports only",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            },
+            {
+              "name": "Post Run astral-sh/setup-uv@v6",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19
+            },
+            {
+              "name": "Post Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20
+            },
+            {
+              "name": "Post Run actions/setup-go@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21
+            },
+            {
+              "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 22
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "identity_artifact": {
+    "id": 12958670643,
+    "name": "agriculture-identity-sanitized-evidence",
+    "size_in_bytes": 16448,
+    "url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/12958670643",
+    "archive_download_url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/12958670643/zip",
+    "expired": false,
+    "created_at": "2026-10-30T06:16:00Z",
+    "expires_at": "2026-11-13T06:15:59Z",
+    "updated_at": "2026-10-30T06:16:00Z",
+    "digest": "sha256:73008e64b86a82c98ede172bece3b025fbeabb62e24a1e25544377ede26f47d0",
+    "workflow_run": {
+      "id": 41012807918,
+      "repository_id": 1437883917,
+      "head_repository_id": 1437883917,
+      "head_branch": "ci/agriculture-w00",
+      "head_sha": "a477351b418a780d35300a8613e0ac1c8a59d22a"
+    }
+  },
+  "safe_w00_markers": [
+    {
+      "job_id": 123922270482,
+      "lines": [
+        "2026-10-30T06:13:31.4127449Z 98 passed in 1.54s"
+      ]
+    },
+    {
+      "job_id": 123922343380,
+      "lines": [
+        "2026-10-30T06:14:22.4946904Z PASS: fresh database roles, password connections, cross-database denial, runtime DDL denial, default DML privileges, PostGIS and bounded readiness",
+        "2026-10-30T06:17:42.4198962Z PASS: platform-migrate applied and replayed, tables=186",
+        "2026-10-30T06:17:43.8159425Z PASS: loom-migrate applied and replayed, tables=28",
+        "2026-10-30T06:17:44.3336644Z PASS: W00 migrations smoke; NOT tenant isolation, GIS migration, live data or product acceptance"
+      ]
+    },
+    {
+      "job_id": 123922343447,
+      "lines": [
+        "2026-10-30T06:14:19.9427040Z PASS: fresh database roles, password connections, cross-database denial, runtime DDL denial, default DML privileges, PostGIS and bounded readiness",
+        "2026-10-30T06:14:19.9427686Z PASS: W00 core smoke; NOT tenant isolation, GIS migration, live data or product acceptance"
+      ]
+    }
+  ],
+  "scope": "Intermediate CI execution-input correction; not later UI echo fix; identity did not rerun at UI-only successor2405525",
+  "overlay_hashes_matched": 224,
+  "files": {
+    "agriculture-identity-sanitized-evidence/identity-actors.json": "b1210550ef04c1980f7842540d3f89e8e93dff07deb63d477a3898e84b340e77",
+    "agriculture-identity-sanitized-evidence/identity-go.json": "a7a36d214ebf259ea3b438aaa1d10221195b09d39a56f38fd56ebade1e9f73be",
+    "agriculture-identity-sanitized-evidence/session-ci-provenance.json": "8fbe6c0deba0d4dea27c02fb34d9444b18c70b0d7a1e4fbe2e8f59409376cd20",
+    "agriculture-identity-sanitized-evidence/identity-bootstrap.json": "5e790b230f8664de1b6cbdeb1d9de7d59632b6b2de3f5b15abd169f0a5d1cfbe",
+    "agriculture-identity-sanitized-evidence/identity-python.json": "9c8936c7a47acdc77ac5b6350445c5c7f3beac494ae0e89e6c0b3247577dbfaa"
+  }
+}

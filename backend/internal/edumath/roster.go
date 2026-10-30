@@ -13,6 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"yingce/backend/internal/flow"
 	"yingce/backend/internal/model"
@@ -295,17 +296,34 @@ func (h *API) claimRoster(c *gin.Context) {
 		reply(c, 404, nil, "invalid or expired code")
 		return
 	}
-	var e model.EduRosterEntry
-	if err := h.DB.First(&e, "id = ?", id).Error; err != nil || e.SecretHash == "" ||
-		subtle.ConstantTimeCompare([]byte(e.SecretHash), []byte(secretHash(secret))) != 1 {
+	now := h.Svc.now()
+	tenantID, err := resolveEducationCode(h.DB, u.ID, id, secretHash(secret), true, now)
+	if err != nil {
 		reply(c, 404, nil, "invalid or expired code")
 		return
 	}
-	now := h.Svc.now()
+	var e model.EduRosterEntry
 	var enr model.EduEnrollment
-	err = flow.TenantTx(h.DB, e.TenantID, func(tx *gorm.DB) error {
+	err = flow.TenantTx(h.DB, tenantID, func(tx *gorm.DB) error {
+		if err := lockEducationAdmissionActor(tx, u.ID, tenantID); err != nil {
+			return err
+		}
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&e, "id=? AND tenant_id=?", id, tenantID).Error; err != nil {
+			return ErrNotFound
+		}
+		if e.SecretHash == "" || subtle.ConstantTimeCompare([]byte(e.SecretHash), []byte(secretHash(secret))) != 1 || e.State != "pending" || !now.Before(e.ExpiresAt) {
+			return ErrNotFound
+		}
 		var k model.EduClass
-		if tx.First(&k, "id = ? AND tenant_id = ? AND status = ?", e.ClassID, e.TenantID, "active").Error != nil {
+		if tx.Clauses(clause.Locking{Strength: "SHARE"}).First(&k, "id = ? AND tenant_id = ? AND status = ?", e.ClassID, e.TenantID, "active").Error != nil {
+			return ErrNotFound
+		}
+		if err := checkEducationEnrollment(tx, tenantID, u.ID, h.Svc.now); err != nil {
+			return err
+		}
+		// Re-evaluate expiry after all potentially blocking admission locks.
+		now = h.Svc.now()
+		if !now.Before(e.ExpiresAt) {
 			return ErrNotFound
 		}
 		var other int64

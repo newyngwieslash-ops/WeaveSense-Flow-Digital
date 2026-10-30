@@ -12,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"yingce/backend/internal/flow"
 	"yingce/backend/internal/model"
@@ -232,9 +233,80 @@ func (h *API) revokeInvite(c *gin.Context) {
 	reply(c, 200, gin.H{"revoked": true}, "ok")
 }
 
+// resolveEducationCode is a fixed admission capability. Only the verified
+// account and an exact code hash may discover its tenant; never a browser tenant.
+func resolveEducationCode(db *gorm.DB, userID, id, hash string, roster bool, now time.Time) (string, error) {
+	var tenant string
+	if userID == "" || id == "" || hash == "" {
+		return "", ErrNotFound
+	}
+	if db.Dialector.Name() == "postgres" {
+		query := "SELECT tenant_id FROM flow_system.resolve_edu_class_invite(?,?,?)"
+		if roster {
+			query = "SELECT tenant_id FROM flow_system.resolve_edu_roster_claim(?,?,?)"
+		}
+		if err := db.Raw(query, id, hash, userID).Scan(&tenant).Error; err != nil {
+			return "", err
+		}
+	} else {
+		var user model.User
+		if err := db.First(&user, "id=? AND status=?", userID, "active").Error; err != nil {
+			return "", ErrNotFound
+		}
+		if roster {
+			var row model.EduRosterEntry
+			if err := db.First(&row, "id=? AND secret_hash=? AND state='pending' AND expires_at>?", id, hash, now).Error; err != nil {
+				return "", ErrNotFound
+			}
+			tenant = row.TenantID
+		} else {
+			var row model.EduClassInvite
+			if err := db.First(&row, "id=? AND secret_hash=? AND status='active' AND expires_at>?", id, hash, now).Error; err != nil {
+				return "", ErrNotFound
+			}
+			tenant = row.TenantID
+		}
+		var current model.Tenant
+		if err := db.First(&current, "id=? AND status='active'", tenant).Error; err != nil {
+			return "", ErrNotFound
+		}
+	}
+	if tenant == "" {
+		return "", ErrNotFound
+	}
+	return tenant, nil
+}
+
+func lockEducationAdmissionActor(tx *gorm.DB, userID, tenantID string) error {
+	var user model.User
+	if err := tx.Clauses(clause.Locking{Strength: "SHARE"}).First(&user, "id=? AND status='active'", userID).Error; err != nil {
+		return ErrNotFound
+	}
+	var tenant model.Tenant
+	if err := tx.Clauses(clause.Locking{Strength: "SHARE"}).First(&tenant, "id=? AND status='active'", tenantID).Error; err != nil {
+		return ErrNotFound
+	}
+	return nil
+}
+
+func checkEducationEnrollment(tx *gorm.DB, tenantID, userID string, now func() time.Time) error {
+	var binding model.EduRoleBinding
+	err := tx.Clauses(clause.Locking{Strength: "SHARE"}).First(&binding, "tenant_id=? AND user_id=? AND role='student'", tenantID, userID).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if binding.Status != "active" || (binding.ExpiresAt != nil && !binding.ExpiresAt.After(now())) {
+		return errEnrollBlocked
+	}
+	return nil
+}
+
 // join is mounted outside the tenant-scoped middleware: the joining user is not
-// yet in the class tenant. The invite is located by id in system context, the
-// secret is checked in constant time, and the writes run in TenantTx(invite tenant).
+// yet in the class tenant. A fixed id/hash/account resolver admits the tenant,
+// then the locked row and current actor are rechecked inside its transaction.
 // It grants the student role + class enrollment only; never a workspace membership.
 func (h *API) join(c *gin.Context) {
 	u, err := h.User(c)
@@ -254,18 +326,38 @@ func (h *API) join(c *gin.Context) {
 		reply(c, 404, nil, "invalid or expired invite")
 		return
 	}
-	var inv model.EduClassInvite
-	if err := h.DB.First(&inv, "id = ?", id).Error; err != nil ||
-		subtle.ConstantTimeCompare([]byte(inv.SecretHash), []byte(secretHash(secret))) != 1 {
+	now := h.Svc.now()
+	tenantID, err := resolveEducationCode(h.DB, u.ID, id, secretHash(secret), false, now)
+	if err != nil {
 		reply(c, 404, nil, "invalid or expired invite")
 		return
 	}
-	now := h.Svc.now()
+	var inv model.EduClassInvite
 	var enr model.EduEnrollment
 	errBlocked := errors.New("blocked")
-	err = flow.TenantTx(h.DB, inv.TenantID, func(tx *gorm.DB) error {
+	err = flow.TenantTx(h.DB, tenantID, func(tx *gorm.DB) error {
+		if err := lockEducationAdmissionActor(tx, u.ID, tenantID); err != nil {
+			return err
+		}
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&inv, "id=? AND tenant_id=?", id, tenantID).Error; err != nil {
+			return ErrNotFound
+		}
+		if subtle.ConstantTimeCompare([]byte(inv.SecretHash), []byte(secretHash(secret))) != 1 || inv.Status != "active" || !now.Before(inv.ExpiresAt) {
+			return ErrNotFound
+		}
 		var k model.EduClass
-		if tx.First(&k, "id = ? AND tenant_id = ? AND status = ?", inv.ClassID, inv.TenantID, "active").Error != nil {
+		if tx.Clauses(clause.Locking{Strength: "SHARE"}).First(&k, "id = ? AND tenant_id = ? AND status = ?", inv.ClassID, inv.TenantID, "active").Error != nil {
+			return ErrNotFound
+		}
+		if err := checkEducationEnrollment(tx, tenantID, u.ID, h.Svc.now); err != nil {
+			if errors.Is(err, errEnrollBlocked) {
+				return errBlocked
+			}
+			return err
+		}
+		// Re-evaluate expiry after all potentially blocking admission locks.
+		now = h.Svc.now()
+		if !now.Before(inv.ExpiresAt) {
 			return ErrNotFound
 		}
 		// Existing enrollment: idempotent if active; a withdrawn student needs the teacher, not a code.

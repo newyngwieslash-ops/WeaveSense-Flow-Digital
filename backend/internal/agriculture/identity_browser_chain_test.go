@@ -541,9 +541,16 @@ func TestIdentityBrowserGISWriteChain(t *testing.T) {
 			return
 		}
 		var report struct {
-			Result  string `json:"result"`
-			Stage   string `json:"stage"`
-			Results []struct {
+			Result      string `json:"result"`
+			Stage       string `json:"stage"`
+			APIStatuses []struct {
+				Path      string `json:"path"`
+				Status    int    `json:"status"`
+				Completed bool   `json:"completed"`
+			} `json:"api_statuses"`
+			DOMFlags       map[string]bool `json:"dom_flags"`
+			ExceptionCount int             `json:"browser_runtime_exception_count"`
+			Results        []struct {
 				Name   string `json:"name"`
 				Result string `json:"result"`
 			} `json:"results"`
@@ -552,6 +559,9 @@ func TestIdentityBrowserGISWriteChain(t *testing.T) {
 			return
 		}
 		stages := map[string]bool{"preflight": true, "anonymous_request": true, "real_login": true, "authorized_chain_write": true, "scope_and_identity_negatives": true, "awaiting_real_platform_revocation": true, "same_cookie_after_revocation": true, "complete": true}
+		for _, stage := range []string{"real_login_navigation", "real_login_account", "real_login_password", "real_login_submit", "real_login_confirmed_workspace"} {
+			stages[stage] = true
+		}
 		if !stages[report.Stage] || (report.Result != "pass" && report.Result != "fail") || len(report.Results) > 100 {
 			return
 		}
@@ -560,7 +570,22 @@ func TestIdentityBrowserGISWriteChain(t *testing.T) {
 				return
 			}
 		}
-		clean, _ := json.Marshal(map[string]any{"schema_version": "1.0", "result": report.Result, "stage": report.Stage, "results": report.Results, "diagnostic_only": true})
+		if len(report.APIStatuses) > 80 || report.ExceptionCount < 0 || report.ExceptionCount > 10000 {
+			return
+		}
+		paths := map[string]bool{"/api/auth/session": true, "/api/auth/login": true, "/api/auth/logout": true, "/api/auth/settings": true, "/api/agriculture/workspaces": true}
+		for _, row := range report.APIStatuses {
+			if !paths[row.Path] || row.Status < 100 || row.Status > 599 {
+				return
+			}
+		}
+		flags := map[string]bool{}
+		for _, key := range []string{"loginRoute", "agriRoute", "documentComplete", "accountInput", "passwordInput", "submitButton", "actorVisible", "vueLoading", "vueReady", "vueError", "alertVisible"} {
+			if value, ok := report.DOMFlags[key]; ok {
+				flags[key] = value
+			}
+		}
+		clean, _ := json.Marshal(map[string]any{"schema_version": "1.0", "result": report.Result, "stage": report.Stage, "results": report.Results, "diagnostic_only": true, "api_statuses": report.APIStatuses, "dom_flags": flags, "browser_runtime_exception_count": report.ExceptionCount})
 		dir := filepath.Join(root, ".local/evidence")
 		if os.MkdirAll(dir, 0700) == nil {
 			_ = os.WriteFile(filepath.Join(dir, "identity-chain-browser.json"), clean, 0600)

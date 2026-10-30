@@ -1,0 +1,190 @@
+{
+  "schema_version": "1.0",
+  "run_id": 41008181499,
+  "source_commit": "91c76b89dc1bc0f8299f75c065c250b1e9cfb2a0",
+  "parent_commit": "512e963e97cc8282cfcd9c59045cf78ade0a331e",
+  "product_runtime_source_commit": "53ddad0536351b77a2acb2eb26d0839f4644c26c",
+  "test_source_commit": "856af8f3",
+  "change_files": [
+    {
+      "filename": "tests/agriculture/test_compose_policy.py",
+      "git_blob": "b51c470b26eb372e51a7a5289be1ff184f3cf2b7",
+      "status": "modified"
+    }
+  ],
+  "jobs": [
+    {
+      "id": 123907761156,
+      "name": "contracts",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 41008181499,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Install isolated schema-test dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Contract negatives and trusted source policy",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        }
+      ]
+    },
+    {
+      "id": 123907827294,
+      "name": "compose (core)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 41008181499,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Explicit scaffold bootstrap or existing full product checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Fresh-volume database and migration smoke",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        }
+      ]
+    },
+    {
+      "id": 123907827358,
+      "name": "compose (migrations)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 41008181499,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Explicit scaffold bootstrap or existing full product checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Fresh-volume database and migration smoke",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        }
+      ]
+    }
+  ],
+  "artifacts": [],
+  "safe_log_markers": [
+    {
+      "job_id": 123907761156,
+      "markers": [
+        "2026-10-30T05:23:44.7064840Z 97 passed in 0.60s"
+      ]
+    },
+    {
+      "job_id": 123907827294,
+      "markers": [
+        "2026-10-30T05:24:30.0260542Z PASS: fresh database roles, password connections, cross-database denial, runtime DDL denial, default DML privileges, PostGIS and bounded readiness",
+        "2026-10-30T05:24:30.0262261Z PASS: W00 core smoke; NOT tenant isolation, GIS migration, live data or product acceptance"
+      ]
+    },
+    {
+      "job_id": 123907827358,
+      "markers": [
+        "2026-10-30T05:24:40.8739334Z PASS: fresh database roles, password connections, cross-database denial, runtime DDL denial, default DML privileges, PostGIS and bounded readiness",
+        "2026-10-30T05:27:50.2891420Z PASS: platform-migrate applied and replayed, tables=186",
+        "2026-10-30T05:27:51.5429063Z PASS: loom-migrate applied and replayed, tables=28",
+        "2026-10-30T05:27:52.0059880Z PASS: W00 migrations smoke; NOT tenant isolation, GIS migration, live data or product acceptance"
+      ]
+    }
+  ],
+  "original_failed_run_preserved": "docs/agriculture/evidence/w01/ci-512e963-20261030/reconciliation.json",
+  "scope": "W00 contracts plus fresh Docker core and pinned Flow/Loom migration replay; no production or live-farm acceptance",
+  "runtime_overlay_unchanged": true,
+  "prior_runtime_overlay_count": 211,
+  "test_file_sha256": "17f196c4b42a43d83e192778343b2d1e0d10b79058bebe00a06592032a735d88",
+  "test_source_blob_verified": true,
+  "recorded_at": "2026-10-30T05:30:52.249015+00:00",
+  "result": "success",
+  "artifacts_note": "API returned empty list; safe markers are newly extracted original job log lines, not claimed artifact files",
+  "migration_source_boundary": "W00 workflow combines fixed Flow206c82 with deployment overlay only; platform186 and Loom28 table migration/replay is not full business server startup or agriculture82/83 migration acceptance."
+}

@@ -121,6 +121,47 @@ def test_postgres_job_sidecar_scope_immutable_and_worker_privileges():
                 )
                 == 0
             )
+            # A fresh caller must also not commit after the callback's shorter
+            # current-authority deadline (independent of request expiry).
+            checked = datetime.now(UTC).replace(microsecond=0)
+            current_until = checked + timedelta(seconds=1)
+            checkpoint = JobCheckpoint(
+                snapshot["job_id"],
+                digest,
+                "worker_fixture",
+                1,
+                1,
+                "publish",
+                snapshot["input_hash"],
+            )
+            current = {
+                "checked_at": checked.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "valid_until": current_until.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            }
+            async with owner.transaction():
+                await owner.execute(
+                    "LOCK TABLE public.agriculture_job_authority_checks "
+                    "IN ACCESS EXCLUSIVE MODE"
+                )
+                pending = asyncio.create_task(
+                    store.record(verified, snapshot, checkpoint, current)
+                )
+                await asyncio.sleep(0.03)
+                assert not pending.done(), "audit did not encounter held PG lock"
+                await asyncio.sleep(
+                    max(0, (current_until - datetime.now(UTC)).total_seconds()) + 0.02
+                )
+            with pytest.raises(IdentityError) as expired:
+                await pending
+            assert expired.value.code == "job_authority_expired"
+            assert (
+                await owner.fetchval(
+                    "SELECT count(*) FROM public.agriculture_job_authority_checks "
+                    "WHERE tenant_id=$1",
+                    snapshot["tenant_id"],
+                )
+                == 0
+            )
         finally:
             await worker.close()
             await app.close()

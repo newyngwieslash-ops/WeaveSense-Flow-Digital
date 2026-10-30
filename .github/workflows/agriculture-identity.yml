@@ -136,6 +136,7 @@ jobs:
           path: |
             product/.local/evidence/identity-*.json
             product/.local/evidence/identity-*.xml
+            product/.local/evidence/scope-stream-*.json
             product/.local/evidence/session-ci-provenance.json
           include-hidden-files: true
           if-no-files-found: warn

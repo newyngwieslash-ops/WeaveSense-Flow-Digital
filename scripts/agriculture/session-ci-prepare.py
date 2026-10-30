@@ -388,6 +388,22 @@ OVERLAY = (
     "web/test/agriculture-projection-query-key.test.ts",
     "scripts/agriculture/scope-stream-result.py",
     "scripts/agriculture/scope-stream-result.test.py",
+    "scripts/agriculture/parser-ci-wiring.test.py",
+    "scripts/agriculture/parser-docker-ci.sh",
+    "deploy/agriculture/Dockerfile.parser",
+    "docs/agriculture/INGESTION_SECURITY.md",
+    "services/agri-gis/backend/app/agriculture/ingestion/__init__.py",
+    "services/agri-gis/backend/app/agriculture/ingestion/source_policy.py",
+    "services/agri-gis/backend/app/agriculture/ingestion/download.py",
+    "services/agri-gis/backend/app/agriculture/ingestion/limits.py",
+    "services/agri-gis/backend/app/agriculture/ingestion/runner.py",
+    "services/agri-gis/backend/app/agriculture/ingestion/worker.py",
+    "services/agri-gis/backend/app/agriculture/ingestion/archive.py",
+    "services/agri-gis/backend/tests/ingestion_limit_probe.py",
+    "services/agri-gis/backend/tests/test_agriculture_ingestion_docker.py",
+    "services/agri-gis/backend/tests/test_agriculture_ingestion_download.py",
+    "services/agri-gis/backend/tests/test_agriculture_ingestion_limits.py",
+    "services/agri-gis/backend/tests/test_agriculture_ingestion_parser.py",
 )
 
 

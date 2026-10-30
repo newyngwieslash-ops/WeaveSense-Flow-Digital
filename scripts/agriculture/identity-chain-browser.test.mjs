@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { chmodSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { continuation, readPrivateConfig, safeIdentityFailure, validateConfig, validNetworkEvidence } from './identity-chain-browser.mjs';
+import { continuation, readPrivateConfig, safeAPIStatuses, safeIdentityFailure, validateConfig, validNetworkEvidence } from './identity-chain-browser.mjs';
 
 function fixture(directory) {
     return { platform_url: 'http://127.0.0.1:18081', gateway_port: 18082, username: 'chain_fixture', password: 'fixture-not-a-real-password', workspace_id: 'workspace_a', foreign_workspace_id: 'workspace_b', second_workspace_id: 'workspace_c', operation_id: 'operation_fixture', task_code: 'task_fixture', plot_code: 'plot_fixture', parcel_id: 'parcel_fixture', crop_type: '玉米', report_path: join(directory, 'browser-report.json') };
@@ -51,6 +51,13 @@ test('failures never emit arbitrary credential, HTTP or database diagnostics', (
 test('zero or missing network observations cannot prove credential non-exposure', () => {
     assert.equal(validNetworkEvidence({ observed: 12, violations: 0 }), true);
     for (const evidence of [null, {}, { observed: 0, violations: 0 }, { observed: -1, violations: 0 }, { observed: NaN, violations: 0 }, { observed: 0.5, violations: 0 }, { observed: 12 }, { observed: 12, violations: 1 }]) assert.equal(validNetworkEvidence(evidence), false);
+});
+
+test('API failure diagnostics keep only literal route classes and bounded status flags', () => {
+    const good = { path: '/api/auth/login', status: 503, completed: true, response: 'password-secret' };
+    assert.deepEqual(safeAPIStatuses([good, { ...good, path: '/api/auth/login?token=secret' }, { ...good, path: '/api/agriculture/workspaces/private-scope' }, { ...good, status: '503' }, { ...good, completed: 'true' }]), [{ path: '/api/auth/login', status: 503, completed: true }]);
+    assert.equal(safeAPIStatuses(Array.from({ length: 100 }, () => good)).length, 80);
+    assert.deepEqual(safeAPIStatuses(null), []);
 });
 
 test('runner uses production nginx, actual login, no cookie injection or sandbox bypass', () => {

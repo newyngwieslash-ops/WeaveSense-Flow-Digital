@@ -58,6 +58,11 @@ export function validNetworkEvidence(value) {
     return Boolean(value && Number.isSafeInteger(value.observed) && value.observed > 0 && value.violations === 0);
 }
 
+export function safeAPIStatuses(values) {
+    const allowed = ['/api/auth/session', '/api/auth/login', '/api/auth/logout', '/api/auth/settings', '/api/agriculture/workspaces'];
+    return Array.isArray(values) ? values.slice(-80).filter(row => row && allowed.includes(row.path) && Number.isInteger(row.status) && row.status >= 100 && row.status <= 599 && typeof row.completed === 'boolean').map(row => ({ path: row.path, status: row.status, completed: row.completed })) : [];
+}
+
 function parentContinuation(input) {
     const lines = createInterface({ input, crlfDelay: Infinity });
     let released = false, failed = false, waiter;
@@ -171,11 +176,15 @@ export async function main(configPath = process.argv[2]) {
         await cdp.poll("!!document.querySelector('#login-account')", 'real login form');
         const anonymous = await browserWrite(cdp, payload);
         check(anonymous.csrf && anonymous.status === 401 && !anonymous.secretLeak, 'anonymous_browser_write_rejected');
-        report.stage = 'real_login';
+        report.stage = 'real_login_navigation';
         await cdp.navigate('/login?next=' + encodeURIComponent('/agri/workspaces/' + config.workspace_id));
+        report.stage = 'real_login_account';
         await cdp.fill('#login-account', config.username, 'fixture account');
+        report.stage = 'real_login_password';
         await cdp.fill('#login-password', config.password, 'fixture password');
+        report.stage = 'real_login_submit';
         await cdp.evaluate("document.querySelector('form button[type=submit]').click()", 'submit real login form');
+        report.stage = 'real_login_confirmed_workspace';
         await cdp.poll("location.pathname === " + JSON.stringify('/agri/workspaces/' + config.workspace_id) + " && document.querySelector('main[data-session-status=ready]') && document.querySelector('[data-testid=agri-workspace-context]')?.dataset.workspaceId === " + JSON.stringify(config.workspace_id), 'trusted Vue workspace after real login');
         check(true, 'real_react_form_login_and_trusted_vue_workspace');
         const cookies = (await cdp.send('Network.getCookies', { urls: [origin] })).cookies;
@@ -212,7 +221,16 @@ export async function main(configPath = process.argv[2]) {
         report.network = observer.counts();
         check(validNetworkEvidence(report.network) && cdp.exceptions.length === 0 && cdp.outboundBlocked() === 0, 'no_browser_internal_credentials_or_external_requests');
         report.stage = 'complete'; report.result = 'pass';
-    } catch (error) { report.result = 'fail'; report.failure = safeIdentityFailure(error); process.exitCode = 1; }
+    } catch (error) {
+        report.result = 'fail'; report.failure = safeIdentityFailure(error); process.exitCode = 1;
+        if (cdp) {
+            report.api_statuses = safeAPIStatuses(cdp.statuses);
+            report.browser_runtime_exception_count = cdp.exceptions.length;
+            try {
+                report.dom_flags = await cdp.evaluate("({loginRoute:location.pathname==='/login',agriRoute:location.pathname.startsWith('/agri/'),documentComplete:document.readyState==='complete',accountInput:!!document.querySelector('#login-account'),passwordInput:!!document.querySelector('#login-password'),submitButton:!!document.querySelector('form button[type=submit]'),actorVisible:!!document.querySelector('[data-testid=session-user]'),vueLoading:!!document.querySelector('main[data-session-status=loading]'),vueReady:!!document.querySelector('main[data-session-status=ready]'),vueError:!!document.querySelector('main[data-session-status=error]'),alertVisible:!!document.querySelector('[role=alert]')})", 'sanitized failure flags');
+            } catch { /* No raw CDP exception text or DOM content is retained. */ }
+        }
+    }
     finally {
         await cleanup();
         process.removeListener('SIGTERM', interrupted); process.removeListener('SIGINT', interrupted);

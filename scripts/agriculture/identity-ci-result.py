@@ -26,6 +26,7 @@ ACTOR_MODULES = {
     "test_agriculture_actors", "test_agriculture_actors_postgres",
     "test_legacy_actor_gate", "test_agriculture_legacy_write_integration",
     "test_legacy_identity_contracts",
+    "test_identity_chain_fixture",
 }
 
 

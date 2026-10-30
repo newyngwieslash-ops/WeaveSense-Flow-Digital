@@ -6,12 +6,17 @@ cd "$(dirname "$0")/../.."
 : "${AGRI_IDENTITY_PYTHON:?Explicit locked Python environment required}"
 AGRI_IDENTITY_PYTHON="$(cd "$(dirname "$AGRI_IDENTITY_PYTHON")" && pwd)/$(basename "$AGRI_IDENTITY_PYTHON")"
 export AGRI_IDENTITY_PYTHON
+[[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} =~ ^[01]$ ]] || { echo 'Invalid browser chain gate'; exit 2; }
 mkdir -p .local/evidence
 python3 scripts/agriculture/legacy-identity-inventory.test.py
 python3 scripts/agriculture/legacy-identity-inventory.py --check
 for suite in go python actors; do
   printf '%s\n' '{"passed":false,"status":"not_run","tests":[]}' > ".local/evidence/identity-$suite.json"
 done
+if [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} == 1 ]]; then
+  printf '%s\n' '{"passed":false,"status":"not_run","tests":[]}' > .local/evidence/identity-chain-go.json
+  printf '%s\n' '{"result":"not_run","results":[]}' > .local/evidence/identity-chain-browser.json
+fi
 command -v docker >/dev/null
 docker info >/dev/null 2>&1 || { echo 'BLOCKED: Docker daemon required'; exit 2; }
 "$AGRI_IDENTITY_PYTHON" -c 'import fastapi,uvicorn,httpx,cryptography,rfc8785,asyncpg,pytest'
@@ -75,6 +80,8 @@ for domain in platform intel geo; do
 done
 export AGRI_TEST_GEO_MIGRATION_DSN="postgres://flow_geo_migrate:$GEO_MIGRATION_PASSWORD@127.0.0.1:$port/flow_geo?sslmode=disable"
 export AGRI_TEST_GEO_RUNTIME_DSN="postgres://flow_geo_app:$GEO_RUNTIME_PASSWORD@127.0.0.1:$port/flow_geo?sslmode=disable"
+export AGRI_TEST_PG_MIGRATION_DSN="postgres://flow_platform_migrate:$PLATFORM_MIGRATION_PASSWORD@127.0.0.1:$port/flow_platform?sslmode=disable"
+export AGRI_TEST_PG_RUNTIME_DSN="postgres://flow_platform_app:$PLATFORM_RUNTIME_PASSWORD@127.0.0.1:$port/flow_platform?sslmode=disable"
 export AGRI_TEST_PG_ISOLATED=1
 export IDENTITY_PG_VERSION="$(sql geo app flow_geo 'SELECT version()')"
 export IDENTITY_IMAGE_ID="$(docker inspect --format '{{.Image}}' "$container")"
@@ -97,10 +104,17 @@ python_gate=$?
 go_code=$?
 python3 scripts/agriculture/identity-ci-result.py --kind go --input "$private/go.jsonl" --output .local/evidence/identity-go.json
 go_gate=$?
-(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_actors.py tests/test_agriculture_actors_postgres.py tests/test_legacy_actor_gate.py tests/test_legacy_identity_contracts.py tests/test_agriculture_legacy_write_integration.py --junitxml="$private/actors.xml" -q) > "$private/actors.log" 2>&1
+(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_actors.py tests/test_agriculture_actors_postgres.py tests/test_legacy_actor_gate.py tests/test_legacy_identity_contracts.py tests/test_agriculture_legacy_write_integration.py tests/test_identity_chain_fixture.py --junitxml="$private/actors.xml" -q) > "$private/actors.log" 2>&1
 actors_code=$?
 python3 scripts/agriculture/identity-ci-result.py --kind actors --input "$private/actors.xml" --output .local/evidence/identity-actors.json
 actors_gate=$?
+chain_code=0; chain_gate=0
+if [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} == 1 ]]; then
+  "${GO_BIN:-go}" -C backend test ./internal/agriculture -run '^TestIdentityBrowserGISWriteChain$' -count=1 -timeout 12m -json > "$private/chain.jsonl" 2> "$private/chain-stderr.log"
+  chain_code=$?
+  python3 scripts/agriculture/identity-chain-result.py --input "$private/chain.jsonl" --output .local/evidence/identity-chain-go.json
+  chain_gate=$?
+fi
 set -e
-[[ $python_code == 0 && $python_gate == 0 && $go_code == 0 && $go_gate == 0 && $actors_code == 0 && $actors_gate == 0 ]] || { echo 'Identity acceptance failed; inspect sanitized reports, no raw secrets exported'; exit 1; }
+[[ $python_code == 0 && $python_gate == 0 && $go_code == 0 && $go_gate == 0 && $actors_code == 0 && $actors_gate == 0 && $chain_code == 0 && $chain_gate == 0 ]] || { echo 'Identity acceptance failed; inspect sanitized reports, no raw secrets exported'; exit 1; }
 echo 'PASS: actual Go/Python HTTP, PostgreSQL replay and legacy actor boundary; fixture-domain acceptance only'

@@ -36,7 +36,15 @@ from app.services.workbench_service import WorkbenchService
 @pytest_asyncio.fixture
 async def legacy_fixture():
     owner_dsn, runtime_dsn = pg_config()
-    owner, tenant, workspace, actor, project, member = await prepare(owner_dsn)
+    async for value in legacy_fixture_context(owner_dsn, runtime_dsn):
+        yield value
+
+
+async def legacy_fixture_context(owner_dsn, runtime_dsn, identity=None):
+    """Shared real database fixture; chain callers never use proof()/mutate()."""
+    owner, tenant, workspace, actor, project, member = await prepare(
+        owner_dsn, identity
+    )
     owner_engine, runtime = engine_for(owner_dsn), engine_for(runtime_dsn)
     suffix = uuid4().hex
     plot_code, task_code, parcel_id = (

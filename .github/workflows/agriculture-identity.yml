@@ -73,7 +73,7 @@ jobs:
         working-directory: product
         run: |
           set -euo pipefail
-          go -C backend test ./internal/agriculture -run '^TestIdentityChainChildEnvironment$' -count=1
+          go -C backend test ./internal/agriculture -run '^TestIdentityChain(ChildEnvironment|SafeDiagnostic)$' -count=1
           (cd web && bun install --frozen-lockfile --ignore-scripts && bun run build:agriculture)
           (cd services/agri-gis/frontend && npm ci --ignore-scripts --no-audit --no-fund && npm run build:agriculture)
       - name: Obtain runner nginx without starting a daemon

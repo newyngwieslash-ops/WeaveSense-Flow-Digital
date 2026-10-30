@@ -85,6 +85,8 @@ async function connect(cdpPort, origin) {
     const exceptions = [];
     const statuses = [];
     const statusRequests = new Map();
+    const requestStarts = new Map();
+    let trackedRequestSequence = 0;
     let outboundBlocked = 0;
     let committedNavigation = false;
     const send = (method, params = {}) => new Promise((resolve, reject) => {
@@ -101,17 +103,21 @@ async function connect(cdpPort, origin) {
         } else if (message.method === "Runtime.exceptionThrown") {
             // Do not store descriptions: exception text can contain request secrets.
             exceptions.push("browser_runtime_exception");
+        } else if (message.method === "Network.requestWillBeSent") {
+            const url = new URL(message.params.request.url);
+            if (url.origin === origin && routeClass(url.pathname)) requestStarts.set(message.params.requestId, ++trackedRequestSequence);
         } else if (message.method === "Network.responseReceived") {
             const response = message.params.response;
             const url = new URL(response.url);
             if (url.origin === origin && routeClass(url.pathname)) {
-                const status = { path: routeClass(url.pathname), status: response.status, completed: false };
+                const status = { path: routeClass(url.pathname), status: response.status, completed: false, startedSequence: requestStarts.get(message.params.requestId) ?? null };
                 statuses.push(status);
                 statusRequests.set(message.params.requestId, status);
             }
         } else if (message.method === "Network.loadingFinished") {
             const status = statusRequests.get(message.params.requestId);
             if (status) { status.completed = true; statusRequests.delete(message.params.requestId); }
+            requestStarts.delete(message.params.requestId);
         } else if (message.method === "Fetch.requestPaused") {
             const { requestId, request: req } = message.params;
             const allowed = req.url.startsWith(origin + "/") || /^(data|blob):/.test(req.url);
@@ -151,7 +157,7 @@ async function connect(cdpPort, origin) {
     // become a delayed window-focus/session-revalidation event mid-keystroke.
     await send("Page.bringToFront");
     await poll("document.hasFocus()", "browser foreground activation");
-    return { send, evaluate, poll, navigate, fill, exceptions, statuses, outboundBlocked: () => outboundBlocked, navigationCommitted: () => committedNavigation, close: () => socket.close() };
+    return { send, evaluate, poll, navigate, fill, exceptions, statuses, requestSequence: () => trackedRequestSequence, outboundBlocked: () => outboundBlocked, navigationCommitted: () => committedNavigation, close: () => socket.close() };
 }
 
 
@@ -176,7 +182,7 @@ export async function revalidateThroughRealTabSwitch(client) {
 export async function observeRoutineRetention(client, token, draft, timing = {}) {
     const now = timing.now ?? Date.now, pause = timing.pause ?? sleep;
     const before = (await client.send('Page.getFrameTree')).frameTree.frame;
-    const start = now(), offset = client.statuses.length;
+    const start = now(), offset = client.statuses.length, startedAfter = client.requestSequence();
     let samples = 0;
     while (now() - start < 55000) {
         const retained = await client.evaluate(`(() => {
@@ -187,7 +193,7 @@ export async function observeRoutineRetention(client, token, draft, timing = {})
         })()`, 'routine invitation and draft retention');
         if (!retained) throw new Error('assertion failed: routine_must_preserve_unchanged_invitation_and_draft');
         samples++;
-        const observed = client.statuses.slice(offset);
+        const observed = client.statuses.slice(offset).filter(x => Number.isSafeInteger(x.startedSequence) && x.startedSequence > startedAfter);
         const session = observed.some(x => x.path === '/api/auth/session' && x.status === 200 && x.completed);
         const workspaces = observed.some(x => x.path === '/api/agriculture/workspaces' && x.status === 200 && x.completed);
         if (now() - start >= 35000 && session && workspaces) {

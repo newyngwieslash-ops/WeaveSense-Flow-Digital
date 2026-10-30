@@ -29,10 +29,13 @@ if [[ $mode == migrations ]]; then compose+=(--profile platform --profile knowle
 # Random namespace is also checked before cleanup is armed. Never prune Docker.
 [[ -z $(docker ps -aq --filter "label=com.docker.compose.project=$project") ]]
 [[ -z $(docker volume ls -q --filter "label=com.docker.compose.project=$project") ]]
+csrf_dir=$(mktemp -d)
+export FLOW_AGRICULTURE_CSRF_KEY_FILE="$csrf_dir/csrf.key"
+compose_started=false
 cleanup() {
   code=$?
   trap - EXIT
-  if ! "${compose[@]}" down --volumes --remove-orphans --timeout 15 >/dev/null 2>&1; then
+  if [[ $compose_started == true ]] && ! "${compose[@]}" down --volumes --remove-orphans --timeout 15 >/dev/null 2>&1; then
     echo "ERROR: cleanup failed for owned project $project" >&2
     [[ $code != 0 ]] || code=1
   fi
@@ -40,10 +43,9 @@ cleanup() {
   exit "$code"
 }
 trap cleanup EXIT
-csrf_dir=$(mktemp -d)
-export FLOW_AGRICULTURE_CSRF_KEY_FILE="$csrf_dir/csrf.key"
 python3 -c 'import os,secrets; p=os.environ["FLOW_AGRICULTURE_CSRF_KEY_FILE"]; fd=os.open(p,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600); os.write(fd,secrets.token_bytes(32)); os.close(fd)'
 echo "W00 smoke mode=$mode project=$project (fresh ephemeral demo databases)"
+compose_started=true
 "${compose[@]}" up -d --build --wait --wait-timeout 180 postgres redis geo-readiness
 
 # TCP forces password authentication; Unix-socket init trust is not an auth test.

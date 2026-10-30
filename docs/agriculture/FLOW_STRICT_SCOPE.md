@@ -104,13 +104,13 @@ SQLite 保留原计算实现用于旧逻辑回归，不作为 PostgreSQL 权限�
 报告分别保留开始/结束源码 SHA，运行期间源码变化必须重新验证，不能用结束时哈希冒充实际执行版本。
 本文件列出的实现边界不替代最终整包验收状态，实际结果以对应归档报告为准。
 
-2026-10-30 最终双 bootstrap PostgreSQL 切片，实际源码提交 `4b49887204546fc91ab11433d3ce4ae2da8748b0`：
+2026-10-30 最终双 bootstrap PostgreSQL 切片，实际源码提交 `b7be7c44c709882ec80e030ac60802b3efd1a85b`：
 
-- 农业：`evidence/w02/dt018-flow-agriculture-postgres.json`，run `15eabf239d9d437eaa7b1440ce4b9b60`。
-- 旧影视 Flow：`evidence/w02/dt018-flow-legacy-postgres.json`，run `6d533a4196104adba6c2d159fe03aeab`。
-- 各自 7 个固定根测试 + 23 子项全部通过，0 skip/missing，启动和结束的 1158 个源码文件哈希一致。
-- 7 根分别验证 provider 原子账本、旧 callback/admission、模型/命令外部 I/O、wait/notification、
-  数学签名下载、学校 onboarding、scanner 最小权限/漂移/分页。所有密码和用户/学校数据均为
+- 农业：`evidence/w02/dt018-flow-agriculture-postgres.json`，run `b5acafd4fa7e412ab24ee97ef85cba89`。
+- 旧影视 Flow：`evidence/w02/dt018-flow-legacy-postgres.json`，run `a1bd3b82527e4dfaa680d7175c2bba09`。
+- 各自 8 个固定根测试 + 25 子项全部通过，0 skip/missing，启动和结束的 1159 个源码文件哈希一致。
+- 8 根分别验证 provider 原子账本、旧 callback/admission、模型/命令外部 I/O、wait/notification、
+  数学签名下载、学校 onboarding、每日全页对账、scanner 最小权限/漂移/分页。所有密码和用户/学校数据均为
   私有隔离 fixture；没有真实生产账户、通知投递、商业支付或农场验收。
 - 中间失败保留：scanner SQL 参数 `kind` 与业务列重名触发 42702，改为 `scan_kind`；漂移测试曾
   引用不存在的复数表名，改为实际 `flow_event_inbox` 后重跑真实权限拒绝。没有跳过失败分支。

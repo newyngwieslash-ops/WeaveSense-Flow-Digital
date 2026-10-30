@@ -49,7 +49,7 @@ run.mkdir(parents=True)
 passwords = {name: secrets.token_hex(24) for name in (
     'POSTGRES_PASSWORD', 'PLATFORM_MIGRATION_PASSWORD', 'PLATFORM_RUNTIME_PASSWORD',
     'INTEL_MIGRATION_PASSWORD', 'INTEL_RUNTIME_PASSWORD',
-    'GEO_MIGRATION_PASSWORD', 'GEO_RUNTIME_PASSWORD')}
+    'GEO_MIGRATION_PASSWORD', 'GEO_RUNTIME_PASSWORD', 'GEO_WORKER_PASSWORD')}
 with socket.socket() as sock:
     sock.bind(('127.0.0.1',0))
     port = str(sock.getsockname()[1])

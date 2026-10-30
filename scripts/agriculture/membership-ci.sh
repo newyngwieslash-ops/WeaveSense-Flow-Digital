@@ -39,7 +39,7 @@ PY
   exit "$code"
 }
 trap cleanup EXIT
-for name in POSTGRES_PASSWORD PLATFORM_MIGRATION_PASSWORD PLATFORM_RUNTIME_PASSWORD INTEL_MIGRATION_PASSWORD INTEL_RUNTIME_PASSWORD GEO_MIGRATION_PASSWORD GEO_RUNTIME_PASSWORD; do
+for name in POSTGRES_PASSWORD PLATFORM_MIGRATION_PASSWORD PLATFORM_RUNTIME_PASSWORD INTEL_MIGRATION_PASSWORD INTEL_RUNTIME_PASSWORD GEO_MIGRATION_PASSWORD GEO_RUNTIME_PASSWORD GEO_WORKER_PASSWORD; do
   value=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
   if [[ ${GITHUB_ACTIONS:-} == true ]]; then printf '::add-mask::%s\n' "$value"; fi
   export "$name=$value"
@@ -50,7 +50,7 @@ docker network create --label "weavesense.ci.owner=$project" "$network" >/dev/nu
 docker run -d --name "$container" --label "weavesense.ci.owner=$project" --network "$network" \
   -p 127.0.0.1::5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD \
   -e PLATFORM_MIGRATION_PASSWORD -e PLATFORM_RUNTIME_PASSWORD \
-  -e INTEL_MIGRATION_PASSWORD -e INTEL_RUNTIME_PASSWORD -e GEO_MIGRATION_PASSWORD -e GEO_RUNTIME_PASSWORD \
+  -e INTEL_MIGRATION_PASSWORD -e INTEL_RUNTIME_PASSWORD -e GEO_MIGRATION_PASSWORD -e GEO_RUNTIME_PASSWORD -e GEO_WORKER_PASSWORD \
   --mount "type=volume,source=$volume,target=/var/lib/postgresql/data" \
   --mount "type=bind,source=$PWD/deploy/agriculture/postgres/init.sh,target=/docker-entrypoint-initdb.d/10-agriculture.sh,readonly" \
   postgis/postgis:17-3.5 >/dev/null

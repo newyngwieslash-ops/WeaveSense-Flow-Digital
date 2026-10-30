@@ -158,6 +158,8 @@ OVERLAY = (
     "services/agri-gis/backend/tests/test_agriculture_identity_postgres.py",
     "scripts/agriculture/identity-ci.sh",
     "scripts/agriculture/identity-postgres-ci.sh",
+    "scripts/agriculture/geo-worker-role-test.sh",
+    "tests/agriculture/test_geo_worker_role_policy.py",
     "scripts/agriculture/identity-ci-result.py",
     "scripts/agriculture/identity-ci-result.test.py",
     "scripts/agriculture/identity-chain-result.py",

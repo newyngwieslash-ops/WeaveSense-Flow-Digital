@@ -35,7 +35,7 @@ jobs:
           .ci-venv/bin/pip install pytest==8.3.5 jsonschema==4.26.0 referencing==0.37.0 jsonschema-specifications==2025.9.1 rpds-py==2026.6.3 PyYAML==6.0.3
       - name: Contract negatives and trusted source policy
         run: |
-          .ci-venv/bin/python -m pytest -q tests/agriculture/test_contracts.py tests/agriculture/test_source_rights.py tests/agriculture/test_compose_policy.py tests/agriculture/test_ci_smoke_environment.py
+          .ci-venv/bin/python -m pytest -q tests/agriculture/test_contracts.py tests/agriculture/test_source_rights.py tests/agriculture/test_compose_policy.py tests/agriculture/test_ci_smoke_environment.py tests/agriculture/test_geo_worker_role_policy.py
           .ci-venv/bin/python scripts/agriculture/check-source-policy.py --profile agriculture
   compose:
     needs: contracts
@@ -74,6 +74,7 @@ jobs:
           mkdir -p product/deploy/agriculture product/scripts/agriculture
           cp -R scaffold/deploy/agriculture/. product/deploy/agriculture/
           cp scaffold/scripts/agriculture/ci-smoke.sh product/scripts/agriculture/
+          cp scaffold/scripts/agriculture/geo-worker-role-test.sh product/scripts/agriculture/
           cp scaffold/docker-compose.agriculture.yml product/
           printf '%s\n' 'Source: pinned Flow 206c82a plus authored W00 deployment overlay; not a source-history import or product acceptance.' >> "$GITHUB_STEP_SUMMARY"
       - name: Fresh-volume database and migration smoke

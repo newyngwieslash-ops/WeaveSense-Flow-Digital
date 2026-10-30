@@ -310,7 +310,7 @@ func TestIdentityBrowserGISWriteChain(t *testing.T) {
 	}
 	second := flow.NewID("ws_chain_")
 	err = flow.TenantTx(seed, org.Tenant.ID, func(tx *gorm.DB) error {
-		for _, record := range []any{&model.Workspace{ID: second, TenantID: org.Tenant.ID, Product: Product, Name: "Second fixture workspace", Slug: "second-chain"}, &model.WorkspaceMembership{ID: flow.NewID("wm_"), WorkspaceID: second, UserID: owner, Role: "owner"}, &model.WorkspaceMembership{ID: flow.NewID("wm_"), WorkspaceID: second, UserID: actor, Role: "viewer"}, &model.AgricultureRoleBinding{ID: flow.NewID("agr_"), TenantID: org.Tenant.ID, WorkspaceID: second, UserID: actor, Role: "editor"}} {
+		for _, record := range []any{&model.Workspace{ID: second, TenantID: org.Tenant.ID, Product: Product, Name: "Second fixture workspace", Slug: "second-chain"}, &model.WorkspaceMembership{ID: flow.NewID("wm_"), WorkspaceID: second, UserID: owner, Role: "viewer"}, &model.WorkspaceMembership{ID: flow.NewID("wm_"), WorkspaceID: second, UserID: actor, Role: "viewer"}, &model.AgricultureRoleBinding{ID: flow.NewID("agr_"), TenantID: org.Tenant.ID, WorkspaceID: second, UserID: actor, Role: "editor"}} {
 			if e := tx.Create(record).Error; e != nil {
 				return e
 			}

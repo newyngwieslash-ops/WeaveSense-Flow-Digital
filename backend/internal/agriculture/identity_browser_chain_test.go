@@ -158,6 +158,9 @@ func chainStart(t *testing.T, command, dir string, args ...string) *chainChild {
 
 func chainEnvironment(dir, home string) []string {
 	env := []string{"HOME=" + home, "TMPDIR=" + home, "LANG=C.UTF-8", "PYTHONPATH=" + dir, "PYTHONUNBUFFERED=1"}
+	if source := os.Getenv("AGRI_E2E_SOURCE_COMMIT"); regexp.MustCompile(`^[0-9a-f]{40}$`).MatchString(source) {
+		env = append(env, "AGRI_E2E_SOURCE_COMMIT="+source)
+	}
 	for _, key := range []string{"PATH", "CHROME_BIN", "NGINX_BIN", "NGINX_MIME_TYPES"} {
 		if value := os.Getenv(key); value != "" {
 			env = append(env, key+"="+value)
@@ -176,6 +179,17 @@ func TestIdentityChainChildEnvironment(t *testing.T) {
 	}
 	if !strings.Contains(strings.Join(env, "\n"), "HOME=/fixture/private") {
 		t.Fatal("private home missing")
+	}
+	const commit = "0123456789abcdef0123456789abcdef01234567"
+	t.Setenv("AGRI_E2E_SOURCE_COMMIT", commit)
+	if !strings.Contains(strings.Join(chainEnvironment("/source", "/private"), "\n"), "AGRI_E2E_SOURCE_COMMIT="+commit) {
+		t.Fatal("validated nonsecret provenance missing")
+	}
+	for _, invalid := range []string{"main", strings.ToUpper(commit), commit + "\nPGPASSWORD=secret"} {
+		t.Setenv("AGRI_E2E_SOURCE_COMMIT", invalid)
+		if strings.Contains(strings.Join(chainEnvironment("/source", "/private"), "\n"), "AGRI_E2E_SOURCE_COMMIT=") {
+			t.Fatal("invalid provenance passed to child")
+		}
 	}
 }
 

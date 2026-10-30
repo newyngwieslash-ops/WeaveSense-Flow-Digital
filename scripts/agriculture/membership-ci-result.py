@@ -46,7 +46,7 @@ def verify(lines, suite):
         for test in ("TestAgriculturePostgresAdmissionAndStrictRLS", "TestAgriculturePostgresAuthorizationBindingsAndEpoch"):
             if ("yingce/backend/internal/database", test) not in passed:
                 missing.append(test)
-        for test in ("TestAgriculturePostgresMembershipLifecycle", "TestAgriculturePostgresConcurrentAcceptance", "TestAgriculturePostgresResourceAuthorization"):
+        for test in ("TestAgriculturePostgresMembershipLifecycle", "TestAgriculturePostgresConcurrentAcceptance", "TestAgriculturePostgresResourceAuthorization", "TestAgriculturePostgresRoleDowngradeRevokesPendingDelegation"):
             if ("yingce/backend/internal/agriculture", test) not in passed:
                 missing.append(test)
     if suite == "legacy-flow":

@@ -461,6 +461,10 @@ func TestIdentityBrowserGISWriteChain(t *testing.T) {
 	}
 	svc := platformservice.New(repository.New(s.DB), filepath.Join(private, "platform"))
 	t.Cleanup(func() { svc.Close() })
+	// Match cmd/server/main.go: shared authentication handlers use the real
+	// runtime coordinator for rate limits, not merely their service argument.
+	handler.ConfigureRuntime(svc)
+	t.Cleanup(func() { handler.ConfigureRuntime(nil) })
 	user := func(c *gin.Context) (*model.User, error) {
 		cookie, _ := c.Cookie(auth.SessionCookieName)
 		return svc.CurrentUser(cookie)

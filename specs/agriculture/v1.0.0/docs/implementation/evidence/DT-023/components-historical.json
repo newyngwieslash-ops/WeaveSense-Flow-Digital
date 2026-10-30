@@ -1,0 +1,490 @@
+{
+  "kind": "dt023-real-local-components",
+  "source_commit": "c69d4d77396902dd5dbf1ab3ffdee044eaa0bbca",
+  "passed": true,
+  "exit_code": 0,
+  "tests_passed": 70,
+  "tests_skipped": 0,
+  "test_cases": [
+    {
+      "classname": "tests.test_agriculture_ingestion_parser",
+      "name": "test_real_rasterio_decode_in_separate_limited_process",
+      "time": "0.187",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_parser",
+      "name": "test_raster_rejection_and_cleanup[missing_crs]",
+      "time": "0.180",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_parser",
+      "name": "test_raster_rejection_and_cleanup[pixel_limit]",
+      "time": "0.185",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_parser",
+      "name": "test_raster_rejection_and_cleanup[corrupt]",
+      "time": "0.177",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_parser",
+      "name": "test_raster_rejection_and_cleanup[vrt]",
+      "time": "0.166",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_parser",
+      "name": "test_actual_archive_abuse_is_bounded_and_cleaned[traversal]",
+      "time": "0.178",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_parser",
+      "name": "test_actual_archive_abuse_is_bounded_and_cleaned[duplicate]",
+      "time": "0.169",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_parser",
+      "name": "test_actual_archive_abuse_is_bounded_and_cleaned[symlink]",
+      "time": "0.146",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_parser",
+      "name": "test_actual_archive_abuse_is_bounded_and_cleaned[ratio]",
+      "time": "0.172",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_parser",
+      "name": "test_actual_archive_abuse_is_bounded_and_cleaned[nested]",
+      "time": "0.160",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_parser",
+      "name": "test_actual_archive_abuse_is_bounded_and_cleaned[external]",
+      "time": "0.166",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_parser",
+      "name": "test_actual_archive_abuse_is_bounded_and_cleaned[expanded]",
+      "time": "0.158",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_parser",
+      "name": "test_actual_fiona_geojson_and_coordinate_limit",
+      "time": "0.445",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_parser",
+      "name": "test_existing_field_workbook_parser_runs_in_child",
+      "time": "0.524",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_parser",
+      "name": "test_real_docx_and_pdf_readers",
+      "time": "0.554",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_parser",
+      "name": "test_production_has_no_ordinary_process_fallback",
+      "time": "0.001",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_parser",
+      "name": "test_actual_csv_xlsx_and_formula_denial",
+      "time": "0.665",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_parser",
+      "name": "test_arbitrary_stream_not_read_before_resource_supervision",
+      "time": "0.001",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_parser",
+      "name": "test_parent_secret_environment_not_forwarded",
+      "time": "0.023",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_limits",
+      "name": "test_real_process_limits_cleanup[cpu]",
+      "time": "1.044",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_limits",
+      "name": "test_real_process_limits_cleanup[wall]",
+      "time": "2.004",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_limits",
+      "name": "test_real_process_limits_cleanup[memory]",
+      "time": "0.050",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_limits",
+      "name": "test_real_process_limits_cleanup[file]",
+      "time": "0.043",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_limits",
+      "name": "test_real_process_limits_cleanup[output]",
+      "time": "0.038",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_non_public_addresses[127.0.0.1]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_non_public_addresses[10.1.2.3]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_non_public_addresses[169.254.169.254]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_non_public_addresses[0.0.0.0]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_non_public_addresses[224.0.0.1]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_non_public_addresses[::1]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_non_public_addresses[fc00::1]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_non_public_addresses[fe80::1]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_non_public_addresses[::ffff:8.8.8.8]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_non_public_addresses[2002:0808:0808::1]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_non_public_addresses[2130706433]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_non_public_addresses[127.1]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_non_public_addresses[fe80::1%eth0]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_non_public_addresses[fec0::1]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_non_public_addresses[64:ff9b::a00:1]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_non_public_addresses[64:ff9b:1::a00:1]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_url_aliases_and_credentials_denied[http://approved.example/data/a]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_url_aliases_and_credentials_denied[https://user:pass@approved.example/data/a]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_url_aliases_and_credentials_denied[https://approved.example:444/data/a]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_url_aliases_and_credentials_denied[https://approved.example/data/a?token=x]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_url_aliases_and_credentials_denied[https://approved.example/data/a#x]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_url_aliases_and_credentials_denied[https://approved.example/data/%2e%2e/a]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_url_aliases_and_credentials_denied[https://approved.example/data/../a]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_url_aliases_and_credentials_denied[https://approved.example/other/a]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_url_aliases_and_credentials_denied[https://approved.example.evil/data/a]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_url_aliases_and_credentials_denied[https://approved.example./data/a]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_url_aliases_and_credentials_denied[https://approved.example/data/\\\\evil]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_url_aliases_and_credentials_denied[https://approved.example/data/a\\n]",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_dns_rebinding_mixed_answers_fail_closed",
+      "time": "0.000",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_real_stream_atomic_publication[ok]",
+      "time": "0.504",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_real_stream_atomic_publication[redirect]",
+      "time": "0.505",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_real_http_failure_cleans_owned_temp[redirect_private]",
+      "time": "0.503",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_real_http_failure_cleans_owned_temp[redirect_path]",
+      "time": "0.503",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_real_http_failure_cleans_owned_temp[redirect_loop]",
+      "time": "0.508",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_real_http_failure_cleans_owned_temp[large]",
+      "time": "0.503",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_real_http_failure_cleans_owned_temp[overflow]",
+      "time": "0.503",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_real_http_failure_cleans_owned_temp[slow]",
+      "time": "1.004",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_existing_w00_rights_engine_reused_and_revocation_reloaded",
+      "time": "0.024",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_pinned_connection_preserves_original_tls_host",
+      "time": "0.002",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_actual_slow_drip_headers_obey_absolute_deadline",
+      "time": "0.482",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_missing_rights_never_connect[None]",
+      "time": "0.502",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_missing_rights_never_connect[False]",
+      "time": "0.501",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_missing_rights_never_connect[approval2]",
+      "time": "0.501",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_missing_rights_never_connect[approval3]",
+      "time": "0.502",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_rights_revoked_after_actual_bytes_not_published",
+      "time": "0.503",
+      "status": "passed"
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_download",
+      "name": "test_collision_never_removes_preexisting_complete",
+      "time": "0.503",
+      "status": "passed"
+    }
+  ],
+  "junit_sha256": "e532ed227896acd91e98c3d86479965316717de0fa395d9c756cd4fd533f5315",
+  "recorded_at": "2026-10-30T11:46:29.828754+00:00",
+  "environment": {
+    "python": "3.12.14",
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+    "rasterio": "1.4.4",
+    "gdal": "3.10.3",
+    "fiona": "1.10.1",
+    "openpyxl": "3.1.5",
+    "pypdf": "6.14.2",
+    "python_docx": "1.2.0"
+  },
+  "command": "python -m pytest -q tests/test_agriculture_ingestion_parser.py tests/test_agriculture_ingestion_limits.py tests/test_agriculture_ingestion_download.py",
+  "cwd": "services/agri-gis/backend",
+  "source_sha256": {
+    "contracts/agriculture/source-rights.py": "117c28096e5d29e2831b5ad8590f6cd43017c92a2a57599f851e3feef17481c7",
+    "contracts/agriculture/source-rights.schema.json": "543452243e26b328a996038dbfbd6024fae10a36bec144c7a755be57293c257d",
+    "deploy/agriculture/Dockerfile.parser": "48448f728cff02e9c32ed38b267c51f04b68fa342d4763d58bbc1bf9a877f14a",
+    "deploy/agriculture/sources.json": "aae6b4e006489a1724a5fcefae8ed55e7ae83ffebe3d3951a73f6d78aff27fc8",
+    "docs/agriculture/INGESTION_SECURITY.md": "e4d34c61523c327903da3d6c98b08d23611caca6064d55614070276beea3e00c",
+    "scripts/agriculture/export-python-lock.py": "479108ab50874cb42c5e18798293f7595a511879d02d26e921193d2ee3a487e6",
+    "scripts/agriculture/parser-docker-ci.sh": "9300e3785f28b5aa71461f82c2c9dea3aa36ae9dc8b933ede256977e0b886c30",
+    "scripts/agriculture/python-test-requirements.txt": "c546aca9e8293cbfce086a58ea722c6c70a4665a7034732a2f287806d9dcbdce",
+    "services/agri-gis/backend/app/agriculture/ingestion/__init__.py": "d01c018733658b4ad68b33339d255db9d6d2d898cc53460aaa16c890c9551b26",
+    "services/agri-gis/backend/app/agriculture/ingestion/archive.py": "50b85959d2a00b0f640749b32591a2cad93d761df8108fa241990835072f970b",
+    "services/agri-gis/backend/app/agriculture/ingestion/download.py": "1e5c07846738b54d0bd148de8ad4133f3f93a8bdb4a873050b9b7c16ee8b2cb8",
+    "services/agri-gis/backend/app/agriculture/ingestion/limits.py": "5eab552bbff53366d8de5fec7e56f6b8b65ee5ef3f9f7bf95cbda55568585713",
+    "services/agri-gis/backend/app/agriculture/ingestion/runner.py": "31a0c1c1e9f7b41eb4ff65c3be71bcad2194509aac47656ecf94c551a1a8582b",
+    "services/agri-gis/backend/app/agriculture/ingestion/source_policy.py": "0ae55b1e2cd30661bac0f87e4ece2d5768bccbdd1f78d076c09db26c786f3871",
+    "services/agri-gis/backend/app/agriculture/ingestion/worker.py": "3a0347ed4e834ae1b7b94b74ba02658446bc3a562fd2efc94ebd7f97b622f6e7",
+    "services/agri-gis/backend/app/core/dataset_files.py": "3fe167db8e87d0ff86aa302233344c61b6a557d1864a23d6b8054534a25e6f4d",
+    "services/agri-gis/backend/app/core/exceptions.py": "330c76adf9043d9ff877586abc010c39804bb83f09317b75f29901fa52b8fe8e",
+    "services/agri-gis/backend/app/schemas/field_verification.py": "1f5cee35ce513085013c29bd89354a87061dbd6d623fcacf5d868f65a8a9795b",
+    "services/agri-gis/backend/app/services/field_workbook_parser.py": "06f0554111d8fdf074af90ebc4798a35c9712c15aa300d095838b11d327a16b6",
+    "services/agri-gis/backend/poetry.lock": "e5e287271ef6c5fb56185dfcd07f12eedae144a908ec1483ab877696259a26df",
+    "services/agri-gis/backend/pyproject.toml": "25ba43f87576814128bffd8b19f1a1f5cf9a673a6da9aa1a01ed6d1837b7abd2",
+    "services/agri-gis/backend/tests/ingestion_limit_probe.py": "38dffa9af0240cb3a4ce5f005973665d3a57de4f88c0c0107781f6dfe169670b",
+    "services/agri-gis/backend/tests/test_agriculture_ingestion_docker.py": "6d63706664ea7ba85293da582bca69c90962af9a768d74fea63fbdadb485a601",
+    "services/agri-gis/backend/tests/test_agriculture_ingestion_download.py": "31ce42f8cc0e619963232872dcca4076472460c9ad6ac90ea4587136e767950f",
+    "services/agri-gis/backend/tests/test_agriculture_ingestion_limits.py": "03e9b1a7ca2e5aa219c0e1059cd366353a3e12a3f1977a5827ffa09a9ac4df77",
+    "services/agri-gis/backend/tests/test_agriculture_ingestion_parser.py": "fbfa1e6adf64b1dbb1a695295fdbcaa2c3af45e3851104bb12d0985ee02e78d0"
+  },
+  "scope": {
+    "actual_parser_children": true,
+    "actual_rlimit_enforcement": true,
+    "actual_owned_http_fixture_bytes": true,
+    "real_external_collection": false,
+    "public_upload_routes_enabled": false,
+    "kernel_sandbox_proven": false,
+    "docker_tests_status": "not_run",
+    "task_complete": false
+  },
+  "historical_test_setup_failures": [
+    "New rights reuse test initially read deployment wrapper at wrong sources key; corrected to actual requested_uses/registry structure.",
+    "New TLS contract test initially contained misplaced elapsed-time assertion; moved assertion back to the HTTP deadline case."
+  ],
+  "pending": [
+    "Actual Docker adapter three required tests in supported read-only CI.",
+    "Independent code review is separate from this component result."
+  ]
+}

@@ -1305,8 +1305,10 @@
         "测试私网IP、重定向到内网、异常CRS和损坏栅格",
         "检查进程超限退出后的临时文件与任务状态"
       ],
-      "blockers": [],
-      "status": "in_progress"
+      "blockers": [
+        "生产Docker解析适配器三项真实隔离/超时清理验证未运行：本地无Docker daemon；普通远程CI发布等待原单次清单上传审批实际结果。代码和77项本地组件证据已冻结，不能代替容器验收。"
+      ],
+      "status": "blocked_external"
     },
     {
       "id": "DT-024",

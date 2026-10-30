@@ -58,7 +58,7 @@ func issueServiceAssertion(keys *ServiceKeyring, capability string, scope Owners
 	if err != nil {
 		return "", nil, err
 	}
-	now = now.Truncate(time.Second)
+	now = now.UTC().Truncate(time.Second)
 	expires := now.Add(30 * time.Second)
 	claims := serviceAssertion{SchemaVersion: "1.0", Issuer: issuer, Audience: audience, Subject: issuer, Capability: capability, TenantID: scope.TenantID, WorkspaceID: scope.WorkspaceID, IssuedAt: now.Format("2006-01-02T15:04:05Z"), ExpiresAt: expires.Format("2006-01-02T15:04:05Z"), JTI: flow.NewID("jti_"), TraceID: flow.NewID("trace_"), RequestID: flow.NewID("req_"), Request: request}
 	token, err := keys.sign(serviceAssertionType, claims, now, expires)

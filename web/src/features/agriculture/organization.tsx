@@ -5,6 +5,7 @@ import { agricultureAPI, assignableAgricultureRoles, canChangeAgricultureMemberR
 import { useUserStore } from "@/stores/use-user-store";
 import { OrganizationController, type OrganizationState } from "./organization-controller";
 import { ConfirmationScope } from './confirmation-scope';
+import { acceptDisplayedAuthority, currentProjectionGeneration, registerRoutineParticipant, useRoutineChecking } from './routine-session';
 
 const labels: Record<string, string> = { viewer: "只读客户", analyst: "GIS分析员", editor: "地块编辑员", field_operator: "巡查员", reviewer: "审核员", farm_manager: "农场经理", tenant_admin: "租户管理员", billing_admin: "财务管理员" };
 const roleLabel = (role: string) => labels[role] ?? `未识别角色（${role}）`;
@@ -25,6 +26,7 @@ function MemberRow({ member, disabled, change }: { member: AgricultureMember; di
 
 export default function OrganizationPage() {
     const userId = useUserStore(state => state.user?.id);
+    const checking = useRoutineChecking();
     const [params] = useSearchParams();
     const preferred = params.get("workspace_id") ?? "";
     const { modal } = App.useApp();
@@ -37,16 +39,23 @@ export default function OrganizationPage() {
     const [role, setRole] = useState<string>();
     useEffect(() => {
         const current = new OrganizationController();
+        const generation = currentProjectionGeneration();
+        current.onAuthorityProjection = workspaces => acceptDisplayedAuthority(userId, workspaces, generation);
         current.onChange = setState; setController(current); setState(current.state);
         setToken(""); setName(""); setEmail(""); setRole(undefined);
         void current.refresh(preferred);
+        const unregister = registerRoutineParticipant(async signal => {
+            if (await current.reconcileMembers(signal)) confirmations.current.clear();
+        });
         return () => {
+            unregister();
             current.dispose();
             confirmations.current.clear();
         };
     }, [userId, preferred]);
     const selected = state?.workspaces.find(w => w.id === state.selectedId);
-    const disabled = !controller || !state || state.loading || state.busy;
+    const disabled = checking || !controller || !state || state.loading || state.busy;
+    useEffect(() => { if (checking) confirmations.current.clear(); }, [checking]);
     const confirm = (title: string, detail: string, action: () => Promise<unknown>) => {
         let forget = () => {};
         const handle = modal.confirm({ title, content: detail, okText: "确认执行", cancelText: "取消", okButtonProps: { ...{ "data-testid": "org-confirm" } }, cancelButtonProps: { ...{ "data-testid": "org-cancel" } }, onOk: action, afterClose: () => { forget(); } });
@@ -61,7 +70,7 @@ export default function OrganizationPage() {
         const id = selected.id;
         confirm("修改成员角色？", `${selected.tenantName} / ${selected.name}：${member.name || member.userId}；${member.roles.map(roleLabel).join("、") || "无业务角色"} → ${roles.map(roleLabel).join("、") || "撤销全部业务角色"}。${member.isOwner ? "只调整自己的业务角色，不改变所有者身份或组织治理权。" : "治理角色会影响组织成员管理；"}农业内容仍需独立资源授权。`, () => controller.changeRoles(id, member.userId, roles));
     };
-    return <main className="agri-profile" data-testid="organization-management">
+    return <main className="agri-profile" data-testid="organization-management" data-authority-checking={checking}>
         <header><h1>组织与成员</h1><Link to="/">返回平台工作区</Link></header>
         <p>使用当前平台账号。这里只管理组织关系与角色，不授予未经验证的农场内容访问权。</p>
         {state?.error && <Alert type="error" role="alert" title="操作未完成" description={state.error} action={<Button disabled={state.busy} onClick={() => void controller?.refresh()}>重新读取权限</Button>} />}

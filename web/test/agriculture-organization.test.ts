@@ -1,14 +1,73 @@
 import { describe, expect, test } from "bun:test";
 import { OrganizationController } from "../src/features/agriculture/organization-controller";
 import { agricultureAPI, assignableAgricultureRoles, type AgricultureWorkspace, type AgricultureMembers } from "../src/services/api/agriculture";
+import { acquireBusinessActivity, setRoutineChecking, waitForBusinessIdle } from '../src/features/agriculture/routine-session';
 
-const workspace = (id: string): AgricultureWorkspace => ({ id, tenantId: `tenant-${id}`, name: id, slug: "default", tenantName: id, tenantStatus: "active", roles: ["tenant_admin"], canManageMembers: true, canManageOrganization: false });
+const workspace = (id: string): AgricultureWorkspace => ({ id, tenantId: `tenant-${id}`, name: id, slug: "default", tenantName: id, tenantStatus: "active", roles: ["tenant_admin"], canManageMembers: true, canManageOrganization: false, authorityFingerprint: 'a'.repeat(64) });
 const members = (id: string): AgricultureMembers => ({ members: [{ userId: id, name: id, roles: ["viewer"], status: "active", isOwner: false, canChangeRoles: true, assignableRoles: ["viewer", "analyst"] }], assignableRoles: ["viewer", "analyst"] });
 function deferred<T>() { let resolve!: (value: T) => void; let reject!: (reason: unknown) => void; const promise = new Promise<T>((a, b) => { resolve = a; reject = b; }); return { promise, resolve, reject }; }
 function api(overrides: Partial<typeof agricultureAPI> = {}): typeof agricultureAPI {
     return { ...agricultureAPI, workspaces: async () => [workspace("a"), workspace("b")], members: async id => members(id), ...overrides };
 }
 describe("agriculture organization controller", () => {
+    test('routine idle waits through mutation and authoritative refresh, then preserves its one-time receipt', async () => {
+        const invitation = deferred<{ invite: { id: string; email: string; role: string; expiresAt: string }; token: string }>();
+        const c = new OrganizationController(api({ invite: () => invitation.promise }));
+        await c.refresh('a');
+        const write = c.invite('test@example.invalid', 'viewer');
+        let idle = false;
+        const signal = new AbortController();
+        const wait = waitForBusinessIdle(signal.signal).then(() => { idle = true; });
+        try {
+            await Promise.resolve(); expect(idle).toBe(false);
+            expect(acquireBusinessActivity()).toBeNull();
+            invitation.resolve({ invite: { id: 'i', email: 'test@example.invalid', role: 'viewer', expiresAt: 'future' }, token: 'receipt' });
+            await write; await wait;
+            expect(idle).toBe(true); expect(c.state.invitation?.token).toBe('receipt');
+        } finally { setRoutineChecking(false); }
+        const refresh = deferred<AgricultureWorkspace[]>(), entered = deferred<void>();
+        let reads = 0;
+        const d = new OrganizationController(api({ workspaces: () => ++reads === 1 ? Promise.resolve([workspace('a')]) : (entered.resolve(), refresh.promise), create: async () => ({ tenant: { id: 't', name: 'A', status: 'active' }, workspace: workspace('a') }) }));
+        await d.refresh('a'); const creation = d.create('A'); await entered.promise;
+        idle = false;
+        const next = waitForBusinessIdle(signal.signal).then(() => { idle = true; });
+        try {
+            await Promise.resolve(); expect(idle).toBe(false);
+            refresh.resolve([workspace('a')]); await creation; await next;
+            expect(d.state.loading).toBe(false); expect(d.state.busy).toBe(false); expect(idle).toBe(true);
+        } finally { setRoutineChecking(false); }
+    });
+    test('routine member reconciliation preserves invite receipt and unchanged row identity', async () => {
+        let changed = false;
+        const c = new OrganizationController(api({ members: async id => ({ ...members(id), members: [...members(id).members, { ...members('other').members[0], name: changed ? 'New name' : 'Old name' }] }), invite: async () => ({ invite: { id: 'invite', email: 'test@example.invalid', role: 'viewer', expiresAt: 'future' }, token: 'one-time-fixture' }) }));
+        await c.refresh('a'); await c.invite('test@example.invalid', 'viewer');
+        const own = c.state.members!.members[0], receipt = c.state.invitation;
+        expect(await c.reconcileMembers(new AbortController().signal)).toBe(false);
+        expect(c.state.invitation).toBe(receipt);
+        expect(c.state.members!.members[0]).toBe(own);
+        changed = true;
+        expect(await c.reconcileMembers(new AbortController().signal)).toBe(true);
+        expect(c.state.members!.members[0]).toBe(own);
+        expect(c.state.members!.members[1].name).toBe('New name');
+        expect(c.state.invitation).toBe(receipt);
+    });
+    test('routine check does not cancel an in-flight one-time invite and late reconciliation cannot revive disposed data', async () => {
+        const receipt = deferred<{ invite: { id: string; email: string; role: string; expiresAt: string }; token: string }>();
+        const c = new OrganizationController(api({ invite: () => receipt.promise }));
+        await c.refresh('a');
+        const pending = c.invite('test@example.invalid', 'viewer');
+        expect(await c.reconcileMembers(new AbortController().signal)).toBe(false);
+        receipt.resolve({ invite: { id: 'i', email: 'test@example.invalid', role: 'viewer', expiresAt: 'future' }, token: 'receipt' });
+        await pending; expect(c.state.invitation?.token).toBe('receipt');
+        const delayed = deferred<AgricultureMembers>();
+        const slowApi = api({ members: () => delayed.promise });
+        // Separate controller obtains its initial data before the deferred routine read.
+        let calls = 0;
+        const e = new OrganizationController(api({ members: id => ++calls === 1 ? Promise.resolve(members(id)) : slowApi.members(id) }));
+        await e.refresh('a'); const stale = e.reconcileMembers(new AbortController().signal);
+        e.dispose(); delayed.resolve(members('other')); await stale;
+        expect(e.state.members).toBeNull();
+    });
     test("owner business roles use authoritative row options and permit explicit empty revocation", async () => {
         const changes: unknown[] = [];
         const owner: AgricultureMembers = { ...members("owner"), members: [{ ...members("owner").members[0], isOwner: true, roles: [], assignableRoles: ["viewer", "analyst"] }] };

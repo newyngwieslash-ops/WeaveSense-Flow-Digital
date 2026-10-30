@@ -6,6 +6,46 @@ import { applyUserSession, beginSessionRevalidation } from '../src/features/agri
 import { appQueryClient } from '../src/lib/query-client';
 import { useUserStore } from '../src/stores/use-user-store';
 import { ConfirmationScope } from '../src/features/agriculture/confirmation-scope';
+import { authoritySnapshot } from '../../contracts/agriculture/authority-snapshot';
+import { acceptDisplayedAuthority, clearDisplayedAuthority, currentProjectionGeneration, displayedAuthority, setRoutineChecking } from '../src/features/agriculture/routine-session';
+
+test('authority snapshots reject missing/duplicate digests and ignore unrelated audit metadata', () => {
+    const actor = { id: 'a', role: 'user', status: 'active' };
+    const row = { id: 'w', authorityFingerprint: 'a'.repeat(64) };
+    const baseline = authoritySnapshot(actor, [row]);
+    expect(authoritySnapshot({ ...actor, displayName: 'new label' } as typeof actor, [{ ...row, auditEpoch: 19 } as typeof row])).toBe(baseline);
+    expect(authoritySnapshot(actor, [{ ...row, authorityFingerprint: 'b'.repeat(64) }])).not.toBe(baseline);
+    expect(() => authoritySnapshot(actor, [row, row])).toThrow();
+    expect(() => authoritySnapshot(actor, [{ ...row, authorityFingerprint: '' }])).toThrow();
+});
+
+test('late old actor projection cannot replace the current displayed authority after hard invalidation', async () => {
+    clearDisplayedAuthority();
+    const old = currentProjectionGeneration();
+    let release!: () => void;
+    const pending = new Promise<void>(resolve => { release = resolve; });
+    const oldRequest = pending.then(() => acceptDisplayedAuthority('a', [], old));
+    clearDisplayedAuthority();
+    acceptDisplayedAuthority('b', [], currentProjectionGeneration());
+    release(); await oldRequest;
+    expect(displayedAuthority()?.actorId).toBe('b');
+    clearDisplayedAuthority();
+});
+
+test('routine comparison disables new writes without aborting an already dispatched mutation', async () => {
+    let release!: () => void, writes = 0;
+    const pending = new Promise<void>(resolve => { release = resolve; });
+    const client = axios.create({ baseURL: '/api', adapter: async config => { writes++; await pending; return { config, status: 200, statusText: 'OK', headers: {}, data: {} }; } });
+    const uninstall = installAgricultureRequestSecurity(client, (async () => Response.json({ code: 0, data: { token: 'a'.repeat(64) } })) as typeof fetch);
+    try {
+        const oldWrite = client.post('/agriculture/workspaces/w/invites', {});
+        while (!writes) await Promise.resolve();
+        setRoutineChecking(true);
+        await expect(client.post('/agriculture/workspaces/w/invites', {})).rejects.toThrow();
+        expect(writes).toBe(1);
+        release(); await oldWrite;
+    } finally { setRoutineChecking(false); uninstall(); }
+});
 
 test('page confirmation scope clears repeated dialogs, preserves canceled and unrelated dialogs', () => {
     const own = new ConfirmationScope(), unrelated = new ConfirmationScope();

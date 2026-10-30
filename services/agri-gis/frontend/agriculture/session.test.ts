@@ -3,8 +3,81 @@ import { SessionController, loginURL, selectedWorkspace, workspaceURL } from './
 import { bindSessionLifecycle } from './session-lifecycle'
 
 const user = { id: 'user-a', username: 'farmer', displayName: 'Test Farmer', role: 'user', status: 'active' }
-const workspace = { id: 'workspace-a', tenantId: 'server-only-tenant', slug: 'farm', name: 'Farm workspace', tenantName: 'Farm organization', tenantStatus: 'active', roles: ['viewer'], canManageMembers: false, canManageOrganization: false }
+const workspace = { id: 'workspace-a', tenantId: 'server-only-tenant', slug: 'farm', name: 'Farm workspace', tenantName: 'Farm organization', tenantStatus: 'active', roles: ['viewer'], canManageMembers: false, canManageOrganization: false, authorityFingerprint: 'a'.repeat(64) }
 const response = (data: unknown, status = 200) => Response.json({ code: 0, data }, { status })
+
+test('scheduled 30 second routine uses continuity refresh instead of hard lifecycle reset', async () => {
+  const controller = new SessionController(async path => response(path.endsWith('/session') ? { user } : [workspace]))
+  let tick!: () => void, delay: number | undefined
+  let ready!: () => void
+  const initial = new Promise<void>(resolve => { ready = resolve })
+  controller.onChange = state => { if (state.status === 'ready') ready() }
+  const clock = { setInterval: ((callback: () => void, interval: number) => { tick = callback; delay = interval; return 1 }) as unknown as typeof setInterval, clearInterval: (() => {}) as typeof clearInterval }
+  const unbind = bindSessionLifecycle(controller, new EventTarget(), new EventTarget(), () => 'visible', () => '', () => '/agri/', () => '', () => () => {}, clock)
+  await initial
+  const original = controller.state.workspaces
+  const finished = new Promise<void>(resolve => { controller.onChange = state => { if (state.status === 'ready' && state.checking === false) resolve() } })
+  expect(delay).toBe(30000)
+  tick(); expect(controller.state.checking).toBe(true); expect(controller.state.workspaces).toBe(original)
+  await finished
+  expect(controller.state.workspaces).toBe(original)
+  unbind()
+})
+
+test('routine trusted refresh retains Vue projection identities; changed fingerprint clears before reacceptance', async () => {
+  let fingerprint = workspace.authorityFingerprint
+  const controller = new SessionController(async path => response(path.endsWith('/session') ? { user } : [{ ...workspace, authorityFingerprint: fingerprint }]))
+  await controller.refresh('?workspace_id=workspace-a')
+  const original = controller.state.selected, states: string[] = []
+  controller.onChange = state => { states.push(state.status) }
+  await controller.refresh('?workspace_id=workspace-a', '/agri/', '', true)
+  expect(controller.state.selected).toBe(original)
+  expect(states).toEqual(['ready', 'ready'])
+  fingerprint = 'b'.repeat(64)
+  await controller.refresh('?workspace_id=workspace-a', '/agri/', '', true)
+  expect(states).toContain('loading')
+  expect(controller.state.selected).not.toBe(original)
+  expect(controller.state.selected?.authorityFingerprint).toBe(fingerprint)
+  controller.dispose()
+})
+
+test('routine late response cannot restore projection after hard hint invalidation', async () => {
+  let resolve!: (response: Response) => void, slow = false
+  const pending = new Promise<Response>(done => { resolve = done })
+  const controller = new SessionController(async path => slow ? pending : response(path.endsWith('/session') ? { user } : [workspace]))
+  await controller.refresh()
+  slow = true
+  const check = controller.refresh('', '/agri/', '', true)
+  expect(controller.state.checking).toBe(true)
+  controller.invalidate(); resolve(response({ user })); await check
+  expect(controller.state.status).toBe('loading')
+  expect(controller.state.user).toBeNull()
+})
+
+test('routine malformed or expired authority never preserves protected Vue context', async () => {
+  for (const reply of [response([{ ...workspace, authorityFingerprint: undefined }]), response(null, 401)]) {
+    const { controller } = client([response({ user }), response([workspace]), response({ user }), reply])
+    await controller.refresh(); await controller.refresh('', '/agri/', '', true)
+    expect(controller.state.user).toBeNull()
+    expect(controller.state.workspaces).toEqual([])
+    controller.dispose()
+  }
+})
+
+test('real routine deadline erases context even when a deferred transport ignores cancellation', async () => {
+  let resolve!: (response: Response) => void, slow = false
+  const pending = new Promise<Response>(done => { resolve = done })
+  const controller = new SessionController(async path => slow ? pending : response(path.endsWith('/session') ? { user } : [workspace]))
+  await controller.refresh(); slow = true
+  const expired = new Promise<void>(done => { controller.onChange = state => { if (state.error?.code === 'TIMEOUT') done() } })
+  const check = controller.refresh('', '/agri/', '', true)
+  await expired
+  expect(controller.state.user).toBeNull()
+  resolve(response({ user })); await check
+  expect(controller.state.error?.code).toBe('TIMEOUT')
+  controller.dispose()
+}, 25000)
+
 function client(responses: (Response | Error)[]) {
   const requests: { path: string; init: RequestInit }[] = []
   const controller = new SessionController(async (path, init) => {
@@ -22,7 +95,7 @@ describe('platform cookie session boundary', () => {
     const { controller, requests } = client([response({ user }), response([workspace])])
     await controller.refresh('?workspace_id=workspace-a')
     expect(controller.state.status).toBe('ready')
-    expect(controller.state.selected).toEqual({ id: 'workspace-a', slug: 'farm', name: 'Farm workspace' })
+    expect(controller.state.selected).toEqual({ id: 'workspace-a', slug: 'farm', name: 'Farm workspace', authorityFingerprint: 'a'.repeat(64) })
     expect(requests.map((item) => item.path)).toEqual(['/api/auth/session', '/api/agriculture/workspaces'])
     for (const item of requests) {
       expect(item.init.credentials).toBe('same-origin')

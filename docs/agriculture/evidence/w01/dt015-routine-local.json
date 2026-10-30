@@ -1,0 +1,47 @@
+{
+  "scope": "DT015 routine revalidation continuity, frontend local only",
+  "result": "pass",
+  "tests": {
+    "command": "bun test web/test/agriculture-{api,organization,profile,session-security}.test.ts web/test/auth-{session-race,return-path}.test.ts services/agri-gis/frontend/agriculture/session.test.ts",
+    "exit_code": 0,
+    "passed": 91,
+    "failed": 0,
+    "assertions": 413,
+    "includes_real_deadline_seconds": 20
+  },
+  "builds": [
+    {
+      "directory": "web",
+      "command": "bun run build:agriculture",
+      "exit_code": 0
+    },
+    {
+      "directory": "services/agri-gis/frontend",
+      "command": "bun run build:agriculture",
+      "exit_code": 0
+    }
+  ],
+  "source_hashes": {
+    "contracts/agriculture/authority-snapshot.ts": "1aeb97c893940938c06626ea8d2593d1cb5ca19e57101233112913e52cc83300",
+    "web/src/features/agriculture/routine-session.ts": "adf0a8fcc8ec83103af093f3b8624e4f26f418a82ad8e35f54225f0c2c97fb7e",
+    "web/src/features/agriculture/main.tsx": "2c957578080b9daf2970c2b587d62a41ee140ecbb2c590f0fd8d439c6df3df4c",
+    "web/src/features/agriculture/organization-controller.ts": "406041ae3b3bdea41ef5c6abfd00a0d330e8abfb6d91f224d945ecd926bf74b4",
+    "web/src/features/agriculture/organization.tsx": "ebb946d8b94056ad5a3b6a7e47232d484f3bf9de6ed47088a5a360ec322ad1c8",
+    "web/src/features/agriculture/request-security.ts": "2845496005fb9fb2d38aae5425978d5a5f3767b56a7ab93ccc92727a32e4b6ab",
+    "web/src/services/api/agriculture.ts": "c688d908935f1ce1f903f9b69653fb4a74d072708b9cb11da46ea482596c21d3",
+    "web/test/agriculture-api.test.ts": "72d54af4ca7ece00b26fea5104253fc11757b8166569eb4eb8be1b19dab556ca",
+    "web/test/agriculture-organization.test.ts": "23267cbfd2ef1f9375bc6fb639e6c62aa9e9c1a06ec6025cb5b424fbeed13780",
+    "web/test/agriculture-session-security.test.ts": "ce1cf01fcd75125d6dda705c7c803022a74798bb52e831fb7acd6b6a3a3c5237",
+    "services/agri-gis/frontend/agriculture/App.vue": "975b5a31ff401f91017454ba070c7f8c8b911a9b945b4d9897eba493e6449d82",
+    "services/agri-gis/frontend/agriculture/session.ts": "a6f669fca546f247ca30a701a8147c11c949c966a16c4092aaf65c7bac45d032",
+    "services/agri-gis/frontend/agriculture/session-lifecycle.ts": "49f45ac6ae9b4676ff19a770c9fb45f78e81bdf46881d311e9ad7fb4fa10d5ae",
+    "services/agri-gis/frontend/agriculture/session.test.ts": "e0380394400c9e50c7f477e86e25f0e91146d8cd0edddb94962e4d1f8bc69e44",
+    "docs/agriculture/SESSION_REVALIDATION.md": "01aeff3bbbec77b9180fe44810bd21719ec59c3e7dcae26e0eac6a86e4e8557e"
+  },
+  "browser": "not_run_for_this_source",
+  "limitations": [
+    "Authority fingerprint is platform input continuity only, not GIS ownership proof or authorization",
+    "Actual same-document 35-second form/token retention and revocation require new CI browser run",
+    "Periodic cadence is best effort under browser suspension"
+  ]
+}

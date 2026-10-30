@@ -71,12 +71,34 @@ def test_postgres_worker_factory_admission_without_business_privileges():
                   SELECT 1 FROM pg_catalog.pg_class c
                   JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
                   WHERE n.nspname='public' AND c.relkind IN ('r','p')
+                  AND c.relname NOT IN
+                    ('agriculture_job_authorities','agriculture_job_authority_checks')
                   AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_depend d
                     WHERE d.classid='pg_catalog.pg_class'::regclass
                     AND d.objid=c.oid AND d.deptype='e'
                     AND d.refclassid='pg_catalog.pg_extension'::regclass)
                   AND has_table_privilege(current_user,c.oid,
                     'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'))""")
+                for table, insert in (
+                    ("agriculture_job_authorities", False),
+                    ("agriculture_job_authority_checks", True),
+                ):
+                    assert await connection.fetchval(
+                        "SELECT has_table_privilege(current_user,$1,'SELECT')",
+                        "public." + table,
+                    )
+                    assert (
+                        await connection.fetchval(
+                            "SELECT has_table_privilege(current_user,$1,'INSERT')",
+                            "public." + table,
+                        )
+                        is insert
+                    )
+                    assert not await connection.fetchval(
+                        "SELECT has_table_privilege(current_user,$1,"
+                        "'UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')",
+                        "public." + table,
+                    )
         finally:
             await pool.close()
 
@@ -109,9 +131,7 @@ def test_postgres_runtime_scope_pool_reuse_and_rollback():
 
                 for item in items:
                     expected = [item["plot_code"]]
-                    async with runtime.session(
-                        item["proof"]()
-                    ) as db:
+                    async with runtime.session(item["proof"]()) as db:
                         actual_pid = (
                             await db.execute(select(func.pg_backend_pid()))
                         ).scalar_one()
@@ -143,9 +163,7 @@ def test_postgres_runtime_scope_pool_reuse_and_rollback():
 
                 item = items[0]
                 with pytest.raises(RuntimeError, match="test_failure"):
-                    async with runtime.session(
-                        item["proof"]()
-                    ) as db:
+                    async with runtime.session(item["proof"]()) as db:
                         assert (
                             await db.execute(select(table.c.plot_code))
                         ).scalars().all() == [item["plot_code"]]

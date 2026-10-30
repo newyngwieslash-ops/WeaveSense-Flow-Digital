@@ -226,12 +226,14 @@ func (g *GISClient) readObject(ctx context.Context, s Service, actor string, dec
 
 func (a API) registerObjectGateway(api gin.IRouter) {
 	g := api.Group("/agri/v1/workspaces/:workspace_id/objects")
-	g.Use(a.sessionMiddleware(respond))
-	handler := func(c *gin.Context) {
+	g.Use(func(c *gin.Context) {
 		c.Header("Cache-Control", "private, no-store")
 		c.Header("Vary", "Cookie")
 		c.Header("X-Content-Type-Options", "nosniff")
 		c.Header("Content-Security-Policy", "default-src 'none'; sandbox")
+		c.Next()
+	}, a.sessionMiddleware(respond))
+	handler := func(c *gin.Context) {
 		if c.Request.URL.RawQuery != "" || c.Request.URL.ForceQuery || c.Request.URL.RawPath != "" || c.Request.ContentLength > 0 || len(c.Request.TransferEncoding) != 0 || len(c.Request.Header.Values("Range")) > 1 || len(c.Request.Header.Values("If-Range")) != 0 {
 			respond(c, nil, ErrInvalid)
 			return

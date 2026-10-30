@@ -230,6 +230,9 @@ def test_pinned_connection_preserves_original_tls_host(monkeypatch):
     calls = []
 
     class Socket:
+        def settimeout(self, value):
+            assert 0 < value <= 2
+
         def close(self):
             calls.append("closed")
 
@@ -320,3 +323,20 @@ def test_collision_never_removes_preexisting_complete(monkeypatch, transport, tm
     files = list(tmp_path.iterdir())
     assert len(files) == 1 and files[0].suffix == ".complete"
     assert files[0].read_bytes() == b"preexisting-do-not-delete"
+
+
+def test_delayed_final_rights_never_publishes_after_deadline(transport, tmp_path):
+    count = 0
+
+    def rights(*args):
+        nonlocal count
+        count += 1
+        if count == 2:
+            time.sleep(1.05)
+        return {"allowed": True}
+
+    with pytest.raises(IngestionDenied, match="source_timeout"):
+        SafeDownloader([source()], rights, transport=transport, seconds=1).download(
+            "fixture", "artifact", tmp_path
+        )
+    assert not list(tmp_path.iterdir())

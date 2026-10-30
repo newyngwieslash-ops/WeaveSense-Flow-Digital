@@ -180,16 +180,30 @@ class PinnedHTTPSConnection(http.client.HTTPSConnection):
             host, 443, timeout=timeout, context=ssl.create_default_context()
         )
         self.address = address
+        self.deadline = time.monotonic() + timeout
 
     def connect(self):
         # Connect only to the already checked numeric address: no second DNS
         # resolution. Certificate and SNI still use the original approved host.
         sock = socket.create_connection((self.address, 443), self.timeout)
         try:
+            remaining = self.deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError("connection deadline")
+            sock.settimeout(remaining)
             self.sock = self._context.wrap_socket(sock, server_hostname=self.host)
         except BaseException:
             sock.close()
             raise
+
+    def send(self, data):
+        if self.sock is None:
+            self.connect()
+        remaining = self.deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError("request deadline")
+        self.sock.settimeout(remaining)
+        super().send(data)
 
 
 class DeadlineReader(io.RawIOBase):
@@ -394,6 +408,8 @@ class SafeDownloader:
                         raise IngestionDenied("source_body_incomplete")
                     # Recheck rights/approval before publishing a completed file.
                     rights = self.check_rights(source.source_id)
+                    if time.monotonic() >= deadline:
+                        raise IngestionDenied("source_timeout")
                     if datetime.now(UTC) >= source.expires_at:
                         raise IngestionDenied("source_approval_expired")
                     completed = str(temporary).removesuffix(".part") + ".complete"

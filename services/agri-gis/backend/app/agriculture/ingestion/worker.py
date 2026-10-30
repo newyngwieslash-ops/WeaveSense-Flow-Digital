@@ -1,6 +1,7 @@
 """Fixed subprocess entrypoint; only bounded summaries leave the process."""
 
 import json
+import math
 import os
 import resource
 import sys
@@ -38,6 +39,10 @@ def vector_summary(path, limits):
             raise IngestionDenied("geometry_depth_limit")
         if isinstance(value, list | tuple):
             if value and isinstance(value[0], int | float):
+                if any(
+                    type(v) not in {int, float} or not math.isfinite(v) for v in value
+                ):
+                    raise IngestionDenied("invalid_geometry_coordinate")
                 coordinates += 1
             else:
                 for child in value:
@@ -116,16 +121,25 @@ def inspect(path, operation, asset_type, filename, limits):
                                 min(256, source.height - y),
                             )
                         )
-    if asset_type == "vector":
+    geometry_format = suffix in {".geojson", ".gpkg"}
+    if suffix == ".json":
+        document = json.loads(path.read_bytes())
+        geometry_format = isinstance(document, dict) and document.get("type") in {
+            "FeatureCollection",
+            "Feature",
+            "Point",
+            "MultiPoint",
+            "LineString",
+            "MultiLineString",
+            "Polygon",
+            "MultiPolygon",
+            "GeometryCollection",
+        }
+    # Format/content, not a caller-selected business label, determines whether
+    # geometry limits apply (control/uav/weather can also carry GeoJSON).
+    if asset_type == "vector" or geometry_format:
         metadata.update(vector_summary(path, limits))
-    if operation == "field_workbook":
-        if suffix != ".xlsx":
-            raise IngestionDenied("invalid_workbook_format")
-        from app.services.field_workbook_parser import FieldVerificationWorkbookParser
-
-        rows = FieldVerificationWorkbookParser().parse(filename, path.read_bytes())
-        metadata["validated_record_count"] = len(rows)
-    elif suffix == ".docx":
+    if suffix == ".docx":
         from docx import Document
 
         document = Document(path)
@@ -176,6 +190,13 @@ def inspect(path, operation, asset_type, filename, limits):
         if any(key in catalog for key in ("/OpenAction", "/AA", "/Names")):
             raise IngestionDenied("active_document_content_denied")
         metadata["page_count"] = len(reader.pages)
+    if operation == "field_workbook":
+        if suffix != ".xlsx":
+            raise IngestionDenied("invalid_workbook_format")
+        from app.services.field_workbook_parser import FieldVerificationWorkbookParser
+
+        rows = FieldVerificationWorkbookParser().parse(filename, path.read_bytes())
+        metadata["validated_record_count"] = len(rows)
     result = inspect_dataset_file(
         path, asset_type, filename, None, limits.expanded_bytes
     )

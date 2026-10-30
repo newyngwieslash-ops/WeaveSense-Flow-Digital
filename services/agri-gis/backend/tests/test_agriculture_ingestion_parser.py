@@ -152,6 +152,20 @@ def test_existing_field_workbook_parser_runs_in_child(tmp_path):
     assert result["inspection"]["metadata"]["validated_record_count"] == 1
 
 
+@pytest.mark.parametrize("limits", [{"features": 1}, {"coordinates": 1}])
+def test_business_workbook_parser_cannot_bypass_structural_limits(tmp_path, limits):
+    from app.services.field_workbook_parser import FieldVerificationWorkbookParser
+
+    with pytest.raises(IngestionDenied, match="document_items_limit"):
+        inspect(
+            parser(tmp_path, **limits),
+            FieldVerificationWorkbookParser.build_template(),
+            "input.xlsx",
+            "table",
+            operation="field_workbook",
+        )
+
+
 def test_real_docx_and_pdf_readers(tmp_path):
     from docx import Document
     from pypdf import PdfWriter
@@ -214,6 +228,43 @@ def test_arbitrary_stream_not_read_before_resource_supervision(tmp_path):
         parser(tmp_path).inspect_stream(
             UntrustedReader(), asset_type="table", filename="x.csv"
         )
+
+
+@pytest.mark.parametrize(
+    "filename,asset_type",
+    [
+        ("input.geojson", "control"),
+        ("input.json", "control"),
+        ("input.json", "weather"),
+        ("input.json", "management"),
+    ],
+)
+def test_geometry_limits_cannot_be_bypassed_by_business_label(
+    tmp_path, filename, asset_type
+):
+    raw = json.dumps(
+        {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {"type": "Point", "coordinates": [120, 40]},
+                },
+                {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {"type": "Point", "coordinates": [121, 41]},
+                },
+            ],
+        }
+    ).encode()
+    with pytest.raises(IngestionDenied, match="vector_features_limit"):
+        inspect(parser(tmp_path, features=1), raw, filename, asset_type)
+    with pytest.raises(IngestionDenied, match="geometry_coordinates_limit"):
+        inspect(parser(tmp_path, coordinates=1), raw, filename, asset_type)
+    result = inspect(parser(tmp_path), raw, filename, asset_type)
+    assert result["inspection"]["metadata"]["feature_count"] == 2
 
 
 def test_parent_secret_environment_not_forwarded(tmp_path, monkeypatch):

@@ -77,5 +77,32 @@ DT013 使用明确的租户／工作区→旧项目、稳定平台主体→旧�
 影响 DT013、DT014/016/017、AG-FR-002/004/006/054 和 AG-NFR-001；不删改需求。
 回退关闭适配入口并保留绑定与审计，禁止恢复客户端身份信任或降低 RLS。
 
+## ADR-029：农业浏览器来源与会话绑定防伪（2026-10-30）
+
+DT015 承接 DT014 已验证的同域入口。原平台 CORS 接受 forwarded-host、通配符和
+本地回退，Cookie Secure 依赖代理头；这些旧行为保留在未启用农业的影视 profile。
+农业启用时必须提供规范外部 origin、私有共享 CSRF key-file；仅明确开发开关允许
+literal-loopback HTTP，不根据浏览器头推导部署权威。缺配置拒绝启动。
+
+遵循 DATA_API_CONTRACTS §1.5：采用唯一精确 Origin 加会话 Cookie 域分离 hash token，
+而非仅 SameSite/Origin。匿名登录使用有服务端过期验证的随机 preauth nonce + HMAC；
+不是第二套账号/登录系统。所有平台副本挂载同一用途隔离的 32-byte key，以支持非粘性
+负载均衡及重启；不复用 Flow/Loom JWT、GIS Ed25519 或设置加密 key。
+key 轮换仅拒绝旧匿名 nonce，不自行撤销数据库会话。key 不由前端、LLM 或请求提供。
+
+范围涵盖共享认证写、农业写及其他携会话 Cookie 的 API 写；内部服务签名回调不因此
+获得绕过授权。独立审计发现 LinuxDO 全局 state+PKCE 没有发起浏览器绑定；农业 profile
+暂闭 start 和两个 callback alias、隐藏 provider advertisement，返回明确 503，不消费
+state 或设置会话。原影视 OAuth 不变；农业重新启用需正确浏览器绑定与渠道验收。
+拒绝重复 Origin/token/会话 Cookie 歧义。
+前端每次写前 fresh token、不重放失败写。认证/成员撤销以后续持久事实检查生效；
+已签服务票据仍可能在 30 秒签名期内，不能宣称退出取消所有已开始工作。
+
+影响 DT015、AG-FR-002/004、AG-NFR-001/002；无数据库迁移。新增部署 key-file 配置是
+已授权内部工程配置，不代表生产秘密已配置或外部付费授权。测试包括真实 HTTP、共享
+key 双实例、持久会话重新打开、CSRF/来源负例、PG 降权与浏览器多标签；各自证据独立。
+完整合同和回滚约束见 docs/agriculture/BROWSER_SECURITY.md。回滚应关闭农业入口而非
+恢复农业 wildcard/无 CSRF 运行，不改原需求或将未运行验收标为通过。
+
 标题、日期、背景与证据、当前约束、候选方案、选择及理由、对FR/NFR/任务/API/数据迁移的影响、风险、验证计划、回滚方式、需要的外部授权。涉及范围/费用/对外行为的重大变更先给出具体可复核方案，再请求必要决策；普通实现细节在已授权范围内自主推进。
 

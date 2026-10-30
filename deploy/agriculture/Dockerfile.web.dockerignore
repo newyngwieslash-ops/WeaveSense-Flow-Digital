@@ -4,6 +4,7 @@
 !contracts/
 !contracts/agriculture/
 !contracts/agriculture/navigation.ts
+!contracts/agriculture/session-hints.ts
 !services/
 !services/agri-gis/
 !services/agri-gis/frontend/

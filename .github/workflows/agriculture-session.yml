@@ -57,7 +57,7 @@ jobs:
         run: |
           set -euo pipefail
           bun install --frozen-lockfile
-          bun test test/agriculture-profile.test.ts test/auth-return-path.test.ts test/auth-session-race.test.ts
+          bun test test/agriculture-profile.test.ts test/auth-return-path.test.ts test/auth-session-race.test.ts test/agriculture-session-security.test.ts
           bun run build:agriculture
       - name: Build and test actual Vue production profile
         working-directory: product/services/agri-gis/frontend

@@ -1,0 +1,64 @@
+{
+  "scope": "DT015 local backend and fixture transport verification; not browser/PG/production acceptance",
+  "base_commit": "52fad40ad019029453d5938b3311116372eacf22",
+  "uncommitted_changes_included": true,
+  "source_sha256": {
+    "backend/cmd/server/main.go": "69a203aa3e8a7ad614fe7b472b032e38af7304b53a660775195e869c5ecc4e30",
+    "backend/internal/agriculture/routes.go": "efd7696a983e4b79857e415e94314f7679fc84f63121b98c464ad97cd7fe050a",
+    "backend/internal/handler/auth.go": "7abc3f42e131bf3a2a38462a39c3ad746bec89051ea74bbc82ca75efad6133b3",
+    "backend/internal/browsersecurity/policy.go": "2239d7cf23feae6f9052e5884c6107882a377969e897d5aec4d7b782800e6580",
+    "backend/internal/browsersecurity/middleware.go": "db46217f90e01e4e25757233d1bc1e0dc84bf955b7462c7af7d41be7485d82b7",
+    "backend/internal/browsersecurity/policy_test.go": "601680ffc7c6e88b0d5fc5bd9bef1f1c0ee88005cb5a787e8924b9f58ad3b179",
+    "backend/internal/handler/agriculture_browser_security_test.go": "80a7edffeb5b9af4d6d8a8d23f9303f3e7affd315f615a001a3f0649cb06b9dd",
+    "scripts/agriculture/csrf-fixture.mjs": "c0c6ff17f89c4b2d7bff45c3c50b78cdf1e4b44e3a96c6e051b6f2b2efd9ef7c",
+    "scripts/agriculture/csrf-fixture.test.mjs": "7d509b3bdde147ae024d4941fd376875e7b7c9c177c152d62d22ffb788e2f9aa",
+    "docker-compose.agriculture.yml": "616a0a6e2da643de14b00b937d10bdf2a7efc4b4ced0506c7141fa47151f5179"
+  },
+  "results": [
+    {
+      "command": "go test ./internal/browsersecurity ./internal/handler ./cmd/server ./internal/auth ./internal/agriculture",
+      "exit_code": 0,
+      "result": "final OAuth-closed source: five packages pass; handler 21.926s; conditional PostgreSQL integrations without DSNs not counted as executed",
+      "log": ".local/evidence/dt015-go-oauth-final.log"
+    },
+    {
+      "command": "go test ./internal/flow",
+      "exit_code": 0,
+      "result": "pass 56.421s; conditional PostgreSQL tests not live acceptance"
+    },
+    {
+      "command": "node --test scripts/agriculture/session-e2e.test.mjs scripts/agriculture/gateway-browser-e2e.test.mjs scripts/agriculture/csrf-fixture.test.mjs",
+      "exit_code": 0,
+      "result": "18 passed, 0 skipped"
+    },
+    {
+      "command": "python3 scripts/agriculture/session-ci-prepare.test.py",
+      "exit_code": 0,
+      "result": "6 passed"
+    },
+    {
+      "command": "pytest tests/agriculture/test_gateway_configuration.py tests/agriculture/test_gateway_ci.py tests/agriculture/test_compose_policy.py",
+      "exit_code": 0,
+      "result": "12 passed"
+    },
+    {
+      "command": "go test ./internal/handler -run ^TestAgriculture -count=1",
+      "exit_code": 0,
+      "result": "pass 2.588s; real HTTP LinuxDO agriculture-only disabled aliases, no session cookie/state consumption; legacy advertisement retained"
+    }
+  ],
+  "logs_sha256": {
+    ".local/evidence/dt015-go-final-candidate.log": "ee0731b503cbcad6d92738c5ac94d6a8dd9c6cc977cbb57c207e6745e93e6f61",
+    ".local/evidence/dt015-legacy-flow.log": "018d6d64d1f23277cb6a807ea155f44bc6865ab6dad11a837b916d97b3465cf1",
+    ".local/evidence/dt015-helper-tests.log": "3eb9aa41d390959650a527abbb22bac022a187887c56eb1c74882631aca7a1df",
+    ".local/evidence/dt015-oauth-fix-final.log": "72dac5e6c6710546019a78eddb382fe87a4223a46bf142a66adf1f6095c339e7",
+    ".local/evidence/dt015-go-oauth-final.log": "a389e7e24e2df4bc7625b116c90a6df7ef26040899bc823e666f6befbc0275cc"
+  },
+  "limitations": [
+    "No local DT015 browser run",
+    "No local PostgreSQL run by this author",
+    "No Docker or production deployment",
+    "Shared key files are ephemeral local fixtures only; no production credentials configured"
+  ],
+  "binary_sha256": "6a887246d4f532da099fa82014f7a320f48ee9197401508c5901e513ed7a8df8"
+}

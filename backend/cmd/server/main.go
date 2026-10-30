@@ -16,6 +16,7 @@ import (
 	"syscall"
 	"time"
 	"yingce/backend/internal/agriculture"
+	"yingce/backend/internal/browsersecurity"
 	"yingce/backend/internal/edumath"
 	"yingce/backend/internal/flow"
 	"yingce/backend/internal/model"
@@ -44,6 +45,9 @@ func main() {
 }
 
 func run(ctx context.Context) error {
+	if _, err := browsersecurity.FromEnv(); err != nil {
+		return err
+	}
 	dataDir := env("CANVAS_BACKEND_DATA_DIR", "data")
 	if err := os.MkdirAll(dataDir, 0o755); err != nil {
 		return err
@@ -288,6 +292,11 @@ type corsPolicy struct {
 }
 
 func cors() (gin.HandlerFunc, error) {
+	if policy, err := browsersecurity.FromEnv(); err != nil {
+		return nil, err
+	} else if policy != nil {
+		return policy.Middleware(), nil
+	}
 	policy, err := parseCORSPolicy(os.Getenv("CANVAS_CORS_ORIGINS"))
 	if err != nil {
 		return nil, err

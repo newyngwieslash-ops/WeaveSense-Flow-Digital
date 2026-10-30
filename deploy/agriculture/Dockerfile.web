@@ -7,6 +7,7 @@ COPY web/package.json web/bun.lock ./
 RUN bun install --frozen-lockfile --ignore-scripts
 COPY web ./
 COPY contracts/agriculture/navigation.ts /app/contracts/agriculture/navigation.ts
+COPY contracts/agriculture/session-hints.ts /app/contracts/agriculture/session-hints.ts
 COPY docs/agriculture/profile/licenses /app/docs/agriculture/profile/licenses
 RUN bun run build:agriculture
 WORKDIR /app/services/agri-gis/frontend

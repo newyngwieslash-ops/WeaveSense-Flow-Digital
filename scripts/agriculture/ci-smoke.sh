@@ -21,6 +21,8 @@ for name in POSTGRES_PASSWORD PLATFORM_MIGRATION_PASSWORD PLATFORM_RUNTIME_PASSW
 done
 unset value
 export AGRI_HTTP_PORT=0
+export FLOW_AGRICULTURE_EXTERNAL_ORIGIN=http://127.0.0.1:8091
+export FLOW_AGRICULTURE_ALLOW_HTTP_LOOPBACK_DEV=true
 project="agri-ci-$(python3 -c 'import secrets; print(secrets.token_hex(12))')"
 compose=(docker compose --env-file /dev/null -p "$project" -f docker-compose.agriculture.yml --profile core)
 if [[ $mode == migrations ]]; then compose+=(--profile platform --profile knowledge); fi
@@ -34,9 +36,13 @@ cleanup() {
     echo "ERROR: cleanup failed for owned project $project" >&2
     [[ $code != 0 ]] || code=1
   fi
+  if [[ -n ${csrf_dir:-} ]]; then rm -f -- "$csrf_dir/csrf.key"; rmdir -- "$csrf_dir"; fi
   exit "$code"
 }
 trap cleanup EXIT
+csrf_dir=$(mktemp -d)
+export FLOW_AGRICULTURE_CSRF_KEY_FILE="$csrf_dir/csrf.key"
+python3 -c 'import os,secrets; p=os.environ["FLOW_AGRICULTURE_CSRF_KEY_FILE"]; fd=os.open(p,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600); os.write(fd,secrets.token_bytes(32)); os.close(fd)'
 echo "W00 smoke mode=$mode project=$project (fresh ephemeral demo databases)"
 "${compose[@]}" up -d --build --wait --wait-timeout 180 postgres redis geo-readiness
 

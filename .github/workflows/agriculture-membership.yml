@@ -99,7 +99,7 @@ jobs:
           set -euo pipefail
           mkdir -p .local/bin
           go -C backend build -o "$PWD/.local/bin/agriculture-platform" ./cmd/server
-          (cd web && bun install --frozen-lockfile && bun test test/agriculture-api.test.ts test/agriculture-organization.test.ts test/agriculture-profile.test.ts test/auth-return-path.test.ts test/auth-session-race.test.ts && bun run build:agriculture)
+          (cd web && bun install --frozen-lockfile && bun test test/agriculture-api.test.ts test/agriculture-organization.test.ts test/agriculture-profile.test.ts test/auth-return-path.test.ts test/auth-session-race.test.ts test/agriculture-session-security.test.ts && bun run build:agriculture)
           (cd services/agri-gis/frontend && npm ci --ignore-scripts --no-audit --no-fund && bun run test:agriculture && npm run build:agriculture)
       - name: Actual dual-account Chromium organization lifecycle
         working-directory: product

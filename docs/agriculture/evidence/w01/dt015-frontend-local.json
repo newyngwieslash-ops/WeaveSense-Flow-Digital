@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.0",
+  "task": "DT-015",
+  "scope": "local frontend and test-helper verification only",
+  "date": "2026-10-30",
+  "source_hashes": {
+    "contracts/agriculture/session-hints.ts": "2dd27d69f80b347a49189420d20fba73692abdea90e7f4ea2214716a05287e9c",
+    "web/src/features/agriculture/request-security.ts": "12b8e89e93078cb52b4c30bcfc4ef2e310bdff38d541b66d537a85e21b163093",
+    "web/src/features/agriculture/confirmation-scope.ts": "6a1b06744aa1bc349faae8b9c2e55f3f0d948c6a951af7a0e23719fad92e2818",
+    "web/src/features/agriculture/main.tsx": "d6e777de7982e1cdd3973cb654420308c871605252a9f51bc9e0cf1aef2d24a6",
+    "web/src/features/agriculture/session.ts": "b9a509133d8f85fbfd6e03637caf2c9f8fca79def8bc86c71ee4fd77e19ecb77",
+    "web/src/features/agriculture/organization.tsx": "0d8c10165a695c031df5a66604d6d420678efa4f01f2ca794721d7255aa29d74",
+    "web/test/agriculture-session-security.test.ts": "53ddb93ee3e8e283b9a81a2a29e76e5559fc5693f721b9dd6c367943dcfac780",
+    "services/agri-gis/frontend/agriculture/session.ts": "9ed4c998b7fb33ac152b9a9022398ab261dbfdf2d45d79a184fa604bfcc5e5f2",
+    "services/agri-gis/frontend/agriculture/session-lifecycle.ts": "166aa3b5abf36ac9d70e4e727b19c7c758bf3f0b8873b96fd440584b31ad015e",
+    "services/agri-gis/frontend/agriculture/session.test.ts": "e4bf814a665beb6ca1a7543b6075773a58a2b5e89fdd7a3c24cbd92e3d5edf8c",
+    "scripts/agriculture/gateway-browser-e2e.mjs": "cfc8f21b26caf751e8e930abb5e746d6c3515bebee00b19e62280104eb621b1f",
+    "scripts/agriculture/organization-e2e.mjs": "b9075dfe28446dc76ae87a86cc3c3b3f23a17789e2b90a634ac8454f2f392161",
+    "docs/agriculture/SESSION_REVALIDATION.md": "d30f84ea005ff3f721abb2fbcceed8ca03feb4507633925c318450f84a220897"
+  },
+  "commands": [
+    {
+      "command": "bun test web/test/agriculture-session-security.test.ts web/test/agriculture-organization.test.ts web/test/agriculture-profile.test.ts web/test/auth-session-race.test.ts web/test/auth-return-path.test.ts services/agri-gis/frontend/agriculture/session.test.ts services/agri-gis/frontend/agriculture/legacy-identity.test.ts",
+      "exit_code": 0,
+      "result": "passed",
+      "tests": 80,
+      "assertions": 378
+    },
+    {
+      "command": "cd web && bun run build:agriculture",
+      "exit_code": 0,
+      "result": "passed",
+      "includes": [
+        "TypeScript",
+        "production Vite",
+        "artifact drawing-runtime exclusion"
+      ],
+      "warnings": [
+        "existing large-chunk and mixed import warnings"
+      ]
+    },
+    {
+      "command": "cd services/agri-gis/frontend && bun run build:agriculture",
+      "exit_code": 0,
+      "result": "passed",
+      "includes": [
+        "vue-tsc",
+        "production Vite"
+      ]
+    },
+    {
+      "command": "node --test scripts/agriculture/gateway-browser-e2e.test.mjs scripts/agriculture/session-e2e.test.mjs scripts/agriculture/organization-e2e.test.mjs scripts/agriculture/csrf-fixture.test.mjs",
+      "exit_code": 0,
+      "result": "passed",
+      "tests": 26,
+      "skipped": 0
+    }
+  ],
+  "actual_browser_for_this_change": "not_run",
+  "limitations": [
+    "DT014 historical browser pass does not certify DT015 changes",
+    "Cross-origin forged Origin negative is a real HTTP fixture, not a browser ability to forge Origin",
+    "30 second visible-page refresh is not a hard real-time bound under suspension/throttling",
+    "No PostgreSQL RLS or live farm acceptance inferred",
+    "No production deployment or external email"
+  ]
+}

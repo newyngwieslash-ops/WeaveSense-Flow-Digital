@@ -1,5 +1,6 @@
 // Display-only projection of the platform cookie session. Never an authority for GIS.
 import { AgricultureNavigationError, agricultureRoute, agricultureWorkspaceURL } from '../../../../contracts/agriculture/navigation'
+import { publishSessionHint } from '../../../../contracts/agriculture/session-hints'
 export type User = { id: string; username: string; displayName: string; role: 'admin' | 'user'; status: 'active' }
 export type Workspace = { id: string; name: string; slug: string }
 export type State = {
@@ -31,9 +32,15 @@ export function loginURL(search: string, pathname = '/agri/', hash = ''): string
 }
 
 async function request(fetcher: Fetcher, path: string, signal: AbortSignal, method = 'GET'): Promise<unknown> {
+  let token: string | undefined
+  if (method === 'POST') {
+    const csrf = await request(fetcher, '/api/auth/csrf', signal)
+    if (!record(csrf) || typeof csrf.token !== 'string' || !/^[a-f0-9]{64}$/.test(csrf.token)) throw invalid()
+    token = csrf.token
+  }
   const response = await fetcher(path, {
     method, credentials: 'same-origin', cache: 'no-store', redirect: 'error', signal,
-    headers: method === 'POST' ? { Accept: 'application/json', 'Content-Type': 'application/json' } : { Accept: 'application/json' },
+    headers: method === 'POST' ? { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-Token': token! } : { Accept: 'application/json' },
     ...(method === 'POST' ? { body: '{}' } : {}),
   })
   if (response.status === 401) throw new SessionError('AUTH_EXPIRED', '登录已失效，请重新登录。')
@@ -128,8 +135,10 @@ export class SessionController {
     } catch (error) {
       if (generation === this.generation) this.failure(error, true)
     } finally {
+      publishSessionHint()
       if (generation === this.generation) clearTimeout(this.deadline)
     }
   }
-  dispose() { ++this.generation; this.active?.abort(); clearTimeout(this.deadline); this.publish(empty('loading')) }
+  invalidate() { ++this.generation; this.active?.abort(); clearTimeout(this.deadline); this.publish(empty('loading')) }
+  dispose() { this.invalidate() }
 }

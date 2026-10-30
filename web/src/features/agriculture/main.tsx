@@ -22,6 +22,11 @@ import { appQueryClient } from "@/lib/query-client";
 import { getAntThemeConfig } from "@/lib/app-theme";
 import { applyUserSession, beginSessionRevalidation } from "./session";
 import OrganizationPage from "./organization";
+import { apiClient } from '@/services/api/request';
+import { installAgricultureRequestSecurity } from './request-security';
+import { SESSION_RECHECK_MS, subscribeSessionHints } from '../../../../contracts/agriculture/session-hints';
+
+installAgricultureRequestSecurity(apiClient);
 
 function SessionBoundary({ children }: { children: ReactNode }) {
     const [error, setError] = useState(false);
@@ -29,17 +34,24 @@ function SessionBoundary({ children }: { children: ReactNode }) {
     const hydrated = useUserStore((state) => state.hydrated);
     useEffect(() => {
         const revalidate = () => {
+            invalidateAuthSessionCache();
             beginSessionRevalidation();
             setError(false);
             setAttempt((value) => value + 1);
         };
-        const visible = () => { if (document.visibilityState === "visible") revalidate(); };
+        const visible = () => { revalidate(); };
+        const unsubscribe = subscribeSessionHints(revalidate);
+        const timer = window.setInterval(() => { if (document.visibilityState === 'visible') revalidate(); }, SESSION_RECHECK_MS);
         window.addEventListener("focus", revalidate);
         window.addEventListener("pageshow", revalidate);
+        window.addEventListener("popstate", revalidate);
         document.addEventListener("visibilitychange", visible);
         return () => {
+            unsubscribe();
+            window.clearInterval(timer);
             window.removeEventListener("focus", revalidate);
             window.removeEventListener("pageshow", revalidate);
+            window.removeEventListener("popstate", revalidate);
             document.removeEventListener("visibilitychange", visible);
         };
     }, []);
@@ -47,6 +59,7 @@ function SessionBoundary({ children }: { children: ReactNode }) {
         let active = true;
         beginSessionRevalidation();
         invalidateAuthSessionCache();
+        if (document.visibilityState === 'hidden') return;
         getAuthSession().then((session) => { if (active) void applyUserSession(session); }).catch((error: unknown) => {
             if (!active) return;
             // A concurrent login/logout invalidates old requests. Recheck the new

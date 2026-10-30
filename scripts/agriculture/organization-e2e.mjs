@@ -2,6 +2,7 @@
 // Real two-account governance UI. No API mocks or external delivery.
 import { spawn, spawnSync } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
+import { csrfFetch, sessionCookieFrom } from "./csrf-fixture.mjs";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createServer as createPortServer } from "node:net";
 import { tmpdir } from "node:os";
@@ -180,16 +181,19 @@ async function main() {
         const apiPort = await freePort();
         proxy = await startProxy({ apiPort, reactRoot, vueRoot });
         const origin = "http://127.0.0.1:" + proxy.address().port;
+        const csrfKey = join(temp, 'csrf.key');
+        writeFileSync(csrfKey, randomBytes(32), { mode: 0o600 });
         const backend = spawn(binary, [], { cwd: join(ROOT, "backend"), env: {
             PATH: process.env.PATH, HOME: temp, GIN_MODE: "release", CANVAS_DATABASE_DRIVER: "sqlite", CANVAS_BACKEND_DATA_DIR: temp,
             CANVAS_BACKEND_ADDR: "127.0.0.1:" + apiPort, CANVAS_AUTO_MIGRATE: "true", CANVAS_CORS_ORIGINS: origin,
             FLOW_AGRICULTURE_ENABLED: "true", FLOW_AGRICULTURE_ALLOW_SQLITE_DEV: "true",
+            FLOW_AGRICULTURE_EXTERNAL_ORIGIN: origin, FLOW_AGRICULTURE_ALLOW_HTTP_LOOPBACK_DEV: "true", FLOW_AGRICULTURE_CSRF_KEY_FILE: csrfKey,
         }, stdio: "ignore" }); processes.push(backend);
         await ready(origin + "/api/auth/settings", backend);
         const api = async (path, cookie, method = "GET", body) => {
-            const response = await fetch(origin + "/api" + path, { method, headers: { "content-type": "application/json", Origin: origin, ...(cookie ? { Cookie: COOKIE + "=" + cookie } : {}) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+            const response = await csrfFetch(origin + "/api" + path, { method, headers: { "content-type": "application/json", Origin: origin, ...(cookie ? { Cookie: COOKIE + "=" + cookie } : {}) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
             let payload; try { payload = await response.json(); } catch { payload = null; }
-            return { status: response.status, data: payload?.data, code: payload?.code, cookie: response.headers.get("set-cookie")?.split(";")[0].split("=").slice(1).join("=") };
+            return { status: response.status, data: payload?.data, code: payload?.code, cookie: sessionCookieFrom(response) };
         };
         const suffix = randomBytes(6).toString("hex"), password = randomBytes(24).toString("base64url");
         const accountA = "owner_" + suffix, accountB = "member_" + suffix, email = "member_" + suffix + "@fixture.invalid";
@@ -318,6 +322,13 @@ async function main() {
         report.stage = "role_promotion_server_effect";
         await eventual(async () => (await api(memberPath, cookieB)).status === 200, "role_promotion_effective");
         check((await api(memberPath, cookieB)).status === 200, "real_ui_promotion_grants_governance");
+        await openOrg(b, orgA.id);
+        await b.poll("!!document.querySelector('[data-testid=org-invite-create]')", "member has current governance editor");
+        await b.fill(selector("org-invite-email"), email, "unsubmitted privileged invitation draft");
+        check(await b.evaluate("!!document.querySelector('[data-testid=org-invite-email]')?.value"), "privileged_draft_prepared_before_demotion");
+        await click(b, row + selector("org-member-status"));
+        await b.poll("!!document.querySelector('[data-testid=org-confirm]')", "pending privileged confirmation");
+        check(true, "privileged_confirmation_prepared_without_submission");
         report.stage = "role_demotion_reload";
         await openOrg(a, orgA.id);
         report.stage = "role_demotion_expand"; await openSelect(a, memberRoleSelector);
@@ -329,6 +340,22 @@ async function main() {
         report.stage = "role_demotion_server_effect";
         await eventual(async () => (await api(memberPath, cookieB)).status === 403, "role_demotion_effective");
         check((await api(memberPath, cookieB)).status === 403, "old_cookie_loses_governance_after_ui_demotion");
+        // Submit the captured former privileged operation from the same browser
+        // session without reloading its page. Fresh CSRF must not restore roles.
+        const staleWrite = await b.evaluate(`(async () => {
+            const csrf = await fetch('/api/auth/csrf', { credentials: 'same-origin', cache: 'no-store' });
+            const token = (await csrf.json()).data?.token;
+            if (!csrf.ok || !/^[a-f0-9]{64}$/.test(token || '')) return { csrf: false };
+            const response = await fetch(${JSON.stringify('/api/agriculture/workspaces/' + orgA.id + '/invites')}, {
+                method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': token },
+                body: JSON.stringify({ email: ${JSON.stringify(email)}, role: 'viewer' }) });
+            const body = await response.json(); return { csrf: true, status: response.status, reason: body.reason };
+        })()`, "old privileged request after demotion");
+        check(staleWrite.csrf === true && staleWrite.status === 403 && staleWrite.reason === 'forbidden', "downgraded_same_session_old_privileged_write_rejected_not_csrf_failure");
+        await b.send("Page.bringToFront");
+        await b.poll("!!document.querySelector('[data-testid=organization-management]') && !document.querySelector('[data-testid=org-create-name]')?.disabled && !document.querySelector('[data-testid=org-invite-create]')", "same user demotion revalidates and removes old controls");
+        check(await b.evaluate("!document.querySelector('[data-testid=org-invite-email]')"), "same_user_demotion_clears_unsubmitted_privileged_draft");
+        check(await b.evaluate("!document.querySelector('[data-testid=org-confirm]')"), "session_revalidation_destroys_privileged_confirmation_portal");
         const deniedScope = async label => {
             check((await api(memberPath, cookieB)).status === 404, label + "_old_cookie_http_404");
             check(!(await list(cookieB)).some(x => x.id === orgA.id), label + "_workspace_absent");

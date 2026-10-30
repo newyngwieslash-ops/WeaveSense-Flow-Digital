@@ -7,6 +7,7 @@ import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { connect, freePort, ready, stop } from './session-e2e.mjs';
+import { csrfFetch } from './csrf-fixture.mjs';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const digest = path => createHash('sha256').update(readFileSync(path)).digest('hex');
 
@@ -61,9 +62,9 @@ export function requestLeaksInternalCredential(request, origin) {
     return /(?:private_seed|private_key|weavesense-agri-(?:service|delegation)\+jws)/i.test(request.url + '\n' + JSON.stringify(headers) + '\n' + (request.postData || ''));
 }
 
-async function watchRequests(port, origin) {
+async function watchRequests(port, origin, targetId) {
     const targets = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
-    const socket = new WebSocket(targets.find(t => t.type === 'page').webSocketDebuggerUrl);
+    const socket = new WebSocket(targets.find(t => t.type === 'page' && (!targetId || t.id === targetId)).webSocketDebuggerUrl);
     await new Promise((ok, no) => { socket.addEventListener('open', ok, { once: true }); socket.addEventListener('error', no, { once: true }); });
     let violations = 0, observed = 0;
     const workspaceRequests = [], pendingWorkspaces = new Map();
@@ -99,7 +100,7 @@ async function watchRequests(port, origin) {
 
 export async function main() {
     const report = { schema_version: '1.0', result: 'not_run', stage: 'preflight', command: 'node scripts/agriculture/gateway-browser-e2e.mjs', results: [], limitations: ['Local SQLite fixture is not PostgreSQL RLS or live farm acceptance', 'No external email, provider, payment or deployment', 'Browser sandbox remains enabled; unsupported environment fails, never substitutes a mocked browser'] };
-    let temp, backend, nginx, browser, cdp, observer;
+    let temp, backend, nginx, browser, cdp, observer, other, otherObserver;
     const check = (condition, name) => { if (!condition) throw new Error(`assertion failed: ${name}`); report.results.push({ name, result: 'pass' }); };
     try {
         if (process.getuid?.() === 0) throw new Error('non-root fixture execution required');
@@ -129,20 +130,26 @@ export async function main() {
         const apiPort = await freePort(), port = await freePort(), chromePort = await freePort();
         const origin = `http://127.0.0.1:${port}`;
         const config = join(temp, 'nginx.conf');
+        const csrfKey = join(temp, 'csrf.key');
+        writeFileSync(csrfKey, randomBytes(32), { mode: 0o600 });
         writeFileSync(config, renderGateway(readFileSync(template, 'utf8'), { directory: temp, port, apiPort, mimeTypes }));
         check(spawnSync(nginxBin, ['-t', '-p', temp + '/', '-c', config], { stdio: 'ignore' }).status === 0, 'production_nginx_configuration_valid');
         report.stage = 'real_platform_startup';
-        backend = spawn(binary, [], { cwd: join(ROOT, 'backend'), env: { PATH: process.env.PATH, HOME: temp, GIN_MODE: 'release', CANVAS_DATABASE_DRIVER: 'sqlite', CANVAS_BACKEND_DATA_DIR: join(temp, 'backend'), CANVAS_BACKEND_ADDR: `127.0.0.1:${apiPort}`, CANVAS_AUTO_MIGRATE: 'true', CANVAS_CORS_ORIGINS: origin, FLOW_AGRICULTURE_ENABLED: 'true', FLOW_AGRICULTURE_ALLOW_SQLITE_DEV: 'true' }, stdio: 'ignore' });
+        backend = spawn(binary, [], { cwd: join(ROOT, 'backend'), env: { PATH: process.env.PATH, HOME: temp, GIN_MODE: 'release', CANVAS_DATABASE_DRIVER: 'sqlite', CANVAS_BACKEND_DATA_DIR: join(temp, 'backend'), CANVAS_BACKEND_ADDR: `127.0.0.1:${apiPort}`, CANVAS_AUTO_MIGRATE: 'true', CANVAS_CORS_ORIGINS: origin, FLOW_AGRICULTURE_ENABLED: 'true', FLOW_AGRICULTURE_ALLOW_SQLITE_DEV: 'true', FLOW_AGRICULTURE_EXTERNAL_ORIGIN: origin, FLOW_AGRICULTURE_ALLOW_HTTP_LOOPBACK_DEV: 'true', FLOW_AGRICULTURE_CSRF_KEY_FILE: csrfKey }, stdio: 'ignore' });
         nginx = spawn(nginxBin, ['-p', temp + '/', '-c', config, '-g', 'daemon off;'], { stdio: 'ignore' });
         await ready(`${origin}/api/auth/settings`, backend);
         check((await fetch(origin + '/api/agriculture/workspaces')).status === 401, 'anonymous_api_denied');
         const username = 'gateway_' + randomBytes(6).toString('hex'), password = randomBytes(24).toString('base64url');
-        const registration = await fetch(origin + '/api/auth/register', { method: 'POST', headers: { 'content-type': 'application/json', Origin: origin }, body: JSON.stringify({ username, password, displayName: 'Local Gateway Fixture', acceptedTerms: true }) });
+        const registration = await csrfFetch(origin + '/api/auth/register', { method: 'POST', headers: { 'content-type': 'application/json', Origin: origin }, body: JSON.stringify({ username, password, displayName: 'Local Gateway Fixture', acceptedTerms: true }) });
         const cookie = registration.headers.getSetCookie().find(value => value.startsWith('open_ai_canvas_session='))?.split(';')[0];
         check(registration.ok && Boolean(cookie), 'reserved_local_fixture_registration');
-        const organization = await fetch(origin + '/api/agriculture/organizations', { method: 'POST', headers: { 'content-type': 'application/json', Origin: origin, Cookie: cookie, 'X-Idempotency-Key': randomBytes(16).toString('hex') }, body: JSON.stringify({ name: 'Local Gateway Fixture Organization' }) });
+        const organization = await csrfFetch(origin + '/api/agriculture/organizations', { method: 'POST', headers: { 'content-type': 'application/json', Origin: origin, Cookie: cookie, 'X-Idempotency-Key': randomBytes(16).toString('hex') }, body: JSON.stringify({ name: 'Local Gateway Fixture Organization' }) });
         const workspace = (await organization.json()).data?.workspace?.id;
         check(organization.ok && typeof workspace === 'string', 'actual_authorized_workspace_created');
+        const noCSRF = await fetch(origin + '/api/auth/logout', { method: 'POST', headers: { Cookie: cookie, Origin: origin } });
+        check(noCSRF.status === 403 && (await noCSRF.json()).reason === 'csrf_invalid', 'same_origin_write_without_csrf_rejected');
+        const crossSite = await csrfFetch(origin + '/api/auth/logout', { method: 'POST', headers: { Cookie: cookie, Origin: 'https://attacker.invalid' } });
+        check(crossSite.status === 403 && (await crossSite.json()).reason === 'origin_denied', 'cross_site_write_with_valid_csrf_rejected');
         report.stage = 'browser_startup';
         browser = spawn(chrome, ['--headless=new', '--disable-background-networking', '--no-first-run', `--remote-debugging-port=${chromePort}`, `--user-data-dir=${join(temp, 'chrome')}`, 'about:blank'], { env: { ...process.env, HOME: temp, XDG_CONFIG_HOME: join(temp, 'config'), XDG_CACHE_HOME: join(temp, 'cache') }, stdio: 'ignore' });
         await ready(`http://127.0.0.1:${chromePort}/json/version`, browser, 30000);
@@ -184,29 +191,48 @@ export async function main() {
         await waitForWorkspaceRevalidation(observer.workspaceRequests, requestsBeforeBack);
         await cdp.poll(selected, 'back revalidates Vue context');
         check(true, 'cross_application_and_back');
+        report.stage = 'multiple_tabs_session_revocation';
+        const target = await cdp.send('Target.createTarget', { url: 'about:blank', newWindow: true });
+        other = await connect(chromePort, origin, target.targetId);
+        otherObserver = await watchRequests(chromePort, origin, target.targetId);
+        await other.navigate(deep);
+        await other.poll(selected, 'second tab authorized server context');
+        await cdp.send('Page.bringToFront');
+        await cdp.poll(selected, 'first tab fresh server context');
         await click('[data-testid=session-logout]', 'logout');
         await cdp.poll("!!document.querySelector('main[data-session-status=anonymous]')", 'confirmed logout');
         check(await cdp.evaluate("!document.querySelector('[data-testid=agri-workspace-context]')"), 'logout_clears_workspace');
+        await other.send('Page.bringToFront');
+        await other.poll("!!document.querySelector('main[data-session-status=anonymous]')", 'other tab observes revoked shared cookie');
+        check(await other.evaluate("!document.querySelector('[data-testid=agri-workspace-context]') && !document.querySelector('[data-testid=session-user]')"), 'other_tab_logout_clears_protected_display');
+        await cdp.send('Page.bringToFront');
+        await cdp.poll("!!document.querySelector('[data-testid=agri-login]')", 'first tab remains anonymous');
         await click('[data-testid=agri-login]', 'relogin');
         await cdp.poll("!!document.querySelector('#login-account')", 'relogin form');
         await login();
         check(true, 'relogin_restores_exact_authorized_context');
+        await other.send('Page.bringToFront');
+        await other.poll(selected, 'other tab rechecks relogged shared session');
+        check(true, 'other_tab_relogin_restores_only_server_confirmed_workspace');
+        await cdp.send('Page.bringToFront');
+        await cdp.poll(selected, 'first tab current session revalidation');
         await cdp.navigate('/agri/workspaces/fixture_forbidden');
         await cdp.poll("!!document.querySelector('[data-route-error=WORKSPACE_FORBIDDEN]')", 'forbidden workspace');
         check(await cdp.evaluate("!document.querySelector('[data-testid=agri-workspace-context]')"), 'foreign_workspace_not_rendered');
         await cdp.navigate('/agri/unknown-route');
         await cdp.poll("!!document.querySelector('[data-route-error=ROUTE_NOT_FOUND]')", 'unknown route');
         check(await cdp.evaluate("!document.querySelector('[data-testid=session-user]')"), 'unknown_route_explicit_404_no_actor');
-        report.network = observer.counts();
+        const firstNetwork = observer.counts(), secondNetwork = otherObserver.counts();
+        report.network = { observed: firstNetwork.observed + secondNetwork.observed, violations: firstNetwork.violations + secondNetwork.violations };
         check(report.network.observed > 0 && report.network.violations === 0, 'no_internal_credential_or_cross_origin_browser_requests');
-        check(cdp.exceptions.length === 0 && cdp.outboundBlocked() === 0, 'no_browser_exceptions_or_outbound_requests');
+        check(cdp.exceptions.length === 0 && cdp.outboundBlocked() === 0 && other.exceptions.length === 0 && other.outboundBlocked() === 0, 'no_browser_exceptions_or_outbound_requests');
         report.result = 'pass'; report.stage = 'complete';
     } catch (error) {
         report.result = ['preflight', 'browser_startup'].includes(report.stage) ? 'not_run' : 'fail';
         report.failure = safeGatewayFailure(error);
         process.exitCode = 1;
     } finally {
-        observer?.close(); cdp?.close();
+        observer?.close(); otherObserver?.close(); cdp?.close(); other?.close();
         await stop(browser); await stop(nginx); await stop(backend);
         if (temp) rmSync(temp, { recursive: true, force: true });
         const output = resolve(process.env.AGRI_GATEWAY_BROWSER_REPORT || join(ROOT, '.local/evidence/gateway-browser-e2e.json'));

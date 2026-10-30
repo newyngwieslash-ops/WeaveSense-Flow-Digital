@@ -38,11 +38,13 @@ type CommandInput struct {
 // operation projection and optional budget reservation, then dispatched idempotently
 // to Loom Engine with bounded retries and reconciliation protection.
 type CommandDispatcher struct {
-	DB      *gorm.DB
-	Engine  EngineCaller
-	Now     func() time.Time
-	Lease   time.Duration
-	Backoff time.Duration
+	Scanner  *BackgroundScanner
+	tenantID string // set only by fixed background tenant discovery
+	DB       *gorm.DB
+	Engine   EngineCaller
+	Now      func() time.Time
+	Lease    time.Duration
+	Backoff  time.Duration
 }
 
 func (d CommandDispatcher) now() time.Time {
@@ -177,11 +179,15 @@ func (d CommandDispatcher) Enqueue(ctx context.Context, in CommandInput) (model.
 	return out, replayed, err
 }
 
+func (d CommandDispatcher) databaseWork(fn func(CommandDispatcher) error) error {
+	return shortTenantWork(d.DB, d.tenantID, func(tx *gorm.DB) error { scoped := d; scoped.DB = tx; scoped.tenantID = ""; return fn(scoped) })
+}
+
 // DispatchOne claims and dispatches one outbox row by ID. If the row is already
 // dispatched or permanently failed, it returns the stored state without re-calling the Engine.
 func (d CommandDispatcher) DispatchOne(ctx context.Context, id string) (model.FlowCommandOutbox, error) {
 	var row model.FlowCommandOutbox
-	if err := d.DB.First(&row, "id = ?", id).Error; err != nil {
+	if err := d.databaseWork(func(d CommandDispatcher) error { return d.DB.First(&row, "id = ?", id).Error }); err != nil {
 		return row, err
 	}
 	if row.Status == "dispatched" || row.Status == "failed" || row.Status == StatusReconciliation {
@@ -192,21 +198,20 @@ func (d CommandDispatcher) DispatchOne(ctx context.Context, id string) (model.Fl
 	}
 	now := d.now()
 	until := now.Add(d.lease())
-	claim := d.DB.Model(&model.FlowCommandOutbox{}).
-		Where("id = ? AND (status IN ? OR (status = 'dispatching' AND lease_until < ?))", id, []string{"pending", StatusRetryWait}, now).
-		Updates(map[string]any{
-			"status":      "dispatching",
-			"lease_until": until,
-			"attempts":    gorm.Expr("attempts + 1"),
-			"updated_at":  now,
-		})
-	if claim.Error != nil {
-		return row, claim.Error
-	}
-	if err := d.DB.First(&row, "id = ?", id).Error; err != nil {
+	var claimed bool
+	err := d.databaseWork(func(d CommandDispatcher) error {
+		claim := d.DB.Model(&model.FlowCommandOutbox{}).Where("id = ? AND (status IN ? OR (status = 'dispatching' AND lease_until < ?))", id, []string{"pending", StatusRetryWait}, now).Updates(map[string]any{"status": "dispatching", "lease_until": until, "attempts": gorm.Expr("attempts + 1"), "updated_at": now})
+		if claim.Error != nil {
+			return claim.Error
+		}
+		claimed = claim.RowsAffected == 1
+		return d.DB.First(&row, "id = ?", id).Error
+	})
+	if err != nil {
 		return row, err
 	}
-	if claim.RowsAffected == 0 && row.Status != "dispatching" {
+	// A losing claimant must not send an already-running request a second time.
+	if !claimed {
 		return row, nil
 	}
 	callCtx := ctx
@@ -219,11 +224,33 @@ func (d CommandDispatcher) DispatchOne(ctx context.Context, id string) (model.Fl
 	}
 	actor := Actor{Type: row.ActorType, ID: row.ActorID}
 	status, body, callErr := d.Engine.Do(callCtx, scope, actor, row.Method, row.Path, row.ForwardIdemHeader, []byte(row.Payload))
+	var finished model.FlowCommandOutbox
+	err = d.databaseWork(func(d CommandDispatcher) error {
+		var err error
+		finished, err = d.finishDispatch(row, status, body, callErr)
+		return err
+	})
+	if err != nil {
+		return finished, err
+	}
+	// A transport failure is reported only after its durable retry/unknown
+	// receipt commits, never used as the database transaction rollback cause.
+	if callErr != nil {
+		return finished, callErr
+	}
+	if status <= 0 || status >= 500 {
+		return finished, errors.New(extractEngineErrorMsg(body, status))
+	}
+	return finished, nil
+}
+
+// finishDispatch performs only database receipt/ledger updates after external I/O.
+func (d CommandDispatcher) finishDispatch(row model.FlowCommandOutbox, status int, body []byte, callErr error) (model.FlowCommandOutbox, error) {
 	finNow := d.now()
 	switch {
 	case callErr == nil && status > 0 && status < 400:
 		engineOpID, jobID, projStatus := parseEngineCommandReceipt(row.OperationID, body)
-		_ = d.DB.Transaction(func(tx *gorm.DB) error {
+		err := d.DB.Transaction(func(tx *gorm.DB) error {
 			if err := tx.Model(&model.FlowCommandOutbox{}).Where("id = ?", row.ID).Updates(map[string]any{
 				"status":              "dispatched",
 				"response_status":     status,
@@ -240,7 +267,9 @@ func (d CommandDispatcher) DispatchOne(ctx context.Context, id string) (model.Fl
 				upd["job_id"] = jobID
 			}
 			if engineOpID != "" && engineOpID != row.OperationID {
-				_ = tx.Where("operation_id = ? AND sequence = 0", row.OperationID).Delete(&model.FlowOperationProjection{}).Error
+				if err := tx.Where("operation_id = ? AND sequence = 0", row.OperationID).Delete(&model.FlowOperationProjection{}).Error; err != nil {
+					return err
+				}
 				p := model.FlowOperationProjection{
 					OperationID:   engineOpID,
 					TenantID:      row.TenantID,
@@ -252,7 +281,9 @@ func (d CommandDispatcher) DispatchOne(ctx context.Context, id string) (model.Fl
 					SourceVersion: 0,
 					SyncStatus:    "synced",
 				}
-				_ = tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&p).Error
+				if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&p).Error; err != nil {
+					return err
+				}
 			} else {
 				if err := tx.Model(&model.FlowOperationProjection{}).Where("operation_id = ?", row.OperationID).Updates(upd).Error; err != nil {
 					return err
@@ -260,15 +291,22 @@ func (d CommandDispatcher) DispatchOne(ctx context.Context, id string) (model.Fl
 			}
 			return nil
 		})
-		_ = d.DB.First(&row, "id = ?", row.ID).Error
+		if err != nil {
+			return row, err
+		}
+		if err := d.DB.First(&row, "id = ?", row.ID).Error; err != nil {
+			return row, err
+		}
 		return row, nil
 
 	case callErr == nil && status >= 400 && status < 500:
 		// Definite 4xx rejection from Engine (including 400, 404, 409, 422, 429 child limit).
 		errMsg := extractEngineErrorMsg(body, status)
-		_ = d.DB.Transaction(func(tx *gorm.DB) error {
+		err := d.DB.Transaction(func(tx *gorm.DB) error {
 			if row.ReservationID != "" {
-				_, _ = Billing{DB: tx, Now: d.Now}.Release(row.ReservationID)
+				if _, err := (Billing{DB: tx, Now: d.Now}).Release(row.ReservationID); err != nil {
+					return err
+				}
 			}
 			if err := tx.Model(&model.FlowCommandOutbox{}).Where("id = ?", row.ID).Updates(map[string]any{
 				"status":          "failed",
@@ -283,7 +321,12 @@ func (d CommandDispatcher) DispatchOne(ctx context.Context, id string) (model.Fl
 			return tx.Model(&model.FlowOperationProjection{}).Where("operation_id = ? AND sequence = 0", row.OperationID).
 				Updates(map[string]any{"status": "failed", "as_of": finNow}).Error
 		})
-		_ = d.DB.First(&row, "id = ?", row.ID).Error
+		if err != nil {
+			return row, err
+		}
+		if err := d.DB.First(&row, "id = ?", row.ID).Error; err != nil {
+			return row, err
+		}
 		return row, nil
 
 	default:
@@ -306,10 +349,12 @@ func (d CommandDispatcher) DispatchOne(ctx context.Context, id string) (model.Fl
 		if row.Attempts >= row.MaxAttempts {
 			nextStatus = StatusReconciliation
 			if row.ReservationID != "" {
-				_ = Billing{DB: d.DB, Now: d.Now}.MarkUnknown(row.ReservationID, row.OperationID, errMsg)
+				if err := (Billing{DB: d.DB, Now: d.Now}).MarkUnknown(row.ReservationID, row.OperationID, errMsg); err != nil {
+					return row, err
+				}
 			}
 		}
-		_ = d.DB.Model(&model.FlowCommandOutbox{}).Where("id = ?", row.ID).Updates(map[string]any{
+		if err := d.DB.Model(&model.FlowCommandOutbox{}).Where("id = ?", row.ID).Updates(map[string]any{
 			"status":          nextStatus,
 			"response_status": status,
 			"response_body":   string(body),
@@ -317,16 +362,19 @@ func (d CommandDispatcher) DispatchOne(ctx context.Context, id string) (model.Fl
 			"lease_until":     nil,
 			"last_error":      truncRunes(errMsg, 480),
 			"updated_at":      finNow,
-		}).Error
+		}).Error; err != nil {
+			return row, err
+		}
 		if nextStatus == StatusReconciliation {
-			_ = d.DB.Model(&model.FlowOperationProjection{}).Where("operation_id = ? AND sequence = 0", row.OperationID).
-				Updates(map[string]any{"status": StatusReconciliation, "as_of": finNow}).Error
+			if err := d.DB.Model(&model.FlowOperationProjection{}).Where("operation_id = ? AND sequence = 0", row.OperationID).
+				Updates(map[string]any{"status": StatusReconciliation, "as_of": finNow}).Error; err != nil {
+				return row, err
+			}
 		}
-		_ = d.DB.First(&row, "id = ?", row.ID).Error
-		if callErr != nil {
-			return row, callErr
+		if err := d.DB.First(&row, "id = ?", row.ID).Error; err != nil {
+			return row, err
 		}
-		return row, errors.New(errMsg)
+		return row, nil
 	}
 }
 
@@ -351,18 +399,38 @@ func (d CommandDispatcher) DispatchDue(ctx context.Context, limit int) (int, err
 	if d.DB == nil || d.Engine == nil {
 		return 0, nil
 	}
+	if d.DB.Dialector.Name() == "postgres" && d.tenantID == "" {
+		tenants, err := d.Scanner.Next(ctx, ScanCommands)
+		if err != nil {
+			return 0, err
+		}
+		n := 0
+		for _, tenant := range tenants {
+			if err := ctx.Err(); err != nil {
+				return n, err
+			}
+			child := d
+			child.tenantID = tenant
+			count, err := child.DispatchDue(ctx, limit)
+			n += count
+			if err != nil {
+				return n, err
+			}
+		}
+		return n, nil
+	}
 	if limit <= 0 {
 		limit = 25
 	}
 	now := d.now()
-	// Expired dispatching leases have an unknown outcome (lost ACK): mark reconciliation_required rather than blind-resending.
-	d.DB.Model(&model.FlowCommandOutbox{}).
-		Where("status = 'dispatching' AND lease_until IS NOT NULL AND lease_until < ?", now).
-		Updates(map[string]any{"status": StatusReconciliation, "lease_until": nil, "last_error": "dispatch lease expired; outcome unknown", "updated_at": now})
-
 	var due []model.FlowCommandOutbox
-	if err := d.DB.Where("status IN ? AND next_attempt_at <= ?", []string{"pending", StatusRetryWait}, now).
-		Order("next_attempt_at ASC, created_at ASC").Limit(limit).Find(&due).Error; err != nil {
+	err := d.databaseWork(func(d CommandDispatcher) error {
+		if err := d.DB.Model(&model.FlowCommandOutbox{}).Where("status = 'dispatching' AND lease_until IS NOT NULL AND lease_until < ?", now).Updates(map[string]any{"status": StatusReconciliation, "lease_until": nil, "last_error": "dispatch lease expired; outcome unknown", "updated_at": now}).Error; err != nil {
+			return err
+		}
+		return d.DB.Where("status IN ? AND next_attempt_at <= ?", []string{"pending", StatusRetryWait}, now).Order("next_attempt_at ASC, created_at ASC").Limit(limit).Find(&due).Error
+	})
+	if err != nil {
 		return 0, err
 	}
 	n := 0

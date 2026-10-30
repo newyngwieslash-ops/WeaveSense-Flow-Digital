@@ -11,3 +11,11 @@
 - 旧 MCP scoped helper 改用请求事务，避免额外未 scoped 查询和单连接死锁。测试真实安装生产 TenantMiddleware，而非增加连接数掩盖缺陷。
 
 验证：`go test ./internal/flow -count=1 -timeout=180s` 完整本地回归及针对性测试；PostgreSQL 独立必测根为 `TestFlowPostgresCallbackAndLegacyAdmission`，需要隔离 migration/runtime 角色和 `AGRI_TEST_PG_ISOLATED=1`。未配置 DSN 时明确 skip，不能作为真实 PG 通过证据。实际运行结果由验收证据另行记录。
+
+## 后台 worker 的短事务边界
+
+DT018 的 ModelTasks / CommandDispatcher 仅由服务器组合层注入固定 `BackgroundScanner` 能力。PostgreSQL 顶层批次分别使用 `ScanModelTasks` / `ScanCommands`；返回 tenant 只存于未导出的 `tenantID`，请求 JSON 不能填充。每个租户的读取/claim、回执和结算使用独立短事务，真实 Gateway/Engine HTTP、状态查询、完成通知位于这些后台事务之外。缺 scanner 的 PostgreSQL 批次明确拒绝，不回退全库读取。SQLite 保留原开发路径。
+
+`TestFlowPostgresWorkerShortTransactions` 在真实受限 PostgreSQL 角色、单条 app 连接下，通过本地 HTTP 协议测试端在请求处理中反向查询同一连接，验证连接可用、tenant setting 已清除、无已分配事务；还验证两个租户、未知结果/重试回执的持久化、真实账本和完成通知。HTTP peer 是明确 fixture，非真实模型或 Loom 商业服务验收。
+
+**范围限制**：既有同步 REST `EnqueueAndDispatch` / `ModelTasks.Wait` 可能收到外层请求事务；此次没有偷偷改变同步响应或原子性契约，不宣称所有旧同步路径的网络调用都已脱离事务。该遗留路径需要单独迁移到持久异步请求闭环。

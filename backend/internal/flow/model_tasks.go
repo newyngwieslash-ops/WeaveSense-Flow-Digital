@@ -29,12 +29,14 @@ var ErrModelRetryable = errors.New("flow: model gateway asked to retry later")
 // through the gateway status endpoint. Settlement happens exactly once, when a
 // task reaches succeeded (or released on definite failure).
 type ModelTasks struct {
-	DB      *gorm.DB
-	GW      ModelGateway
-	Status  ModelStatus
-	Now     func() time.Time
-	Lease   time.Duration
-	Backoff time.Duration
+	Scanner  *BackgroundScanner
+	tenantID string // assigned only by the fixed background scanner
+	DB       *gorm.DB
+	GW       ModelGateway
+	Status   ModelStatus
+	Now      func() time.Time
+	Lease    time.Duration
+	Backoff  time.Duration
 	// Notify is called once per finished task (succeeded/failed) by the worker:
 	// the push half of completion (engine brief wake-up). Parked agent runs are
 	// released by NotifyDone itself.
@@ -104,14 +106,41 @@ func (m ModelTasks) Enqueue(in ModelTaskInput) (model.FlowModelTask, error) {
 	return t, m.DB.First(&t, "tenant_id = ? AND idem_key = ?", in.TenantID, in.Key).Error
 }
 
+// databaseWork opens only a bounded tenant transaction for scanner-derived
+// background work. A request-owned handle retains its existing scope.
+func (m ModelTasks) databaseWork(fn func(ModelTasks) error) error {
+	return shortTenantWork(m.DB, m.tenantID, func(tx *gorm.DB) error { scoped := m; scoped.DB = tx; scoped.tenantID = ""; return fn(scoped) })
+}
+func (m ModelTasks) scan(ctx context.Context, fn func(ModelTasks) (int, error)) (int, error) {
+	tenants, err := m.Scanner.Next(ctx, ScanModelTasks)
+	if err != nil {
+		return 0, err
+	}
+	n := 0
+	for _, tenant := range tenants {
+		if err := ctx.Err(); err != nil {
+			return n, err
+		}
+		child := m
+		child.tenantID = tenant
+		count, err := fn(child)
+		n += count
+		if err != nil {
+			return n, err
+		}
+	}
+	return n, nil
+}
 func (m ModelTasks) Get(id string) (model.FlowModelTask, error) {
 	var t model.FlowModelTask
-	return t, m.DB.First(&t, "id = ?", id).Error
+	err := m.databaseWork(func(m ModelTasks) error { return m.DB.First(&t, "id = ?", id).Error })
+	return t, err
 }
-
-func (m ModelTasks) set(id string, fields map[string]any) {
+func (m ModelTasks) set(id string, fields map[string]any) error {
 	fields["updated_at"] = m.now()
-	m.DB.Model(&model.FlowModelTask{}).Where("id = ?", id).Updates(fields)
+	return m.databaseWork(func(m ModelTasks) error {
+		return m.DB.Model(&model.FlowModelTask{}).Where("id = ?", id).Updates(fields).Error
+	})
 }
 
 // RunTask claims a due queued task and executes one attempt. It is safe to call
@@ -126,14 +155,25 @@ func (m ModelTasks) RunTask(ctx context.Context, id string) (bool, error) {
 	}
 	now := m.now()
 	until := now.Add(lease)
-	claim := m.DB.Model(&model.FlowModelTask{}).Where("id = ? AND status IN ? AND next_attempt_at <= ?", id, []string{"queued", StatusRetryWait}, now).
-		Updates(map[string]any{"status": "running", "lease_until": until, "attempts": gorm.Expr("attempts + 1"), "updated_at": now})
-	if claim.Error != nil || claim.RowsAffected == 0 {
-		return false, claim.Error
-	}
-	t, err := m.Get(id)
-	if err != nil {
-		return true, err
+	var t model.FlowModelTask
+	var rsv model.FlowBudgetReservation
+	var claimed bool
+	err := m.databaseWork(func(m ModelTasks) error {
+		claim := m.DB.Model(&model.FlowModelTask{}).Where("id = ? AND status IN ? AND next_attempt_at <= ?", id, []string{"queued", StatusRetryWait}, now).Updates(map[string]any{"status": "running", "lease_until": until, "attempts": gorm.Expr("attempts + 1"), "updated_at": now})
+		if claim.Error != nil {
+			return claim.Error
+		}
+		claimed = claim.RowsAffected == 1
+		if !claimed {
+			return nil
+		}
+		if err := m.DB.First(&t, "id = ?", id).Error; err != nil {
+			return err
+		}
+		return m.DB.Select("price_version").First(&rsv, "id = ?", t.ReservationID).Error
+	})
+	if err != nil || !claimed {
+		return claimed, err
 	}
 	var rq struct {
 		System    string `json:"system"`
@@ -141,61 +181,81 @@ func (m ModelTasks) RunTask(ctx context.Context, id string) (bool, error) {
 		MaxTokens int    `json:"max_tokens"`
 	}
 	_ = json.Unmarshal([]byte(t.Request), &rq)
-	var rsv model.FlowBudgetReservation
-	m.DB.Select("price_version").First(&rsv, "id = ?", t.ReservationID)
 	usage := &ModelUsage{}
 	cctx, cancel := context.WithTimeout(WithModelUsage(WithModelCallMeta(context.WithValue(ctx, modelIdemCtx{}, t.IdemKey),
 		ModelCallMeta{ReservationID: t.ReservationID, PriceVersion: rsv.PriceVersion, CallID: t.IdemKey}), usage), lease)
 	text, cost, cerr := m.GW.Complete(cctx, rq.System, rq.User, rq.MaxTokens)
 	cancel()
-	b := m.billing()
-	switch {
-	case cerr == nil:
-		if _, err := b.Settle(t.ReservationID, cost); err != nil {
-			return true, err
+	err = m.databaseWork(func(m ModelTasks) error {
+		b := m.billing()
+		switch {
+		case cerr == nil:
+			if _, err := b.Settle(t.ReservationID, cost); err != nil {
+				return err
+			}
+			if err := recordModelUsage(m.DB, t, *usage, cost, m.now()); err != nil {
+				return err
+			}
+			return m.set(id, map[string]any{"status": "succeeded", "result": text, "cost_micro": cost, "lease_until": nil, "last_error": ""})
+		case errors.Is(cerr, ErrModelUnknownOutcome):
+			if err := b.MarkUnknown(t.ReservationID, "model:"+t.IdemKey, truncRunes(cerr.Error(), 280)); err != nil {
+				return err
+			}
+			return m.set(id, map[string]any{"status": StatusReconciliation, "lease_until": nil, "last_error": truncRunes(cerr.Error(), 480)})
+		case errors.Is(cerr, ErrModelRetryable) && t.Attempts < t.MaxAttempts:
+			backoff := m.Backoff
+			if backoff <= 0 {
+				backoff = 2 * time.Second
+			}
+			next := m.now().Add(backoff * time.Duration(1<<(t.Attempts-1)))
+			return m.set(id, map[string]any{"status": StatusRetryWait, "next_attempt_at": next, "lease_until": nil, "last_error": truncRunes(cerr.Error(), 480)})
+		default:
+			if _, err := b.Release(t.ReservationID); err != nil {
+				return err
+			}
+			return m.set(id, map[string]any{"status": "failed", "lease_until": nil, "last_error": truncRunes(cerr.Error(), 480)})
 		}
-		if err := recordModelUsage(m.DB, t, *usage, cost, m.now()); err != nil {
-			return true, err
-		}
-		m.set(id, map[string]any{"status": "succeeded", "result": text, "cost_micro": cost, "lease_until": nil, "last_error": ""})
-	case errors.Is(cerr, ErrModelUnknownOutcome):
-		_ = b.MarkUnknown(t.ReservationID, "model:"+t.IdemKey, truncRunes(cerr.Error(), 280))
-		m.set(id, map[string]any{"status": StatusReconciliation, "lease_until": nil, "last_error": truncRunes(cerr.Error(), 480)})
-	case errors.Is(cerr, ErrModelRetryable) && t.Attempts < t.MaxAttempts:
-		backoff := m.Backoff
-		if backoff <= 0 {
-			backoff = 2 * time.Second
-		}
-		next := m.now().Add(backoff * time.Duration(1<<(t.Attempts-1)))
-		m.set(id, map[string]any{"status": StatusRetryWait, "next_attempt_at": next, "lease_until": nil, "last_error": truncRunes(cerr.Error(), 480)})
-	default:
-		_, _ = b.Release(t.ReservationID)
-		m.set(id, map[string]any{"status": "failed", "lease_until": nil, "last_error": truncRunes(cerr.Error(), 480)})
-	}
-	return true, nil
+	})
+	return true, err
 }
 
 // RunDue executes due queued tasks and turns expired leases (worker crashed
 // mid-call: the request may have been sent) into unknown.
 func (m ModelTasks) RunDue(ctx context.Context) (int, error) {
-	now := m.now()
-	var stale []model.FlowModelTask
-	m.DB.Where("status = ? AND lease_until < ?", "running", now).Limit(50).Find(&stale)
-	for _, t := range stale {
-		upd := m.DB.Model(&model.FlowModelTask{}).Where("id = ? AND status = ?", t.ID, "running").
-			Updates(map[string]any{"status": StatusReconciliation, "lease_until": nil, "last_error": "worker lease expired", "updated_at": now})
-		if upd.RowsAffected == 1 {
-			_ = m.billing().MarkUnknown(t.ReservationID, "model:"+t.IdemKey, "worker lease expired")
-		}
+	if m.DB.Dialector.Name() == "postgres" && m.tenantID == "" {
+		return m.scan(ctx, func(child ModelTasks) (int, error) { return child.RunDue(ctx) })
 	}
+	now := m.now()
 	var ids []string
-	if err := m.DB.Model(&model.FlowModelTask{}).Where("status IN ? AND next_attempt_at <= ?", []string{"queued", StatusRetryWait}, now).Order("next_attempt_at").Limit(20).Pluck("id", &ids).Error; err != nil {
+	err := m.databaseWork(func(m ModelTasks) error {
+		var stale []model.FlowModelTask
+		if err := m.DB.Where("status = ? AND lease_until < ?", "running", now).Limit(50).Find(&stale).Error; err != nil {
+			return err
+		}
+		for _, t := range stale {
+			upd := m.DB.Model(&model.FlowModelTask{}).Where("id = ? AND status = ?", t.ID, "running").Updates(map[string]any{"status": StatusReconciliation, "lease_until": nil, "last_error": "worker lease expired", "updated_at": now})
+			if upd.Error != nil {
+				return upd.Error
+			}
+			if upd.RowsAffected == 1 {
+				if err := m.billing().MarkUnknown(t.ReservationID, "model:"+t.IdemKey, "worker lease expired"); err != nil {
+					return err
+				}
+			}
+		}
+		return m.DB.Model(&model.FlowModelTask{}).Where("status IN ? AND next_attempt_at <= ?", []string{"queued", StatusRetryWait}, now).Order("next_attempt_at").Limit(20).Pluck("id", &ids).Error
+	})
+	if err != nil {
 		return 0, err
 	}
 	n := 0
 	for _, id := range ids {
-		if ok, _ := m.RunTask(ctx, id); ok {
+		ok, err := m.RunTask(ctx, id)
+		if ok {
 			n++
+		}
+		if err != nil {
+			return n, err
 		}
 	}
 	return n, nil
@@ -208,34 +268,45 @@ func (m ModelTasks) Reconcile(ctx context.Context, minAge time.Duration) (int, e
 	if m.Status.URL == "" {
 		return 0, nil
 	}
+	if m.DB.Dialector.Name() == "postgres" && m.tenantID == "" {
+		return m.scan(ctx, func(child ModelTasks) (int, error) { return child.Reconcile(ctx, minAge) })
+	}
 	var rows []model.FlowModelTask
-	if err := m.DB.Where("status = ? AND updated_at <= ?", StatusReconciliation, m.now().Add(-minAge)).Limit(50).Find(&rows).Error; err != nil {
+	if err := m.databaseWork(func(m ModelTasks) error {
+		return m.DB.Where("status = ? AND updated_at <= ?", StatusReconciliation, m.now().Add(-minAge)).Limit(50).Find(&rows).Error
+	}); err != nil {
 		return 0, err
 	}
-	b := m.billing()
 	n := 0
 	for _, t := range rows {
 		st, err := m.Status.QueryKey(ctx, t.IdemKey)
 		if err != nil {
 			continue
 		}
-		switch st.Status {
-		case "succeeded":
-			cost := st.TotalTokens * m.Status.MicroPer1KTok / 1000
-			if _, err := b.Settle(t.ReservationID, cost); err != nil {
-				return n, err
-			}
-			m.set(t.ID, map[string]any{"status": "succeeded", "result": st.Content, "cost_micro": cost, "last_error": "reconciled"})
-			n++
-		case "not_found", "failed":
-			if t.Attempts < t.MaxAttempts && b.Reopen(t.ReservationID) == nil {
-				m.set(t.ID, map[string]any{"status": StatusRetryWait, "next_attempt_at": m.now(), "last_error": "reconciled: not processed, retrying"})
-			} else {
-				_, _ = b.Release(t.ReservationID)
-				m.set(t.ID, map[string]any{"status": "failed", "last_error": "reconciled: not processed"})
-			}
-			n++
+		if st.Status != "succeeded" && st.Status != "not_found" && st.Status != "failed" {
+			continue
 		}
+		err = m.databaseWork(func(m ModelTasks) error {
+			b := m.billing()
+			if st.Status == "succeeded" {
+				cost := st.TotalTokens * m.Status.MicroPer1KTok / 1000
+				if _, err := b.Settle(t.ReservationID, cost); err != nil {
+					return err
+				}
+				return m.set(t.ID, map[string]any{"status": "succeeded", "result": st.Content, "cost_micro": cost, "last_error": "reconciled"})
+			}
+			if t.Attempts < t.MaxAttempts && b.Reopen(t.ReservationID) == nil {
+				return m.set(t.ID, map[string]any{"status": StatusRetryWait, "next_attempt_at": m.now(), "last_error": "reconciled: not processed, retrying"})
+			}
+			if _, err := b.Release(t.ReservationID); err != nil {
+				return err
+			}
+			return m.set(t.ID, map[string]any{"status": "failed", "last_error": "reconciled: not processed"})
+		})
+		if err != nil {
+			return n, err
+		}
+		n++
 	}
 	return n, nil
 }
@@ -321,20 +392,39 @@ var _ = strings.TrimSpace
 // the task un-notified so the next worker pass retries; consumers also keep
 // their own polling fallback.
 func (m ModelTasks) NotifyDone(ctx context.Context) int {
+	if m.DB.Dialector.Name() == "postgres" && m.tenantID == "" {
+		n, err := m.scan(ctx, func(child ModelTasks) (int, error) { return child.NotifyDone(ctx), nil })
+		if err != nil {
+			slog.Warn("flow: model completion scanner unavailable")
+		}
+		return n
+	}
 	var rows []model.FlowModelTask
-	m.DB.Where("status IN ? AND notified_at IS NULL", []string{"succeeded", "failed"}).Order("updated_at").Limit(50).Find(&rows)
+	if err := m.databaseWork(func(m ModelTasks) error {
+		return m.DB.Where("status IN ? AND notified_at IS NULL", []string{"succeeded", "failed"}).Order("updated_at").Limit(50).Find(&rows).Error
+	}); err != nil {
+		return 0
+	}
 	n := 0
 	for _, t := range rows {
-		m.DB.Model(&model.FlowExternalWait{}).Where("operation_id = ? AND tenant_id = ? AND status = ?", t.ID, t.TenantID, "waiting").
-			Updates(map[string]any{"status": "ready", "outcome": t.Status})
+		if err := m.databaseWork(func(m ModelTasks) error {
+			return m.DB.Model(&model.FlowExternalWait{}).Where("operation_id = ? AND tenant_id = ? AND status = ?", t.ID, t.TenantID, "waiting").Updates(map[string]any{"status": "ready", "outcome": t.Status}).Error
+		}); err != nil {
+			continue
+		}
+		// External notification is never inside the background database transaction.
 		if m.Notify != nil {
 			if err := m.Notify(t); err != nil {
-				slog.Warn("flow: model task notify", "task", t.ID, "error", err)
+				slog.Warn("flow: model task notify failed")
 				continue
 			}
 		}
-		now := m.now()
-		if m.DB.Model(&model.FlowModelTask{}).Where("id = ? AND notified_at IS NULL", t.ID).Update("notified_at", now).RowsAffected == 1 {
+		var changed int64
+		if err := m.databaseWork(func(m ModelTasks) error {
+			res := m.DB.Model(&model.FlowModelTask{}).Where("id = ? AND notified_at IS NULL", t.ID).Update("notified_at", m.now())
+			changed = res.RowsAffected
+			return res.Error
+		}); err == nil && changed == 1 {
 			n++
 		}
 	}

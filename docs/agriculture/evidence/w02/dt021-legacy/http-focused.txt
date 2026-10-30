@@ -1,0 +1,2 @@
+ok  	yingce/backend/internal/handler	29.397s
+ok  	yingce/backend/internal/app	0.049s

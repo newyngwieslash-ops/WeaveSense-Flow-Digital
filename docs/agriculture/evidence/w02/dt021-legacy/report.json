@@ -1,0 +1,86 @@
+{
+  "task": "DT-021",
+  "slice": "existing_platform_sse_and_replay_cache",
+  "source_commit": "611e8f0653b1e69e311d32caa4fbdce8ceb780fc",
+  "source_files": {
+    "backend/internal/app/read_cache_integration_test.go": "e7afb14cce9014e5ac9c84a3e3701f829076d434a568db453c6a5bf39769d68d",
+    "backend/internal/app/text_replay_cache.go": "f3e87165f91b621fbccf7c1c85062a56dba5bfc763728cd0609e426e6245fc75",
+    "backend/internal/handler/agent.go": "8b3a70cf8f9155c948121436e3d9fc631d1605a77c06ac396c3b4db9f8faf027",
+    "backend/internal/handler/routes.go": "658ac60eb1c94e4c47a0c93933d35949f8a9c3d91baa48938ad32eb83e596457",
+    "backend/internal/handler/stream_revocation_test.go": "e92baa259260f254dfa54d3e32f2e8d8e304a7ffb68716d40cd99a2ab5c0f920",
+    "backend/internal/handler/text_events_test.go": "cc764e5df4e29de724f74bbe7e912d8c189137d6e5b65f2b76e834fd2e854d3f"
+  },
+  "source_scope": "six changed legacy files; not exhaustive transitive manifest",
+  "results": [
+    {
+      "command": "go test ./internal/app -count=1 -timeout 10m",
+      "exit_code": 0,
+      "seconds": 239.126
+    },
+    {
+      "command": "go test ./internal/handler -count=1 -timeout 3m",
+      "exit_code": 0,
+      "seconds": 47.898
+    }
+  ],
+  "logs": {
+    "full-app.txt": "8a2ea0da62a0d5b4d9a781928bf196144037b5928f2e56bf56c8a8e477ebcd4e",
+    "full-handler.txt": "fccbf5d3c8d26d4a042878da1fa0b36efa0ebf0b28e52cd37bdbf44840186dcf",
+    "affected-app.txt": "013eb7fa2a7e191f1a893986021708b59bbed84bac46304878795f588cc2d3f0",
+    "http-focused.txt": "50aaa16dc334d6d73ce3957609786c27e4ee6fabd709d276c6bc6c511c2c4b4e"
+  },
+  "historical_failures": [
+    {
+      "private_log": "dt021-stream-http.log",
+      "sha256": "fae8a6b1411b6c8f6f261c966bf9e22b95c5a8de20729dbcbe375662c2b18235",
+      "failed_tests": [
+        "TestConnectedLegacyStreamsRevalidateAuthority",
+        "TestConnectedLegacyStreamsRevalidateAuthority/agent/other_cookie",
+        "TestConnectedLegacyStreamsRevalidateAuthority/agent/success"
+      ],
+      "suite_timeout_observed": false,
+      "public_raw_log": false
+    },
+    {
+      "private_log": "dt021-stream-http-fixed.log",
+      "sha256": "be40dc1a4459408179a86c883637ef3fae9245d72d6ffbed15f0aa3dde56d1b3",
+      "failed_tests": [
+        "TestConnectedLegacyStreamsRevalidateAuthority",
+        "TestConnectedLegacyStreamsRevalidateAuthority/agent/other_cookie",
+        "TestConnectedLegacyStreamsRevalidateAuthority/agent/success"
+      ],
+      "suite_timeout_observed": false,
+      "public_raw_log": false
+    },
+    {
+      "private_log": "dt021-stream-http-journal.log",
+      "sha256": "0c943a9bf01f4caa554495c54a808f9eb9992e6e68bcb8108080452900a1c8f5",
+      "failed_tests": [
+        "TestConnectedLegacyStreamsRevalidateAuthority",
+        "TestConnectedLegacyStreamsRevalidateAuthority/agent/other_cookie",
+        "TestConnectedLegacyStreamsRevalidateAuthority/agent/success"
+      ],
+      "suite_timeout_observed": false,
+      "public_raw_log": false
+    },
+    {
+      "private_log": "dt021-stream-full.log",
+      "sha256": "fe53d11cf94339da37f77fa43fc41e977d5a9cddf64f836764356f076c4b51b4",
+      "failed_tests": [
+        "TestConnectedLegacyStreamsRevalidateAuthority",
+        "TestConnectedLegacyStreamsRevalidateAuthority/agent/other_cookie",
+        "TestConnectedLegacyStreamsRevalidateAuthority/agent/success"
+      ],
+      "suite_timeout_observed": true,
+      "public_raw_log": false
+    }
+  ],
+  "independent_review": "initial connected-flush revocation finding repaired; targeted independent negative tests passed",
+  "boundaries": [
+    "Real loopback HTTP and persisted SQLite login/session/task/event rows; not PostgreSQL RLS evidence.",
+    "Legacy cursor remains its original integer contract, not an agricultural signed scope cursor.",
+    "Current cookie, active actor and original task owner semantics; no agricultural tenant/farm authority is inferred.",
+    "Original 180-second full-suite timeout was below the known 228-second prior app baseline; final standard Go ten-minute suite passed without weakening individual assertions.",
+    "No browser lifecycle or remote CI claim."
+  ]
+}

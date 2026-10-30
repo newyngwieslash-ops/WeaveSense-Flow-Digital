@@ -17,12 +17,12 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_SUPERUSER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?set in .env.flow}
-      PLATFORM_DB_NAME: ${PLATFORM_DB_NAME:-flow_platform}
-      PLATFORM_DB_USER: ${PLATFORM_DB_USER:-flow_platform}
       PLATFORM_DB_PASSWORD: ${PLATFORM_DB_PASSWORD:?set in .env.flow}
-      INTEL_DB_NAME: ${INTEL_DB_NAME:-flow_intel}
-      INTEL_DB_USER: ${INTEL_DB_USER:-flow_intel}
       INTEL_DB_PASSWORD: ${INTEL_DB_PASSWORD:?set in .env.flow}
+      PLATFORM_MIGRATION_PASSWORD: ${PLATFORM_MIGRATION_PASSWORD:?independent migration secret required}
+      PLATFORM_SYSTEM_PASSWORD: ${PLATFORM_SYSTEM_PASSWORD:?independent dispatcher secret required}
+      INTEL_MIGRATION_PASSWORD: ${INTEL_MIGRATION_PASSWORD:?independent migration secret required}
+      INTEL_SYSTEM_PASSWORD: ${INTEL_SYSTEM_PASSWORD:?independent dispatcher secret required}
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./deploy/flow/postgres/init-databases.sh:/docker-entrypoint-initdb.d/10-init.sh:ro
@@ -68,22 +68,34 @@ services:
     networks: [internal]
   # Go platform: identity, authz, billing ledger, agent runs. Pi runtime is
   # bundled in this image (backend/Dockerfile stage pi-runtime-deps).
+  platform-migrate:
+    profiles: [core]
+    build: { context: ., dockerfile: backend/Dockerfile }
+    command: [migrate-schema, up]
+    environment:
+      CANVAS_DATABASE_DRIVER: postgres
+      DATABASE_URL: postgres://flow_platform_migrate:${PLATFORM_MIGRATION_PASSWORD}@postgres:5432/flow_platform?sslmode=disable
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [internal]
   platform:
     profiles: [core]
     <<: *restart
     build: { context: ., dockerfile: backend/Dockerfile }
-    env_file: [.env.flow]
+    env_file: [.env.flow.runtime]
     environment:
       # Names below are the ones backend/cmd/server/main.go and internal/flow actually read.
       CANVAS_DATABASE_DRIVER: postgres
+      CANVAS_AUTO_MIGRATE: "false"
       CANVAS_BACKEND_ADDR: ":8080"
       CANVAS_BACKEND_DATA_DIR: /data
-      DATABASE_URL: postgres://${PLATFORM_DB_USER:-flow_platform}:${PLATFORM_DB_PASSWORD}@postgres:5432/${PLATFORM_DB_NAME:-flow_platform}?sslmode=disable
+      DATABASE_URL: postgres://flow_platform_app:${PLATFORM_DB_PASSWORD}@postgres:5432/flow_platform?sslmode=disable
+      FLOW_PLATFORM_SYSTEM_DSN: postgres://flow_platform_system:${PLATFORM_SYSTEM_PASSWORD}@postgres:5432/flow_platform?sslmode=disable
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       LOOM_ENGINE_URL: http://loom-engine:8080
       # P5 Model Gateway (OpenAI-compatible). Set FLOW_MODEL_GATEWAY_URL/_KEY/_MODEL in .env.flow; unset = extractive only.
     depends_on:
-      postgres: { condition: service_healthy }
+      platform-migrate: { condition: service_completed_successfully }
       redis: { condition: service_started }
     volumes: [platformdata:/data]
     networks:
@@ -97,13 +109,24 @@ services:
     ports: ["${FLOW_HTTP_PORT:-8088}:3000"]   # the only published entrypoint
     networks: [internal]
   # Loom Engine (extracted from WeaveSense): sources, cursors, documents, jobs.
+  loom-migrate:
+    profiles: [core]
+    build: { context: ./services/loom-engine, dockerfile: Dockerfile }
+    environment:
+      LOOM_MIGRATION_DATABASE_URL: postgres://flow_intel_migrate:${INTEL_MIGRATION_PASSWORD}@postgres:5432/flow_intel
+    command: [node, --experimental-strip-types, flow/tools/migrate.ts]
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [internal]
   loom-engine:
     profiles: [core]
     <<: *restart
     build: { context: ./services/loom-engine, dockerfile: Dockerfile }
-    env_file: [.env.flow]
+    env_file: [.env.flow.runtime]
     environment:
-      DATABASE_URL: postgres://${INTEL_DB_USER:-flow_intel}:${INTEL_DB_PASSWORD}@postgres:5432/${INTEL_DB_NAME:-flow_intel}?sslmode=disable
+      DATABASE_URL: postgres://flow_intel_app:${INTEL_DB_PASSWORD}@postgres:5432/flow_intel?sslmode=disable
+      LOOM_SYSTEM_DATABASE_URL: postgres://flow_intel_system:${INTEL_SYSTEM_PASSWORD}@postgres:5432/flow_intel?sslmode=disable
+      LOOM_AUTO_MIGRATE: "false"
       LOOM_ROLE: api            # internal API + collection worker + outbox dispatcher
       LOOM_PORT: "8080"
       FLOW_PLATFORM_EVENTS_URL: http://platform:8080/api/internal/flow/events
@@ -114,22 +137,23 @@ services:
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
     command: ["node", "flow/main.ts"]
     depends_on:
-      postgres: { condition: service_healthy }
+      loom-migrate: { condition: service_completed_successfully }
     networks: [internal]
   loom-scheduler:
     profiles: [core]
     <<: *restart
     build: { context: ./services/loom-engine, dockerfile: Dockerfile }
-    env_file: [.env.flow]
+    env_file: [.env.flow.runtime]
     environment:
-      DATABASE_URL: postgres://${INTEL_DB_USER:-flow_intel}:${INTEL_DB_PASSWORD}@postgres:5432/${INTEL_DB_NAME:-flow_intel}?sslmode=disable
+      DATABASE_URL: postgres://flow_intel_app:${INTEL_DB_PASSWORD}@postgres:5432/flow_intel?sslmode=disable
+      LOOM_SYSTEM_DATABASE_URL: postgres://flow_intel_system:${INTEL_SYSTEM_PASSWORD}@postgres:5432/flow_intel?sslmode=disable
       LOOM_ROLE: scheduler      # single due-window scanner (advisory-locked)
       # P5: re-check grant authorization + LLM brief summarization via the platform (internal network only).
       FLOW_PLATFORM_INTERNAL_URL: http://platform:8080
       LOOM_AUTO_MIGRATE: "false"
     command: ["node", "flow/main.ts"]
     depends_on:
-      postgres: { condition: service_healthy }
+      loom-migrate: { condition: service_completed_successfully }
     networks: [internal]
   # Optional Telegram MTProto collector (A19). Enable with
   # `--profile telegram` and set TELEGRAM_WORKER_URL=http://telethon:8787 in .env.flow.
@@ -137,7 +161,7 @@ services:
     <<: *restart
     profiles: [telegram]
     build: { context: ./services/loom-engine/workers/telethon, dockerfile: Dockerfile }
-    env_file: [.env.flow]
+    env_file: [.env.flow.runtime]
     environment:
       MINIO_ENDPOINT: minio:9000
       MINIO_BUCKET: ${INTEL_BUCKET:-flow-intel}
@@ -190,7 +214,7 @@ services:
     <<: *restart
     profiles: [wechat]
     build: { context: ./services/loom-engine, dockerfile: Dockerfile }
-    env_file: [.env.flow]
+    env_file: [.env.flow.runtime]
     environment:
       PORT: "8790"
       GATEWAY_DB_PATH: /data/gateway.db
@@ -203,7 +227,7 @@ services:
     <<: *restart
     profiles: [extract]
     build: { context: ./services/loom-engine/workers/ocr, dockerfile: Dockerfile }
-    env_file: [.env.flow]
+    env_file: [.env.flow.runtime]
     environment:
       MINIO_ENDPOINT: minio:9000
       MINIO_BUCKET: ${INTEL_BUCKET:-flow-intel}
@@ -216,7 +240,7 @@ services:
     <<: *restart
     profiles: [asr]
     build: { context: ./services/loom-engine/workers/asr, dockerfile: Dockerfile, args: { ASR_MODEL: "${ASR_MODEL:-small}" } }
-    env_file: [.env.flow]
+    env_file: [.env.flow.runtime]
     environment:
       MINIO_ENDPOINT: minio:9000
       MINIO_BUCKET: ${INTEL_BUCKET:-flow-intel}
@@ -227,31 +251,33 @@ services:
     <<: *restart
     profiles: [extract]
     build: { context: ./services/loom-engine, dockerfile: Dockerfile }
-    env_file: [.env.flow]
+    env_file: [.env.flow.runtime]
     environment:
-      DATABASE_URL: postgres://${INTEL_DB_USER:-flow_intel}:${INTEL_DB_PASSWORD}@postgres:5432/${INTEL_DB_NAME:-flow_intel}?sslmode=disable
+      DATABASE_URL: postgres://flow_intel_app:${INTEL_DB_PASSWORD}@postgres:5432/flow_intel?sslmode=disable
+      LOOM_SYSTEM_DATABASE_URL: postgres://flow_intel_system:${INTEL_SYSTEM_PASSWORD}@postgres:5432/flow_intel?sslmode=disable
       LOOM_ROLE: enrich
       LOOM_AUTO_MIGRATE: "false"
       OCR_URL: http://ocr-worker:8796
       ASR_URL: http://asr-worker:8797
     command: ["node", "flow/main.ts"]
     depends_on:
-      postgres: { condition: service_healthy }
+      loom-migrate: { condition: service_completed_successfully }
     networks: [internal]
   # Periodic brief/research generation split from the scheduler. `--profile research`.
   loom-research:
     <<: *restart
     profiles: [research]
     build: { context: ./services/loom-engine, dockerfile: Dockerfile }
-    env_file: [.env.flow]
+    env_file: [.env.flow.runtime]
     environment:
-      DATABASE_URL: postgres://${INTEL_DB_USER:-flow_intel}:${INTEL_DB_PASSWORD}@postgres:5432/${INTEL_DB_NAME:-flow_intel}?sslmode=disable
+      DATABASE_URL: postgres://flow_intel_app:${INTEL_DB_PASSWORD}@postgres:5432/flow_intel?sslmode=disable
+      LOOM_SYSTEM_DATABASE_URL: postgres://flow_intel_system:${INTEL_SYSTEM_PASSWORD}@postgres:5432/flow_intel?sslmode=disable
       LOOM_ROLE: research
       LOOM_AUTO_MIGRATE: "false"
       FLOW_PLATFORM_INTERNAL_URL: http://platform:8080
     command: ["node", "flow/main.ts"]
     depends_on:
-      postgres: { condition: service_healthy }
+      loom-migrate: { condition: service_completed_successfully }
     networks: [internal]
   # Monitoring (§14): Prometheus scrapes loom-engine /metrics and platform /metrics/flow
   # (FLOW_METRICS_TOKEN). Rules: deploy/flow/monitoring/alerts.yml. Bound to localhost only.

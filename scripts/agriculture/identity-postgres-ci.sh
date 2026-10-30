@@ -37,7 +37,7 @@ cleanup() {
   exit "$code"
 }
 trap cleanup EXIT
-for name in POSTGRES_PASSWORD PLATFORM_MIGRATION_PASSWORD PLATFORM_RUNTIME_PASSWORD INTEL_MIGRATION_PASSWORD INTEL_RUNTIME_PASSWORD GEO_MIGRATION_PASSWORD GEO_RUNTIME_PASSWORD GEO_WORKER_PASSWORD REDIS_PASSWORD; do
+for name in POSTGRES_PASSWORD PLATFORM_MIGRATION_PASSWORD PLATFORM_RUNTIME_PASSWORD INTEL_MIGRATION_PASSWORD INTEL_RUNTIME_PASSWORD GEO_MIGRATION_PASSWORD GEO_RUNTIME_PASSWORD GEO_WORKER_PASSWORD PLATFORM_SYSTEM_PASSWORD INTEL_SYSTEM_PASSWORD REDIS_PASSWORD; do
   value=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
   if [[ ${GITHUB_ACTIONS:-} == true ]]; then printf '::add-mask::%s\n' "$value"; fi
   export "$name=$value"
@@ -61,7 +61,7 @@ export REDIS_URL="redis://:$REDIS_PASSWORD@127.0.0.1:${BASH_REMATCH[1]}/0"
 export IDENTITY_REDIS_IMAGE_ID="$(docker inspect --format '{{.Image}}' "$redis_container")"
 docker run -d --name "$container" --label "weavesense.ci.owner=$project" --network "$network" \
   -p 127.0.0.1::5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD \
-  -e PLATFORM_MIGRATION_PASSWORD -e PLATFORM_RUNTIME_PASSWORD -e INTEL_MIGRATION_PASSWORD \
+  -e PLATFORM_MIGRATION_PASSWORD -e PLATFORM_RUNTIME_PASSWORD -e INTEL_MIGRATION_PASSWORD -e PLATFORM_SYSTEM_PASSWORD -e INTEL_SYSTEM_PASSWORD \
   -e INTEL_RUNTIME_PASSWORD -e GEO_MIGRATION_PASSWORD -e GEO_RUNTIME_PASSWORD -e GEO_WORKER_PASSWORD \
   --mount "type=volume,source=$volume,target=/var/lib/postgresql/data" \
   --mount "type=bind,source=$PWD/deploy/agriculture/postgres/init.sh,target=/docker-entrypoint-initdb.d/10-agriculture.sh,readonly" \

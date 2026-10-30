@@ -14,7 +14,7 @@ command -v python3 >/dev/null
 # Do not read .env or reuse caller passwords, ports, or a caller Compose project.
 for name in POSTGRES_PASSWORD PLATFORM_MIGRATION_PASSWORD PLATFORM_RUNTIME_PASSWORD \
   INTEL_MIGRATION_PASSWORD INTEL_RUNTIME_PASSWORD GEO_MIGRATION_PASSWORD \
-  GEO_RUNTIME_PASSWORD GEO_WORKER_PASSWORD REDIS_PASSWORD FLOW_INTERNAL_JWT_SIGNING_KEY; do
+  GEO_RUNTIME_PASSWORD GEO_WORKER_PASSWORD PLATFORM_SYSTEM_PASSWORD INTEL_SYSTEM_PASSWORD REDIS_PASSWORD FLOW_INTERNAL_JWT_SIGNING_KEY; do
   value=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
   if [[ ${GITHUB_ACTIONS:-} == true ]]; then printf '::add-mask::%s\n' "$value"; fi
   export "$name=$value"

@@ -18,7 +18,7 @@ repo = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--package-root', type=Path, required=True)
 parser.add_argument('--python', type=Path, default=repo/'.local/agri-identity-venv/bin/python')
-parser.add_argument('--phase', choices=('components', 'migration'), default='components')
+parser.add_argument('--phase', choices=('components', 'migration', 'query'), default='components')
 args = parser.parse_args()
 phase_mode = args.phase
 test_python = args.python.absolute()
@@ -55,7 +55,7 @@ run.mkdir(parents=True)
 passwords = {name: secrets.token_hex(24) for name in (
     'POSTGRES_PASSWORD', 'PLATFORM_MIGRATION_PASSWORD', 'PLATFORM_RUNTIME_PASSWORD',
     'INTEL_MIGRATION_PASSWORD', 'INTEL_RUNTIME_PASSWORD',
-    'GEO_MIGRATION_PASSWORD', 'GEO_RUNTIME_PASSWORD', 'GEO_WORKER_PASSWORD')}
+    'GEO_MIGRATION_PASSWORD', 'GEO_RUNTIME_PASSWORD', 'GEO_WORKER_PASSWORD', 'PLATFORM_SYSTEM_PASSWORD', 'INTEL_SYSTEM_PASSWORD')}
 with socket.socket() as sock:
     sock.bind(('127.0.0.1',0))
     port = str(sock.getsockname()[1])
@@ -82,6 +82,8 @@ files = [
 ]
 if phase_mode == 'migration':
     files = ['tests/test_agriculture_migration.py', 'tests/test_agriculture_migration_postgres.py']
+elif phase_mode == 'query':
+    files = ['tests/test_agriculture_query_scope.py', 'tests/test_agriculture_query_scope_postgres.py']
 started=False
 start=time.monotonic()
 with (run/'private.log').open('w') as log:
@@ -112,7 +114,7 @@ cases=[]
 for t in ET.parse(run/'tests.xml').getroot().iter('testcase'):
     statuses=[e.tag for e in t if e.tag in {'failure','error','skipped'}]
     module=t.attrib.get('classname','').split('.')[-1]
-    phase='independent_fresh_database_migration' if phase_mode == 'migration' else 'post_domain_current' if module in {'test_agriculture_database','test_agriculture_database_postgres','test_agriculture_domain_boundary','test_agriculture_domain_rls_postgres'} else 'pre_domain_component'
+    phase='independent_fresh_database_migration' if phase_mode == 'migration' else 'post_query_current' if phase_mode == 'query' else 'post_domain_current' if module in {'test_agriculture_database','test_agriculture_database_postgres','test_agriculture_domain_boundary','test_agriculture_domain_rls_postgres'} else 'pre_domain_component'
     cases.append({'name':t.attrib['name'],'schema_phase':phase,'status':statuses[0] if statuses else 'pass',
                   'seconds':float(t.attrib.get('time','0'))})
 required_pg = {
@@ -132,6 +134,10 @@ required_pg = {
 }
 if phase_mode == 'migration':
     required_pg = {'test_postgres_migration_command_new_repeat_and_drift'}
+elif phase_mode == 'query':
+    required_pg = {'test_postgres_query_scope_same_bbox_and_history',
+                   'test_postgres_query_scope_mixed_task_and_core',
+                   'test_postgres_query_scope_missing_mapping_and_rebinding'}
 missing_pg = sorted(required_pg-{c['name'] for c in cases if c['status']=='pass'})
 scope=['deploy/agriculture/postgres/init.sh', 'deploy/agriculture/native-postgres-packages.json',
        'scripts/agriculture/native_test_environment.py',

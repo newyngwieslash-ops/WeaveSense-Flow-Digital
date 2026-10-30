@@ -1,0 +1,103 @@
+{
+  "schema_version": "1.0",
+  "result": "pass",
+  "stage": "complete",
+  "command": "node scripts/agriculture/gateway-browser-e2e.mjs",
+  "results": [
+    {
+      "name": "production_nginx_configuration_valid",
+      "result": "pass"
+    },
+    {
+      "name": "anonymous_api_denied",
+      "result": "pass"
+    },
+    {
+      "name": "reserved_local_fixture_registration",
+      "result": "pass"
+    },
+    {
+      "name": "actual_authorized_workspace_created",
+      "result": "pass"
+    },
+    {
+      "name": "same_origin_write_without_csrf_rejected",
+      "result": "pass"
+    },
+    {
+      "name": "cross_site_write_with_valid_csrf_rejected",
+      "result": "pass"
+    },
+    {
+      "name": "deep_link_next_preserved",
+      "result": "pass"
+    },
+    {
+      "name": "register_preserves_deep_return",
+      "result": "pass"
+    },
+    {
+      "name": "real_login_returns_to_exact_vue_deep_path",
+      "result": "pass"
+    },
+    {
+      "name": "deep_refresh_through_production_nginx",
+      "result": "pass"
+    },
+    {
+      "name": "cross_application_and_back",
+      "result": "pass"
+    },
+    {
+      "name": "logout_clears_workspace",
+      "result": "pass"
+    },
+    {
+      "name": "other_tab_logout_clears_protected_display",
+      "result": "pass"
+    },
+    {
+      "name": "relogin_restores_exact_authorized_context",
+      "result": "pass"
+    },
+    {
+      "name": "other_tab_relogin_restores_only_server_confirmed_workspace",
+      "result": "pass"
+    },
+    {
+      "name": "foreign_workspace_not_rendered",
+      "result": "pass"
+    },
+    {
+      "name": "unknown_route_explicit_404_no_actor",
+      "result": "pass"
+    },
+    {
+      "name": "no_internal_credential_or_cross_origin_browser_requests",
+      "result": "pass"
+    },
+    {
+      "name": "no_browser_exceptions_or_outbound_requests",
+      "result": "pass"
+    }
+  ],
+  "limitations": [
+    "Local SQLite fixture is not PostgreSQL RLS or live farm acceptance",
+    "No external email, provider, payment or deployment",
+    "Browser sandbox remains enabled; unsupported environment fails, never substitutes a mocked browser"
+  ],
+  "artifact_hashes": {
+    "backend": "a3e5f17e7686bf0f24f5380f8cdc81e062684bb37f77f2f4f496ae5d881d2b03",
+    "nginx_template": "30a1b2fce7e5ec7eedb38d9bd5b8d459ee7bf850970da370631585a2d7b17782",
+    "react_index": "74b3bfa41b4109bde40aecaf3be89ae9377212e53a87741af1b25cb435c7be50",
+    "vue_index": "9f3d23c236e24c174691de86e8a20416d5e17a0bf965893fb3e625221345fe87"
+  },
+  "checkout_head": "",
+  "source_commit": "6363d7a0886ad42373f5ca7211bbe396ec2b4671",
+  "working_tree_changes_included": false,
+  "ci_provenance_sha256": "4764e683a7111edfed11d771a33f52b62a9ce399ce69fea79eb3061076400873",
+  "network": {
+    "observed": 85,
+    "violations": 0
+  }
+}

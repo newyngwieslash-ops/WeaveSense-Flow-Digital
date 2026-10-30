@@ -1,0 +1,29 @@
+{
+  "fresh_volume": true,
+  "six_database_roles_checked": true,
+  "runtime_not_owner_checked": true,
+  "cross_database_denial_checked": true,
+  "migration_82_applied_and_replayed": true,
+  "migration_83_applied_and_replayed": true,
+  "postgis_checked": true,
+  "data_class": "fixture",
+  "production_deployment": false,
+  "tests_outcome": "passed",
+  "started_at": "2026-10-30T05:12:48.080749+00:00",
+  "bootstrap_completed_at": "2026-10-30T05:14:29.089028+00:00",
+  "environment": {
+    "postgres_version": "PostgreSQL 17.5 (Debian 17.5-1.pgdg110+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 10.2.1-6) 10.2.1 20210110, 64-bit",
+    "image_reference": "postgis/postgis:17-3.5",
+    "image_id": "sha256:2ed748fc602dd3031c6724db8cb289e1578c2deb552a4f6e291f6f7e5e6e4f69",
+    "image_digests": [
+      "postgis/postgis@sha256:01a6a70e41e6c4467c8f55f6063555ed72db2d6662cd0d571040d42eadaeb6f6"
+    ],
+    "go_version": "go version go1.25.9 linux/amd64",
+    "os": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39"
+  },
+  "source_commit": "512e963e97cc8282cfcd9c59045cf78ade0a331e",
+  "source_mode": "read_only_pinned_sources_plus_allowlisted_overlay",
+  "completed_at": "2026-10-30T05:15:27.256780+00:00",
+  "job_exit_code": 0,
+  "finished_at": "2026-10-30T05:15:27.892749+00:00"
+}

@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.0",
+  "result": "pass",
+  "stage": "complete",
+  "command": "node scripts/agriculture/gateway-browser-e2e.mjs",
+  "results": [
+    {
+      "name": "production_nginx_configuration_valid",
+      "result": "pass"
+    },
+    {
+      "name": "anonymous_api_denied",
+      "result": "pass"
+    },
+    {
+      "name": "reserved_local_fixture_registration",
+      "result": "pass"
+    },
+    {
+      "name": "actual_authorized_workspace_created",
+      "result": "pass"
+    },
+    {
+      "name": "deep_link_next_preserved",
+      "result": "pass"
+    },
+    {
+      "name": "register_preserves_deep_return",
+      "result": "pass"
+    },
+    {
+      "name": "real_login_returns_to_exact_vue_deep_path",
+      "result": "pass"
+    },
+    {
+      "name": "deep_refresh_through_production_nginx",
+      "result": "pass"
+    },
+    {
+      "name": "cross_application_and_back",
+      "result": "pass"
+    },
+    {
+      "name": "logout_clears_workspace",
+      "result": "pass"
+    },
+    {
+      "name": "relogin_restores_exact_authorized_context",
+      "result": "pass"
+    },
+    {
+      "name": "foreign_workspace_not_rendered",
+      "result": "pass"
+    },
+    {
+      "name": "unknown_route_explicit_404_no_actor",
+      "result": "pass"
+    },
+    {
+      "name": "no_internal_credential_or_cross_origin_browser_requests",
+      "result": "pass"
+    },
+    {
+      "name": "no_browser_exceptions_or_outbound_requests",
+      "result": "pass"
+    }
+  ],
+  "limitations": [
+    "Local SQLite fixture is not PostgreSQL RLS or live farm acceptance",
+    "No external email, provider, payment or deployment",
+    "Browser sandbox remains enabled; unsupported environment fails, never substitutes a mocked browser"
+  ],
+  "artifact_hashes": {
+    "backend": "d90d32b7468e3e7144268abbac48747bb8c3f849aa75377bb0f862ff2fab9908",
+    "nginx_template": "30a1b2fce7e5ec7eedb38d9bd5b8d459ee7bf850970da370631585a2d7b17782",
+    "react_index": "168bedb14c7ab4044f5ee8df32be8a00e7ea8efcd6c03749e6e97c8cbdb16846",
+    "vue_index": "3c23608a5c17697b12796b582bf5a9c658e7d0b8c3568c366f87e3ef19e8db93"
+  },
+  "checkout_head": "",
+  "source_commit": "512e963e97cc8282cfcd9c59045cf78ade0a331e",
+  "working_tree_changes_included": false,
+  "ci_provenance_sha256": "c535b54d8ff4ae6b90f932ebf9f714658617ba18059b4da4df0548fa95833d05",
+  "network": {
+    "observed": 71,
+    "violations": 0
+  }
+}

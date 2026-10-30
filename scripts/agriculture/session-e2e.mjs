@@ -12,6 +12,7 @@ import { tmpdir } from "node:os";
 import { dirname, extname, join, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { navigateDocument } from "./browser-navigation.mjs";
+import { csrfFetch, sessionCookieFrom } from "./csrf-fixture.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -127,9 +128,9 @@ export async function stop(child) {
     if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
 }
 
-export async function connect(cdpPort, origin) {
+export async function connect(cdpPort, origin, targetId) {
     const targets = await (await fetch(`http://127.0.0.1:${cdpPort}/json/list`)).json();
-    const socket = new WebSocket(targets.find(t => t.type === "page").webSocketDebuggerUrl);
+    const socket = new WebSocket(targets.find(t => t.type === "page" && (!targetId || t.id === targetId)).webSocketDebuggerUrl);
     await new Promise((resolve, reject) => { socket.addEventListener("open", resolve, { once: true }); socket.addEventListener("error", reject, { once: true }); });
     let sequence = 0;
     const pending = new Map();
@@ -232,6 +233,8 @@ async function main() {
         const apiPort = await freePort();
         proxy = await startProxy({ apiPort, reactRoot, vueRoot });
         const origin = `http://127.0.0.1:${proxy.address().port}`;
+        const csrfKey = join(temp, 'csrf.key');
+        writeFileSync(csrfKey, randomBytes(32), { mode: 0o600 });
         const workspaceStatus = async value => (await fetch(`${origin}/api/agriculture/workspaces`, {
             headers: value ? { Cookie: `${COOKIE}=${value}` } : {},
         })).status;
@@ -239,12 +242,13 @@ async function main() {
             PATH: process.env.PATH, HOME: temp, GIN_MODE: "release", CANVAS_DATABASE_DRIVER: "sqlite", CANVAS_BACKEND_DATA_DIR: temp,
             CANVAS_BACKEND_ADDR: `127.0.0.1:${apiPort}`, CANVAS_AUTO_MIGRATE: "true", CANVAS_CORS_ORIGINS: origin,
             FLOW_AGRICULTURE_ENABLED: "true", FLOW_AGRICULTURE_ALLOW_SQLITE_DEV: "true",
+            FLOW_AGRICULTURE_EXTERNAL_ORIGIN: origin, FLOW_AGRICULTURE_ALLOW_HTTP_LOOPBACK_DEV: "true", FLOW_AGRICULTURE_CSRF_KEY_FILE: csrfKey,
         }, stdio: "ignore" });
         await ready(`${origin}/api/auth/settings`, backend);
         const username = `e2e_${randomBytes(6).toString("hex")}`;
         const password = randomBytes(24).toString("base64url");
         const displayName = "Agriculture Session Fixture";
-        const registered = await fetch(`${origin}/api/auth/register`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ username, password, displayName, acceptedTerms: true }) });
+        const registered = await csrfFetch(`${origin}/api/auth/register`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ username, password, displayName, acceptedTerms: true }) });
         const registerBody = await registered.json();
         const actor = registerBody.data?.user?.id;
         check(registered.ok && Boolean(actor), "real_fixture_registration");
@@ -307,7 +311,7 @@ async function main() {
         const denied = await fetch(`${origin}/api/auth/session`, { headers: { Cookie: `${COOKIE}=${wrong}` } });
         check((await denied.json()).data?.user === null, "wrong_token_is_anonymous");
         check(await workspaceStatus(wrong) === 401, "wrong_token_workspace_http_unauthorized");
-        await fetch(`${origin}/api/auth/logout`, { method: "POST", headers: { Cookie: `${COOKIE}=${wrong}` } });
+        await csrfFetch(`${origin}/api/auth/logout`, { method: "POST", headers: { Cookie: `${COOKIE}=${wrong}` } });
         check(await sessionActor() === actor, "wrong_token_logout_does_not_revoke_original");
         await cdp.navigate("/");
         await cdp.poll(`document.body.innerText.includes(${JSON.stringify(displayName)})`, "React sees same actor");
@@ -331,10 +335,9 @@ async function main() {
         check((await replay.json()).data?.user === null, "logout_revoked_cookie_cannot_be_replayed");
         check(await workspaceStatus(original) === 401, "revoked_cookie_workspace_http_unauthorized");
         // Create a real session via API, then change ONLY this owned SQLite fixture's expiry.
-        const relogin = await fetch(`${origin}/api/auth/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ username, password }) });
+        const relogin = await csrfFetch(`${origin}/api/auth/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ username, password }) });
         report.stage = "expired_session_negative";
-        const setCookie = relogin.headers.get("set-cookie");
-        const expired = setCookie?.split(";")[0].slice(COOKIE.length + 1);
+        const expired = sessionCookieFrom(relogin);
         check(relogin.ok && Boolean(expired), "real_session_created_for_expiry_negative");
         const expire = spawnSync("python3", ["-c", "import json,sqlite3,sys; x=json.load(sys.stdin); db=sqlite3.connect(x['db']); c=db.execute(\"UPDATE auth_sessions SET expires_at='2000-01-01 00:00:00+00:00' WHERE id=?\",(x['id'],)); assert c.rowcount==1; db.commit(); db.close()"], { input: JSON.stringify({ db: join(temp, "open_ai_canvas.db"), id: decodeURIComponent(expired).split(".")[0] }), encoding: "utf8", stdio: ["pipe", "ignore", "ignore"] });
         check(expire.status === 0, "owned_fixture_expiry_mutation");
@@ -353,8 +356,8 @@ async function main() {
         const bind = spawnSync("python3", ["-c", "import json,sqlite3,sys; x=json.load(sys.stdin); db=sqlite3.connect(x['db']); c=db.execute('UPDATE users SET email=? WHERE id=?',(x['email'],x['id'])); assert c.rowcount==1; db.commit(); db.close()"], { input: JSON.stringify({ db: join(temp, "open_ai_canvas.db"), id: actor, email: fixtureEmail }), stdio: ["pipe", "ignore", "ignore"] });
         check(bind.status === 0, "owned_fixture_email_bound_for_password_reset");
         const loginFixture = async () => {
-            const response = await fetch(`${origin}/api/auth/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ username, password }) });
-            const value = response.headers.get("set-cookie")?.split(";")[0].slice(COOKIE.length + 1);
+            const response = await csrfFetch(`${origin}/api/auth/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ username, password }) });
+            const value = sessionCookieFrom(response);
             if (!response.ok || !value) throw new Error("real reset session fixture login failed");
             return decodeURIComponent(value);
         };
@@ -362,7 +365,7 @@ async function main() {
         const preResetB = await loginFixture();
         check(await workspaceStatus(preResetA) === 200 && await workspaceStatus(preResetB) === 200, "two_real_pre_reset_sessions_are_authorized");
         smtp = await startLocalSMTPSink(fixtureEmail);
-        const mailConfig = await fetch(`${origin}/api/admin/settings/email`, { method: "PATCH", headers: { "content-type": "application/json", Cookie: `${COOKIE}=${preResetA}` },
+        const mailConfig = await csrfFetch(`${origin}/api/admin/settings/email`, { method: "PATCH", headers: { "content-type": "application/json", Cookie: `${COOKIE}=${preResetA}` },
             body: JSON.stringify({ enabled: true, host: "127.0.0.1", port: smtp.port, encryption: "none", username: "", password: "", fromEmail: "noreply@fixture.invalid", fromName: "Local Test Fixture" }) });
         check(mailConfig.ok && (await mailConfig.json()).code === 0, "real_admin_api_configures_only_loopback_smtp_fixture");
         await cdp.send("Network.deleteCookies", { name: COOKIE, url: origin });
@@ -386,7 +389,7 @@ async function main() {
         check(await workspaceStatus(preResetA) === 401 && await workspaceStatus(preResetB) === 401, "password_reset_revokes_both_old_sessions_protected_http");
         const consumed = spawnSync("python3", ["-c", "import json,sqlite3,sys; x=json.load(sys.stdin); db=sqlite3.connect(x['db']); r=db.execute(\"SELECT code_hash,used_at FROM email_verification_codes WHERE email=? AND purpose='password_reset' ORDER BY created_at DESC LIMIT 1\",(x['email'],)).fetchone(); assert r and r[1] and len(r[0])==64 and r[0]!=x['code']; db.close()"], { input: JSON.stringify({ db: join(temp, "open_ai_canvas.db"), email: fixtureEmail, code: resetCode }), stdio: ["pipe", "ignore", "ignore"] });
         check(consumed.status === 0, "real_reset_code_is_hashed_and_consumed_in_owned_database");
-        const reused = await fetch(`${origin}/api/auth/password-reset`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: fixtureEmail, emailCode: resetCode, password: randomBytes(24).toString("base64url") }) });
+        const reused = await csrfFetch(`${origin}/api/auth/password-reset`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: fixtureEmail, emailCode: resetCode, password: randomBytes(24).toString("base64url") }) });
         check(reused.status === 400, "consumed_reset_code_cannot_be_replayed");
         await cdp.send("Network.setCookie", { name: COOKIE, value: preResetB, url: origin, path: "/", httpOnly: true, sameSite: "Lax" });
         await cdp.navigate("/agri/");
@@ -395,7 +398,7 @@ async function main() {
         await cdp.navigate("/");
         await cdp.poll("!!document.querySelector('#login-account')", "React rejects password-reset old session");
         check(await sessionActor() === null, "react_rejects_old_cookie_after_password_reset");
-        const oldPasswordLogin = await fetch(`${origin}/api/auth/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ username, password }) });
+        const oldPasswordLogin = await csrfFetch(`${origin}/api/auth/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ username, password }) });
         check(oldPasswordLogin.status === 401, "old_password_http_login_is_rejected");
         report.stage = "password_reset_new_password_real_login";
         await cdp.navigate("/login?next=%2Fagri%2F");

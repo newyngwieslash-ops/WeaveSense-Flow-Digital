@@ -53,8 +53,9 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p .local/bin
+          go -C backend test ./internal/browsersecurity ./internal/auth ./internal/handler ./cmd/server
           go -C backend build -o "$PWD/.local/bin/agriculture-platform" ./cmd/server
-          (cd web && bun install --frozen-lockfile --ignore-scripts && bun test test/agriculture-profile.test.ts test/auth-return-path.test.ts test/auth-session-race.test.ts && bun run build:agriculture)
+          (cd web && bun install --frozen-lockfile --ignore-scripts && bun test test/agriculture-profile.test.ts test/auth-return-path.test.ts test/auth-session-race.test.ts test/agriculture-session-security.test.ts && bun run build:agriculture)
           (cd services/agri-gis/frontend && npm ci --ignore-scripts --no-audit --no-fund && bun run test:agriculture && npm run build:agriculture)
       - name: Hash-pinned configuration tests
         working-directory: product
@@ -90,7 +91,7 @@ jobs:
           test -n "$chrome"
           export CHROME_BIN="$chrome"
           "$chrome" --version
-          node --test scripts/agriculture/session-e2e.test.mjs scripts/agriculture/gateway-browser-e2e.test.mjs
+          node --test scripts/agriculture/session-e2e.test.mjs scripts/agriculture/gateway-browser-e2e.test.mjs scripts/agriculture/csrf-fixture.test.mjs
           node scripts/agriculture/gateway-browser-e2e.mjs
       - name: Independent local-only Docker build and static failure smoke
         if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}

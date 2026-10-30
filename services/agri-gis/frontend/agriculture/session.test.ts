@@ -170,17 +170,25 @@ describe('bounded agricultural deep links', () => {
 })
 
 describe('confirmed unified logout', () => {
+  test('malformed CSRF prevents logout write rather than retrying without protection', async () => {
+    const { controller, requests } = client([response({ token: 'invalid' })])
+    await controller.logout()
+    expect(controller.state.error?.code).toBe('LOGOUT_FAILED')
+    expect(requests.map(item => item.path)).toEqual(['/api/auth/csrf'])
+  })
   test('posts without client identity then confirms cookie session is gone', async () => {
-    const { controller, requests } = client([response({ user }), response([workspace]), response({ ok: true }), response({ user: null })])
+    const { controller, requests } = client([response({ user }), response([workspace]), response({ token: 'a'.repeat(64) }), response({ ok: true }), response({ user: null })])
     await controller.refresh()
     await controller.logout()
     expect(controller.state.status).toBe('anonymous')
     expect(controller.state.error).toBeNull()
     expect(controller.state.user).toBeNull()
-    expect(requests[2].path).toBe('/api/auth/logout')
-    expect(requests[2].init.method).toBe('POST')
-    expect(requests[2].init.body).toBe('{}')
-    expect(requests[3].path).toBe('/api/auth/session')
+    expect(requests[2].path).toBe('/api/auth/csrf')
+    expect(requests[3].path).toBe('/api/auth/logout')
+    expect(requests[3].init.method).toBe('POST')
+    expect(requests[3].init.body).toBe('{}')
+    expect(requests[3].init.headers).toEqual({ Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-Token': 'a'.repeat(64) })
+    expect(requests[4].path).toBe('/api/auth/session')
   })
   for (const [label, replies] of [
     ['failed HTTP', [response(null, 500)]],
@@ -189,7 +197,7 @@ describe('confirmed unified logout', () => {
     ['confirmation offline', [response({ ok: true }), new Error('offline')]],
   ] as const) {
     test(`never reports success after ${label}`, async () => {
-      const { controller } = client([...replies])
+      const { controller } = client([response({ token: 'a'.repeat(64) }), ...replies])
       await controller.logout()
       expect(controller.state.status).toBe('error')
       expect(controller.state.error?.code).toBe('LOGOUT_FAILED')
@@ -197,7 +205,7 @@ describe('confirmed unified logout', () => {
     })
   }
   test('expired verification is a confirmed absent session', async () => {
-    const { controller } = client([response({ ok: true }), response(null, 401)])
+    const { controller } = client([response({ token: 'a'.repeat(64) }), response({ ok: true }), response(null, 401)])
     await controller.logout()
     expect(controller.state.status).toBe('anonymous')
     expect(controller.state.error).toBeNull()
@@ -206,15 +214,52 @@ describe('confirmed unified logout', () => {
     let resolveLogout!: (value: Response) => void
     const pending = new Promise<Response>((resolve) => { resolveLogout = resolve })
     let calls = 0
-    const controller = new SessionController(async () => ++calls === 1 ? pending : response({ user: null }))
+    const controller = new SessionController(async () => ++calls === 1 ? response({ token: 'a'.repeat(64) }) : calls === 2 ? pending : response({ user: null }))
     const logout = controller.logout()
     await controller.refresh()
     expect(controller.state.status).toBe('logging_out')
     resolveLogout(response({ ok: true }))
     await logout
     expect(controller.state.status).toBe('anonymous')
-    expect(calls).toBe(2)
+    expect(calls).toBe(3)
   })
+})
+
+test('hidden or hinted invalidation clears projection and refuses deferred old membership', async () => {
+  let resolveOld!: (response: Response) => void
+  const pending = new Promise<Response>(resolve => { resolveOld = resolve })
+  let calls = 0
+  let membershipStarted!: () => void
+  const started = new Promise<void>(resolve => { membershipStarted = resolve })
+  const controller = new SessionController(async () => {
+    if (++calls === 1) return response({ user })
+    membershipStarted(); return pending
+  })
+  const old = controller.refresh('', '/agri/workspaces/workspace-a')
+  await started
+  controller.invalidate()
+  resolveOld(response([workspace]))
+  await old
+  expect(controller.state.user).toBeNull()
+  expect(controller.state.selected).toBeNull()
+  expect(controller.state.status).toBe('loading')
+})
+
+test('hidden pages erase identity without a background fetch; visible hint rechecks server', async () => {
+  const { controller, requests } = client([response({ user }), response([workspace]), response({ user: null })])
+  const events = new EventTarget(), documents = new EventTarget()
+  let visible: DocumentVisibilityState = 'visible', hint = () => {}
+  const initial = new Promise<void>(resolve => { controller.onChange = value => { if (value.status === 'ready') resolve() } })
+  const unbind = bindSessionLifecycle(controller, events, documents, () => visible, () => '', () => '/agri/', () => '', callback => { hint = callback; return () => { hint = () => {} } })
+  await initial
+  visible = 'hidden'; documents.dispatchEvent(new Event('visibilitychange'))
+  expect(controller.state.user).toBeNull(); expect(requests).toHaveLength(2)
+  hint(); expect(requests).toHaveLength(2)
+  visible = 'visible'
+  const anonymous = new Promise<void>(resolve => { controller.onChange = value => { if (value.status === 'anonymous') resolve() } })
+  hint(); await anonymous
+  expect(requests).toHaveLength(3)
+  unbind()
 })
 
 test('BFCache pageshow clears restored actor, requests current server session, and unbinds on unmount', async () => {

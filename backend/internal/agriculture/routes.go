@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"yingce/backend/internal/browsersecurity"
 	"yingce/backend/internal/database"
 	"yingce/backend/internal/flow"
 	"yingce/backend/internal/kernel"
@@ -141,7 +142,7 @@ func (a API) sessionMiddleware(response func(*gin.Context, any, error)) gin.Hand
 			c.Abort()
 			return
 		}
-		if c.Request.Method != http.MethodGet && c.Request.Method != http.MethodHead {
+		if !browsersecurity.Configured(c) && c.Request.Method != http.MethodGet && c.Request.Method != http.MethodHead {
 			origin := c.GetHeader("Origin")
 			if origin != "" {
 				parsed, e := url.Parse(origin)

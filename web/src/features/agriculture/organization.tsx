@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Alert, App, Button, Card, Input, Select, Space, Tag } from "antd";
 import { Link, useSearchParams } from "react-router";
 import { agricultureAPI, assignableAgricultureRoles, canChangeAgricultureMemberRoles, type AgricultureMember } from "@/services/api/agriculture";
 import { useUserStore } from "@/stores/use-user-store";
 import { OrganizationController, type OrganizationState } from "./organization-controller";
+import { ConfirmationScope } from './confirmation-scope';
 
 const labels: Record<string, string> = { viewer: "只读客户", analyst: "GIS分析员", editor: "地块编辑员", field_operator: "巡查员", reviewer: "审核员", farm_manager: "农场经理", tenant_admin: "租户管理员", billing_admin: "财务管理员" };
 const roleLabel = (role: string) => labels[role] ?? `未识别角色（${role}）`;
@@ -27,6 +28,7 @@ export default function OrganizationPage() {
     const [params] = useSearchParams();
     const preferred = params.get("workspace_id") ?? "";
     const { modal } = App.useApp();
+    const confirmations = useRef(new ConfirmationScope());
     const [controller, setController] = useState<OrganizationController | null>(null);
     const [state, setState] = useState<OrganizationState | null>(null);
     const [name, setName] = useState("");
@@ -38,12 +40,21 @@ export default function OrganizationPage() {
         current.onChange = setState; setController(current); setState(current.state);
         setToken(""); setName(""); setEmail(""); setRole(undefined);
         void current.refresh(preferred);
-        return () => current.dispose();
+        return () => {
+            current.dispose();
+            confirmations.current.clear();
+        };
     }, [userId, preferred]);
     const selected = state?.workspaces.find(w => w.id === state.selectedId);
     const disabled = !controller || !state || state.loading || state.busy;
     const confirm = (title: string, detail: string, action: () => Promise<unknown>) => {
-        modal.confirm({ title, content: detail, okText: "确认执行", cancelText: "取消", okButtonProps: { ...{ "data-testid": "org-confirm" } }, cancelButtonProps: { ...{ "data-testid": "org-cancel" } }, onOk: action });
+        let forget = () => {};
+        const handle = modal.confirm({ title, content: detail, okText: "确认执行", cancelText: "取消", okButtonProps: { ...{ "data-testid": "org-confirm" } }, cancelButtonProps: { ...{ "data-testid": "org-cancel" } }, onOk: action, afterClose: () => { forget(); } });
+        forget = confirmations.current.add(() => {
+            // Clear protected preview before the portal's close animation ends.
+            handle.update({ title: null, content: null, footer: null });
+            handle.destroy();
+        });
     };
     const memberRoles = (member: AgricultureMember, roles: string[]) => {
         if (!controller || !selected) return;

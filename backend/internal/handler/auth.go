@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"yingce/backend/internal/browsersecurity"
 	"yingce/backend/internal/model"
 	"yingce/backend/internal/service"
 
@@ -27,6 +28,11 @@ func RegisterAuthRoutes(r *gin.RouterGroup, svc *service.Service) {
 		if err != nil {
 			failService(c, err)
 			return
+		}
+		// Legacy OAuth state is global, not bound to its initiating browser.
+		// Do not advertise an unsafe provider in the agriculture deployment.
+		if browsersecurity.Configured(c) {
+			settings.LinuxDOEnabled = false
 		}
 		ok(c, settings)
 	})
@@ -141,6 +147,9 @@ func RegisterAuthRoutes(r *gin.RouterGroup, svc *service.Service) {
 		ok(c, gin.H{"user": result.User})
 	})
 	r.GET("/auth/linuxdo/start", func(c *gin.Context) {
+		if rejectUnboundAgricultureOAuth(c) {
+			return
+		}
 		if !enforceRateLimit(c, "linuxdo-start:"+c.ClientIP(), 20, 10*time.Minute) {
 			return
 		}
@@ -222,6 +231,9 @@ func RegisterOAuthCallbackRoutes(r gin.IRoutes, svc *service.Service) {
 
 func linuxDOCallbackHandler(svc *service.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if rejectUnboundAgricultureOAuth(c) {
+			return
+		}
 		if !enforceRateLimit(c, "linuxdo-callback:"+c.ClientIP(), 30, 10*time.Minute) {
 			return
 		}
@@ -233,6 +245,15 @@ func linuxDOCallbackHandler(svc *service.Service) gin.HandlerFunc {
 		setSessionCookie(c, result.Session.Session, result.Session.MaxAgeSecs)
 		c.Redirect(http.StatusFound, result.Next)
 	}
+}
+
+func rejectUnboundAgricultureOAuth(c *gin.Context) bool {
+	if !browsersecurity.Configured(c) {
+		return false
+	}
+	c.Header("Cache-Control", "no-store")
+	c.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"code": 503, "data": nil, "msg": "此登录方式尚未完成浏览器绑定适配", "reason": "oauth_browser_binding_unavailable"})
+	return true
 }
 
 func RegisterAdminRoutes(r *gin.RouterGroup, svc *service.Service) {
@@ -593,7 +614,11 @@ func passwordResetRateLimitSubject(value string) string {
 }
 
 func setSessionCookie(c *gin.Context, value string, maxAge int) {
+	browsersecurity.ClearPreauth(c)
 	secure := c.Request.TLS != nil || strings.EqualFold(strings.TrimSpace(c.GetHeader("X-Forwarded-Proto")), "https")
+	if configured, ok := browsersecurity.CookieSecure(c); ok {
+		secure = configured
+	}
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     service.SessionCookieName,
 		Value:    value,
@@ -606,7 +631,11 @@ func setSessionCookie(c *gin.Context, value string, maxAge int) {
 }
 
 func clearSessionCookie(c *gin.Context) {
+	browsersecurity.ClearPreauth(c)
 	secure := c.Request.TLS != nil || strings.EqualFold(strings.TrimSpace(c.GetHeader("X-Forwarded-Proto")), "https")
+	if configured, ok := browsersecurity.CookieSecure(c); ok {
+		secure = configured
+	}
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     service.SessionCookieName,
 		Value:    "",

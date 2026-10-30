@@ -6,6 +6,9 @@ import { useUserStore } from "@/stores/use-user-store";
 let sessionGeneration = 0;
 
 export function beginSessionRevalidation() {
+    ++sessionGeneration;
+    void appQueryClient.cancelQueries({ queryKey: ["agriculture"] });
+    appQueryClient.removeQueries({ queryKey: ["agriculture"] });
     const store = useUserStore.getState();
     // An already anonymous form contains no protected projection. Preserve its
     // input on focus rechecks, but hide authenticated or unknown state at once.
@@ -15,10 +18,10 @@ export function beginSessionRevalidation() {
 // The agriculture product shares the platform cookie/API and user identity. Film
 // canvas persistence is not initialized in this product's dependency graph.
 export async function applyUserSession(payload: AuthSessionPayload) {
+    beginSessionRevalidation();
     const generation = ++sessionGeneration;
     const store = useUserStore.getState();
-    if (payload.user === null) beginSessionRevalidation();
-    else store.setHydrated(false);
+    if (payload.user !== null) store.setHydrated(false);
     await appQueryClient.cancelQueries({ queryKey: ["agriculture"] });
     if (generation !== sessionGeneration) return;
     // Membership can change without changing the user ID. Never rehydrate the

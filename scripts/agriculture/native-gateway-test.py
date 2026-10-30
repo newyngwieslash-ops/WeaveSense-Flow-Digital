@@ -63,6 +63,9 @@ def main():
     (run/'backend').mkdir()
     api_port, port = free_port(), free_port()
     origin = f'http://127.0.0.1:{port}'
+    csrf_key = run/'csrf.key'
+    csrf_key.write_bytes(secrets.token_bytes(32))
+    csrf_key.chmod(0o600)
     template_path = ROOT/'deploy/agriculture/nginx.conf.template'
     template = template_path.read_text()
     replacements = {
@@ -90,11 +93,21 @@ def main():
 
     def request(path, method='GET', body=None, headers=None, authenticated=True):
         hdr = dict(headers or {})
+        transport = opener if authenticated else urllib.request.build_opener(
+            urllib.request.ProxyHandler({}), urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()), NoRedirect())
+        if method not in ('GET', 'HEAD', 'OPTIONS'):
+            token_headers = {'Origin': origin}
+            if 'Cookie' in hdr: token_headers['Cookie'] = hdr['Cookie']
+            with transport.open(urllib.request.Request(origin+'/api/auth/csrf', headers=token_headers), timeout=10) as token_response:
+                token = json.load(token_response)['data']['token']
+            if not re.fullmatch('[a-f0-9]{64}', token): raise AssertionError('invalid CSRF fixture response')
+            hdr.setdefault('Origin', origin)
+            hdr['X-CSRF-Token'] = token
         if body is not None: hdr['Content-Type'] = 'application/json'
         req = urllib.request.Request(origin+path, method=method, headers=hdr,
             data=None if body is None else json.dumps(body).encode())
         try:
-            response = (opener if authenticated else anonymous).open(req, timeout=10)
+            response = transport.open(req, timeout=10)
         except urllib.error.HTTPError as error:
             response = error
         with response:
@@ -144,6 +157,8 @@ def main():
                 'CANVAS_DATABASE_DRIVER':'sqlite','CANVAS_BACKEND_DATA_DIR':str(run/'backend'),
                 'CANVAS_BACKEND_ADDR':f'127.0.0.1:{api_port}','CANVAS_AUTO_MIGRATE':'true',
                 'CANVAS_CORS_ORIGINS':origin,'FLOW_AGRICULTURE_ENABLED':'true',
+                'FLOW_AGRICULTURE_EXTERNAL_ORIGIN':origin,'FLOW_AGRICULTURE_ALLOW_HTTP_LOOPBACK_DEV':'true',
+                'FLOW_AGRICULTURE_CSRF_KEY_FILE':str(csrf_key),
                 'FLOW_AGRICULTURE_ALLOW_SQLITE_DEV':'true'},stdout=log,stderr=log)
             processes.append(backend)
             nginx_cmd=[str(args.nginx.resolve()),'-p',str(run)+'/', '-c',str(config),

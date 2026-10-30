@@ -72,6 +72,8 @@ func respond(c *gin.Context, data any, err error) {
 		data = nil
 		status, reason, msg = http.StatusInternalServerError, "agriculture_unavailable", "农业服务暂不可用"
 		switch {
+		case errors.Is(err, ErrObjectRange):
+			status, reason, msg = 416, "range_unavailable", "请求的字节范围不可用"
 		case errors.Is(err, ErrPreconditionRequired):
 			status, reason, msg = 428, "precondition_required", "必须提供预期授权版本"
 		case errors.Is(err, ErrUnauthenticated):
@@ -165,6 +167,7 @@ func (a API) sessionMiddleware(response func(*gin.Context, any, error)) gin.Hand
 
 func (a API) Register(api gin.IRouter) {
 	a.registerAuthorizationV1(api)
+	a.registerObjectGateway(api)
 	g := api.Group("/agriculture")
 	g.Use(a.sessionMiddleware(respond))
 	actor := func(c *gin.Context) string { return c.GetString("agriculture.actor") }

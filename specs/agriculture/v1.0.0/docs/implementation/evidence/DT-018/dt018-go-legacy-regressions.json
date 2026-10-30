@@ -1,0 +1,158 @@
+{
+  "kind": "dt018_go_legacy_regressions",
+  "tested_source_commit": "b7be7c44c709882ec80e030ac60802b3efd1a85b",
+  "database_and_server_regression": {
+    "database": "pass 21.027s",
+    "server": "pass 3.646s",
+    "log": ".local/flow-scope-app-regression.log"
+  },
+  "commands": [
+    "go test ./internal/database ./internal/app ./cmd/server -count=1",
+    "go test ./internal/app -count=1",
+    "go test ./internal/flow -count=1",
+    "go test ./internal/edumath -count=1",
+    "go test ./internal/edumath -run ^Test(ScheduledLedgerReconcile|LedgerReconcileAndExport|LedgerWindowConfig)$ -count=1",
+    "python3 scripts/agriculture/membership-ci-result.test.py"
+  ],
+  "source_files": {
+    "backend/cmd/server/main.go": "5b6694eae9ffb5ea1278d5a77b267fcda52c555fa788a974280a0d34cf944cc5",
+    "backend/internal/app/cloud_agent_canvas_event_size_test.go": "4e9bd33f2ca010cc3e4b4f5738e04b9c8ce24373080363ebc004efd8602a2afa",
+    "backend/internal/app/cloud_agent_flow_p6.go": "4827652843cfa6b7039a4d0f177cad3f2a2ae06a54f98c340d2e8319cf1a8c15",
+    "backend/internal/app/creation_test.go": "9c72b2e2d617a316f7d2b77bb56a153e5e5a3042ef63465848c8af14fe946f4c",
+    "backend/internal/app/service.go": "8585c8fe33a413de2109c69f2f262e4aee5818c3891ed5dee44ab93aaec2fcdc",
+    "backend/internal/database/migration_flow_scanner.go": "bd9b5726d6880c3786fea08f0a97cafc5521d6b52d2feae4a5e69586a9c2f06e",
+    "backend/internal/database/migration_flow_scope.go": "4102c17ef0fcaeca85afaca21220c005484b31c1b3cc3c06549e1ff4bd00bc7c",
+    "backend/internal/database/migrations.go": "cd6e1ea8800c91c90d0d47da1c8ec898b3f297fd4dabf9666fb7169851b35a14",
+    "backend/internal/edumath/artifacts.go": "79f15e7cd13ebb15b7ea1549735d7639f5ea66291beb4c3e2b55c169cd892e54",
+    "backend/internal/edumath/authz.go": "d39dfca5ef475d90dbe8a0af1c95ee84793d119085521379b00b3fe4783ae9f8",
+    "backend/internal/edumath/classes_test.go": "cf9d3053c85dfc36d867e24ae31beafbadef9fa1ab4cb34a2791456e1eb9a576",
+    "backend/internal/edumath/e2e_test.go": "d58d9094ecd4660722b67e47914539d35745d64c30e0ade0c254a37828faac9a",
+    "backend/internal/edumath/handlers.go": "988aa2e4837890ca812e3f19faaebada96bec45ad7c33cd9add39407003414fb",
+    "backend/internal/edumath/help_test.go": "cdf7671fac8676d1f1013bd62b5cb50d134de7e5a4eec8694f3e099f3c266ebd",
+    "backend/internal/edumath/ledger_scanner_postgres_test.go": "6d726dcfb9bdd03166b46bc7d953215cd269977ffabebcad4dc26f7a7337ac67",
+    "backend/internal/edumath/service.go": "74a8e2cfbb2c4eb7a38e7694d574399b9f0eba073ad77d801e39bec97e07e755",
+    "backend/internal/edumath/worker.go": "3983f350083f479f531904ea5bf63e48cae4fde08ca36220835d4f42efd0ef2a",
+    "backend/internal/flow/background_scanner.go": "6ecf656262ce2b9db483ae95e6e98974fe28b5edd54275060b8ef1f10ad3a30c",
+    "backend/internal/flow/continuation_scope_postgres_test.go": "92459d1b2b8e93e433c680e1bb1818a4f71693e5d2f98340ff979433ab0daf60",
+    "backend/internal/flow/notify.go": "b6bab2b7bf8ae26b7d5f5c22904bed8b315d7ea874bf7f1bf7c94cf7efb615fa",
+    "backend/internal/flow/routes_p5.go": "9cfab954b77ef36603df9c91e3f39836c260d2e0ae156057d8c8b1dc436efe19",
+    "backend/internal/flow/scanner_scope_postgres_test.go": "eb0bd2149228da85631c255f723c0bf3379522882ee2b8e7d7d48524cd832eaf",
+    "backend/internal/flow/waits.go": "bfecc38ee9a5b179aed756b1c9c2d77e1fc3444c808d4ca7758ca85966feaef6",
+    "scripts/agriculture/membership-ci-result.py": "e3d04641245513497427388067e24b75e579a86fd85b0fd861ba4f990aa11b44",
+    "scripts/agriculture/membership-ci-result.test.py": "3d8dd05f67b11d0f7b94e5b18fb4f73b470fa6d578706cfc71671d53ea11c568",
+    "scripts/agriculture/native-flow-scope-test.py": "c6c169fd50b2bc940a95b7577778bf1444bfdc04d4a0866e58c892d4737cf86c"
+  },
+  "logs": [
+    {
+      "name": "first_app",
+      "result": "failed",
+      "top_level_failures": 141,
+      "local_log": ".local/flow-scope-app-regression.log",
+      "sha256": "9e100525f618b1ae0a713a6096c88154427fd80acb753f8403de9bc1c04a80b1",
+      "go_terminal_results": [
+        "ok  \tyingce/backend/internal/database\t21.027s",
+        "FAIL\tyingce/backend/internal/app\t208.385s",
+        "ok  \tyingce/backend/cmd/server\t3.646s"
+      ]
+    },
+    {
+      "name": "active_actor_only",
+      "result": "failed",
+      "top_level_failures": 132,
+      "local_log": ".local/flow-scope-app-regression2.log",
+      "sha256": "eaa2eccb9fab0bd7dbba7123308109a274ff7822158b9a98e6bcf1327f455cf4",
+      "go_terminal_results": [
+        "FAIL\tyingce/backend/internal/app\t203.876s"
+      ]
+    },
+    {
+      "name": "complete_metadata_fixture",
+      "result": "failed",
+      "top_level_failures": 5,
+      "local_log": ".local/flow-scope-app-regression3.log",
+      "sha256": "68f4f2935ecf4b5f507d1dbc69fecdf922f1d46d51570a855273041fa7a1d690",
+      "go_terminal_results": [
+        "FAIL\tyingce/backend/internal/app\t219.307s"
+      ]
+    },
+    {
+      "name": "final_app",
+      "result": "pass",
+      "top_level_failures": 0,
+      "local_log": ".local/flow-scope-app-regression4.log",
+      "sha256": "220a0498068ee9217f8d1ac62740029ef2e3bb96fd453b65775093b918029563",
+      "go_terminal_results": [
+        "ok  \tyingce/backend/internal/app\t228.963s"
+      ]
+    },
+    {
+      "name": "full_flow",
+      "result": "pass",
+      "top_level_failures": 0,
+      "local_log": ".local/flow-scope-full-final.log",
+      "sha256": "9a74604d05b5c9755dc03050fe7a352509d83a23933100c3938e395cc6a02a9e",
+      "go_terminal_results": [
+        "ok  \tyingce/backend/internal/flow\t69.793s"
+      ]
+    },
+    {
+      "name": "full_edumath",
+      "result": "pass",
+      "top_level_failures": 0,
+      "local_log": ".local/edumath-all-scope2.log",
+      "sha256": "2fab34710a50772d3996a7a65f142766a229101009b8a3cbdefdfa1531c4b07d",
+      "go_terminal_results": [
+        "ok  \tyingce/backend/internal/edumath\t124.200s"
+      ]
+    },
+    {
+      "name": "daily_ledger_regression",
+      "result": "pass",
+      "top_level_failures": 0,
+      "local_log": ".local/flow-math-daily-regression.log",
+      "sha256": "2ba63269ec3623804e60dc76b4b9bc2ae712b214b71bc723570936e3cc66265e",
+      "go_terminal_results": [
+        "ok  \tyingce/backend/internal/edumath\t6.100s"
+      ]
+    },
+    {
+      "name": "five_real_pi_roundtrips",
+      "result": "pass",
+      "top_level_failures": 0,
+      "local_log": ".local/flow-pi-roundtrip-recovered.log",
+      "sha256": "a3502266a63ebb70123fed9ded1eababbf3cd79b8be7bc041c8a20463f6e0dea",
+      "go_terminal_results": [
+        "ok  \tyingce/backend/internal/app\t16.220s"
+      ]
+    },
+    {
+      "name": "unknown_disabled_actor",
+      "result": "pass",
+      "top_level_failures": 0,
+      "local_log": ".local/flow-actor-admission-negative.log",
+      "sha256": "63bc620d0fed83c1583dd67776f4aee09ad4bd2b54abb60a564adc461f0acbc6",
+      "go_terminal_results": [
+        "ok  \tyingce/backend/internal/app\t0.087s"
+      ]
+    }
+  ],
+  "environment": {
+    "go": "1.25.9",
+    "node": "24.22.1",
+    "npm": "11.9.0",
+    "pi_install": "npm ci --omit=dev --ignore-scripts --no-audit --no-fund --cache ../../../.local/npm-cache",
+    "pi_lock_sha256": "976cc4b3c4edde2eafd3f67d3d6efe7a667a31f103da8f313edded1d4917703b",
+    "pi_installed_packages": 230
+  },
+  "failure_resolution": [
+    "Old authenticated Agent fixtures omitted persisted active actor; strict UserTx now rejects unknown/disabled actors. Added only fixed fixture user, not production auto-creation.",
+    "database.Models() omitted separately migrated tenancy metadata. Two genuine Agent admission fixtures now migrate real User/Tenant/Membership/Workspace/WorkspaceMembership models; original assertions retained.",
+    "Remaining five Pi tests failed because restored workspace lacked locked undici/runtime dependencies. Installed exact existing npm lock without lifecycle scripts; five genuine Node/local HTTP roundtrips and entire app subsequently passed."
+  ],
+  "boundaries": [
+    "Whole-package pass is not a claim every opt-in legacy PG test ran; real restricted-role PG evidence is separately recorded for both bootstraps.",
+    "Python math protocol tests and Pi HTTP peers are fixtures, not paid model services, production payments or live farming.",
+    "Intermediate shell wrappers printed log tails; Go terminal statuses above are retained, not a fabricated all-green initial run.",
+    "Native PG runner independently captures actual subprocess exit codes and enforces every required root/child with no skips."
+  ]
+}

@@ -275,6 +275,32 @@ func chainSnapshot(db *gorm.DB, contexts []chainDomain) (map[string]map[string]s
 	return out, nil
 }
 
+// Assertion-only migration connection in the disposable cluster. Discover every
+// tenant again so an erroneously created organization cannot escape the snapshot.
+// Session/CSRF security records are deliberately not domain governance records.
+func chainPlatformSnapshot(db *gorm.DB) (map[string]string, error) {
+	out := map[string]string{}
+	err := db.Transaction(func(tx *gorm.DB) error {
+		var tenants []string
+		if err := tx.Model(&model.Tenant{}).Order("id").Pluck("id", &tenants).Error; err != nil {
+			return err
+		}
+		if err := tx.Exec("SELECT set_config('app.tenant_ids',?,true)", strings.Join(tenants, ",")).Error; err != nil {
+			return err
+		}
+		for _, table := range []string{"flow_tenants", "flow_memberships", "flow_workspaces", "flow_workspace_memberships", "flow_invites", "flow_billing_accounts", "flow_agriculture_role_bindings", "flow_agriculture_resource_bindings", "flow_agriculture_authorization_epochs", "flow_agriculture_audit_events"} {
+			var value string
+			// Sorting complete JSON also supports epoch rows whose key is tenant_id.
+			if err := tx.Raw("SELECT COALESCE(jsonb_agg(to_jsonb(f) ORDER BY to_jsonb(f)::text),'[]')::text FROM " + table + " f").Scan(&value).Error; err != nil {
+				return err
+			}
+			out[table] = value
+		}
+		return nil
+	})
+	return out, err
+}
+
 func TestIdentityBrowserGISWriteChain(t *testing.T) {
 	required := os.Getenv("AGRI_IDENTITY_CHAIN_REQUIRED") == "1"
 	for _, key := range []string{"AGRI_IDENTITY_PYTHON", "AGRI_TEST_PG_MIGRATION_DSN", "AGRI_TEST_PG_RUNTIME_DSN", "AGRI_TEST_GEO_MIGRATION_DSN", "AGRI_TEST_GEO_RUNTIME_DSN", "CHROME_BIN", "NGINX_BIN", "NGINX_MIME_TYPES"} {
@@ -647,6 +673,10 @@ func TestIdentityBrowserGISWriteChain(t *testing.T) {
 	})
 	inventory := []map[string]any{}
 	t.Run("unauthenticated_open_endpoint_inventory", func(t *testing.T) {
+		platformBefore, e := chainPlatformSnapshot(seed)
+		if e != nil {
+			t.Fatal("platform governance snapshot failed")
+		}
 		before, e := chainSnapshot(geo, ready.Contexts)
 		if e != nil {
 			t.Fatal(e)
@@ -678,6 +708,10 @@ func TestIdentityBrowserGISWriteChain(t *testing.T) {
 		after, e := chainSnapshot(geo, ready.Contexts)
 		if e != nil || !reflect.DeepEqual(before, after) {
 			t.Fatal("anonymous inventory changed domain")
+		}
+		platformAfter, e := chainPlatformSnapshot(seed)
+		if e != nil || !reflect.DeepEqual(platformBefore, platformAfter) {
+			t.Fatal("anonymous inventory changed platform governance")
 		}
 		r, e := http.Post(callback.URL+authorityCheckPath, "application/json", strings.NewReader("{}"))
 		if e != nil {

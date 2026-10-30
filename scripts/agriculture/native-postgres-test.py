@@ -182,7 +182,8 @@ if phase_mode in {'objects', 'jobs'}:
               'services/agri-gis/backend/tests/test_agriculture_actors_postgres.py']
 if phase_mode == 'objects':
     scope += ['services/agri-gis/backend/tests/object_http_fixture.py',
-              'services/agri-gis/backend/tests/test_agriculture_jobs_postgres.py']
+              'services/agri-gis/backend/tests/test_agriculture_jobs_postgres.py',
+              'services/agri-gis/backend/tests/test_agriculture_job_authority.py']
 if phase_mode in {'objects', 'jobs'}:
     scope += [
               'services/agri-gis/backend/tests/job_fixture_support.py',

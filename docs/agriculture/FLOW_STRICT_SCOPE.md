@@ -19,6 +19,11 @@ closed kind 列表覆盖 billing、notification、model、command、external wai
 每类任务独立 keyset cursor，避免只处理前 100 个租户。函数 owner 是无登录 guard，system 没有
 业务表/列 CRUD、TRUNCATE 或角色继承权限，app 也不能调用全域 scanner。
 
+每日数学账本对账不能只取一页后等 24 小时：它使用相同固定函数的 `Page` 接口和调用局部
+游标，每页仍最多 100 ID，但本次对账会读到末页。每校独立事务内重新应用原时间窗口；
+仅有旧作业的学校不记为本轮已对账。取消后下一次从头做幂等全轮，不受普通 worker 的共享
+轮转 cursor 影响。真实 PostgreSQL 105 学校与事务中途取消/重试测试验证该行为。
+
 启动校验拒绝 `current_user != session_user`、危险角色属性、迁移/admission/guard 成员关系，
 以及 app 拥有数据库/业务表的配置。scanner 额外扫描全部 public relations 的表和列权限，
 拒绝误授予其他业务表的权限，不仅检查 provider 表。新部署和已有卷都不能靠角色名称冒充安全配置。
@@ -98,3 +103,14 @@ SQLite 保留原计算实现用于旧逻辑回归，不作为 PostgreSQL 权限�
 管理凭据只注入专门的权限漂移负例子进程，用于构造后恢复错误授权/ownership；不会传入产品。
 报告分别保留开始/结束源码 SHA，运行期间源码变化必须重新验证，不能用结束时哈希冒充实际执行版本。
 本文件列出的实现边界不替代最终整包验收状态，实际结果以对应归档报告为准。
+
+2026-10-30 最终双 bootstrap PostgreSQL 切片，实际源码提交 `4b49887204546fc91ab11433d3ce4ae2da8748b0`：
+
+- 农业：`evidence/w02/dt018-flow-agriculture-postgres.json`，run `15eabf239d9d437eaa7b1440ce4b9b60`。
+- 旧影视 Flow：`evidence/w02/dt018-flow-legacy-postgres.json`，run `6d533a4196104adba6c2d159fe03aeab`。
+- 各自 7 个固定根测试 + 23 子项全部通过，0 skip/missing，启动和结束的 1158 个源码文件哈希一致。
+- 7 根分别验证 provider 原子账本、旧 callback/admission、模型/命令外部 I/O、wait/notification、
+  数学签名下载、学校 onboarding、scanner 最小权限/漂移/分页。所有密码和用户/学校数据均为
+  私有隔离 fixture；没有真实生产账户、通知投递、商业支付或农场验收。
+- 中间失败保留：scanner SQL 参数 `kind` 与业务列重名触发 42702，改为 `scan_kind`；漂移测试曾
+  引用不存在的复数表名，改为实际 `flow_event_inbox` 后重跑真实权限拒绝。没有跳过失败分支。

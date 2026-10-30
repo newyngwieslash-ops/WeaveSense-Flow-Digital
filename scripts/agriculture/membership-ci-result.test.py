@@ -34,6 +34,7 @@ class EvidenceTests(unittest.TestCase):
             "flow-continuations": ("flow", "TestFlowPostgresWaitAndNotificationScopes", ["wait_continuation_outside_short_transaction", "notifications_outside_short_transaction"]),
             "edu-artifacts": ("edumath", "TestEduPostgresSignedArtifactAdmission", ["active_nonmember_student", "signature_negatives_no_http", "revoked_actor_or_role_no_http", "pooled_scope_and_cross_school"]),
             "edu-onboarding": ("edumath", "TestEduPostgresOnboardingAdmission", ["class_invite_hash_and_atomic_limit", "roster_claim_single_use", "disabled_or_revoked_actor_denied", "metadata_scope_and_no_platform_grants"]),
+            "edu-ledger": ("edumath", "TestEduPostgresDailyLedgerPagination", ["all_105_schools_and_window", "cancelled_pass_restarts_without_missing_schools"]),
         }
         for suite, (package, root, children) in suites.items():
             events = [event("pass", package, name) for name in [root] + [root + "/" + child for child in children]] + [event("pass", package)]

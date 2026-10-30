@@ -157,6 +157,7 @@ def main():
                 ("flow-continuations", ["./internal/flow"], "^TestFlowPostgresWaitAndNotificationScopes$"),
                 ("edu-artifacts", ["./internal/edumath"], "^TestEduPostgresSignedArtifactAdmission$"),
                 ("edu-onboarding", ["./internal/edumath"], "^TestEduPostgresOnboardingAdmission$"),
+                ("edu-ledger", ["./internal/edumath"], "^TestEduPostgresDailyLedgerPagination$"),
                 ("flow-scanner", ["./internal/flow"], "^TestFlowPostgresScannerAndRuntimeAdmission$")]:
                 stage = suite
                 argv = [str(go), "-C", "backend", "test", "-p", "1", "-count=1", "-json", *packages, "-run", pattern]

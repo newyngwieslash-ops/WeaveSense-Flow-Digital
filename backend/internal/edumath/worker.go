@@ -114,41 +114,70 @@ func (s *Service) ReconcileAll(ctx context.Context, window time.Duration) (tenan
 	now := s.now()
 	from := now.Add(-window)
 	var ids []string
-	if s.DB.Dialector.Name() == "postgres" {
-		ids, err = s.Scanner.Next(ctx, flow.ScanEduLedger)
-		if err != nil {
+	postgres := s.DB.Dialector.Name() == "postgres"
+	afterTenant := ""
+	if !postgres {
+		if err = s.DB.WithContext(ctx).Model(&model.EduMathJob{}).Where("created_at >= ?", from).Distinct().Pluck("tenant_id", &ids).Error; err != nil {
 			return 0, 0, err
 		}
-	} else if err = s.DB.Model(&model.EduMathJob{}).Where("created_at >= ?", from).Distinct().Pluck("tenant_id", &ids).Error; err != nil {
-		return 0, 0, err
 	}
-	for _, tenant := range ids {
+	for {
 		if ctx.Err() != nil {
 			return tenants, findings, ctx.Err()
 		}
-		e := flow.TenantTx(s.DB, tenant, func(tx *gorm.DB) error {
-			lines, err := s.LedgerReport(tx, tenant, from, now.Add(time.Second))
-			if err != nil {
-				return err
+		if postgres {
+			page, pageErr := s.Scanner.Page(ctx, flow.ScanEduLedger, afterTenant)
+			if pageErr != nil {
+				return tenants, findings, pageErr
 			}
-			a := Actor{UserID: "system:ledger", TenantID: tenant}
-			if _, err := s.RecordLedgerAnomalies(tx, a, lines); err != nil {
-				return err
-			}
-			n := 0
-			for _, l := range lines {
-				n += len(l.Anomalies)
-			}
-			findings += n
-			s.audit(tx, a, "ledger.reconcile.scheduled", tenant, fmt.Sprintf("jobs=%d findings=%d", len(lines), n))
-			return nil
-		})
-		if e != nil {
-			slog.Warn("edumath ledger reconcile failed", "tenant", tenant, "error", e)
-			err = e
-			continue
+			ids = page
 		}
-		tenants++
+		for _, tenant := range ids {
+			if ctx.Err() != nil {
+				return tenants, findings, ctx.Err()
+			}
+			visited, tenantFindings := false, 0
+			e := flow.TenantTx(s.DB.WithContext(ctx), tenant, func(tx *gorm.DB) error {
+				lines, err := s.LedgerReport(tx, tenant, from, now.Add(time.Second))
+				if err != nil {
+					return err
+				}
+				// Discovery exposes only bounded IDs. Reapply the original time
+				// window inside the scoped transaction; old-only schools are not
+				// reported/audited as reconciled this cycle.
+				if len(lines) == 0 {
+					return nil
+				}
+				visited = true
+				a := Actor{UserID: "system:ledger", TenantID: tenant}
+				if _, err := s.RecordLedgerAnomalies(tx, a, lines); err != nil {
+					return err
+				}
+				n := 0
+				for _, l := range lines {
+					n += len(l.Anomalies)
+				}
+				tenantFindings = n
+				s.audit(tx, a, "ledger.reconcile.scheduled", tenant, fmt.Sprintf("jobs=%d findings=%d", len(lines), n))
+				return nil
+			})
+			if e != nil {
+				slog.Warn("edumath ledger reconcile failed", "tenant", tenant, "error", e)
+				err = e
+				continue
+			}
+			if visited {
+				tenants++
+				findings += tenantFindings
+			}
+		}
+		// A daily pass must drain all pages, unlike frequent worker ticks.
+		// An exact multiple requests the final empty page. Cursor is local to
+		// this pass; a cancelled invocation cannot skip tenants on retry.
+		if !postgres || len(ids) < 100 {
+			break
+		}
+		afterTenant = ids[len(ids)-1]
 	}
 	return tenants, findings, err
 }

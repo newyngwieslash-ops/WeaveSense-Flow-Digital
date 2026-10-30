@@ -11,6 +11,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"yingce/backend/internal/database"
+	"yingce/backend/internal/flow"
 	"yingce/backend/internal/model"
 	"yingce/backend/internal/repository"
 )
@@ -28,6 +29,7 @@ func creationTestService(t *testing.T) (*Service, *gorm.DB, string, CreationGuar
 	if err = db.AutoMigrate(database.Models()...); err != nil {
 		t.Fatal(err)
 	}
+	seedAgentAdmissionFixture(t, db)
 	s := &Service{
 		repo: repository.New(db), dataDir: t.TempDir(),
 		disablePiRuntime: true, legacyCloudAgentRootTask: true,
@@ -53,6 +55,34 @@ func creationTestService(t *testing.T) (*Service, *gorm.DB, string, CreationGuar
 	}
 	return s, db, id, CreationGuard{ExecutionEpoch: 1, Owner: "page"}
 }
+
+// The production migration creates tenancy metadata separately from Models().
+// These Agent tests model one real authenticated actor, not arbitrary ID access.
+func seedAgentAdmissionFixture(t *testing.T, db *gorm.DB) {
+	t.Helper()
+	if err := db.AutoMigrate(&model.User{}, &model.Tenant{}, &model.Membership{}, &model.Workspace{}, &model.WorkspaceMembership{}); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Create(&model.User{ID: "user", Username: "fixture-user", Status: model.UserStatusActive}).Error; err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestAgentTenantAdmissionRejectsUnknownAndDisabledActor(t *testing.T) {
+	_, db, _, _ := creationTestService(t)
+	for _, user := range []string{"unknown-fixture-user", "user"} {
+		if user == "user" {
+			if err := db.Model(&model.User{}).Where("id = ?", user).Update("status", "disabled").Error; err != nil {
+				t.Fatal(err)
+			}
+		}
+		called := false
+		if err := flow.UserTx(db, user, func(*gorm.DB) error { called = true; return nil }); err == nil || called {
+			t.Fatal("unknown or disabled actor entered Agent tenant transaction")
+		}
+	}
+}
+
 func creationTextRequest() CreateTaskRequest {
 	return CreateTaskRequest{Type: "canvas_text", Prompt: "只输出测试", Model: "text-test", Input: map[string]any{"mode": "text", "prompt": "只输出测试", "config": map[string]any{"channelId": "channel", "model": "text-test"}}}
 }

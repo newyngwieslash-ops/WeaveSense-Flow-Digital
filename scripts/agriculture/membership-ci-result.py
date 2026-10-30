@@ -18,6 +18,7 @@ def verify(lines, suite):
         "flow-continuations": {"yingce/backend/internal/flow"},
         "edu-artifacts": {"yingce/backend/internal/edumath"},
         "edu-onboarding": {"yingce/backend/internal/edumath"},
+        "edu-ledger": {"yingce/backend/internal/edumath"},
     }[suite]
     passed, failed, skipped, packages = set(), set(), set(), set()
     locations = {}
@@ -97,6 +98,11 @@ def verify(lines, suite):
         for test in [root] + [root + "/" + child for child in ("class_invite_hash_and_atomic_limit", "roster_claim_single_use", "disabled_or_revoked_actor_denied", "metadata_scope_and_no_platform_grants")]:
             if ("yingce/backend/internal/edumath", test) not in passed:
                 missing.append(test)
+    if suite == "edu-ledger":
+        root = "TestEduPostgresDailyLedgerPagination"
+        for test in [root] + [root + "/" + child for child in ("all_105_schools_and_window", "cancelled_pass_restarts_without_missing_schools")]:
+            if ("yingce/backend/internal/edumath", test) not in passed:
+                missing.append(test)
     return {"suite": suite, "passed": not (failed or skipped or missing),
             "tests_passed": [f"{p}/{t}" for p, t in sorted(passed)],
             "tests_failed": [f"{p}/{t}" for p, t in sorted(failed)],
@@ -108,7 +114,7 @@ def verify(lines, suite):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--suite", choices=["postgres", "legacy-flow", "flow-scope", "flow-admission", "flow-workers", "flow-scanner", "flow-continuations", "edu-artifacts", "edu-onboarding"], required=True)
+    parser.add_argument("--suite", choices=["postgres", "legacy-flow", "flow-scope", "flow-admission", "flow-workers", "flow-scanner", "flow-continuations", "edu-artifacts", "edu-onboarding", "edu-ledger"], required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     try:

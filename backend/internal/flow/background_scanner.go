@@ -80,6 +80,27 @@ func (s *BackgroundScanner) Close() error {
 	return pool.Close()
 }
 func (s *BackgroundScanner) Next(ctx context.Context, kind ScanKind) ([]string, error) {
+	if s == nil || s.db == nil {
+		return nil, ErrBackgroundScanner
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	rows, err := s.Page(ctx, kind, s.cursors[kind])
+	if err != nil {
+		return nil, err
+	}
+	if len(rows) == 100 {
+		s.cursors[kind] = rows[len(rows)-1]
+	} else {
+		s.cursors[kind] = ""
+	}
+	return rows, nil
+}
+
+// Page is the same fixed metadata capability with a caller-local cursor. Daily
+// all-tenant passes use it so cancellation cannot strand the remainder of a
+// previously fetched page. No table, SQL, payload, role or limit is selectable.
+func (s *BackgroundScanner) Page(ctx context.Context, kind ScanKind, afterTenant string) ([]string, error) {
 	switch kind {
 	case ScanBilling, ScanNotifications, ScanModelTasks, ScanCommands, ScanExternalWaits, ScanEduJobs, ScanEduLedger:
 	default:
@@ -88,16 +109,12 @@ func (s *BackgroundScanner) Next(ctx context.Context, kind ScanKind) ([]string, 
 	if s == nil || s.db == nil {
 		return nil, ErrBackgroundScanner
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	var rows []string
-	if err := s.db.WithContext(ctx).Raw("SELECT tenant_id FROM flow_system.pending_tenants(?,?,100)", string(kind), s.cursors[kind]).Scan(&rows).Error; err != nil {
-		return nil, err
+	if len(afterTenant) > 160 {
+		return nil, ErrInvalid
 	}
-	if len(rows) == 100 {
-		s.cursors[kind] = rows[len(rows)-1]
-	} else {
-		s.cursors[kind] = ""
+	var rows []string
+	if err := s.db.WithContext(ctx).Raw("SELECT tenant_id FROM flow_system.pending_tenants(?,?,100)", string(kind), afterTenant).Scan(&rows).Error; err != nil {
+		return nil, err
 	}
 	return rows, nil
 }

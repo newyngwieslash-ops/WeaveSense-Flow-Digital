@@ -36,7 +36,7 @@ def engine_for(dsn):
     )
 
 
-async def prepare(owner_dsn):
+async def prepare(owner_dsn, identity=None):
     engine = engine_for(owner_dsn)
     async with engine.begin() as conn:
         await conn.run_sync(
@@ -57,6 +57,13 @@ async def prepare(owner_dsn):
         "workspace_" + suffix,
         "7" + suffix + "x" * 95,
     )
+    if identity is not None:
+        # Trusted test-process configuration, never HTTP claims or browser input.
+        tenant, workspace, actor = (
+            identity["tenant"],
+            identity["workspace"],
+            identity["actor"],
+        )
     async with owner.transaction():
         await owner.execute("SELECT set_config('app.tenant_ids',$1,true)", tenant)
         project = await owner.fetchval(

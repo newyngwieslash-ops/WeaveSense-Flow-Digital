@@ -18,7 +18,9 @@ repo = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--package-root', type=Path, required=True)
 parser.add_argument('--python', type=Path, default=repo/'.local/agri-identity-venv/bin/python')
+parser.add_argument('--phase', choices=('components', 'migration'), default='components')
 args = parser.parse_args()
+phase_mode = args.phase
 test_python = args.python.absolute()
 if not test_python.is_file():
     raise SystemExit('explicit locked Python test environment required')
@@ -78,6 +80,8 @@ files = [
     'tests/test_agriculture_database.py', 'tests/test_agriculture_database_postgres.py',
     'tests/test_agriculture_domain_boundary.py', 'tests/test_agriculture_domain_rls_postgres.py',
 ]
+if phase_mode == 'migration':
+    files = ['tests/test_agriculture_migration.py', 'tests/test_agriculture_migration_postgres.py']
 started=False
 start=time.monotonic()
 with (run/'private.log').open('w') as log:
@@ -108,7 +112,7 @@ cases=[]
 for t in ET.parse(run/'tests.xml').getroot().iter('testcase'):
     statuses=[e.tag for e in t if e.tag in {'failure','error','skipped'}]
     module=t.attrib.get('classname','').split('.')[-1]
-    phase='post_domain_current' if module in {'test_agriculture_database','test_agriculture_database_postgres','test_agriculture_domain_boundary','test_agriculture_domain_rls_postgres'} else 'pre_domain_component'
+    phase='independent_fresh_database_migration' if phase_mode == 'migration' else 'post_domain_current' if module in {'test_agriculture_database','test_agriculture_database_postgres','test_agriculture_domain_boundary','test_agriculture_domain_rls_postgres'} else 'pre_domain_component'
     cases.append({'name':t.attrib['name'],'schema_phase':phase,'status':statuses[0] if statuses else 'pass',
                   'seconds':float(t.attrib.get('time','0'))})
 required_pg = {
@@ -126,6 +130,8 @@ required_pg = {
     'test_postgres_domain_cross_workspace_parent_and_policy_denial',
     'test_postgres_domain_workbench_commit_and_audit_rollback',
 }
+if phase_mode == 'migration':
+    required_pg = {'test_postgres_migration_command_new_repeat_and_drift'}
 missing_pg = sorted(required_pg-{c['name'] for c in cases if c['status']=='pass'})
 scope=['deploy/agriculture/postgres/init.sh', 'deploy/agriculture/native-postgres-packages.json',
        'scripts/agriculture/native_test_environment.py',
@@ -142,7 +148,7 @@ scope += ['services/agri-gis/backend/tests/domain_fixture_support.py']
 scope += ['services/agri-gis/backend/app/dao/workbench_dao.py',
           'services/agri-gis/backend/app/services/workbench_service.py',
           'services/agri-gis/backend/app/services/project_user_service.py']
-report={'kind':'local_real_postgres_fixture','remote_ci':False,
+report={'kind':'local_real_postgres_fixture','remote_ci':False,'phase_mode':phase_mode,
         'recorded_at':datetime.now(timezone.utc).isoformat(),'elapsed_seconds':round(time.monotonic()-start,3),
         'fresh_cluster':True,'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=repo,text=True).strip(),
         'worktree_changes_included':True,'production_acceptance':False,'live_farm_data':False,

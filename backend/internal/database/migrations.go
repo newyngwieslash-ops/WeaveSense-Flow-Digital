@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const CurrentSchemaVersion int64 = 86
+const CurrentSchemaVersion int64 = 88
 
 const baselineSchemaChecksum = "sha256:open-ai-canvas-schema-v1-20260830"
 const schemaMigrationAppliedAtIndexChecksum = "sha256:schema-migrations-applied-at-index-v2-20260830"
@@ -369,6 +369,8 @@ var schemaMigrations = []migration{
 	{version: 84, name: "flow_explicit_system_context_v84", checksum: "sha256:flow-explicit-system-context-v84-20261030", apply: migrateFlowStrictScope},
 	{version: 85, name: "flow_restricted_background_scanner_v85", checksum: "sha256:flow-restricted-background-scanner-v85-20261030", apply: migrateFlowSystemScanner},
 	{version: 86, name: "agriculture_farm_operations_v86", checksum: "sha256:agriculture-farm-operations-v86-20261101", apply: migrateAgricultureFarms},
+	{version: 87, name: "agriculture_parcel_operations_v87", checksum: "sha256:agriculture-parcel-operations-v87-20261101", apply: migrateAgricultureParcels},
+	{version: 88, name: "agriculture_asset_catalog_operations_v88", checksum: "sha256:agriculture-asset-catalog-operations-v88-20261101", apply: migrateAgricultureAssetCatalog},
 }
 
 func migratePrefixedIDSequenceReconcile(tx *gorm.DB) error {

@@ -135,6 +135,19 @@ func (g *GISClient) readObject(ctx context.Context, s Service, actor string, dec
 	if err != nil {
 		return out, err
 	}
+	return g.readSignedObject(ctx, path, token, method, byteRange)
+}
+
+// Only trusted typed profiles construct path/token. Keep transport validation,
+// byte limits and response-header policy common to both authorization profiles.
+func (g *GISClient) readSignedObject(ctx context.Context, path, token, method, byteRange string) (objectBytes, error) {
+	var out objectBytes
+	if g == nil || g.base == nil || g.client == nil || token == "" || (method != "GET" && method != "HEAD") {
+		return out, ErrDependencyUnavailable
+	}
+	if err := validateObjectRange(byteRange); err != nil {
+		return out, err
+	}
 	endpoint := *g.base
 	endpoint.Path = path
 	req, err := http.NewRequestWithContext(ctx, method, endpoint.String(), nil)
@@ -269,8 +282,18 @@ func (a API) registerObjectGateway(api gin.IRouter) {
 			respond(c, nil, err)
 			return
 		}
-		decision, err := a.Service.Authorize(c.Request.Context(), actor, workspace, action, []ResourceRef{ref.Resource})
-		if err == nil && (len(decision.ResourceVersions) != 1 || decision.ResourceVersions[0].Revision != ref.ResourceRevision) {
+		catalogAsset := ref.Resource.Kind == "asset" && assetCatalogID.MatchString(ref.Resource.ID)
+		var decision AuthorizationDecision
+		if catalogAsset {
+			if a.Assets == nil {
+				respond(c, nil, ErrDependencyUnavailable)
+				return
+			}
+			decision, err = a.Assets.AuthorizeAssetDownload(c.Request.Context(), actor, workspace, ref.Resource.ID)
+		} else {
+			decision, err = a.Service.Authorize(c.Request.Context(), actor, workspace, action, []ResourceRef{ref.Resource})
+		}
+		if err == nil && (len(decision.ResourceVersions) != 1 || (!catalogAsset && decision.ResourceVersions[0].Revision != ref.ResourceRevision) || (catalogAsset && decision.ResourceVersions[0].Revision < ref.ResourceRevision)) {
 			err = ErrConflict
 		}
 		if err != nil {
@@ -286,7 +309,12 @@ func (a API) registerObjectGateway(api gin.IRouter) {
 			respond(c, nil, ErrDependencyUnavailable)
 			return
 		}
-		data, err := client.readObject(c.Request.Context(), a.Service, actor, decision, ref, c.Request.Method, c.GetHeader("Range"))
+		var data objectBytes
+		if catalogAsset {
+			data, err = a.Assets.readAssetCatalogObject(c.Request.Context(), actor, workspace, ref, c.Request.Method, c.GetHeader("Range"))
+		} else {
+			data, err = client.readObject(c.Request.Context(), a.Service, actor, decision, ref, c.Request.Method, c.GetHeader("Range"))
+		}
 		if err != nil {
 			respond(c, nil, err)
 			return

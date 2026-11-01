@@ -1,0 +1,64 @@
+{
+  "schema_version": "1.0",
+  "kind": "local_actual_parcel_http_postgres",
+  "passed": true,
+  "exact_cases": [
+    "TestParcelHTTPPostgresChain",
+    "TestParcelHTTPPostgresChain/context_list_detail_history_current",
+    "TestParcelHTTPPostgresChain/direct_grants_mixed_context_cursor_and_version_staleness",
+    "TestParcelHTTPPostgresChain/preview_create_receipt_and_replay",
+    "TestParcelHTTPPostgresChain/real_response_frontend_contract",
+    "TestParcelHTTPPostgresChain/reject_foreign_workspace_and_invalid_geometry_without_writes",
+    "TestParcelHTTPPostgresChain/revision_history_and_stale_preview_conflict",
+    "TestParcelHTTPPostgresChain/revoke_current_grant_blocks_content_and_preview"
+  ],
+  "counts": {
+    "run": {
+      "TestParcelHTTPPostgresChain": 1,
+      "TestParcelHTTPPostgresChain/preview_create_receipt_and_replay": 1,
+      "TestParcelHTTPPostgresChain/context_list_detail_history_current": 1,
+      "TestParcelHTTPPostgresChain/real_response_frontend_contract": 1,
+      "TestParcelHTTPPostgresChain/reject_foreign_workspace_and_invalid_geometry_without_writes": 1,
+      "TestParcelHTTPPostgresChain/revision_history_and_stale_preview_conflict": 1,
+      "TestParcelHTTPPostgresChain/direct_grants_mixed_context_cursor_and_version_staleness": 1,
+      "TestParcelHTTPPostgresChain/revoke_current_grant_blocks_content_and_preview": 1
+    },
+    "pass": {
+      "TestParcelHTTPPostgresChain/preview_create_receipt_and_replay": 1,
+      "TestParcelHTTPPostgresChain/context_list_detail_history_current": 1,
+      "TestParcelHTTPPostgresChain/real_response_frontend_contract": 1,
+      "TestParcelHTTPPostgresChain/reject_foreign_workspace_and_invalid_geometry_without_writes": 1,
+      "TestParcelHTTPPostgresChain/revision_history_and_stale_preview_conflict": 1,
+      "TestParcelHTTPPostgresChain/direct_grants_mixed_context_cursor_and_version_staleness": 1,
+      "TestParcelHTTPPostgresChain/revoke_current_grant_blocks_content_and_preview": 1,
+      "TestParcelHTTPPostgresChain": 1
+    },
+    "fail": {},
+    "skip": {}
+  },
+  "race": true,
+  "auth_component_only": false,
+  "redis": "owned 8.0.2 (CI requires 7.4 separately)",
+  "real_login_cookie_csrf": true,
+  "actual_frontend_contract_checks": 8,
+  "source_stable": true,
+  "native_run": ".local/native-flow-scope/run_948560f47bb44d6092f2fdc8cf5edacc",
+  "source_files": {
+    "backend/internal/agriculture/parcel_http_chain_test.go": "95a7dc6d8333cb520ce7b748e31a6dc056cb7fd6049cce8e96bf052f0834b6bc",
+    "backend/internal/agriculture/parcel_contract_test.go": "4f96a5da51ffbfab352c834356aad8bb5a29084975cc8c8178a2bcad44d26702",
+    "backend/internal/agriculture/parcel_reads.go": "df6cce2a89c9266637430b4c0e9b8ecac80ec18b7cfee2f77f3b84c7a9dee9a5",
+    "backend/internal/agriculture/parcel_identity.go": "9c284d96c154d6e38bc874025f222056946d09d247acb99fd919a0028a688dfb",
+    "backend/internal/agriculture/parcel_operations.go": "b6dc1a27f0029e9c4cca1949436b3eb21e38dfb1b9c25840d1c2f0c3e2f63472",
+    "backend/internal/agriculture/parcel_adapter.go": "3d68124c9196f17fa5f08b42158d98cdb9636a346a091963e3da1556da9542e2",
+    "backend/internal/agriculture/parcel_routes.go": "80bebf4a1ec6345e1ae48c2949366f6a021c45f182d1e7b6a1bf26198eccb45b",
+    "backend/internal/agriculture/parcel_types.go": "71ab8afcbb8f7ba35f8733398bac874a3f829a928ecc5fa2b6e29c2e7cd21c1a",
+    "backend/internal/agriculture/parcel_browser_chain_test.go": "2da4f02880ab7f5b5a98dfe9156918fc836d6597722412b653cc0497f4a52203",
+    "backend/internal/database/migration_agriculture_parcels.go": "935d811d5be391a140ea24e4596288b1f371605c5cf5ef9d0e64d8db30f48f2e",
+    "backend/internal/model/models_agriculture_parcels.go": "cfb3c1c427f6f8c3cb7e33893d271c905f05a65866ab07d7487ae78ab87883b6"
+  },
+  "limitations": [
+    "synthetic authorized fixture geometry, not live farm trial",
+    "not final CI or browser acceptance",
+    "old flow reducer independently checks only Flow; parcel cases checked here"
+  ]
+}

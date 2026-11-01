@@ -24,6 +24,8 @@ MIGRATIONS = (
     "20261030_agriculture_private_objects.sql",
     "20261030_agriculture_job_authority.sql",
     "20261101_agriculture_farms.sql",
+    "20261101_agriculture_parcels.sql",
+    "20261101_agriculture_asset_catalog.sql",
 )
 LEDGER = "agriculture_schema_migrations"
 ROLE_CHECK = """

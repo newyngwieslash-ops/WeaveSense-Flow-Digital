@@ -1,0 +1,27 @@
+{
+  "kind": "local_real_postgres_store_fixture",
+  "business_acceptance": false,
+  "exit_code": 0,
+  "source_stable": true,
+  "source_files": {
+    "app/agriculture/asset_catalog_rules.py": "34b99d93de8218a35d200dd4cd6d3e06d5de61a3e1b7d8a58c7ee507990ff69a",
+    "app/agriculture/asset_catalog_store.py": "aa4366699e170b43d4c026a5fd26bfa56e4f152a58e98a4e9382af459ed3a885",
+    "app/agriculture/asset_catalog_objects.py": "ae1ee7627db85907be40af730dac4a9dd27cfb278852fa6a2d3a61e629b30ea9",
+    "scripts/migrations/20261101_agriculture_asset_catalog.sql": "ad8cea0b89b6a29383c8e9fb66ac7e7d74d5e68fccd40821dd9c0628847904f2",
+    "tests/test_agriculture_asset_catalog_postgres.py": "b86dd6ac5aaa024e5c5289c7f39d0de56aa575868ac574a120e5d2840b49de56"
+  },
+  "tests": {
+    "test_asset_catalog_real_migration_replay_and_precise_grants": "pass",
+    "test_asset_catalog_real_ready_bytes_history_and_current_withdrawal": "pass",
+    "test_asset_catalog_real_object_guard_rechecks_after_storage_read": "pass",
+    "test_asset_catalog_real_register_receipt_and_no_ready_claim": "pass",
+    "test_asset_catalog_real_versions_concurrent_cas_and_immutable_history": "pass",
+    "test_asset_catalog_real_scope_pool_reuse_and_null_farm_projection": "pass",
+    "test_asset_catalog_real_same_names_and_old_command_hash_conflict": "pass",
+    "test_asset_catalog_real_current_rights_revocation_expiry_and_demo_block": "pass",
+    "test_asset_catalog_real_successor_cannot_release_security_constraints": "pass"
+  },
+  "passed": 9,
+  "failed": 0,
+  "skipped": 0
+}

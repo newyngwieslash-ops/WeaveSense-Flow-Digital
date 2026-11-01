@@ -8,6 +8,9 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from .farms_routes import install_farm_routes
+from .asset_catalog_routes import install_asset_catalog_routes
+from .asset_catalog_ownership import install_asset_ownership_route
+from .asset_object_gateway import install_asset_object_routes
 from .identity.config import configured_services
 from .identity.dependency import IdentityServices, verify_request
 from .identity.keys import KeyRing
@@ -21,6 +24,7 @@ from .identity.verify import (
 )
 from .job_routes import install_job_routes
 from .object_gateway import register_object_routes
+from .parcels_routes import install_parcel_routes
 
 
 def create_app(services: IdentityServices | None = None) -> FastAPI:
@@ -44,7 +48,7 @@ def create_app(services: IdentityServices | None = None) -> FastAPI:
 
     @app.exception_handler(IdentityError)
     async def identity_error(_request: Request, error: IdentityError):
-        if _request.url.path.startswith("/internal/agri/v1/farms"):
+        if _request.url.path.startswith(("/internal/agri/v1/farms", "/internal/agri/v1/parcels", "/internal/agri/v1/assets")):
             return JSONResponse(
                 {"error": {"code": error.code}},
                 status_code=error.status,
@@ -111,6 +115,10 @@ def create_app(services: IdentityServices | None = None) -> FastAPI:
     register_object_routes(app)
     install_job_routes(app, None)
     install_farm_routes(app)
+    install_parcel_routes(app)
+    install_asset_catalog_routes(app)
+    install_asset_ownership_route(app)
+    install_asset_object_routes(app)
     return app
 
 

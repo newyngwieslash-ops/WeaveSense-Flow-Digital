@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0",
+  "source_base": "6c5f2f82fa7f992abb83a5f7fa9560a537a68e35",
+  "source_files": {
+    "services/agri-gis/frontend/agriculture/asset-catalog/AssetCatalog.vue": "d4f85098617a37b142ca68bfe2a09b40de0c09b1416213b7788b77840c127f08",
+    "services/agri-gis/frontend/agriculture/asset-catalog/MetadataEditor.vue": "91459520ebda474c94e9e8dfcf655d2f5a501c9b48e0f5a243935d38cf97a1ed",
+    "services/agri-gis/frontend/agriculture/asset-catalog/api.test.ts": "2c5c3a13ec69c7a219d4158ebf3ec6bde6093532a5fee18d1025fb41094dac4d",
+    "services/agri-gis/frontend/agriculture/asset-catalog/api.ts": "f65e076a990330a59cc3e16f6aa28b44306209c9b3fee232e16b7384873069ab",
+    "services/agri-gis/frontend/agriculture/asset-catalog/controller.test.ts": "1fe6f247aada91ca2dec1a5f63213ce5f415cc84b3449475a4fc9c29fcaca517",
+    "services/agri-gis/frontend/agriculture/asset-catalog/controller.ts": "2103b5be3f0316998758c94abbae888275a3a7b8a65a8f12e4c131a740d9795d",
+    "services/agri-gis/frontend/agriculture/asset-catalog/metadata.test.ts": "7af1207b03b515597c7a72c6bad78051099bd4a05507ad3a2d67e5918b34acea",
+    "services/agri-gis/frontend/agriculture/asset-catalog/metadata.ts": "0c76222b2e0a1b453e36ce6140e1be198e55a733089c70f53c840c9761699799",
+    "services/agri-gis/frontend/agriculture/asset-catalog/tests/fixtures.ts": "9e2978ca5d198a58591d520c36f4f1a0ab665c7e396702f315dfd8af9feac965",
+    "services/agri-gis/frontend/agriculture/asset-catalog/types.ts": "605a4ee5db74163a4e677e4a2adb3dc1b0566f332b32a0a739cbaeff0b29e746",
+    "services/agri-gis/frontend/agriculture/parcels/ParcelDirectory.vue": "782a871ddbb0b7afefef2d8df138837b58de9629ab453168ca43a3360a75169c",
+    "services/agri-gis/frontend/agriculture/parcels/ParcelEditor.vue": "61b3d768f6d74ca6b2524e883b213bce45c7f03df6ba0a50a441fb092b975d03",
+    "services/agri-gis/frontend/agriculture/parcels/ParcelWorkspace.vue": "29f9f1f43015b6b62a33d618b860beed45dee1a950b6a5a1bc5937cd314bdf63",
+    "services/agri-gis/frontend/agriculture/parcels/api.test.ts": "c0937417f9efb7a8ce671882bfec0242d85b212521d617548010e0704a7bc9c1",
+    "services/agri-gis/frontend/agriculture/parcels/api.ts": "daae405f3acbe005775ffaf1653b6481691cbaf68fc30e7af00e70ed17d60e7f",
+    "services/agri-gis/frontend/agriculture/parcels/directory.test.ts": "f4bcb5acd52b130b22faa240636503db3b25a5b7d6f56566524b4ccd17cb1a1f",
+    "services/agri-gis/frontend/agriculture/parcels/directory.ts": "cd8fe476e5f3c5e9e4fd6a24452bb9c1776975605d8c14d7e3f74a44271b55eb",
+    "services/agri-gis/frontend/agriculture/parcels/draft.test.ts": "9acc330eea1894e6a7c20051c8a1bdf302674b7a03c7c9f105b3fc442d9d07d9",
+    "services/agri-gis/frontend/agriculture/parcels/draft.ts": "eb723a8c4b86f1ad736b97c3f7d47c9271bc994a0de8c91690f6842721655266",
+    "services/agri-gis/frontend/agriculture/parcels/http-contract-check.mjs": "de5f31bdce39ee9f5dc1d8eb3ef791b5c4bf7c1b4f21097924fff25128da2a98",
+    "services/agri-gis/frontend/agriculture/parcels/http-contract-check.test.ts": "7384a2192fff1dc77c18929bce3ae72c5d7dfe54accc741a22109b3ccee5404e",
+    "services/agri-gis/frontend/agriculture/parcels/parcel-controller.test.ts": "fc72c09c9dc0d352be4958f8c9cac9f2f67033605fdf856dd1a56d1fc7244f36",
+    "services/agri-gis/frontend/agriculture/parcels/parcel-controller.ts": "a071e3274dcf39394dde217a916b6e19f198382fbe65e0023e4656cd90256166",
+    "services/agri-gis/frontend/agriculture/parcels/types.ts": "612aa6f165688a928c80f0c300232bcd062b17d9a876c7e58bc5fbe20e309528"
+  },
+  "tests": {
+    "command": "bun test agriculture/session.test.ts agriculture/legacy-identity.test.ts agriculture/farms agriculture/parcels agriculture/asset-catalog",
+    "environment": "Bun1.3.9, unchanged package-lock isolated dependencies, actual current source copies",
+    "passed": 115,
+    "failed": 0,
+    "assertions": 641,
+    "exit_code": 0,
+    "log": ".local/audit/dt026-dt041-vue-full-tests.log"
+  },
+  "build": {
+    "command": "npm run build:agriculture",
+    "exit_code": 0,
+    "modules": 215,
+    "real_entry_integrations": [
+      "FarmWorkspace -> ParcelWorkspace",
+      "App -> ParcelDirectory -> ParcelWorkspace",
+      "App -> AssetCatalog"
+    ],
+    "log": ".local/audit/dt026-dt041-vue-integrated-build.log"
+  },
+  "scope": [
+    "DT026 immutable revision UI/current and history selectors/sub-ms checks/parent conflict refresh/current-authority directory",
+    "DT041 metadata catalog UI/explicit grants/version conflict/nonready pending rights/source-scoped declarations"
+  ],
+  "not_claimed": [
+    "real browser acceptance",
+    "live farm/source/entity/rights acceptance",
+    "DT026 or DT041 done",
+    "remote publication"
+  ],
+  "parser_cli": {
+    "entry": "services/agri-gis/frontend/agriculture/parcels/http-contract-check.mjs",
+    "required_input_keys": [
+      "context",
+      "detail",
+      "history",
+      "list",
+      "operation",
+      "parents",
+      "preview",
+      "preview_input"
+    ],
+    "success_checks": 8,
+    "actual_http_result": "Go agent confirmed old7checks pass; new8checks positive pending his result"
+  }
+}

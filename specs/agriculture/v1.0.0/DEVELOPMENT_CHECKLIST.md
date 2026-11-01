@@ -855,7 +855,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-026 · 实现稳定地块与不可变边界修订
 
-- 状态：`not_started`；阶段：`S1`；优先级：`P0`。
+- 状态：`in_progress`；阶段：`S1`；优先级：`P0`。
 - 需求：AG-FR-008、AG-FR-014、AG-FR-029、AG-NFR-003、AG-NFR-004。
 - 验收用例：AG-AC-008、AG-AC-014、AG-AC-029。
 - 前置任务：DT-025。
@@ -1339,7 +1339,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-041 · 建立资产目录和数据权利模型
 
-- 状态：`not_started`；阶段：`S1`；优先级：`P0`。
+- 状态：`in_progress`；阶段：`S1`；优先级：`P0`。
 - 需求：AG-FR-015、AG-FR-020、AG-FR-022、AG-NFR-002、AG-NFR-015。
 - 验收用例：AG-AC-015、AG-AC-020、AG-AC-022。
 - 前置任务：DT-003、DT-017、DT-020、DT-025。
@@ -4817,10 +4817,11 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 | 状态 | 数量 |
 | --- | ---: |
 | done | 25 |
-| not_started | 119 |
+| in_progress | 2 |
+| not_started | 117 |
 
 历史 done、恢复证据待补验：无。
-依赖状态就绪但仍须检查恢复条件：DT-026、DT-041。
+依赖状态就绪但仍须检查恢复条件：无。
 
 | 任务 | 状态 |
 | --- | --- |
@@ -4849,7 +4850,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 | DT-023 | done |
 | DT-024 | done |
 | DT-025 | done |
-| DT-026 | not_started |
+| DT-026 | in_progress |
 | DT-027 | not_started |
 | DT-028 | not_started |
 | DT-029 | not_started |
@@ -4864,7 +4865,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 | DT-038 | not_started |
 | DT-039 | not_started |
 | DT-040 | not_started |
-| DT-041 | not_started |
+| DT-041 | in_progress |
 | DT-042 | not_started |
 | DT-043 | not_started |
 | DT-044 | not_started |

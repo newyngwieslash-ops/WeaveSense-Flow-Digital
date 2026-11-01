@@ -1,0 +1,250 @@
+{
+  "version": "1.0",
+  "scope": "DT026 create/revise/current/historical read only; no restore/split/merge or property editing",
+  "public": {
+    "parents": {
+      "method": "GET",
+      "path": "/api/agri/v1/parcel-farms?workspace_id=...&limit=1..200(default50)&cursor=...",
+      "data": "context[] plus meta and top-level next_cursor/has_more; current explicit parcel-capability parent discovery only, no ungranted farm name/geometry"
+    },
+    "context": {
+      "method": "GET",
+      "path": "/api/agri/v1/farms/{farm_id}/parcel-context?workspace_id=...",
+      "data": {
+        "workspace_id": "ws",
+        "farm_id": "farm",
+        "expected_farm_revision": "current authorized parent revision;0 when only direct parcel grants and no parent capability",
+        "allowed_actions": "full explicit applicable agri.parcel.create/read/update; no implicit farm.read inheritance"
+      }
+    },
+    "list": {
+      "method": "GET",
+      "path": "/api/agri/v1/farms/{farm_id}/parcels?workspace_id=...&limit=1..200(default50)&cursor=...",
+      "data": "summary[] plus top-level next_cursor/has_more; summary id/workspace_id/farm_id/name/external_code/status/data_class/geometry_revision/current_geometry_revision/geometry_hash/area_m2/area_ha/area_mu/valid_from/allowed_actions, no geometry"
+    },
+    "preview": {
+      "method": "POST",
+      "path": "/api/agri/v1/parcel-previews",
+      "body": {
+        "workspace_id": "ws",
+        "action": "create|revise",
+        "farm_id": "create only",
+        "parcel_id": "revise only",
+        "expected_revision": "0 required create; >=1 revise",
+        "expected_farm_revision": ">=1 create only",
+        "parcel": "create only: exact ParcelInput",
+        "geometry": "revise only",
+        "source_crs": "revise only",
+        "coordinate_order": "revise only",
+        "reason": "nonempty max500"
+      },
+      "data": {
+        "preview_id": "pop_opaque equals operation_id",
+        "expires_at": "RFC3339UTC",
+        "request_hash": "64hex",
+        "action": "create|revise",
+        "farm_id": "actual parent farm",
+        "parcel_id": "empty before create",
+        "expected_revision": 0,
+        "summary": "full validated GIS preview including geometry, areas, reason and affected_dependencies explicit availability"
+      }
+    },
+    "create": {
+      "method": "POST",
+      "path": "/api/agri/v1/farms/{farm_id}/parcels",
+      "body": "workspace_id,preview_id,expected_revision=0,expected_farm_revision,parcel,reason; Idempotency-Key required"
+    },
+    "revise": {
+      "method": "POST",
+      "path": "/api/agri/v1/parcels/{parcel_id}/revisions",
+      "body": "workspace_id,preview_id,expected_revision>=1,geometry,source_crs,coordinate_order,reason; Idempotency-Key required"
+    },
+    "read": {
+      "method": "GET",
+      "path": "/api/agri/v1/parcels/{parcel_id}?workspace_id=...&revision=... OR &at=...",
+      "data": "ParcelDTO; revision and at mutually exclusive, absent=current"
+    },
+    "history": {
+      "method": "GET",
+      "path": "/api/agri/v1/parcels/{parcel_id}/history?workspace_id=...&limit=1..200(default50)&cursor=...",
+      "data": "revision summary array plus top-level next_cursor/has_more; not full geometry list"
+    },
+    "operation": {
+      "method": "GET",
+      "path": "/api/agri/v1/parcel-operations/{operation_id}?workspace_id=...",
+      "data": {
+        "operation_id": "pop_opaque",
+        "action": "create|revise",
+        "state": "preview|pending|completed|rejected|reconciliation_required",
+        "farm_id": "real parent",
+        "parcel_id": "empty before known",
+        "geometry_revision": 0,
+        "error_code": "fixed or empty",
+        "job_id": null,
+        "events_url": null,
+        "status_url": "actual operation query path"
+      }
+    },
+    "statuses": "GET operation200; create completed201; revise completed200; pending/reconciliation202; deterministic rejected conflict409; geometry422; missing expected428; immutable If-Match unsupported explicitly400"
+  },
+  "ParcelInput": {
+    "external_code": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$ immutable within parent farm",
+    "name": "nonempty max200 immutable until DT029",
+    "geometry": "GeoJSON Polygon/MultiPolygon",
+    "source_crs": "EPSG:4326|OGC:CRS84",
+    "coordinate_order": "longitude_latitude"
+  },
+  "ParcelDTO": {
+    "id": "parcel_32lowerhex",
+    "workspace_id": "ws",
+    "farm_id": "farm_32lowerhex",
+    "geometry_revision": "selected immutable version",
+    "current_geometry_revision": "current proof version",
+    "name": "name",
+    "external_code": "code",
+    "status": "active",
+    "data_class": "inherited immutable parent class",
+    "geometry": "validated GeoJSON",
+    "source_crs": "recorded explicit CRS",
+    "coordinate_order": "longitude_latitude",
+    "area_m2": "decimal string",
+    "area_ha": "decimal string",
+    "area_mu": "decimal string",
+    "geometry_hash": "64hex",
+    "valid_from": "RFC3339UTC server effective time",
+    "valid_to": "RFC3339UTC or null derived from next revision",
+    "reason": "authorized business reason",
+    "actor_user_id": "opaque actor ID only, no contact/name/credentials",
+    "created_at": "RFC3339UTC",
+    "provenance": "CRS/axis/algorithm/version only, no private paths/URLs/credentials",
+    "affected_dependencies": {
+      "availability": "not_yet_integrated",
+      "count": null
+    }
+  },
+  "internal": [
+    {
+      "method": "POST",
+      "path": "/internal/agri/v1/farms/{farm_id}/parcels/list",
+      "token": "business agri.parcel.read; farm mode scope exact parent farm, ids mode scope exact nonempty parcel_ids; all ownership and farm_ids must equal path farm",
+      "body": {
+        "access_mode": "farm|ids",
+        "parcel_ids": "empty in farm mode; sorted unique nonempty<=200 ids mode",
+        "after_id": "empty or cursor position parcel_id",
+        "limit": "1..200"
+      },
+      "response": {
+        "items": "ParcelSummary[]",
+        "next_after_id": "empty or parcel ID",
+        "has_more": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/internal/agri/v1/farms/{farm_id}/parcels/preview-create",
+      "token": "business agri.parcel.create parent farm current proof",
+      "body": "expected_revision=0,expected_farm_revision,parcel,reason",
+      "response": {
+        "summary": "validated ParcelInput + area/hash/parent/reason/affected_dependencies"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/internal/agri/v1/farms/{farm_id}/parcels",
+      "token": "same business profile",
+      "body": "operation_id,request_hash,expected_revision=0,expected_farm_revision,parcel,reason",
+      "response": "ParcelReceipt"
+    },
+    {
+      "method": "POST",
+      "path": "/internal/agri/v1/parcels/{parcel_id}/preview-revise",
+      "token": "business agri.parcel.update current parcel proof",
+      "body": "expected_revision,geometry,source_crs,coordinate_order,reason",
+      "response": {
+        "summary": "validated geometry/area/hash/currentrevision/reason/affected_dependencies"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/internal/agri/v1/parcels/{parcel_id}/revisions",
+      "token": "same business profile",
+      "body": "operation_id,request_hash,expected_revision,geometry,source_crs,coordinate_order,reason",
+      "response": "ParcelReceipt"
+    },
+    {
+      "method": "POST",
+      "path": "/internal/agri/v1/parcels/{parcel_id}/read",
+      "token": "business agri.parcel.read CURRENT parcel proof; selector does not override authorization version",
+      "body": {
+        "revision": "integer0=current or positive; cannot combine positive with at",
+        "at": "empty or UTC RFC3339; cannot combine with positive revision"
+      },
+      "response": "ParcelDTO"
+    },
+    {
+      "method": "POST",
+      "path": "/internal/agri/v1/parcels/{parcel_id}/history",
+      "token": "business agri.parcel.read CURRENT parcel proof",
+      "body": {
+        "after_revision": 0,
+        "limit": "1..200"
+      },
+      "response": {
+        "items": "revision summaries without geometry",
+        "next_after_revision": 0,
+        "has_more": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/internal/agri/v1/parcels/commands/receipt",
+      "token": "dedicated parcel-operation receipt-only profile",
+      "body": {
+        "operation_id": "pop_id",
+        "request_hash": "64hex"
+      },
+      "response": "ParcelReceipt or404"
+    }
+  ],
+  "ParcelReceipt": {
+    "schema_version": "1.0",
+    "producer": "agri-gis",
+    "operation_id": "pop_id",
+    "tenant_id": "tenant",
+    "workspace_id": "ws",
+    "request_hash": "64hex",
+    "farm_id": "real parent farm",
+    "parcel_id": "parcel_32lowerhex",
+    "geometry_revision": "new positive revision",
+    "previous_geometry_revision": "0 create; expected revise",
+    "previous_geometry_hash": "empty create; real prior hash revise",
+    "aggregate_revision": "same new geometry_revision",
+    "geometry_hash": "64hex new geometry",
+    "event_id": "evt_opaque",
+    "event_type": "agri.parcel.created|agri.parcel.revised",
+    "payload_hash": "SHA256 canonical whole receipt excluding payload_hash",
+    "state": "applied"
+  },
+  "receipt_profile": {
+    "typ": "weavesense-agri-parcel-operation+jws",
+    "claims": "schema_version=1.0,issuer=subject=flow-platform,audience=agri-gis,actor={kind:user,id},tenant_id,workspace_id,action=parcel.receipt,authorization_version,current policy_version,operation_id,request_hash,issued_at,expires_at<=30s,jti,trace_id,request_id,request={method:POST,path:exactreceiptpath,canonicalization_version:rfc8785-safe-v1,payload_hash,operation_id}; NO empty business resource scope",
+    "callback": {
+      "path": "/internal/agri/v1/parcels/authority/check",
+      "typ": "existing service assertion",
+      "capability": "parcel.operation.check",
+      "body": "actor_user_id,tenant_id,workspace_id,authorization_version,operation_id,request_hash,request_payload_hash",
+      "result": {
+        "active": true,
+        "authorization_version": "same current"
+      }
+    },
+    "restriction": "only real persisted intent actor/workspace; GIS own stored actor must match; no content/grants/write capability; callback checks current membership plus exact op/hash/body, no ownership recursion"
+  },
+  "projection": {
+    "allowed_actions": "ParcelDTO adds full agri.parcel.read/update capabilities from current platform authorization; selected historical version only read",
+    "history_summary": "id,workspace_id,farm_id,geometry_revision,current_geometry_revision,valid_from,valid_to,created_at,reason,actor_user_id,geometry_hash,area_m2,area_ha,area_mu; no geometry/provenance/name/contact",
+    "public_nulls": "valid_to null current, affected_dependencies.count null unavailable; other required fields nonnull"
+  },
+  "time_policy": "server effective time only; no client backdating/future effective_at; revision validity derived append-only; exact selector uses timezone-aware UTC",
+  "authorization": "inherit only explicitly granted parent farm parcel capabilities; do not modify nonfarm ReceiptRevision/Hash checks; no initial implicit creator grant"
+}

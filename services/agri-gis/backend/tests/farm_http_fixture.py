@@ -22,6 +22,10 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from domain_fixture_support import install_domain_schema
 
 from app.agriculture.database import create_runtime_pool
+from app.agriculture.asset_catalog_identity import AssetCatalogAuthority
+from app.agriculture.asset_catalog_rules import AssetCatalogRights
+from app.agriculture.asset_catalog_store import AssetCatalogOwnership, AssetCatalogStore
+from app.agriculture.domain_ownership import DomainOwnership
 from app.agriculture.farms_config import FarmDictionary
 from app.agriculture.farms_identity import FarmAuthority
 from app.agriculture.farms_store import FarmOwnership, FarmStore
@@ -31,6 +35,8 @@ from app.agriculture.identity.keys import KeyRing, utc_second
 from app.agriculture.identity.replay import PostgresReplayLedger
 from app.agriculture.identity.verify import Verifier
 from app.agriculture.main import create_app
+from app.agriculture.parcels_identity import ParcelAuthority
+from app.agriculture.parcels_store import ParcelOwnership, ParcelStore
 
 
 def read_config(path):
@@ -86,6 +92,12 @@ async def main():
     try:
         store = FarmStore(pool, FarmDictionary.from_document(config["dictionary"]))
         await store.require_ready()
+        parcel_store = ParcelStore(pool)
+        await parcel_store.require_ready()
+        # Unknown source rights remain pending; this fixture never approves a
+        # source or fabricates an entity merely to make metadata tests pass.
+        asset_catalog_store = AssetCatalogStore(pool, AssetCatalogRights())
+        await asset_catalog_store.require_ready()
         raw = config["callback_key"]
         key = CallbackKey(
             raw["kid"],
@@ -98,11 +110,16 @@ async def main():
         async with httpx.AsyncClient(trust_env=False, timeout=5) as client:
             services = IdentityServices(
                 Verifier(KeyRing.from_config(config["platform_keys"])),
-                ownership=FarmOwnership(pool),
+                ownership=DomainOwnership({"farm": FarmOwnership(pool), "parcel": ParcelOwnership(pool)}),
                 authority=PlatformAuthority(config["platform"], key, client),
                 replay=PostgresReplayLedger(pool),
                 farm_store=store,
                 farm_authority=FarmAuthority(config["platform"], key, client),
+                parcel_store=parcel_store,
+                parcel_authority=ParcelAuthority(config["platform"], key, client),
+                asset_catalog_store=asset_catalog_store,
+                asset_catalog_authority=AssetCatalogAuthority(config["platform"], key, client),
+                asset_catalog_ownership=AssetCatalogOwnership(pool),
             )
             app = create_app(services)
             with socket.socket() as sock:

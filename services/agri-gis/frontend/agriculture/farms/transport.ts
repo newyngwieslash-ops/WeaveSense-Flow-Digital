@@ -21,7 +21,7 @@ async function json(response: Response): Promise<unknown> {
 export class FarmTransport {
   constructor(private readonly fetcher: Fetcher = fetch) {}
   async request(path: string, signal: AbortSignal, method: 'GET' | 'POST' | 'PATCH' = 'GET', body?: unknown, key?: string): Promise<{ status: number; envelope: Envelope }> {
-    if (!/^\/api\/agri\/v1\/(?:context|farm-previews|farms(?:\/[A-Za-z0-9_-]+(?:\/archive)?)?|farm-operations\/[A-Za-z0-9_-]+)(?:\?[^#]*)?$/.test(path)) throw invalid()
+    if (!/^\/api\/agri\/v1\/(?:asset-context|asset-previews|asset-operations\/[A-Za-z0-9_-]+|assets(?:\/[A-Za-z0-9_-]+\/versions(?:\/[1-9][0-9]*)?)?|context|farm-previews|farms(?:\/[A-Za-z0-9_-]+(?:\/(?:archive|parcel-context|parcels))?)?|farm-operations\/[A-Za-z0-9_-]+|parcel-farms|parcel-previews|parcel-operations\/[A-Za-z0-9_-]+|parcels\/[A-Za-z0-9_-]+(?:\/(?:revisions|history))?)(?:\?[^#]*)?$/.test(path)) throw invalid()
     // Invoke native Window.fetch without binding this transport as its receiver.
     const fetcher = this.fetcher
     const headers: Record<string, string> = { Accept: 'application/json' }

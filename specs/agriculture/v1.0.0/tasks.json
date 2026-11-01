@@ -1437,7 +1437,7 @@
         "查询历史时间点验证返回对应修订"
       ],
       "blockers": [],
-      "status": "not_started"
+      "status": "in_progress"
     },
     {
       "id": "DT-027",
@@ -2071,7 +2071,7 @@
         "验证目录查询与实体访问均隔离租户"
       ],
       "blockers": [],
-      "status": "not_started"
+      "status": "in_progress"
     },
     {
       "id": "DT-042",

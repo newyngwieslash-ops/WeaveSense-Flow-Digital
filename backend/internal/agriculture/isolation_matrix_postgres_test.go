@@ -53,6 +53,8 @@ type isolationRoute struct{ ID, Method, Path, Body, Kind string }
 // Each registered method/path must have exactly one executed matrix row. Do not
 // replace this with a minimum route count: a new route requires reviewed cases.
 func isolationRoutes(actor, inviteToken string) []isolationRoute {
+	metadata := `{"name":"Matrix synthetic catalog","kind":"raster","data_class":"demo","farm_id":null,"source":{"kind":"customer_data","source_id":"fixture-source","reference":"fixture:source"},"rights_declaration":{"owner":"Fixture claimant","license_ref":"fixture-license","permitted_uses":["analysis","ingest"],"attribution":{"required":true,"text":"Synthetic fixture"},"valid_from":"2020-01-01T00:00:00Z","expiry":"2099-01-01T00:00:00Z"},"sensitivity":"internal","retention":{"retain_until":"2099-01-01T00:00:00Z","legal_hold":true}}`
+	grants := fmt.Sprintf(`[{"subject_user_id":%q,"capabilities":["agri.asset.read"]}]`, actor)
 	return []isolationRoute{
 		{"P01", "GET", "/api/agriculture/workspaces", "", "list"},
 		{"P02", "POST", "/api/agriculture/workspaces/:workspaceId/authorize", `{"action":"agri.parcel.update","resources":[{"kind":"parcel","id":"matrix_parcel"}]}`, "scope"},
@@ -84,6 +86,25 @@ func isolationRoutes(actor, inviteToken string) []isolationRoute {
 		{"P26", "PATCH", "/api/agri/v1/farms/:farm_id", `{"workspace_id":"{{workspace}}","preview_id":"fop_matrix","expected_revision":1,"farm":{"name":"Fixture name"}}`, "farm_write"},
 		{"P27", "POST", "/api/agri/v1/farms/:farm_id/archive", `{"workspace_id":"{{workspace}}","preview_id":"fop_matrix","expected_revision":1,"reason":"Fixture archive"}`, "farm_write"},
 		{"I03", "POST", farmAuthorityPath, `{}`, "internal"},
+		{"P28", "GET", "/api/agri/v1/farms/:farm_id/parcel-context", "", "parcel_detail"},
+		{"P29", "GET", "/api/agri/v1/farms/:farm_id/parcels", "", "parcel_list"},
+		{"P30", "GET", "/api/agri/v1/parcels/:parcel_id", "", "parcel_detail"},
+		{"P31", "GET", "/api/agri/v1/parcels/:parcel_id/history", "", "parcel_detail"},
+		{"P32", "GET", "/api/agri/v1/parcel-operations/:operation_id", "", "parcel_operation"},
+		{"P33", "POST", "/api/agri/v1/parcel-previews", `{"workspace_id":"{{workspace}}","action":"create","farm_id":"farm_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","expected_revision":0,"expected_farm_revision":1,"parcel":{},"reason":"Fixture create"}`, "parcel_write"},
+		{"P34", "POST", "/api/agri/v1/farms/:farm_id/parcels", `{"workspace_id":"{{workspace}}","preview_id":"pop_matrix","expected_revision":0,"expected_farm_revision":1,"parcel":{},"reason":"Fixture create"}`, "parcel_write"},
+		{"P35", "POST", "/api/agri/v1/parcels/:parcel_id/revisions", `{"workspace_id":"{{workspace}}","preview_id":"pop_matrix","expected_revision":1,"geometry":{},"source_crs":"EPSG:4326","coordinate_order":"longitude_latitude","reason":"Fixture revise"}`, "parcel_write"},
+		{"I04", "POST", parcelAuthorityPath, `{}`, "internal"},
+		{"P36", "GET", "/api/agri/v1/parcel-farms", "", "parcel_parents"},
+		{"P37", "GET", "/api/agri/v1/asset-context", "", "asset_context"},
+		{"P38", "GET", "/api/agri/v1/assets", "", "asset_list"},
+		{"P39", "GET", "/api/agri/v1/assets/:asset_id/versions/:version", "", "asset_detail"},
+		{"P40", "GET", "/api/agri/v1/asset-operations/:operation_id", "", "asset_operation"},
+		{"P41", "POST", "/api/agri/v1/asset-previews", fmt.Sprintf(`{"workspace_id":"{{workspace}}","action":"create","expected_revision":0,"metadata":%s,"initial_grants":%s}`, metadata, grants), "asset_write"},
+		{"P42", "POST", "/api/agri/v1/assets", fmt.Sprintf(`{"workspace_id":"{{workspace}}","preview_id":"aop_matrix","expected_revision":0,"metadata":%s,"initial_grants":%s}`, metadata, grants), "asset_write"},
+		{"P43", "POST", "/api/agri/v1/assets/:asset_id/versions", fmt.Sprintf(`{"workspace_id":"{{workspace}}","preview_id":"aop_matrix","expected_revision":1,"metadata":%s}`, metadata), "asset_write"},
+		{"I05", "POST", assetCatalogAuthorityPath, `{}`, "internal"},
+		{"I06", "POST", assetCatalogDownloadAuthorityPath, `{}`, "internal"},
 	}
 }
 
@@ -192,6 +213,10 @@ func TestAgricultureIsolationMatrixPostgres(t *testing.T) {
 	gisKeys, _ := identityTestKeys(t, time.Now().UTC(), 0x71)
 	s.RegisterInternalAuthority(router, gisKeys)
 	NewFarmPlatform(s, nil).RegisterInternal(router, gisKeys)
+	NewParcelPlatform(s, nil).RegisterInternal(router, gisKeys)
+	assets := NewAssetCatalogPlatform(s, nil)
+	assets.RegisterInternal(router, gisKeys)
+	assets.RegisterDownloadAuthority(router, gisKeys)
 	server.Start()
 	t.Cleanup(server.Close)
 	identity := func(cookie *http.Cookie) isolationIdentity {
@@ -246,7 +271,7 @@ func TestAgricultureIsolationMatrixPostgres(t *testing.T) {
 		}
 	})
 	expand := func(path, workspace string) string {
-		return strings.NewReplacer(":workspaceId", workspace, ":workspace_id", workspace, ":bindingId", binding.ID, ":binding_id", binding.ID, ":inviteId", wrongInvite.Invite.ID, ":userId", owner, ":object_id", "matrix_object", ":version", "1", ":job_id", "matrix_job", ":farm_id", "farm_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", ":operation_id", "fop_matrix").Replace(path)
+		return strings.NewReplacer(":workspaceId", workspace, ":workspace_id", workspace, ":bindingId", binding.ID, ":binding_id", binding.ID, ":inviteId", wrongInvite.Invite.ID, ":userId", owner, ":object_id", "matrix_object", ":version", "1", ":job_id", "matrix_job", ":farm_id", "farm_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", ":parcel_id", "parcel_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", ":asset_id", "asset_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", ":operation_id", "fop_matrix").Replace(path)
 	}
 	call := func(t *testing.T, row isolationRoute, scenario string, id isolationIdentity, workspace, body string, status int, extra http.Header) []byte {
 		t.Helper()
@@ -255,7 +280,7 @@ func TestAgricultureIsolationMatrixPostgres(t *testing.T) {
 			t.Fatal("before snapshot failed")
 		}
 		path := expand(row.Path, workspace)
-		if strings.HasPrefix(row.Kind, "farm_") && row.Method == "GET" {
+		if (strings.HasPrefix(row.Kind, "farm_") || strings.HasPrefix(row.Kind, "parcel_") || strings.HasPrefix(row.Kind, "asset_")) && row.Method == "GET" {
 			path += "?workspace_id=" + workspace
 		}
 		body = strings.ReplaceAll(body, "{{workspace}}", workspace)
@@ -327,14 +352,32 @@ func TestAgricultureIsolationMatrixPostgres(t *testing.T) {
 			}
 			t.Run("expired_session", func(t *testing.T) { call(t, row, "expired_session", expired, org.Workspace.ID, row.Body, 401, nil) })
 			switch row.Kind {
-			case "farm_context", "farm_list", "farm_detail", "farm_operation", "farm_write":
+			case "farm_context", "farm_list", "farm_detail", "farm_operation", "farm_write", "parcel_detail", "parcel_list", "parcel_operation", "parcel_write", "parcel_parents", "asset_context", "asset_list", "asset_detail", "asset_operation", "asset_write":
 				t.Run("foreign_tenant", func(t *testing.T) { call(t, row, "foreign_tenant", viewer, foreign.Workspace.ID, row.Body, 404, nil) })
 				t.Run("unjoined_same_tenant_workspace", func(t *testing.T) { call(t, row, "unjoined_same_tenant_workspace", viewer, second, row.Body, 404, nil) })
-				status := map[string]int{"farm_context": 503, "farm_list": 503, "farm_detail": 404, "farm_operation": 404, "farm_write": 403}[row.Kind]
+				status := map[string]int{"farm_context": 503, "farm_list": 503, "farm_detail": 404, "farm_operation": 404, "farm_write": 403, "parcel_detail": 404, "parcel_list": 200, "parcel_operation": 404, "parcel_write": 403, "parcel_parents": 200, "asset_context": 503, "asset_list": 200, "asset_detail": 503, "asset_operation": 404, "asset_write": 403}[row.Kind]
 				// Real farm facts/current callbacks are exercised by the independent
 				// double-PG chain. Never label missing-provider 503 as role denial.
 				t.Run("current_scope_boundary", func(t *testing.T) {
-					call(t, row, "current_scope_boundary", viewer, org.Workspace.ID, row.Body, status, nil)
+					raw := call(t, row, "current_scope_boundary", viewer, org.Workspace.ID, row.Body, status, nil)
+					if row.Kind == "parcel_list" || row.Kind == "asset_list" {
+						var empty struct {
+							Data       []json.RawMessage `json:"data"`
+							HasMore    bool              `json:"has_more"`
+							NextCursor string            `json:"next_cursor"`
+						}
+						if json.Unmarshal(raw, &empty) != nil || empty.Data == nil || len(empty.Data) != 0 || empty.HasMore || empty.NextCursor != "" {
+							t.Fatal("ungranted content list must be empty without a cursor")
+						}
+					}
+					if row.Kind == "parcel_parents" {
+						var result struct {
+							Data []map[string]any `json:"data"`
+						}
+						if json.Unmarshal(raw, &result) != nil || len(result.Data) != 1 || result.Data[0]["farm_id"] != "matrix_farm" || len(result.Data[0]) != 4 {
+							t.Fatal("parent discovery must expose only explicit authorized context")
+						}
+					}
 				})
 			case "scope":
 				t.Run("foreign_tenant", func(t *testing.T) { call(t, row, "foreign_tenant", viewer, foreign.Workspace.ID, row.Body, 404, nil) })
@@ -420,6 +463,10 @@ func TestAgricultureIsolationMatrixPostgres(t *testing.T) {
 	authorityBody := authorityCheckBody{ActorUserID: actor, TenantID: org.Tenant.ID, WorkspaceID: org.Workspace.ID, AuthorizationVersion: decision.AuthorizationVersion}
 	jobBody := jobAuthorityCheckBody{Snapshot: snapshot, SnapshotHash: digest, Phase: "claim"}
 	farmBody := farmAuthorityRequest{ActorUserID: actor, TenantID: org.Tenant.ID, WorkspaceID: org.Workspace.ID, Action: "farm.context", AuthorizationVersion: decision.AuthorizationVersion, OperationID: "req_matrix", RequestHash: zeroFarmHash, GrantPlanHash: zeroFarmHash, FarmIDs: []string{}, RequestPayloadHash: zeroFarmHash}
+	parcelBody := parcelAuthorityRequest{ActorUserID: actor, TenantID: org.Tenant.ID, WorkspaceID: org.Workspace.ID, AuthorizationVersion: decision.AuthorizationVersion, OperationID: "pop_missing", RequestHash: zeroFarmHash, RequestPayloadHash: zeroFarmHash}
+	_, emptyHash, _ := farmCanonical(map[string]any{})
+	assetBody := assetCatalogAuthorityRequest{ActorUserID: actor, TenantID: org.Tenant.ID, WorkspaceID: org.Workspace.ID, Action: "asset.context", AuthorizationVersion: decision.AuthorizationVersion, OperationID: "aop_context", RequestHash: zeroFarmHash, GrantPlanHash: zeroFarmHash, AssetIDs: []string{}, RequestPayloadHash: emptyHash}
+	assetDownloadBody := map[string]any{"actor_user_id": actor, "tenant_id": org.Tenant.ID, "workspace_id": org.Workspace.ID, "action": "agri.asset_download.read", "authorization_version": decision.AuthorizationVersion, "asset_id": "asset_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "asset_revision": 1, "asset_version": 1, "ownership_hash": zeroFarmHash, "object_id": "matrix_object", "object_version": 1}
 	for _, row := range routes {
 		if row.Kind != "internal" {
 			continue
@@ -434,10 +481,26 @@ func TestAgricultureIsolationMatrixPostgres(t *testing.T) {
 		if row.ID == "I03" {
 			capability, body = "farm.operation.check", farmBody
 		}
-		t.Run(row.ID+"_signed_control", func(t *testing.T) { signed(t, row, "signed_control", capability, body, scope, gisKeys, 200) })
+		controlName, controlStatus := "signed_control", 200
+		if row.ID == "I04" {
+			capability, body = "parcel.operation.check", parcelBody
+			controlName, controlStatus = "signed_missing_intent", 403
+		}
+		if row.ID == "I05" {
+			capability, body = "asset.operation.check", assetBody
+		}
+		if row.ID == "I06" {
+			capability, body = "asset.download.check", assetDownloadBody
+			controlName, controlStatus = "signed_missing_asset", 403
+		}
+		t.Run(row.ID+"_"+controlName, func(t *testing.T) { signed(t, row, controlName, capability, body, scope, gisKeys, controlStatus) })
 		t.Run(row.ID+"_wrong_signer", func(t *testing.T) { signed(t, row, "wrong_signer", capability, body, scope, wrongKeys, 401) })
 		t.Run(row.ID+"_signed_scope_mismatch", func(t *testing.T) {
-			signed(t, row, "signed_scope_mismatch", capability, body, OwnershipContext{TenantID: foreign.Tenant.ID, WorkspaceID: foreign.Workspace.ID}, gisKeys, 400)
+			status := 400
+			if row.ID == "I05" || row.ID == "I06" {
+				status = 401
+			}
+			signed(t, row, "signed_scope_mismatch", capability, body, OwnershipContext{TenantID: foreign.Tenant.ID, WorkspaceID: foreign.Workspace.ID}, gisKeys, status)
 		})
 		t.Run(row.ID+"_wrong_direction", func(t *testing.T) { signed(t, row, "wrong_direction", "ownership.resolve", body, scope, gisKeys, 401) })
 	}
@@ -464,7 +527,7 @@ func TestAgricultureIsolationMatrixPostgres(t *testing.T) {
 		t.Fatal(e)
 	}
 	for _, row := range routes {
-		if row.Kind == "scope" || strings.HasPrefix(row.Kind, "farm_") {
+		if row.Kind == "scope" || strings.HasPrefix(row.Kind, "farm_") || strings.HasPrefix(row.Kind, "parcel_") || strings.HasPrefix(row.Kind, "asset_") {
 			row := row
 			t.Run(row.ID+"_revoked_member", func(t *testing.T) {
 				call(t, row, "revoked_member_same_session", viewer, org.Workspace.ID, row.Body, 404, nil)
@@ -481,6 +544,21 @@ func TestAgricultureIsolationMatrixPostgres(t *testing.T) {
 	t.Run("I03_revoked_actor", func(t *testing.T) {
 		signed(t, routes[29], "revoked_actor", "farm.operation.check", farmBody, scope, gisKeys, 403)
 	})
+	t.Run("I04_revoked_actor", func(t *testing.T) {
+		signed(t, routes[38], "revoked_actor", "parcel.operation.check", parcelBody, scope, gisKeys, 403)
+	})
+	for _, row := range routes {
+		if row.ID == "I05" || row.ID == "I06" {
+			row := row
+			t.Run(row.ID+"_revoked_actor", func(t *testing.T) {
+				if row.ID == "I05" {
+					signed(t, row, "revoked_actor", "asset.operation.check", assetBody, scope, gisKeys, 403)
+				} else {
+					signed(t, row, "revoked_actor", "asset.download.check", assetDownloadBody, scope, gisKeys, 403)
+				}
+			})
+		}
+	}
 
 	if e = svc.Logout(actorCookie.Value); e != nil {
 		t.Fatal(e)

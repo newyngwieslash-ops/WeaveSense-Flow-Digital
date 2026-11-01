@@ -33,6 +33,14 @@ type serviceAssertion struct {
 
 func serviceDirection(capability string) (issuer, audience, path string, err error) {
 	switch capability {
+	case "asset.download.check":
+		return "agri-gis", "flow-platform", "/internal/agri/v1/assets/download/authority/check", nil
+	case "asset.ownership.read":
+		return "flow-platform", "agri-gis", "/internal/agri/v1/assets/ownership/resolve", nil
+	case "asset.operation.check":
+		return "agri-gis", "flow-platform", "/internal/agri/v1/assets/authority/check", nil
+	case "parcel.operation.check":
+		return "agri-gis", "flow-platform", parcelAuthorityPath, nil
 	case "farm.operation.check":
 		return "agri-gis", "flow-platform", farmAuthorityPath, nil
 	case "ownership.resolve":

@@ -128,7 +128,7 @@ def run_go(root_test, children, suite):
 
 
 def test_isolation_go_route_matrix():
-    public = [f"P{i:02}" for i in range(1, 28)]
+    public = [f"P{i:02}" for i in range(1, 37)]
     scope = [f"P{i:02}" for i in (2, 3, 4, 5, 8, 9, 10, 11, 12, 13, 14, 15, 16)]
     children = [
         p + "/" + case
@@ -143,7 +143,7 @@ def test_isolation_go_route_matrix():
     children += [p + "_revoked_member" for p in scope] + [
         p + "_logged_out" for p in public
     ]
-    farms = [f"P{i:02}" for i in range(20, 28)]
+    farms = [f"P{i:02}" for i in range(20, 37)]
     children += [p + "/" + case for p in farms for case in (
         "foreign_tenant", "unjoined_same_tenant_workspace", "current_scope_boundary"
     )]
@@ -163,7 +163,7 @@ def test_isolation_go_route_matrix():
     ]
     children += [
         p + "/" + case
-        for p in ("I01", "I02", "I03")
+        for p in ("I01", "I02", "I03", "I04")
         for case in ("anonymous", "forged_session")
     ]
     children += [
@@ -175,6 +175,12 @@ def test_isolation_go_route_matrix():
             "signed_scope_mismatch",
             "wrong_direction",
             "revoked_actor",
+        )
+    ]
+    children += [
+        "I04_" + case for case in (
+            "signed_missing_intent", "wrong_signer", "signed_scope_mismatch",
+            "wrong_direction", "revoked_actor",
         )
     ]
     children += [

@@ -71,7 +71,7 @@ func (s Service) GrantResourceBinding(ctx context.Context, actorID, workspaceID,
 		value := expiresAt.UTC()
 		expiry = &value
 	}
-	err = s.withOwnership(ctx, actorID, workspaceID, []ResourceRef{resource}, func(tx *gorm.DB, scope workspaceContext, version int64, proofs map[ResourceRef]ResourceOwnership) error {
+	err = s.withBindingOwnership(ctx, actorID, workspaceID, []ResourceRef{resource}, func(tx *gorm.DB, scope workspaceContext, version int64, proofs map[ResourceRef]ResourceOwnership) error {
 		var err error
 		out, err = s.grantOwnedBinding(tx, scope, actorID, targetUserID, resource, caps, expiry, expected, version, proofs)
 		return err
@@ -266,7 +266,7 @@ func (s Service) RevokeBinding(ctx context.Context, actorID, workspaceID, bindin
 		return err
 	}
 	resource := ResourceRef{Kind: initial.ResourceKind, ID: initial.ResourceID}
-	return s.withOwnership(ctx, actorID, workspaceID, []ResourceRef{resource}, func(tx *gorm.DB, scope workspaceContext, version int64, proofs map[ResourceRef]ResourceOwnership) error {
+	return s.withBindingOwnership(ctx, actorID, workspaceID, []ResourceRef{resource}, func(tx *gorm.DB, scope workspaceContext, version int64, proofs map[ResourceRef]ResourceOwnership) error {
 		if !hasRole(scope.Roles, "farm_manager") {
 			return ErrForbidden
 		}

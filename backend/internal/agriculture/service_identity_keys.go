@@ -197,7 +197,7 @@ func (r *ServiceKeyring) signingKey(now, expiry time.Time) (ServiceIdentityKey, 
 }
 
 func (r *ServiceKeyring) sign(typ string, claims any, now, expiry time.Time) (string, error) {
-	if typ != delegationType && typ != serviceAssertionType && typ != farmWorkspaceType && typ != farmCursorType {
+	if typ != delegationType && typ != serviceAssertionType && typ != farmWorkspaceType && typ != farmCursorType && typ != parcelReceiptType && typ != parcelCursorType && typ != assetCatalogType && typ != assetCatalogCursorType && typ != assetCatalogObjectType {
 		return "", ErrServiceIdentity
 	}
 	key, err := r.signingKey(now, expiry)

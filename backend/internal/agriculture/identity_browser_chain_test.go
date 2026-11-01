@@ -288,7 +288,7 @@ func chainPlatformSnapshot(db *gorm.DB) (map[string]string, error) {
 		if err := tx.Exec("SELECT set_config('app.tenant_ids',?,true)", strings.Join(tenants, ",")).Error; err != nil {
 			return err
 		}
-		for _, table := range []string{"flow_tenants", "flow_memberships", "flow_workspaces", "flow_workspace_memberships", "flow_invites", "flow_billing_accounts", "flow_agriculture_role_bindings", "flow_agriculture_resource_bindings", "flow_agriculture_authorization_epochs", "flow_agriculture_audit_events", "flow_agriculture_farm_operations", "flow_agriculture_farm_events", "flow_command_outbox", "flow_operation_projections"} {
+		for _, table := range []string{"flow_tenants", "flow_memberships", "flow_workspaces", "flow_workspace_memberships", "flow_invites", "flow_billing_accounts", "flow_agriculture_role_bindings", "flow_agriculture_resource_bindings", "flow_agriculture_authorization_epochs", "flow_agriculture_audit_events", "flow_agriculture_farm_operations", "flow_agriculture_farm_events", "flow_agriculture_parcel_operations", "flow_agriculture_parcel_events", "flow_agriculture_parcel_references", "flow_agriculture_asset_operations", "flow_agriculture_asset_events", "flow_command_outbox", "flow_operation_projections"} {
 			var value string
 			// Sorting complete JSON also supports epoch rows whose key is tenant_id.
 			if err := tx.Raw("SELECT COALESCE(jsonb_agg(to_jsonb(f) ORDER BY to_jsonb(f)::text),'[]')::text FROM " + table + " f").Scan(&value).Error; err != nil {

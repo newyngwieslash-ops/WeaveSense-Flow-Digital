@@ -1,0 +1,9 @@
+{
+  "kind": "independent_cluster_shutdown_verification",
+  "report_sha256": "46352eb7c475216805897149268b77b5c00a3875ddfbea63a3cc4bab625d7810",
+  "pg_ctl_status_exit_code": 3,
+  "postmaster_pid_absent": true,
+  "server_log_shutdown": true,
+  "server_log_sha256": "e62cd8b40673aa104b3e8609fb1d77204ae3d16bcb4fca360138f2fec334c94c",
+  "stopped_verified": true
+}

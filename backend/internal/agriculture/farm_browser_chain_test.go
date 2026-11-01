@@ -38,6 +38,8 @@ type farmChainFixture struct {
 	root, private, owner, actor, password, origin, second string
 	org, foreign                                          OrganizationResult
 	platform                                              *FarmPlatform
+	parcels                                               *ParcelPlatform
+	assets                                                *AssetCatalogPlatform
 	seed, geo                                             *gorm.DB
 	server                                                *httptest.Server
 	actorCookie, ownerCookie                              *http.Cookie
@@ -195,8 +197,12 @@ func newFarmChainFixture(t *testing.T, browser bool, progress ...func(string)) *
 	client.client.Transport = farmChainTransport{base: client.client.Transport, t: t}
 	f.platform.Client = client
 	f.platform.Service.Ownership = client
+	f.parcels = NewParcelPlatform(f.platform.Service, client)
+	f.assets = NewAssetCatalogPlatform(f.platform.Service, client)
 	f.platform.Service.RegisterInternalAuthority(callbackRouter, gisKeys)
 	f.platform.RegisterInternal(callbackRouter, gisKeys)
+	f.parcels.RegisterInternal(callbackRouter, gisKeys)
+	f.assets.RegisterInternal(callbackRouter, gisKeys)
 	f.geo, e = gorm.Open(postgres.Open(os.Getenv("AGRI_TEST_GEO_MIGRATION_DSN")), &gorm.Config{Logger: logger.Discard})
 	if e != nil {
 		t.Fatal("GIS assertion connection unavailable")
@@ -240,7 +246,7 @@ func newFarmChainFixture(t *testing.T, browser bool, progress ...func(string)) *
 	router := gin.New()
 	router.Use(policy.Middleware())
 	handler.RegisterAuthRoutes(router.Group("/api"), svc)
-	API{Service: f.platform.Service, Farms: f.platform, User: func(c *gin.Context) (*model.User, error) {
+	API{Service: f.platform.Service, Farms: f.platform, Parcels: f.parcels, Assets: f.assets, User: func(c *gin.Context) (*model.User, error) {
 		cookie, _ := c.Cookie(auth.SessionCookieName)
 		return svc.CurrentUser(cookie)
 	}}.Register(router.Group("/api"))

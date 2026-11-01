@@ -149,7 +149,7 @@ func run(ctx context.Context) error {
 		cookie, _ := c.Cookie(service.SessionCookieName)
 		return svc.CurrentUser(cookie)
 	}
-	farmPlatform, err := agriculture.RegisterFromEnvWithFarms(r, api, db, flowUser)
+	agriculturePlatforms, err := agriculture.RegisterFromEnvWithDomains(r, api, db, flowUser)
 	if err != nil {
 		return err
 	}
@@ -196,13 +196,13 @@ func run(ctx context.Context) error {
 	}
 	go flow.RunNotifier(ctx, flow.Notifier{DB: db, Scanner: backgroundScanner, Mail: flow.SMTPMailerFromEnv(), BaseURL: os.Getenv("FLOW_PUBLIC_BASE_URL")}, 10*time.Second)
 	go flow.RunBillingMaintenance(ctx, db, 15*time.Minute, backgroundScanner)
-	if flowCfg.Enabled() || farmPlatform != nil {
+	if flowCfg.Enabled() || agriculturePlatforms != nil {
 		dispatcher := flow.CommandDispatcher{DB: db, Scanner: backgroundScanner}
 		if flowCfg.Enabled() {
 			dispatcher.Engine = flow.EngineClient{Cfg: flowCfg}
 		}
-		if farmPlatform != nil {
-			dispatcher.Adapters = farmPlatform.Dispatcher.Adapters
+		if agriculturePlatforms != nil {
+			dispatcher.Adapters = agriculturePlatforms.Adapters
 		}
 		go flow.RunCommandDispatcher(ctx, dispatcher, 2*time.Second)
 	}

@@ -242,3 +242,19 @@ DT025依赖DT024真实验收完成后开始。初建农场不存在可用于授�
 
 区域目录采用版本化部署JSON，未配置明确失败，不默认黑龙江/RS；第一输入profile只接受显式WGS84/CRS84经纬序，其他CRS明确拒绝，通用转换留后续导入任务。权威面积为PostGIS椭球m²，保留版本/来源，演示标识不可升级正式。具体实施合同见项目 `docs/agriculture/FARMS_CONTRACT.md`。新增路由、真实双PG与浏览器恢复负例均须纳入原隔离gate；本ADR不标记尚未实现任务完成。
 
+## ADR-036：稳定地块、历史选择器与当前授权分离（2026-11-01）
+
+DT025真实双PG/Redis/浏览器验收通过后启动DT026。新增GIS稳定parcel实体和不可变geometry_revision，不改写遗留plot、农场或旧迁移。父farm及data_class不可迁移；边界使用显式WGS84/CRS84经纬度与既有PostGIS椭球算法，必须ST_CoveredBy当前父farm，不静默裁切或修补。地块写入与父farm边界锁在同短事务，农场缩边界也须保留全部active地块覆盖；冲突拒绝而不是改旧几何。
+
+create的expected_revision=0与expected_farm_revision分别表达新地块和父farm版本；revise使用当前geometry_revision。服务器生效时间不可由浏览器回填/预定；valid_to由后续不可变revision推导，不更新旧历史。历史revision/at只选择内容版本，仍以当前资源ownership及当前显式权限授权；内部固定POST只读selector签名body避免未签query。归档历史需独立受审策略，不将inactive伪作active。
+
+创建、修改仍走具体预览、现有Flow adapter及分库outbox/inbox；独立parcel receipt-only typ只允许当前主体/作用域/epoch核验持久intent回执，不带内容权限、不因旧资源版本阻止结果对账。父farm上的显式parcel能力可继承；非farm直接grant仍严格绑定签收revision/hash，不把farm特例扩大。新增parcel-context和授权列表支持真实UI，farm.read本身不授予parcel.read。完整绘制、恢复、分割合并与通用属性留各自任务，不用不存在的依赖统计返回虚假0。
+
+## ADR-037：资产登记、受信权利与实体就绪分离（2026-11-01）
+
+DT041与DT026依赖独立，按新文件分包并行。GIS拥有资产/不可变版本/权利快照，平台仅可信授权与必要持久操作引用，不复制资产事实、不造空迁移。资产允许无farm；不伪造farm ID，也不放宽普通business票据的非空farm要求。采用受审资产专用workspace-operation/ownership profile：内容访问的asset_ids必须明确且当前逐个授权；空集合仅限窄登记预览/回执，不得扫描全部内容。
+
+farm-scoped登记需父farm显式asset.create；无farm初建采用owner/tenant_admin治理及显式初始grant，不授予治理者隐式内容访问或许可审批。直接asset grant仍保留签收版本语义。共享组合根精确按kind装配provider，未知kind默认拒绝；no-farm下载另用asset专用授权和对象归属链，不绕过原对象网关。
+
+客户端权利声明只进入pending/unknown；approved依据受信W00来源注册表及审核版本，用途由服务操作固定。登记不等于ready，元数据与不可变实体版本分离；无实体/无有效许可不能进入正式处理。过期、撤回、演示等级与所有父源的用途限制必须在读取前后重核，资产目录不能成为旧对象地址的旁路。完整上传发布、来源撤回全渠道传播分别留DT042/048；本决策不是这些任务完成证据。
+

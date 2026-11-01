@@ -113,6 +113,32 @@ class FarmGateTests(unittest.TestCase):
         self.assertTrue(report["passed"])
         self.assertEqual(report["browser_evidence"]["artifact_hashes"], self.browser["artifact_hashes"])
 
+    def test_failure_coordinates_and_browser_stage_are_closed_and_not_pass(self):
+        events = self.events.copy()
+        events = [{**event, "Action": "fail"} if event.get("Test") == gate.BROWSER_ROOT and event["Action"] == "pass" else event for event in events]
+        events.append({"Action": "output", "Package": gate.PACKAGE, "Test": gate.BROWSER_ROOT,
+                       "Output": "/SECRET/farm_browser_chain_test.go:704: Bearer SECRET\nSECRET.go:123: bad\nidentity_browser_chain_test.go:53: hidden\nFARM_BROWSER_DIAGNOSTIC stage=browser_private_config\nFARM_BROWSER_DIAGNOSTIC stage=SECRET"})
+        browser = {"result": "fail", "stage": "create_north_preview", "results": [],
+                   "failure": "assertion failed: north_created_with_explicit_grants", "secret": "SECRET"}
+        result = self.report(events, browser=browser)
+        self.assertFalse(result["passed"])
+        diagnostic = result["failure_diagnostics"]
+        self.assertEqual(diagnostic["browser_stage"], "create_north_preview")
+        self.assertEqual(diagnostic["browser_failure_code"], "assertion_failed")
+        self.assertEqual(len(diagnostic["go_locations"][0]["locations"]), 2)
+        self.assertEqual(diagnostic["go_stages"], [{"test": gate.BROWSER_ROOT, "stages": ["browser_private_config"]}])
+        self.assertNotIn("SECRET", json.dumps(result))
+
+    def test_unknown_failure_text_stage_and_location_cannot_escape(self):
+        for stage in ("SECRET", [], None):
+            browser = {"result": "fail", "stage": stage, "failure": "assertion failed: SECRET"}
+            result = self.report(browser=browser)
+            self.assertFalse(result["passed"])
+            self.assertNotIn("SECRET", json.dumps(result))
+            self.assertNotIn("browser_stage", result["failure_diagnostics"])
+        diagnostic = gate.failure_diagnostics("{}\nnull\n{\"Test\":[]}", {}, {})
+        self.assertEqual(diagnostic, {"go_locations": []})
+
     def test_fixed_sets_match_actual_go_and_browser_sources(self):
         source = (ROOT / "scripts/agriculture/farm-browser-e2e.mjs").read_text()
         checks = source.split("export const REQUIRED_CHECKS = [", 1)[1].split("];", 1)[0]

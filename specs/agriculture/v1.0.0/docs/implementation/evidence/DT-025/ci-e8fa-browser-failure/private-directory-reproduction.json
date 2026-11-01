@@ -1,0 +1,17 @@
+{
+  "scope": "Minimal reproduction of frozen farm browser private-config directory contract",
+  "frozen_source": "7ef522ea",
+  "observed_testing_TempDir_mode": "0755",
+  "required_private_config_parent_mode": "0700",
+  "unmodified_result": "PRIVATE_CONFIG_REJECTED",
+  "chmod_0700_only_result": "PRIVATE_CONFIG_ACCEPTED",
+  "go_version": "1.25.9",
+  "test_exit_code": 0,
+  "test_pass_count": 1,
+  "source": ".local/audit/farm-private-mode/private_mode_test.go",
+  "evidence_log": ".local/audit/farm-private-mode/evidence.log",
+  "evidence_sha256": "28c5af539c55768a322157bf75e6190cf4991587561c8dbe7f40a5e74be016a3",
+  "production_sources_modified": false,
+  "ci_failure_cause": "Deterministic preflight incompatibility found; real CI rerun still required after fixture-only permission fix.",
+  "context_wire_static_review": "Go/GIS context field names and types match Vue parser; no actual TS consumption of live response executed in this subtask."
+}

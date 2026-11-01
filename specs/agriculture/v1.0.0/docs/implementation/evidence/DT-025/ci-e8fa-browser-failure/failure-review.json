@@ -1,0 +1,20 @@
+{
+  "result": "failed",
+  "source_commit": "7ef522ea22f83fe08226cfe6f4f5061480298025",
+  "ci_commit": "e8fa2ca4ace8d33238e2d4f94813d010ccdc24ba",
+  "run_id": 41293112765,
+  "artifact_id": 13078252973,
+  "source_overlay_count": 456,
+  "source_hash_mismatches": [],
+  "failure": "TestFarmBrowserPostgresChain; no retained browser phase/check evidence",
+  "passed_scopes": [
+    "actual Redis runtime gate",
+    "HTTP root plus 8 required children",
+    "81 farm Python cases including actual PostGIS",
+    "156 isolation cases",
+    "10 Flow adapter and legacy worker Go records"
+  ],
+  "cause_status": "locally reproduced fixture directory 0755 rejected by actual JS reader; same file with directory 0700 accepted; CI repair pending",
+  "production_acceptance": false,
+  "fix_scope": "test fixture directory chmod0700+stat assertion; closed failure stage/source-line diagnostics; no production or acceptance assertion change"
+}

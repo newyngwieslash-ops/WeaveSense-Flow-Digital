@@ -24,6 +24,53 @@ BROWSER_CHECKS = {
     "same_cookie_after_revocation", "revoked_old_page_clears_content", "revoked_history_navigation_no_content",
     "all_database_checkpoints_acknowledged", "no_internal_credentials_identity_spoofing_or_external_requests",
 }
+BROWSER_STAGES = set("preflight react_login create_two_regions create_north_form create_north_preview create_north_confirm create_north_reload create_south_form create_south_preview create_south_confirm create_south_reload invalid_input_negatives ui_update_and_stale_revision archive_history cross_scope_negatives awaiting_revocation complete".split())
+GO_DIAGNOSTIC_FILES = {"farm_browser_chain_test.go", "identity_browser_chain_test.go"}
+GO_BROWSER_STAGES = set("browser_dependencies fixture_dependencies fixture_platform_database fixture_membership fixture_credentials fixture_service_keys fixture_gis_start fixture_gis_ready fixture_browser_policy fixture_runtime fixture_persisted_login browser_builds browser_node_lookup browser_private_config browser_child_start browser_child_finish browser_report_validate browser_evidence_write".split()) | {
+    "browser_" + action + "_" + checkpoint for action in ("wait", "verify")
+    for checkpoint in ("created", "updated", "archived", "revoke-request", "revoked-verified")
+}
+
+
+def failure_diagnostics(raw, browser, terminal):
+    locations = {}
+    stages = {}
+    for line in raw.splitlines():
+        try:
+            event = strict_json(line)
+            if not isinstance(event, dict):
+                continue
+            name = event.get("Test")
+            if (not isinstance(name, str) or name not in REQUIRED or terminal.get(name) != "fail"
+                    or event.get("Package") != PACKAGE or event.get("Action") != "output"
+                    or not isinstance(event.get("Output"), str)):
+                continue
+            for file, number in re.findall(r"\b([A-Za-z0-9_]+\.go):([1-9][0-9]{0,5})(?=[:\s])", event["Output"]):
+                if file in GO_DIAGNOSTIC_FILES:
+                    locations.setdefault(name, set()).add((file, int(number)))
+            for stage in re.findall(r"FARM_BROWSER_DIAGNOSTIC stage=([A-Za-z0-9_-]+)(?=\s|$)", event["Output"]):
+                if stage in GO_BROWSER_STAGES:
+                    stages.setdefault(name, set()).add(stage)
+        except (ValueError, TypeError):
+            continue
+    result = {"go_locations": [{"test": n, "locations": [{"file": f, "line": i} for f, i in sorted(points)[:12]]}
+                               for n, points in sorted(locations.items())]}
+    if stages:
+        result["go_stages"] = [{"test": n, "stages": sorted(values)} for n, values in sorted(stages.items())]
+    if isinstance(browser, dict):
+        stage = browser.get("stage")
+        if isinstance(stage, str) and stage in BROWSER_STAGES:
+            result["browser_stage"] = stage
+        failure = browser.get("failure")
+        if isinstance(failure, str) and failure.startswith("assertion failed: "):
+            check = failure.removeprefix("assertion failed: ")
+            if check in BROWSER_CHECKS:
+                result.update(browser_failure_code="assertion_failed", browser_failed_check=check)
+        elif failure == "farm browser fixture failed; private diagnostics withheld":
+            result["browser_failure_code"] = "fixture_failed"
+        elif failure == "owned farm fixture interrupted":
+            result["browser_failure_code"] = "interrupted"
+    return result
 
 
 def strict_json(raw):
@@ -127,6 +174,7 @@ def reduce(raw, browser, bootstrap, mode):
         "tests": [{"name": n, "result": terminal.get(n, "not_run")} for n in sorted(REQUIRED)],
         "browser_checks": [{"name": n, "result": checks.get(n, "not_run")} for n in sorted(BROWSER_CHECKS)],
         "browser_evidence": browser_evidence,
+        "failure_diagnostics": failure_diagnostics(raw, browser, terminal) if not (valid_go and valid_browser and valid_runtime) else {},
         "passed_count": sum(v == "pass" for v in terminal.values()),
     }
 

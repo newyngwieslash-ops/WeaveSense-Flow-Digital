@@ -27,8 +27,8 @@ class IsolationGateTests(unittest.TestCase):
     def reduce(self):
         return module.reduce(ET.tostring(self.xml, encoding="unicode"), self.reports)
 
-    def test_exact_79_cases_required(self):
-        self.assertEqual(len(module.REQUIRED), 79)
+    def test_exact_156_cases_required(self):
+        self.assertEqual(len(module.REQUIRED), 156)
         self.assertTrue(self.reduce()["passed"])
         self.xml.remove(self.xml[0])
         self.assertFalse(self.reduce()["passed"])
@@ -136,9 +136,9 @@ class IsolationGateTests(unittest.TestCase):
                 module.strict_json(raw)
 
     def test_contract_counts_and_positive_control_snapshot(self):
-        self.assertEqual(len(module.GO_EXPECTED["matrix"]), 180)
-        self.assertEqual(len(module.EXPECTED_OBSERVATIONS), 158)
-        self.assertEqual(len(module.EXPECTED_ROUTES), 21)
+        self.assertEqual(len(module.GO_EXPECTED["matrix"]), 260)
+        self.assertEqual(len(module.EXPECTED_OBSERVATIONS), 229)
+        self.assertEqual(len(module.EXPECTED_ROUTES), 30)
         row = next(row for row in self.reports["routes"]["observations"] if row["status"] == 200)
         row["business_snapshot_unchanged"] = False
         self.assertFalse(self.reduce()["passed"])

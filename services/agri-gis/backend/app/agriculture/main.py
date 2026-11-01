@@ -7,6 +7,7 @@ from datetime import UTC, datetime, timedelta
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from .farms_routes import install_farm_routes
 from .identity.config import configured_services
 from .identity.dependency import IdentityServices, verify_request
 from .identity.keys import KeyRing
@@ -43,6 +44,12 @@ def create_app(services: IdentityServices | None = None) -> FastAPI:
 
     @app.exception_handler(IdentityError)
     async def identity_error(_request: Request, error: IdentityError):
+        if _request.url.path.startswith("/internal/agri/v1/farms"):
+            return JSONResponse(
+                {"error": {"code": error.code}},
+                status_code=error.status,
+                headers={"Cache-Control": "private, no-store"},
+            )
         return JSONResponse(
             {"code": error.code},
             status_code=error.status,
@@ -103,6 +110,7 @@ def create_app(services: IdentityServices | None = None) -> FastAPI:
 
     register_object_routes(app)
     install_job_routes(app, None)
+    install_farm_routes(app)
     return app
 
 

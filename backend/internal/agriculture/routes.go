@@ -23,34 +23,47 @@ import (
 // Enablement is explicit: the default film/math profile remains unchanged.
 // PostgreSQL must have the narrowly owned admission function provisioned.
 func RegisterFromEnv(root, api gin.IRouter, db *gorm.DB, user flow.UserFunc) error {
+	_, err := RegisterFromEnvWithFarms(root, api, db, user)
+	return err
+}
+
+// RegisterFromEnvWithFarms returns adapters for the existing shared dispatcher.
+func RegisterFromEnvWithFarms(root, api gin.IRouter, db *gorm.DB, user flow.UserFunc) (*FarmPlatform, error) {
 	enabled, err := strconv.ParseBool(envDefault("FLOW_AGRICULTURE_ENABLED", "false"))
 	if err != nil {
-		return errors.New("invalid agriculture enablement configuration")
+		return nil, errors.New("invalid agriculture enablement configuration")
 	}
 	if !enabled {
-		return nil
+		return nil, nil
 	}
 	if db.Dialector.Name() == "postgres" {
 		if err := database.RequireAgricultureAdmission(db); err != nil {
-			return err
+			return nil, err
 		}
 	} else {
 		dev, e := strconv.ParseBool(envDefault("FLOW_AGRICULTURE_ALLOW_SQLITE_DEV", "false"))
 		if e != nil || !dev {
-			return errors.New("agriculture requires PostgreSQL or explicit isolated SQLite development mode")
+			return nil, errors.New("agriculture requires PostgreSQL or explicit isolated SQLite development mode")
 		}
 	}
 	service := Service{DB: db}
+	var farms *FarmPlatform
 	if path := os.Getenv("FLOW_AGRICULTURE_SERVICE_IDENTITY_CONFIG"); path != "" {
 		client, gisKeys, err := loadServiceIdentity(path)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		service.Ownership = client
 		service.RegisterInternalAuthority(root, gisKeys)
+		farms = NewFarmPlatform(service, client)
+		farms.RegisterInternal(root, gisKeys)
 	}
-	API{Service: service, User: user}.Register(api)
-	return nil
+	if farms == nil {
+		farms = NewFarmPlatform(service, nil)
+		farms.RegisterInternal(root, nil)
+	}
+	API{Service: service, User: user, Farms: farms}.Register(api)
+	return farms, nil
 }
 func envDefault(name, value string) string {
 	if v := os.Getenv(name); v != "" {
@@ -62,6 +75,7 @@ func envDefault(name, value string) string {
 type API struct {
 	Service Service
 	User    flow.UserFunc
+	Farms   *FarmPlatform
 	// Trusted server composition only. Production has no W06 event adapter yet;
 	// nil keeps the authenticated route closed instead of fabricating events.
 	JobEvents *JobEventStream
@@ -169,6 +183,7 @@ func (a API) sessionMiddleware(response func(*gin.Context, any, error)) gin.Hand
 }
 
 func (a API) Register(api gin.IRouter) {
+	a.registerFarms(api)
 	a.registerAuthorizationV1(api)
 	a.registerObjectGateway(api)
 	RegisterJobEvents(api, a, a.JobEvents)

@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted, shallowRef } from 'vue'
 import { SessionController, loginURL, workspaceURL } from './session'
 import { bindSessionLifecycle } from './session-lifecycle'
+import FarmWorkspace from './farms/FarmWorkspace.vue'
 const controller = new SessionController()
 const state = shallowRef(controller.state)
 const signIn = shallowRef<string | null>(null)
@@ -32,12 +33,13 @@ onUnmounted(() => { unbind() })
       <ul v-if="state.workspaces.length"><li v-for="workspace in state.workspaces" :key="workspace.id"><a :href="workspaceURL(workspace.id)" :aria-current="state.selected?.id === workspace.id ? 'page' : undefined">{{ workspace.name }}</a><span class="muted"> · {{ workspace.slug }}</span></li></ul>
       <p v-else>尚无可访问工作区，请在平台中创建或申请加入。</p>
       <section v-if="state.selected" data-testid="agri-workspace-context" :data-workspace-id="state.selected.id"><h2>当前授权工作区</h2><p><strong>{{ state.selected.name }}</strong> · {{ state.selected.slug }}</p><p class="muted">这是服务器确认的工作区上下文，不是农场或地块详情。</p></section>
+      <FarmWorkspace v-if="state.selected" :key="`${state.user.id}:${state.selected.id}:${state.selected.authorityFingerprint}`" :workspace="state.selected.id" :checking="!!state.checking" @revalidate="refresh" />
     </section>
     <div class="actions" v-if="state.status !== 'loading' && state.status !== 'logging_out'">
       <button type="button" @click="refresh">重新验证会话</button>
       <button v-if="state.error?.code === 'LOGOUT_FAILED'" type="button" @click="controller.logout()">重试退出</button>
       <a v-if="state.status === 'anonymous' && signIn" data-testid="agri-login" :href="signIn">前往平台登录</a>
     </div>
-    <aside><h2>农业业务暂未开放</h2><p>当前交付为可信平台会话与工作区接入。地块、影像分析、外业、报告和农业 Agent，需完成服务端授权与租户隔离后开放。</p><p>本页面不调用旧 GIS 业务接口，不加载底图、影像或三维资源，也不展示模拟农业结果。</p></aside>
+    <aside><h2>农业服务边界</h2><p>农场功能依赖当前工作区的服务端权限与区域配置。地块、影像分析、外业、报告和农业 Agent 按后续任务开放；本页面不展示模拟农业结果。</p><p>地图仅显示明确提供的农场边界，不调用旧 GIS 接口，不加载外部底图、影像或三维资源。</p></aside>
   </main>
 </template>

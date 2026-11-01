@@ -1,0 +1,719 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.weavesense.invalid/agriculture/v1/farms.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "workspace_id": {},
+    "preview_id": {},
+    "farm": {},
+    "initial_grants": {},
+    "expected_revision": {},
+    "reason": {},
+    "action": {},
+    "farm_id": {}
+  },
+  "title": "Agriculture farm request and receipt contracts",
+  "description": "DT025 implementation contract. Schema validation is not authorization, geometric validity, IANA zone validation, or deployment acceptance.",
+  "$defs": {
+    "FarmInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "external_code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "operator_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "contact": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 120
+            },
+            "email": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 254
+            },
+            "phone": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 40
+            }
+          },
+          "required": []
+        },
+        "region_code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+        },
+        "dictionary_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+        },
+        "timezone": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "area_unit": {
+          "enum": [
+            "m2",
+            "ha",
+            "mu"
+          ]
+        },
+        "geometry": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "Polygon"
+                },
+                "coordinates": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "prefixItems": [
+                        {
+                          "type": "number",
+                          "minimum": -180,
+                          "maximum": 180
+                        },
+                        {
+                          "type": "number",
+                          "minimum": -90,
+                          "maximum": 90
+                        }
+                      ],
+                      "items": false,
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    "minItems": 4,
+                    "maxItems": 10001
+                  },
+                  "minItems": 1,
+                  "maxItems": 1000
+                }
+              },
+              "required": [
+                "type",
+                "coordinates"
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "MultiPolygon"
+                },
+                "coordinates": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "array",
+                        "prefixItems": [
+                          {
+                            "type": "number",
+                            "minimum": -180,
+                            "maximum": 180
+                          },
+                          {
+                            "type": "number",
+                            "minimum": -90,
+                            "maximum": 90
+                          }
+                        ],
+                        "items": false,
+                        "minItems": 2,
+                        "maxItems": 2
+                      },
+                      "minItems": 4,
+                      "maxItems": 10001
+                    },
+                    "minItems": 1,
+                    "maxItems": 1000
+                  },
+                  "minItems": 1,
+                  "maxItems": 1000
+                }
+              },
+              "required": [
+                "type",
+                "coordinates"
+              ]
+            }
+          ]
+        },
+        "source_crs": {
+          "enum": [
+            "EPSG:4326",
+            "OGC:CRS84"
+          ]
+        },
+        "coordinate_order": {
+          "const": "longitude_latitude"
+        },
+        "data_class": {
+          "enum": [
+            "demo",
+            "operational"
+          ]
+        }
+      },
+      "required": [
+        "external_code",
+        "name",
+        "operator_name",
+        "region_code",
+        "dictionary_version",
+        "timezone",
+        "area_unit",
+        "geometry",
+        "source_crs",
+        "coordinate_order",
+        "data_class"
+      ]
+    },
+    "FarmPatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "operator_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "contact": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 120
+            },
+            "email": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 254
+            },
+            "phone": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 40
+            }
+          },
+          "required": []
+        },
+        "region_code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+        },
+        "dictionary_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"
+        },
+        "timezone": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "area_unit": {
+          "enum": [
+            "m2",
+            "ha",
+            "mu"
+          ]
+        },
+        "geometry": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "Polygon"
+                },
+                "coordinates": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "prefixItems": [
+                        {
+                          "type": "number",
+                          "minimum": -180,
+                          "maximum": 180
+                        },
+                        {
+                          "type": "number",
+                          "minimum": -90,
+                          "maximum": 90
+                        }
+                      ],
+                      "items": false,
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    "minItems": 4,
+                    "maxItems": 10001
+                  },
+                  "minItems": 1,
+                  "maxItems": 1000
+                }
+              },
+              "required": [
+                "type",
+                "coordinates"
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "MultiPolygon"
+                },
+                "coordinates": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "array",
+                        "prefixItems": [
+                          {
+                            "type": "number",
+                            "minimum": -180,
+                            "maximum": 180
+                          },
+                          {
+                            "type": "number",
+                            "minimum": -90,
+                            "maximum": 90
+                          }
+                        ],
+                        "items": false,
+                        "minItems": 2,
+                        "maxItems": 2
+                      },
+                      "minItems": 4,
+                      "maxItems": 10001
+                    },
+                    "minItems": 1,
+                    "maxItems": 1000
+                  },
+                  "minItems": 1,
+                  "maxItems": 1000
+                }
+              },
+              "required": [
+                "type",
+                "coordinates"
+              ]
+            }
+          ]
+        },
+        "source_crs": {
+          "enum": [
+            "EPSG:4326",
+            "OGC:CRS84"
+          ]
+        },
+        "coordinate_order": {
+          "const": "longitude_latitude"
+        }
+      },
+      "required": [],
+      "minProperties": 1
+    },
+    "InitialGrant": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "subject_user_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "agri.farm.read",
+              "agri.farm.update",
+              "agri.farm.archive"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 3,
+          "uniqueItems": true
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "subject_user_id",
+        "capabilities"
+      ]
+    },
+    "CreateFarm": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "workspace_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        },
+        "preview_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        },
+        "farm": {
+          "$ref": "#/$defs/FarmInput"
+        },
+        "initial_grants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/InitialGrant"
+          },
+          "minItems": 1,
+          "maxItems": 20
+        }
+      },
+      "required": [
+        "workspace_id",
+        "preview_id",
+        "farm",
+        "initial_grants"
+      ]
+    },
+    "UpdateFarm": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "workspace_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        },
+        "preview_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        },
+        "expected_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "farm": {
+          "$ref": "#/$defs/FarmPatch"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "preview_id",
+        "expected_revision",
+        "farm"
+      ]
+    },
+    "ArchiveFarm": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "workspace_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        },
+        "preview_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        },
+        "expected_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "workspace_id",
+        "preview_id",
+        "expected_revision",
+        "reason"
+      ]
+    },
+    "PreviewCreate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "workspace_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        },
+        "action": {
+          "const": "create"
+        },
+        "farm": {
+          "$ref": "#/$defs/FarmInput"
+        },
+        "initial_grants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/InitialGrant"
+          },
+          "minItems": 1,
+          "maxItems": 20
+        }
+      },
+      "required": [
+        "workspace_id",
+        "action",
+        "farm",
+        "initial_grants"
+      ]
+    },
+    "PreviewUpdate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "workspace_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        },
+        "action": {
+          "const": "update"
+        },
+        "farm_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        },
+        "expected_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "farm": {
+          "$ref": "#/$defs/FarmPatch"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "action",
+        "farm_id",
+        "expected_revision",
+        "farm"
+      ]
+    },
+    "PreviewArchive": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "workspace_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        },
+        "action": {
+          "const": "archive"
+        },
+        "farm_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        },
+        "expected_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "workspace_id",
+        "action",
+        "farm_id",
+        "expected_revision",
+        "reason"
+      ]
+    },
+    "CommandReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "producer": {
+          "const": "agri-gis"
+        },
+        "aggregate_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "schema_version": {
+          "const": "1.0"
+        },
+        "operation_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        },
+        "tenant_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        },
+        "workspace_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        },
+        "request_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "grant_plan_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "farm_id": {
+          "type": "string",
+          "pattern": "^farm_[0-9a-f]{32}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "event_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        },
+        "event_type": {
+          "enum": [
+            "agri.farm.created",
+            "agri.farm.updated",
+            "agri.farm.archived"
+          ]
+        },
+        "payload_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "state": {
+          "const": "applied"
+        }
+      },
+      "required": [
+        "schema_version",
+        "producer",
+        "aggregate_revision",
+        "operation_id",
+        "tenant_id",
+        "workspace_id",
+        "request_hash",
+        "grant_plan_hash",
+        "farm_id",
+        "revision",
+        "event_id",
+        "event_type",
+        "payload_hash",
+        "state"
+      ]
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/CreateFarm"
+    },
+    {
+      "$ref": "#/$defs/UpdateFarm"
+    },
+    {
+      "$ref": "#/$defs/ArchiveFarm"
+    },
+    {
+      "$ref": "#/$defs/PreviewCreate"
+    },
+    {
+      "$ref": "#/$defs/PreviewUpdate"
+    },
+    {
+      "$ref": "#/$defs/PreviewArchive"
+    }
+  ]
+}

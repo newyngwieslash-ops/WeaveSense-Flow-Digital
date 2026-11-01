@@ -5,7 +5,7 @@ package agriculture
 // must never acquire authority.
 func knownAction(action string) bool {
 	switch action {
-	case "agri.farm.read", "agri.farm.update",
+	case "agri.farm.read", "agri.farm.update", "agri.farm.archive",
 		"agri.parcel.read", "agri.parcel.create", "agri.parcel.update", "agri.parcel.delete",
 		"agri.asset.read", "agri.asset.create", "agri.asset_download.read",
 		"agri.analysis.read", "agri.analysis.submit", "agri.analysis.cancel",
@@ -84,6 +84,7 @@ func singleRoleAllowsAction(role, action string) bool {
 		// Evidence upload needs a narrower action than general asset.create.
 		return action == "agri.report.review" || action == "agri.report.publish"
 	case "farm_manager":
+		if action == "agri.farm.archive" { return true }
 		// Governance is limited to explicitly granted farms, never tenant-wide.
 		// Usage/budget projections need narrower actions than general billing.
 		switch action {

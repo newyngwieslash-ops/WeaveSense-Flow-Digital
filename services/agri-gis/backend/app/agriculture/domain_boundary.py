@@ -40,6 +40,15 @@ JOB_AUTHORITY_TABLES = frozenset(
         "agriculture_job_authority_checks",
     }
 )
+FARM_TABLES = frozenset(
+    {
+        "agriculture_farms",
+        "agriculture_farm_revisions",
+        "agriculture_farm_commands",
+        "agriculture_farm_outbox",
+        "agriculture_farm_dictionaries",
+    }
+)
 
 
 def actual_model_inventory():
@@ -85,6 +94,7 @@ async def require_domain_boundary(connection, role="flow_geo_app"):
             | IDENTITY_TABLES
             | {OWNERSHIP_TABLE, REFERENCE_TABLE, OBJECT_TABLE}
             | JOB_AUTHORITY_TABLES
+            | FARM_TABLES
         )
         rows = await connection.fetch(
             "SELECT c.relname,c.relrowsecurity,c.relforcerowsecurity,"
@@ -107,6 +117,31 @@ async def require_domain_boundary(connection, role="flow_geo_app"):
                 raise ValueError("domain RLS required")
             if row["owner"] != "flow_geo_migrate":
                 raise ValueError("unexpected domain owner")
+            if name in FARM_TABLES:
+                expected_access = (
+                    True,
+                    True,
+                    name == "agriculture_farms",
+                    False,
+                    False,
+                )
+                if role == "flow_geo_worker":
+                    expected_access = (False, False, False, False, False)
+                if (
+                    tuple(
+                        row[k]
+                        for k in (
+                            "can_read",
+                            "can_insert",
+                            "can_update",
+                            "can_delete",
+                            "can_manage",
+                        )
+                    )
+                    != expected_access
+                ):
+                    raise ValueError("farm privilege boundary mismatch")
+                continue
             if name in JOB_AUTHORITY_TABLES:
                 expected_insert = (
                     role == "flow_geo_app" or name == "agriculture_job_authority_checks"
@@ -174,6 +209,16 @@ async def require_domain_boundary(connection, role="flow_geo_app"):
         )
         if sidecar_policies != len(JOB_AUTHORITY_TABLES):
             raise ValueError("restrictive job authority policy required")
+        farm_policies = await connection.fetchval(
+            "SELECT count(*) FROM pg_catalog.pg_policy p "
+            "JOIN pg_catalog.pg_class c ON c.oid=p.polrelid "
+            "JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace "
+            "WHERE n.nspname='public' AND c.relname=ANY($1) "
+            "AND NOT p.polpermissive AND p.polname='agriculture_farm_scope'",
+            sorted(FARM_TABLES),
+        )
+        if farm_policies != len(FARM_TABLES):
+            raise ValueError("restrictive farm policy required")
         object_policy = await connection.fetchval(
             "SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_policy "
             "WHERE polrelid='public.agriculture_private_objects'::regclass "

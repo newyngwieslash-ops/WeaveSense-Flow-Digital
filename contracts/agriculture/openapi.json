@@ -1,16 +1,16 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "WeaveSense Agriculture initial contract subset",
+    "title": "WeaveSense Agriculture versioned contract subsets",
     "version": "1.0.0",
-    "description": "W00 contract-only, not implemented endpoint or full API claim. Platform session/CSRF and GIS delegation must be implemented and tested separately."
+    "description": "Existing analysis/job subset remains contract-only. Farm routes are DT025 implementation in progress; this document does not certify runtime or live acceptance."
   },
   "servers": [
     {
       "url": "/api/agri/v1"
     }
   ],
-  "x-implementation-status": "contract_only",
+  "x-implementation-status": "partial_implementation_in_progress",
   "paths": {
     "/analyses": {
       "post": {
@@ -129,7 +129,8 @@
           "503": {
             "description": "Dependency unavailable"
           }
-        }
+        },
+        "x-implementation-status": "contract_only"
       }
     },
     "/jobs/{id}": {
@@ -190,6 +191,519 @@
           },
           "404": {
             "description": "Missing or outside authorization scope"
+          }
+        },
+        "x-implementation-status": "contract_only"
+      }
+    },
+    "/context": {
+      "get": {
+        "operationId": "getFarmContext",
+        "x-implementation-status": "in_progress",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized completed result; never an implicit content grant"
+          },
+          "401": {
+            "description": "No valid platform session"
+          },
+          "403": {
+            "description": "Current capability denied"
+          },
+          "404": {
+            "description": "Resource unavailable without existence disclosure"
+          },
+          "503": {
+            "description": "Required trusted dependency unavailable"
+          }
+        }
+      }
+    },
+    "/farm-previews": {
+      "post": {
+        "operationId": "previewFarm",
+        "x-implementation-status": "in_progress",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized completed result; never an implicit content grant"
+          },
+          "401": {
+            "description": "No valid platform session"
+          },
+          "403": {
+            "description": "Current capability denied"
+          },
+          "404": {
+            "description": "Resource unavailable without existence disclosure"
+          },
+          "503": {
+            "description": "Required trusted dependency unavailable"
+          },
+          "409": {
+            "description": "Revision or idempotency payload conflict"
+          },
+          "422": {
+            "description": "Invalid geometry, unsupported CRS or input"
+          },
+          "428": {
+            "description": "Expected revision is required for update/archive"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "./farms.schema.json#/$defs/PreviewCreate"
+                  },
+                  {
+                    "$ref": "./farms.schema.json#/$defs/PreviewUpdate"
+                  },
+                  {
+                    "$ref": "./farms.schema.json#/$defs/PreviewArchive"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/farms": {
+      "get": {
+        "operationId": "listFarms",
+        "x-implementation-status": "in_progress",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "enum": [
+                "active",
+                "archived"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized completed result; never an implicit content grant"
+          },
+          "401": {
+            "description": "No valid platform session"
+          },
+          "403": {
+            "description": "Current capability denied"
+          },
+          "404": {
+            "description": "Resource unavailable without existence disclosure"
+          },
+          "503": {
+            "description": "Required trusted dependency unavailable"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createFarm",
+        "x-implementation-status": "in_progress",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Authorized completed result; never an implicit content grant"
+          },
+          "401": {
+            "description": "No valid platform session"
+          },
+          "403": {
+            "description": "Current capability denied"
+          },
+          "404": {
+            "description": "Resource unavailable without existence disclosure"
+          },
+          "503": {
+            "description": "Required trusted dependency unavailable"
+          },
+          "409": {
+            "description": "Revision or idempotency payload conflict"
+          },
+          "422": {
+            "description": "Invalid geometry, unsupported CRS or input"
+          },
+          "428": {
+            "description": "Expected revision is required for update/archive"
+          },
+          "202": {
+            "description": "Durable pending operation; not a completed farm or grant"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "./farms.schema.json#/$defs/CreateFarm"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/farms/{farm_id}": {
+      "get": {
+        "operationId": "getFarm",
+        "x-implementation-status": "in_progress",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "farm_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized completed result; never an implicit content grant"
+          },
+          "401": {
+            "description": "No valid platform session"
+          },
+          "403": {
+            "description": "Current capability denied"
+          },
+          "404": {
+            "description": "Resource unavailable without existence disclosure"
+          },
+          "503": {
+            "description": "Required trusted dependency unavailable"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateFarm",
+        "x-implementation-status": "in_progress",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "farm_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized completed result; never an implicit content grant"
+          },
+          "401": {
+            "description": "No valid platform session"
+          },
+          "403": {
+            "description": "Current capability denied"
+          },
+          "404": {
+            "description": "Resource unavailable without existence disclosure"
+          },
+          "503": {
+            "description": "Required trusted dependency unavailable"
+          },
+          "409": {
+            "description": "Revision or idempotency payload conflict"
+          },
+          "422": {
+            "description": "Invalid geometry, unsupported CRS or input"
+          },
+          "428": {
+            "description": "Expected revision is required for update/archive"
+          },
+          "202": {
+            "description": "Durable pending operation; not a completed farm or grant"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "./farms.schema.json#/$defs/UpdateFarm"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/farms/{farm_id}/archive": {
+      "post": {
+        "operationId": "archiveFarm",
+        "x-implementation-status": "in_progress",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "farm_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-CSRF-Token",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized completed result; never an implicit content grant"
+          },
+          "401": {
+            "description": "No valid platform session"
+          },
+          "403": {
+            "description": "Current capability denied"
+          },
+          "404": {
+            "description": "Resource unavailable without existence disclosure"
+          },
+          "503": {
+            "description": "Required trusted dependency unavailable"
+          },
+          "409": {
+            "description": "Revision or idempotency payload conflict"
+          },
+          "422": {
+            "description": "Invalid geometry, unsupported CRS or input"
+          },
+          "428": {
+            "description": "Expected revision is required for update/archive"
+          },
+          "202": {
+            "description": "Durable pending operation; not a completed farm or grant"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "./farms.schema.json#/$defs/ArchiveFarm"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/farm-operations/{operation_id}": {
+      "get": {
+        "operationId": "getFarmOperation",
+        "x-implementation-status": "in_progress",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "operation_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized completed result; never an implicit content grant"
+          },
+          "401": {
+            "description": "No valid platform session"
+          },
+          "403": {
+            "description": "Current capability denied"
+          },
+          "404": {
+            "description": "Resource unavailable without existence disclosure"
+          },
+          "503": {
+            "description": "Required trusted dependency unavailable"
           }
         }
       }

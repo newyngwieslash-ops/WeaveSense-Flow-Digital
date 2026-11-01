@@ -67,6 +67,26 @@ class Verifier:
     def __init__(self, keys: KeyRing):
         self.keys = keys
 
+    def decode_signed(self, token, *, typ, now):
+        """Shared crypto only; callers must enforce their closed claim schema."""
+        require(isinstance(token, str) and len(token) <= 196608)
+        parts = token.split(".")
+        require(len(parts) == 3)
+        decoded_header, decoded_claims = b64decode(parts[0]), b64decode(parts[1])
+        require(len(decoded_header) <= 2048 and len(decoded_claims) <= 131072)
+        header = json.loads(canonicalize(decoded_header))
+        require(
+            set(header) == {"alg", "typ", "kid"}
+            and header["alg"] == "EdDSA"
+            and header["typ"] == typ
+            and isinstance(header["kid"], str)
+        )
+        key = self.keys.require(header["kid"], now)
+        key.public_key.verify(
+            b64decode(parts[2]), (parts[0] + "." + parts[1]).encode("ascii")
+        )
+        return json.loads(canonicalize(decoded_claims)), key
+
     def verify(
         self,
         token: str,
@@ -80,6 +100,20 @@ class Verifier:
         action: str,
     ) -> Verified:
         try:
+            if typ == "weavesense-agri-workspace-operation+jws":
+                from ..farms_identity import verify_workspace
+
+                return verify_workspace(
+                    self,
+                    token,
+                    typ=typ,
+                    method=method,
+                    path=path,
+                    query=query,
+                    raw_body=raw_body,
+                    now=now,
+                    action=action,
+                )
             return self._verify(
                 token,
                 typ=typ,
@@ -110,23 +144,7 @@ class Verifier:
     ) -> Verified:
         validate_path(path, query)
         require(typ in {BUSINESS_TYP, SERVICE_TYP})
-        require(isinstance(token, str) and len(token) <= 196608)
-        parts = token.split(".")
-        require(len(parts) == 3)
-        decoded_header, decoded_claims = b64decode(parts[0]), b64decode(parts[1])
-        require(len(decoded_header) <= 2048 and len(decoded_claims) <= 131072)
-        header = json.loads(canonicalize(decoded_header))
-        require(
-            set(header) == {"alg", "typ", "kid"}
-            and header["alg"] == "EdDSA"
-            and header["typ"] == typ
-            and isinstance(header["kid"], str)
-        )
-        key = self.keys.require(header["kid"], now)
-        key.public_key.verify(
-            b64decode(parts[2]), (parts[0] + "." + parts[1]).encode("ascii")
-        )
-        claims = json.loads(canonicalize(decoded_claims))
+        claims, key = self.decode_signed(token, typ=typ, now=now)
         common = {
             "schema_version",
             "issuer",

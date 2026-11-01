@@ -75,6 +75,15 @@ func isolationRoutes(actor, inviteToken string) []isolationRoute {
 		{"P19", "GET", "/api/agri/v1/workspaces/:workspace_id/jobs/:job_id/events", "", "closed_provider"},
 		{"I01", "POST", authorityCheckPath, `{}`, "internal"},
 		{"I02", "POST", jobAuthorityCheckPath, `{}`, "internal"},
+		{"P20", "GET", "/api/agri/v1/context", "", "farm_context"},
+		{"P21", "GET", "/api/agri/v1/farms", "", "farm_list"},
+		{"P22", "GET", "/api/agri/v1/farms/:farm_id", "", "farm_detail"},
+		{"P23", "GET", "/api/agri/v1/farm-operations/:operation_id", "", "farm_operation"},
+		{"P24", "POST", "/api/agri/v1/farm-previews", `{"workspace_id":"{{workspace}}","action":"create","farm":{},"initial_grants":[]}`, "farm_write"},
+		{"P25", "POST", "/api/agri/v1/farms", `{"workspace_id":"{{workspace}}","preview_id":"fop_matrix","farm":{},"initial_grants":[]}`, "farm_write"},
+		{"P26", "PATCH", "/api/agri/v1/farms/:farm_id", `{"workspace_id":"{{workspace}}","preview_id":"fop_matrix","expected_revision":1,"farm":{"name":"Fixture name"}}`, "farm_write"},
+		{"P27", "POST", "/api/agri/v1/farms/:farm_id/archive", `{"workspace_id":"{{workspace}}","preview_id":"fop_matrix","expected_revision":1,"reason":"Fixture archive"}`, "farm_write"},
+		{"I03", "POST", farmAuthorityPath, `{}`, "internal"},
 	}
 }
 
@@ -182,6 +191,7 @@ func TestAgricultureIsolationMatrixPostgres(t *testing.T) {
 	api.Register(router.Group("/api"))
 	gisKeys, _ := identityTestKeys(t, time.Now().UTC(), 0x71)
 	s.RegisterInternalAuthority(router, gisKeys)
+	NewFarmPlatform(s, nil).RegisterInternal(router, gisKeys)
 	server.Start()
 	t.Cleanup(server.Close)
 	identity := func(cookie *http.Cookie) isolationIdentity {
@@ -236,7 +246,7 @@ func TestAgricultureIsolationMatrixPostgres(t *testing.T) {
 		}
 	})
 	expand := func(path, workspace string) string {
-		return strings.NewReplacer(":workspaceId", workspace, ":workspace_id", workspace, ":bindingId", binding.ID, ":binding_id", binding.ID, ":inviteId", wrongInvite.Invite.ID, ":userId", owner, ":object_id", "matrix_object", ":version", "1", ":job_id", "matrix_job").Replace(path)
+		return strings.NewReplacer(":workspaceId", workspace, ":workspace_id", workspace, ":bindingId", binding.ID, ":binding_id", binding.ID, ":inviteId", wrongInvite.Invite.ID, ":userId", owner, ":object_id", "matrix_object", ":version", "1", ":job_id", "matrix_job", ":farm_id", "farm_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", ":operation_id", "fop_matrix").Replace(path)
 	}
 	call := func(t *testing.T, row isolationRoute, scenario string, id isolationIdentity, workspace, body string, status int, extra http.Header) []byte {
 		t.Helper()
@@ -244,7 +254,12 @@ func TestAgricultureIsolationMatrixPostgres(t *testing.T) {
 		if e != nil {
 			t.Fatal("before snapshot failed")
 		}
-		r, e := http.NewRequest(row.Method, server.URL+expand(row.Path, workspace), strings.NewReader(body))
+		path := expand(row.Path, workspace)
+		if strings.HasPrefix(row.Kind, "farm_") && row.Method == "GET" {
+			path += "?workspace_id=" + workspace
+		}
+		body = strings.ReplaceAll(body, "{{workspace}}", workspace)
+		r, e := http.NewRequest(row.Method, server.URL+path, strings.NewReader(body))
 		if e != nil {
 			t.Fatal(e)
 		}
@@ -252,6 +267,7 @@ func TestAgricultureIsolationMatrixPostgres(t *testing.T) {
 		r.Header.Set("Content-Type", "application/json")
 		r.Header.Set(browsersecurity.CSRFHeader, id.CSRF)
 		r.Header.Set("X-Idempotency-Key", "matrix-request-001")
+		r.Header.Set("Idempotency-Key", "matrix-request-001")
 		// Untrusted headers must never select the authenticated identity or scope.
 		r.Header.Set("X-Tenant-ID", foreign.Tenant.ID)
 		r.Header.Set("X-User-ID", owner)
@@ -311,6 +327,15 @@ func TestAgricultureIsolationMatrixPostgres(t *testing.T) {
 			}
 			t.Run("expired_session", func(t *testing.T) { call(t, row, "expired_session", expired, org.Workspace.ID, row.Body, 401, nil) })
 			switch row.Kind {
+			case "farm_context", "farm_list", "farm_detail", "farm_operation", "farm_write":
+				t.Run("foreign_tenant", func(t *testing.T) { call(t, row, "foreign_tenant", viewer, foreign.Workspace.ID, row.Body, 404, nil) })
+				t.Run("unjoined_same_tenant_workspace", func(t *testing.T) { call(t, row, "unjoined_same_tenant_workspace", viewer, second, row.Body, 404, nil) })
+				status := map[string]int{"farm_context": 503, "farm_list": 503, "farm_detail": 404, "farm_operation": 404, "farm_write": 403}[row.Kind]
+				// Real farm facts/current callbacks are exercised by the independent
+				// double-PG chain. Never label missing-provider 503 as role denial.
+				t.Run("current_scope_boundary", func(t *testing.T) {
+					call(t, row, "current_scope_boundary", viewer, org.Workspace.ID, row.Body, status, nil)
+				})
 			case "scope":
 				t.Run("foreign_tenant", func(t *testing.T) { call(t, row, "foreign_tenant", viewer, foreign.Workspace.ID, row.Body, 404, nil) })
 				t.Run("unjoined_same_tenant_workspace", func(t *testing.T) { call(t, row, "unjoined_same_tenant_workspace", viewer, second, row.Body, 404, nil) })
@@ -394,6 +419,7 @@ func TestAgricultureIsolationMatrixPostgres(t *testing.T) {
 	wrongKeys, _ := identityTestKeys(t, time.Now().UTC(), 0x72)
 	authorityBody := authorityCheckBody{ActorUserID: actor, TenantID: org.Tenant.ID, WorkspaceID: org.Workspace.ID, AuthorizationVersion: decision.AuthorizationVersion}
 	jobBody := jobAuthorityCheckBody{Snapshot: snapshot, SnapshotHash: digest, Phase: "claim"}
+	farmBody := farmAuthorityRequest{ActorUserID: actor, TenantID: org.Tenant.ID, WorkspaceID: org.Workspace.ID, Action: "farm.context", AuthorizationVersion: decision.AuthorizationVersion, OperationID: "req_matrix", RequestHash: zeroFarmHash, GrantPlanHash: zeroFarmHash, FarmIDs: []string{}, RequestPayloadHash: zeroFarmHash}
 	for _, row := range routes {
 		if row.Kind != "internal" {
 			continue
@@ -404,6 +430,9 @@ func TestAgricultureIsolationMatrixPostgres(t *testing.T) {
 		if row.ID == "I02" {
 			capability = "job.authority.check"
 			body = jobBody
+		}
+		if row.ID == "I03" {
+			capability, body = "farm.operation.check", farmBody
 		}
 		t.Run(row.ID+"_signed_control", func(t *testing.T) { signed(t, row, "signed_control", capability, body, scope, gisKeys, 200) })
 		t.Run(row.ID+"_wrong_signer", func(t *testing.T) { signed(t, row, "wrong_signer", capability, body, scope, wrongKeys, 401) })
@@ -435,7 +464,7 @@ func TestAgricultureIsolationMatrixPostgres(t *testing.T) {
 		t.Fatal(e)
 	}
 	for _, row := range routes {
-		if row.Kind == "scope" {
+		if row.Kind == "scope" || strings.HasPrefix(row.Kind, "farm_") {
 			row := row
 			t.Run(row.ID+"_revoked_member", func(t *testing.T) {
 				call(t, row, "revoked_member_same_session", viewer, org.Workspace.ID, row.Body, 404, nil)
@@ -448,6 +477,9 @@ func TestAgricultureIsolationMatrixPostgres(t *testing.T) {
 	})
 	t.Run("I02_revoked_actor", func(t *testing.T) {
 		signed(t, routes[20], "revoked_actor", "job.authority.check", jobBody, scope, gisKeys, 403)
+	})
+	t.Run("I03_revoked_actor", func(t *testing.T) {
+		signed(t, routes[29], "revoked_actor", "farm.operation.check", farmBody, scope, gisKeys, 403)
 	})
 
 	if e = svc.Logout(actorCookie.Value); e != nil {

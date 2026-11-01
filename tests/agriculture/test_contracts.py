@@ -239,12 +239,16 @@ def test_meter_is_bounded_nonnegative_integer(quantity):
     validate("event-envelope", value)
 
 
-def test_minimum_openapi_is_explicitly_unimplemented_and_uses_real_platform_cookie():
+def test_openapi_distinguishes_unimplemented_and_farm_work_in_progress():
     api = json.loads((ROOT / "openapi.json").read_text())
     assert api["openapi"] == "3.1.0"
-    assert api["x-implementation-status"] == "contract_only"
-    assert set(api["paths"]) == {"/analyses", "/jobs/{id}"}
+    assert api["x-implementation-status"] == "partial_implementation_in_progress"
+    original = {"/analyses", "/jobs/{id}"}
+    farms = {"/context", "/farm-previews", "/farms", "/farms/{farm_id}",
+             "/farms/{farm_id}/archive", "/farm-operations/{operation_id}"}
+    assert set(api["paths"]) == original | farms
     assert api["components"]["securitySchemes"]["platformSession"]["name"] == "open_ai_canvas_session"
-    for path in api["paths"].values():
+    for name, path in api["paths"].items():
         for operation in path.values():
             assert operation["security"] == [{"platformSession": []}]
+            assert operation['x-implementation-status'] == ('contract_only' if name in original else 'in_progress')

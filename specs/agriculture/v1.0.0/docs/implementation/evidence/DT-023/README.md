@@ -1,4 +1,13 @@
-# DT-023 验收检查点：in_progress
+# DT-023 验收检查点：done（安全组件范围）
+
+## 2026-11-01 最终真实容器验收通过
+
+[实际运行 41276134632](https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/runs/41276134632) 对应 CI `0abff504f1506bd6ff2b9b8ade82995a45f9c5f6`、冻结产品 `e50ec16d1cc4357cc9a761ed7fe56ed79e7406eb`。
+严格指定三项全部执行通过，退出 0、无跳过；真实 image `sha256:5f5759c98c678e4c9a7c5543738665682d3aca0aa12081a5261d0a9f1f5b6bb8`。
+独立核验 24 个 parser 输入和 388 个 overlay 逐项匹配冻结源；内嵌与单独 assembly、哈希及 CI commit 一致。完整原始脱敏报告与独立复核保留于 `ci-0abff504/`。
+修复后本地组件报告 `components-e50ec16d.json` 为 77 pass、零失败/跳过，34 个源哈希映射同一产品提交。验证命令见报告及 `RECOVERY_STATUS.json`。
+独立审查确认可按本任务范围完成：隔离解析、资源限制和固定批准来源下载安全组件；不表示生产上传业务、真实 STAC/MCP 来源获权接入、W06 调度、完整 AG-AC 或 W02/G0 通过。没有新增数据库迁移或开放业务路由。
+全部历史失败仍如下保留，不回写为成功。下一依赖就绪任务是 DT-024。
 
 ## 2026-11-01 第三轮已定位缺库，修复待容器复验
 

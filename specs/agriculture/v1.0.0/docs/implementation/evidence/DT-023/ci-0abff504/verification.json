@@ -1,0 +1,34 @@
+{
+  "source_commit": "e50ec16d1cc4357cc9a761ed7fe56ed79e7406eb",
+  "ci_commit": "0abff504f1506bd6ff2b9b8ade82995a45f9c5f6",
+  "source_files": 24,
+  "overlay": 388,
+  "passed": true,
+  "tests": [
+    {
+      "classname": "tests.test_agriculture_ingestion_docker",
+      "name": "test_docker_actual_raster_and_malformed_inputs",
+      "time": "3.729",
+      "status": "pass",
+      "diagnostic": {
+        "stage": "pixel_limit"
+      }
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_docker",
+      "name": "test_docker_no_host_files_no_network_readonly",
+      "time": "0.274",
+      "status": "pass",
+      "diagnostic": {}
+    },
+    {
+      "classname": "tests.test_agriculture_ingestion_docker",
+      "name": "test_docker_timeout_removes_container_and_temp",
+      "time": "2.071",
+      "status": "pass",
+      "diagnostic": {}
+    }
+  ],
+  "image_id": "sha256:5f5759c98c678e4c9a7c5543738665682d3aca0aa12081a5261d0a9f1f5b6bb8",
+  "run_id": 41276134632
+}

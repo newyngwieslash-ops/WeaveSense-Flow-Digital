@@ -33324,6 +33324,187 @@
         }
       ],
       "note": "独立审查通过原任务范围；本地HTTP/SQLite fixture，非本轮浏览器、远程CI、PG RLS或生产领域provider。各补充证据保留其自身冻结来源。"
+    },
+    "DT-023": {
+      "verification": "verified",
+      "source_commit": "e50ec16d1cc4357cc9a761ed7fe56ed79e7406eb",
+      "evidence": [
+        {
+          "path": "docs/implementation/evidence/DT-023/README.md",
+          "sha256": "e13d1a33ba9f3e6bedddd2430358099e4a1f4393ce00f61cfcc3c91e74f40059"
+        },
+        {
+          "path": "docs/implementation/evidence/DT-023/components-e50ec16d.json",
+          "sha256": "2ebca1b3cf1c3c117c9a696e88571df2adb54485fb1a4051e5dd15693074e6ab"
+        },
+        {
+          "path": "docs/implementation/evidence/DT-023/ci-0abff504/independent-verification.json",
+          "sha256": "c9de8cc902c2d14ab71040e43d1047f115cb363e07c93c1c94ad914a0c2acb35"
+        },
+        {
+          "path": "docs/implementation/evidence/DT-023/ci-0abff504/parser-docker.json",
+          "sha256": "513684a7d313142f21db71a865b0d6a6b33938aa53c66c5137c86fb5f5a0630d"
+        },
+        {
+          "path": "docs/implementation/evidence/DT-023/ci-0abff504/session-ci-provenance.json",
+          "sha256": "a647c23443b73035abe379ac0ae8be50223fb140e466f1fd165b6c4382069ae4"
+        },
+        {
+          "path": "docs/implementation/evidence/DT-023/ci-0abff504/verification.json",
+          "sha256": "4c04ba4bd1a1dfbaa75846b87a6424d435b5a1fc5b887b5ee8a6f265a5439dc5"
+        }
+      ],
+      "commands": [
+        {
+          "command": ".local/identity-rebuild/venv/bin/python -m pytest -q tests/test_agriculture_ingestion_parser.py tests/test_agriculture_ingestion_limits.py tests/test_agriculture_ingestion_download.py",
+          "exit_code": 0,
+          "result": "passed"
+        },
+        {
+          "command": "AGRI_IDENTITY_PYTHON=/absolute/locked/python bash scripts/agriculture/parser-docker-ci.sh (actual GitHub Actions run 41276134632)",
+          "exit_code": 0,
+          "result": "passed"
+        }
+      ],
+      "source_hashes": [
+        {
+          "path": "contracts/agriculture/source-rights.py",
+          "sha256": "117c28096e5d29e2831b5ad8590f6cd43017c92a2a57599f851e3feef17481c7"
+        },
+        {
+          "path": "contracts/agriculture/source-rights.schema.json",
+          "sha256": "543452243e26b328a996038dbfbd6024fae10a36bec144c7a755be57293c257d"
+        },
+        {
+          "path": "deploy/agriculture/Dockerfile.parser",
+          "sha256": "f104c1b2f5a172d1c143b41c8ca73d69c60a74f3ed33bb35a84642f41a2a0401"
+        },
+        {
+          "path": "deploy/agriculture/sources.json",
+          "sha256": "aae6b4e006489a1724a5fcefae8ed55e7ae83ffebe3d3951a73f6d78aff27fc8"
+        },
+        {
+          "path": "docs/agriculture/INGESTION_SECURITY.md",
+          "sha256": "4a8a36ebcd36280a3f21f70946abfbe31dc69c05e062c746d3ff5702c1b1fa19"
+        },
+        {
+          "path": "scripts/agriculture/export-python-lock.py",
+          "sha256": "479108ab50874cb42c5e18798293f7595a511879d02d26e921193d2ee3a487e6"
+        },
+        {
+          "path": "scripts/agriculture/parser-ci-result.py",
+          "sha256": "8b289a908d1f67b2a884da71b8749378fd1cc25c9d86a4aa36adfb17793cae37"
+        },
+        {
+          "path": "scripts/agriculture/parser-ci-result.test.py",
+          "sha256": "49f6a6bfb5425851bb4e8dcc9ee68b993ca9a9031b98d625ebc16c11bc9b4e35"
+        },
+        {
+          "path": "scripts/agriculture/parser-ci-wiring.test.py",
+          "sha256": "614d2322aaba589951fff448454bf93830d154ea0eff79ca5229182441087b6e"
+        },
+        {
+          "path": "scripts/agriculture/parser-docker-ci.sh",
+          "sha256": "cbb0a8918017896700118bf65aca1c9c8a38a2f1db36ad6e2654e6db29f083e7"
+        },
+        {
+          "path": "scripts/agriculture/python-test-requirements.txt",
+          "sha256": "c546aca9e8293cbfce086a58ea722c6c70a4665a7034732a2f287806d9dcbdce"
+        },
+        {
+          "path": "services/agri-gis/backend/app/__init__.py",
+          "sha256": "9408096060f01f8e8e69dd293ce8a234ec32f561a50d152e1e0e5ca1b401cc55"
+        },
+        {
+          "path": "services/agri-gis/backend/app/agriculture/__init__.py",
+          "sha256": "77951ad82dc95f2e08716330d61902e73a231f0e5f085d66bb41e5d78533d66a"
+        },
+        {
+          "path": "services/agri-gis/backend/app/agriculture/ingestion/__init__.py",
+          "sha256": "d01c018733658b4ad68b33339d255db9d6d2d898cc53460aaa16c890c9551b26"
+        },
+        {
+          "path": "services/agri-gis/backend/app/agriculture/ingestion/archive.py",
+          "sha256": "50b85959d2a00b0f640749b32591a2cad93d761df8108fa241990835072f970b"
+        },
+        {
+          "path": "services/agri-gis/backend/app/agriculture/ingestion/download.py",
+          "sha256": "c7a06716a4bde8799601df91282bff1027a329b4165adc4278ad96e792c99409"
+        },
+        {
+          "path": "services/agri-gis/backend/app/agriculture/ingestion/limits.py",
+          "sha256": "5eab552bbff53366d8de5fec7e56f6b8b65ee5ef3f9f7bf95cbda55568585713"
+        },
+        {
+          "path": "services/agri-gis/backend/app/agriculture/ingestion/runner.py",
+          "sha256": "31a0c1c1e9f7b41eb4ff65c3be71bcad2194509aac47656ecf94c551a1a8582b"
+        },
+        {
+          "path": "services/agri-gis/backend/app/agriculture/ingestion/source_policy.py",
+          "sha256": "0ae55b1e2cd30661bac0f87e4ece2d5768bccbdd1f78d076c09db26c786f3871"
+        },
+        {
+          "path": "services/agri-gis/backend/app/agriculture/ingestion/worker.py",
+          "sha256": "906456b43b10f8750cfd2d058e8f7a2225e102847dad0742e13380eb49789441"
+        },
+        {
+          "path": "services/agri-gis/backend/app/core/__init__.py",
+          "sha256": "1820a44b6e0682da8670ad49a500d638919dbd0a85157ba25ecee0d82529ffb3"
+        },
+        {
+          "path": "services/agri-gis/backend/app/core/dataset_files.py",
+          "sha256": "3fe167db8e87d0ff86aa302233344c61b6a557d1864a23d6b8054534a25e6f4d"
+        },
+        {
+          "path": "services/agri-gis/backend/app/core/exceptions.py",
+          "sha256": "330c76adf9043d9ff877586abc010c39804bb83f09317b75f29901fa52b8fe8e"
+        },
+        {
+          "path": "services/agri-gis/backend/app/schemas/__init__.py",
+          "sha256": "2c11e1c640938bd3bfe8b2ad10e1fc871fc82f4317e94c97f0b8c8b1ec632d6d"
+        },
+        {
+          "path": "services/agri-gis/backend/app/schemas/field_verification.py",
+          "sha256": "1f5cee35ce513085013c29bd89354a87061dbd6d623fcacf5d868f65a8a9795b"
+        },
+        {
+          "path": "services/agri-gis/backend/app/services/__init__.py",
+          "sha256": "22a22dce4f8f50d16fcabba1074267c1fe566a7492fa4adfc22fe370f0c3b30a"
+        },
+        {
+          "path": "services/agri-gis/backend/app/services/field_workbook_parser.py",
+          "sha256": "06f0554111d8fdf074af90ebc4798a35c9712c15aa300d095838b11d327a16b6"
+        },
+        {
+          "path": "services/agri-gis/backend/poetry.lock",
+          "sha256": "e5e287271ef6c5fb56185dfcd07f12eedae144a908ec1483ab877696259a26df"
+        },
+        {
+          "path": "services/agri-gis/backend/pyproject.toml",
+          "sha256": "25ba43f87576814128bffd8b19f1a1f5cf9a673a6da9aa1a01ed6d1837b7abd2"
+        },
+        {
+          "path": "services/agri-gis/backend/tests/ingestion_limit_probe.py",
+          "sha256": "38dffa9af0240cb3a4ce5f005973665d3a57de4f88c0c0107781f6dfe169670b"
+        },
+        {
+          "path": "services/agri-gis/backend/tests/test_agriculture_ingestion_docker.py",
+          "sha256": "9004095c8f995c5a18a5f1af6eaaba4d152e20e2b9b0c94302b7ff7b97398b46"
+        },
+        {
+          "path": "services/agri-gis/backend/tests/test_agriculture_ingestion_download.py",
+          "sha256": "b31b846c47b8176762df9ecd126655f8293657f946c72648d06c4c1b60e16a8d"
+        },
+        {
+          "path": "services/agri-gis/backend/tests/test_agriculture_ingestion_limits.py",
+          "sha256": "03e9b1a7ca2e5aa219c0e1059cd366353a3e12a3f1977a5827ffa09a9ac4df77"
+        },
+        {
+          "path": "services/agri-gis/backend/tests/test_agriculture_ingestion_parser.py",
+          "sha256": "fcf4fd0b0838c5e39bdfd23474423e872b766ff9899e537378e95ad65c32521b"
+        }
+      ],
+      "note": "Independent review accepted DT023 security components only. 77 local components and 3 actual Docker cases passed without skips. Not production uploads, live STAC/MCP rights, W06 jobs or complete AG-AC/G0."
     }
   }
 }

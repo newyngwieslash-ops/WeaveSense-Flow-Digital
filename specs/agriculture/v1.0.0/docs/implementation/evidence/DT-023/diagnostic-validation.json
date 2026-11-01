@@ -1,0 +1,40 @@
+{
+  "kind": "diagnostic-only-component-validation",
+  "time_utc": "2026-11-01T04:59:48.621411+00:00",
+  "commands": [
+    {
+      "command": ".local/identity-rebuild/venv/bin/python -m pytest -q tests/test_agriculture_ingestion_parser.py tests/test_agriculture_ingestion_limits.py tests/test_agriculture_ingestion_download.py",
+      "cwd": "services/agri-gis/backend",
+      "exit_code": 0,
+      "passed": 77,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "command": "python3 scripts/agriculture/parser-ci-result.test.py",
+      "exit_code": 0,
+      "passed": 2
+    },
+    {
+      "command": "python3 scripts/agriculture/parser-ci-wiring.test.py",
+      "exit_code": 0,
+      "passed": 4
+    },
+    {
+      "command": "python3 scripts/agriculture/session-ci-prepare.test.py",
+      "exit_code": 0,
+      "passed": 8
+    }
+  ],
+  "source_sha256": {
+    "scripts/agriculture/parser-ci-result.py": "b6910fe817edbc53aa2415b5168456bacbc7941e07557cde712e121e85d618fd",
+    "scripts/agriculture/parser-ci-result.test.py": "9cef57b954af05bf3718e22b77066fbbd12e914fcc9409ad6f1b59ff783693b2",
+    "scripts/agriculture/parser-docker-ci.sh": "cbb0a8918017896700118bf65aca1c9c8a38a2f1db36ad6e2654e6db29f083e7",
+    "services/agri-gis/backend/tests/test_agriculture_ingestion_docker.py": "fcaad9b443e0ebe997027898eaeb9e7a702382d0962985d4283717ec6d8d409d"
+  },
+  "limitations": [
+    "No local Docker daemon. This run is not actual container acceptance.",
+    "First remote parser run failed; diagnostic additions await new CI."
+  ],
+  "review": "Independent read-only reviewer accepted sanitized fields and unchanged assertions; explicit testcase attribute allowlist adopted."
+}

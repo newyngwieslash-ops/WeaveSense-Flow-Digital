@@ -20,6 +20,7 @@ class ParserWiringTests(unittest.TestCase):
         required |= {f"services/agri-gis/backend/tests/{name}.py" for name in tests}
         required |= {"deploy/agriculture/Dockerfile.parser", "scripts/agriculture/parser-docker-ci.sh",
                      "docs/agriculture/INGESTION_SECURITY.md", "scripts/agriculture/parser-ci-wiring.test.py",
+                     "scripts/agriculture/parser-ci-result.py", "scripts/agriculture/parser-ci-result.test.py",
                      "scripts/agriculture/export-python-lock.py",
                      "scripts/agriculture/python-test-requirements.txt", "services/agri-gis/backend/poetry.lock",
                      "services/agri-gis/backend/pyproject.toml"}

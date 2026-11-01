@@ -757,7 +757,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 ### DT-023 · 加固上传解析与外部访问边界
 
-- 状态：`blocked_external`；阶段：`S0`；优先级：`P0`。
+- 状态：`in_progress`；阶段：`S0`；优先级：`P0`。
 - 需求：AG-FR-016、AG-FR-017、AG-FR-047、AG-NFR-002、AG-NFR-007、AG-NFR-016。
 - 验收用例：AG-AC-016、AG-AC-017、AG-AC-047。
 - 前置任务：DT-003、DT-005、DT-012、DT-020。
@@ -4816,8 +4816,8 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 
 | 状态 | 数量 |
 | --- | ---: |
-| blocked_external | 1 |
 | done | 22 |
+| in_progress | 1 |
 | not_started | 121 |
 
 历史 done、恢复证据待补验：无。
@@ -4847,7 +4847,7 @@ S3 收费可采用经用户选择并完成真实到账、独立复核及审计�
 | DT-020 | done |
 | DT-021 | done |
 | DT-022 | done |
-| DT-023 | blocked_external |
+| DT-023 | in_progress |
 | DT-024 | not_started |
 | DT-025 | not_started |
 | DT-026 | not_started |

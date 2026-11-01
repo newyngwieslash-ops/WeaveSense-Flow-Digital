@@ -52,7 +52,7 @@ cd "$ROOT/services/agri-gis/backend"
 status=0
 "$PYTHON" -m pytest -q tests/test_agriculture_ingestion_docker.py --junitxml="$OWN/result.xml" >"$OWN/test.log" 2>&1 || status=$?
 "$PYTHON" - "$ROOT" "$OWN/result.xml" "$IMAGE" "$BASE" "$status" "$OWN/build-provenance.json" <<'PY'
-import datetime, hashlib, json, os, pathlib, re, subprocess, sys, xml.etree.ElementTree as ET
+import datetime, hashlib, json, os, pathlib, re, runpy, subprocess, sys, xml.etree.ElementTree as ET
 root, result, image, base, status, build_manifest = sys.argv[1:]
 assembly_path = pathlib.Path(root)/'.local/evidence/session-ci-provenance.json'
 assembly = json.loads(assembly_path.read_text()) if assembly_path.exists() else None
@@ -68,11 +68,13 @@ else:
     source_commit = subprocess.check_output(['git','-C',root,'rev-parse','HEAD'],text=True).strip()
     assert re.fullmatch('[0-9a-f]{40}',source_commit)
 cases = list(ET.parse(result).iter('testcase')) if pathlib.Path(result).exists() else []
+diagnostics = runpy.run_path(str(pathlib.Path(root)/'scripts/agriculture/parser-ci-result.py'))
 required = {'test_docker_actual_raster_and_malformed_inputs',
             'test_docker_no_host_files_no_network_readonly',
             'test_docker_timeout_removes_container_and_temp'}
-passed = int(status)==0 and {c.attrib['name'] for c in cases} == required and not any(list(c) for c in cases)
+passed = int(status)==0 and len(cases)==len(required) and {c.attrib['name'] for c in cases} == required and all(diagnostics['passed'](c) for c in cases)
 paths = ['deploy/agriculture/Dockerfile.parser', 'scripts/agriculture/parser-docker-ci.sh']
+paths += ['scripts/agriculture/parser-ci-result.py']
 paths += [str(p.relative_to(root)) for p in (pathlib.Path(root)/'services/agri-gis/backend/app/agriculture/ingestion').glob('*.py')]
 paths += ['services/agri-gis/backend/tests/test_agriculture_ingestion_docker.py',
           'services/agri-gis/backend/tests/test_agriculture_ingestion_parser.py']
@@ -80,7 +82,8 @@ build = json.loads(pathlib.Path(build_manifest).read_text())
 source_hashes = build['source_sha256'] | {p:hashlib.sha256((pathlib.Path(root)/p).read_bytes()).hexdigest() for p in paths}
 report = {'kind':'actual-docker-parser', 'passed':passed, 'exit_code':int(status), 'source_commit':source_commit,
           'time_utc':datetime.datetime.now(datetime.UTC).isoformat(), 'base_digest':base,
-          'image_id':image, 'tests':[dict(c.attrib,status='pass' if not list(c) else 'not_pass') for c in cases],
+          'image_id':image, 'tests':[dict({k:c.attrib[k] for k in ('classname','name','time') if k in c.attrib},status='pass' if diagnostics['passed'](c) else 'not_pass',
+                                        diagnostic=diagnostics['diagnostic'](c)) for c in cases],
           'source_sha256':source_hashes, 'requirements_sha256':build['requirements_sha256'],
           'assembly_provenance':assembly,
           'assembly_provenance_sha256':hashlib.sha256(assembly_path.read_bytes()).hexdigest() if assembly else None}

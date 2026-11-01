@@ -1,6 +1,6 @@
 # WeaveSense-DigitalTwin 实施状态
 
-更新日期：2026-10-30（Asia/Shanghai）
+更新日期：2026-11-01（Asia/Shanghai）
 规格版本：1.0.0  
 当前状态：recovery_evidence_verified_implementation_in_progress
 
@@ -8,9 +8,9 @@
 
 当前工作包：W02；DT-001 至 DT-022 已按各自原范围完成，共 22/144 项；完整 W02/G0 和产品验收尚未完成。
 
-下一任务：完成 DT-023 上传解析与外部访问边界及生产解析适配器的真实容器隔离验证，再按依赖进入 DT-024；远程新 schema 签名浏览器回归仍单独等待审批/执行。
+下一任务：修复 DT-023 首轮真实 Docker 栅格解析验收失败，再按依赖进入 DT-024；新 schema 签名浏览器回归及 W00 迁移复验另记真实结果。
 
-DT-023 当前为 blocked_external，不是完成：冻结 `92f2146e` 的真实本地解析/下载/资源限额组件77项通过、零跳过，31输入哈希精确映射。独立审查修复了按业务标签绕过几何限制、外业XLSX分支绕过结构限额及最终权利检查跨总时限仍发布三处缺陷。生产只允许固定Docker适配器，缺容器时503，普通Popen仅为显式测试组合；本执行环境没有Docker daemon，三项真实生产适配器隔离/宿主文件和网络拒绝/超时清理测试仍not_run。普通contents:read CI接线已完成；原单次远程清单上传仍待审批，不重试或绕过。仅该外部执行门槛阻塞023及其后024；DAG当前没有其他依赖就绪未完成任务。恢复步骤及精确来源见 `evidence/DT-023/README.md`。
+DT-023 当前为 in_progress，不是完成：2026-11-01 首轮真实 Docker CI `41274681614`（远端 `0040b606`、对应产品 `ad4995c6`）执行全部三项，宿主文件/网络隔离及超时清理通过，栅格/异常输入项失败。23 个解析输入及全部 382 overlay 哈希已逐项核验一致；原始脱敏报告保留在 `evidence/DT-023/ci-0040b606/`，不把失败回写为成功。当前追加测试专用的固定阶段/异常类诊断，生产隔离与原断言保持不变；本地 77 项组件复验通过，但不替代 Docker。原远程上传审批已解决，不能继续称三项 not_run 或仅外部阻塞。DT024 仍须等待该真实失败修复。此前冻结 `92f2146e` 的组件与独立审查证据保留，见 `evidence/DT-023/README.md`。
 
 DT-021 已完成：冻结 `bbc650eb` 的严格执行证据包含农业范围缓存/事件流20项、旧业务撤权事件流15项和缓存1项，全部通过且无缺失/跳过；1171源码哈希独立核对一致。前端可信权限快照缓存键18项测试及实际农业构建、旧业务完整app/handler回归和逐事件撤权竞态另有冻结证据。修复真实Logout发生于Flush/Write之后仍发送下一敏感帧的问题，保留原失败记录。证据见 `evidence/DT-021/`。这证明本地真实HTTP/会话及SQLite fixture组件范围，不冒称远程CI、此次真实浏览器、PG RLS、生产农业检索/地图provider或W06队列；完整AG-AC/W02/G0仍未通过。
 
@@ -30,8 +30,8 @@ DT-017 已按原任务验收完成：冻结 `2e3d43a6` 的实际本地 PostgreSQ
 
 - Flow：206c82af7ae007f45da4c582f373fbabf027f1b8。
 - AgriScope：571a2dcd9abf8b8a22b66c750ee710b61d482051。
-- 目标远程：https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital；最新已复核 CI scaffold 为 `3f6f97b9`（源码 `332c4ba1`），该批 identity 因清单漂移失败，其他实际作业成功，不称整批通过。后续普通清单上传仍由原单次审批操作持有；本地 DT018/019 新结果未冒充远端结果。完整本地产品历史与 scaffold 区分，不声称产品分支已同步。
-- 当前恢复目录：`/workspace/scratch/8cdfee496491/WeaveSense-DigitalTwin-Recovery-20261030`；实际分支/HEAD 以恢复检查点记录为准。
+- 目标远程：https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital；最新已复核 CI scaffold 为 `0040b606`（产品源码 `ad4995c6`），parser 三项二过一失败，W00 migrations 因未组装新版 Loom 迁移源失败，其他运行结果逐项登记，不称整批通过。完整本地产品历史与 scaffold 区分，不声称产品分支已同步。
+- 当前恢复目录：`/workspace/scratch/8cdfee496491/digitaltwin-recovery-20261101/WeaveSense-DigitalTwin`；实际分支/HEAD 以恢复检查点记录为准。
 - 规格位置：推荐PROJECT_ROOT/specs/agriculture/v1.0.0。
 
 ## 2 任务与验收记录边界
@@ -105,8 +105,8 @@ DT-015 已按原任务范围完成：冻结 `574d48f02e96b43c01f0cd3ee2b90a95671
 
 | 状态 | 数量 |
 | --- | ---: |
-| blocked_external | 1 |
 | done | 22 |
+| in_progress | 1 |
 | not_started | 121 |
 
 历史 done、恢复证据待补验：无。
@@ -136,7 +136,7 @@ DT-015 已按原任务范围完成：冻结 `574d48f02e96b43c01f0cd3ee2b90a95671
 | DT-020 | done |
 | DT-021 | done |
 | DT-022 | done |
-| DT-023 | blocked_external |
+| DT-023 | in_progress |
 | DT-024 | not_started |
 | DT-025 | not_started |
 | DT-026 | not_started |

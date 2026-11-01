@@ -20,6 +20,8 @@ DT025第三轮`05786ed5`→`56fb009e` identity `41294531062`：私有目录修�
 
 DT025第四轮`72aa1c01`→`11a380f5` identity `41296300730`：真实登录、会话与工作区HTTP均200，Vue已挂载且session ready，但农场显示NETWORK_ERROR，context/list尚未发出请求；仍停在`react_login_workspace`。独立核验456源哈希，保留原失败于`evidence/DT-025/ci-11a380-receiver-failure/`。只读受控普通函数探针确认FarmTransport的`this.fetcher(...)`将接收者错误绑定到实例，GET及POST的CSRF均可在网络前失败；中立接收者对照通过。按此证据修复局部调用方式并增加双路径回归，不变更认证、权限或23项浏览器门禁；真实修复验收仍待执行，24项done保持不变。
 
+Receiver修复`f5ea0758`→`8ff749f5`已正常发布，Vue75项/构建通过，但identity原push路径过滤未包含前端，因此该轮只触发session/membership/gateway，不将旧identity重跑当作新源验收。补齐实际React/Vue/契约/部署输入过滤及逐overlay覆盖测试。另用锁定Vue真实vModelCheckbox指令证明runner同tick三次点击只能保留最后一个grant，现改为逐次点击并等待DOM保留全部已选项，仍要求完整三个权限；没有修改产品授权或验收标准。等待修正接线后的真实整链，证据见同目录`ci-wiring-and-checkbox.json`。
+
 DT-024 已完成：产品冻结 `71021e9f`、远端 CI scaffold `aa60e1a6`。真实 identity run `41278325667` 隔离79项全过，Redis完整启动、组件模式关闭、race开启；独立复核398源哈希、Go精确集合180/4/6、21路由158请求快照、GIS9路由及原有回归无缺项/跳过。gateway run `41278325702` 首次Vue容器构建超时，保留失败原件；同源仅重试失败job，attempt2实际容器16检查/浏览器19断言通过，未改限额/断言。六条CI全部成功，详见 `evidence/DT-024/README.md`。首次超时根因未证实，不冒称修复了代码错误；完整产品历史并未因CI scaffold发布而同步。
 
 DT-023 最终验收：CI `41276134632`（远端 `0abff504`、产品 `e50ec16d`）三项真实 Docker 全部通过、退出0、零跳过；独立核验24 parser输入与388 overlay一致。本地修复后77项组件通过，34源哈希对应同一冻结源。根因是缺少 `libexpat.so.1`，只补固定 Expat 运行依赖和非 root 构建 import，不调整隔离/限额/断言。证据见 `evidence/DT-023/ci-0abff504/`；这是安全组件任务完成，不是生产上传、真实外部来源或W06业务完成。

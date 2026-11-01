@@ -1,5 +1,7 @@
 """CI wiring contracts, not substitutes for real PostgreSQL route acceptance."""
 import importlib.util
+import fnmatch
+import re
 from pathlib import Path
 import unittest
 
@@ -10,6 +12,18 @@ spec.loader.exec_module(prepare)
 
 
 class IsolationWiringTests(unittest.TestCase):
+    def test_real_browser_input_changes_trigger_identity_acceptance(self):
+        workflow = (ROOT / ".github/workflows/agriculture-identity.yml").read_text()
+        push = workflow.split("  push:\n", 1)[1].split("  pull_request:\n", 1)[0]
+        filters = re.findall(r"^      - '([^']+)'$", push, re.MULTILINE)
+        inputs = [path for path in prepare.OVERLAY if path.startswith((
+            "services/agri-gis/frontend/", "web/", "contracts/agriculture/",
+            "tests/agriculture/", "deploy/agriculture/"))]
+        self.assertIn("services/agri-gis/frontend/agriculture/farms/transport.ts", inputs)
+        self.assertGreater(len(inputs), 20)
+        for path in inputs:
+            self.assertTrue(any(fnmatch.fnmatchcase(path, pattern) for pattern in filters), path)
+
     def test_all_new_test_inputs_are_in_explicit_assembly(self):
         required = {
             "backend/internal/agriculture/isolation_matrix_postgres_test.go",

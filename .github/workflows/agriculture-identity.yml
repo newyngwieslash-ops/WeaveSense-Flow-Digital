@@ -16,8 +16,11 @@ on:
       - 'backend/internal/app/read_cache_integration_test.go'
       - 'backend/go.*'
       - 'services/agri-gis/backend/**'
-      - 'tests/agriculture/fixtures/identity-canonical.json'
-      - 'deploy/agriculture/postgres/**'
+      - 'services/agri-gis/frontend/**'
+      - 'web/**'
+      - 'contracts/agriculture/**'
+      - 'tests/agriculture/**'
+      - 'deploy/agriculture/**'
   pull_request:
     branches: [ci/agriculture-w00, feat/agriculture-v1]
 permissions:

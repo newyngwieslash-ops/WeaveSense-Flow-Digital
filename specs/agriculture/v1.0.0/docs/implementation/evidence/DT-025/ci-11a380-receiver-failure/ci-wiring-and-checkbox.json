@@ -1,0 +1,70 @@
+{
+  "source_base": "f5ea0758c476ed0994aaa67254810534d54660ba",
+  "ci_without_identity": "8ff749f5b73e6537dba5a10d40351bfa858ce6f8",
+  "old_filter_missed_farm_transport": true,
+  "source_sha256": {
+    ".github/workflows/agriculture-identity.yml": "fe224dc84c74d93ea7c4282d92239792d6a407d66251f6212df192b0f7b64cea",
+    "tests/agriculture/test_isolation_ci_wiring.py": "3561b6f20c6a199d479598137e0b9c503d3ff0734d8427cfbdb4d12b1bc09061",
+    "scripts/agriculture/farm-browser-e2e.mjs": "08f872f17e37a3aa26a3d7d630a456dadadacd81998e00d55f987f4d2e0be129",
+    "scripts/agriculture/farm-browser-e2e.test.mjs": "ef8d2cd8867a7d806a03ed8f499e2c557a95b5c2e88befaea0ae13a0dfb677f2"
+  },
+  "tests": [
+    {
+      "command": "python3 tests/agriculture/test_isolation_ci_wiring.py",
+      "passed": 4,
+      "exit_code": 0
+    },
+    {
+      "command": "node --test scripts/agriculture/farm-browser-e2e.test.mjs",
+      "passed": 13,
+      "exit_code": 0
+    },
+    {
+      "command": "python3 scripts/agriculture/farm-ci-result.test.py",
+      "passed": 16,
+      "exit_code": 0
+    },
+    {
+      "command": "python3 scripts/agriculture/parser-ci-wiring.test.py",
+      "passed": 5,
+      "exit_code": 0
+    }
+  ],
+  "checkbox_probe": {
+    "implementation": "actual locked Vue runtime-dom vModelCheckbox directive, minimal element hooks (not browser acceptance)",
+    "synchronous_clicks": {
+      "model": [
+        "agri.farm.archive"
+      ],
+      "immediateChecked": [
+        true,
+        true,
+        true
+      ],
+      "settledChecked": [
+        false,
+        false,
+        true
+      ]
+    },
+    "update_between_clicks": {
+      "model": [
+        "agri.farm.read",
+        "agri.farm.update",
+        "agri.farm.archive"
+      ],
+      "immediateChecked": [
+        true,
+        true,
+        true
+      ],
+      "settledChecked": [
+        true,
+        true,
+        true
+      ]
+    }
+  },
+  "browser_acceptance": "not_run_for_fix",
+  "production_acceptance": false
+}

@@ -24,6 +24,39 @@ describe('same-origin farm transport component', () => {
     expect((await api.request('/api/agri/v1/farms', new AbortController().signal, 'POST', { workspace_id: 'w1' }, 'req_keep')).status).toBe(202)
     expect(requests).toEqual(['/api/auth/csrf', '/api/agri/v1/farms'])
   })
+  test('GET invokes an ordinary fetch function with a neutral receiver', async () => {
+    const abort = new AbortController()
+    let calls = 0
+    const api = new FarmTransport(async function (this: unknown, path, init) {
+      expect(this).toBeUndefined()
+      calls++
+      expect(path).toBe('/api/agri/v1/context?workspace_id=w1')
+      expect(init.method).toBe('GET'); expect(init.credentials).toBe('same-origin'); expect(init.cache).toBe('no-store'); expect(init.redirect).toBe('error'); expect(init.signal).toBe(abort.signal)
+      expect(init.headers).toEqual({ Accept: 'application/json' }); expect(init.body).toBeUndefined()
+      return response(success)
+    })
+    expect((await api.request('/api/agri/v1/context?workspace_id=w1', abort.signal)).envelope.data).toEqual([])
+    expect(calls).toBe(1)
+  })
+  test('POST invokes both CSRF and mutation fetch functions with neutral receivers', async () => {
+    const abort = new AbortController()
+    const requests: string[] = []
+    const api = new FarmTransport(async function (this: unknown, path, init) {
+      expect(this).toBeUndefined()
+      requests.push(path)
+      expect(init.credentials).toBe('same-origin'); expect(init.cache).toBe('no-store'); expect(init.redirect).toBe('error'); expect(init.signal).toBe(abort.signal)
+      if (path === '/api/auth/csrf') {
+        expect(init.method).toBe('GET'); expect(init.headers).toEqual({ Accept: 'application/json' }); expect(init.body).toBeUndefined()
+        return response({ code: 0, data: { token: 'a'.repeat(64) } })
+      }
+      expect(path).toBe('/api/agri/v1/farms'); expect(init.method).toBe('POST')
+      expect(init.headers).toEqual({ Accept: 'application/json', 'X-CSRF-Token': 'a'.repeat(64), 'Content-Type': 'application/json', 'Idempotency-Key': 'req_keep' })
+      expect(init.body).toBe('{"workspace_id":"w1"}')
+      return response(success, 202)
+    })
+    expect((await api.request('/api/agri/v1/farms', abort.signal, 'POST', { workspace_id: 'w1' }, 'req_keep')).status).toBe(202)
+    expect(requests).toEqual(['/api/auth/csrf', '/api/agri/v1/farms'])
+  })
   test('does not echo reflected sensitive error or accept old envelope, HTML, redirects or foreign origin', async () => {
     const bad = new FarmTransport(async () => response({ request_id: 'req_2', error: { code: 'REVISION_CONFLICT', message: 'contact@example.com secret raw diagnostics' } }, 409))
     try { await bad.request('/api/agri/v1/farms', new AbortController().signal); throw new Error('expected failure') } catch (e) { expect(e).toBeInstanceOf(FarmError); expect((e as FarmError).status).toBe(409); expect((e as Error).message).not.toContain('contact@') }

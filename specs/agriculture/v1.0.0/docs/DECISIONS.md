@@ -234,3 +234,11 @@ GIS 两个新侧表采用精确scope强制RLS与append-only。worker只读快照
 不声称跨数据库检查与业务发布天然原子或exactly-once。真实PG lease fixture与Go
 授权/签名HTTP证明身份链，不替代生产队列、真实影像、取消计费或故障恢复验收。
 
+## ADR-035：农场初建治理与显式业务授权分离（2026-11-01）
+
+DT025依赖DT024真实验收完成后开始。初建农场不存在可用于授权的GIS事实，不能伪造ownership或将空scope当系统。初版owner/tenant_admin可发起workspace创建治理；必须显式选择已有合适业务角色的初始grantee及精确能力，不自动授予创建人/所有者内容权限，不暗改角色。新增farm.archive能力仍受farm_manager角色上限与显式grant约束。
+
+创建采用独立短期workspace-operation签名合同，GIS回查平台当前创建意图/权限；普通business票据非空farm范围规则不变。复用flow CommandDispatcher并通过中性adapter扩展GIS，不新增调度循环；GIS事实/receipt/outbox与平台意图/inbox/grants分库持久，至少一次与业务去重、fencing CAS保证可恢复。201表示两端完成；新增202持久pending明确表达未知/待登记，不伪称跨库回滚。重复created不得复活已撤授权。
+
+区域目录采用版本化部署JSON，未配置明确失败，不默认黑龙江/RS；第一输入profile只接受显式WGS84/CRS84经纬序，其他CRS明确拒绝，通用转换留后续导入任务。权威面积为PostGIS椭球m²，保留版本/来源，演示标识不可升级正式。具体实施合同见项目 `docs/agriculture/FARMS_CONTRACT.md`。新增路由、真实双PG与浏览器恢复负例均须纳入原隔离gate；本ADR不标记尚未实现任务完成。
+

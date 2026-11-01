@@ -7,16 +7,21 @@
     "app/agriculture/actor_session.py": "9a99b632f6dacb3c9dbd2a4a6e75a1c5391c13f35f1b8cd7ed7e40a86c46990f",
     "app/agriculture/actors.py": "4f8a5993160c7c53ae95cf1f9dd8abc1289ed2c052f391f3aa3456d83d692434",
     "app/agriculture/database.py": "559c70e1fd755fb332840984c5c48d448152a4ee7b5d7e3c1975134945c3985b",
-    "app/agriculture/domain_boundary.py": "19cceb8b14476e628f037da3a662b12946a4db3361eb0cb6a1370eb49c294e6d",
+    "app/agriculture/domain_boundary.py": "6709a6eac3c3cc9fd74b76f0e72866cd3c13cfecd239bdad5f19a163dedf2234",
+    "app/agriculture/farms_config.py": "df3e9cb2fe589d23cda6c6a06848a1302df1cc4e2d6c194fb43f10d1effad87e",
+    "app/agriculture/farms_geometry.py": "8cb0b91db163a9528a37a12b03e7a2c8774e712d3674db2ced4c0cec86a433b0",
+    "app/agriculture/farms_identity.py": "a6094cba51f3c18329073719d51117ddc895db368cc77881cb2eef8ca9368ca8",
+    "app/agriculture/farms_routes.py": "9942e43fcead5d4da683dd1e39d09a0950650f679eb8df59109a1c192b03b3ce",
+    "app/agriculture/farms_store.py": "a2844b20506e4490ce8ade26b9fedd0cf11d7b578997776d33f430310ad4001a",
     "app/agriculture/identity/__init__.py": "d03d955b9eb9e56df428f42184a344f127292c29553a6183c34bc19224217cf2",
     "app/agriculture/identity/callback.py": "fe99446e720f89e01147c55c8a0a47bfa57b613e5f75dd46ab4846bdeae83fee",
     "app/agriculture/identity/canonical.py": "bd09a9c7fcdd20a783d09abd122f9c268c7e7f01a70a7d75f30d5d538b61c1d2",
-    "app/agriculture/identity/config.py": "205365a9257c49e9acd78ad454cb32e909005866e4236d1877a61fe43e26dafd",
-    "app/agriculture/identity/dependency.py": "dafb3f0ac731f00d58f14963cf35d123c3b1219f4a209bcdb2db73c03eb75a21",
+    "app/agriculture/identity/config.py": "ecab11bdc640ce19b36bdf29199a9b04c5e68e91c4b80c504b2a0f898fa1adc9",
+    "app/agriculture/identity/dependency.py": "ac0d075e6b8ece5e5b635466ee376990ae714f9b77e41d225b2bef390d3742b3",
     "app/agriculture/identity/keys.py": "3153d9b0ef99dc38cdd8d124d090dcdfc74cebca735f22a4b5e9b0de44905f2e",
     "app/agriculture/identity/providers.py": "bc4953cfeeb7c28b7531a00c8297f2b3961126c5787241a04e96769f4b37c6af",
     "app/agriculture/identity/replay.py": "4d8cd1af86f6260602860f2635859e8cba83f5b69e7c53138dae18724a326f1d",
-    "app/agriculture/identity/verify.py": "75a467a36fc34dd3599c352b95835d988b895cea53ea361ddf99475c36d026cf",
+    "app/agriculture/identity/verify.py": "8bd5bc7d87e35ea6d76797a435a4b21ba13529f1eed0b742669d56f92bb841ea",
     "app/agriculture/ingestion/__init__.py": "d01c018733658b4ad68b33339d255db9d6d2d898cc53460aaa16c890c9551b26",
     "app/agriculture/ingestion/archive.py": "50b85959d2a00b0f640749b32591a2cad93d761df8108fa241990835072f970b",
     "app/agriculture/ingestion/download.py": "c7a06716a4bde8799601df91282bff1027a329b4165adc4278ad96e792c99409",
@@ -28,8 +33,8 @@
     "app/agriculture/job_callback.py": "a601ea65b51f71ee323b012ef28e16cbfb609b9b9fc25783cdabef920315fb29",
     "app/agriculture/job_routes.py": "54b012c541daf9e13a094991961804f7a3f6eeb0ae8b9efaf016a34f9d69468f",
     "app/agriculture/job_store.py": "f56f5eb9d3aa09b834fed9d0dc6fffe6b4ae8f7c14a42fbfba5b118ec30a3ba4",
-    "app/agriculture/main.py": "f33b42d48c3587fb08fa4e5d70db489352510a2252e011a629e9214e048dae89",
-    "app/agriculture/migrate.py": "9cc72565396553b807d3ff8f227ed662f6d3b35b5b4969d490993a8479443d93",
+    "app/agriculture/main.py": "e1dc5ffb752a5c69d861f021407fc59a1f05fb3baf53ecbfa5a22bd8b22a0d71",
+    "app/agriculture/migrate.py": "f02e1e32cee2b156c7e5b7c62f425ea37a640e5835da987ff22591a244e0e40d",
     "app/agriculture/object_gateway.py": "b5d8b72cb79b7aa2128bb9081f4564e20e82c13003ad0661f946ead6e7525be5",
     "app/agriculture/object_storage.py": "f3669f51d8bc3649ddc19588dc6daf409f046472f4bb5a7641c3968eecb46461",
     "app/agriculture/object_store.py": "92a5ecbde7ad50b2f043609e84e6e0ac33aaf4a40d265703e052a3a0a3209077",
@@ -351,6 +356,148 @@
       ]
     },
     {
+      "path": "app/agriculture/farms_identity.py",
+      "function": "check_farm",
+      "line": 186,
+      "sha256": "a6094cba51f3c18329073719d51117ddc895db368cc77881cb2eef8ca9368ca8",
+      "boundary": "explicit_identity_owner_or_internal_boundary_review",
+      "calls": [
+        {
+          "line": 241,
+          "receiver": "self.client",
+          "method": "stream"
+        }
+      ]
+    },
+    {
+      "path": "app/agriculture/farms_routes.py",
+      "function": "endpoint",
+      "line": 75,
+      "sha256": "9942e43fcead5d4da683dd1e39d09a0950650f679eb8df59109a1c192b03b3ce",
+      "boundary": "explicit_identity_owner_or_internal_boundary_review",
+      "calls": [
+        {
+          "line": 101,
+          "receiver": "store",
+          "method": "execute"
+        }
+      ]
+    },
+    {
+      "path": "app/agriculture/farms_routes.py",
+      "function": "endpoint",
+      "line": 146,
+      "sha256": "9942e43fcead5d4da683dd1e39d09a0950650f679eb8df59109a1c192b03b3ce",
+      "boundary": "explicit_identity_owner_or_internal_boundary_review",
+      "calls": [
+        {
+          "line": 223,
+          "receiver": "store",
+          "method": "execute"
+        }
+      ]
+    },
+    {
+      "path": "app/agriculture/farms_store.py",
+      "function": "transaction",
+      "line": 131,
+      "sha256": "a2844b20506e4490ce8ade26b9fedd0cf11d7b578997776d33f430310ad4001a",
+      "boundary": "explicit_identity_owner_or_internal_boundary_review",
+      "calls": [
+        {
+          "line": 145,
+          "receiver": "conn",
+          "method": "execute"
+        },
+        {
+          "line": 151,
+          "receiver": "conn",
+          "method": "execute"
+        }
+      ]
+    },
+    {
+      "path": "app/agriculture/farms_store.py",
+      "function": "_record",
+      "line": 296,
+      "sha256": "a2844b20506e4490ce8ade26b9fedd0cf11d7b578997776d33f430310ad4001a",
+      "boundary": "explicit_identity_owner_or_internal_boundary_review",
+      "calls": [
+        {
+          "line": 327,
+          "receiver": "conn",
+          "method": "execute"
+        },
+        {
+          "line": 341,
+          "receiver": "conn",
+          "method": "execute"
+        },
+        {
+          "line": 357,
+          "receiver": "conn",
+          "method": "execute"
+        }
+      ]
+    },
+    {
+      "path": "app/agriculture/farms_store.py",
+      "function": "_dictionary",
+      "line": 374,
+      "sha256": "a2844b20506e4490ce8ade26b9fedd0cf11d7b578997776d33f430310ad4001a",
+      "boundary": "explicit_identity_owner_or_internal_boundary_review",
+      "calls": [
+        {
+          "line": 380,
+          "receiver": "conn",
+          "method": "execute"
+        }
+      ]
+    },
+    {
+      "path": "app/agriculture/farms_store.py",
+      "function": "execute",
+      "line": 397,
+      "sha256": "a2844b20506e4490ce8ade26b9fedd0cf11d7b578997776d33f430310ad4001a",
+      "boundary": "explicit_identity_owner_or_internal_boundary_review",
+      "calls": [
+        {
+          "line": 460,
+          "receiver": "conn",
+          "method": "execute"
+        },
+        {
+          "line": 483,
+          "receiver": "conn",
+          "method": "execute"
+        },
+        {
+          "line": 517,
+          "receiver": "conn",
+          "method": "execute"
+        },
+        {
+          "line": 533,
+          "receiver": "conn",
+          "method": "execute"
+        }
+      ]
+    },
+    {
+      "path": "app/agriculture/farms_store.py",
+      "function": "resolve",
+      "line": 563,
+      "sha256": "a2844b20506e4490ce8ade26b9fedd0cf11d7b578997776d33f430310ad4001a",
+      "boundary": "explicit_identity_owner_or_internal_boundary_review",
+      "calls": [
+        {
+          "line": 569,
+          "receiver": "conn",
+          "method": "execute"
+        }
+      ]
+    },
+    {
       "path": "app/agriculture/identity/callback.py",
       "function": "check",
       "line": 61,
@@ -367,12 +514,12 @@
     {
       "path": "app/agriculture/identity/dependency.py",
       "function": "verify_request",
-      "line": 32,
-      "sha256": "dafb3f0ac731f00d58f14963cf35d123c3b1219f4a209bcdb2db73c03eb75a21",
+      "line": 34,
+      "sha256": "ac0d075e6b8ece5e5b635466ee376990ae714f9b77e41d225b2bef390d3742b3",
       "boundary": "explicit_identity_owner_or_internal_boundary_review",
       "calls": [
         {
-          "line": 48,
+          "line": 50,
           "receiver": "request",
           "method": "stream"
         }
@@ -451,37 +598,37 @@
     {
       "path": "app/agriculture/migrate.py",
       "function": "validate_legacy_schema",
-      "line": 82,
-      "sha256": "9cc72565396553b807d3ff8f227ed662f6d3b35b5b4969d490993a8479443d93",
+      "line": 83,
+      "sha256": "f02e1e32cee2b156c7e5b7c62f425ea37a640e5835da987ff22591a244e0e40d",
       "boundary": "explicit_identity_owner_or_internal_boundary_review",
       "calls": [
         {
-          "line": 157,
+          "line": 158,
           "receiver": "connection",
           "method": "execute"
         },
         {
-          "line": 186,
+          "line": 187,
           "receiver": "connection",
           "method": "execute"
         },
         {
-          "line": 195,
+          "line": 196,
           "receiver": "connection.execute(text(\"SELECT pg_get_constraintdef(oid,true) FROM pg_catalog.pg_constraint WHERE conrelid=to_regclass(:name) AND contype='c'\"), {'name': 'pg_temp.' + probe})",
           "method": "scalars"
         },
         {
-          "line": 195,
+          "line": 196,
           "receiver": "connection",
           "method": "execute"
         },
         {
-          "line": 207,
+          "line": 208,
           "receiver": "connection.execute(text(\"SELECT pg_get_constraintdef(oid,true) FROM pg_catalog.pg_constraint WHERE conrelid=to_regclass(:name) AND contype='c'\"), {'name': 'public.' + name})",
           "method": "scalars"
         },
         {
-          "line": 207,
+          "line": 208,
           "receiver": "connection",
           "method": "execute"
         }
@@ -490,32 +637,32 @@
     {
       "path": "app/agriculture/migrate.py",
       "function": "migrate_schema",
-      "line": 223,
-      "sha256": "9cc72565396553b807d3ff8f227ed662f6d3b35b5b4969d490993a8479443d93",
+      "line": 224,
+      "sha256": "f02e1e32cee2b156c7e5b7c62f425ea37a640e5835da987ff22591a244e0e40d",
       "boundary": "explicit_identity_owner_or_internal_boundary_review",
       "calls": [
         {
-          "line": 248,
+          "line": 249,
           "receiver": "raw",
           "method": "execute"
         },
         {
-          "line": 251,
+          "line": 252,
           "receiver": "raw",
           "method": "execute"
         },
         {
-          "line": 272,
-          "receiver": "raw",
-          "method": "execute"
-        },
-        {
-          "line": 291,
+          "line": 273,
           "receiver": "raw",
           "method": "execute"
         },
         {
           "line": 292,
+          "receiver": "raw",
+          "method": "execute"
+        },
+        {
+          "line": 293,
           "receiver": "raw",
           "method": "execute"
         }

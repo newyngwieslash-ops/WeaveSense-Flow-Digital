@@ -1,0 +1,15 @@
+{
+  "result": "failed",
+  "source_commit": "8a22a4cda2472b749f7c60085b2282d187c1d6be",
+  "ci_commit": "f767cc56d2ff6bdcd53b141acee0bdcac4766ffe",
+  "run_id": 41284016272,
+  "job_id": 124781535437,
+  "artifact_id": 13073979919,
+  "phase": "explicit GIS migration preflight",
+  "error": "inventory drift: review source and explicitly refresh snapshot",
+  "farm_business_tests": "not_run",
+  "source_overlay_count": 456,
+  "source_hash_mismatches": [],
+  "local_followup": "query_scope_inventory snapshot also stale; independently reproduced before refreshing",
+  "fix_scope": "reviewed inventory snapshots only; no production/scanner/assertion changes"
+}

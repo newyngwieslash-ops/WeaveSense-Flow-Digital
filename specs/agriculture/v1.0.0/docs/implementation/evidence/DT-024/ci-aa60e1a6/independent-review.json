@@ -1,0 +1,144 @@
+{
+  "passed": true,
+  "reviewer": "dt024_projection_pg independent read-only review",
+  "source_commit": "71021e9f4632b1eb3a2002e354164453fdb13c1c",
+  "ci_commit": "aa60e1a6222cbfab3426134ebc7b88d6313abf76",
+  "publisher_verification_used": false,
+  "overlay_verified_against_git_show": 398,
+  "contract_sha256": "4de8d94266a00d0fcf6ad495fd0099e09b137355fcfbb292fdcc522dc48de0dc",
+  "isolation_exact_pass_count": 79,
+  "auth_component_only": false,
+  "race_enabled": true,
+  "go_exact_pass_counts": {
+    "matrix": 180,
+    "objects": 4,
+    "projections": 6
+  },
+  "exact_routes": 21,
+  "requests_exact_status_and_unchanged_snapshot": 158,
+  "regression_pass_counts": {
+    "python": 75,
+    "actors": 62,
+    "domain": 29,
+    "migration-command": 6,
+    "query": 17,
+    "objects": 47,
+    "jobs": 7,
+    "go": 15,
+    "scope-stream-agriculture": 20,
+    "scope-stream-legacy": 15,
+    "scope-stream-cache": 1,
+    "identity-chain-go": 5
+  },
+  "browser_pass_count": 15,
+  "bootstrap_real_postgres_redis_checks": true,
+  "artifact_sha256": {
+    "identity-actors.json": "a73099290c7e0e3fa27c311a5213c517dee84643b48e4a81d336149c1e862a09",
+    "identity-actors.xml": "f369186c58df55a80e78d20c10128e9e04ce23bac39cfa960427d6f755c2ac4c",
+    "identity-bootstrap.json": "3ce38e0d6084db73ba9c2b92ca17ec42b90e87fbfb0634b9aa4b9cc43aee20df",
+    "identity-chain-boundary.json": "53cd8d13d812a86728b64495353dba50c2869525887f09b4ee8ae301b6377fb6",
+    "identity-chain-browser.json": "e623dbb79ab859e72a063007188c6efcef1e6f7c8406678445fce83ef5739ae8",
+    "identity-chain-go.json": "8a7109723599d8433bfa18b2b8361ffc55742b4bfd933b122570d87411130891",
+    "identity-chain-nginx.json": "7b950b5633cddc8bbd8dec0f35b61b2ad5ed9420844877eb3d38452fa908de6a",
+    "identity-domain.json": "6dd4ae746bc70a263a973066315406520f37e0d727ff837f019f39fbfd435d9d",
+    "identity-domain.xml": "95ddcbe034765ef5080c898379502d607375a748ff75a6cd684b1e9ce1949346",
+    "identity-go.json": "94a459819a5c3396e76181d4a2068973f175f74bc49b64d9e05e8dd37920058c",
+    "identity-go.xml": "98ecd2fe47a60fe0ae8d2583147dcee140e492d3ba8c3a008eabafd015bea2cb",
+    "identity-isolation.json": "610ae0a5d6657e07fd7e88ca3e903b67b0036e2adff324b1a257d75e94c38c72",
+    "identity-jobs.json": "1353ee2b46a505e25a69f51357945817ce560ce958063b25ba3242e181c5dc9e",
+    "identity-jobs.xml": "d3e72fe971027b66a36f611ba1c28d812af31b2862314a287a60ecdf5051c19f",
+    "identity-migration-bootstrap.json": "0eee703085ab7342903a994f514cb0bfbf35a772699cc29feebd165417d5aea5",
+    "identity-migration-command.json": "692d7593c9b66afc61490aa357408e632d767d4a9b7bb92a3efbe3e9d97509f3",
+    "identity-migration-command.xml": "c4b57c6c1a477a0bc049d2fc85738dfb3c7983aad215782a05612ff0a179b42f",
+    "identity-objects.json": "4bdb49c11d2e63f97620f0e99feffac60a71184e1dcfa8bf1f4080c58a9926ae",
+    "identity-objects.xml": "b1b22046591ecf246e07061178f99bd39038101c9e6a537bf3fa6e1805dfcd95",
+    "identity-python.json": "88b4d6a09ec8cec223b5d7ea55b9221ea9e740881d37a10974ba48c7aa5afe2b",
+    "identity-python.xml": "480258781f3bbe8909dbe85e8652f686239bb2c79915adb61114bab10826bd61",
+    "identity-query.json": "acbf6ccb3f7f5b7d3fde1bedcf92dbd2c491326877b058ecf6fcea78364e81af",
+    "identity-query.xml": "447b69c85e2c3ac738af9336509af4fefc9281f27ff205d70a928518940f5ff0",
+    "isolation-go-matrix.json": "996f456ad9df1b6fc776ac7343ad035cd9c74effc79c77721717f8a09bb9b848",
+    "isolation-go-objects.json": "c0b85a0d7bf4fbec50a174064b2cbfffd353ad69cf47ede3ce823cab508ccd00",
+    "isolation-go-projections.json": "b3e51193851c4b9b3dff234bf2b69e82396a1b1ac27ecd7c542a255d8d1a9022",
+    "isolation-routes-go.json": "1d355613c82b8092bf19be38c5f566be19a68dbf421974fc70820a4c73f31829",
+    "scope-stream-agriculture.json": "9fe548a61b6a6f72121c1debfb977aaee0b9b8d57d7b14504ecaff610a8d01cf",
+    "scope-stream-cache.json": "2f2a56acf0afda83bf9bf6042fdd347d2dd542206b726f7ced68383fe7ae3297",
+    "scope-stream-legacy.json": "8b9a0ce1ffed2b1aac22666edb4a16901e4a4f3d15377253c0c768db0c7e5486",
+    "session-ci-provenance.json": "1aeef2b6e5fdb03639b59bd9f44566eae0e722ebf7486b73cf1b882ea287e1e3"
+  },
+  "data_class": "fixture",
+  "production_acceptance": false,
+  "limitations": [
+    "Actual Docker PostgreSQL/PostGIS and authenticated Redis CI fixtures; not live farm or production acceptance.",
+    "Explicit test-only domain/object/job providers and browser orchestration bridge do not complete future W06/domain workflows.",
+    "Sanitized artifact evidence verified; raw secret-bearing CI logs intentionally not read.",
+    "Gateway workflow terminal status is separate and not evaluated here."
+  ],
+  "task_status_changed": false,
+  "previous_0040_regression_multiset_retention": {
+    "identity-actors.json": {
+      "baseline_count": 62,
+      "current_count": 62,
+      "missing": []
+    },
+    "identity-chain-go.json": {
+      "baseline_count": 5,
+      "current_count": 5,
+      "missing": []
+    },
+    "identity-jobs.json": {
+      "baseline_count": 7,
+      "current_count": 7,
+      "missing": []
+    },
+    "identity-objects.json": {
+      "baseline_count": 47,
+      "current_count": 47,
+      "missing": []
+    },
+    "identity-python.json": {
+      "baseline_count": 75,
+      "current_count": 75,
+      "missing": []
+    },
+    "scope-stream-legacy.json": {
+      "baseline_count": 15,
+      "current_count": 15,
+      "missing": []
+    },
+    "scope-stream-cache.json": {
+      "baseline_count": 1,
+      "current_count": 1,
+      "missing": []
+    },
+    "identity-go.json": {
+      "baseline_count": 15,
+      "current_count": 15,
+      "missing": []
+    },
+    "identity-query.json": {
+      "baseline_count": 17,
+      "current_count": 17,
+      "missing": []
+    },
+    "identity-domain.json": {
+      "baseline_count": 29,
+      "current_count": 29,
+      "missing": []
+    },
+    "identity-migration-command.json": {
+      "baseline_count": 6,
+      "current_count": 6,
+      "missing": []
+    },
+    "scope-stream-agriculture.json": {
+      "baseline_count": 20,
+      "current_count": 20,
+      "missing": []
+    },
+    "identity-chain-browser.json": {
+      "baseline_count": 15,
+      "current_count": 15,
+      "missing": []
+    }
+  }
+}

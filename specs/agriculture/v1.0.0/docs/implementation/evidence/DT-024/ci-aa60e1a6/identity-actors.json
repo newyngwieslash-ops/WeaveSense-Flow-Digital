@@ -1,0 +1,321 @@
+{
+  "suite": "actors",
+  "schema_phase": "pre_domain_component",
+  "passed": true,
+  "data_class": "fixture",
+  "production_acceptance": false,
+  "tests": [
+    {
+      "name": "test_explicit_mapping_no_name_code_default_claim",
+      "module": "test_agriculture_actors",
+      "result": "pass"
+    },
+    {
+      "name": "test_actor_128_char_not_truncated_and_revocation_rechecked",
+      "module": "test_agriculture_actors",
+      "result": "pass"
+    },
+    {
+      "name": "test_audit_commits_atomically_and_context_cleared",
+      "module": "test_agriculture_actors",
+      "result": "pass"
+    },
+    {
+      "name": "test_audit_failure_rolls_back_business_and_business_failure_rolls_back_audit",
+      "module": "test_agriculture_actors",
+      "result": "pass"
+    },
+    {
+      "name": "test_raw_bulk_and_mapping_writes_closed",
+      "module": "test_agriculture_actors",
+      "result": "pass"
+    },
+    {
+      "name": "test_unknown_model_and_reparent_and_resource_mismatch_denied",
+      "module": "test_agriculture_actors",
+      "result": "pass"
+    },
+    {
+      "name": "test_read_action_cannot_mutate_and_context_cannot_be_swapped",
+      "module": "test_agriculture_actors",
+      "result": "pass"
+    },
+    {
+      "name": "test_postgres_actor_mapping_strict_scope_and_atomic_audit",
+      "module": "test_agriculture_actors_postgres",
+      "result": "pass"
+    },
+    {
+      "name": "test_postgres_actor_binding_lock_blocks_concurrent_revocation",
+      "module": "test_agriculture_actors_postgres",
+      "result": "pass"
+    },
+    {
+      "name": "test_exact_actor_and_action_intersection",
+      "module": "test_legacy_actor_gate",
+      "result": "pass"
+    },
+    {
+      "name": "test_other_actual_resource_denied_even_with_same_actor_project",
+      "module": "test_legacy_actor_gate",
+      "result": "pass"
+    },
+    {
+      "name": "test_missing_adapter_is_not_authorized_by_ticket_alone",
+      "module": "test_legacy_actor_gate",
+      "result": "pass"
+    },
+    {
+      "name": "test_signed_download_does_not_override_legacy_domain_capability",
+      "module": "test_legacy_actor_gate",
+      "result": "pass"
+    },
+    {
+      "name": "test_supplied_identity_cannot_select_actor",
+      "module": "test_legacy_actor_gate",
+      "result": "pass"
+    },
+    {
+      "name": "test_supplied_identity_cannot_select_actor",
+      "module": "test_legacy_actor_gate",
+      "result": "pass"
+    },
+    {
+      "name": "test_supplied_identity_cannot_select_actor",
+      "module": "test_legacy_actor_gate",
+      "result": "pass"
+    },
+    {
+      "name": "test_unknown_or_wrong_action_is_not_legacy_role_authority",
+      "module": "test_legacy_actor_gate",
+      "result": "pass"
+    },
+    {
+      "name": "test_unknown_or_wrong_action_is_not_legacy_role_authority",
+      "module": "test_legacy_actor_gate",
+      "result": "pass"
+    },
+    {
+      "name": "test_unknown_or_wrong_action_is_not_legacy_role_authority",
+      "module": "test_legacy_actor_gate",
+      "result": "pass"
+    },
+    {
+      "name": "test_unknown_or_wrong_action_is_not_legacy_role_authority",
+      "module": "test_legacy_actor_gate",
+      "result": "pass"
+    },
+    {
+      "name": "test_unknown_or_wrong_action_is_not_legacy_role_authority",
+      "module": "test_legacy_actor_gate",
+      "result": "pass"
+    },
+    {
+      "name": "test_direct_unscoped_service_and_cross_project_denied",
+      "module": "test_legacy_actor_gate",
+      "result": "pass"
+    },
+    {
+      "name": "test_session_action_mutation_cannot_escalate",
+      "module": "test_legacy_actor_gate",
+      "result": "pass"
+    },
+    {
+      "name": "test_resolver_wait_cannot_extend_ticket_lifetime",
+      "module": "test_legacy_actor_gate",
+      "result": "pass"
+    },
+    {
+      "name": "test_legacy_identity_directory_rejects_before_project_lookup",
+      "module": "test_legacy_actor_gate",
+      "result": "pass"
+    },
+    {
+      "name": "test_request_actor_spelling_never_selects_trusted_actor",
+      "module": "test_legacy_identity_contracts",
+      "result": "pass"
+    },
+    {
+      "name": "test_request_actor_spelling_never_selects_trusted_actor",
+      "module": "test_legacy_identity_contracts",
+      "result": "pass"
+    },
+    {
+      "name": "test_request_actor_spelling_never_selects_trusted_actor",
+      "module": "test_legacy_identity_contracts",
+      "result": "pass"
+    },
+    {
+      "name": "test_request_actor_spelling_never_selects_trusted_actor",
+      "module": "test_legacy_identity_contracts",
+      "result": "pass"
+    },
+    {
+      "name": "test_request_actor_spelling_never_selects_trusted_actor",
+      "module": "test_legacy_identity_contracts",
+      "result": "pass"
+    },
+    {
+      "name": "test_request_actor_spelling_never_selects_trusted_actor",
+      "module": "test_legacy_identity_contracts",
+      "result": "pass"
+    },
+    {
+      "name": "test_all_download_capabilities_reject_forged_actor",
+      "module": "test_legacy_identity_contracts",
+      "result": "pass"
+    },
+    {
+      "name": "test_all_download_capabilities_reject_forged_actor",
+      "module": "test_legacy_identity_contracts",
+      "result": "pass"
+    },
+    {
+      "name": "test_all_download_capabilities_reject_forged_actor",
+      "module": "test_legacy_identity_contracts",
+      "result": "pass"
+    },
+    {
+      "name": "test_all_download_capabilities_reject_forged_actor",
+      "module": "test_legacy_identity_contracts",
+      "result": "pass"
+    },
+    {
+      "name": "test_all_download_capabilities_reject_forged_actor",
+      "module": "test_legacy_identity_contracts",
+      "result": "pass"
+    },
+    {
+      "name": "test_all_download_capabilities_reject_forged_actor",
+      "module": "test_legacy_identity_contracts",
+      "result": "pass"
+    },
+    {
+      "name": "test_all_download_capabilities_reject_forged_actor",
+      "module": "test_legacy_identity_contracts",
+      "result": "pass"
+    },
+    {
+      "name": "test_all_download_capabilities_reject_forged_actor",
+      "module": "test_legacy_identity_contracts",
+      "result": "pass"
+    },
+    {
+      "name": "test_all_download_capabilities_reject_forged_actor",
+      "module": "test_legacy_identity_contracts",
+      "result": "pass"
+    },
+    {
+      "name": "test_all_download_capabilities_reject_forged_actor",
+      "module": "test_legacy_identity_contracts",
+      "result": "pass"
+    },
+    {
+      "name": "test_all_download_capabilities_reject_forged_actor",
+      "module": "test_legacy_identity_contracts",
+      "result": "pass"
+    },
+    {
+      "name": "test_all_download_capabilities_reject_forged_actor",
+      "module": "test_legacy_identity_contracts",
+      "result": "pass"
+    },
+    {
+      "name": "test_actual_review_and_assignment_schema_values_are_not_identity",
+      "module": "test_legacy_identity_contracts",
+      "result": "pass"
+    },
+    {
+      "name": "test_service_credential_is_not_human_actor_adapter",
+      "module": "test_legacy_identity_contracts",
+      "result": "pass"
+    },
+    {
+      "name": "test_actual_old_app_rejects_all_declared_business_routes",
+      "module": "test_legacy_identity_contracts",
+      "result": "pass"
+    },
+    {
+      "name": "test_postgres_real_workbench_write_commit_and_stable_audit",
+      "module": "test_agriculture_legacy_write_integration",
+      "result": "pass"
+    },
+    {
+      "name": "test_postgres_real_workbench_audit_failure_rolls_back",
+      "module": "test_agriculture_legacy_write_integration",
+      "result": "pass"
+    },
+    {
+      "name": "test_failure_diagnostic_excludes_driver_message_and_arguments",
+      "module": "test_identity_chain_fixture",
+      "result": "pass"
+    },
+    {
+      "name": "test_private_config_requires_exact_private_regular_file",
+      "module": "test_identity_chain_fixture",
+      "result": "pass"
+    },
+    {
+      "name": "test_fixture_never_connects_nonliteral_or_external_database",
+      "module": "test_identity_chain_fixture",
+      "result": "pass"
+    },
+    {
+      "name": "test_fixture_never_connects_nonliteral_or_external_database",
+      "module": "test_identity_chain_fixture",
+      "result": "pass"
+    },
+    {
+      "name": "test_fixture_never_connects_nonliteral_or_external_database",
+      "module": "test_identity_chain_fixture",
+      "result": "pass"
+    },
+    {
+      "name": "test_fixture_never_connects_nonliteral_or_external_database",
+      "module": "test_identity_chain_fixture",
+      "result": "pass"
+    },
+    {
+      "name": "test_duplicate_workspace_fixture_is_not_accepted",
+      "module": "test_identity_chain_fixture",
+      "result": "pass"
+    },
+    {
+      "name": "test_fixture_database_connection_overrides_are_rejected",
+      "module": "test_identity_chain_fixture",
+      "result": "pass"
+    },
+    {
+      "name": "test_fixture_database_connection_overrides_are_rejected",
+      "module": "test_identity_chain_fixture",
+      "result": "pass"
+    },
+    {
+      "name": "test_fixture_database_connection_overrides_are_rejected",
+      "module": "test_identity_chain_fixture",
+      "result": "pass"
+    },
+    {
+      "name": "test_route_refuses_identity_or_resource_parameters_before_database",
+      "module": "test_identity_chain_fixture",
+      "result": "pass"
+    },
+    {
+      "name": "test_route_refuses_identity_or_resource_parameters_before_database",
+      "module": "test_identity_chain_fixture",
+      "result": "pass"
+    },
+    {
+      "name": "test_route_refuses_identity_or_resource_parameters_before_database",
+      "module": "test_identity_chain_fixture",
+      "result": "pass"
+    },
+    {
+      "name": "test_route_refuses_identity_or_resource_parameters_before_database",
+      "module": "test_identity_chain_fixture",
+      "result": "pass"
+    }
+  ],
+  "failure_locations": [],
+  "passed_count": 62
+}

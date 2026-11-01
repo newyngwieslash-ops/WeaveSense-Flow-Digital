@@ -1,0 +1,42 @@
+[
+  {
+    "artifact_directory": "agriculture-parser-sanitized-evidence",
+    "overlay": 398,
+    "source_verified": "71021e9f4632b1eb3a2002e354164453fdb13c1c"
+  },
+  {
+    "artifact_directory": "agriculture-membership-sanitized-evidence",
+    "overlay": 398,
+    "source_verified": "71021e9f4632b1eb3a2002e354164453fdb13c1c"
+  },
+  {
+    "artifact_directory": "gateway-aa60",
+    "overlay": 398,
+    "source_verified": "71021e9f4632b1eb3a2002e354164453fdb13c1c"
+  },
+  {
+    "artifact_directory": "agriculture-w00-core-source-evidence",
+    "overlay": 398,
+    "source_verified": "71021e9f4632b1eb3a2002e354164453fdb13c1c"
+  },
+  {
+    "artifact_directory": "agriculture-w00-migrations-source-evidence",
+    "overlay": 398,
+    "source_verified": "71021e9f4632b1eb3a2002e354164453fdb13c1c"
+  },
+  {
+    "artifact_directory": "agriculture-organization-browser-sanitized-evidence",
+    "overlay": 398,
+    "source_verified": "71021e9f4632b1eb3a2002e354164453fdb13c1c"
+  },
+  {
+    "artifact_directory": "agriculture-session-sanitized-evidence",
+    "overlay": 398,
+    "source_verified": "71021e9f4632b1eb3a2002e354164453fdb13c1c"
+  },
+  {
+    "artifact_directory": "identity-aa60",
+    "overlay": 398,
+    "source_verified": "71021e9f4632b1eb3a2002e354164453fdb13c1c"
+  }
+]

@@ -1,0 +1,33 @@
+{
+  "frozen_product": "71021e9f4632b1eb3a2002e354164453fdb13c1c",
+  "verified_source_files": 1537,
+  "mismatches": [],
+  "pytest_passed": 79,
+  "pytest_failed": 0,
+  "pytest_skipped": 0,
+  "go_case_counts": {
+    "matrix": 180,
+    "objects": 4,
+    "projections": 6
+  },
+  "exact_go_required_counts": {
+    "matrix": 180,
+    "objects": 4,
+    "projections": 6
+  },
+  "exact_route_count": 21,
+  "exact_route_observation_count": 158,
+  "all_business_snapshots_unchanged": true,
+  "race_enabled": true,
+  "auth_component_only": true,
+  "exit_code": 0,
+  "shutdown_exit_code": 0,
+  "source_stable": true,
+  "report_sha256": "7b20ab04a793b413465fd554bb3c03a70a01d76597d609beb0495c90b53407bb",
+  "review": "independent read-only verification; exact source Git objects, strict case sets and route observations",
+  "limitations": [
+    "Local real PostgreSQL/PostGIS fixture with real auth service; not full Redis-backed runtime acceptance.",
+    "No remote CI or production deployment acceptance claimed.",
+    "DT024 must remain incomplete until required Redis CI and final review."
+  ]
+}

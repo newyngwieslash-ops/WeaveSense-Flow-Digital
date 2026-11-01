@@ -10,7 +10,7 @@
 
 下一任务：DT-024 租户隔离专项基线验收；以真实 PostgreSQL/可信会话补齐全部已开放路径负例、无副作用证明及新增路由 CI 门槛。
 
-DT-024 当前 in_progress：已实现 Go 21 路由/158 HTTP 案例、GIS 9 操作/76 项、双 PostgreSQL 对象（含 report、同租户工作区、已存在外对象、读取中撤权）及缓存/SSE/并发连接池测试。最新本地原生 PostgreSQL 全套 79 pytest 通过、零失败/跳过，三个 Go suite 开启 race detector；本地明确为认证组件模式，不冒充真实 Redis 完整启动。最终只读 CI 已接入严格固定路由/案例/状态/快照 gate，禁止组件模式充当验收；等待冻结源码发布及真实 CI 后独立复核，不提前标 done。
+DT-024 当前 in_progress：产品冻结 `71021e9f`、远端 CI scaffold `aa60e1a6`。真实 identity run `41278325667` 隔离79项全过，Redis完整启动、组件模式关闭、race开启；独立复核398源哈希、Go精确集合180/4/6、21路由158请求快照、GIS9路由及原有回归无缺项/跳过。最终gateway run `41278325702` 浏览器阶段通过，但独立Docker构建最后Vue构建命令1800秒超时，故仍不能标done。失败安全证据已保留，正在原源单job安全重试并独立诊断；未增加限额/降低断言。详见 `evidence/DT-024/README.md`。完整产品历史并未因CI scaffold发布而同步。
 
 DT-023 最终验收：CI `41276134632`（远端 `0abff504`、产品 `e50ec16d`）三项真实 Docker 全部通过、退出0、零跳过；独立核验24 parser输入与388 overlay一致。本地修复后77项组件通过，34源哈希对应同一冻结源。根因是缺少 `libexpat.so.1`，只补固定 Expat 运行依赖和非 root 构建 import，不调整隔离/限额/断言。证据见 `evidence/DT-023/ci-0abff504/`；这是安全组件任务完成，不是生产上传、真实外部来源或W06业务完成。
 

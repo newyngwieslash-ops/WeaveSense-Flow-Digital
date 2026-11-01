@@ -1,0 +1,250 @@
+{
+  "kind": "disposable_local_docker_web_smoke",
+  "authenticated_e2e": false,
+  "production_deployment": false,
+  "registry_push": false,
+  "checks": [],
+  "failure": {
+    "phase": "build",
+    "type": "TimeoutExpired"
+  },
+  "build_progress": {
+    "events": [
+      {
+        "step_id": 1,
+        "stage": "internal",
+        "operation": "LOAD_DEFINITION"
+      },
+      {
+        "step_id": 1,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 3,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 2,
+        "status": "DONE",
+        "elapsed_seconds": 0.9
+      },
+      {
+        "step_id": 4,
+        "status": "DONE",
+        "elapsed_seconds": 0.3
+      },
+      {
+        "step_id": 5,
+        "stage": "internal",
+        "operation": "LOAD_METADATA"
+      },
+      {
+        "step_id": 6,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 7,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 8,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 9,
+        "stage": "internal",
+        "operation": "LOAD_METADATA"
+      },
+      {
+        "step_id": 9,
+        "status": "DONE",
+        "elapsed_seconds": 0.8
+      },
+      {
+        "step_id": 10,
+        "stage": "internal",
+        "operation": "LOAD_METADATA"
+      },
+      {
+        "step_id": 10,
+        "status": "DONE",
+        "elapsed_seconds": 0.8
+      },
+      {
+        "step_id": 5,
+        "stage": "internal",
+        "operation": "LOAD_METADATA"
+      },
+      {
+        "step_id": 5,
+        "status": "DONE",
+        "elapsed_seconds": 0.8
+      },
+      {
+        "step_id": 12,
+        "stage": "internal",
+        "operation": "LOAD_CONTEXT"
+      },
+      {
+        "step_id": 12,
+        "status": "DONE",
+        "elapsed_seconds": 0.6
+      },
+      {
+        "step_id": 13,
+        "stage": "stage-2",
+        "index": 1,
+        "total": 6,
+        "operation": "FROM"
+      },
+      {
+        "step_id": 13,
+        "status": "DONE",
+        "elapsed_seconds": 2.0
+      },
+      {
+        "step_id": 11,
+        "status": "DONE",
+        "elapsed_seconds": 4.1
+      },
+      {
+        "step_id": 14,
+        "stage": "bun",
+        "index": 1,
+        "total": 1,
+        "operation": "FROM"
+      },
+      {
+        "step_id": 14,
+        "status": "DONE",
+        "elapsed_seconds": 4.1
+      },
+      {
+        "step_id": 15,
+        "status": "DONE",
+        "elapsed_seconds": 0.1
+      },
+      {
+        "step_id": 16,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 17,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 18,
+        "status": "DONE",
+        "elapsed_seconds": 16.4
+      },
+      {
+        "step_id": 19,
+        "status": "DONE",
+        "elapsed_seconds": 0.3
+      },
+      {
+        "step_id": 20,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 21,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 22,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 23,
+        "stage": "build",
+        "index": 10,
+        "total": 16,
+        "operation": "COPY"
+      },
+      {
+        "step_id": 23,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 24,
+        "stage": "build",
+        "index": 11,
+        "total": 16,
+        "operation": "RUN"
+      },
+      {
+        "step_id": 24,
+        "status": "DONE",
+        "elapsed_seconds": 3.9
+      },
+      {
+        "step_id": 25,
+        "stage": "build",
+        "index": 12,
+        "total": 16,
+        "operation": "WORKDIR"
+      },
+      {
+        "step_id": 25,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 26,
+        "stage": "build",
+        "index": 13,
+        "total": 16,
+        "operation": "COPY"
+      },
+      {
+        "step_id": 26,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 27,
+        "stage": "build",
+        "index": 14,
+        "total": 16,
+        "operation": "RUN"
+      },
+      {
+        "step_id": 27,
+        "status": "DONE",
+        "elapsed_seconds": 11.9
+      },
+      {
+        "step_id": 28,
+        "stage": "build",
+        "index": 15,
+        "total": 16,
+        "operation": "COPY"
+      },
+      {
+        "step_id": 28,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 29,
+        "stage": "build",
+        "index": 16,
+        "total": 16,
+        "operation": "RUN"
+      }
+    ],
+    "truncated": false
+  },
+  "passed": false
+}

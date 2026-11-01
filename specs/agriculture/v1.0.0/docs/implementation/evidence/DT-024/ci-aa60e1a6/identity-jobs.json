@@ -1,0 +1,46 @@
+{
+  "suite": "jobs",
+  "schema_phase": "job_authority_current",
+  "passed": true,
+  "data_class": "fixture",
+  "production_acceptance": false,
+  "tests": [
+    {
+      "name": "test_job_snapshot_has_no_implicit_scope_or_identity",
+      "module": "test_agriculture_job_authority",
+      "result": "pass"
+    },
+    {
+      "name": "test_checkpoint_rejects_missing_fencing_and_message_identity",
+      "module": "test_agriculture_job_authority",
+      "result": "pass"
+    },
+    {
+      "name": "test_no_execution_adapter_never_claims_a_job",
+      "module": "test_agriculture_job_authority",
+      "result": "pass"
+    },
+    {
+      "name": "test_postgres_job_sidecar_scope_immutable_and_worker_privileges",
+      "module": "test_agriculture_jobs_postgres",
+      "result": "pass"
+    },
+    {
+      "name": "test_postgres_job_execution_lease_fencing_and_retry_scope",
+      "module": "test_agriculture_jobs_postgres",
+      "result": "pass"
+    },
+    {
+      "name": "test_job_cache_configuration_accepts_only_explicit_existing_directory",
+      "module": "test_agriculture_jobs_postgres",
+      "result": "pass"
+    },
+    {
+      "name": "test_real_go_python_job_authority_chain",
+      "module": "test_agriculture_jobs_postgres",
+      "result": "pass"
+    }
+  ],
+  "failure_locations": [],
+  "passed_count": 7
+}

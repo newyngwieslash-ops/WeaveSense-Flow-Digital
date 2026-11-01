@@ -52,6 +52,8 @@ jobs:
         run: |
           python3 scaffold/scripts/agriculture/session-ci-prepare.test.py
           python3 scaffold/scripts/agriculture/identity-ci-result.test.py
+          python3 scaffold/scripts/agriculture/isolation-matrix-result.test.py
+          python3 scaffold/tests/agriculture/test_isolation_ci_wiring.py
           python3 scaffold/scripts/agriculture/identity-chain-result.test.py
           python3 scaffold/scripts/agriculture/scope-stream-result.test.py
           python3 scaffold/tests/agriculture/test_identity_chain_configuration.py
@@ -137,6 +139,8 @@ jobs:
             product/.local/evidence/identity-*.json
             product/.local/evidence/identity-*.xml
             product/.local/evidence/scope-stream-*.json
+            product/.local/evidence/isolation-go-*.json
+            product/.local/evidence/isolation-routes-go.json
             product/.local/evidence/session-ci-provenance.json
           include-hidden-files: true
           if-no-files-found: warn

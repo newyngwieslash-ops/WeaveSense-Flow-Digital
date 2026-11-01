@@ -15,6 +15,7 @@ done
 for suite in agriculture legacy cache; do
   printf '%s\n' '{"passed":false,"status":"not_run","tests":[]}' > ".local/evidence/scope-stream-$suite.json"
 done
+printf '%s\n' '{"passed":false,"status":"not_run"}' > .local/evidence/identity-isolation.json
 if [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} == 1 ]]; then
   printf '%s\n' '{"passed":false,"status":"not_run","tests":[]}' > .local/evidence/identity-chain-go.json
   printf '%s\n' '{"result":"not_run","results":[]}' > .local/evidence/identity-chain-browser.json
@@ -187,7 +188,18 @@ if [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} == 1 ]]; then
   python3 scripts/agriculture/identity-chain-result.py --input "$private/chain.jsonl" --output .local/evidence/identity-chain-go.json
   chain_gate=$?
 fi
+# Always use the real Redis-validated runtime in CI; the explicit local
+# auth-component mode is not allowed to satisfy this acceptance gate.
+export AGRI_ISOLATION_AUTH_COMPONENT_ONLY=0
+export AGRI_ISOLATION_REQUIRED=1
+export AGRI_ISOLATION_GO_RACE=1
+export AGRI_ISOLATION_REPORT_DIR="$PWD/.local/evidence"
+(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_isolation_matrix_postgres.py tests/test_agriculture_isolation_go_postgres.py --junitxml="$private/isolation.xml" -q) > "$private/isolation.log" 2>&1
+isolation_code=$?
+python3 scripts/agriculture/isolation-matrix-result.py --input "$private/isolation.xml" --reports-dir .local/evidence --output .local/evidence/identity-isolation.json
+isolation_gate=$?
 set -e
+[[ $isolation_code == 0 && $isolation_gate == 0 ]] || { echo 'Isolation route matrix failed; inspect sanitized evidence'; exit 1; }
 [[ $scoped_stream_code == 0 && $scoped_stream_gate == 0 && $legacy_stream_code == 0 && $legacy_stream_gate == 0 && $scoped_cache_code == 0 && $scoped_cache_gate == 0 ]] || { echo 'Scoped cache/stream acceptance failed; inspect sanitized reports'; exit 1; }
 [[ $python_code == 0 && $python_gate == 0 && $go_code == 0 && $go_gate == 0 && $actors_code == 0 && $actors_gate == 0 && $domain_code == 0 && $domain_gate == 0 && $query_code == 0 && $query_gate == 0 && $objects_code == 0 && $objects_gate == 0 && $jobs_code == 0 && $jobs_gate == 0 && $chain_code == 0 && $chain_gate == 0 ]] || { echo 'Identity acceptance failed; inspect sanitized reports, no raw secrets exported'; exit 1; }
 echo 'PASS: actual Go/Python HTTP, PostgreSQL replay and legacy actor boundary; fixture-domain acceptance only'

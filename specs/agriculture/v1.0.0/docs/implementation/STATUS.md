@@ -10,6 +10,8 @@
 
 下一任务：DT-024 租户隔离专项基线验收；以真实 PostgreSQL/可信会话补齐全部已开放路径负例、无副作用证明及新增路由 CI 门槛。
 
+DT-024 当前 in_progress：已实现 Go 21 路由/158 HTTP 案例、GIS 9 操作/76 项、双 PostgreSQL 对象（含 report、同租户工作区、已存在外对象、读取中撤权）及缓存/SSE/并发连接池测试。最新本地原生 PostgreSQL 全套 79 pytest 通过、零失败/跳过，三个 Go suite 开启 race detector；本地明确为认证组件模式，不冒充真实 Redis 完整启动。最终只读 CI 已接入严格固定路由/案例/状态/快照 gate，禁止组件模式充当验收；等待冻结源码发布及真实 CI 后独立复核，不提前标 done。
+
 DT-023 最终验收：CI `41276134632`（远端 `0abff504`、产品 `e50ec16d`）三项真实 Docker 全部通过、退出0、零跳过；独立核验24 parser输入与388 overlay一致。本地修复后77项组件通过，34源哈希对应同一冻结源。根因是缺少 `libexpat.so.1`，只补固定 Expat 运行依赖和非 root 构建 import，不调整隔离/限额/断言。证据见 `evidence/DT-023/ci-0abff504/`；这是安全组件任务完成，不是生产上传、真实外部来源或W06业务完成。
 
 新增回归：`0040b606` identity CI `41274681557` 成功，382 overlay 哈希映射 `ad4995c6`；JSON 299 pass 含 XML 258 项，不能重复相加，零失败/跳过。`d77a5c36` W00 CI `41275361980` 已修复 Loom 源码装配，平台 schema 85/85 ready、190 表，Loom 28 表迁移/重放成功，388 overlay 精确映射 `2cfe8d8c`。证据保留于 `evidence/historical-ci/`，不是生产部署、DT024 全路径或真实农场验收。
@@ -110,10 +112,11 @@ DT-015 已按原任务范围完成：冻结 `574d48f02e96b43c01f0cd3ee2b90a95671
 | 状态 | 数量 |
 | --- | ---: |
 | done | 23 |
-| not_started | 121 |
+| in_progress | 1 |
+| not_started | 120 |
 
 历史 done、恢复证据待补验：无。
-依赖状态就绪但仍须检查恢复条件：DT-024。
+依赖状态就绪但仍须检查恢复条件：无。
 
 | 任务 | 状态 |
 | --- | --- |
@@ -140,7 +143,7 @@ DT-015 已按原任务范围完成：冻结 `574d48f02e96b43c01f0cd3ee2b90a95671
 | DT-021 | done |
 | DT-022 | done |
 | DT-023 | done |
-| DT-024 | not_started |
+| DT-024 | in_progress |
 | DT-025 | not_started |
 | DT-026 | not_started |
 | DT-027 | not_started |

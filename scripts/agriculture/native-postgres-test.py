@@ -18,10 +18,14 @@ repo = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--package-root', type=Path, required=True)
 parser.add_argument('--python', type=Path, default=repo/'.local/agri-identity-venv/bin/python')
-parser.add_argument('--phase', choices=('components', 'migration', 'query', 'objects', 'jobs'), default='components')
+parser.add_argument('--phase', choices=('components', 'migration', 'query', 'objects', 'jobs', 'isolation-gis', 'isolation'), default='components')
 parser.add_argument('--go', type=Path, help='explicit local Go binary for the fixed object/job integration suites')
+parser.add_argument('--race', action='store_true', help='Go race detector in the explicit isolation suite')
 args = parser.parse_args()
 phase_mode = args.phase
+go_race = args.race
+if args.race and phase_mode != 'isolation':
+    raise SystemExit('--race is only supported for isolation')
 test_python = args.python.absolute()
 if not test_python.is_file():
     raise SystemExit('explicit locked Python test environment required')
@@ -29,9 +33,9 @@ base = repo / '.local/native-postgres'
 root = args.package_root.resolve()
 allowed = (repo/'.local').resolve()
 test_go = args.go.resolve() if args.go else None
-if phase_mode in {'objects', 'jobs'} and (test_go is None or not test_go.is_file() or not test_go.is_relative_to(allowed)):
+if phase_mode in {'objects', 'jobs', 'isolation'} and (test_go is None or not test_go.is_file() or not test_go.is_relative_to(allowed)):
     raise SystemExit('object/job phase requires an explicit prepared Go binary inside repository .local')
-if phase_mode not in {'objects', 'jobs'} and test_go is not None:
+if phase_mode not in {'objects', 'jobs', 'isolation'} and test_go is not None:
     raise SystemExit('--go is only supported for the fixed object/job phases')
 if not allowed.is_relative_to(repo.resolve()) or not root.is_relative_to(allowed) or not base.resolve().is_relative_to(allowed):
     raise SystemExit('fixture paths must remain inside repository .local')
@@ -82,6 +86,17 @@ test_env = {k: env[k] for k in ('PATH','HOME','LANG','LANGUAGE','LC_ALL','LC_CTY
 test_env['AGRI_IDENTITY_PYTHON'] = str(test_python)
 if test_go is not None:
     test_env['AGRI_TEST_GO_BIN'] = str(test_go)
+if phase_mode == 'isolation':
+    for role, key, target in (
+        ('flow_platform_migrate', 'PLATFORM_MIGRATION_PASSWORD', 'AGRI_TEST_PG_MIGRATION_DSN'),
+        ('flow_platform_app', 'PLATFORM_RUNTIME_PASSWORD', 'AGRI_TEST_PG_RUNTIME_DSN'),
+    ):
+        test_env[target] = f'postgresql://{role}:{passwords[key]}@127.0.0.1:{port}/flow_platform?sslmode=disable'
+    # Local auth-service integration is explicit, never full Redis startup.
+    test_env['AGRI_ISOLATION_AUTH_COMPONENT_ONLY'] = '1'
+    test_env['AGRI_ISOLATION_MATRIX_REPORT'] = str(run/'isolation-routes-go.json')
+    test_env['AGRI_ISOLATION_REPORT_DIR'] = str(run)
+    test_env['AGRI_ISOLATION_GO_RACE'] = '1' if args.race else '0'
 pw = run/'bootstrap-password'
 pw.write_text(passwords['POSTGRES_PASSWORD']+'\n')
 files = [
@@ -102,6 +117,22 @@ elif phase_mode == 'objects':
     files = ['tests/test_agriculture_object_storage.py', 'tests/test_agriculture_object_gateway.py', 'tests/test_agriculture_objects_postgres.py', 'tests/test_agriculture_objects_go_postgres.py']
 elif phase_mode == 'jobs':
     files = ['tests/test_agriculture_job_authority.py', 'tests/test_agriculture_jobs_postgres.py']
+elif phase_mode in {'isolation-gis', 'isolation'}:
+    files = ['tests/test_agriculture_isolation_matrix_postgres.py']
+    if phase_mode == 'isolation':
+        files.append('tests/test_agriculture_isolation_go_postgres.py')
+def isolation_source_hashes():
+    paths = {repo/'scripts/agriculture/native-postgres-test.py'}
+    for directory, suffixes in (
+        ('services/agri-gis/backend/app', {'.py'}),
+        ('services/agri-gis/backend/tests', {'.py'}),
+        ('services/agri-gis/backend/scripts/migrations', {'.py', '.sql', '.json'}),
+        ('backend', {'.go', '.mod', '.sum'}),
+    ):
+        paths.update(p for p in (repo/directory).rglob('*') if p.is_file() and p.suffix in suffixes and '.local' not in p.parts)
+    return {str(p.relative_to(repo)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(paths)}
+
+initial_isolation_sources = isolation_source_hashes() if phase_mode in {'isolation', 'isolation-gis'} else None
 started=False
 start=time.monotonic()
 with (run/'private.log').open('w') as log:
@@ -120,7 +151,7 @@ with (run/'private.log').open('w') as log:
         args=[str(test_python),'-m','pytest','-q',*files,
               '--junitxml='+str(run/'tests.xml')]
         result=subprocess.run(args,cwd=repo/'services/agri-gis/backend',env=test_env,
-                              stdout=log,stderr=log,timeout=180)
+                              stdout=log,stderr=log,timeout=600 if phase_mode == 'isolation' else 180)
     finally:
         try:
             if started:
@@ -133,6 +164,8 @@ for t in ET.parse(run/'tests.xml').getroot().iter('testcase'):
     statuses=[e.tag for e in t if e.tag in {'failure','error','skipped'}]
     module=t.attrib.get('classname','').split('.')[-1]
     phase='job_authority_current' if phase_mode == 'jobs' else 'private_objects_current' if phase_mode == 'objects' else 'independent_fresh_database_migration' if phase_mode == 'migration' else 'post_query_current' if phase_mode == 'query' else 'post_domain_current' if module in {'test_agriculture_database','test_agriculture_database_postgres','test_agriculture_domain_boundary','test_agriculture_domain_rls_postgres'} else 'pre_domain_component'
+    if phase_mode in {'isolation', 'isolation-gis'}:
+        phase = 'current_agricultural_route_isolation'
     cases.append({'name':t.attrib['name'],'schema_phase':phase,'status':statuses[0] if statuses else 'pass',
                   'seconds':float(t.attrib.get('time','0'))})
 required_pg = {
@@ -164,6 +197,15 @@ elif phase_mode == 'jobs':
     required_pg = {'test_postgres_job_sidecar_scope_immutable_and_worker_privileges',
                    'test_postgres_job_execution_lease_fencing_and_retry_scope',
                    'test_real_go_python_job_authority_chain'}
+elif phase_mode in {'isolation-gis', 'isolation'}:
+    routes = ('ownership', 'metadata', 'asset_get', 'asset_head', 'report_get', 'report_head', 'job_accept', 'job_checkpoint')
+    negatives = ('unsigned', 'wrong_signature', 'audience', 'path', 'body', 'expired', 'tenant', 'workspace')
+    required_pg = {'test_isolation_exact_production_route_manifest', 'test_isolation_public_health_legacy_absent_and_pg_controls'}
+    required_pg |= {f'test_isolation_signed_route_negative_no_domain_effect[{case}-{route}]' for case in negatives for route in routes}
+    required_pg |= {f'test_isolation_production_missing_dependencies_closed[{route}]' for route in routes}
+    required_pg |= {f'test_isolation_job_snapshot_epoch_no_domain_effect[{route}]' for route in ('job_accept', 'job_checkpoint')}
+    if phase_mode == 'isolation':
+        required_pg |= {'test_isolation_go_route_matrix', 'test_isolation_go_double_postgres_objects', 'test_isolation_go_postgres_projections'}
 missing_pg = sorted(required_pg-{c['name'] for c in cases if c['status']=='pass'})
 scope=['deploy/agriculture/postgres/init.sh', 'deploy/agriculture/native-postgres-packages.json',
        'scripts/agriculture/native_test_environment.py',
@@ -177,24 +219,26 @@ for directory in ['services/agri-gis/backend/app',
               if p.is_file() and p.suffix in {'.py','.sql','.json'}]
 scope += ['services/agri-gis/backend/'+f for f in files]
 scope += ['services/agri-gis/backend/tests/domain_fixture_support.py']
-if phase_mode in {'objects', 'jobs'}:
+if phase_mode in {'objects', 'jobs', 'isolation', 'isolation-gis'}:
     scope += ['services/agri-gis/backend/tests/test_agriculture_identity.py',
               'services/agri-gis/backend/tests/test_agriculture_actors_postgres.py']
 if phase_mode == 'objects':
     scope += ['services/agri-gis/backend/tests/object_http_fixture.py',
               'services/agri-gis/backend/tests/test_agriculture_jobs_postgres.py',
               'services/agri-gis/backend/tests/test_agriculture_job_authority.py']
-if phase_mode in {'objects', 'jobs'}:
+if phase_mode in {'objects', 'jobs', 'isolation', 'isolation-gis'}:
     scope += [
               'services/agri-gis/backend/tests/job_fixture_support.py',
               'services/agri-gis/backend/tests/job_http_fixture.py']
-if phase_mode in {'objects', 'jobs'}:
+if phase_mode in {'objects', 'jobs', 'isolation'}:
     scope += ['backend/go.mod', 'backend/go.sum']
     scope += [str(p.relative_to(repo)) for p in (repo/'backend').rglob('*.go') if '.local' not in p.parts]
 scope += ['services/agri-gis/backend/app/dao/workbench_dao.py',
           'services/agri-gis/backend/app/services/workbench_service.py',
           'services/agri-gis/backend/app/services/project_user_service.py']
 report={'kind':'local_real_postgres_fixture','remote_ci':False,'phase_mode':phase_mode,
+        'auth_component_only':phase_mode == 'isolation',
+        'go_race_detector':go_race,
         'recorded_at':datetime.now(timezone.utc).isoformat(),'elapsed_seconds':round(time.monotonic()-start,3),
         'fresh_cluster':True,'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=repo,text=True).strip(),
         'worktree_changes_included':True,'production_acceptance':False,'live_farm_data':False,
@@ -205,7 +249,11 @@ report={'kind':'local_real_postgres_fixture','remote_ci':False,'phase_mode':phas
         'skipped':sum(c['status']=='skipped' for c in cases),'tests':cases,
         'source_files':{f:hashlib.sha256((repo/f).read_bytes()).hexdigest() for f in sorted(set(scope))},
         'packages':package_manifest['packages']}
+if initial_isolation_sources is not None:
+    report['source_files'] = initial_isolation_sources
+    report['source_stable'] = initial_isolation_sources == isolation_source_hashes()
+    report['source_changed_during_run'] = not report['source_stable']
 (run/'report.json').write_text(json.dumps(report,indent=2)+'\n')
 print(json.dumps({k:report[k] for k in ['passed','failed','skipped','exit_code','shutdown_exit_code']}))
 print('report='+str(run/'report.json'))
-sys.exit(result.returncode or stopped.returncode or int(bool(missing_pg)))
+sys.exit(result.returncode or stopped.returncode or int(bool(missing_pg)) or int(not report.get('source_stable', True)))

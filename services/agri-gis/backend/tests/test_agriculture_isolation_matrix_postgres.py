@@ -1,0 +1,436 @@
+"""Exact production route matrix with real crypto and runtime PostgreSQL.
+
+Ownership rows are explicit test facts, not production farm registration. No
+mock authorize callback is installed. Successful content/current-authority
+checks belong to the separate real Go/PostgreSQL callback chain. Job adapter
+installation here exposes only the real PG sidecar's rejection paths; callback
+and execution remain unavailable. This is not W06 scheduler/live acceptance.
+"""
+
+import copy
+import hashlib
+import json
+from dataclasses import replace
+from datetime import UTC, datetime, timedelta
+from uuid import uuid4
+
+import httpx
+import pytest
+import pytest_asyncio
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from job_fixture_support import prepare_jobs
+from test_agriculture_actors_postgres import pg_config
+from test_agriculture_identity import sign
+from test_agriculture_job_authority import job_fixture
+from test_agriculture_objects_postgres import insert, setup
+
+from app.agriculture.domain_boundary import LEGACY_TABLES
+from app.agriculture.identity.canonical import canonicalize
+from app.agriculture.identity.replay import PostgresReplayLedger
+from app.agriculture.identity.verify import BUSINESS_TYP, SERVICE_TYP
+from app.agriculture.job_authority import JobAuthority, snapshot_bytes
+from app.agriculture.job_store import PostgresJobAuthorityStore
+from app.agriculture.main import create_app
+from app.agriculture.object_storage import object_key
+
+PREFIX = "/internal/agri/v1"
+LOCATOR = PREFIX + "/tenants/{tenant}/workspaces/{workspace}"
+ROUTES = {
+    "ownership": ("POST", PREFIX + "/ownership/resolve"),
+    "metadata": ("POST", PREFIX + "/objects/resolve"),
+    "asset_get": ("GET", LOCATOR + "/assets/objects/{object}/versions/{version}"),
+    "asset_head": ("HEAD", LOCATOR + "/assets/objects/{object}/versions/{version}"),
+    "report_get": ("GET", LOCATOR + "/reports/objects/{object}/versions/{version}"),
+    "report_head": ("HEAD", LOCATOR + "/reports/objects/{object}/versions/{version}"),
+    "job_accept": ("POST", PREFIX + "/jobs/authority/accept"),
+    "job_checkpoint": ("POST", PREFIX + "/jobs/authority/checkpoint"),
+}
+CASES = (
+    "unsigned",
+    "wrong_signature",
+    "audience",
+    "path",
+    "body",
+    "expired",
+    "tenant",
+    "workspace",
+)
+SNAPSHOT_TABLES = sorted(
+    LEGACY_TABLES
+    | {
+        "agriculture_project_bindings",
+        "agriculture_actor_bindings",
+        "agriculture_actor_audit",
+        "agriculture_legacy_plot_ownership",
+        "agriculture_legacy_resource_references",
+        "agriculture_private_objects",
+        "agriculture_job_authorities",
+        "agriculture_job_authority_checks",
+        "fixture_job_leases",
+        "fixture_job_resources",
+    }
+)
+
+
+def discovered(app):
+    return {(method, route.path) for route in app.routes for method in route.methods}
+
+
+def test_isolation_exact_production_route_manifest():
+    assert discovered(create_app()) == set(ROUTES.values()) | {("GET", "/health")}
+    assert len(discovered(create_app())) == 9
+
+
+async def domain_snapshot(owner):
+    """Assertion-only owner, committed full rows; never runtime authorization.
+
+    Nonce/security ledger is intentionally excluded. All domain/sidecar tables
+    are included, along with explicit fixture ownership facts. No raw snapshot
+    or credentials are emitted into test output/artifacts.
+    """
+    assert await owner.fetchval("SELECT current_user") == "flow_geo_migrate"
+    result = {}
+    async with owner.transaction():
+        # Actor audit/bindings FORCE RLS also applies to the migration owner.
+        # Explicitly include every seeded/attacked tenant, not an empty scope
+        # (which would silently turn the audit comparison into an empty set).
+        await owner.execute(
+            "SELECT set_config('app.tenant_ids',"
+            "'tenant_a,tenant_b,tenant_foreign',true)"
+        )
+        for table in SNAPSHOT_TABLES:
+            # Names come solely from checked-in model inventory/literal list.
+            rows = await owner.fetch(
+                f'SELECT to_jsonb(t)::text AS row FROM public."{table}" t '
+                "ORDER BY to_jsonb(t)::text"
+            )
+            result[table] = tuple(row["row"] for row in rows)
+        result["fixture_ownership"] = tuple(
+            await owner.fetch(
+                "SELECT to_jsonb(t)::text FROM object_test_fixture.authority t "
+                "ORDER BY to_jsonb(t)::text"
+            )
+        )
+    return result
+
+
+@pytest_asyncio.fixture(scope="module", loop_scope="module")
+async def isolation_pg(tmp_path_factory):
+    owner_dsn, _ = pg_config()
+    jobs_owner = await prepare_jobs(owner_dsn)
+    await jobs_owner.close()
+    async with setup(tmp_path_factory.mktemp("isolation-pg")) as (fixture, owner, pool):
+        _, services, private, claims, item, payload = fixture
+        # Discard fixture probe routes and its in-memory authority/replay.
+        services.authority = None
+        services.replay = PostgresReplayLedger(pool)
+        await services.replay.require_safe_runtime()
+        app = create_app(services)
+        assert discovered(app) == set(ROUTES.values()) | {("GET", "/health")}
+        report = replace(
+            item,
+            object_id="report_" + uuid4().hex,
+            resource_kind="report",
+            resource_id="report_fixture",
+        )
+        report = replace(
+            report,
+            object_key=object_key(
+                report.tenant_id, report.workspace_id, report.object_id, 1
+            ),
+        )
+        await insert(owner, report)
+        await owner.execute(
+            "INSERT INTO object_test_fixture.authority VALUES "
+            "('tenant_a','workspace_a','report','report_fixture',"
+            "'[\"farm_a\"]',1,'active') "
+            "ON CONFLICT(tenant,workspace,kind,id) "
+            "DO UPDATE SET revision=1,state='active'"
+        )
+        snapshot, verified = job_fixture("tenant_a", "workspace_a")
+        snapshot["job_id"] = "job_" + uuid4().hex
+        store = PostgresJobAuthorityStore(pool)
+        await store.require_ready()
+        await store.insert(
+            verified,
+            snapshot,
+            hashlib.sha256(snapshot_bytes(snapshot)).hexdigest(),
+            verified.expires_at,
+        )
+        app.state.job_authority = JobAuthority(store, callback=None)
+        # Synthetic audit canaries prove the scoped owner snapshot is not
+        # vacuously empty. They are fixture observations, never real activity.
+        canaries = []
+        async with owner.transaction():
+            await owner.execute(
+                "SELECT set_config('app.tenant_ids',"
+                "'tenant_a,tenant_b,tenant_foreign',true)"
+            )
+            for tenant, workspace in (
+                ("tenant_a", "workspace_a"),
+                ("tenant_a", "workspace_b"),
+                ("tenant_b", "workspace_a"),
+                ("tenant_foreign", "workspace_foreign"),
+            ):
+                audit_id = str(uuid4())
+                canaries.append(audit_id)
+                await owner.execute(
+                    "INSERT INTO agriculture_actor_audit "
+                    "(id,tenant_id,workspace_id,actor_id,project_id,legacy_member_id,"
+                    "legacy_user_code,legacy_role,policy_version,"
+                    "authorization_version,request_id,action,resources,changes) "
+                    "VALUES($1,$2,$3,'matrix_fixture',0,0,'matrix_fixture','fixture',"
+                    "'agriculture-policy/1.0.0',"
+                    "1,'matrix_fixture','fixture.canary','[]','[]')",
+                    audit_id,
+                    tenant,
+                    workspace,
+                )
+        audit_snapshot = (await domain_snapshot(owner))["agriculture_actor_audit"]
+        assert all(
+            any(audit_id in row for row in audit_snapshot) for audit_id in canaries
+        )
+        async with pool.acquire() as connection:
+            assert await connection.fetchval("SELECT current_user") == "flow_geo_app"
+            assert not await connection.fetchval(
+                "SELECT rolsuper OR rolbypassrls FROM pg_roles "
+                "WHERE rolname=current_user"
+            )
+            assert (
+                await connection.fetchval(
+                    "SELECT count(*) FROM agriculture_private_objects"
+                )
+                == 0
+            )
+        yield (
+            app,
+            services,
+            private,
+            claims,
+            item,
+            report,
+            snapshot,
+            verified.body,
+            owner,
+            payload,
+        )
+
+
+def request_data(fixture, route):
+    _, _, _, base, item, report, snapshot, job_body, _, _ = fixture
+    method, path = ROUTES[route]
+    current = report if route.startswith("report") else item
+    path = path.format(
+        tenant="tenant_a", workspace="workspace_a", object=current.object_id, version=1
+    )
+    claims = copy.deepcopy(base)
+    typ = BUSINESS_TYP
+    body = {}
+    if route in {"ownership", "metadata"}:
+        typ = SERVICE_TYP
+        for name in (
+            "actor",
+            "resource_scope",
+            "scopes",
+            "authorization_version",
+            "policy_version",
+            "farm_ids",
+            "resource_versions",
+        ):
+            claims.pop(name)
+        claims["capability"] = (
+            "ownership.resolve" if route == "ownership" else "object.resolve"
+        )
+        body = {"tenant_id": "tenant_a", "workspace_id": "workspace_a"}
+        if route == "ownership":
+            body["resources"] = [{"kind": "asset", "id": "asset_a"}]
+        else:
+            body.update(object_id=item.object_id, version=1)
+    elif route.startswith("job"):
+        for name in (
+            "tenant_id",
+            "workspace_id",
+            "resource_versions",
+            "farm_ids",
+            "authorization_version",
+            "policy_version",
+        ):
+            claims[name] = copy.deepcopy(snapshot[name])
+        claims.update(
+            actor={"kind": "user", "id": snapshot["actor_user_id"]},
+            scopes=[snapshot["action"]],
+            resource_scope=snapshot["resources"],
+        )
+        if route == "job_accept":
+            body = {"snapshot": snapshot, "input": job_body["input"]}
+        else:
+            body = {
+                "job_id": snapshot["job_id"],
+                "snapshot_hash": hashlib.sha256(snapshot_bytes(snapshot)).hexdigest(),
+                "input_hash": snapshot["input_hash"],
+                "worker_id": "worker_fixture",
+                "attempt": 1,
+                "fencing": 1,
+                "phase": "claim",
+            }
+    else:
+        claims["resource_scope"] = [
+            {"kind": current.resource_kind, "id": current.resource_id}
+        ]
+        claims["resource_versions"] = [
+            {"resource": claims["resource_scope"][0], "revision": 1}
+        ]
+        claims["scopes"] = [
+            "agri.report.read"
+            if route.startswith("report")
+            else "agri.asset_download.read"
+        ]
+    now = datetime.now(UTC).replace(microsecond=0)
+    claims.update(
+        issued_at=now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        expires_at=(now + timedelta(seconds=30)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        jti="matrix_" + uuid4().hex,
+    )
+    claims["request"] = {"method": method, "path": path}
+    raw = json.dumps(body).encode() if method == "POST" else b""
+    if method == "POST":
+        claims["request"].update(
+            canonicalization_version="rfc8785-safe-v1",
+            payload_hash=hashlib.sha256(canonicalize(raw)).hexdigest(),
+        )
+        if typ == BUSINESS_TYP:
+            claims["request"]["operation_id"] = snapshot["operation_id"]
+    return method, path, raw, claims, typ
+
+
+async def perform(fixture, route, case=None, app=None):
+    method, path, raw, claims, typ = request_data(fixture, route)
+    key = fixture[2]
+    expected = 401
+    if case == "wrong_signature":
+        key = Ed25519PrivateKey.generate()
+    elif case == "audience":
+        claims["audience"] = "flow-platform"
+    elif case == "path":
+        claims["request"]["path"] += "/other"
+    elif case == "body":
+        raw = b'{"unexpected":"private-marker"}'
+    elif case == "expired":
+        now = datetime.now(UTC)
+        claims["issued_at"] = (now - timedelta(seconds=25)).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
+        claims["expires_at"] = (now - timedelta(seconds=1)).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
+    elif case in {"tenant", "workspace"}:
+        claims[case + "_id"] = case + "_foreign"
+        expected = 404 if route == "job_checkpoint" else 403
+    elif case == "epoch":
+        claims["authorization_version"] += 1
+        expected = 403
+    token = sign(claims, key, {"alg": "EdDSA", "typ": typ, "kid": "fixture_key"})
+    headers = {"Content-Type": "application/json"}
+    if case != "unsigned":
+        headers["Authorization"] = "Bearer " + token
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app or fixture[0]), base_url="http://fixture"
+    ) as client:
+        response = await client.request(method, path, content=raw, headers=headers)
+    return response, expected
+
+
+def assert_private_denial(response, method):
+    assert "no-store" in response.headers["cache-control"]
+    assert not any(
+        name in response.headers
+        for name in ("location", "etag", "content-disposition", "content-range")
+    )
+    if method == "HEAD":
+        assert response.content == b""
+    else:
+        assert set(response.json()) == {"code"}
+        assert isinstance(response.json()["code"], str)
+        for secret in (
+            "tenant_a",
+            "workspace_a",
+            "asset_a",
+            "report_fixture",
+            "object_key",
+            "snapshot",
+            "private-marker",
+            "actual synthetic",
+        ):
+            assert secret not in response.text
+
+
+@pytest.mark.asyncio(loop_scope="module")
+@pytest.mark.parametrize("route", ROUTES)
+@pytest.mark.parametrize("case", CASES)
+async def test_isolation_signed_route_negative_no_domain_effect(
+    isolation_pg, route, case
+):
+    before = await domain_snapshot(isolation_pg[8])
+    response, expected = await perform(isolation_pg, route, case)
+    assert response.status_code == expected
+    assert_private_denial(response, ROUTES[route][0])
+    assert await domain_snapshot(isolation_pg[8]) == before
+
+
+@pytest.mark.asyncio(loop_scope="module")
+@pytest.mark.parametrize("route", ("job_accept", "job_checkpoint"))
+async def test_isolation_job_snapshot_epoch_no_domain_effect(isolation_pg, route):
+    before = await domain_snapshot(isolation_pg[8])
+    response, expected = await perform(isolation_pg, route, "epoch")
+    assert response.status_code == expected
+    assert_private_denial(response, "POST")
+    assert await domain_snapshot(isolation_pg[8]) == before
+
+
+@pytest.mark.asyncio(loop_scope="module")
+@pytest.mark.parametrize("route", ROUTES)
+async def test_isolation_production_missing_dependencies_closed(isolation_pg, route):
+    services = copy.copy(isolation_pg[1])
+    services.ownership = services.authority = services.object_store = (
+        services.object_storage
+    ) = None
+    production = create_app(services)  # job authority intentionally None.
+    before = await domain_snapshot(isolation_pg[8])
+    response, _ = await perform(isolation_pg, route, app=production)
+    assert response.status_code == 503
+    assert_private_denial(response, ROUTES[route][0])
+    assert await domain_snapshot(isolation_pg[8]) == before
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_isolation_public_health_legacy_absent_and_pg_controls(isolation_pg):
+    before = await domain_snapshot(isolation_pg[8])
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=isolation_pg[0]), base_url="http://fixture"
+    ) as client:
+        response = await client.get("/health")
+        assert response.status_code == 200
+        assert response.json() == {"status": "ok", "agriculture_content_ready": False}
+        for path in (
+            "/docs",
+            "/redoc",
+            "/openapi.json",
+            "/api/plots",
+            "/api/tasks",
+            "/internal/agri/v1/delegation/check",
+        ):
+            response = await client.get(path)
+            assert response.status_code == 404 and response.json() == {
+                "detail": "Not Found"
+            }
+    for route in ("ownership", "metadata"):
+        response, _ = await perform(isolation_pg, route)
+        assert response.status_code == 200
+        if route == "ownership":
+            assert response.json()["resources"][0]["resource"] == {
+                "kind": "asset",
+                "id": "asset_a",
+            }
+        else:
+            assert response.json()["object_id"] == isolation_pg[4].object_id
+    assert await domain_snapshot(isolation_pg[8]) == before

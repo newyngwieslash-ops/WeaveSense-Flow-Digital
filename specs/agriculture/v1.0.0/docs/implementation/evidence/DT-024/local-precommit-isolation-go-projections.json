@@ -1,0 +1,19 @@
+{
+  "suite": "projections",
+  "passed": true,
+  "exit_code": 0,
+  "auth_component_only": true,
+  "data_class": "fixture",
+  "race_enabled": true,
+  "tests": {
+    "TestIsolationProjectionPostgres/cache_scope_keys_and_revision": "pass",
+    "TestIsolationProjectionPostgres/cache_revocation_and_inflight_fill": "pass",
+    "TestIsolationProjectionPostgres/sse_cursor_and_revocation": "pass",
+    "TestIsolationProjectionPostgres/sse_every_frame_logout": "pass",
+    "TestIsolationProjectionPostgres/pool_concurrent_scope_and_empty_denial": "pass",
+    "TestIsolationProjectionPostgres": "pass"
+  },
+  "missing_required": [],
+  "source_failure_locations": [],
+  "production_acceptance": false
+}

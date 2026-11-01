@@ -6,11 +6,11 @@
 
 应用实现状态：in_progress
 
-当前工作包：W02；DT-001 至 DT-023 已按各自原范围完成，共 23/144 项；完整 W02/G0 和产品验收尚未完成。
+当前工作包：W03 准备开始；DT-001 至 DT-024 已按各自原范围完成，共 24/144 项；W02 当前开放路径隔离基线完成，不等于完整G0或产品商用验收。
 
-下一任务：DT-024 租户隔离专项基线验收；以真实 PostgreSQL/可信会话补齐全部已开放路径负例、无副作用证明及新增路由 CI 门槛。
+下一任务：DT-025 农场档案和区域配置；依赖已齐备，按Go可信授权/持久派发、GIS事实/面积与Vue工作台互不冲突路径并行推进。
 
-DT-024 当前 in_progress：产品冻结 `71021e9f`、远端 CI scaffold `aa60e1a6`。真实 identity run `41278325667` 隔离79项全过，Redis完整启动、组件模式关闭、race开启；独立复核398源哈希、Go精确集合180/4/6、21路由158请求快照、GIS9路由及原有回归无缺项/跳过。最终gateway run `41278325702` 浏览器阶段通过，但独立Docker构建最后Vue构建命令1800秒超时，故仍不能标done。失败安全证据已保留，正在原源单job安全重试并独立诊断；未增加限额/降低断言。详见 `evidence/DT-024/README.md`。完整产品历史并未因CI scaffold发布而同步。
+DT-024 已完成：产品冻结 `71021e9f`、远端 CI scaffold `aa60e1a6`。真实 identity run `41278325667` 隔离79项全过，Redis完整启动、组件模式关闭、race开启；独立复核398源哈希、Go精确集合180/4/6、21路由158请求快照、GIS9路由及原有回归无缺项/跳过。gateway run `41278325702` 首次Vue容器构建超时，保留失败原件；同源仅重试失败job，attempt2实际容器16检查/浏览器19断言通过，未改限额/断言。六条CI全部成功，详见 `evidence/DT-024/README.md`。首次超时根因未证实，不冒称修复了代码错误；完整产品历史并未因CI scaffold发布而同步。
 
 DT-023 最终验收：CI `41276134632`（远端 `0abff504`、产品 `e50ec16d`）三项真实 Docker 全部通过、退出0、零跳过；独立核验24 parser输入与388 overlay一致。本地修复后77项组件通过，34源哈希对应同一冻结源。根因是缺少 `libexpat.so.1`，只补固定 Expat 运行依赖和非 root 构建 import，不调整隔离/限额/断言。证据见 `evidence/DT-023/ci-0abff504/`；这是安全组件任务完成，不是生产上传、真实外部来源或W06业务完成。
 
@@ -36,7 +36,7 @@ DT-017 已按原任务验收完成：冻结 `2e3d43a6` 的实际本地 PostgreSQ
 
 - Flow：206c82af7ae007f45da4c582f373fbabf027f1b8。
 - AgriScope：571a2dcd9abf8b8a22b66c750ee710b61d482051。
-- 目标远程：https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital；最新已复核 CI scaffold 为 `0040b606`（产品源码 `ad4995c6`），parser 三项二过一失败，W00 migrations 因未组装新版 Loom 迁移源失败，其他运行结果逐项登记，不称整批通过。完整本地产品历史与 scaffold 区分，不声称产品分支已同步。
+- 目标远程：https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital；最新已复核 CI scaffold 为 `aa60e1a6`（产品源码 `71021e9f`），六条CI最终全部通过，早期失败与本次gateway首次超时原件仍保留。完整本地产品历史与 scaffold 区分，不声称产品分支已同步。
 - 当前恢复目录：`/workspace/scratch/8cdfee496491/digitaltwin-recovery-20261101/WeaveSense-DigitalTwin`；实际分支/HEAD 以恢复检查点记录为准。
 - 规格位置：推荐PROJECT_ROOT/specs/agriculture/v1.0.0。
 
@@ -111,12 +111,11 @@ DT-015 已按原任务范围完成：冻结 `574d48f02e96b43c01f0cd3ee2b90a95671
 
 | 状态 | 数量 |
 | --- | ---: |
-| done | 23 |
-| in_progress | 1 |
+| done | 24 |
 | not_started | 120 |
 
 历史 done、恢复证据待补验：无。
-依赖状态就绪但仍须检查恢复条件：无。
+依赖状态就绪但仍须检查恢复条件：DT-025。
 
 | 任务 | 状态 |
 | --- | --- |
@@ -143,7 +142,7 @@ DT-015 已按原任务范围完成：冻结 `574d48f02e96b43c01f0cd3ee2b90a95671
 | DT-021 | done |
 | DT-022 | done |
 | DT-023 | done |
-| DT-024 | in_progress |
+| DT-024 | done |
 | DT-025 | not_started |
 | DT-026 | not_started |
 | DT-027 | not_started |

@@ -1,6 +1,12 @@
-# DT024 检查点：in_progress
+# DT024 验收：done
 
-依赖 DT017–023 均已按各自任务验收。本项真实身份/隔离 CI 已通过并独立审查，但最终 gateway 容器构建超时，仍为 in_progress，不能进入 DT025 实施。
+依赖 DT017–023 均已按各自任务验收。本项真实身份/隔离 CI 已通过并独立审查；gateway首次构建超时后，仅重试原job、未改源/限额/断言，attempt2实际通过，六条CI最终全部成功，允许进入DT025。
+
+## 最终验收（2026-11-01 06:30 UTC）
+
+同一产品源71021e9f、同一CI aa60e1a6，gateway run41278325702 attempt2/job124772007832成功。容器16项检查通过，实际Vue构建1.9秒完成；真实浏览器19项通过、出站违规0。新artifact13073167829的398源哈希独立匹配冻结源；镜像 `sha256:606805aae945c575446059745cbb4b23751340cdbb240ccbfd33fbebefc5d9bc`。证据见 `gateway-aa60-attempt2/` 和 `final-ci-success.json`。
+
+本地相同Node24.22.1、冻结Vue源/原lock完整构建2.27秒通过；未复现首次Docker停滞，不能宣称其根因已经确认。旧失败原件/原终态清单完整保留，不覆写成成功。本任务完成是当前W02开放接口的隔离基线，不是所有80项验收、G0-G5、未来域接口、真实农场或商用可发布。
 
 ## 冻结源与真实 CI 检查点（2026-11-01 06:24 UTC）
 
@@ -11,7 +17,7 @@
 - 本轮6条CI中5成功；gateway run `41278325702` 失败，浏览器阶段通过，独立容器构建在最后 Vue `npm run build:agriculture`（build16/16）超过1800秒，`TimeoutExpired`。前序 npm ci 11.9秒完成、React构建3.9秒完成。保存原安全失败报告 `gateway-aa60e1a6/gateway-container-smoke.json`，不把失败改称未运行或已通过。
 - 全部8份artifact的398源映射已核对，见 `source-verification.json`；6条终态见 `final-ci.json`。这些是真实依赖上的fixture证据，不是实际农场/商用/生产部署验收。
 
-恢复步骤：保留上述冻结源和失败证据；诊断 Vue typecheck/Vite 容器子阶段及可重试环境因素，仅按证据修复或安全重试原run，不放松断言、不增加限额。最后gateway实际通过并核验后才同步DT024完成、开始DT025。DT025只读契约准备在工作区 `.local/audit/dt025-*.md`，未开始产品开发。
+历史检查点恢复动作现已完成：原源单job重试及终态独立核验通过。保留冻结源和失败证据，下一依赖就绪任务为DT025；只读契约准备在工作区 `.local/audit/dt025-*.md`。
 
 ## 实现
 
@@ -37,4 +43,4 @@ python3 scripts/agriculture/native-postgres-test.py \
 
 额外验证：`pytest -q tests/agriculture` 140项通过；严格 reducer 10项、assembly 8项、parser wiring 5项通过；既有 object gateway 17项组件回归通过。测试中捕获并修复的是 fixture 的非法幂等 key、错误 GORM view建模、owner缺显式内容角色；未放宽任何生产权限或断言。一次 race 运行的3个 Go suite 全过，但 native 报告生成曾因 CLI 变量被覆盖失败，已修并在上述完整运行重验，不把该失败尝试当成成功报告。
 
-剩余条件：诊断并通过本次gateway容器构建回归，核验修复源/证据，再独立审查并更新状态。真实农场、影像、模型、设备、付费和生产部署不是本项验收。
+本项剩余阻塞：无。未来新增接口必须扩展严格隔离门槛；真实农场、影像、模型、设备、付费和生产部署不是本项验收。

@@ -1,0 +1,415 @@
+{
+  "kind": "disposable_local_docker_web_smoke",
+  "authenticated_e2e": false,
+  "production_deployment": false,
+  "registry_push": false,
+  "checks": [
+    {
+      "path": "/",
+      "status": 200,
+      "no_store": true
+    },
+    {
+      "asset": "react",
+      "immutable": true
+    },
+    {
+      "path": "/agri/",
+      "status": 200,
+      "no_store": true
+    },
+    {
+      "asset": "vue",
+      "immutable": true
+    },
+    {
+      "path": "/agri/workspaces",
+      "status": 200,
+      "no_store": true
+    },
+    {
+      "path": "/login",
+      "status": 200,
+      "no_store": true
+    },
+    {
+      "path": "/assets/missing-12345678.js",
+      "status": 404,
+      "no_store": true
+    },
+    {
+      "path": "/agri/assets/missing-12345678.js",
+      "status": 404,
+      "no_store": true
+    },
+    {
+      "path": "/internal",
+      "status": 404,
+      "no_store": true
+    },
+    {
+      "path": "/internal/agri/v1/authority/check",
+      "status": 404,
+      "no_store": true
+    },
+    {
+      "path": "/api/internal",
+      "status": 404,
+      "no_store": true
+    },
+    {
+      "path": "/api/internal/test",
+      "status": 404,
+      "no_store": true
+    },
+    {
+      "path": "/api/v1/project-users",
+      "status": 404,
+      "no_store": true
+    },
+    {
+      "path": "/agri/api/x",
+      "status": 404,
+      "no_store": true
+    },
+    {
+      "path": "/.env",
+      "status": 404,
+      "no_store": true
+    },
+    {
+      "platform_intentionally_absent": true,
+      "status": 502
+    }
+  ],
+  "build_log_sha256": "d1286c11c5cae2254eebe2608fa39b92f1fb79c12f133b6786d63ef23f802cc4",
+  "build_progress": {
+    "events": [
+      {
+        "step_id": 1,
+        "stage": "internal",
+        "operation": "LOAD_DEFINITION"
+      },
+      {
+        "step_id": 1,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 2,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 3,
+        "status": "DONE",
+        "elapsed_seconds": 0.7
+      },
+      {
+        "step_id": 4,
+        "status": "DONE",
+        "elapsed_seconds": 0.3
+      },
+      {
+        "step_id": 5,
+        "stage": "internal",
+        "operation": "LOAD_METADATA"
+      },
+      {
+        "step_id": 6,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 7,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 8,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 9,
+        "stage": "internal",
+        "operation": "LOAD_METADATA"
+      },
+      {
+        "step_id": 10,
+        "stage": "internal",
+        "operation": "LOAD_METADATA"
+      },
+      {
+        "step_id": 10,
+        "status": "DONE",
+        "elapsed_seconds": 0.6
+      },
+      {
+        "step_id": 9,
+        "stage": "internal",
+        "operation": "LOAD_METADATA"
+      },
+      {
+        "step_id": 9,
+        "status": "DONE",
+        "elapsed_seconds": 0.6
+      },
+      {
+        "step_id": 5,
+        "stage": "internal",
+        "operation": "LOAD_METADATA"
+      },
+      {
+        "step_id": 5,
+        "status": "DONE",
+        "elapsed_seconds": 0.6
+      },
+      {
+        "step_id": 11,
+        "stage": "stage-2",
+        "index": 1,
+        "total": 6,
+        "operation": "FROM"
+      },
+      {
+        "step_id": 12,
+        "stage": "internal",
+        "operation": "LOAD_CONTEXT"
+      },
+      {
+        "step_id": 12,
+        "status": "DONE",
+        "elapsed_seconds": 0.8
+      },
+      {
+        "step_id": 13,
+        "stage": "bun",
+        "index": 1,
+        "total": 1,
+        "operation": "FROM"
+      },
+      {
+        "step_id": 14,
+        "status": "DONE",
+        "elapsed_seconds": 4.5
+      },
+      {
+        "step_id": 13,
+        "stage": "bun",
+        "index": 1,
+        "total": 1,
+        "operation": "FROM"
+      },
+      {
+        "step_id": 13,
+        "status": "DONE",
+        "elapsed_seconds": 5.5
+      },
+      {
+        "step_id": 11,
+        "stage": "stage-2",
+        "index": 1,
+        "total": 6,
+        "operation": "FROM"
+      },
+      {
+        "step_id": 11,
+        "status": "DONE",
+        "elapsed_seconds": 5.4
+      },
+      {
+        "step_id": 15,
+        "status": "DONE",
+        "elapsed_seconds": 0.5
+      },
+      {
+        "step_id": 16,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 17,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 18,
+        "status": "DONE",
+        "elapsed_seconds": 16.2
+      },
+      {
+        "step_id": 19,
+        "status": "DONE",
+        "elapsed_seconds": 0.6
+      },
+      {
+        "step_id": 20,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 21,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 22,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 23,
+        "stage": "build",
+        "index": 10,
+        "total": 16,
+        "operation": "COPY"
+      },
+      {
+        "step_id": 23,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 24,
+        "stage": "build",
+        "index": 11,
+        "total": 16,
+        "operation": "RUN"
+      },
+      {
+        "step_id": 24,
+        "status": "DONE",
+        "elapsed_seconds": 2.7
+      },
+      {
+        "step_id": 25,
+        "stage": "build",
+        "index": 12,
+        "total": 16,
+        "operation": "WORKDIR"
+      },
+      {
+        "step_id": 25,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 26,
+        "stage": "build",
+        "index": 13,
+        "total": 16,
+        "operation": "COPY"
+      },
+      {
+        "step_id": 26,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 27,
+        "stage": "build",
+        "index": 14,
+        "total": 16,
+        "operation": "RUN"
+      },
+      {
+        "step_id": 27,
+        "status": "DONE",
+        "elapsed_seconds": 6.5
+      },
+      {
+        "step_id": 28,
+        "stage": "build",
+        "index": 15,
+        "total": 16,
+        "operation": "COPY"
+      },
+      {
+        "step_id": 28,
+        "status": "DONE",
+        "elapsed_seconds": 2.5
+      },
+      {
+        "step_id": 29,
+        "stage": "build",
+        "index": 16,
+        "total": 16,
+        "operation": "RUN"
+      },
+      {
+        "step_id": 29,
+        "status": "DONE",
+        "elapsed_seconds": 1.9
+      },
+      {
+        "step_id": 30,
+        "stage": "stage-2",
+        "index": 2,
+        "total": 6,
+        "operation": "COPY"
+      },
+      {
+        "step_id": 30,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 31,
+        "stage": "stage-2",
+        "index": 3,
+        "total": 6,
+        "operation": "COPY"
+      },
+      {
+        "step_id": 31,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 32,
+        "stage": "stage-2",
+        "index": 4,
+        "total": 6,
+        "operation": "COPY"
+      },
+      {
+        "step_id": 32,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 33,
+        "stage": "stage-2",
+        "index": 5,
+        "total": 6,
+        "operation": "COPY"
+      },
+      {
+        "step_id": 33,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 34,
+        "stage": "stage-2",
+        "index": 6,
+        "total": 6,
+        "operation": "COPY"
+      },
+      {
+        "step_id": 34,
+        "status": "DONE",
+        "elapsed_seconds": 0.0
+      },
+      {
+        "step_id": 35,
+        "status": "DONE",
+        "elapsed_seconds": 0.3
+      }
+    ],
+    "truncated": false
+  },
+  "image_id": "sha256:606805aae945c575446059745cbb4b23751340cdbb240ccbfd33fbebefc5d9bc",
+  "passed": true
+}

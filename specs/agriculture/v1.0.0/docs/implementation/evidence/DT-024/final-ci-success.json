@@ -1,0 +1,271 @@
+{
+  "source": "71021e9f4632b1eb3a2002e354164453fdb13c1c",
+  "ci_commit": "aa60e1a6222cbfab3426134ebc7b88d6313abf76",
+  "runs": [
+    {
+      "id": 41278325667,
+      "name": "Agriculture signed service identity acceptance",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/runs/41278325667",
+      "run_attempt": 1
+    },
+    {
+      "id": 41278325685,
+      "name": "Agriculture real browser session",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/runs/41278325685",
+      "run_attempt": 1
+    },
+    {
+      "id": 41278325762,
+      "name": "Agriculture W00 dependency evidence",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/runs/41278325762",
+      "run_attempt": 1
+    },
+    {
+      "id": 41278325735,
+      "name": "Agriculture membership PostgreSQL and browser acceptance",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/runs/41278325735",
+      "run_attempt": 1
+    },
+    {
+      "id": 41278325681,
+      "name": "Agriculture isolated parser container acceptance",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/runs/41278325681",
+      "run_attempt": 1
+    },
+    {
+      "id": 41278325702,
+      "name": "Agriculture gateway browser and disposable image",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/runs/41278325702",
+      "run_attempt": 2
+    }
+  ],
+  "artifacts": [
+    {
+      "run": 41278325681,
+      "name": "Agriculture isolated parser container acceptance",
+      "artifacts": [
+        {
+          "id": 13071703762,
+          "node_id": "MDg6QXJ0aWZhY3QxMzA3MTcwMzc2Mg==",
+          "name": "agriculture-parser-sanitized-evidence",
+          "size_in_bytes": 41645,
+          "url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/13071703762",
+          "archive_download_url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/13071703762/zip",
+          "expired": false,
+          "digest": "sha256:de42cc834b3a5778adfa5705064589ae99729fb354c7d063c666e8cf5fb51662",
+          "created_at": "2026-11-01T05:49:18Z",
+          "updated_at": "2026-11-01T05:49:18Z",
+          "expires_at": "2026-11-15T05:49:17Z",
+          "workflow_run": {
+            "id": 41278325681,
+            "repository_id": 1437883917,
+            "head_repository_id": 1437883917,
+            "head_branch": "ci/agriculture-w00",
+            "head_sha": "aa60e1a6222cbfab3426134ebc7b88d6313abf76"
+          }
+        }
+      ]
+    },
+    {
+      "run": 41278325685,
+      "name": "Agriculture real browser session",
+      "artifacts": [
+        {
+          "id": 13072282299,
+          "node_id": "MDg6QXJ0aWZhY3QxMzA3MjI4MjI5OQ==",
+          "name": "agriculture-session-sanitized-evidence",
+          "size_in_bytes": 41730,
+          "url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/13072282299",
+          "archive_download_url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/13072282299/zip",
+          "expired": false,
+          "digest": "sha256:0dafb4ae0037ce2407f3ea9cc77a2c37663637cd4f42d58d4a162d449a45a582",
+          "created_at": "2026-11-01T05:52:07Z",
+          "updated_at": "2026-11-01T05:52:07Z",
+          "expires_at": "2026-11-15T05:52:07Z",
+          "workflow_run": {
+            "id": 41278325685,
+            "repository_id": 1437883917,
+            "head_repository_id": 1437883917,
+            "head_branch": "ci/agriculture-w00",
+            "head_sha": "aa60e1a6222cbfab3426134ebc7b88d6313abf76"
+          }
+        }
+      ]
+    },
+    {
+      "run": 41278325762,
+      "name": "Agriculture W00 dependency evidence",
+      "artifacts": [
+        {
+          "id": 13072356016,
+          "node_id": "MDg6QXJ0aWZhY3QxMzA3MjM1NjAxNg==",
+          "name": "agriculture-w00-core-source-evidence",
+          "size_in_bytes": 20042,
+          "url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/13072356016",
+          "archive_download_url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/13072356016/zip",
+          "expired": false,
+          "digest": "sha256:0d42c9feee080ee9cecebfeb86b4c56d49ef5da6616cb4e2906eba57f07fd6a0",
+          "created_at": "2026-11-01T05:49:47Z",
+          "updated_at": "2026-11-01T05:49:47Z",
+          "expires_at": "2026-11-15T05:49:46Z",
+          "workflow_run": {
+            "id": 41278325762,
+            "repository_id": 1437883917,
+            "head_repository_id": 1437883917,
+            "head_branch": "ci/agriculture-w00",
+            "head_sha": "aa60e1a6222cbfab3426134ebc7b88d6313abf76"
+          }
+        },
+        {
+          "id": 13071689194,
+          "node_id": "MDg6QXJ0aWZhY3QxMzA3MTY4OTE5NA==",
+          "name": "agriculture-w00-migrations-source-evidence",
+          "size_in_bytes": 20042,
+          "url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/13071689194",
+          "archive_download_url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/13071689194/zip",
+          "expired": false,
+          "digest": "sha256:efe868df2cc4288030d4e0a84a5a6b47d40bb53b3d599b4fe2c8b024cd2560f8",
+          "created_at": "2026-11-01T05:52:26Z",
+          "updated_at": "2026-11-01T05:52:26Z",
+          "expires_at": "2026-11-15T05:52:25Z",
+          "workflow_run": {
+            "id": 41278325762,
+            "repository_id": 1437883917,
+            "head_repository_id": 1437883917,
+            "head_branch": "ci/agriculture-w00",
+            "head_sha": "aa60e1a6222cbfab3426134ebc7b88d6313abf76"
+          }
+        }
+      ]
+    },
+    {
+      "run": 41278325735,
+      "name": "Agriculture membership PostgreSQL and browser acceptance",
+      "artifacts": [
+        {
+          "id": 13072715762,
+          "node_id": "MDg6QXJ0aWZhY3QxMzA3MjcxNTc2Mg==",
+          "name": "agriculture-organization-browser-sanitized-evidence",
+          "size_in_bytes": 41978,
+          "url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/13072715762",
+          "archive_download_url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/13072715762/zip",
+          "expired": false,
+          "digest": "sha256:b023e7f52fcf8a3a022ea0e7c5ba038f555f0b953a45002e78fd7dc85198b2b9",
+          "created_at": "2026-11-01T05:52:57Z",
+          "updated_at": "2026-11-01T05:52:57Z",
+          "expires_at": "2026-11-15T05:52:57Z",
+          "workflow_run": {
+            "id": 41278325735,
+            "repository_id": 1437883917,
+            "head_repository_id": 1437883917,
+            "head_branch": "ci/agriculture-w00",
+            "head_sha": "aa60e1a6222cbfab3426134ebc7b88d6313abf76"
+          }
+        },
+        {
+          "id": 13071773619,
+          "node_id": "MDg6QXJ0aWZhY3QxMzA3MTc3MzYxOQ==",
+          "name": "agriculture-membership-sanitized-evidence",
+          "size_in_bytes": 25303,
+          "url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/13071773619",
+          "archive_download_url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/13071773619/zip",
+          "expired": false,
+          "digest": "sha256:e15cb3e677fe17776150a68b04c04e664a56cf14a8569237dad4712258f4325f",
+          "created_at": "2026-11-01T05:50:59Z",
+          "updated_at": "2026-11-01T05:50:59Z",
+          "expires_at": "2026-11-15T05:50:58Z",
+          "workflow_run": {
+            "id": 41278325735,
+            "repository_id": 1437883917,
+            "head_repository_id": 1437883917,
+            "head_branch": "ci/agriculture-w00",
+            "head_sha": "aa60e1a6222cbfab3426134ebc7b88d6313abf76"
+          }
+        }
+      ]
+    },
+    {
+      "run": 41278325667,
+      "name": "Agriculture signed service identity acceptance",
+      "artifacts": [
+        {
+          "id": 13072815453,
+          "node_id": "MDg6QXJ0aWZhY3QxMzA3MjgxNTQ1Mw==",
+          "name": "agriculture-identity-sanitized-evidence",
+          "size_in_bytes": 40518,
+          "url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/13072815453",
+          "archive_download_url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/13072815453/zip",
+          "expired": false,
+          "digest": "sha256:9b7584e35ab083caeccea624cad1dcbd8726ac1e97ef455e21df3108585bc352",
+          "created_at": "2026-11-01T05:59:20Z",
+          "updated_at": "2026-11-01T05:59:20Z",
+          "expires_at": "2026-11-15T05:59:20Z",
+          "workflow_run": {
+            "id": 41278325667,
+            "repository_id": 1437883917,
+            "head_repository_id": 1437883917,
+            "head_branch": "ci/agriculture-w00",
+            "head_sha": "aa60e1a6222cbfab3426134ebc7b88d6313abf76"
+          }
+        }
+      ]
+    },
+    {
+      "run": 41278325702,
+      "artifacts": [
+        {
+          "id": 13073167829,
+          "node_id": "MDg6QXJ0aWZhY3QxMzA3MzE2NzgyOQ==",
+          "name": "agriculture-gateway-sanitized-evidence",
+          "size_in_bytes": 22792,
+          "url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/13073167829",
+          "archive_download_url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/13073167829/zip",
+          "expired": false,
+          "digest": "sha256:a83a7268dadb1f4ea42dcd15edfff8e82aee6dd0120c146aea2c29c1aa0baddb",
+          "created_at": "2026-11-01T06:29:13Z",
+          "updated_at": "2026-11-01T06:29:13Z",
+          "expires_at": "2026-11-15T06:29:12Z",
+          "workflow_run": {
+            "id": 41278325702,
+            "repository_id": 1437883917,
+            "head_repository_id": 1437883917,
+            "head_branch": "ci/agriculture-w00",
+            "head_sha": "aa60e1a6222cbfab3426134ebc7b88d6313abf76"
+          }
+        },
+        {
+          "id": 13073032580,
+          "node_id": "MDg6QXJ0aWZhY3QxMzA3MzAzMjU4MA==",
+          "name": "agriculture-gateway-sanitized-evidence",
+          "size_in_bytes": 22411,
+          "url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/13073032580",
+          "archive_download_url": "https://api.github.com/repos/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/artifacts/13073032580/zip",
+          "expired": false,
+          "digest": "sha256:e14c8432a4ff797a2fb3302a6ce0331b90c70c9629659674863d664360ff8313",
+          "created_at": "2026-11-01T06:22:54Z",
+          "updated_at": "2026-11-01T06:22:54Z",
+          "expires_at": "2026-11-15T06:22:53Z",
+          "workflow_run": {
+            "id": 41278325702,
+            "repository_id": 1437883917,
+            "head_repository_id": 1437883917,
+            "head_branch": "ci/agriculture-w00",
+            "head_sha": "aa60e1a6222cbfab3426134ebc7b88d6313abf76"
+          }
+        }
+      ]
+    }
+  ]
+}

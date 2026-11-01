@@ -1,0 +1,13 @@
+{
+  "source_commit": "71021e9f4632b1eb3a2002e354164453fdb13c1c",
+  "ci_commit": "aa60e1a6222cbfab3426134ebc7b88d6313abf76",
+  "overlay_git_hashes_verified": 398,
+  "container_checks_passed": 16,
+  "browser_assertions_passed": 19,
+  "outbound_violations": 0,
+  "attempt": 2,
+  "source_changed_for_retry": false,
+  "image_id": "sha256:606805aae945c575446059745cbb4b23751340cdbb240ccbfd33fbebefc5d9bc",
+  "passed": true,
+  "limits": "Gateway browser fixture uses SQLite; PostgreSQL/Redis isolation verified independently by identity CI. First timeout retained; root cause not proven."
+}

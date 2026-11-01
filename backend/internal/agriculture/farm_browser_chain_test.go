@@ -46,8 +46,43 @@ type farmChainFixture struct {
 	gatewayPort                                           int
 }
 
-func newFarmChainFixture(t *testing.T, browser bool) *farmChainFixture {
+func farmPrivateDirectory(t *testing.T) string {
 	t.Helper()
+	dir := t.TempDir()
+	// testing.TempDir creates a per-test child using 0777 subject to umask.
+	// This directory contains credentials and the child reader requires 0700.
+	if err := os.Chmod(dir, 0700); err != nil {
+		t.Fatal("private farm directory mode could not be secured")
+	}
+	info, err := os.Stat(dir)
+	if err != nil || !info.IsDir() || info.Mode().Perm() != 0700 {
+		t.Fatal("private farm directory mode invalid")
+	}
+	return dir
+}
+
+func TestFarmFixturePrivateDirectory(t *testing.T) {
+	dir := farmPrivateDirectory(t)
+	info, err := os.Stat(dir)
+	if err != nil || info.Mode().Perm() != 0700 {
+		t.Fatal("farm private configuration parent is not owner-only")
+	}
+	path := filepath.Join(dir, "fixture.json")
+	chainPrivate(t, path, map[string]string{"fixture": "nonsecret"})
+	info, err = os.Stat(path)
+	if err != nil || info.Mode().Perm() != 0600 {
+		t.Fatal("farm private configuration is not owner-only")
+	}
+}
+
+func newFarmChainFixture(t *testing.T, browser bool, progress ...func(string)) *farmChainFixture {
+	t.Helper()
+	stage := func(value string) {
+		if len(progress) == 1 {
+			progress[0](value)
+		}
+	}
+	stage("fixture_dependencies")
 	required := os.Getenv("AGRI_FARM_CHAIN_REQUIRED") == "1"
 	for _, key := range []string{"AGRI_IDENTITY_PYTHON", "AGRI_TEST_PG_MIGRATION_DSN", "AGRI_TEST_PG_RUNTIME_DSN", "AGRI_TEST_GEO_MIGRATION_DSN", "AGRI_TEST_GEO_RUNTIME_DSN"} {
 		if os.Getenv(key) == "" {
@@ -72,10 +107,12 @@ func newFarmChainFixture(t *testing.T, browser bool) *farmChainFixture {
 	if e != nil {
 		t.Fatal(e)
 	}
-	f := &farmChainFixture{t: t, root: root, private: t.TempDir()}
+	f := &farmChainFixture{t: t, root: root, private: farmPrivateDirectory(t)}
+	stage("fixture_platform_database")
 	s, seed, owner, actor := postgresFixture(t)
 	f.seed, f.owner, f.actor = seed, owner, actor
 	ctx := context.Background()
+	stage("fixture_membership")
 	f.org, e = s.CreateOrganization(ctx, owner, "Farm chain main", "farm-chain-main-0001")
 	if e != nil {
 		t.Fatal("main organization setup failed")
@@ -97,6 +134,7 @@ func newFarmChainFixture(t *testing.T, browser bool) *farmChainFixture {
 		t.Fatal("explicit farm business role setup failed")
 	}
 	f.password = auth.RandomToken()
+	stage("fixture_credentials")
 	hash, e := auth.HashPassword(f.password)
 	if e != nil {
 		t.Fatal(e)
@@ -119,6 +157,7 @@ func newFarmChainFixture(t *testing.T, browser bool) *farmChainFixture {
 		return ring, key
 	}
 	platformKeys, platformKey := makeKeys("farm_platform")
+	stage("fixture_service_keys")
 	f.keys = platformKeys
 	gisKeys, gisKey := makeKeys("farm_gis")
 	f.platform = NewFarmPlatform(s, nil)
@@ -136,11 +175,13 @@ func newFarmChainFixture(t *testing.T, browser bool) *farmChainFixture {
 	config := filepath.Join(f.private, "farm-gis.json")
 	dictionary := map[string]any{"schema_version": "agriculture-farm-dictionary/1", "dictionary_version": "fixture-v1", "regions": []any{map[string]any{"code": "fixture-north", "name": "Northern fixture", "timezones": []string{"Asia/Shanghai"}, "area_units": []string{"m2", "ha", "mu"}}, map[string]any{"code": "fixture-south", "name": "Southern fixture", "timezones": []string{"Asia/Shanghai", "UTC"}, "area_units": []string{"m2", "ha", "mu"}}}}
 	chainPrivate(t, config, map[string]any{"platform": callback.URL, "platform_keys": []any{keyJSON(platformKey, false)}, "callback_key": keyJSON(gisKey, true), "geo_migration_dsn": os.Getenv("AGRI_TEST_GEO_MIGRATION_DSN"), "geo_runtime_dsn": os.Getenv("AGRI_TEST_GEO_RUNTIME_DSN"), "dictionary": dictionary})
+	stage("fixture_gis_start")
 	child := chainStart(t, os.Getenv("AGRI_IDENTITY_PYTHON"), filepath.Join(root, "services/agri-gis/backend"), filepath.Join(root, "services/agri-gis/backend/tests/farm_http_fixture.py"), config)
 	var ready struct {
 		Port       int  `json:"port"`
 		FarmRoutes bool `json:"farm_routes"`
 	}
+	stage("fixture_gis_ready")
 	chainLine(t, child, 60*time.Second, &ready)
 	if ready.Port < 1 || ready.Port > 65535 || !ready.FarmRoutes {
 		t.Fatal("farm GIS readiness invalid")
@@ -162,6 +203,7 @@ func newFarmChainFixture(t *testing.T, browser bool) *farmChainFixture {
 	}
 	pool, _ := f.geo.DB()
 	t.Cleanup(func() { pool.Close() })
+	stage("fixture_browser_policy")
 	listener, e := net.Listen("tcp", "127.0.0.1:0")
 	if e != nil {
 		t.Fatal(e)
@@ -186,6 +228,7 @@ func newFarmChainFixture(t *testing.T, browser bool) *farmChainFixture {
 		t.Fatal(e)
 	}
 	svc := platformservice.New(repository.New(s.DB), filepath.Join(f.private, "platform"))
+	stage("fixture_runtime")
 	t.Cleanup(func() { _ = svc.Close() })
 	if !component {
 		if e = svc.ValidateRuntime(); e != nil {
@@ -210,6 +253,7 @@ func newFarmChainFixture(t *testing.T, browser bool) *farmChainFixture {
 		}
 		return &http.Cookie{Name: auth.SessionCookieName, Value: result.Session, Path: "/", HttpOnly: true}
 	}
+	stage("fixture_persisted_login")
 	f.actorCookie, f.ownerCookie = login(actor), login(owner)
 	return f
 }
@@ -643,6 +687,16 @@ func TestFarmHTTPPostgresChain(t *testing.T) {
 const farmBrowserRequiredChecks = "production_nginx_configuration_valid real_react_login_shared_vue_session http_only_platform_cookie north_created_with_explicit_grants south_created_with_explicit_grants duplicate_click_single_create created_farms_survive_reload explicit_region_unit_crs_demo openlayers_real_canvas invalid_geometry_no_write missing_crs_no_preview duplicate_external_code_rejected north_ui_update_revision_two concurrent_real_api_update_revision_three stale_revision_409_preserves_draft archive_ui_history_readonly foreign_workspace_denied same_tenant_other_workspace_denied same_cookie_after_revocation revoked_old_page_clears_content revoked_history_navigation_no_content all_database_checkpoints_acknowledged no_internal_credentials_identity_spoofing_or_external_requests"
 
 func TestFarmBrowserPostgresChain(t *testing.T) {
+	stage := "browser_dependencies"
+	progress := func(value string) { stage = value }
+	// Only fixed source-controlled stages enter the public Go event stream.
+	// This cleanup precedes fixture construction, so pre-child failures survive
+	// even when no browser report has been created.
+	t.Cleanup(func() {
+		if t.Failed() {
+			t.Logf("FARM_BROWSER_DIAGNOSTIC stage=%s", stage)
+		}
+	})
 	for _, key := range []string{"CHROME_BIN", "NGINX_BIN", "NGINX_MIME_TYPES", "REDIS_URL"} {
 		if os.Getenv(key) == "" {
 			if os.Getenv("AGRI_FARM_CHAIN_REQUIRED") == "1" {
@@ -651,12 +705,14 @@ func TestFarmBrowserPostgresChain(t *testing.T) {
 			t.Skip("actual farm browser dependencies not configured")
 		}
 	}
-	f := newFarmChainFixture(t, true)
+	f := newFarmChainFixture(t, true, progress)
+	progress("browser_builds")
 	for _, path := range []string{"web/dist-agriculture/index.html", "services/agri-gis/frontend/dist-agriculture/index.html", "scripts/agriculture/farm-browser-e2e.mjs"} {
 		if _, e := os.Stat(filepath.Join(f.root, path)); e != nil {
 			t.Fatal("actual farm browser source/build missing")
 		}
 	}
+	progress("browser_node_lookup")
 	node, e := exec.LookPath("node")
 	if e != nil {
 		t.Fatal("Node required")
@@ -708,11 +764,14 @@ func TestFarmBrowserPostgresChain(t *testing.T) {
 		}
 	})
 	config := filepath.Join(f.private, "farm-browser.json")
+	progress("browser_private_config")
 	chainPrivate(t, config, map[string]any{"platform_url": f.server.URL, "gateway_port": f.gatewayPort, "username": f.actor, "password": f.password, "workspace_id": f.org.Workspace.ID, "foreign_workspace_id": f.foreign.Workspace.ID, "second_workspace_id": f.second, "actor_id": f.actor, "dictionary_version": "fixture-v1", "region_north": "fixture-north", "region_south": "fixture-south", "area_units": []string{"m2", "ha", "mu"}, "report_path": reportPath})
+	progress("browser_child_start")
 	child := chainStart(t, node, f.root, filepath.Join(f.root, "scripts/agriculture/farm-browser-e2e.mjs"), config)
 	expected := []string{"created", "updated", "archived", "revoke-request", "revoked-verified"}
 	var frozen map[string]string
 	for _, checkpoint := range expected {
+		progress("browser_wait_" + checkpoint)
 		var event struct {
 			Event      string `json:"event"`
 			Checkpoint string `json:"checkpoint"`
@@ -721,6 +780,7 @@ func TestFarmBrowserPostgresChain(t *testing.T) {
 		if event.Event != "checkpoint" || event.Checkpoint != checkpoint {
 			t.Fatal("unexpected farm browser checkpoint")
 		}
+		progress("browser_verify_" + checkpoint)
 		if checkpoint == "created" || checkpoint == "updated" || checkpoint == "archived" {
 			type state struct {
 				Code      string `gorm:"column:external_code"`
@@ -773,6 +833,7 @@ func TestFarmBrowserPostgresChain(t *testing.T) {
 			t.Fatal("browser acknowledgment failed")
 		}
 	}
+	progress("browser_child_finish")
 	select {
 	case <-child.done:
 		if child.err != nil {
@@ -781,6 +842,7 @@ func TestFarmBrowserPostgresChain(t *testing.T) {
 	case <-time.After(30 * time.Second):
 		t.Fatal("farm browser did not finish")
 	}
+	progress("browser_report_validate")
 	raw, e := os.ReadFile(reportPath)
 	if e != nil || len(raw) > 1024*1024 {
 		t.Fatal("farm browser report missing")
@@ -816,6 +878,7 @@ func TestFarmBrowserPostgresChain(t *testing.T) {
 			t.Fatal("farm browser report contains private material")
 		}
 	}
+	progress("browser_evidence_write")
 	out := filepath.Join(f.root, ".local/evidence")
 	if e = os.MkdirAll(out, 0700); e != nil {
 		t.Fatal(e)

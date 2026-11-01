@@ -104,22 +104,43 @@ class Verifier:
                 from ..asset_object_identity import verify_asset_object
 
                 return verify_asset_object(
-                    self, token, typ=typ, method=method, path=path,
-                    query=query, raw_body=raw_body, now=now, action=action,
+                    self,
+                    token,
+                    typ=typ,
+                    method=method,
+                    path=path,
+                    query=query,
+                    raw_body=raw_body,
+                    now=now,
+                    action=action,
                 )
             if typ == "weavesense-agri-asset-operation+jws":
                 from ..asset_catalog_identity import verify_asset_workspace
 
                 return verify_asset_workspace(
-                    self, token, typ=typ, method=method, path=path,
-                    query=query, raw_body=raw_body, now=now, action=action,
+                    self,
+                    token,
+                    typ=typ,
+                    method=method,
+                    path=path,
+                    query=query,
+                    raw_body=raw_body,
+                    now=now,
+                    action=action,
                 )
             if typ == "weavesense-agri-parcel-operation+jws":
                 from ..parcels_identity import verify_parcel_operation
 
                 return verify_parcel_operation(
-                    self, token, typ=typ, method=method, path=path,
-                    query=query, raw_body=raw_body, now=now, action=action,
+                    self,
+                    token,
+                    typ=typ,
+                    method=method,
+                    path=path,
+                    query=query,
+                    raw_body=raw_body,
+                    now=now,
+                    action=action,
                 )
             if typ == "weavesense-agri-workspace-operation+jws":
                 from ..farms_identity import verify_workspace
@@ -240,7 +261,8 @@ class Verifier:
             body = json.loads(canonical)
         if typ == SERVICE_TYP:
             require(
-                action in {"ownership.resolve", "object.resolve", "asset.ownership.read"}
+                action
+                in {"ownership.resolve", "object.resolve", "asset.ownership.read"}
                 and claims["capability"] == action
             )
         else:

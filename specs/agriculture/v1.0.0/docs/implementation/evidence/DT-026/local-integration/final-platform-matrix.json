@@ -1,0 +1,16 @@
+{
+  "go_records": 428,
+  "exact_names": true,
+  "all_passed": true,
+  "routes": 49,
+  "observations": 378,
+  "matrix_passed": true,
+  "auth_component_only": false,
+  "source_stable": true,
+  "source_changed_paths": null,
+  "race": true,
+  "production_acceptance": false,
+  "exact_routes": true,
+  "exact_observations": true,
+  "all_business_snapshots_unchanged": true
+}

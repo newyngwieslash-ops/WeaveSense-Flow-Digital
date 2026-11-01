@@ -1,0 +1,116 @@
+{
+  "passed": true,
+  "files": [
+    {
+      "path": "services/agri-gis/backend/app/agriculture/asset_catalog_config.py",
+      "before_sha256": "371ee1bee5562b1cb498a9ae1bd229888ffda9bc2ad14b02931e340dfa25532d",
+      "after_sha256": "f1ae54406506dce8bfe41d6bd6739aae4e1bc11514aade139e8e64e133093ee0",
+      "non_import_ast_equal": true,
+      "removed_imports": [],
+      "added_imports": []
+    },
+    {
+      "path": "services/agri-gis/backend/app/agriculture/asset_catalog_ownership.py",
+      "before_sha256": "9144aea24a90fde94c1a549633a647fe2e0615b87cf31dc825834a602841c8f9",
+      "after_sha256": "c7d56e476f0e4f58f4091a39c2c64601fadc91826ba0b493c1fa1fc60b448b65",
+      "non_import_ast_equal": true,
+      "removed_imports": [],
+      "added_imports": []
+    },
+    {
+      "path": "services/agri-gis/backend/app/agriculture/domain_boundary.py",
+      "before_sha256": "e9ca3ea5f9ffd667d747bd82a2a93a3200eb5d6ceb22d3492e9399a906ca86bf",
+      "after_sha256": "9dfb4f3e2f88ba89521d6fa8c6fb3902729d4e8ba980d66c2d251a379ab3e014",
+      "non_import_ast_equal": true,
+      "removed_imports": [],
+      "added_imports": []
+    },
+    {
+      "path": "services/agri-gis/backend/app/agriculture/domain_ownership.py",
+      "before_sha256": "babee5de1a4e9e1dc493944924052d45a5c05f43ec6a73859b1ca87f00e066f7",
+      "after_sha256": "2ce564bca9c33b81790b4f89df04296f86de206c051938fe3cfb8d90546b6192",
+      "non_import_ast_equal": true,
+      "removed_imports": [],
+      "added_imports": []
+    },
+    {
+      "path": "services/agri-gis/backend/app/agriculture/identity/config.py",
+      "before_sha256": "9958eb2116990ca669e120ff6ff0f6319f839394f129acbf8a50855278e53cd1",
+      "after_sha256": "6192792b7e23465ce819f13566d4e02848bdbbb094553839a044a0a2d5f835ad",
+      "non_import_ast_equal": true,
+      "removed_imports": [],
+      "added_imports": []
+    },
+    {
+      "path": "services/agri-gis/backend/app/agriculture/identity/verify.py",
+      "before_sha256": "cd91cf6950a9c50c68c09090177db5ccb55df379efdeb13bb181cc4efedc5bd4",
+      "after_sha256": "e1eba377fd65a73639a0dedc8fdc78c5fd77670c891ff70f4238ea21a2292dd4",
+      "non_import_ast_equal": true,
+      "removed_imports": [],
+      "added_imports": []
+    },
+    {
+      "path": "services/agri-gis/backend/app/agriculture/main.py",
+      "before_sha256": "743a1fbad26dc0e8c5e650a011194a41f326d65d1be5bcc9dd082458223451ad",
+      "after_sha256": "d5898e1cd971f42f3fc6eec675cbf77f853461475839ada77a5b97143373da90",
+      "non_import_ast_equal": true,
+      "removed_imports": [],
+      "added_imports": []
+    },
+    {
+      "path": "services/agri-gis/backend/app/agriculture/object_gateway.py",
+      "before_sha256": "571bdfa0b1e50fb733f7824f8640fea4ac7bef867b924e741ab74d9f1bb3bc55",
+      "after_sha256": "f4b7c2176f0d989fc997c88a88ba1d30792f9563d4841c4cba4e51ca4179ff69",
+      "non_import_ast_equal": true,
+      "removed_imports": [],
+      "added_imports": []
+    },
+    {
+      "path": "services/agri-gis/backend/tests/farm_http_fixture.py",
+      "before_sha256": "1075a0fbaf8f8cd905e7a9bc022c32f2418cac365e92124f6dbaae693d9fe8ab",
+      "after_sha256": "018f2008628174014ccdc458e128df5e4d196f1af39db536e925d1c29b63b6c6",
+      "non_import_ast_equal": true,
+      "removed_imports": [],
+      "added_imports": []
+    },
+    {
+      "path": "services/agri-gis/backend/tests/test_agriculture_asset_catalog_config.py",
+      "before_sha256": "228327e2ee19ec643a30beed2d837bd6f68fa5878a6f9fa576a307d8d18b780e",
+      "after_sha256": "7e156fb8fcb1c1d4749df196518d2233b37e11ee06bbba8ea4ed763cff4a8688",
+      "non_import_ast_equal": true,
+      "removed_imports": [],
+      "added_imports": []
+    },
+    {
+      "path": "services/agri-gis/backend/tests/test_agriculture_asset_download_fixture.py",
+      "before_sha256": "4e5b7910214f3b44a0bb6b3092bfdcc1cbd7b9adb161615ab892d5993b053c17",
+      "after_sha256": "5d86b054a0d0adf660d4ad88a2c154dd6e6a2f1282b6f6feced5e0d4bc41c6aa",
+      "non_import_ast_equal": true,
+      "removed_imports": [
+        [
+          "pathlib",
+          "Path",
+          null
+        ]
+      ],
+      "added_imports": []
+    },
+    {
+      "path": "services/agri-gis/backend/tests/test_agriculture_domain_ownership.py",
+      "before_sha256": "a259bfd060aa7798fcbf9778da6821e102f1405692a3d4123f92e77796120a0e",
+      "after_sha256": "3ace575b5d8f7a008ab292c27a18f30985e58502148f86999e5c1e66a4882b17",
+      "non_import_ast_equal": true,
+      "removed_imports": [],
+      "added_imports": []
+    },
+    {
+      "path": "services/agri-gis/backend/tests/test_agriculture_object_gateway.py",
+      "before_sha256": "05bf3a0054430ece2f127514bdd773a325d1407d74410ae5898b34c00d3aa7c8",
+      "after_sha256": "7dad0fd831c9bb64b030146e162ad22b4f3bc07f72d27e10d8c9af95e985ecba",
+      "non_import_ast_equal": true,
+      "removed_imports": [],
+      "added_imports": []
+    }
+  ],
+  "scope": "format/import-order and one unused test Path import only; final CI still required"
+}

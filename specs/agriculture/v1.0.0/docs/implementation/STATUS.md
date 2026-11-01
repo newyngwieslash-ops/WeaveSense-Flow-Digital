@@ -6,6 +6,14 @@
 
 应用实现状态：in_progress
 
+## 2026-11-01 11:55 UTC CI候选准备
+
+25/144正式完成不变，DT026/041继续in_progress。业务代码候选与本地实际验收已冻结：GIS286、平台隔离428精确Go记录（49路378请求）、资产Python109、资产HTTP7及实际Vue解析7、typed真实下载10全部通过，最后下载与矩阵均源码稳定。Vue120及实际215模块构建通过；普通Go短测463通过、22集成skip明确不当作验收。修复了到期锁等待提交、emptyfarm治理空集授权假设、下载退出会话复核/错误分类及private缓存覆盖问题，保留原失败和负例。显式父farm资产能力与direct授权并集写入ADR，no-farm必须direct且治理仅owner/admin。
+
+两原始inventory在独立源审查后显式刷新且检查通过，CI显式overlay当前549路径，无缺文件。新增parcel/asset真实浏览器与精确零skip门禁已接；不能在远端实际通过前标任务完成。下一步提交冻结候选，由唯一publisher正常发布CI scaffold并跟踪真实报告，逐源哈希复核后再更新状态；完整产品历史交付与CI scaffold仍分别处理。
+
+12:00 UTC最终lint收尾：13个Python文件只规范格式/import顺序，移除一个未使用测试import；全部非import AST相同，格式前后hash及说明保留，不能把旧原生报告hash称为新候选hash。格式化后119个Python组件实际通过，全部新增/修改backend Python源ruff通过；清单再显式刷新/check通过。正式CI将验证最终格式化源码，真实浏览器仍not_run。
+
 ## 2026-11-01 11:26 UTC 集成检查点
 
 正式完成仍为25/144。DT026、DT041按原依赖并行在建；没有将新组件/本地数据库结果当作最终浏览器验收。稳定地块/不可变revision/当前授权目录、资产metadata/权利快照/typed非农场资产授权已接入共享平台与GIS，原登录、Flow调度、账本、普通非空farm授权链保持。

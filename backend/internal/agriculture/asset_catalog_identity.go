@@ -2,6 +2,7 @@ package agriculture
 
 import (
 	"context"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"io"
@@ -51,6 +52,24 @@ func (p *AssetCatalogPlatform) currentIntent(tx *gorm.DB, s workspaceContext, op
 	}
 	if !roleAllowsAction(s.Roles, "agri.asset.create") {
 		return ErrForbidden
+	}
+	// The frozen intent's farm came from trusted typed ownership at preview.
+	// Its epoch must still match; current domain proof is checked at dispatch
+	// and receipt application. A parent grant is an independent positive path.
+	if op.Action == "version" && op.FarmID != "" {
+		var parent model.AgricultureResourceBinding
+		err := tx.Where("tenant_id=? AND workspace_id=? AND subject_type='user' AND subject_id=? AND resource_kind='farm' AND resource_id=? AND state='active' AND (expires_at IS NULL OR expires_at>?)", s.Tenant.ID, s.Workspace.ID, op.ActorID, op.FarmID, p.Service.now()).First(&parent).Error
+		if err == nil {
+			caps, err := bindingCapabilities(parent)
+			if err != nil {
+				return err
+			}
+			if hasRole(caps, "agri.asset.create") {
+				return nil
+			}
+		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
 	}
 	kind, id := "asset", op.AssetID
 	need := []string{"agri.asset.create"}

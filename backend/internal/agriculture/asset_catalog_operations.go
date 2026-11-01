@@ -203,8 +203,15 @@ func (p *AssetCatalogPlatform) Preview(ctx context.Context, actor, ws string, pa
 // solely because another writer committed. Only an unchanged current grant and
 // epoch allow reporting that deterministic CAS conflict; revoked authority does
 // not gain a metadata read or a permission refresh through this path.
-func(p *AssetCatalogPlatform) staleIntentConflict(ctx context.Context,op model.AgricultureAssetOperation)bool{
- if op.Action!="version"{return false};if e:=p.Service.withWorkspace(ctx,op.ActorID,op.WorkspaceID,false,func(tx *gorm.DB,s workspaceContext)error{return p.currentIntent(tx,s,op)});e!=nil{return false};facts,e:=p.Client.ResolveAssetCatalog(ctx,OwnershipContext{op.TenantID,op.WorkspaceID},[]string{op.AssetID});return e==nil&&len(facts)==1&&facts[0].Revision>op.ExpectedRevision
+func (p *AssetCatalogPlatform) staleIntentConflict(ctx context.Context, op model.AgricultureAssetOperation) bool {
+	if op.Action != "version" {
+		return false
+	}
+	if e := p.Service.withWorkspace(ctx, op.ActorID, op.WorkspaceID, false, func(tx *gorm.DB, s workspaceContext) error { return p.currentIntent(tx, s, op) }); e != nil {
+		return false
+	}
+	facts, e := p.Client.ResolveAssetCatalog(ctx, OwnershipContext{op.TenantID, op.WorkspaceID}, []string{op.AssetID})
+	return e == nil && len(facts) == 1 && facts[0].Revision > op.ExpectedRevision
 }
 func assetCatalogOpIDs(op model.AgricultureAssetOperation) []string {
 	if op.Action == "version" {
@@ -246,7 +253,9 @@ func (p *AssetCatalogPlatform) Confirm(ctx context.Context, actor, ws, id, key s
 	}
 	_, version, e := p.prepare(ctx, actor, ws, payload)
 	if e != nil {
-		if errors.Is(e,ErrForbidden)&&p.staleIntentConflict(ctx,op){return empty,ErrConflict}
+		if errors.Is(e, ErrForbidden) && p.staleIntentConflict(ctx, op) {
+			return empty, ErrConflict
+		}
 		return empty, e
 	}
 	e = p.Service.withWorkspacePrincipals(ctx, actor, ws, false, assetCatalogGrantees(payload), func(tx *gorm.DB, s workspaceContext) error {

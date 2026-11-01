@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from fastapi import Request
 from fastapi.responses import JSONResponse, Response
 
+from .asset_catalog_rules import ASSET_ID
 from .identity.dependency import delegation_dependency, verify_request
 from .identity.providers import resolve_owned
 from .identity.verify import SERVICE_TYP, IdentityError, require
@@ -75,6 +76,13 @@ def register_object_routes(app):
         async def extract(request, _body):
             item = await reference(request)
             require(item.resource_kind == kind, "object_not_found", 404)
+            # Catalog identities must use the reviewed typed profile even
+            # when attached to a farm; never fall back after catalog denial.
+            require(
+                kind != "asset" or not ASSET_ID.fullmatch(item.resource_id),
+                "object_not_found",
+                404,
+            )
             return [{"kind": kind, "id": item.resource_id}]
 
         def same_scope(request, proof):

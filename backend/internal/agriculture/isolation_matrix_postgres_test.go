@@ -216,7 +216,6 @@ func TestAgricultureIsolationMatrixPostgres(t *testing.T) {
 	NewParcelPlatform(s, nil).RegisterInternal(router, gisKeys)
 	assets := NewAssetCatalogPlatform(s, nil)
 	assets.RegisterInternal(router, gisKeys)
-	assets.RegisterDownloadAuthority(router, gisKeys)
 	server.Start()
 	t.Cleanup(server.Close)
 	identity := func(cookie *http.Cookie) isolationIdentity {
@@ -355,7 +354,7 @@ func TestAgricultureIsolationMatrixPostgres(t *testing.T) {
 			case "farm_context", "farm_list", "farm_detail", "farm_operation", "farm_write", "parcel_detail", "parcel_list", "parcel_operation", "parcel_write", "parcel_parents", "asset_context", "asset_list", "asset_detail", "asset_operation", "asset_write":
 				t.Run("foreign_tenant", func(t *testing.T) { call(t, row, "foreign_tenant", viewer, foreign.Workspace.ID, row.Body, 404, nil) })
 				t.Run("unjoined_same_tenant_workspace", func(t *testing.T) { call(t, row, "unjoined_same_tenant_workspace", viewer, second, row.Body, 404, nil) })
-				status := map[string]int{"farm_context": 503, "farm_list": 503, "farm_detail": 404, "farm_operation": 404, "farm_write": 403, "parcel_detail": 404, "parcel_list": 200, "parcel_operation": 404, "parcel_write": 403, "parcel_parents": 200, "asset_context": 503, "asset_list": 200, "asset_detail": 503, "asset_operation": 404, "asset_write": 403}[row.Kind]
+				status := map[string]int{"farm_context": 503, "farm_list": 503, "farm_detail": 404, "farm_operation": 404, "farm_write": 403, "parcel_detail": 404, "parcel_list": 200, "parcel_operation": 404, "parcel_write": 403, "parcel_parents": 200, "asset_context": 503, "asset_list": 200, "asset_detail": 404, "asset_operation": 404, "asset_write": 403}[row.Kind]
 				// Real farm facts/current callbacks are exercised by the independent
 				// double-PG chain. Never label missing-provider 503 as role denial.
 				t.Run("current_scope_boundary", func(t *testing.T) {

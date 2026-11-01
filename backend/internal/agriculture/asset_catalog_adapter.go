@@ -45,7 +45,9 @@ func (p *AssetCatalogPlatform) Execute(ctx context.Context, row model.FlowComman
 		}
 		_, epoch, prepareErr := p.prepare(ctx, op.ActorID, op.WorkspaceID, payload)
 		e = prepareErr
-		if errors.Is(e,ErrForbidden)&&p.staleIntentConflict(ctx,op){e=ErrConflict}
+		if errors.Is(e, ErrForbidden) && p.staleIntentConflict(ctx, op) {
+			e = ErrConflict
+		}
 		if e == nil && epoch != op.AuthorizationVersion {
 			e = ErrConflict
 		}

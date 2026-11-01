@@ -18,6 +18,17 @@ test('grant preview compares exact instants despite server RFC3339 canonicalizat
   expect(previewFrom(same, original).initial_grants[0]?.expires_at).toBe('2027-01-01T00:00:00Z')
   expect(() => previewFrom({ ...same, initial_grants: same.initial_grants.map(g => ({ ...g, expires_at: '2027-01-01T00:00:00.000001Z' })) }, original)).toThrow()
 })
+test('service receipts accept exact RFC3339Nano without relaxing GIS metadata timestamp precision', () => {
+  const nano = '2026-11-01T11:32:00.123456789Z'
+  expect(previewFrom({ ...preview, expires_at: nano }, intent).expires_at).toBe(nano)
+  expect(assetFrom({ ...asset, created_at: nano }, 'w1').created_at).toBe(nano)
+  const original = { ...intent, initial_grants: intent.initial_grants.map(g => ({ ...g, expires_at: nano })) }
+  const same = { ...preview, initial_grants: preview.initial_grants.map(g => ({ ...g, expires_at: '2026-11-01T19:32:00.123456789+08:00' })) }
+  expect(previewFrom(same, original).initial_grants[0]?.expires_at).toBe('2026-11-01T19:32:00.123456789+08:00')
+  expect(() => previewFrom({ ...same, initial_grants: same.initial_grants.map(g => ({ ...g, expires_at: '2026-11-01T11:32:00.123456788Z' })) }, original)).toThrow()
+  for (const invalid of ['2026-11-01T11:32:00.1234567890Z', '2026-02-30T11:32:00.123456789Z']) expect(() => previewFrom({ ...preview, expires_at: invalid }, intent)).toThrow()
+  expect(() => assetFrom({ ...asset, metadata: { ...asset.metadata, retention: { retain_until: nano, legal_hold: false } } }, 'w1')).toThrow()
+})
 test('current rights summaries discard registry internals; wrong scopes, historical write and ready-without-entity rejected', () => {
   expect(rightsFrom({ ...asset.rights, reviewed_sources: [{ endpoint: 'not-public' }], private_key: 'never-copy' })).toEqual(asset.rights)
   expect(contextFrom(context, 'w1')).toEqual(context)

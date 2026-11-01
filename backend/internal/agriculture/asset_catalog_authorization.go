@@ -158,21 +158,23 @@ func (p *AssetCatalogPlatform) Authorize(ctx context.Context, actor, ws, action 
 		if !roleAllowsAction(s.Roles, action) {
 			return ErrForbidden
 		}
+		var bindings []model.AgricultureResourceBinding
+		if e := tx.Where("tenant_id=? AND workspace_id=? AND subject_type='user' AND subject_id=? AND resource_kind IN ? AND state='active' AND (expires_at IS NULL OR expires_at>?)", s.Tenant.ID, ws, actor, []string{"asset", "farm"}, p.Service.now()).Find(&bindings).Error; e != nil {
+			return e
+		}
 		for _, id := range ids {
-			var b model.AgricultureResourceBinding
-			if tx.Where("tenant_id=? AND workspace_id=? AND subject_type='user' AND subject_id=? AND resource_kind='asset' AND resource_id=? AND state='active' AND (expires_at IS NULL OR expires_at>?)", s.Tenant.ID, ws, actor, id, p.Service.now()).First(&b).Error != nil {
+			candidate := false
+			for _, b := range bindings {
+				caps, e := bindingCapabilities(b)
+				if e != nil {
+					return e
+				}
+				if hasRole(caps, action) && (b.ResourceKind == "farm" || b.ResourceID == id) {
+					candidate = true
+				}
+			}
+			if !candidate {
 				return ErrNotFound
-			}
-			caps, e := bindingCapabilities(b)
-			if e != nil {
-				return e
-			}
-			found := false
-			for _, cap := range caps {
-				found = found || cap == action
-			}
-			if !found {
-				return ErrForbidden
 			}
 		}
 		return nil
@@ -185,10 +187,6 @@ func (p *AssetCatalogPlatform) Authorize(ctx context.Context, actor, ws, action 
 		if !roleAllowsAction(s.Roles, action) {
 			return ErrForbidden
 		}
-		farms, e := authorizeOwned(tx, s, actor, action, proofs, now)
-		if e != nil {
-			return e
-		}
 		expires := now.Add(30 * time.Second)
 		refs := []ResourceRef{}
 		for r, proof := range proofs {
@@ -199,9 +197,34 @@ func (p *AssetCatalogPlatform) Authorize(ctx context.Context, actor, ws, action 
 			if action == "agri.asset_download.read" && proof.Status != "ready" {
 				return ErrNotFound
 			}
-			if e := assetCatalogExactGrant(tx, s, actor, r.ID, action, proof, now); e != nil {
+			// Resolve the authorization source explicitly. Empty farm sets can
+			// never create an inherited path, even in a future generic helper.
+			bindings, e := effectiveBindings(tx, s, actor, proofs, now)
+			if e != nil {
 				return e
 			}
+			direct := hasRole(bindings[r].Capabilities, action)
+			parent := len(proof.FarmIDs) > 0
+			for _, farm := range proof.FarmIDs {
+				parent = parent && hasRole(bindings[ResourceRef{"farm", farm}].Capabilities, action)
+			}
+			if !direct && !parent {
+				// An unrelated parent capability must not reveal a no-grant
+				// asset. A present but stale direct grant remains a forbidden
+				// version, distinct from an absent/revoked resource grant.
+				var count int64
+				if e := tx.Model(&model.AgricultureResourceBinding{}).Where("tenant_id=? AND workspace_id=? AND subject_type='user' AND subject_id=? AND resource_kind='asset' AND resource_id=? AND state='active' AND (expires_at IS NULL OR expires_at>?)", s.Tenant.ID, ws, actor, r.ID, now).Count(&count).Error; e != nil {
+					return e
+				}
+				if count == 0 {
+					return ErrNotFound
+				}
+				return ErrForbidden
+			}
+		}
+		farms, e := authorizeOwned(tx, s, actor, action, proofs, now)
+		if e != nil {
+			return e
 		}
 		sort.Slice(refs, func(i, j int) bool { return refs[i].ID < refs[j].ID })
 		expires, e = authorizationExpiry(tx, s, actor, action, proofs, now, expires)
@@ -264,5 +287,12 @@ func (s Service) withBindingOwnership(ctx context.Context, actor, ws string, res
 		return ErrDependencyUnavailable
 	}
 	p := AssetCatalogPlatform{Service: s, Client: client}
-	return p.withOwnership(ctx, actor, ws, []string{resources[0].ID}, fn, otherActors...)
+	return p.withOwnership(ctx, actor, ws, []string{resources[0].ID}, func(tx *gorm.DB, scope workspaceContext, epoch int64, proofs map[ResourceRef]ResourceOwnership) error {
+		// No-farm assets have no delegated farm governance. Business grants do
+		// not grant authority to issue new grants, even to their own holder.
+		if len(proofs[resources[0]].FarmIDs) == 0 && !scope.Owner && !hasRole(scope.Roles, "tenant_admin") {
+			return ErrForbidden
+		}
+		return fn(tx, scope, epoch, proofs)
+	}, otherActors...)
 }

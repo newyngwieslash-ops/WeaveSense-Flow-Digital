@@ -67,7 +67,7 @@ func (p *AssetCatalogPlatform) visibleIDs(ctx context.Context, actor, ws string)
 			return nil
 		}
 		var bindings []model.AgricultureResourceBinding
-		if e := tx.Where("tenant_id=? AND workspace_id=? AND subject_type='user' AND subject_id=? AND resource_kind='asset' AND state='active' AND (expires_at IS NULL OR expires_at>?)", s.Tenant.ID, ws, actor, p.Service.now()).Order("resource_id").Find(&bindings).Error; e != nil {
+		if e := tx.Where("tenant_id=? AND workspace_id=? AND subject_type='user' AND subject_id=? AND resource_kind IN ('asset','farm') AND state='active' AND (expires_at IS NULL OR expires_at>?)", s.Tenant.ID, ws, actor, p.Service.now()).Order("resource_id").Find(&bindings).Error; e != nil {
 			return e
 		}
 		for _, b := range bindings {
@@ -76,8 +76,20 @@ func (p *AssetCatalogPlatform) visibleIDs(ctx context.Context, actor, ws string)
 				return e
 			}
 			for _, cap := range caps {
-				if cap == "agri.asset.read" && assetCatalogID.MatchString(b.ResourceID) {
+				if cap != "agri.asset.read" {
+					continue
+				}
+				if b.ResourceKind == "asset" && assetCatalogID.MatchString(b.ResourceID) {
 					ids = append(ids, b.ResourceID)
+				}
+				if b.ResourceKind == "farm" {
+					// Completed create receipts are an exact authorization index,
+					// not a copy of GIS metadata nor a global catalog scan.
+					var candidates []string
+					if e := tx.Model(&model.AgricultureAssetOperation{}).Where("tenant_id=? AND workspace_id=? AND farm_id=? AND action='create' AND state='completed'", s.Tenant.ID, ws, b.ResourceID).Pluck("asset_id", &candidates).Error; e != nil {
+						return e
+					}
+					ids = append(ids, candidates...)
 				}
 			}
 		}
@@ -86,8 +98,15 @@ func (p *AssetCatalogPlatform) visibleIDs(ctx context.Context, actor, ws string)
 	if e != nil {
 		return nil, e
 	}
-	valid := []string{}
+	sort.Strings(ids)
+	unique := []string{}
 	for _, id := range ids {
+		if len(unique) == 0 || unique[len(unique)-1] != id {
+			unique = append(unique, id)
+		}
+	}
+	valid := []string{}
+	for _, id := range unique {
 		if _, e := p.Authorize(ctx, actor, ws, "agri.asset.read", []string{id}); e == nil {
 			valid = append(valid, id)
 		} else if !errors.Is(e, ErrForbidden) && !errors.Is(e, ErrNotFound) && !errors.Is(e, ErrConflict) {
@@ -213,9 +232,15 @@ func (p *AssetCatalogPlatform) List(ctx context.Context, actor, ws, kind, dataCl
 }
 func (p *AssetCatalogPlatform) Context(ctx context.Context, actor, ws string) (map[string]any, error) {
 	canRegister := false
+	var epoch int64
 	eligible := []map[string]any{}
 	farmIDs := []string{}
 	e := p.Service.withWorkspace(ctx, actor, ws, false, func(tx *gorm.DB, s workspaceContext) error {
+		var e error
+		epoch, e = currentAuthorizationVersion(tx, s.Tenant.ID)
+		if e != nil {
+			return e
+		}
 		canRegister = s.Owner || hasRole(s.Roles, "tenant_admin")
 		var bindings []model.AgricultureResourceBinding
 		if e := tx.Where("tenant_id=? AND workspace_id=? AND subject_type='user' AND subject_id=? AND resource_kind='farm' AND state='active' AND (expires_at IS NULL OR expires_at>?)", s.Tenant.ID, ws, actor, p.Service.now()).Order("resource_id").Find(&bindings).Error; e != nil {
@@ -298,6 +323,21 @@ func (p *AssetCatalogPlatform) Context(ctx context.Context, actor, ws string) (m
 	}
 	if strictFarmJSON(raw, &context, 1<<20) != nil || context.Sources == nil {
 		return nil, ErrDependencyUnavailable
+	}
+	// Do not return a pre-revocation member/grant projection after the remote
+	// source-registry check. A changed scope must rebuild the complete context.
+	e = p.Service.withWorkspace(ctx, actor, ws, false, func(tx *gorm.DB, s workspaceContext) error {
+		current, e := currentAuthorizationVersion(tx, s.Tenant.ID)
+		if e != nil {
+			return e
+		}
+		if current != epoch {
+			return ErrConflict
+		}
+		return nil
+	})
+	if e != nil {
+		return nil, e
 	}
 	return map[string]any{"workspace_id": ws, "can_register_without_farm": canRegister, "eligible_grantees": eligible, "farms": farms, "sources": context.Sources}, nil
 }

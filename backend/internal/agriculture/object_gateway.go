@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 
+	"yingce/backend/internal/kernel"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -245,7 +247,15 @@ func (a API) registerObjectGateway(api gin.IRouter) {
 		c.Header("X-Content-Type-Options", "nosniff")
 		c.Header("Content-Security-Policy", "default-src 'none'; sandbox")
 		c.Next()
-	}, a.sessionMiddleware(respond))
+	}, a.sessionMiddleware(func(c *gin.Context, data any, err error) {
+		c.Header("Cache-Control", "private, no-store")
+		respond(c, data, err)
+	}), func(c *gin.Context) {
+		// sessionMiddleware sets a shared no-store default; this byte gateway
+		// retains the stricter private policy on successes and all denials.
+		c.Header("Cache-Control", "private, no-store")
+		c.Next()
+	})
 	handler := func(c *gin.Context) {
 		if c.Request.URL.RawQuery != "" || c.Request.URL.ForceQuery || c.Request.URL.RawPath != "" || c.Request.ContentLength > 0 || len(c.Request.TransferEncoding) != 0 || len(c.Request.Header.Values("Range")) > 1 || len(c.Request.Header.Values("If-Range")) != 0 {
 			respond(c, nil, ErrInvalid)
@@ -317,6 +327,22 @@ func (a API) registerObjectGateway(api gin.IRouter) {
 		}
 		if err != nil {
 			respond(c, nil, err)
+			return
+		}
+		// Logout/session expiry does not necessarily change a tenant epoch.
+		// Re-read the actual trusted session after buffered I/O, before bytes or
+		// content headers can leave the platform. Never reuse the entry actor.
+		current, sessionErr := a.User(c)
+		if sessionErr != nil {
+			var appErr *kernel.AppError
+			if errors.As(sessionErr, &appErr) && (appErr.Status == 401 || appErr.Status == 403) {
+				sessionErr = ErrUnauthenticated
+			}
+			respond(c, nil, sessionErr)
+			return
+		}
+		if current == nil || current.ID != actor {
+			respond(c, nil, ErrUnauthenticated)
 			return
 		}
 		c.Header("Content-Type", data.mime)

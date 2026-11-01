@@ -15,14 +15,19 @@ export const text = (v: unknown, max: number): v is string => typeof v === 'stri
 export const reference = (v: unknown): v is string => typeof v === 'string' && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(v)
 export const farmID = (v: unknown): v is string => typeof v === 'string' && /^farm_[a-f0-9]{32}$/.test(v)
 export function timestamp(v: unknown): v is string {
+  // GIS metadata is persisted at microsecond precision; service receipt clocks
+  // are separate and may use Go's RFC3339Nano representation.
+  return serviceTimestamp(v) && !/\.\d{7,}/.test(v)
+}
+export function serviceTimestamp(v: unknown): v is string {
   if (typeof v !== 'string') return false
-  const m = /^(\d{4})-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d)(?:\.(\d{1,6}))?(Z|[+-]\d\d:\d\d)$/.exec(v)
+  const m = /^(\d{4})-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d)(?:\.(\d{1,9}))?(Z|[+-]\d\d:\d\d)$/.exec(v)
   if (!m || !Number.isFinite(Date.parse(v))) return false
   const year = Number(m[1]), month = Number(m[2]), day = Number(m[3]), days = [31, year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
   return year >= 1 && month >= 1 && month <= 12 && day >= 1 && day <= days[month - 1]! && Number(m[4]) <= 23 && Number(m[5]) <= 59 && Number(m[6]) <= 59 && (m[8] === 'Z' || (Number(m[8]!.slice(1, 3)) <= 23 && Number(m[8]!.slice(4)) <= 59))
 }
 export function instant(value: string): bigint {
-  if (!timestamp(value)) return invalid()
+  if (!serviceTimestamp(value)) return invalid()
   const base = value.replace(/\.\d+(?=Z|[+-]\d\d:\d\d$)/, '')
   return BigInt(Date.parse(base)) * 1000000n + BigInt((value.match(/\.(\d+)(?:Z|[+-]\d\d:\d\d)$/)?.[1] ?? '').padEnd(9, '0'))
 }

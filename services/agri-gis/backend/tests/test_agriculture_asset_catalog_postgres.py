@@ -218,6 +218,43 @@ async def test_asset_catalog_real_object_guard_rechecks_after_storage_read(tmp_p
             await guarded.get("tenant_b", "workspace_a", obj, 1)
 
 
+@pytest.mark.asyncio
+async def test_asset_catalog_real_fixed_namespace_legacy_metadata_no_fallback():
+    async with setup() as (catalog, owner, pool, _source):
+        raw = PostgresObjectStore(pool)
+        guarded = CatalogObjectStore(raw, catalog)
+        for kind, resource, allowed in (
+            ("asset", "legacy_asset_fixture", True),
+            ("report", "legacy_report_fixture", True),
+            ("asset", "asset_" + uuid4().hex, False),
+        ):
+            obj = "object_" + uuid4().hex
+            key = object_key("tenant_a", "workspace_a", obj, 1)
+            await owner.execute(
+                "INSERT INTO agriculture_private_objects "
+                "(tenant_id,workspace_id,object_id,version,resource_kind,resource_id,"
+                "resource_revision,category,object_key,content_sha256,size_bytes,"
+                "media_type,data_class,distribution_allowed) VALUES "
+                "('tenant_a','workspace_a',$1,1,$2,$3,1,'original',$4,$5,0,"
+                "'application/octet-stream','demo',true)",
+                obj,
+                kind,
+                resource,
+                key,
+                hashlib.sha256(b"").hexdigest(),
+            )
+            original = await raw.get("tenant_a", "workspace_a", obj, 1)
+            if allowed:
+                assert await guarded.get("tenant_a", "workspace_a", obj, 1) == original
+            else:
+                with pytest.raises(IdentityError) as error:
+                    await guarded.get("tenant_a", "workspace_a", obj, 1)
+                assert error.value.code == "ASSET_NOT_FOUND"
+        with pytest.raises(IdentityError) as missing:
+            await guarded.get("tenant_a", "workspace_a", "object_missing_legacy", 1)
+        assert missing.value.code == "object_not_found"
+
+
 async def catalog_snapshot(owner):
     result = {}
     for name in (

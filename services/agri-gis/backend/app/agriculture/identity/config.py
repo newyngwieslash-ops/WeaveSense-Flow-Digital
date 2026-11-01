@@ -9,12 +9,12 @@ from pathlib import Path
 import httpx
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
-from ..database import create_runtime_pool
 from ..asset_catalog_config import configured_asset_rights
 from ..asset_catalog_identity import AssetCatalogAuthority
-from ..asset_catalog_store import AssetCatalogOwnership, AssetCatalogStore
 from ..asset_catalog_objects import CatalogObjectStore
+from ..asset_catalog_store import AssetCatalogOwnership, AssetCatalogStore
 from ..asset_object_identity import AssetObjectAuthority
+from ..database import create_runtime_pool
 from ..domain_ownership import DomainOwnership
 from ..farms_config import FarmDictionary
 from ..farms_identity import FarmAuthority
@@ -95,7 +95,9 @@ async def configured_services():
             if object_root:
                 if pool is None:
                     raise ValueError("private object database required")
-                object_store = CatalogObjectStore(PostgresObjectStore(pool), asset_catalog_store)
+                object_store = CatalogObjectStore(
+                    PostgresObjectStore(pool), asset_catalog_store
+                )
                 await object_store.require_ready()
                 object_storage = PrivateLocalStorage(object_root)
             # Real GIS ownership is intentionally unconfigured until its domain
@@ -106,15 +108,27 @@ async def configured_services():
                 replay=PostgresReplayLedger(pool) if pool else None,
                 object_store=object_store,
                 object_storage=object_storage,
-                ownership=DomainOwnership({"farm": FarmOwnership(pool), "parcel": ParcelOwnership(pool)}) if farm_store else None,
+                ownership=DomainOwnership(
+                    {"farm": FarmOwnership(pool), "parcel": ParcelOwnership(pool)}
+                )
+                if farm_store
+                else None,
                 farm_store=farm_store,
                 farm_authority=FarmAuthority(config["platform_base_url"], key, client),
                 parcel_store=parcel_store,
-                parcel_authority=ParcelAuthority(config["platform_base_url"], key, client),
+                parcel_authority=ParcelAuthority(
+                    config["platform_base_url"], key, client
+                ),
                 asset_catalog_store=asset_catalog_store,
-                asset_catalog_authority=AssetCatalogAuthority(config["platform_base_url"], key, client),
-                asset_catalog_ownership=AssetCatalogOwnership(pool) if pool is not None else None,
-                asset_object_authority=AssetObjectAuthority(config["platform_base_url"], key, client),
+                asset_catalog_authority=AssetCatalogAuthority(
+                    config["platform_base_url"], key, client
+                ),
+                asset_catalog_ownership=AssetCatalogOwnership(pool)
+                if pool is not None
+                else None,
+                asset_object_authority=AssetObjectAuthority(
+                    config["platform_base_url"], key, client
+                ),
             )
         except Exception:
             raise RuntimeError(

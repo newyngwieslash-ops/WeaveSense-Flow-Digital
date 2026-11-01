@@ -55,10 +55,10 @@ GO_EXPECTED.update({name: {value["root"]} | {value["root"] + "/" + c for c in va
 # The reviewed baseline has one row per registered method/path and one row per
 # actual HTTP request. Contract edits cannot silently collapse duplicates.
 assert CONTRACT["schema_version"] == "1.0"
-assert len(EXPECTED_ROUTES) == len(CONTRACT["routes"]) == 40
-assert len({row["id"] for row in CONTRACT["routes"]}) == 40
-assert len(EXPECTED_OBSERVATIONS) == sum(len(row["cases"]) for row in CONTRACT["routes"]) == 308
-assert len(GO_EXPECTED["matrix"]) == 349
+assert len(EXPECTED_ROUTES) == len(CONTRACT["routes"]) == 49
+assert len({row["id"] for row in CONTRACT["routes"]}) == 49
+assert len(EXPECTED_OBSERVATIONS) == sum(len(row["cases"]) for row in CONTRACT["routes"]) == 378
+assert len(GO_EXPECTED["matrix"]) == 428
 assert len(GO_EXPECTED["objects"]) == 4 and len(GO_EXPECTED["projections"]) == 6
 
 

@@ -258,12 +258,20 @@ async def require_domain_boundary(connection, role="flow_geo_app"):
         if asset_policies != len(ASSET_CATALOG_TABLES):
             raise ValueError("restrictive asset policy required")
         asset_columns = await connection.fetch(
-            "SELECT attname,has_column_privilege(current_user,attrelid,attnum,'UPDATE') AS allowed "
-            "FROM pg_catalog.pg_attribute WHERE attrelid='public.agriculture_asset_catalog'::regclass "
+            "SELECT attname,has_column_privilege(current_user,attrelid,"
+            "attnum,'UPDATE') AS allowed "
+            "FROM pg_catalog.pg_attribute WHERE "
+            "attrelid='public.agriculture_asset_catalog'::regclass "
             "AND attnum>0 AND NOT attisdropped"
         )
-        allowed_asset_updates = {"current_revision", "current_version_id", "status", "updated_at"} if role == "flow_geo_app" else set()
-        if {row["attname"] for row in asset_columns if row["allowed"]} != allowed_asset_updates:
+        allowed_asset_updates = (
+            {"current_revision", "current_version_id", "status", "updated_at"}
+            if role == "flow_geo_app"
+            else set()
+        )
+        if {
+            row["attname"] for row in asset_columns if row["allowed"]
+        } != allowed_asset_updates:
             raise ValueError("asset column privilege boundary mismatch")
         object_policy = await connection.fetchval(
             "SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_policy "

@@ -90,6 +90,34 @@ async def request(fixture, *, method="GET", path=PATH, changes=None, headers=Non
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("method", ["GET", "HEAD"])
+async def test_catalog_namespace_never_uses_ordinary_asset_profile(tmp_path, method):
+    fixture = object_fixture(tmp_path)
+    services, claims = fixture[1], fixture[3]
+    catalog_id = "asset_" + "a" * 32
+    services.object_store.item = replace(fixture[4], resource_id=catalog_id)
+    services.ownership.facts[0] = replace(
+        services.ownership.facts[0], resource_id=catalog_id
+    )
+    claims["resource_scope"] = [{"kind": "asset", "id": catalog_id}]
+    claims["resource_versions"] = [
+        {"resource": claims["resource_scope"][0], "revision": 1}
+    ]
+    reads = []
+    original = services.object_storage.read
+
+    def counted(**values):
+        reads.append(True)
+        return original(**values)
+
+    services.object_storage.read = counted
+    response = await request(fixture, method=method)
+    assert response.status_code == 404
+    assert not reads
+    assert response.content != fixture[-1]
+
+
+@pytest.mark.asyncio
 async def test_actual_bytes_range_head_no_public_cache(tmp_path):
     fixture = object_fixture(tmp_path)
     response = await request(fixture)

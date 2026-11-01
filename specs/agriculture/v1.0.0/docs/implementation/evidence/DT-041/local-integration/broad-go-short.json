@@ -1,0 +1,1951 @@
+{
+  "exit_code": 0,
+  "terminal_counts": {
+    "skip": 22,
+    "pass": 463
+  },
+  "failed": [],
+  "scope": "short-mode component regression; PG/browser skip is not acceptance",
+  "tests": [
+    {
+      "name": "TestAssetBrowserPostgresChain",
+      "result": "skip"
+    },
+    {
+      "name": "TestAssetCatalogOwnershipProfile/foreign_tenant",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogOwnershipProfile/foreign_workspace",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogOwnershipProfile/nil_farms",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogOwnershipProfile/fabricated_active",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogOwnershipProfile/revoked",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogOwnershipProfile/unknown_resource",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogOwnershipProfile/expired",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogOwnershipProfile/zero_revision",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogOwnershipProfile",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogOwnershipHashGolden",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogPayloadContract",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogOperationHTTPContract/GET_pending_create",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogOperationHTTPContract/GET_completed_create",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogOperationHTTPContract/GET_reconciliation_required_version",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogOperationHTTPContract/POST_pending_create",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogOperationHTTPContract/POST_reconciliation_required_version",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogOperationHTTPContract/POST_completed_create",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogOperationHTTPContract/POST_completed_version",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogOperationHTTPContract",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogDownloadPostgresChain",
+      "result": "skip"
+    },
+    {
+      "name": "TestAssetCatalogHTTPPostgresChain",
+      "result": "skip"
+    },
+    {
+      "name": "TestAuthorityFingerprintIgnoresAuditAndOtherActors",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorityFingerprintGrantsExpiryReceiptAndStableOrdering",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorityFingerprintScopeAndCorruptCapabilitiesFailClosed",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorityFingerprintBindingRowOrderStable",
+      "result": "pass"
+    },
+    {
+      "name": "TestResourceAccessEmptyFarmNeverImplicitGrant",
+      "result": "pass"
+    },
+    {
+      "name": "TestResourceAccessNonemptyExplicitParentUnchanged",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationHTTPTrustedSessionAndResourceNegatives/anonymous",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationHTTPTrustedSessionAndResourceNegatives/allowed",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationHTTPTrustedSessionAndResourceNegatives/same_tenant_other_farm",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationHTTPTrustedSessionAndResourceNegatives/viewer_mutation",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationHTTPTrustedSessionAndResourceNegatives/independent_download",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationHTTPTrustedSessionAndResourceNegatives/composite_requires_all_farms",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationHTTPTrustedSessionAndResourceNegatives/unknown_action",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationHTTPTrustedSessionAndResourceNegatives/nonmember",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationHTTPTrustedSessionAndResourceNegatives/owner_no_implicit_content",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationHTTPTrustedSessionAndResourceNegatives",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationHTTPStrictClaimsAndWritesHaveNoSideEffects/tenant_id",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationHTTPStrictClaimsAndWritesHaveNoSideEffects/tenantId",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationHTTPStrictClaimsAndWritesHaveNoSideEffects/user_id",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationHTTPStrictClaimsAndWritesHaveNoSideEffects/userId",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationHTTPStrictClaimsAndWritesHaveNoSideEffects/operator_code",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationHTTPStrictClaimsAndWritesHaveNoSideEffects/actorId",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationHTTPStrictClaimsAndWritesHaveNoSideEffects/roles",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationHTTPStrictClaimsAndWritesHaveNoSideEffects",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationHTTPBindingCRUDAndForeignBindingID",
+      "result": "pass"
+    },
+    {
+      "name": "TestAgriculturePostgresResourceAuthorization",
+      "result": "skip"
+    },
+    {
+      "name": "TestAuthorizationExplicitFarmScopeAndRoleCeiling",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationRechecksWithdrawalOutsideDatabaseTransaction",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationProviderFailuresAndCrossScope/absent",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationProviderFailuresAndCrossScope/unavailable",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationProviderFailuresAndCrossScope/cross_tenant",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationProviderFailuresAndCrossScope/cross_workspace",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationProviderFailuresAndCrossScope/expired",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationProviderFailuresAndCrossScope/inactive",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationProviderFailuresAndCrossScope",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationDirectResourceRevisionAndIndependentDownload",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationStatusChecksAreNotReplacedByEpoch",
+      "result": "pass"
+    },
+    {
+      "name": "TestRemovedMemberRejoiningDoesNotResurrectResourceGrants",
+      "result": "pass"
+    },
+    {
+      "name": "TestDirectGrantDoesNotOverrideFarmAllowAndDeadline",
+      "result": "pass"
+    },
+    {
+      "name": "TestDecisionDeadlineAndOwnershipChanges",
+      "result": "pass"
+    },
+    {
+      "name": "TestFieldRoleCombinationDoesNotBypassAssignment",
+      "result": "pass"
+    },
+    {
+      "name": "TestNonManagerCannotProbeOwnershipThroughGrant",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationV1CanonicalDTOAndBindingCRUD",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationV1ErrorsAndIdentityFieldsFailClosed/tenant_id",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationV1ErrorsAndIdentityFieldsFailClosed/tenantId",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationV1ErrorsAndIdentityFieldsFailClosed/user_id",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationV1ErrorsAndIdentityFieldsFailClosed/userId",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationV1ErrorsAndIdentityFieldsFailClosed/actor_user_id",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationV1ErrorsAndIdentityFieldsFailClosed/operator_code",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationV1ErrorsAndIdentityFieldsFailClosed/requester_code",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationV1ErrorsAndIdentityFieldsFailClosed/subjectId",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationV1ErrorsAndIdentityFieldsFailClosed",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuthorizationV1SharedMiddlewareInternalErrorsAndRequestID",
+      "result": "pass"
+    },
+    {
+      "name": "TestBindingHTTPExplicitRevisionOnBothAdapters/compatibility",
+      "result": "pass"
+    },
+    {
+      "name": "TestBindingHTTPExplicitRevisionOnBothAdapters/canonical",
+      "result": "pass"
+    },
+    {
+      "name": "TestBindingHTTPExplicitRevisionOnBothAdapters",
+      "result": "pass"
+    },
+    {
+      "name": "TestBindingPaginationRealScopedPagesAndDefaultLimit",
+      "result": "pass"
+    },
+    {
+      "name": "TestBindingPaginationCursorScopeEpochAndLimits",
+      "result": "pass"
+    },
+    {
+      "name": "TestBindingPaginationCursorStrictDecoding",
+      "result": "pass"
+    },
+    {
+      "name": "TestBindingPaginationCanonicalHTTPMetadataAndValidation",
+      "result": "pass"
+    },
+    {
+      "name": "TestDelegationReauthorizationCanonicalBindingAndTTL",
+      "result": "pass"
+    },
+    {
+      "name": "TestDelegationRejectsSignedInvalidClaimsAndHeaderConfusion",
+      "result": "pass"
+    },
+    {
+      "name": "TestServiceKeyRotationRevocationAndRequestRules",
+      "result": "pass"
+    },
+    {
+      "name": "TestDelegationBoundedMaximumResourcesAndKeyCopy",
+      "result": "pass"
+    },
+    {
+      "name": "TestIdentityRejectsCaseAliasesAndNonCanonicalBase64",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmFixturePrivateDirectory",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmHTTPPostgresChain",
+      "result": "skip"
+    },
+    {
+      "name": "TestFarmBrowserPostgresChain",
+      "result": "skip"
+    },
+    {
+      "name": "TestFarmResponsePersistentOperationStatusContract/pending_create",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmResponsePersistentOperationStatusContract/reconciliation_required_create",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmResponsePersistentOperationStatusContract/completed_create",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmResponsePersistentOperationStatusContract/completed_update",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmResponsePersistentOperationStatusContract",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmResponseStatusLookupAlwaysOK/pending",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmResponseStatusLookupAlwaysOK/reconciliation_required",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmResponseStatusLookupAlwaysOK/completed",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmResponseStatusLookupAlwaysOK",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmPayloadClosedAndExplicitGrants/no_grants",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmPayloadClosedAndExplicitGrants/self_asserted_tenant",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmPayloadClosedAndExplicitGrants/arbitrary_capability",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmPayloadClosedAndExplicitGrants/null_contact",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmPayloadClosedAndExplicitGrants/create_revision",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmPayloadClosedAndExplicitGrants/create_id",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmPayloadClosedAndExplicitGrants",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmPersistedPayloadAndHashRoundtrip",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmStrictJSONKeepsGeometryAndRejectsAliases",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmCursorSignedScopeEpochAndType",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmArchiveExplicitRoleCeiling",
+      "result": "pass"
+    },
+    {
+      "name": "TestIdentityChainChildEnvironment",
+      "result": "pass"
+    },
+    {
+      "name": "TestIdentityChainSafeDiagnostic",
+      "result": "pass"
+    },
+    {
+      "name": "TestIdentityBrowserGISWriteChain",
+      "result": "skip"
+    },
+    {
+      "name": "TestIdentityRealHTTPGoPython",
+      "result": "skip"
+    },
+    {
+      "name": "TestAgricultureIsolationMatrixPostgres",
+      "result": "skip"
+    },
+    {
+      "name": "TestIsolationProjectionPostgres/cache_scope_keys_and_revision",
+      "result": "skip"
+    },
+    {
+      "name": "TestIsolationProjectionPostgres/cache_revocation_and_inflight_fill",
+      "result": "skip"
+    },
+    {
+      "name": "TestIsolationProjectionPostgres/sse_cursor_and_revocation",
+      "result": "skip"
+    },
+    {
+      "name": "TestIsolationProjectionPostgres/sse_every_frame_logout",
+      "result": "skip"
+    },
+    {
+      "name": "TestIsolationProjectionPostgres/pool_concurrent_scope_and_empty_denial",
+      "result": "skip"
+    },
+    {
+      "name": "TestIsolationProjectionPostgres",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobAuthorityInternalCallbackRequiresIndependentIdentity",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobAuthorityRealHTTPPostgres",
+      "result": "skip"
+    },
+    {
+      "name": "TestJobAuthorityOutlivesRequestButNotCurrentAuthority",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobAuthorityNaturalGrantExpiryRequiresFreshCheck",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobAuthoritySnapshotStrictScopeAndRetry",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsRealSessionScopeReplayAndRevocation",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsCrossTenantAndDefaultUnavailable",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsEstablishedStreamStopsOnLogoutOrRevocation/logout",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsEstablishedStreamStopsOnLogoutOrRevocation/membership",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsEstablishedStreamStopsOnLogoutOrRevocation/generation",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsEstablishedStreamStopsOnLogoutOrRevocation/resource_version",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsEstablishedStreamStopsOnLogoutOrRevocation/disconnect",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsEstablishedStreamStopsOnLogoutOrRevocation",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventCursorIntegrityAndRestart",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsProviderCancellationAndMalformedBatch/provider_observes_request_cancellation",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsProviderCancellationAndMalformedBatch/whole_batch_rejected_before_first_byte",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsProviderCancellationAndMalformedBatch",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsEachWriteRechecksCurrentAuthority/logout",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsEachWriteRechecksCurrentAuthority/membership",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsEachWriteRechecksCurrentAuthority",
+      "result": "pass"
+    },
+    {
+      "name": "TestObjectGatewayRealHTTPPostgres",
+      "result": "skip"
+    },
+    {
+      "name": "TestObjectGatewayDoublePostgresIsolation",
+      "result": "skip"
+    },
+    {
+      "name": "TestObjectGatewayRealSessionAndStrictTransport/actual_session_get_head_range_and_filtered_headers",
+      "result": "pass"
+    },
+    {
+      "name": "TestObjectGatewayRealSessionAndStrictTransport/malformed_request_and_session_fail_before_domain_download",
+      "result": "pass"
+    },
+    {
+      "name": "TestObjectGatewayRealSessionAndStrictTransport/strict_metadata_and_bytes_contract",
+      "result": "pass"
+    },
+    {
+      "name": "TestObjectGatewayRealSessionAndStrictTransport/foreign_scope_and_revocation_rechecked",
+      "result": "pass"
+    },
+    {
+      "name": "TestObjectGatewayRealSessionAndStrictTransport",
+      "result": "pass"
+    },
+    {
+      "name": "TestServiceAssertionsNormalizeNonUTCClock",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelBrowserPostgresChain",
+      "result": "skip"
+    },
+    {
+      "name": "TestParcelPayloadContract/missing_revision",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelPayloadContract/create_nonzero_revision",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelPayloadContract/missing_parent_revision",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelPayloadContract/client_parcel_id",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelPayloadContract/client_data_class",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelPayloadContract/missing_reason",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelPayloadContract",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelNullableHistoryContract",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelOperationHTTPContract/GET_pending_create",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelOperationHTTPContract/GET_reconciliation_required_create",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelOperationHTTPContract/GET_completed_create",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelOperationHTTPContract/POST_pending_create",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelOperationHTTPContract/POST_reconciliation_required_revise",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelOperationHTTPContract/POST_completed_create",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelOperationHTTPContract/POST_completed_revise",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelOperationHTTPContract",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelHTTPPostgresChain",
+      "result": "skip"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.farm.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.farm.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.parcel.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.parcel.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.parcel.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.parcel.delete",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.asset.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.asset.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.asset_download.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.analysis.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.analysis.submit",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.analysis.cancel",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.inspection.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.inspection.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.inspection.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.inspection.submit",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.report.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.report.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.report.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.report.review",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.report.publish",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.authorization.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.authorization.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.billing.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/tenant_admin/agri.billing.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.farm.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.farm.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.parcel.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.parcel.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.parcel.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.parcel.delete",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.asset.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.asset.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.asset_download.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.analysis.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.analysis.submit",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.analysis.cancel",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.inspection.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.inspection.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.inspection.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.inspection.submit",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.report.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.report.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.report.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.report.review",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.report.publish",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.authorization.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.authorization.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.billing.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/billing_admin/agri.billing.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.farm.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.farm.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.parcel.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.parcel.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.parcel.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.parcel.delete",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.asset.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.asset.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.asset_download.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.analysis.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.analysis.submit",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.analysis.cancel",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.inspection.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.inspection.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.inspection.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.inspection.submit",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.report.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.report.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.report.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.report.review",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.report.publish",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.authorization.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.authorization.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.billing.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/viewer/agri.billing.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.farm.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.farm.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.parcel.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.parcel.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.parcel.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.parcel.delete",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.asset.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.asset.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.asset_download.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.analysis.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.analysis.submit",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.analysis.cancel",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.inspection.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.inspection.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.inspection.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.inspection.submit",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.report.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.report.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.report.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.report.review",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.report.publish",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.authorization.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.authorization.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.billing.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/analyst/agri.billing.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.farm.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.farm.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.parcel.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.parcel.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.parcel.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.parcel.delete",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.asset.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.asset.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.asset_download.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.analysis.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.analysis.submit",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.analysis.cancel",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.inspection.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.inspection.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.inspection.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.inspection.submit",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.report.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.report.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.report.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.report.review",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.report.publish",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.authorization.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.authorization.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.billing.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/editor/agri.billing.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.farm.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.farm.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.parcel.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.parcel.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.parcel.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.parcel.delete",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.asset.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.asset.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.asset_download.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.analysis.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.analysis.submit",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.analysis.cancel",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.inspection.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.inspection.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.inspection.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.inspection.submit",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.report.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.report.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.report.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.report.review",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.report.publish",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.authorization.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.authorization.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.billing.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/field_operator/agri.billing.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.farm.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.farm.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.parcel.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.parcel.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.parcel.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.parcel.delete",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.asset.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.asset.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.asset_download.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.analysis.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.analysis.submit",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.analysis.cancel",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.inspection.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.inspection.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.inspection.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.inspection.submit",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.report.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.report.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.report.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.report.review",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.report.publish",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.authorization.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.authorization.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.billing.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/reviewer/agri.billing.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.farm.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.farm.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.parcel.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.parcel.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.parcel.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.parcel.delete",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.asset.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.asset.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.asset_download.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.analysis.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.analysis.submit",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.analysis.cancel",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.inspection.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.inspection.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.inspection.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.inspection.submit",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.report.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.report.create",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.report.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.report.review",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.report.publish",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.authorization.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.authorization.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.billing.read",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix/farm_manager/agri.billing.update",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleActionCeilingMatrix",
+      "result": "pass"
+    },
+    {
+      "name": "TestPolicyCatalogClosedAndDelegationSyntax",
+      "result": "pass"
+    },
+    {
+      "name": "TestPolicyUnknownAndAliasRolesFailClosed",
+      "result": "pass"
+    },
+    {
+      "name": "TestPolicyCanonicalRoleCombinationIsUnionNotPrivilegeExpansion",
+      "result": "pass"
+    },
+    {
+      "name": "TestAgriculturePostgresMembershipLifecycle",
+      "result": "skip"
+    },
+    {
+      "name": "TestAgriculturePostgresConcurrentAcceptance",
+      "result": "skip"
+    },
+    {
+      "name": "TestResourceBindingServiceRequiresExplicitRevision",
+      "result": "pass"
+    },
+    {
+      "name": "TestResourceBindingGrantReplaceRevoke",
+      "result": "pass"
+    },
+    {
+      "name": "TestResourceBindingInvalidGrantNeverPersists/empty",
+      "result": "pass"
+    },
+    {
+      "name": "TestResourceBindingInvalidGrantNeverPersists/duplicate",
+      "result": "pass"
+    },
+    {
+      "name": "TestResourceBindingInvalidGrantNeverPersists/unknown",
+      "result": "pass"
+    },
+    {
+      "name": "TestResourceBindingInvalidGrantNeverPersists/finance",
+      "result": "pass"
+    },
+    {
+      "name": "TestResourceBindingInvalidGrantNeverPersists/role_ceiling",
+      "result": "pass"
+    },
+    {
+      "name": "TestResourceBindingInvalidGrantNeverPersists/owner_no_content",
+      "result": "pass"
+    },
+    {
+      "name": "TestResourceBindingInvalidGrantNeverPersists/nonmember",
+      "result": "pass"
+    },
+    {
+      "name": "TestResourceBindingInvalidGrantNeverPersists/expiry_now",
+      "result": "pass"
+    },
+    {
+      "name": "TestResourceBindingInvalidGrantNeverPersists/expiry_too_far",
+      "result": "pass"
+    },
+    {
+      "name": "TestResourceBindingInvalidGrantNeverPersists",
+      "result": "pass"
+    },
+    {
+      "name": "TestResourceBindingManagerCannotWidenDelegation",
+      "result": "pass"
+    },
+    {
+      "name": "TestResourceBindingCanonicalCapabilitiesDoNotMutateCaller",
+      "result": "pass"
+    },
+    {
+      "name": "TestResourceBindingManagerCannotExtendTemporaryAuthority",
+      "result": "pass"
+    },
+    {
+      "name": "TestResourceBindingDisabledOrganizationOwnerCanRevokeWithoutRestoring",
+      "result": "pass"
+    },
+    {
+      "name": "TestResourceBindingAuditFailureRollsBackRowAndEpoch",
+      "result": "pass"
+    },
+    {
+      "name": "TestResourceBindingUnavailableGISAndCrossWorkspaceFailClosed",
+      "result": "pass"
+    },
+    {
+      "name": "TestCanonicalResourcesStrictContract/empty",
+      "result": "pass"
+    },
+    {
+      "name": "TestCanonicalResourcesStrictContract/unknown_kind",
+      "result": "pass"
+    },
+    {
+      "name": "TestCanonicalResourcesStrictContract/kind_case",
+      "result": "pass"
+    },
+    {
+      "name": "TestCanonicalResourcesStrictContract/empty_id",
+      "result": "pass"
+    },
+    {
+      "name": "TestCanonicalResourcesStrictContract/numeric_start",
+      "result": "pass"
+    },
+    {
+      "name": "TestCanonicalResourcesStrictContract/underscore_start",
+      "result": "pass"
+    },
+    {
+      "name": "TestCanonicalResourcesStrictContract/unicode",
+      "result": "pass"
+    },
+    {
+      "name": "TestCanonicalResourcesStrictContract/path",
+      "result": "pass"
+    },
+    {
+      "name": "TestCanonicalResourcesStrictContract/control",
+      "result": "pass"
+    },
+    {
+      "name": "TestCanonicalResourcesStrictContract/whitespace",
+      "result": "pass"
+    },
+    {
+      "name": "TestCanonicalResourcesStrictContract/too_long",
+      "result": "pass"
+    },
+    {
+      "name": "TestCanonicalResourcesStrictContract/duplicate",
+      "result": "pass"
+    },
+    {
+      "name": "TestCanonicalResourcesStrictContract/too_many",
+      "result": "pass"
+    },
+    {
+      "name": "TestCanonicalResourcesStrictContract",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipReceiptFailures/tenant",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipReceiptFailures/workspace",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipReceiptFailures/inactive",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipReceiptFailures/deleted",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipReceiptFailures/missing_tenant",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipReceiptFailures/malformed_workspace",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipReceiptFailures/missing_status",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipReceiptFailures/zero_revision",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipReceiptFailures/negative_revision",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipReceiptFailures/unsafe_revision",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipReceiptFailures/missing_receipt",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipReceiptFailures/invalid_receipt",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipReceiptFailures/missing_issue",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipReceiptFailures/missing_expiry",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipReceiptFailures/future",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipReceiptFailures/stale",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipReceiptFailures/expired",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipReceiptFailures/lifetime",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipReceiptFailures/reversed_times",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipReceiptFailures/no_farms",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipReceiptFailures/duplicate_farms",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipReceiptFailures/invalid_farm",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipReceiptFailures/many_farms",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipReceiptFailures",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipExactSetAndServerContext/empty",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipExactSetAndServerContext/missing",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipExactSetAndServerContext/duplicate",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipExactSetAndServerContext/extra",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipExactSetAndServerContext",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipCopiesAndBoundaries",
+      "result": "pass"
+    },
+    {
+      "name": "TestValidateOwnershipBatchIsAllOrNothingAndCopiesEachReceipt",
+      "result": "pass"
+    },
+    {
+      "name": "TestAgriculturePostgresRoleDowngradeRevokesPendingDelegation",
+      "result": "skip"
+    },
+    {
+      "name": "TestScopedProjectionCacheActualAuthority",
+      "result": "pass"
+    },
+    {
+      "name": "TestScopedProjectionCacheCrossTenantAndVersionKeys",
+      "result": "pass"
+    },
+    {
+      "name": "TestScopedProjectionCacheActualTwoTenantSameInputs",
+      "result": "pass"
+    },
+    {
+      "name": "TestScopedProjectionRejectsWriteAndPostDescriptionRevocation",
+      "result": "pass"
+    },
+    {
+      "name": "TestScopedProjectionWaitingFillCannotReviveRevokedActor",
+      "result": "pass"
+    },
+    {
+      "name": "TestServiceAssertionIsDirectionScopeAndPayloadBound",
+      "result": "pass"
+    },
+    {
+      "name": "TestInternalAuthorityChecksLiveDatabaseWithoutGISRecursion",
+      "result": "pass"
+    },
+    {
+      "name": "TestInternalAuthorityRequiresServiceCredentialAndSignedScope",
+      "result": "pass"
+    },
+    {
+      "name": "TestGISClientRealHTTPServiceAndDelegation",
+      "result": "pass"
+    },
+    {
+      "name": "TestGISClientRejectsRedirectsTimeoutOversizeAndUnsafeConfig/redirect",
+      "result": "pass"
+    },
+    {
+      "name": "TestGISClientRejectsRedirectsTimeoutOversizeAndUnsafeConfig/timeout",
+      "result": "pass"
+    },
+    {
+      "name": "TestGISClientRejectsRedirectsTimeoutOversizeAndUnsafeConfig/oversize",
+      "result": "pass"
+    },
+    {
+      "name": "TestGISClientRejectsRedirectsTimeoutOversizeAndUnsafeConfig/secret_error",
+      "result": "pass"
+    },
+    {
+      "name": "TestGISClientRejectsRedirectsTimeoutOversizeAndUnsafeConfig",
+      "result": "pass"
+    },
+    {
+      "name": "TestGISClientRequiresTLSForEveryNonLoopbackPeer",
+      "result": "pass"
+    },
+    {
+      "name": "TestServiceIdentityConfigurationMissingOrInvalidFailsClosed",
+      "result": "pass"
+    },
+    {
+      "name": "TestServiceIdentityConfigLoadsIndependentExternalKeysOnly",
+      "result": "pass"
+    },
+    {
+      "name": "TestPlatformIdentityTemplateCannotBecomeWorkingConfiguration",
+      "result": "pass"
+    },
+    {
+      "name": "TestCreateOrganizationIdempotentAndNoImplicitContentRole",
+      "result": "pass"
+    },
+    {
+      "name": "TestOwnerExplicitBusinessRolesAndRevocation",
+      "result": "pass"
+    },
+    {
+      "name": "TestMemberWithoutCurrentWorkspaceHasNoRoleEditingCapability",
+      "result": "pass"
+    },
+    {
+      "name": "TestOwnerBusinessRoleChangeRollsBackWithAuditFailure",
+      "result": "pass"
+    },
+    {
+      "name": "TestCanonicalRolesAndLegacyInviteCannotConsumeProduct/viewer",
+      "result": "pass"
+    },
+    {
+      "name": "TestCanonicalRolesAndLegacyInviteCannotConsumeProduct/analyst",
+      "result": "pass"
+    },
+    {
+      "name": "TestCanonicalRolesAndLegacyInviteCannotConsumeProduct/editor",
+      "result": "pass"
+    },
+    {
+      "name": "TestCanonicalRolesAndLegacyInviteCannotConsumeProduct/field_operator",
+      "result": "pass"
+    },
+    {
+      "name": "TestCanonicalRolesAndLegacyInviteCannotConsumeProduct/reviewer",
+      "result": "pass"
+    },
+    {
+      "name": "TestCanonicalRolesAndLegacyInviteCannotConsumeProduct/farm_manager",
+      "result": "pass"
+    },
+    {
+      "name": "TestCanonicalRolesAndLegacyInviteCannotConsumeProduct/tenant_admin",
+      "result": "pass"
+    },
+    {
+      "name": "TestCanonicalRolesAndLegacyInviteCannotConsumeProduct/billing_admin",
+      "result": "pass"
+    },
+    {
+      "name": "TestCanonicalRolesAndLegacyInviteCannotConsumeProduct",
+      "result": "pass"
+    },
+    {
+      "name": "TestInviteNegativeConditionsHaveNoSideEffects/wrong_recipient",
+      "result": "pass"
+    },
+    {
+      "name": "TestInviteNegativeConditionsHaveNoSideEffects/unverified",
+      "result": "pass"
+    },
+    {
+      "name": "TestInviteNegativeConditionsHaveNoSideEffects/disabled_user",
+      "result": "pass"
+    },
+    {
+      "name": "TestInviteNegativeConditionsHaveNoSideEffects/expired",
+      "result": "pass"
+    },
+    {
+      "name": "TestInviteNegativeConditionsHaveNoSideEffects/revoked",
+      "result": "pass"
+    },
+    {
+      "name": "TestInviteNegativeConditionsHaveNoSideEffects/disabled_tenant",
+      "result": "pass"
+    },
+    {
+      "name": "TestInviteNegativeConditionsHaveNoSideEffects/suspended_member",
+      "result": "pass"
+    },
+    {
+      "name": "TestInviteNegativeConditionsHaveNoSideEffects/removed_member",
+      "result": "pass"
+    },
+    {
+      "name": "TestInviteNegativeConditionsHaveNoSideEffects/revoked_inviter",
+      "result": "pass"
+    },
+    {
+      "name": "TestInviteNegativeConditionsHaveNoSideEffects/wrong_product",
+      "result": "pass"
+    },
+    {
+      "name": "TestInviteNegativeConditionsHaveNoSideEffects",
+      "result": "pass"
+    },
+    {
+      "name": "TestExistingMemberInviteNeverEscalates",
+      "result": "pass"
+    },
+    {
+      "name": "TestMemberGovernanceAndRevocation",
+      "result": "pass"
+    },
+    {
+      "name": "TestTenantDisableRestoreAndCrossTenantIDs",
+      "result": "pass"
+    },
+    {
+      "name": "TestAuditFailureRollsBackOrganizationAndBilling",
+      "result": "pass"
+    },
+    {
+      "name": "TestRoleInputAliasesUnknownAndContentBoundaries",
+      "result": "pass"
+    },
+    {
+      "name": "TestHTTPTrustedActorStrictInputAndRealFailures",
+      "result": "pass"
+    }
+  ]
+}

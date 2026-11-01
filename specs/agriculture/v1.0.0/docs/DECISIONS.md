@@ -256,5 +256,11 @@ DT041与DT026依赖独立，按新文件分包并行。GIS拥有资产/不可变
 
 farm-scoped登记需父farm显式asset.create；无farm初建采用owner/tenant_admin治理及显式初始grant，不授予治理者隐式内容访问或许可审批。直接asset grant仍保留签收版本语义。共享组合根精确按kind装配provider，未知kind默认拒绝；no-farm下载另用asset专用授权和对象归属链，不绕过原对象网关。
 
+已有farm资产的read/create（追加metadata版本）/download可由当前真实父farm对应显式资产能力授权，且仍受角色上限约束；不是farm.read或owner身份的隐式继承。与精确direct grant形成明确并集；无farm没有父路径，direct签收仍精确绑定当前revision/hash，授权治理仅owner/tenant_admin。底层resourceAccess对emptyfarm显式默认拒绝，不能让空集合循环构成授权；普通provider原来已拒空farm，此防御不改变其非空行为。平台列表只从已确认创建意图与当前binding构造精确候选并逐项typed验证。
+
 客户端权利声明只进入pending/unknown；approved依据受信W00来源注册表及审核版本，用途由服务操作固定。登记不等于ready，元数据与不可变实体版本分离；无实体/无有效许可不能进入正式处理。过期、撤回、演示等级与所有父源的用途限制必须在读取前后重核，资产目录不能成为旧对象地址的旁路。完整上传发布、来源撤回全渠道传播分别留DT042/048；本决策不是这些任务完成证据。
+
+下载票据将`asset_revision`当前授权事实和`asset_version`所选历史实体版本分开；历史内容需要当前grant/hash/epoch及历史与当前权利交集。平台缓冲I/O完成后还须重新读取真实会话并确认同一actor，注销/会话失效不能仅依赖租户epoch变动。资产写事务在取得advisory/行锁后与提交前使用数据库时钟检查票据期限，固定锁/语句限额；末尾HTTP拒绝不能替代事务回滚。
+
+目录namespace固定为服务端生成的`asset_<32hex>`：所有匹配项必须进入typed目录权利链，缺记录、拒权、无实体都不得fallback；普通GIS资产对象入口明确拒绝此namespace。非目录legacy asset/report只保留原有非空farm proof与当前ownership准入，不据此开放未迁移资料；生产没有legacy asset provider时仍failclosed。今后接入legacy provider必须另做权利迁移与验收，不能将此兼容分类当作无许可准入。客户端不能选取新目录资产ID。所有相关分支都有负例，不删除旧模块或伪造迁移事实。
 

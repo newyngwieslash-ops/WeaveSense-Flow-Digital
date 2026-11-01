@@ -78,6 +78,12 @@ func TestFarmFixturePrivateDirectory(t *testing.T) {
 }
 
 func newFarmChainFixture(t *testing.T, browser bool, progress ...func(string)) *farmChainFixture {
+	return newFarmChainFixtureWithAssetObjects(t, browser, nil, progress...)
+}
+
+// setup is an internal test-only composition hook, before the GIS subprocess
+// starts. The default farm/parcel/metadata fixture remains unchanged.
+func newFarmChainFixtureWithAssetObjects(t *testing.T, browser bool, setup func(*farmChainFixture), progress ...func(string)) *farmChainFixture {
 	t.Helper()
 	stage := func(value string) {
 		if len(progress) == 1 {
@@ -176,7 +182,12 @@ func newFarmChainFixture(t *testing.T, browser bool, progress ...func(string)) *
 	}
 	config := filepath.Join(f.private, "farm-gis.json")
 	dictionary := map[string]any{"schema_version": "agriculture-farm-dictionary/1", "dictionary_version": "fixture-v1", "regions": []any{map[string]any{"code": "fixture-north", "name": "Northern fixture", "timezones": []string{"Asia/Shanghai"}, "area_units": []string{"m2", "ha", "mu"}}, map[string]any{"code": "fixture-south", "name": "Southern fixture", "timezones": []string{"Asia/Shanghai", "UTC"}, "area_units": []string{"m2", "ha", "mu"}}}}
-	chainPrivate(t, config, map[string]any{"platform": callback.URL, "platform_keys": []any{keyJSON(platformKey, false)}, "callback_key": keyJSON(gisKey, true), "geo_migration_dsn": os.Getenv("AGRI_TEST_GEO_MIGRATION_DSN"), "geo_runtime_dsn": os.Getenv("AGRI_TEST_GEO_RUNTIME_DSN"), "dictionary": dictionary})
+	configuration := map[string]any{"platform": callback.URL, "platform_keys": []any{keyJSON(platformKey, false)}, "callback_key": keyJSON(gisKey, true), "geo_migration_dsn": os.Getenv("AGRI_TEST_GEO_MIGRATION_DSN"), "geo_runtime_dsn": os.Getenv("AGRI_TEST_GEO_RUNTIME_DSN"), "dictionary": dictionary}
+	if setup != nil {
+		setup(f)
+		configuration["asset_object_fixture"] = true
+	}
+	chainPrivate(t, config, configuration)
 	stage("fixture_gis_start")
 	child := chainStart(t, os.Getenv("AGRI_IDENTITY_PYTHON"), filepath.Join(root, "services/agri-gis/backend"), filepath.Join(root, "services/agri-gis/backend/tests/farm_http_fixture.py"), config)
 	var ready struct {

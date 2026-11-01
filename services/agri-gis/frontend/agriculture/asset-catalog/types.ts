@@ -1,5 +1,5 @@
 import { record } from '../farms/transport'
-import { farmID, instant, invalid, kinds, metadataFrom, reference, sourceKinds, text, timestamp, type Metadata } from './metadata'
+import { farmID, instant, invalid, kinds, metadataFrom, reference, sourceKinds, text, serviceTimestamp, type Metadata } from './metadata'
 export const capabilities = ['agri.asset.read', 'agri.asset.create', 'agri.asset_download.read'] as const
 export type Capability = typeof capabilities[number]
 export type Grant = { subject_user_id: string; capabilities: Capability[]; expires_at?: string }
@@ -32,7 +32,7 @@ export function rightsFrom(v: unknown): Rights {
   return { status: v.status as Rights['status'], snapshot_hash: v.snapshot_hash, review_ref: v.review_ref as string | null }
 }
 export function assetFrom(v: unknown, workspace: string): Asset {
-  if (!record(v) || !assetID(v.asset_id) || v.workspace_id !== workspace || !(v.farm_id === null || farmID(v.farm_id)) || !positive(v.revision) || !positive(v.version) || v.version > v.revision || !versionID(v.asset_version_id) || !kinds.includes(v.kind as Metadata['kind']) || !['demo', 'operational'].includes(String(v.data_class)) || !text(v.name, 200) || !['validating', 'ready', 'quarantined', 'rejected', 'revoked'].includes(String(v.status)) || !hash(v.metadata_hash) || !timestamp(v.created_at) || !actions(v.allowed_actions)) return invalid()
+  if (!record(v) || !assetID(v.asset_id) || v.workspace_id !== workspace || !(v.farm_id === null || farmID(v.farm_id)) || !positive(v.revision) || !positive(v.version) || v.version > v.revision || !versionID(v.asset_version_id) || !kinds.includes(v.kind as Metadata['kind']) || !['demo', 'operational'].includes(String(v.data_class)) || !text(v.name, 200) || !['validating', 'ready', 'quarantined', 'rejected', 'revoked'].includes(String(v.status)) || !hash(v.metadata_hash) || !serviceTimestamp(v.created_at) || !actions(v.allowed_actions)) return invalid()
   const metadata = metadataFrom(v.metadata), rights = rightsFrom(v.rights)
   if (metadata.farm_id !== v.farm_id || metadata.kind !== v.kind || metadata.data_class !== v.data_class || metadata.name !== v.name || (v.version !== v.revision && v.allowed_actions.includes('agri.asset.create'))) return invalid()
   if (v.entity !== null && (!record(v.entity) || Object.keys(v.entity).sort().join(',') !== 'object_id,object_version' || !id(v.entity.object_id) || !positive(v.entity.object_version))) return invalid()
@@ -45,11 +45,11 @@ export function pageFrom(items: unknown, next_cursor: unknown, has_more: unknown
   return { items: rows, next_cursor, has_more }
 }
 export function grantsFrom(v: unknown): Grant[] {
-  if (!Array.isArray(v) || v.length > 20 || v.some(g => !record(g) || Object.keys(g).some(k => !['subject_user_id', 'capabilities', 'expires_at'].includes(k)) || !id(g.subject_user_id) || !actions(g.capabilities) || !g.capabilities.length || (g.expires_at !== undefined && !timestamp(g.expires_at))) || new Set(v.map(g => g.subject_user_id)).size !== v.length) return invalid()
+  if (!Array.isArray(v) || v.length > 20 || v.some(g => !record(g) || Object.keys(g).some(k => !['subject_user_id', 'capabilities', 'expires_at'].includes(k)) || !id(g.subject_user_id) || !actions(g.capabilities) || !g.capabilities.length || (g.expires_at !== undefined && !serviceTimestamp(g.expires_at))) || new Set(v.map(g => g.subject_user_id)).size !== v.length) return invalid()
   return v.map(g => ({ ...structuredClone(g), capabilities: [...g.capabilities].sort() })).sort((a, b) => a.subject_user_id.localeCompare(b.subject_user_id))
 }
 export function previewFrom(v: unknown, intent: Intent): Preview {
-  if (!record(v) || !operationID(v.preview_id) || !timestamp(v.expires_at) || !hash(v.request_hash) || v.action !== intent.action || v.asset_id !== (intent.action === 'create' ? '' : intent.asset_id) || v.expected_revision !== intent.expected_revision || !record(v.summary) || v.summary.entity !== null || v.summary.status !== 'validating') return invalid()
+  if (!record(v) || !operationID(v.preview_id) || !serviceTimestamp(v.expires_at) || !hash(v.request_hash) || v.action !== intent.action || v.asset_id !== (intent.action === 'create' ? '' : intent.asset_id) || v.expected_revision !== intent.expected_revision || !record(v.summary) || v.summary.entity !== null || v.summary.status !== 'validating') return invalid()
   const metadata = metadataFrom(v.summary.metadata), rights = rightsFrom(v.summary.rights), initial_grants = grantsFrom(v.initial_grants)
   if (canonical(metadata) !== canonical(metadataFrom(intent.metadata)) || grantIdentity(initial_grants) !== grantIdentity(grantsFrom(intent.action === 'create' ? intent.initial_grants : [])) || (intent.action === 'create' && !initial_grants.length)) return invalid()
   return { ...(structuredClone(v) as Preview), summary: { metadata, rights, entity: null, status: 'validating' }, initial_grants }

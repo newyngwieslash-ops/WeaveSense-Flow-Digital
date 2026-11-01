@@ -8,6 +8,8 @@
 
 已有farm上的登记需要当前显式 `agri.asset.create`。无farm初建是窄治理操作，owner/tenant_admin选择明确初始grantee及受角色上限约束的能力；治理不授予内容访问或许可审批。列表/read的asset IDs均由平台从当前授权推导，空授权列表不向GIS发全目录扫描。直接asset grant继续绑定签收revision/hash，版本推进不自动拓展能力。
 
+授权来源明确取并集：有farm资产经当前可信typedownership证明归属后，可使用该父farm当前有效的对应 `agri.asset.read/create/asset_download.read` 显式能力及角色上限；`farm.read`或owner身份不隐式授权资产。无farm资产没有父授权路径，必须匹配direct签收版本/hash；仅owner/tenant_admin能执行无farm授权治理。direct失效不能被无关farm或空farm循环变成允许；合法父cap可独立授权跨metadata版本，其撤回/过期立即失效。列表只从现有明确授权及已确认创建意图索引取得候选，再逐项验证当前事实，不扫描整个GIS目录。
+
 ## 严格客户端 metadata
 
 `{name,kind,data_class,farm_id,source,rights_declaration,sensitivity,retention}`：

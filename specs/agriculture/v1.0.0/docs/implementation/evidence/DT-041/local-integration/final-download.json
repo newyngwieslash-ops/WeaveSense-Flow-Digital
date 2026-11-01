@@ -1,0 +1,48 @@
+{
+  "passed": true,
+  "required_count": 10,
+  "tests": [
+    {
+      "name": "TestAssetCatalogDownloadPostgresChain",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogDownloadPostgresChain/binding_revocation_during_read_emits_no_bytes",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogDownloadPostgresChain/farm_scoped_real_entity_bytes",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogDownloadPostgresChain/foreign_tenant_and_same_tenant_workspace_denied",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogDownloadPostgresChain/get_head_range_and_immutable_content_hash",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogDownloadPostgresChain/historical_entity_requires_current_version_grant",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogDownloadPostgresChain/real_logout_during_read_emits_no_bytes",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogDownloadPostgresChain/real_unscoped_ready_entity_requires_fresh_grant",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogDownloadPostgresChain/rights_withdrawal_during_read_emits_no_bytes",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogDownloadPostgresChain/signed_download_stale_epoch_denied",
+      "result": "pass"
+    }
+  ],
+  "data_class": "fixture",
+  "production_acceptance": false
+}

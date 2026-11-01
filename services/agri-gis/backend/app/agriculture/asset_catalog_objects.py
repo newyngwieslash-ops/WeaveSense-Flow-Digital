@@ -1,5 +1,6 @@
 """Apply current catalog rights to the existing immutable object lookup path."""
 
+from .asset_catalog_rules import ASSET_ID
 from .identity.verify import require
 
 
@@ -14,7 +15,10 @@ class CatalogObjectStore:
 
     async def get(self, tenant, workspace, object_id, version):
         item = await self.objects.get(tenant, workspace, object_id, version)
-        if item.resource_kind != "asset":
+        # Fixed server-generated catalog namespace, never fallback on a failed
+        # lookup or denied rights. Legacy records retain their prior admission
+        # path; this wrapper does not install a legacy ownership provider.
+        if item.resource_kind != "asset" or not ASSET_ID.fullmatch(item.resource_id):
             return item
         # Purpose is a fixed server operation, never a token/browser field.
         await self.catalog.authorize_use(

@@ -1,4 +1,5 @@
 import importlib.util
+import json
 from pathlib import Path
 import unittest
 import xml.etree.ElementTree as ET
@@ -9,6 +10,17 @@ spec.loader.exec_module(module)
 
 
 class ParserResultTests(unittest.TestCase):
+    def test_missing_library_is_a_closed_basename(self):
+        for library in ("libexpat.so.1", "libstdc++.so.6", "/private/SECRET.so", "SECRET"):
+            case = ET.Element("testcase")
+            prop = ET.SubElement(ET.SubElement(case, "properties"), "property")
+            prop.set("name", "parser_diagnostic")
+            prop.set("value", json.dumps({"exception":"ImportError", "missing_library":library}))
+            expected = {"probe_exception":"ImportError"}
+            if library in module.LIBRARIES:
+                expected["missing_library"] = library
+            self.assertEqual(module.diagnostic(case), expected)
+
     def test_only_closed_structure_is_exported(self):
         case = ET.fromstring('''<testcase><properties>
           <property name="parser_stage" value="valid_raster"/>

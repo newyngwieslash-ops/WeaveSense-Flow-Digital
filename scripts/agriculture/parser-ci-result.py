@@ -10,6 +10,7 @@ EXCEPTIONS = {"none", "other", "probe_unavailable", "ImportError",
 REASONS = {"parser_process_failed", "parser_rejected_input", "parser_timeout",
            "parser_cleanup_failed", "parser_sandbox_unavailable", "parser_output_limit",
            "raster_pixels_limit", "invalid_parser_response"}
+LIBRARIES = {"libexpat.so.1", "libstdc++.so.6", "libgcc_s.so.1", "libz.so.1"}
 
 
 def diagnostic(case):
@@ -26,6 +27,8 @@ def diagnostic(case):
             if not isinstance(value, dict) or value.get("exception") not in EXCEPTIONS:
                 continue
             result["probe_exception"] = value["exception"]
+            if isinstance(value.get("missing_library"), str) and value["missing_library"] in LIBRARIES:
+                result["missing_library"] = value["missing_library"]
             if type(value.get("line")) is int and 1 <= value["line"] <= 10000:
                 result["probe_line"] = value["line"]
     for failure in list(case):

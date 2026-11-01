@@ -72,6 +72,9 @@ except BaseException as error:
              'IngestionDenied','RasterioIOError'}
     kind=type(error).__name__
     diagnostic={'exception':kind if kind in allowed else 'other'}
+    for library in {'libexpat.so.1','libstdc++.so.6','libgcc_s.so.1','libz.so.1'}:
+        if str(error)==library+': cannot open shared object file: No such file or directory':
+            diagnostic['missing_library']=library
     frames=traceback.extract_tb(error.__traceback__)
     for frame in frames:
         if frame.filename in {'/opt/parser/app/agriculture/ingestion/worker.py',

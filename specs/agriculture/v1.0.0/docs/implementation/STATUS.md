@@ -16,6 +16,8 @@ DT025首轮CI候选`8a22a4cd`→`f767cc56`：其余五条CI成功，identity `41
 
 DT025第二轮`7ef522ea`→`e8fa2ca4` identity `41293112765`：前置清单、迁移、旧identity、真实Redis、156隔离、81农场Python及10 Flow记录通过；农场HTTP根及8子项通过，但新浏览器根失败，23浏览器检查未取得可用报告。已保留失败及456源哈希匹配。实际本地复现Go1.25.9 TempDir末级目录0755导致JS严格私有配置读取拒绝，同一文件目录改0700即接受；只修测试fixture目录权限与闭集失败诊断，不放宽JS、生产边界或验收断言。修复真实CI仍待验证，DT025仍in_progress，见`evidence/DT-025/ci-e8fa-browser-failure/`。
 
+DT025第三轮`05786ed5`→`56fb009e` identity `41294531062`：私有目录修复后已通过实际nginx配置检查，但浏览器停在`react_login`，其余22检查未运行；HTTP/Redis、隔离、Python、Flow门禁仍通过，另三条触发CI成功。已保留原失败及456源映射。使用官方workspace-only Redis8.0.2与真实双PG，本地实际HTTP登录→HttpOnly会话→context/空列表→原Vue解析器及8HTTP子项/race全过，Redis退出后PING不可达；该诊断不是CI7.4或浏览器验收。当前仅补细分登录阶段、闭集UI布尔量/API状态以及真实HTTP登录契约，不放松23项浏览器条件，待下一轮实证定位。系统Chromium保持沙箱时实际operation_not_permitted，不通过禁用沙箱绕过环境。见`evidence/DT-025/ci-56fb-login-failure/`。
+
 DT-024 已完成：产品冻结 `71021e9f`、远端 CI scaffold `aa60e1a6`。真实 identity run `41278325667` 隔离79项全过，Redis完整启动、组件模式关闭、race开启；独立复核398源哈希、Go精确集合180/4/6、21路由158请求快照、GIS9路由及原有回归无缺项/跳过。gateway run `41278325702` 首次Vue容器构建超时，保留失败原件；同源仅重试失败job，attempt2实际容器16检查/浏览器19断言通过，未改限额/断言。六条CI全部成功，详见 `evidence/DT-024/README.md`。首次超时根因未证实，不冒称修复了代码错误；完整产品历史并未因CI scaffold发布而同步。
 
 DT-023 最终验收：CI `41276134632`（远端 `0abff504`、产品 `e50ec16d`）三项真实 Docker 全部通过、退出0、零跳过；独立核验24 parser输入与388 overlay一致。本地修复后77项组件通过，34源哈希对应同一冻结源。根因是缺少 `libexpat.so.1`，只补固定 Expat 运行依赖和非 root 构建 import，不调整隔离/限额/断言。证据见 `evidence/DT-023/ci-0abff504/`；这是安全组件任务完成，不是生产上传、真实外部来源或W06业务完成。

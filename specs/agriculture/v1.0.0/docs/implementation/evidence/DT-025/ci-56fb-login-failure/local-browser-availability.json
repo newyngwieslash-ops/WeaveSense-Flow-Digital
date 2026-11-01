@@ -1,0 +1,10 @@
+{
+  "real_chromium": "155.0.8059.79",
+  "sandbox_disabled": false,
+  "cdp_ready": false,
+  "exit_code": -6,
+  "safe_failure_class": "operation_not_permitted",
+  "redis_available": false,
+  "nginx_available": false,
+  "raw_output_not_exported": true
+}

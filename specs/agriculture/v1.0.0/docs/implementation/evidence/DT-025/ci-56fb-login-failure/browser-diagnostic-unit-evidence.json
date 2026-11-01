@@ -1,0 +1,29 @@
+{
+  "scope": "DT025 farm browser failure diagnostics only",
+  "source_sha256": {
+    "scripts/agriculture/farm-browser-e2e.mjs": "244ece9887437ead732e8f7633cf32be7bd6102d10d06d7f744de5adbe3571a0",
+    "scripts/agriculture/farm-browser-e2e.test.mjs": "08a4d65e5eb106361ecfa701107b3d71caff718cc333944accae63a662af0662"
+  },
+  "tests": {
+    "passed": 12,
+    "failed": 0,
+    "skipped": 0,
+    "exit_code": 0,
+    "log": ".local/audit/dt025-browser-login-diagnostic-tests.log"
+  },
+  "syntax_exit_code": 0,
+  "workspace_ready_assertion_changed": false,
+  "required_23_checks_changed": false,
+  "business_logic_changed": false,
+  "actual_browser_executed": false,
+  "root_cause": "Not established for latest react_login failure; current artifact lacks closed UI/API diagnostics.",
+  "diagnostic_contract": {
+    "new_login_stages": 5,
+    "ui_boolean_keys": 14,
+    "error_code_enum": 9,
+    "operation_state_enum": 6,
+    "api_fixed_paths": 12,
+    "api_status_rows_max": 80,
+    "no_query_url_body_token_id": true
+  }
+}

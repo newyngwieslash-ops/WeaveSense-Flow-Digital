@@ -139,6 +139,32 @@ class FarmGateTests(unittest.TestCase):
         diagnostic = gate.failure_diagnostics("{}\nnull\n{\"Test\":[]}", {}, {})
         self.assertEqual(diagnostic, {"go_locations": []})
 
+    def test_browser_closed_login_ui_and_api_diagnostics(self):
+        browser = {"result": "fail", "stage": "react_login_workspace", "results": [], "error_code": "INVALID_RESPONSE", "operation_state": None,
+                   "ui_flags": {"login": False, "session_ready": True, "create_button": False, "error_code": "INVALID_RESPONSE", "operation_state": None, "token": "SECRET"},
+                   "api_statuses": [{"path": "/api/agri/v1/context", "status": 200, "completed": True, "body": "SECRET"}]}
+        report = self.report(browser=browser)
+        self.assertFalse(report["passed"])
+        detail = report["failure_diagnostics"]
+        self.assertEqual(detail["browser_stage"], "react_login_workspace")
+        self.assertEqual(detail["ui_flags"]["error_code"], "INVALID_RESPONSE")
+        self.assertEqual(detail["error_code"], "INVALID_RESPONSE")
+        self.assertIsNone(detail["operation_state"])
+        self.assertEqual(detail["api_statuses"], [{"path": "/api/agri/v1/context", "status": 200, "completed": True}])
+        self.assertNotIn("SECRET", json.dumps(report))
+
+    def test_ui_types_api_paths_and_record_count_are_bounded(self):
+        bad_rows = [{"path": path, "status": 200, "completed": True} for path in ("/api/agri/v1/farms/farm_SECRET", "/api/auth/login?token=SECRET", [], None)]
+        bad_rows += [{"path": "/api/auth/login", "status": status, "completed": True} for status in (True, "200", 0, 600)]
+        bad_rows += [{"path": "/api/auth/login", "status": 200, "completed": 1}]
+        report = self.report(browser={"result": "fail", "ui_flags": {"login": 1, "validation": "SECRET", "error_code": "SECRET", "operation_state": []}, "api_statuses": bad_rows})
+        self.assertEqual(report["failure_diagnostics"].get("ui_flags", {}), {})
+        self.assertEqual(report["failure_diagnostics"]["api_statuses"], [])
+        self.assertNotIn("SECRET", json.dumps(report))
+        row = {"path": "/api/auth/login", "status": 401, "completed": False}
+        report = self.report(browser={"result": "fail", "api_statuses": [row] * 100})
+        self.assertEqual(len(report["failure_diagnostics"]["api_statuses"]), 80)
+
     def test_fixed_sets_match_actual_go_and_browser_sources(self):
         source = (ROOT / "scripts/agriculture/farm-browser-e2e.mjs").read_text()
         checks = source.split("export const REQUIRED_CHECKS = [", 1)[1].split("];", 1)[0]

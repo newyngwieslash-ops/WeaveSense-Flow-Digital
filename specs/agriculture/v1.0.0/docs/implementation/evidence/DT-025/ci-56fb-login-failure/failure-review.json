@@ -1,0 +1,19 @@
+{
+  "source_commit": "05786ed5a3cf732cc8fdcccfde7cf1298f130c10",
+  "ci_commit": "56fb009ea178b53925fd63f8384f7b143d6d97c5",
+  "run_id": 41294531062,
+  "artifact_id": 13078849009,
+  "source_overlay_count": 456,
+  "source_hash_mismatches": [],
+  "result": "failed",
+  "browser_stage": "react_login",
+  "go_stage": "browser_wait_created",
+  "browser_checks_passed": [
+    "production_nginx_configuration_valid"
+  ],
+  "remaining_browser_checks": "22 not_run",
+  "runtime_gate": true,
+  "cause": "not yet established; diagnosing actual HTTP login/session/context and more granular safe UI state",
+  "prior_directory_fix": "private-config preflight now reached actual nginx check, no directory bypass",
+  "production_acceptance": false
+}

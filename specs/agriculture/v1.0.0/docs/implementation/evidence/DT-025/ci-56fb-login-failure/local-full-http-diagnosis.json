@@ -1,0 +1,25 @@
+{
+  "result": "pass",
+  "source_stable": true,
+  "race": true,
+  "full_http_login_session": true,
+  "context_and_empty_list_original_vue_adapters": true,
+  "redis_version": "8.0.2",
+  "ci_redis_version": "7.4",
+  "production_acceptance": false,
+  "browser": false,
+  "tests_passed": [
+    "TestFarmHTTPPostgresChain/create_explicit_grants_and_regions",
+    "TestFarmHTTPPostgresChain/governance_without_content_grant",
+    "TestFarmHTTPPostgresChain/cross_tenant_and_workspace",
+    "TestFarmHTTPPostgresChain/preview_hash_expiry_and_scope",
+    "TestFarmHTTPPostgresChain/idempotent_and_conflicting_requests",
+    "TestFarmHTTPPostgresChain/revision_race_and_archive",
+    "TestFarmHTTPPostgresChain/current_revocation_blocks_replay",
+    "TestFarmHTTPPostgresChain/signed_workspace_profiles_current_authority",
+    "TestFarmHTTPPostgresChain"
+  ],
+  "native_report": ".local/native-flow-scope/run_25f1a21ac1ff489d99954ef90bf3c3be/report.json",
+  "raw_sha256": "9f1f1958ed5d13ac980734109544ad7fff6a554d59f8539fdf3c7e2d0ab17e0d",
+  "redis_cleanup_report": ".local/dt025-flow/redis-farm-20q16q2a/report.json"
+}

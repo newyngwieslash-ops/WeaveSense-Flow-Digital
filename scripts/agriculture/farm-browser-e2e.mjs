@@ -17,6 +17,31 @@ const identifier = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,128}$
 const label = value => typeof value === 'string' && /^[A-Za-z0-9_.-]{1,128}$/.test(value);
 const validPort = value => Number.isInteger(value) && value >= 1024 && value <= 65535;
 export const CHECKPOINTS = ['created', 'updated', 'archived', 'revoke-request', 'revoked-verified'];
+export const LOGIN_STAGES = ['react_login_navigation','react_login_account','react_login_password','react_login_submit','react_login_workspace'];
+export const UI_BOOLEAN_KEYS = ['login','account_input','password_input','submit_button','session_ready','session_loading','session_error','workspace','workspace_context','create_button','editor','preview','busy','validation'];
+export const ERROR_CODES = ['REVISION_CONFLICT','STATE_CONFLICT','INVALID_GEOMETRY','INVALID_ARGUMENT','INVALID_RESPONSE','DEPENDENCY_UNAVAILABLE','AUTHORITY_UNAVAILABLE','NETWORK_ERROR','TIMEOUT'];
+export const OPERATION_STATES = ['preview','pending','completed','rejected','reconciliation_required','unknown'];
+export const API_PATHS = ['/api/auth/settings','/api/auth/csrf','/api/auth/login','/api/auth/session','/api/auth/logout','/api/agriculture/workspaces','/api/agri/v1/context','/api/agri/v1/farms','/api/agri/v1/farm-previews','/api/agri/v1/farms/:farm_id','/api/agri/v1/farms/:farm_id/archive','/api/agri/v1/farm-operations/:operation_id'];
+export function safeUIFlags(value) {
+  if(!value||typeof value!=='object'||Array.isArray(value))return {};
+  const out={};for(const key of UI_BOOLEAN_KEYS)if(typeof value[key]==='boolean')out[key]=value[key];
+  out.error_code=ERROR_CODES.includes(value.error_code)?value.error_code:null;
+  out.operation_state=OPERATION_STATES.includes(value.operation_state)?value.operation_state:null;
+  return out;
+}
+export function safeAPIPath(url, origin) {
+  let value;try{value=new URL(url);}catch{return null;}
+  if(value.origin!==origin)return null;
+  const path=value.pathname;
+  if(API_PATHS.includes(path)&&!path.includes(':'))return path;
+  if(/^\/api\/agri\/v1\/farms\/farm_[a-f0-9]{32}$/.test(path))return '/api/agri/v1/farms/:farm_id';
+  if(/^\/api\/agri\/v1\/farms\/farm_[a-f0-9]{32}\/archive$/.test(path))return '/api/agri/v1/farms/:farm_id/archive';
+  if(/^\/api\/agri\/v1\/farm-operations\/fop_[A-Za-z0-9_-]{1,120}$/.test(path))return '/api/agri/v1/farm-operations/:operation_id';
+  return null;
+}
+export function safeAPIStatuses(values) {
+  return Array.isArray(values)?values.slice(-80).filter(row=>row&&API_PATHS.includes(row.path)&&Number.isInteger(row.status)&&row.status>=100&&row.status<=599&&typeof row.completed==='boolean').map(row=>({path:row.path,status:row.status,completed:row.completed})):[];
+}
 export const REQUIRED_CHECKS = [
   'production_nginx_configuration_valid', 'real_react_login_shared_vue_session', 'http_only_platform_cookie',
   'north_created_with_explicit_grants', 'south_created_with_explicit_grants', 'duplicate_click_single_create',
@@ -86,8 +111,15 @@ async function observer(port, origin) {
   const socket = new WebSocket(targets.find(x => x.type === 'page').webSocketDebuggerUrl);
   await new Promise((ok,no) => { socket.addEventListener('open',ok,{once:true}); socket.addEventListener('error',no,{once:true}); });
   const counts = { observed: 0, violations: 0, previews: 0, creates: 0, updates: 0, archives: 0 };
+  const statuses=[],pending=new Map();
   socket.addEventListener('message', event => {
     const value = JSON.parse(event.data);
+    if(value.method==='Network.responseReceived'){
+      const response=value.params.response,path=safeAPIPath(response.url,origin);
+      if(path&&Number.isInteger(response.status)&&response.status>=100&&response.status<=599){const row={path,status:response.status,completed:false};statuses.push(row);pending.set(value.params.requestId,row);if(statuses.length>80){const removed=statuses.shift();for(const [id,item] of pending)if(item===removed)pending.delete(id);}}
+    }else if(value.method==='Network.loadingFinished'){
+      const row=pending.get(value.params.requestId);if(row){row.completed=true;pending.delete(value.params.requestId);}
+    }
     if (value.method !== 'Network.requestWillBeSent') return;
     const req = value.params.request; counts.observed++;
     if (requestViolatesBoundary(req, origin)) counts.violations++;
@@ -102,7 +134,7 @@ async function observer(port, origin) {
     const response = event => { const v=JSON.parse(event.data); if(v.id===1){clearTimeout(timer);socket.removeEventListener('message',response);v.error?no(Error('network observer rejected')):ok();} };
     socket.addEventListener('message',response);socket.send(JSON.stringify({id:1,method:'Network.enable'}));
   });
-  return { counts: () => ({ ...counts }), close: () => socket.close() };
+  return { counts: () => ({ ...counts }), statuses:()=>safeAPIStatuses(statuses), close: () => socket.close() };
 }
 async function setInput(cdp, selector, value) {
   await cdp.poll(`!!document.querySelector(${JSON.stringify(selector)}) && !document.querySelector(${JSON.stringify(selector)}).disabled`, 'enabled input');
@@ -177,7 +209,11 @@ export async function main(configPath = process.argv[2]) {
     const workspacePath='/agri/workspaces/'+config.workspace_id;
     const workspaceReady=()=>cdp.poll(`!!document.querySelector('main[data-session-status=ready]') && !!document.querySelector('[data-testid=farm-create]') && !document.querySelector('[data-testid=farm-busy]')`,'authorized farm workspace');
     const reload=async()=>{await cdp.navigate(workspacePath);await workspaceReady();};
-    report.stage='react_login';await cdp.navigate('/login?next='+encodeURIComponent(workspacePath));await cdp.fill('#login-account',config.username,'fixture account');await cdp.fill('#login-password',config.password,'fixture password');await click(cdp,'form button[type=submit]');await workspaceReady();
+    report.stage='react_login_navigation';await cdp.navigate('/login?next='+encodeURIComponent(workspacePath));
+    report.stage='react_login_account';await cdp.fill('#login-account',config.username,'fixture account');
+    report.stage='react_login_password';await cdp.fill('#login-password',config.password,'fixture password');
+    report.stage='react_login_submit';await click(cdp,'form button[type=submit]');
+    report.stage='react_login_workspace';await workspaceReady();
     check(await cdp.evaluate(`document.querySelector('[data-testid=agri-workspace-context]')?.dataset.workspaceId===${JSON.stringify(config.workspace_id)}`),'real_react_login_shared_vue_session');
     const cookie=(await cdp.send('Network.getCookies',{urls:[origin]})).cookies.find(c=>c.name==='open_ai_canvas_session');check(!!cookie?.httpOnly&&!!cookie.value,'http_only_platform_cookie');
     report.stage='create_two_regions';
@@ -210,7 +246,8 @@ export async function main(configPath = process.argv[2]) {
     if(report.results.length!==REQUIRED_CHECKS.length)throw Error('required coverage incomplete');report.stage='complete';report.result='pass';
   } catch(error){
     report.result='fail';report.failure=safeFailure(error);report.browser_runtime_exception_count=cdp?.exceptions.length??0;process.exitCode=1;
-    if(cdp)try{report.ui_flags=await cdp.evaluate(`(()=>{const code=document.querySelector('[data-testid=farm-error]')?.dataset.errorCode;const state=document.querySelector('[data-testid=farm-operation]')?.dataset.operationState;return {login:!!document.querySelector('#login-account'),workspace:!!document.querySelector('[data-testid=farm-workspace]'),editor:!!document.querySelector('[data-testid=farm-editor]'),preview:!!document.querySelector('[data-testid=farm-operation-preview]'),busy:!!document.querySelector('[data-testid=farm-busy]'),validation:!!document.querySelector('[data-testid=farm-validation]'),error_code:['REVISION_CONFLICT','STATE_CONFLICT','INVALID_GEOMETRY','INVALID_ARGUMENT','INVALID_RESPONSE','DEPENDENCY_UNAVAILABLE','AUTHORITY_UNAVAILABLE','NETWORK_ERROR','TIMEOUT'].includes(code)?code:null,operation_state:['preview','pending','completed','rejected','reconciliation_required','unknown'].includes(state)?state:null};})()`,'sanitized component flags');}catch{/* Never retain raw DOM or exception text. */}
+    report.api_statuses=network?.statuses()??[];
+    if(cdp)try{report.ui_flags=safeUIFlags(await cdp.evaluate(`(()=>{const code=document.querySelector('[data-testid=farm-error]')?.dataset.errorCode;const state=document.querySelector('[data-testid=farm-operation]')?.dataset.operationState;return {login:!!document.querySelector('#login-account'),account_input:!!document.querySelector('#login-account'),password_input:!!document.querySelector('#login-password'),submit_button:!!document.querySelector('form button[type=submit]'),session_ready:!!document.querySelector('main[data-session-status=ready]'),session_loading:!!document.querySelector('main[data-session-status=loading]'),session_error:!!document.querySelector('main[data-session-status=error]'),workspace:!!document.querySelector('[data-testid=farm-workspace]'),workspace_context:!!document.querySelector('[data-testid=agri-workspace-context]'),create_button:!!document.querySelector('[data-testid=farm-create]'),editor:!!document.querySelector('[data-testid=farm-editor]'),preview:!!document.querySelector('[data-testid=farm-operation-preview]'),busy:!!document.querySelector('[data-testid=farm-busy]'),validation:!!document.querySelector('[data-testid=farm-validation]'),error_code:${JSON.stringify(ERROR_CODES)}.includes(code)?code:null,operation_state:${JSON.stringify(OPERATION_STATES)}.includes(state)?state:null};})()`,'sanitized component flags'));}catch{/* Never retain raw DOM or exception text. */}
   }
   finally{await cleanup();process.removeListener('SIGTERM',interrupted);process.removeListener('SIGINT',interrupted);if(config&&!existsSync(config.report_path))writeFileSync(config.report_path,JSON.stringify(report,null,2)+'\n',{flag:'wx',mode:0o600});}
   return report;

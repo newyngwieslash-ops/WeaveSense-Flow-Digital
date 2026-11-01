@@ -18,7 +18,7 @@ repo = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--package-root', type=Path, required=True)
 parser.add_argument('--python', type=Path, default=repo/'.local/agri-identity-venv/bin/python')
-parser.add_argument('--phase', choices=('components', 'migration', 'query', 'objects', 'jobs', 'isolation-gis', 'isolation'), default='components')
+parser.add_argument('--phase', choices=('components', 'migration', 'query', 'objects', 'jobs', 'isolation-gis', 'isolation', 'farm-python'), default='components')
 parser.add_argument('--go', type=Path, help='explicit local Go binary for the fixed object/job integration suites')
 parser.add_argument('--race', action='store_true', help='Go race detector in the explicit isolation suite')
 args = parser.parse_args()
@@ -117,6 +117,8 @@ elif phase_mode == 'objects':
     files = ['tests/test_agriculture_object_storage.py', 'tests/test_agriculture_object_gateway.py', 'tests/test_agriculture_objects_postgres.py', 'tests/test_agriculture_objects_go_postgres.py']
 elif phase_mode == 'jobs':
     files = ['tests/test_agriculture_job_authority.py', 'tests/test_agriculture_jobs_postgres.py']
+elif phase_mode == 'farm-python':
+    files = ['tests/test_agriculture_farms_config.py', 'tests/test_agriculture_farms_geometry.py', 'tests/test_agriculture_farms_identity.py', 'tests/test_agriculture_farms_store_postgres.py']
 elif phase_mode in {'isolation-gis', 'isolation'}:
     files = ['tests/test_agriculture_isolation_matrix_postgres.py']
     if phase_mode == 'isolation':
@@ -132,7 +134,7 @@ def isolation_source_hashes():
         paths.update(p for p in (repo/directory).rglob('*') if p.is_file() and p.suffix in suffixes and '.local' not in p.parts)
     return {str(p.relative_to(repo)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(paths)}
 
-initial_isolation_sources = isolation_source_hashes() if phase_mode in {'isolation', 'isolation-gis'} else None
+initial_isolation_sources = isolation_source_hashes() if phase_mode in {'isolation', 'isolation-gis', 'farm-python'} else None
 started=False
 start=time.monotonic()
 with (run/'private.log').open('w') as log:
@@ -166,6 +168,8 @@ for t in ET.parse(run/'tests.xml').getroot().iter('testcase'):
     phase='job_authority_current' if phase_mode == 'jobs' else 'private_objects_current' if phase_mode == 'objects' else 'independent_fresh_database_migration' if phase_mode == 'migration' else 'post_query_current' if phase_mode == 'query' else 'post_domain_current' if module in {'test_agriculture_database','test_agriculture_database_postgres','test_agriculture_domain_boundary','test_agriculture_domain_rls_postgres'} else 'pre_domain_component'
     if phase_mode in {'isolation', 'isolation-gis'}:
         phase = 'current_agricultural_route_isolation'
+    if phase_mode == 'farm-python':
+        phase = 'actual_farm_geometry_and_store'
     cases.append({'name':t.attrib['name'],'schema_phase':phase,'status':statuses[0] if statuses else 'pass',
                   'seconds':float(t.attrib.get('time','0'))})
 required_pg = {
@@ -185,6 +189,8 @@ required_pg = {
 }
 if phase_mode == 'migration':
     required_pg = {'test_postgres_migration_command_new_repeat_and_drift'}
+elif phase_mode == 'farm-python':
+    required_pg = {node.split('::', 1)[1] for node in json.loads((repo/'contracts/agriculture/farm-python-acceptance.json').read_text())['required_cases']}
 elif phase_mode == 'query':
     required_pg = {'test_postgres_query_scope_same_bbox_and_history',
                    'test_postgres_query_scope_mixed_task_and_core',
@@ -204,6 +210,9 @@ elif phase_mode in {'isolation-gis', 'isolation'}:
     required_pg |= {f'test_isolation_signed_route_negative_no_domain_effect[{case}-{route}]' for case in negatives for route in routes}
     required_pg |= {f'test_isolation_production_missing_dependencies_closed[{route}]' for route in routes}
     required_pg |= {f'test_isolation_job_snapshot_epoch_no_domain_effect[{route}]' for route in ('job_accept', 'job_checkpoint')}
+    farm_routes = ('farm_preview_create', 'farm_create', 'farm_receipt', 'farm_context', 'farm_list', 'farm_history', 'farm_read', 'farm_preview_update', 'farm_preview_archive', 'farm_update', 'farm_archive')
+    required_pg |= {f'test_isolation_farm_signature_negative_no_domain_effect[{case}-{route}]' for case in negatives[:6] for route in farm_routes}
+    required_pg |= {f'test_isolation_farm_missing_provider_closed[{route}]' for route in farm_routes}
     if phase_mode == 'isolation':
         required_pg |= {'test_isolation_go_route_matrix', 'test_isolation_go_double_postgres_objects', 'test_isolation_go_postgres_projections'}
 missing_pg = sorted(required_pg-{c['name'] for c in cases if c['status']=='pass'})

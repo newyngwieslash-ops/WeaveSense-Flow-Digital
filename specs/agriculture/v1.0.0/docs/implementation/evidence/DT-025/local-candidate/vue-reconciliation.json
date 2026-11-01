@@ -1,0 +1,25 @@
+{
+  "scope": "DT025 reconciliation wire component regression only",
+  "source_files_sha256": {
+    "services/agri-gis/frontend/agriculture/farms/api.test.ts": "0eeb368ddd504caaa6cc626fc860fc25923b57345259407364ee759328df9ecc",
+    "services/agri-gis/frontend/agriculture/farms/farm-controller.test.ts": "0d2c34c142237e16749acb8c9c349753ed0df71331bedbdea9b1ccff74a7d40a"
+  },
+  "production_ui_changed": false,
+  "tests": {
+    "passed": 24,
+    "failed": 0,
+    "skipped": 0,
+    "assertions": 124,
+    "exit_code": 0,
+    "log": ".local/vue-build-diagnostic/dt025-farms-reconciliation-unit.log"
+  },
+  "verified": [
+    "202 reconciliation_required retained as unresolved with same status_url and null job/events",
+    "200 reconciliation_required and other noncompleted responses rejected",
+    "unresolved reconciliation cannot replace draft or imply farm completion"
+  ],
+  "browser_js_go_exact_check_names": true,
+  "browser_check_count": 23,
+  "browser_runtime": "not_run",
+  "production_acceptance": false
+}

@@ -37,13 +37,22 @@ def validate_boundary(root, react, vue):
             raise ValueError("Missing mandatory attribution: " + name)
     if react.get("product_profile") != "agriculture" or not react.get("modules"):
         raise ValueError("Missing actual React agriculture graph")
-    if vue.get("profile") != "vue-session-boundary" or not vue.get("modules"):
+    if vue.get("profile") not in {"vue-session-boundary", "vue-agriculture-farms"} or not vue.get("modules"):
         raise ValueError("Missing actual Vue agriculture graph")
-    values = react["modules"] + vue["modules"] + [p["name"] for p in react["packages"]]
+    if vue["profile"] == "vue-agriculture-farms" and (
+        vue.get("business_api") != "same-origin-platform-canonical-v1"
+        or vue.get("map") != "openlayers-vector-only-no-external-basemap"
+    ):
+        raise ValueError("Unreviewed Vue farm API or map boundary")
+    values = [value.replace("\\", "/") for value in (
+        react["modules"] + vue["modules"] + [p["name"] for p in react["packages"]]
+    )]
     if any(DRAWING.search(value) for value in values):
         raise ValueError("Unapproved drawing dependency is reachable")
-    if any("/src/" in value for value in vue["modules"]):
+    if any(re.search(r"(?:^|/)src/", value.replace("\\", "/")) for value in vue["modules"]):
         raise ValueError("Unreviewed Vue legacy business module is reachable")
+    if any(re.search(r"(?:^|[/@])cesium(?:[/@]|$)", value, re.I) for value in values):
+        raise ValueError("Unreviewed 3D dependency is reachable")
     for package in react["packages"]:
         if not package.get("license") or package["license"] in {
             "UNKNOWN",

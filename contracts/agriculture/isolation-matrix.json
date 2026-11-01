@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "scope": "DT024 existing agricultural routes; explicit domain fixtures; not future business provider acceptance",
+  "scope": "DT024 existing and DT025 farm routes; explicit domain fixtures; real farm current-authority acceptance is additionally required",
   "matrix_root": "TestAgricultureIsolationMatrixPostgres",
   "routes": [
     {
@@ -958,6 +958,433 @@
           "id": "substituted_snapshot",
           "expected_status": 400,
           "go_test": "TestAgricultureIsolationMatrixPostgres/I02_substituted_snapshot"
+        }
+      ]
+    },
+    {
+      "id": "P20",
+      "method": "GET",
+      "path": "/api/agri/v1/context",
+      "boundary": "public_authenticated",
+      "cases": [
+        {
+          "id": "anonymous",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P20/anonymous"
+        },
+        {
+          "id": "forged_session",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P20/forged_session"
+        },
+        {
+          "id": "expired_session",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P20/expired_session"
+        },
+        {
+          "id": "foreign_tenant",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P20/foreign_tenant"
+        },
+        {
+          "id": "unjoined_same_tenant_workspace",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P20/unjoined_same_tenant_workspace"
+        },
+        {
+          "id": "current_scope_boundary",
+          "expected_status": 503,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P20/current_scope_boundary"
+        },
+        {
+          "id": "revoked_member_same_session",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P20_revoked_member"
+        },
+        {
+          "id": "logged_out_same_cookie",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P20_logged_out"
+        }
+      ]
+    },
+    {
+      "id": "P21",
+      "method": "GET",
+      "path": "/api/agri/v1/farms",
+      "boundary": "public_authenticated",
+      "cases": [
+        {
+          "id": "anonymous",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P21/anonymous"
+        },
+        {
+          "id": "forged_session",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P21/forged_session"
+        },
+        {
+          "id": "expired_session",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P21/expired_session"
+        },
+        {
+          "id": "foreign_tenant",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P21/foreign_tenant"
+        },
+        {
+          "id": "unjoined_same_tenant_workspace",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P21/unjoined_same_tenant_workspace"
+        },
+        {
+          "id": "current_scope_boundary",
+          "expected_status": 503,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P21/current_scope_boundary"
+        },
+        {
+          "id": "revoked_member_same_session",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P21_revoked_member"
+        },
+        {
+          "id": "logged_out_same_cookie",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P21_logged_out"
+        }
+      ]
+    },
+    {
+      "id": "P22",
+      "method": "GET",
+      "path": "/api/agri/v1/farms/:farm_id",
+      "boundary": "public_authenticated",
+      "cases": [
+        {
+          "id": "anonymous",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P22/anonymous"
+        },
+        {
+          "id": "forged_session",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P22/forged_session"
+        },
+        {
+          "id": "expired_session",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P22/expired_session"
+        },
+        {
+          "id": "foreign_tenant",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P22/foreign_tenant"
+        },
+        {
+          "id": "unjoined_same_tenant_workspace",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P22/unjoined_same_tenant_workspace"
+        },
+        {
+          "id": "current_scope_boundary",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P22/current_scope_boundary"
+        },
+        {
+          "id": "revoked_member_same_session",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P22_revoked_member"
+        },
+        {
+          "id": "logged_out_same_cookie",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P22_logged_out"
+        }
+      ]
+    },
+    {
+      "id": "P23",
+      "method": "GET",
+      "path": "/api/agri/v1/farm-operations/:operation_id",
+      "boundary": "public_authenticated",
+      "cases": [
+        {
+          "id": "anonymous",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P23/anonymous"
+        },
+        {
+          "id": "forged_session",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P23/forged_session"
+        },
+        {
+          "id": "expired_session",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P23/expired_session"
+        },
+        {
+          "id": "foreign_tenant",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P23/foreign_tenant"
+        },
+        {
+          "id": "unjoined_same_tenant_workspace",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P23/unjoined_same_tenant_workspace"
+        },
+        {
+          "id": "current_scope_boundary",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P23/current_scope_boundary"
+        },
+        {
+          "id": "revoked_member_same_session",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P23_revoked_member"
+        },
+        {
+          "id": "logged_out_same_cookie",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P23_logged_out"
+        }
+      ]
+    },
+    {
+      "id": "P24",
+      "method": "POST",
+      "path": "/api/agri/v1/farm-previews",
+      "boundary": "public_authenticated",
+      "cases": [
+        {
+          "id": "anonymous",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P24/anonymous"
+        },
+        {
+          "id": "forged_session",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P24/forged_session"
+        },
+        {
+          "id": "expired_session",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P24/expired_session"
+        },
+        {
+          "id": "foreign_tenant",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P24/foreign_tenant"
+        },
+        {
+          "id": "unjoined_same_tenant_workspace",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P24/unjoined_same_tenant_workspace"
+        },
+        {
+          "id": "current_scope_boundary",
+          "expected_status": 403,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P24/current_scope_boundary"
+        },
+        {
+          "id": "revoked_member_same_session",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P24_revoked_member"
+        },
+        {
+          "id": "logged_out_same_cookie",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P24_logged_out"
+        }
+      ]
+    },
+    {
+      "id": "P25",
+      "method": "POST",
+      "path": "/api/agri/v1/farms",
+      "boundary": "public_authenticated",
+      "cases": [
+        {
+          "id": "anonymous",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P25/anonymous"
+        },
+        {
+          "id": "forged_session",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P25/forged_session"
+        },
+        {
+          "id": "expired_session",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P25/expired_session"
+        },
+        {
+          "id": "foreign_tenant",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P25/foreign_tenant"
+        },
+        {
+          "id": "unjoined_same_tenant_workspace",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P25/unjoined_same_tenant_workspace"
+        },
+        {
+          "id": "current_scope_boundary",
+          "expected_status": 403,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P25/current_scope_boundary"
+        },
+        {
+          "id": "revoked_member_same_session",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P25_revoked_member"
+        },
+        {
+          "id": "logged_out_same_cookie",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P25_logged_out"
+        }
+      ]
+    },
+    {
+      "id": "P26",
+      "method": "PATCH",
+      "path": "/api/agri/v1/farms/:farm_id",
+      "boundary": "public_authenticated",
+      "cases": [
+        {
+          "id": "anonymous",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P26/anonymous"
+        },
+        {
+          "id": "forged_session",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P26/forged_session"
+        },
+        {
+          "id": "expired_session",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P26/expired_session"
+        },
+        {
+          "id": "foreign_tenant",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P26/foreign_tenant"
+        },
+        {
+          "id": "unjoined_same_tenant_workspace",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P26/unjoined_same_tenant_workspace"
+        },
+        {
+          "id": "current_scope_boundary",
+          "expected_status": 403,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P26/current_scope_boundary"
+        },
+        {
+          "id": "revoked_member_same_session",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P26_revoked_member"
+        },
+        {
+          "id": "logged_out_same_cookie",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P26_logged_out"
+        }
+      ]
+    },
+    {
+      "id": "P27",
+      "method": "POST",
+      "path": "/api/agri/v1/farms/:farm_id/archive",
+      "boundary": "public_authenticated",
+      "cases": [
+        {
+          "id": "anonymous",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P27/anonymous"
+        },
+        {
+          "id": "forged_session",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P27/forged_session"
+        },
+        {
+          "id": "expired_session",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P27/expired_session"
+        },
+        {
+          "id": "foreign_tenant",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P27/foreign_tenant"
+        },
+        {
+          "id": "unjoined_same_tenant_workspace",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P27/unjoined_same_tenant_workspace"
+        },
+        {
+          "id": "current_scope_boundary",
+          "expected_status": 403,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P27/current_scope_boundary"
+        },
+        {
+          "id": "revoked_member_same_session",
+          "expected_status": 404,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P27_revoked_member"
+        },
+        {
+          "id": "logged_out_same_cookie",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/P27_logged_out"
+        }
+      ]
+    },
+    {
+      "id": "I03",
+      "method": "POST",
+      "path": "/internal/agri/v1/farms/authority/check",
+      "boundary": "signed_service",
+      "cases": [
+        {
+          "id": "anonymous",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/I03/anonymous"
+        },
+        {
+          "id": "forged_session",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/I03/forged_session"
+        },
+        {
+          "id": "signed_control",
+          "expected_status": 200,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/I03_signed_control"
+        },
+        {
+          "id": "wrong_signer",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/I03_wrong_signer"
+        },
+        {
+          "id": "signed_scope_mismatch",
+          "expected_status": 400,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/I03_signed_scope_mismatch"
+        },
+        {
+          "id": "wrong_direction",
+          "expected_status": 401,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/I03_wrong_direction"
+        },
+        {
+          "id": "revoked_actor",
+          "expected_status": 403,
+          "go_test": "TestAgricultureIsolationMatrixPostgres/I03_revoked_actor"
         }
       ]
     }

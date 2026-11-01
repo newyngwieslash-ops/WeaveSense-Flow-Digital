@@ -72,6 +72,21 @@ func (s Service) GrantResourceBinding(ctx context.Context, actorID, workspaceID,
 		expiry = &value
 	}
 	err = s.withOwnership(ctx, actorID, workspaceID, []ResourceRef{resource}, func(tx *gorm.DB, scope workspaceContext, version int64, proofs map[ResourceRef]ResourceOwnership) error {
+		var err error
+		out, err = s.grantOwnedBinding(tx, scope, actorID, targetUserID, resource, caps, expiry, expected, version, proofs)
+		return err
+	}, targetUserID)
+	if err != nil {
+		return model.AgricultureResourceBinding{}, err
+	}
+	return out, nil
+}
+
+// grantOwnedBinding is the shared local ACL transaction. Proofs must already
+// have passed authenticated ownership validation; it never performs I/O.
+func (s Service) grantOwnedBinding(tx *gorm.DB, scope workspaceContext, actorID, targetUserID string, resource ResourceRef, caps []string, expiry *time.Time, expected, version int64, proofs map[ResourceRef]ResourceOwnership) (out model.AgricultureResourceBinding, result error) {
+	workspaceID := scope.Workspace.ID
+	result = func() error {
 		now := s.now()
 		if expiry != nil && (!expiry.After(now) || expiry.After(now.Add(366*24*time.Hour))) {
 			return ErrInvalid
@@ -138,11 +153,8 @@ func (s Service) GrantResourceBinding(ctx context.Context, actorID, workspaceID,
 			return err
 		}
 		return audit(tx, now, scope, actorID, "resource_binding.granted", out.ID, map[string]any{"subject_id": targetUserID, "resource": resource, "capabilities": caps, "auth_version": out.AuthVersion})
-	}, targetUserID)
-	if err != nil {
-		return model.AgricultureResourceBinding{}, err
-	}
-	return out, nil
+	}()
+	return out, result
 }
 
 // checkDelegationExpiry deliberately intersects all relevant supporting grants,

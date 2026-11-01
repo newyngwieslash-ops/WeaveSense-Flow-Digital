@@ -18,11 +18,13 @@ FROM python:3.11-slim
 RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources && \
     sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq-dev curl fonts-wqy-zenhei && rm -rf /var/lib/apt/lists/*
+    libpq-dev curl fonts-wqy-zenhei tzdata && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 COPY ./app ./app
 ENV PATH="/app/.venv/bin:$PATH"
+# Poetry's tzdata dependency is Windows-only; Linux needs the system IANA data.
+RUN python -c "from zoneinfo import ZoneInfo; ZoneInfo('UTC'); ZoneInfo('Asia/Shanghai')"
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 EXPOSE 8000

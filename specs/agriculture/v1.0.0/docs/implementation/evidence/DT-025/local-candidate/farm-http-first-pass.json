@@ -1,0 +1,29 @@
+{
+  "kind": "real_dual_pg_farm_http_component_auth",
+  "data_class": "fixture",
+  "production_acceptance": false,
+  "browser": false,
+  "redis_full_auth": false,
+  "tests_passed": [
+    "TestFarmHTTPPostgresChain/create_explicit_grants_and_regions",
+    "TestFarmHTTPPostgresChain/governance_without_content_grant",
+    "TestFarmHTTPPostgresChain/cross_tenant_and_workspace",
+    "TestFarmHTTPPostgresChain/preview_hash_expiry_and_scope",
+    "TestFarmHTTPPostgresChain/idempotent_and_conflicting_requests",
+    "TestFarmHTTPPostgresChain/revision_race_and_archive",
+    "TestFarmHTTPPostgresChain/current_revocation_blocks_replay",
+    "TestFarmHTTPPostgresChain/signed_workspace_profiles_current_authority",
+    "TestFarmHTTPPostgresChain"
+  ],
+  "tests_failed": [],
+  "raw": ".local/native-flow-scope/run_49943227d95a448e81bb3341f94d0773/private-flow-workers.jsonl",
+  "raw_sha256": "1cac5248f7d476de033399ef8b023f11b9d1eacfd72c2d2cdda590b849995134",
+  "native_report": ".local/native-flow-scope/run_49943227d95a448e81bb3341f94d0773/report.json",
+  "native_result": "pass",
+  "native_failure": null,
+  "source_stable": true,
+  "shutdown_exit_code": 0,
+  "limitations": [
+    "Shared development tree; frozen source/CI/full Redis/browser verification remains required."
+  ]
+}

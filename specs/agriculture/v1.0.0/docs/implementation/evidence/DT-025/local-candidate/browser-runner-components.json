@@ -1,0 +1,24 @@
+{
+  "scope": "DT025 browser orchestration implementation and component validation",
+  "files": {
+    "scripts/agriculture/farm-browser-e2e.mjs": "7d6e09464f643a25468815be599e14a4de3bc75602cfea3f4f8214aac62c79ed",
+    "scripts/agriculture/farm-browser-e2e.test.mjs": "cb9afe25bcde6339b8d76070672fbfdfbced02de99559b1b972c45c4117b67a8"
+  },
+  "syntax_exit_code": 0,
+  "node_test": {
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0,
+    "exit_code": 0,
+    "log": ".local/audit/dt025-farm-browser-unit.log"
+  },
+  "browser_integration": "not_run; waiting real dual-PG/Redis owning Go harness",
+  "production_acceptance": false,
+  "checkpoint_expected": {
+    "created": "north/south demo 1/1",
+    "updated": "north3/south1; successful UI north2 + API competitor3 + stale UI conflict",
+    "archived": "north archived4/southactive1",
+    "revoke-request": "parent revokes actor",
+    "revoked-verified": "same cookie and history content absent; parent checks unchanged DB"
+  }
+}

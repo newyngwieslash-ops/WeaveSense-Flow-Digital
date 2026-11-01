@@ -1,0 +1,53 @@
+{
+  "scope": "DT025 Vue component implementation only; server/GIS and browser integration owned by lead",
+  "source_files_sha256": {
+    "services/agri-gis/frontend/agriculture/farms/geometry.test.ts": "a8588321d33208235699f2e4423f91c47ba37f962d1ed087fd0e11030bc162ad",
+    "services/agri-gis/frontend/agriculture/farms/types.ts": "ff20928d7107ba7a33218cb01fe81a2e195c63110d4979b098c4f10493a22cc1",
+    "services/agri-gis/frontend/agriculture/farms/FarmEditor.vue": "c87127d27b8aacf76a1435f5a299cbf945f4ba34870a700e1aecb4c14cee1791",
+    "services/agri-gis/frontend/agriculture/farms/transport.test.ts": "8306349a9a0b8cb7563cfecb42cacd2bd97ef59f3d387dde3c5f3ee8ac9d85e4",
+    "services/agri-gis/frontend/agriculture/farms/transport.ts": "a2c1fe485621186f8845a4f2c6cc52e59a68ebf8ad00f74f51694e41231a8bfa",
+    "services/agri-gis/frontend/agriculture/farms/api.test.ts": "da17ab20028429fef6fb1b1e2cb2df6d125bf359fa1b3cf38633af078aad0e6b",
+    "services/agri-gis/frontend/agriculture/farms/api.ts": "4cef5329e8361d25f0a8ae38803ffb4a0960003c993e45fdfe5ed5c8e69724c1",
+    "services/agri-gis/frontend/agriculture/farms/farm-controller.test.ts": "d894e708605eca9b4a9f7f2e8dcad89efe269a0de3b570331c06e9b5524730a0",
+    "services/agri-gis/frontend/agriculture/farms/farm-controller.ts": "12b5f0bbdf4077afd0a3ab0a43c991c13c0156ee8122a6ddd3f93b77d88d977d",
+    "services/agri-gis/frontend/agriculture/farms/FarmBoundaryMap.vue": "d18023090e5f08572b3f170314bfd3ea11b38e215b2e0f6fbe72d5e0924410e5",
+    "services/agri-gis/frontend/agriculture/farms/FarmWorkspace.vue": "293357757dd2dfcb21cdc6f6705dd342baca4664bf7c39bc64b217412ad2c008",
+    "services/agri-gis/frontend/agriculture/farms/geometry.ts": "f300b131739eadf2ed0d6017b0c8780ea97cf01fac808076b8ed16e8e830254e",
+    "services/agri-gis/frontend/agriculture/App.vue": "595b6b5bd0210fbdf352bf441f162573fdab35ce16e0b3e7504a4d95540b9c43",
+    "services/agri-gis/frontend/agriculture/style.css": "2c7d3f5348c046e89ca9ba6b35de561b249f2677317b04372d6474fa658cc440",
+    "services/agri-gis/frontend/vite.agriculture.config.ts": "a88709385d0c98a8df1bf1ba8c19cfdc4a3f0c04e73a7ec48fe7a90cb760a42e",
+    "services/agri-gis/frontend/package.json": "6c52d46f39ec492271d5c0a540d9b3efa02b749f48faf75bfede068069a7e58b"
+  },
+  "lock_sha256": "e44cbf43293def575925506a98d3acbc8a7b0ec64d75454595329f5b5a57b64d",
+  "lock_unchanged_from": "a76b0fa8",
+  "component_tests": {
+    "farm_tests_passed": 22,
+    "failed": 0,
+    "log": ".local/vue-build-diagnostic/dt025-farms-unit.log"
+  },
+  "production_profile_build": {
+    "exit_code": 0,
+    "typecheck": true,
+    "vite": true,
+    "modules": 188,
+    "external_basemap": false,
+    "legacy_cesium_tldraw_absent": true
+  },
+  "browser": {
+    "status": "not_run",
+    "startup_attempts": 2,
+    "reason": "local Chromium CDP readiness timeout; owned subprocess stop invoked; no UI assertions executed",
+    "mocked_api_component_attempt": true,
+    "actual_backend_acceptance": false
+  },
+  "production_acceptance": false,
+  "remote_publication": false,
+  "full_frontend_regression": {
+    "passed": 71,
+    "failed": 0,
+    "skipped": 0,
+    "assertions": 338,
+    "exit_code": 0,
+    "log": ".local/vue-build-diagnostic/dt025-vue-unit.log"
+  }
+}

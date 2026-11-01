@@ -20,11 +20,16 @@ import pytest_asyncio
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from job_fixture_support import prepare_jobs
 from test_agriculture_actors_postgres import pg_config
+from test_agriculture_farms_config import dictionary_document
+from test_agriculture_farms_store_postgres import create_canary, farm_input
 from test_agriculture_identity import sign
 from test_agriculture_job_authority import job_fixture
 from test_agriculture_objects_postgres import insert, setup
 
 from app.agriculture.domain_boundary import LEGACY_TABLES
+from app.agriculture.farms_config import FarmDictionary
+from app.agriculture.farms_identity import WORKSPACE_TYP
+from app.agriculture.farms_store import FarmStore
 from app.agriculture.identity.canonical import canonicalize
 from app.agriculture.identity.replay import PostgresReplayLedger
 from app.agriculture.identity.verify import BUSINESS_TYP, SERVICE_TYP
@@ -45,6 +50,39 @@ ROUTES = {
     "job_accept": ("POST", PREFIX + "/jobs/authority/accept"),
     "job_checkpoint": ("POST", PREFIX + "/jobs/authority/checkpoint"),
 }
+FARM_ROUTES = {
+    "farm_preview_create": (
+        "POST",
+        PREFIX + "/farms/preview-create",
+        "farm.preview.create",
+    ),
+    "farm_create": ("POST", PREFIX + "/farms/commands/create", "farm.create"),
+    "farm_receipt": ("POST", PREFIX + "/farms/commands/receipt", "farm.receipt"),
+    "farm_context": ("POST", PREFIX + "/farms/context", "farm.context"),
+    "farm_list": ("POST", PREFIX + "/farms/list", "farm.list"),
+    "farm_history": ("POST", PREFIX + "/farms/history", "farm.history.read"),
+    "farm_read": ("GET", PREFIX + "/farms/{farm_id}", "agri.farm.read"),
+    "farm_preview_update": (
+        "POST",
+        PREFIX + "/farms/{farm_id}/preview-update",
+        "agri.farm.update",
+    ),
+    "farm_preview_archive": (
+        "POST",
+        PREFIX + "/farms/{farm_id}/preview-archive",
+        "agri.farm.archive",
+    ),
+    "farm_update": ("PATCH", PREFIX + "/farms/{farm_id}", "agri.farm.update"),
+    "farm_archive": ("POST", PREFIX + "/farms/{farm_id}/archive", "agri.farm.archive"),
+}
+FARM_SIGNATURE_CASES = (
+    "unsigned",
+    "wrong_signature",
+    "audience",
+    "path",
+    "body",
+    "expired",
+)
 CASES = (
     "unsigned",
     "wrong_signature",
@@ -68,6 +106,11 @@ SNAPSHOT_TABLES = sorted(
         "agriculture_job_authority_checks",
         "fixture_job_leases",
         "fixture_job_resources",
+        "agriculture_farms",
+        "agriculture_farm_revisions",
+        "agriculture_farm_commands",
+        "agriculture_farm_outbox",
+        "agriculture_farm_dictionaries",
     }
 )
 
@@ -77,8 +120,10 @@ def discovered(app):
 
 
 def test_isolation_exact_production_route_manifest():
-    assert discovered(create_app()) == set(ROUTES.values()) | {("GET", "/health")}
-    assert len(discovered(create_app())) == 9
+    assert discovered(create_app()) == set(ROUTES.values()) | {
+        row[:2] for row in FARM_ROUTES.values()
+    } | {("GET", "/health")}
+    assert len(discovered(create_app())) == 20
 
 
 async def domain_snapshot(owner):
@@ -126,7 +171,36 @@ async def isolation_pg(tmp_path_factory):
         services.replay = PostgresReplayLedger(pool)
         await services.replay.require_safe_runtime()
         app = create_app(services)
-        assert discovered(app) == set(ROUTES.values()) | {("GET", "/health")}
+        assert discovered(app) == set(ROUTES.values()) | {
+            row[:2] for row in FARM_ROUTES.values()
+        } | {("GET", "/health")}
+        farm_store = FarmStore(
+            pool, FarmDictionary.from_document(dictionary_document())
+        )
+        # This mixed fixture deliberately has public job-lease test tables.
+        # Use the store only to seed real nonempty domain canaries; production
+        # readiness is verified separately in the fresh farm migration suite.
+        # Never whitelist test tables in the actual domain boundary.
+        farm_canaries = []
+        for tenant, workspace in (
+            ("tenant_a", "workspace_a"),
+            ("tenant_a", "workspace_b"),
+            ("tenant_b", "workspace_a"),
+            ("tenant_foreign", "workspace_foreign"),
+        ):
+            farm_canaries.append(await create_canary(farm_store, tenant, workspace))
+        services.farm_store = farm_store
+        services.farm_authority = (
+            None  # Real current authorization is exercised by the Go/GIS chain.
+        )
+        for table in (
+            "agriculture_farms",
+            "agriculture_farm_revisions",
+            "agriculture_farm_commands",
+            "agriculture_farm_outbox",
+            "agriculture_farm_dictionaries",
+        ):
+            assert await owner.fetchval(f'SELECT count(*) FROM "{table}"') > 0
         report = replace(
             item,
             object_id="report_" + uuid4().hex,
@@ -213,11 +287,12 @@ async def isolation_pg(tmp_path_factory):
             verified.body,
             owner,
             payload,
+            farm_canaries[0]["farm_id"],
         )
 
 
 def request_data(fixture, route):
-    _, _, _, base, item, report, snapshot, job_body, _, _ = fixture
+    _, _, _, base, item, report, snapshot, job_body, _, _, _ = fixture
     method, path = ROUTES[route]
     current = report if route.startswith("report") else item
     path = path.format(
@@ -304,7 +379,11 @@ def request_data(fixture, route):
 
 
 async def perform(fixture, route, case=None, app=None):
-    method, path, raw, claims, typ = request_data(fixture, route)
+    method, path, raw, claims, typ = (
+        farm_request_data(fixture, route)
+        if route in FARM_ROUTES
+        else request_data(fixture, route)
+    )
     key = fixture[2]
     expected = 401
     if case == "wrong_signature":
@@ -340,6 +419,93 @@ async def perform(fixture, route, case=None, app=None):
     return response, expected
 
 
+def farm_request_data(fixture, route):
+    """Valid profile shapes; real current authorization lives in Go/GIS tests.
+
+    These cases prove signature/path/body rejection BEFORE a missing provider,
+    not cross-tenant authorization through a fake callback.
+    """
+    method, path, action = FARM_ROUTES[route]
+    farm_id = fixture[10]
+    path = path.format(farm_id=farm_id)
+    base = fixture[3]
+    now = datetime.now(UTC)
+    claims = {
+        name: base[name]
+        for name in (
+            "schema_version",
+            "issuer",
+            "subject",
+            "audience",
+            "actor",
+            "tenant_id",
+            "workspace_id",
+            "authorization_version",
+            "policy_version",
+            "trace_id",
+            "request_id",
+        )
+    }
+    claims.update(
+        issued_at=now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        expires_at=(now + timedelta(seconds=25)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        jti="jti_" + uuid4().hex,
+    )
+    operation = "op_" + uuid4().hex
+    typ = WORKSPACE_TYP if not action.startswith("agri.") else BUSINESS_TYP
+    body = {}
+    if typ == WORKSPACE_TYP:
+        claims.update(
+            action=action,
+            operation_id=operation,
+            request_hash="0" * 64,
+            grant_plan_hash="0" * 64,
+            farm_ids=[farm_id] if action in {"farm.list", "farm.history.read"} else [],
+        )
+        if action in {"farm.create", "farm.preview.create", "farm.receipt"}:
+            body = {
+                "operation_id": operation,
+                "request_hash": "0" * 64,
+                "grant_plan_hash": "0" * 64,
+            }
+            if action != "farm.receipt":
+                body["farm"] = farm_input()
+        elif action == "farm.list":
+            body = {
+                "farm_ids": [farm_id],
+                "status": "active",
+                "limit": 50,
+                "after_id": "",
+                "search": "",
+            }
+        elif action == "farm.history.read":
+            body = {"farm_id": farm_id}
+    else:
+        ref = {"kind": "farm", "id": farm_id}
+        claims.update(
+            scopes=[action],
+            farm_ids=[farm_id],
+            resource_scope=[ref],
+            resource_versions=[{"resource": ref, "revision": 1}],
+        )
+        if method != "GET":
+            body = {"expected_revision": 1}
+            body.update(farm={"name": "Matrix new fixture name"}) if action.endswith(
+                "update"
+            ) else body.update(reason="Matrix fixture archive")
+            if route in {"farm_update", "farm_archive"}:
+                body.update(operation_id=operation, request_hash="0" * 64)
+    raw = canonicalize(json.dumps(body).encode()) if method != "GET" else b""
+    claims["request"] = {"method": method, "path": path}
+    if method != "GET":
+        claims["request"].update(
+            canonicalization_version="rfc8785-safe-v1",
+            payload_hash=hashlib.sha256(raw).hexdigest(),
+            operation_id=operation,
+        )
+    return method, path, raw, claims, typ
+
+
 def assert_private_denial(response, method):
     assert "no-store" in response.headers["cache-control"]
     assert not any(
@@ -349,8 +515,13 @@ def assert_private_denial(response, method):
     if method == "HEAD":
         assert response.content == b""
     else:
-        assert set(response.json()) == {"code"}
-        assert isinstance(response.json()["code"], str)
+        if response.request.url.path.startswith(PREFIX + "/farms"):
+            assert set(response.json()) == {"error"}
+            assert set(response.json()["error"]) == {"code"}
+            assert isinstance(response.json()["error"]["code"], str)
+        else:
+            assert set(response.json()) == {"code"}
+            assert isinstance(response.json()["code"], str)
         for secret in (
             "tenant_a",
             "workspace_a",
@@ -374,6 +545,33 @@ async def test_isolation_signed_route_negative_no_domain_effect(
     response, expected = await perform(isolation_pg, route, case)
     assert response.status_code == expected
     assert_private_denial(response, ROUTES[route][0])
+    assert await domain_snapshot(isolation_pg[8]) == before
+
+
+@pytest.mark.asyncio(loop_scope="module")
+@pytest.mark.parametrize("route", FARM_ROUTES)
+@pytest.mark.parametrize("case", FARM_SIGNATURE_CASES)
+async def test_isolation_farm_signature_negative_no_domain_effect(
+    isolation_pg, route, case
+):
+    before = await domain_snapshot(isolation_pg[8])
+    response, expected = await perform(isolation_pg, route, case)
+    assert response.status_code == expected == 401
+    assert_private_denial(response, FARM_ROUTES[route][0])
+    assert await domain_snapshot(isolation_pg[8]) == before
+
+
+@pytest.mark.asyncio(loop_scope="module")
+@pytest.mark.parametrize("route", FARM_ROUTES)
+async def test_isolation_farm_missing_provider_closed(isolation_pg, route):
+    services = copy.copy(isolation_pg[1])
+    services.ownership = services.authority = services.farm_store = (
+        services.farm_authority
+    ) = None
+    before = await domain_snapshot(isolation_pg[8])
+    response, _ = await perform(isolation_pg, route, app=create_app(services))
+    assert response.status_code == 503
+    assert_private_denial(response, FARM_ROUTES[route][0])
     assert await domain_snapshot(isolation_pg[8]) == before
 
 

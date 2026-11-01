@@ -1,0 +1,334 @@
+{
+  "passed": true,
+  "data_class": "fixture",
+  "live_farm_data": false,
+  "required_count": 81,
+  "observed_count": 81,
+  "tests": [
+    {
+      "name": "test_agriculture_farms_config.py::test_farm_dictionary_versioned_multi_region_immutable_snapshot",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_config.py::test_farm_dictionary_bad_deployment_fails_closed[<lambda>0]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_config.py::test_farm_dictionary_bad_deployment_fails_closed[<lambda>1]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_config.py::test_farm_dictionary_bad_deployment_fails_closed[<lambda>2]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_config.py::test_farm_dictionary_bad_deployment_fails_closed[<lambda>3]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_config.py::test_farm_dictionary_bad_deployment_fails_closed[<lambda>4]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_config.py::test_farm_dictionary_bad_deployment_fails_closed[<lambda>5]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_config.py::test_farm_dictionary_bad_deployment_fails_closed[<lambda>6]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_config.py::test_farm_dictionary_bad_deployment_fails_closed[<lambda>7]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_config.py::test_farm_dictionary_bad_deployment_fails_closed[<lambda>8]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_config.py::test_farm_dictionary_bad_deployment_fails_closed[<lambda>9]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_config.py::test_farm_dictionary_bad_deployment_fails_closed[<lambda>10]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_config.py::test_farm_dictionary_bad_deployment_fails_closed[<lambda>11]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_config.py::test_farm_dictionary_missing_duplicate_json_and_symlink_fail_closed",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_config.py::test_farm_dictionary_selection_is_explicit[old-north-Asia/Shanghai-ha-409]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_config.py::test_farm_dictionary_selection_is_explicit[fixture-1-unconfigured-Asia/Shanghai-ha-422]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_config.py::test_farm_dictionary_selection_is_explicit[fixture-1-south-Asia/Shanghai-mu-422]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_config.py::test_farm_dictionary_selection_is_explicit[fixture-1-north-UTC-ha-422]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_config.py::test_farm_dictionary_selection_is_explicit[fixture-1-region4-UTC-ha-422]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_geometry.py::test_farm_geometry_structure_preserves_holes_multipolygons_and_source",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_geometry.py::test_farm_geometry_rejects_malformed_unbounded_input[<lambda>0]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_geometry.py::test_farm_geometry_rejects_malformed_unbounded_input[<lambda>1]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_geometry.py::test_farm_geometry_rejects_malformed_unbounded_input[<lambda>2]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_geometry.py::test_farm_geometry_rejects_malformed_unbounded_input[<lambda>3]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_geometry.py::test_farm_geometry_rejects_malformed_unbounded_input[<lambda>4]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_geometry.py::test_farm_geometry_rejects_malformed_unbounded_input[<lambda>5]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_geometry.py::test_farm_geometry_rejects_malformed_unbounded_input[<lambda>6]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_geometry.py::test_farm_geometry_rejects_malformed_unbounded_input[<lambda>7]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_geometry.py::test_farm_geometry_rejects_malformed_unbounded_input[<lambda>8]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_geometry.py::test_farm_geometry_rejects_malformed_unbounded_input[<lambda>9]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_geometry.py::test_farm_geometry_rejects_malformed_unbounded_input[<lambda>10]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_geometry.py::test_farm_geometry_rejects_malformed_unbounded_input[<lambda>11]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_geometry.py::test_farm_geometry_rejects_malformed_unbounded_input[<lambda>12]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_geometry.py::test_farm_geometry_rejects_malformed_unbounded_input[<lambda>13]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_geometry.py::test_farm_geometry_never_guesses_crs_or_axis[None-longitude_latitude]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_geometry.py::test_farm_geometry_never_guesses_crs_or_axis[-longitude_latitude]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_geometry.py::test_farm_geometry_never_guesses_crs_or_axis[EPSG:3857-longitude_latitude]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_geometry.py::test_farm_geometry_never_guesses_crs_or_axis[source3-longitude_latitude]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_geometry.py::test_farm_geometry_never_guesses_crs_or_axis[EPSG:4326-latitude_longitude]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_geometry.py::test_farm_geometry_explicit_polar_antimeridian_profile_boundary[value0]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_geometry.py::test_farm_geometry_explicit_polar_antimeridian_profile_boundary[value1]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_geometry.py::test_farm_geometry_real_postgis_golden_spheroid_holes_multi",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_geometry.py::test_farm_geometry_real_postgis_topology_and_area_denials",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_workspace_profile_exact_fixed_action_control[farm.preview.create]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_workspace_profile_exact_fixed_action_control[farm.create]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_workspace_profile_exact_fixed_action_control[farm.receipt]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_workspace_profile_exact_fixed_action_control[farm.context]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_workspace_profile_exact_fixed_action_control[farm.list]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_workspace_profile_exact_fixed_action_control[farm.history.read]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_workspace_profile_rejects_mutations[extra]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_workspace_profile_rejects_mutations[actor]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_workspace_profile_rejects_mutations[tenant]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_workspace_profile_rejects_mutations[audience]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_workspace_profile_rejects_mutations[policy]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_workspace_profile_rejects_mutations[expired]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_workspace_profile_rejects_mutations[operation]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_workspace_profile_rejects_mutations[request_hash]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_workspace_profile_rejects_mutations[grant_hash]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_workspace_profile_rejects_mutations[body_hash]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_workspace_profile_rejects_mutations[path]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_workspace_profile_rejects_mutations[method]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_workspace_profile_rejects_mutations[farm_ids]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_workspace_profile_rejects_mutations[version_bool]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_read_profile_never_accepts_empty_or_extra_farm_set[farm.list]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_read_profile_never_accepts_empty_or_extra_farm_set[farm.history.read]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_workspace_and_business_profiles_cannot_be_substituted",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_callback_signed_body_and_current_epoch_component",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_callback_fail_closed_component[403-body0]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_callback_fail_closed_component[302-body1]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_callback_fail_closed_component[200-body2]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_callback_fail_closed_component[200-body3]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_callback_fail_closed_component[200-body4]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_identity.py::test_farm_all_new_routes_unsigned_fail_closed_without_providers",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_store_postgres.py::test_farm_store_create_geometry_receipt_outbox_dictionary_atomic",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_store_postgres.py::test_farm_store_receipt_idempotency_and_payload_conflicts",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_store_postgres.py::test_farm_store_duplicate_external_code_concurrent_atomic",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_store_postgres.py::test_farm_store_rls_cross_tenant_workspace_and_pool_reset",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_store_postgres.py::test_farm_store_expected_revision_race_archive_and_history",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_store_postgres.py::test_farm_store_bad_changes_expiry_and_dictionary_drift_no_writes",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_store_postgres.py::test_farm_store_database_identity_and_append_only_guards",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farms_store_postgres.py::test_farm_store_real_migration_replay_preserves_data_and_rls",
+      "passed": true
+    }
+  ],
+  "contract_sha256": "05f689775f96e1cfb0bf96904065783c1e13a900bd86871186671ae581fb5e89"
+}

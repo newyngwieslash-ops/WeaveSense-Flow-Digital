@@ -16,6 +16,9 @@ for suite in agriculture legacy cache; do
   printf '%s\n' '{"passed":false,"status":"not_run","tests":[]}' > ".local/evidence/scope-stream-$suite.json"
 done
 printf '%s\n' '{"passed":false,"status":"not_run"}' > .local/evidence/identity-isolation.json
+printf '%s\n' '{"passed":false,"status":"not_run"}' > .local/evidence/identity-farms.json
+printf '%s\n' '{"passed":false,"status":"not_run"}' > .local/evidence/identity-farm-flow.json
+printf '%s\n' '{"result":"not_run","results":[]}' > .local/evidence/farm-chain-browser.json
 if [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} == 1 ]]; then
   printf '%s\n' '{"passed":false,"status":"not_run","tests":[]}' > .local/evidence/identity-chain-go.json
   printf '%s\n' '{"result":"not_run","results":[]}' > .local/evidence/identity-chain-browser.json
@@ -104,6 +107,7 @@ export AGRI_TEST_GEO_RUNTIME_DSN="postgres://flow_geo_app:$GEO_RUNTIME_PASSWORD@
 export AGRI_TEST_GEO_WORKER_DSN="postgres://flow_geo_worker:$GEO_WORKER_PASSWORD@127.0.0.1:$port/flow_geo?sslmode=disable"
 export AGRI_TEST_PG_MIGRATION_DSN="postgres://flow_platform_migrate:$PLATFORM_MIGRATION_PASSWORD@127.0.0.1:$port/flow_platform?sslmode=disable"
 export AGRI_TEST_PG_RUNTIME_DSN="postgres://flow_platform_app:$PLATFORM_RUNTIME_PASSWORD@127.0.0.1:$port/flow_platform?sslmode=disable"
+export AGRI_TEST_PG_SYSTEM_DSN="postgres://flow_platform_system:$PLATFORM_SYSTEM_PASSWORD@127.0.0.1:$port/flow_platform?sslmode=disable"
 export AGRI_TEST_PG_ISOLATED=1
 export IDENTITY_PG_VERSION="$(sql geo app flow_geo 'SELECT version()')"
 export IDENTITY_IMAGE_ID="$(docker inspect --format '{{.Image}}' "$container")"
@@ -198,7 +202,37 @@ export AGRI_ISOLATION_REPORT_DIR="$PWD/.local/evidence"
 isolation_code=$?
 python3 scripts/agriculture/isolation-matrix-result.py --input "$private/isolation.xml" --reports-dir .local/evidence --output .local/evidence/identity-isolation.json
 isolation_gate=$?
+# Exact farm geometry/configuration/identity and actual PostGIS store checks.
+(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_farms_config.py tests/test_agriculture_farms_geometry.py tests/test_agriculture_farms_identity.py tests/test_agriculture_farms_store_postgres.py --junitxml="$private/farm-python.xml" -q) > "$private/farm-python.log" 2>&1
+farm_python_code=$?
+python3 scripts/agriculture/farm-python-result.py --input "$private/farm-python.xml" --output .local/evidence/identity-farm-python.json
+farm_python_gate=$?
+# Farm acceptance always uses the actual runtime, two owned databases, Redis,
+# real browser and the race detector. Raw Go/browser logs stay private.
+export AGRI_FARM_CHAIN_REQUIRED=1
+export AGRI_FARM_AUTH_COMPONENT_ONLY=0
+python3 - "$private/farm-mode.json" <<'PY'
+import json, os, sys
+from pathlib import Path
+Path(sys.argv[1]).write_text(json.dumps({
+    'auth_component_only': os.environ['AGRI_FARM_AUTH_COMPONENT_ONLY'] != '0',
+    'race': True, 'required': os.environ['AGRI_FARM_CHAIN_REQUIRED'] == '1',
+}) + '\n')
+PY
+"${GO_BIN:-go}" -C backend test -race ./internal/agriculture -run '^TestFarm(HTTP|Browser)PostgresChain$' -count=1 -timeout 15m -json > "$private/farms.jsonl" 2> "$private/farms-stderr.log"
+farms_code=$?
+python3 scripts/agriculture/farm-ci-result.py --input "$private/farms.jsonl" \
+  --browser .local/evidence/farm-chain-browser.json --bootstrap .local/evidence/identity-bootstrap.json \
+  --mode "$private/farm-mode.json" --output .local/evidence/identity-farms.json
+farms_gate=$?
+"${GO_BIN:-go}" -C backend test -race ./internal/flow -run '^Test(CommandAdapterPostgres|FlowPostgresWorkerShortTransactions)$' -count=1 -timeout 10m -json > "$private/farm-flow.jsonl" 2> "$private/farm-flow-stderr.log"
+farm_flow_code=$?
+python3 scripts/agriculture/farm-flow-result.py --input "$private/farm-flow.jsonl" --output .local/evidence/identity-farm-flow.json
+farm_flow_gate=$?
 set -e
+[[ $farm_flow_code == 0 && $farm_flow_gate == 0 ]] || { echo 'Farm dispatcher and legacy worker acceptance failed; inspect sanitized evidence'; exit 1; }
+[[ $farm_python_code == 0 && $farm_python_gate == 0 ]] || { echo 'Farm Python/PostGIS acceptance failed; inspect sanitized evidence'; exit 1; }
+[[ $farms_code == 0 && $farms_gate == 0 ]] || { echo 'Real farm HTTP/browser acceptance failed; inspect sanitized evidence'; exit 1; }
 [[ $isolation_code == 0 && $isolation_gate == 0 ]] || { echo 'Isolation route matrix failed; inspect sanitized evidence'; exit 1; }
 [[ $scoped_stream_code == 0 && $scoped_stream_gate == 0 && $legacy_stream_code == 0 && $legacy_stream_gate == 0 && $scoped_cache_code == 0 && $scoped_cache_gate == 0 ]] || { echo 'Scoped cache/stream acceptance failed; inspect sanitized reports'; exit 1; }
 [[ $python_code == 0 && $python_gate == 0 && $go_code == 0 && $go_gate == 0 && $actors_code == 0 && $actors_gate == 0 && $domain_code == 0 && $domain_gate == 0 && $query_code == 0 && $query_gate == 0 && $objects_code == 0 && $objects_gate == 0 && $jobs_code == 0 && $jobs_gate == 0 && $chain_code == 0 && $chain_gate == 0 ]] || { echo 'Identity acceptance failed; inspect sanitized reports, no raw secrets exported'; exit 1; }

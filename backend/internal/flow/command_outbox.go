@@ -42,6 +42,7 @@ type CommandDispatcher struct {
 	tenantID string // set only by fixed background tenant discovery
 	DB       *gorm.DB
 	Engine   EngineCaller
+	Adapters map[string]CommandAdapter
 	Now      func() time.Time
 	Lease    time.Duration
 	Backoff  time.Duration
@@ -88,6 +89,15 @@ func (d CommandDispatcher) Enqueue(ctx context.Context, in CommandInput) (model.
 	var out model.FlowCommandOutbox
 	if d.DB == nil {
 		return out, false, errors.New("flow: command outbox db not configured")
+	}
+	if adapterRequired(in.Command) && d.adapter(in.Command) == nil {
+		return out, false, ErrCommandAdapterUnavailable
+	}
+	if d.adapter(in.Command) != nil && (in.ReserveMicro != 0 || in.Actor.Type != "user" || in.Actor.ID == "" || in.Scope.TenantID == "" || in.Scope.WorkspaceID == "" || strings.TrimSpace(in.IdempotencyKey) == "") {
+		return out, false, errors.New("flow: invalid adapter command input")
+	}
+	if d.adapter(in.Command) != nil {
+		return d.enqueueAdapter(ctx, in)
 	}
 	now := d.now()
 	hash := commandRequestHash(in.Command, in.Scope.WorkspaceID, in.Method, in.Path, in.Payload)
@@ -143,7 +153,7 @@ func (d CommandDispatcher) Enqueue(ctx context.Context, in CommandInput) (model.
 			return err
 		}
 		actorRole := in.Scope.Role
-		if actorRole == "" {
+		if actorRole == "" && d.adapter(in.Command) == nil {
 			actorRole = "editor"
 		}
 		row := model.FlowCommandOutbox{
@@ -193,14 +203,22 @@ func (d CommandDispatcher) DispatchOne(ctx context.Context, id string) (model.Fl
 	if row.Status == "dispatched" || row.Status == "failed" || row.Status == StatusReconciliation {
 		return row, nil
 	}
-	if d.Engine == nil {
+	adapter := d.adapter(row.Command)
+	if adapter == nil && adapterRequired(row.Command) {
+		return row, ErrCommandAdapterUnavailable
+	}
+	if d.Engine == nil && adapter == nil {
 		return row, errors.New("flow: engine caller not configured")
 	}
 	now := d.now()
 	until := now.Add(d.lease())
 	var claimed bool
 	err := d.databaseWork(func(d CommandDispatcher) error {
-		claim := d.DB.Model(&model.FlowCommandOutbox{}).Where("id = ? AND (status IN ? OR (status = 'dispatching' AND lease_until < ?))", id, []string{"pending", StatusRetryWait}, now).Updates(map[string]any{"status": "dispatching", "lease_until": until, "attempts": gorm.Expr("attempts + 1"), "updated_at": now})
+		query := d.DB.Model(&model.FlowCommandOutbox{}).Where("id = ? AND (status IN ? OR (status = 'dispatching' AND lease_until < ?))", id, []string{"pending", StatusRetryWait}, now)
+		if adapter != nil {
+			query = query.Where("next_attempt_at <= ? AND attempts < max_attempts", now)
+		}
+		claim := query.Updates(map[string]any{"status": "dispatching", "lease_until": until, "attempts": gorm.Expr("attempts + 1"), "updated_at": now})
 		if claim.Error != nil {
 			return claim.Error
 		}
@@ -213,6 +231,9 @@ func (d CommandDispatcher) DispatchOne(ctx context.Context, id string) (model.Fl
 	// A losing claimant must not send an already-running request a second time.
 	if !claimed {
 		return row, nil
+	}
+	if adapter != nil {
+		return d.dispatchAdapter(ctx, row, adapter)
 	}
 	callCtx := ctx
 	if row.CapabilitySnapshot != "" {
@@ -396,7 +417,7 @@ func (d CommandDispatcher) EnqueueAndDispatch(ctx context.Context, in CommandInp
 // DispatchDue claims and dispatches due pending / retry_wait outbox rows.
 // Expired dispatching leases are moved to reconciliation_required (PRD §11.3 no blind resend after lost ACK).
 func (d CommandDispatcher) DispatchDue(ctx context.Context, limit int) (int, error) {
-	if d.DB == nil || d.Engine == nil {
+	if d.DB == nil || (d.Engine == nil && len(d.Adapters) == 0) {
 		return 0, nil
 	}
 	if d.DB.Dialector.Name() == "postgres" && d.tenantID == "" {
@@ -425,6 +446,17 @@ func (d CommandDispatcher) DispatchDue(ctx context.Context, limit int) (int, err
 	now := d.now()
 	var due []model.FlowCommandOutbox
 	err := d.databaseWork(func(d CommandDispatcher) error {
+		// Domain adapters guarantee business-idempotent recovery using the same
+		// persisted operation. Expired attempts are fenced by Attempts/status;
+		// the legacy Loom lost-ACK policy below remains unchanged.
+		for command, adapter := range d.Adapters {
+			if adapter == nil {
+				continue
+			}
+			if err := d.DB.Model(&model.FlowCommandOutbox{}).Where("command=? AND status='dispatching' AND lease_until IS NOT NULL AND lease_until < ? AND attempts < max_attempts", command, now).Updates(map[string]any{"status": StatusRetryWait, "lease_until": nil, "next_attempt_at": now, "last_error": "adapter lease expired; resume original operation", "updated_at": now}).Error; err != nil {
+				return err
+			}
+		}
 		if err := d.DB.Model(&model.FlowCommandOutbox{}).Where("status = 'dispatching' AND lease_until IS NOT NULL AND lease_until < ?", now).Updates(map[string]any{"status": StatusReconciliation, "lease_until": nil, "last_error": "dispatch lease expired; outcome unknown", "updated_at": now}).Error; err != nil {
 			return err
 		}

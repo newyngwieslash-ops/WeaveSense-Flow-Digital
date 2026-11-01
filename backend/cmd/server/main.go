@@ -149,7 +149,8 @@ func run(ctx context.Context) error {
 		cookie, _ := c.Cookie(service.SessionCookieName)
 		return svc.CurrentUser(cookie)
 	}
-	if err := agriculture.RegisterFromEnv(r, api, db, flowUser); err != nil {
+	farmPlatform, err := agriculture.RegisterFromEnvWithFarms(r, api, db, flowUser)
+	if err != nil {
 		return err
 	}
 	// Every authenticated flow request runs in a tenant-scoped transaction (RLS enforced).
@@ -195,8 +196,15 @@ func run(ctx context.Context) error {
 	}
 	go flow.RunNotifier(ctx, flow.Notifier{DB: db, Scanner: backgroundScanner, Mail: flow.SMTPMailerFromEnv(), BaseURL: os.Getenv("FLOW_PUBLIC_BASE_URL")}, 10*time.Second)
 	go flow.RunBillingMaintenance(ctx, db, 15*time.Minute, backgroundScanner)
-	if flowCfg.Enabled() {
-		go flow.RunCommandDispatcher(ctx, flow.CommandDispatcher{DB: db, Scanner: backgroundScanner, Engine: flow.EngineClient{Cfg: flowCfg}}, 2*time.Second)
+	if flowCfg.Enabled() || farmPlatform != nil {
+		dispatcher := flow.CommandDispatcher{DB: db, Scanner: backgroundScanner}
+		if flowCfg.Enabled() {
+			dispatcher.Engine = flow.EngineClient{Cfg: flowCfg}
+		}
+		if farmPlatform != nil {
+			dispatcher.Adapters = farmPlatform.Dispatcher.Adapters
+		}
+		go flow.RunCommandDispatcher(ctx, dispatcher, 2*time.Second)
 	}
 	go svc.RunFlowAutoContinue(ctx, 5*time.Second)
 	r.NoRoute(handler.SystemProxyNoRouteHandler(svc))

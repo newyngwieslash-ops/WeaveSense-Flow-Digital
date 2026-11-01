@@ -79,7 +79,7 @@
       "type": "array",
       "items": {
         "type": "string",
-        "pattern": "^agri\\.[a-z_]+\\.(read|create|update|delete|submit|cancel|publish|review|claim)$"
+        "pattern": "^(agri\\.[a-z_]+\\.(read|create|update|delete|submit|cancel|publish|review|claim)|agri\\.farm\\.archive)$"
       },
       "minItems": 1,
       "maxItems": 1,

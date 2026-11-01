@@ -11,9 +11,9 @@ export default defineConfig({
     generateBundle(_options, bundle) {
       const modules = Object.values(bundle).flatMap((item) => item.type === 'chunk' ? Object.keys(item.modules) : [])
       for (const module of modules) {
-        if (/(?:\/src\/|\/node_modules\/(?:cesium|@cesium|ol|tldraw|@tldraw)\/)/.test(module.replaceAll('\\', '/'))) this.error(`Unexpected business/map module in session-only profile: ${module}`)
+        if (/(?:\/src\/|\/node_modules\/(?:cesium|@cesium|tldraw|@tldraw)\/)/.test(module.replaceAll('\\', '/'))) this.error(`Unexpected legacy/3D/licensed canvas module in agricultural profile: ${module}`)
       }
-      this.emitFile({ type: 'asset', fileName: 'agriculture-profile.json', source: JSON.stringify({ profile: 'vue-session-boundary', business_api: 'not_implemented', modules: modules.map((module) => module.replace(fileURLToPath(new URL('.', import.meta.url)), './')).sort() }, null, 2) })
+      this.emitFile({ type: 'asset', fileName: 'agriculture-profile.json', source: JSON.stringify({ profile: 'vue-agriculture-farms', business_api: 'same-origin-platform-canonical-v1', map: 'openlayers-vector-only-no-external-basemap', modules: modules.map((module) => module.replace(fileURLToPath(new URL('.', import.meta.url)), './')).sort() }, null, 2) })
     },
   }],
   build: { outDir: '../dist-agriculture', emptyOutDir: true },

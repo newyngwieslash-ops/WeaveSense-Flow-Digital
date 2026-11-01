@@ -1,6 +1,9 @@
 # Agriculture v1 minimum machine contracts
 
-Status: **W00 contract subset only**, not implemented routes or accepted product.
+Status: original **W00 contract subset** remains explicitly contract-only.
+DT025 adds strict farm request/receipt and workspace-operation schemas while its
+runtime is in progress; OpenAPI marks the individual subsets separately. Neither
+schema validation nor this document is runtime or live product acceptance.
 Source: `specs/agriculture/v1.0.0/docs/DATA_API_CONTRACTS.md`.
 
 The schemas use JSON Schema 2020-12 and offline `$id` registration. The reserved

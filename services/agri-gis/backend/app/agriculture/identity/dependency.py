@@ -27,6 +27,8 @@ class IdentityServices:
     replay: ReplayLedger | None = None
     object_store: object | None = None
     object_storage: object | None = None
+    farm_store: object | None = None
+    farm_authority: object | None = None
 
 
 async def verify_request(request: Request, typ: str, action: str) -> Verified:

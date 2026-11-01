@@ -10,6 +10,9 @@ import httpx
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from ..database import create_runtime_pool
+from ..farms_config import FarmDictionary
+from ..farms_identity import FarmAuthority
+from ..farms_store import FarmOwnership, FarmStore
 from ..object_storage import PrivateLocalStorage
 from ..object_store import PostgresObjectStore
 from .callback import CallbackKey, PlatformAuthority
@@ -67,6 +70,12 @@ async def configured_services():
                 pool = await create_runtime_pool(dsn)
                 await PostgresReplayLedger(pool).require_safe_runtime()
             object_store = object_storage = None
+            farm_store = None
+            farm_config = os.environ.get("AGRI_FARM_DICTIONARY_CONFIG")
+            if pool is not None and farm_config:
+                dictionary = FarmDictionary.from_file(farm_config)
+                farm_store = FarmStore(pool, dictionary)
+                await farm_store.require_ready()
             object_root = os.environ.get("AGRI_PRIVATE_OBJECT_ROOT")
             if object_root:
                 if pool is None:
@@ -82,6 +91,9 @@ async def configured_services():
                 replay=PostgresReplayLedger(pool) if pool else None,
                 object_store=object_store,
                 object_storage=object_storage,
+                ownership=FarmOwnership(pool) if farm_store else None,
+                farm_store=farm_store,
+                farm_authority=FarmAuthority(config["platform_base_url"], key, client),
             )
         except Exception:
             raise RuntimeError(

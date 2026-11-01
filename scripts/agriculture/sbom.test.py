@@ -84,6 +84,41 @@ class InventoryBoundaryTests(unittest.TestCase):
         )
         self.assertEqual(record["sha256"], sbom.sha(path))
 
+    def test_farm_profile_requires_exact_api_and_vector_only_map(self):
+        graph = {
+            "profile": "vue-agriculture-farms",
+            "business_api": "same-origin-platform-canonical-v1",
+            "map": "openlayers-vector-only-no-external-basemap",
+            "modules": ["./agriculture/main.ts", "node_modules/ol/Map.js"],
+        }
+        sbom.validate_boundary(self.root, self.react, graph)
+        for key in ("profile", "business_api", "map"):
+            for value in (None, "", "unreviewed"):
+                with self.subTest(key=key, value=value):
+                    bad = {**graph, key: value}
+                    with self.assertRaises(ValueError):
+                        sbom.validate_boundary(self.root, self.react, bad)
+
+    def test_profiles_reject_legacy_drawing_and_three_dimensional_modules(self):
+        for profile in ("vue-session-boundary", "vue-agriculture-farms"):
+            for module in (
+                "src/store/userStore.ts", "./src/main.ts",
+                r".\src\main.ts", "node_modules/cesium/index.js",
+                "node_modules/@cesium/engine/index.js",
+                r"node_modules\cesium\index.js",
+                "node_modules/tldraw/dist/index.js",
+                r"node_modules\@tldraw\editor\dist.js",
+            ):
+                with self.subTest(profile=profile, module=module):
+                    graph = {
+                        "profile": profile,
+                        "business_api": "same-origin-platform-canonical-v1",
+                        "map": "openlayers-vector-only-no-external-basemap",
+                        "modules": ["./agriculture/main.ts", module],
+                    }
+                    with self.assertRaises(ValueError):
+                        sbom.validate_boundary(self.root, self.react, graph)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -13,6 +13,9 @@ GIS_CASES = {"test_isolation_exact_production_route_manifest", "test_isolation_p
 GIS_CASES |= {f"test_isolation_signed_route_negative_no_domain_effect[{case}-{route}]" for case in NEGATIVES for route in ROUTES}
 GIS_CASES |= {f"test_isolation_production_missing_dependencies_closed[{route}]" for route in ROUTES}
 GIS_CASES |= {f"test_isolation_job_snapshot_epoch_no_domain_effect[{route}]" for route in ("job_accept", "job_checkpoint")}
+FARM_ROUTES = ("farm_preview_create", "farm_create", "farm_receipt", "farm_context", "farm_list", "farm_history", "farm_read", "farm_preview_update", "farm_preview_archive", "farm_update", "farm_archive")
+GIS_CASES |= {f"test_isolation_farm_signature_negative_no_domain_effect[{case}-{route}]" for case in NEGATIVES[:6] for route in FARM_ROUTES}
+GIS_CASES |= {f"test_isolation_farm_missing_provider_closed[{route}]" for route in FARM_ROUTES}
 GO_CASES = {"test_isolation_go_route_matrix", "test_isolation_go_double_postgres_objects", "test_isolation_go_postgres_projections"}
 REQUIRED = {(GIS_MODULE, n) for n in GIS_CASES} | {(GO_MODULE, n) for n in GO_CASES}
 def strict_json(raw):
@@ -43,10 +46,10 @@ GO_EXPECTED.update({name: {value["root"]} | {value["root"] + "/" + c for c in va
 # The reviewed baseline has one row per registered method/path and one row per
 # actual HTTP request. Contract edits cannot silently collapse duplicates.
 assert CONTRACT["schema_version"] == "1.0"
-assert len(EXPECTED_ROUTES) == len(CONTRACT["routes"]) == 21
-assert len({row["id"] for row in CONTRACT["routes"]}) == 21
-assert len(EXPECTED_OBSERVATIONS) == sum(len(row["cases"]) for row in CONTRACT["routes"]) == 158
-assert len(GO_EXPECTED["matrix"]) == 180
+assert len(EXPECTED_ROUTES) == len(CONTRACT["routes"]) == 30
+assert len({row["id"] for row in CONTRACT["routes"]}) == 30
+assert len(EXPECTED_OBSERVATIONS) == sum(len(row["cases"]) for row in CONTRACT["routes"]) == 229
+assert len(GO_EXPECTED["matrix"]) == 260
 assert len(GO_EXPECTED["objects"]) == 4 and len(GO_EXPECTED["projections"]) == 6
 
 
@@ -98,7 +101,7 @@ def reduce(raw, reports):
             "auth_component_only": any(reports[s].get("auth_component_only") is True for s in GO_ROOTS),
             "race_enabled": all(reports[s].get("race_enabled") is True for s in GO_ROOTS),
             "tests": results, "required_count": len(REQUIRED), "observed_count": len(seen),
-            "platform_route_count": len(registered), "gis_route_count": 9,
+            "platform_route_count": len(registered), "gis_route_count": 20,
             "expected_request_cases": len(EXPECTED_OBSERVATIONS),
             "contract_sha256": hashlib.sha256(CONTRACT_BYTES).hexdigest(),
             "denial_snapshot_observations": sum(row.get("status", 0) >= 400 for row in observations),

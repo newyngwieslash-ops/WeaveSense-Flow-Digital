@@ -8,6 +8,12 @@ on:
       - 'scripts/agriculture/**'
       - 'backend/internal/agriculture/**'
       - 'backend/internal/agricanonical/**'
+      - 'backend/internal/handler/routes.go'
+      - 'backend/internal/handler/agent.go'
+      - 'backend/internal/handler/*stream*test.go'
+      - 'backend/internal/handler/text_events_test.go'
+      - 'backend/internal/app/text_replay_cache.go'
+      - 'backend/internal/app/read_cache_integration_test.go'
       - 'backend/go.*'
       - 'services/agri-gis/backend/**'
       - 'tests/agriculture/fixtures/identity-canonical.json'
@@ -47,6 +53,7 @@ jobs:
           python3 scaffold/scripts/agriculture/session-ci-prepare.test.py
           python3 scaffold/scripts/agriculture/identity-ci-result.test.py
           python3 scaffold/scripts/agriculture/identity-chain-result.test.py
+          python3 scaffold/scripts/agriculture/scope-stream-result.test.py
           python3 scaffold/tests/agriculture/test_identity_chain_configuration.py
           node --test scaffold/scripts/agriculture/identity-chain-browser.test.mjs
       - name: Assemble pinned upstreams and explicit reviewed overlay
@@ -100,10 +107,19 @@ jobs:
           records = [{'name': p.name, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest(), 'version': subprocess.check_output(['dpkg-deb', '-f', str(p), 'Version'], text=True).strip()} for p in sorted(pathlib.Path('.local/chain-nginx/download').glob('*.deb'))]
           pathlib.Path('.local/evidence/identity-chain-nginx.json').write_text(json.dumps({'source': 'Ubuntu runner official apt repositories', 'packages': records, 'same_version_as_docker_image': False}, indent=2) + '\n')
           PY
+      - name: Explicit GIS migration command on an independent fresh database
+        working-directory: product
+        env:
+          AGRI_GEO_MIGRATION_ONLY: '1'
+          AGRI_IDENTITY_CHAIN_REQUIRED: '0'
+        run: |
+          export AGRI_IDENTITY_PYTHON="$PWD/.local/identity-rebuild/venv/bin/python"
+          bash scripts/agriculture/identity-postgres-ci.sh
       - name: Actual signed HTTP and PostgreSQL replay acceptance
         working-directory: product
         env:
           AGRI_IDENTITY_CHAIN_REQUIRED: '1'
+          AGRI_GEO_MIGRATION_ONLY: '0'
         run: |
           export AGRI_IDENTITY_PYTHON="$PWD/.local/identity-rebuild/venv/bin/python"
           bash scripts/agriculture/identity-postgres-ci.sh
@@ -120,6 +136,7 @@ jobs:
           path: |
             product/.local/evidence/identity-*.json
             product/.local/evidence/identity-*.xml
+            product/.local/evidence/scope-stream-*.json
             product/.local/evidence/session-ci-provenance.json
           include-hidden-files: true
           if-no-files-found: warn

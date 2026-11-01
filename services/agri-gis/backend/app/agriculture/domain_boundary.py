@@ -32,6 +32,14 @@ IDENTITY_TABLES = frozenset(
     }
 )
 OWNERSHIP_TABLE = "agriculture_legacy_plot_ownership"
+REFERENCE_TABLE = "agriculture_legacy_resource_references"
+OBJECT_TABLE = "agriculture_private_objects"
+JOB_AUTHORITY_TABLES = frozenset(
+    {
+        "agriculture_job_authorities",
+        "agriculture_job_authority_checks",
+    }
+)
 
 
 def actual_model_inventory():
@@ -72,13 +80,20 @@ async def require_domain_boundary(connection, role="flow_geo_app"):
         if await connection.fetchval("SELECT current_user") != role:
             raise ValueError("domain runtime role mismatch")
         validate_model_inventory()
-        expected = sorted(LEGACY_TABLES | IDENTITY_TABLES | {OWNERSHIP_TABLE})
+        expected = sorted(
+            LEGACY_TABLES
+            | IDENTITY_TABLES
+            | {OWNERSHIP_TABLE, REFERENCE_TABLE, OBJECT_TABLE}
+            | JOB_AUTHORITY_TABLES
+        )
         rows = await connection.fetch(
             "SELECT c.relname,c.relrowsecurity,c.relforcerowsecurity,"
             "pg_get_userbyid(c.relowner) AS owner,"
             "has_table_privilege(current_user,c.oid,'SELECT') AS can_read,"
             "has_table_privilege(current_user,c.oid,'INSERT') AS can_insert,"
             "has_table_privilege(current_user,c.oid,'UPDATE') AS can_update,"
+            "has_table_privilege(current_user,c.oid,'REFERENCES,TRIGGER') "
+            "AS can_manage,"
             "has_table_privilege(current_user,c.oid,'DELETE,TRUNCATE') AS can_delete "
             "FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n "
             "ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname=ANY($1)",
@@ -92,10 +107,29 @@ async def require_domain_boundary(connection, role="flow_geo_app"):
                 raise ValueError("domain RLS required")
             if row["owner"] != "flow_geo_migrate":
                 raise ValueError("unexpected domain owner")
+            if name in JOB_AUTHORITY_TABLES:
+                expected_insert = (
+                    role == "flow_geo_app" or name == "agriculture_job_authority_checks"
+                )
+                if (
+                    row["can_read"],
+                    row["can_insert"],
+                    row["can_update"],
+                    row["can_delete"],
+                    row["can_manage"],
+                ) != (True, expected_insert, False, False, False):
+                    raise ValueError("job authority privilege boundary mismatch")
+                continue
             if role == "flow_geo_worker":
                 if any(
                     row[key]
-                    for key in ("can_read", "can_insert", "can_update", "can_delete")
+                    for key in (
+                        "can_read",
+                        "can_insert",
+                        "can_update",
+                        "can_delete",
+                        "can_manage",
+                    )
                 ):
                     raise ValueError("worker has no domain CRUD in this phase")
                 continue
@@ -106,17 +140,18 @@ async def require_domain_boundary(connection, role="flow_geo_app"):
                     row["can_update"],
                     row["can_delete"],
                 ) != (
-                    name in OPEN_TABLES,
+                    name in OPEN_TABLES and name != "monitoring_projects",
                     name in INSERTABLE,
                     name in UPDATABLE,
                     False,
                 ):
                     raise ValueError("domain privilege boundary mismatch")
-            if name == OWNERSHIP_TABLE and (
+            if name in {OWNERSHIP_TABLE, REFERENCE_TABLE, OBJECT_TABLE} and (
                 not row["can_read"]
                 or row["can_insert"]
                 or row["can_update"]
                 or row["can_delete"]
+                or row["can_manage"]
             ):
                 raise ValueError("ownership must be read only")
         count = await connection.fetchval(
@@ -129,6 +164,26 @@ async def require_domain_boundary(connection, role="flow_geo_app"):
         )
         if count != len(OPEN_TABLES) + len(IDENTITY_TABLES) + 1:
             raise ValueError("restrictive domain policy required")
+        sidecar_policies = await connection.fetchval(
+            "SELECT count(*) FROM pg_catalog.pg_policy p "
+            "JOIN pg_catalog.pg_class c ON c.oid=p.polrelid "
+            "JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace "
+            "WHERE n.nspname='public' AND c.relname=ANY($1) "
+            "AND NOT p.polpermissive AND p.polname='agriculture_job_scope'",
+            sorted(JOB_AUTHORITY_TABLES),
+        )
+        if sidecar_policies != len(JOB_AUTHORITY_TABLES):
+            raise ValueError("restrictive job authority policy required")
+        object_policy = await connection.fetchval(
+            "SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_policy "
+            "WHERE polrelid='public.agriculture_private_objects'::regclass "
+            "AND polname='agriculture_object_scope' AND NOT polpermissive) "
+            "AND EXISTS(SELECT 1 FROM pg_catalog.pg_trigger "
+            "WHERE tgrelid='public.agriculture_private_objects'::regclass "
+            "AND tgname='agriculture_object_immutable' AND tgenabled='O')"
+        )
+        if object_policy is not True:
+            raise ValueError("private object boundary required")
         unsafe_extra = await connection.fetchval(
             "SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_class c "
             "JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace "
@@ -143,5 +198,84 @@ async def require_domain_boundary(connection, role="flow_geo_app"):
         )
         if unsafe_extra:
             raise ValueError("unreviewed application table is not denied")
+        if role == "flow_geo_app":
+            columns = await connection.fetch(
+                "SELECT attname,has_column_privilege("
+                "current_user,attrelid,attnum,'SELECT') AS allowed "
+                "FROM pg_catalog.pg_attribute "
+                "WHERE attrelid='public.monitoring_projects'::regclass "
+                "AND attnum>0 AND NOT attisdropped"
+            )
+            if {r["attname"] for r in columns if r["allowed"]} != {
+                "id",
+                "project_code",
+                "monitor_year",
+                "status",
+            }:
+                raise ValueError("unsafe project column privileges")
+        await require_query_boundary(connection, role)
     except Exception:
         raise IdentityError("gis_domain_boundary_unavailable", 503) from None
+
+
+async def require_query_boundary(connection, role):
+    ready = await connection.fetchval("""
+SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_roles r WHERE r.rolname='flow_geo_query_guard'
+ AND NOT(r.rolcanlogin OR r.rolsuper OR r.rolbypassrls OR r.rolinherit
+  OR r.rolcreatedb OR r.rolcreaterole OR r.rolreplication))
+ AND NOT pg_has_role(current_user,'flow_geo_query_guard','MEMBER')
+ AND EXISTS(SELECT 1 FROM pg_catalog.pg_proc p
+ JOIN pg_catalog.pg_roles r ON r.oid=p.proowner
+ WHERE p.oid='public.agriculture_query_task_scope(integer,boolean)'::regprocedure
+ AND p.prosecdef AND r.rolname='flow_geo_query_guard'
+ AND p.prorettype='boolean'::regtype AND p.provolatile='s'
+ AND p.proconfig @> ARRAY['search_path=pg_catalog']
+ AND NOT EXISTS(SELECT 1 FROM pg_catalog.aclexplode(p.proacl) a
+ WHERE a.grantee=0 AND a.privilege_type='EXECUTE'))
+ AND EXISTS(SELECT 1 FROM pg_catalog.pg_class c
+ JOIN pg_catalog.pg_roles r ON r.oid=c.relowner
+ WHERE c.oid='public.agriculture_query_task_locators'::regclass AND c.relkind='v'
+ AND r.rolname='flow_geo_query_guard'
+ AND c.reloptions @> ARRAY['security_barrier=true'])
+""")
+    if ready is not True:
+        raise ValueError("query boundary missing")
+    if await connection.fetchval(
+        "SELECT has_table_privilege(current_user,"
+        "'public.agriculture_query_task_locators','SELECT')"
+    ) != (role == "flow_geo_app"):
+        raise ValueError("query locator privilege mismatch")
+    count = await connection.fetchval("""
+SELECT count(*) FROM pg_catalog.pg_policy p WHERE NOT p.polpermissive
+ AND p.polname='agriculture_query_resources'
+ AND p.polrelid=ANY(ARRAY['public.monitoring_tasks'::regclass,
+ 'public.farmland_plots'::regclass,'public.plot_versions'::regclass,
+ 'public.task_plots'::regclass,'public.review_records'::regclass,
+ 'public.plot_edit_operations'::regclass])
+""")
+    if count != 6:
+        raise ValueError("resource policies missing")
+    metadata_policies = await connection.fetchval("""
+SELECT count(*) FROM pg_catalog.pg_policy p WHERE NOT p.polpermissive
+ AND 'flow_geo_app'::regrole::oid=ANY(p.polroles) AND (
+ (p.polrelid='public.monitoring_projects'::regclass
+  AND p.polname='agriculture_query_project') OR
+ (p.polrelid='public.project_users'::regclass
+  AND p.polname='agriculture_query_actor') OR
+ (p.polrelid='public.agriculture_legacy_resource_references'::regclass
+  AND p.polname='agriculture_reference_scope'))
+""")
+    if metadata_policies != 3:
+        raise ValueError("metadata resource boundary missing")
+    columns = await connection.fetch("""
+SELECT attname FROM pg_catalog.pg_attribute
+WHERE attrelid='public.agriculture_query_task_locators'::regclass
+AND attnum>0 AND NOT attisdropped ORDER BY attnum
+""")
+    if [r["attname"] for r in columns] != ["id", "task_code", "project_id"]:
+        raise ValueError("unsafe locator projection")
+    if await connection.fetchval(
+        "SELECT has_table_privilege(current_user,"
+        "'public.agriculture_query_task_locators','INSERT,UPDATE,DELETE,TRUNCATE')"
+    ):
+        raise ValueError("locator must remain read only")

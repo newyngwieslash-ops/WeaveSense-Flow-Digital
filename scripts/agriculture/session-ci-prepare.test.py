@@ -11,6 +11,39 @@ spec.loader.exec_module(prepare)
 
 
 class PreparationTests(unittest.TestCase):
+    def test_object_job_components_and_real_fixture_dependencies_are_explicit(self):
+        required = {
+            'backend/internal/agriculture/object_gateway.go',
+            'backend/internal/agriculture/job_authority_integration_test.go',
+            'services/agri-gis/backend/app/agriculture/object_gateway.py',
+            'services/agri-gis/backend/app/agriculture/job_routes.py',
+            'services/agri-gis/backend/scripts/migrations/20261030_agriculture_private_objects.sql',
+            'services/agri-gis/backend/scripts/migrations/20261030_agriculture_job_authority.sql',
+            'services/agri-gis/backend/tests/object_http_fixture.py',
+            'services/agri-gis/backend/tests/job_fixture_support.py',
+            'services/agri-gis/backend/tests/job_http_fixture.py',
+            'services/agri-gis/backend/tests/test_agriculture_jobs_postgres.py',
+        }
+        self.assertTrue(required <= set(prepare.OVERLAY))
+
+    def test_scope_cutover_dependency_closure_is_explicit(self):
+        required = {
+            'backend/internal/database/migration_flow_scope.go',
+            'backend/internal/database/migration_flow_scanner.go',
+            'backend/internal/flow/background_scanner.go',
+            'backend/internal/flow/worker_scope_postgres_test.go',
+            'services/loom-engine/flow/db.ts',
+            'services/loom-engine/flow/install-system-role.sql',
+            'services/loom-engine/flow/tools/migrate.ts',
+            'services/loom-engine/flow/migrations/0019_scope_required.sql',
+            'deploy/agriculture/loom-migrate.mjs',
+            'services/agri-gis/backend/app/agriculture/query_inventory.json',
+            'services/agri-gis/backend/scripts/query_scope_inventory.py',
+            'services/agri-gis/backend/tests/test_query_scope_inventory.py',
+            'services/agri-gis/backend/tests/test_agriculture_query_scope_postgres.py',
+        }
+        self.assertTrue(required <= set(prepare.OVERLAY))
+
     def test_gateway_dependency_closure_is_explicit_and_unique(self):
         required = {
             "contracts/agriculture/navigation.ts",

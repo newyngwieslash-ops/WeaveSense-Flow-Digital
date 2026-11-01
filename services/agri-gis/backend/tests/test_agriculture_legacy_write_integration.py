@@ -52,6 +52,7 @@ async def legacy_fixture_context(owner_dsn, runtime_dsn, identity=None):
         "task_" + suffix,
         "parcel_" + suffix,
     )
+    farm_id = "farm_" + suffix
     needed = set()
 
     def include(table):
@@ -252,6 +253,7 @@ async def legacy_fixture_context(owner_dsn, runtime_dsn, identity=None):
         value = ticket(actor, tenant, workspace)
         value.claims["scopes"] = ["agri.parcel.update"]
         value.claims["resource_scope"] = [{"kind": "parcel", "id": parcel_id}]
+        value.claims["farm_ids"] = [farm_id]
         value.claims["request_id"] = "request_" + uuid4().hex
         return value
 
@@ -325,7 +327,8 @@ async def legacy_fixture_context(owner_dsn, runtime_dsn, identity=None):
     )
     runtime_factory = None
     if domain_migrated:
-        from domain_fixture_support import bind_fixture_plot
+        from domain_fixture_support import bind_fixture_plot, bind_fixture_reference
+
         from app.agriculture.database import GISRuntimeDatabase
 
         await bind_fixture_plot(
@@ -335,6 +338,17 @@ async def legacy_fixture_context(owner_dsn, runtime_dsn, identity=None):
                 "tenant": tenant,
                 "workspace": workspace,
                 "project": project,
+            },
+        )
+        await bind_fixture_reference(
+            owner,
+            {
+                "plot_code": plot_code,
+                "tenant": tenant,
+                "workspace": workspace,
+                "project": project,
+                "parcel_id": parcel_id,
+                "farm_id": farm_id,
             },
         )
         runtime_factory = await GISRuntimeDatabase.open(runtime_dsn)

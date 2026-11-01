@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, type ReactNode } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { App, Alert, Button, ConfigProvider } from "antd";
 import zhCN from "antd/locale/zh_CN";
@@ -26,9 +26,11 @@ import { apiClient } from '@/services/api/request';
 import { installAgricultureRequestSecurity } from './request-security';
 import { SESSION_RECHECK_MS, subscribeSessionHints } from '../../../../contracts/agriculture/session-hints';
 import { authoritySnapshot } from '../../../../contracts/agriculture/authority-snapshot';
+import { workspaceDirectoryQueryKey } from './projection-query-key';
 import { acceptDisplayedAuthority, acquireBusinessActivity, clearDisplayedAuthority, currentProjectionGeneration, displayedAuthority, needsSessionBootstrap, reconcileRoutineParticipants, setRoutineChecking, useRoutineChecking, waitForBusinessIdle } from './routine-session';
 
 installAgricultureRequestSecurity(apiClient);
+const TrustedAuthoritySnapshot = createContext<string | null>(null);
 
 function SessionBoundary({ children }: { children: ReactNode }) {
     const [error, setError] = useState(false);
@@ -122,7 +124,7 @@ function SessionBoundary({ children }: { children: ReactNode }) {
     }, [attempt, actorId]);
     if (error) return <main className="agri-profile"><Alert type="error" title="平台会话不可用" description="尚未验证登录状态；不会载入任何工作区缓存。" /><Button onClick={() => { setError(false); setAttempt((n) => n + 1); }}>重试</Button></main>;
     if (!hydrated) return <main className="agri-profile" role="status">正在验证平台会话…</main>;
-    return children;
+    return <TrustedAuthoritySnapshot.Provider value={baseline.current}>{children}</TrustedAuthoritySnapshot.Provider>;
 }
 
 function AuthLayout() {
@@ -135,10 +137,11 @@ function Home() {
     const { message } = App.useApp();
     const checking = useRoutineChecking();
     const user = useUserStore((state) => state.user);
-    const workspaces = useQuery({ queryKey: ["agriculture", "workspaces", user?.id], queryFn: async ({ signal }) => {
+    const authority = useContext(TrustedAuthoritySnapshot);
+    const workspaces = useQuery({ queryKey: workspaceDirectoryQueryKey(user?.id, authority, currentProjectionGeneration()), queryFn: async ({ signal }) => {
         const generation = currentProjectionGeneration();
         return { rows: await agricultureAPI.workspaces(signal), generation, actorId: user?.id };
-    }, enabled: Boolean(user) });
+    }, enabled: Boolean(user) && authority !== null, staleTime: 0, gcTime: 0 });
     useEffect(() => { if (workspaces.data && !workspaces.isFetching) acceptDisplayedAuthority(workspaces.data.actorId, workspaces.data.rows, workspaces.data.generation); }, [workspaces.data, workspaces.isFetching]);
     const visibleWorkspaces = workspaces.data?.rows.filter(workspace => workspace.tenantStatus === 'active') ?? [];
     const leave = async () => {

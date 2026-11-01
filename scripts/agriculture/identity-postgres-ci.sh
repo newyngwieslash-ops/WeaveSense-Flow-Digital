@@ -7,16 +7,21 @@ cd "$(dirname "$0")/../.."
 AGRI_IDENTITY_PYTHON="$(cd "$(dirname "$AGRI_IDENTITY_PYTHON")" && pwd)/$(basename "$AGRI_IDENTITY_PYTHON")"
 export AGRI_IDENTITY_PYTHON
 [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} =~ ^[01]$ ]] || { echo 'Invalid browser chain gate'; exit 2; }
+[[ ${AGRI_GEO_MIGRATION_ONLY:-0} =~ ^[01]$ ]] || { echo 'Invalid isolated migration gate'; exit 2; }
 mkdir -p .local/evidence
-python3 scripts/agriculture/legacy-identity-inventory.test.py
-python3 scripts/agriculture/legacy-identity-inventory.py --check
-for suite in go python actors domain; do
+for suite in go python actors domain query objects jobs; do
   printf '%s\n' '{"passed":false,"status":"not_run","tests":[]}' > ".local/evidence/identity-$suite.json"
+done
+for suite in agriculture legacy cache; do
+  printf '%s\n' '{"passed":false,"status":"not_run","tests":[]}' > ".local/evidence/scope-stream-$suite.json"
 done
 if [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} == 1 ]]; then
   printf '%s\n' '{"passed":false,"status":"not_run","tests":[]}' > .local/evidence/identity-chain-go.json
   printf '%s\n' '{"result":"not_run","results":[]}' > .local/evidence/identity-chain-browser.json
 fi
+python3 scripts/agriculture/legacy-identity-inventory.test.py
+python3 scripts/agriculture/legacy-identity-inventory.py --check
+(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_query_scope_inventory.py -q)
 command -v docker >/dev/null
 docker info >/dev/null 2>&1 || { echo 'BLOCKED: Docker daemon required'; exit 2; }
 "$AGRI_IDENTITY_PYTHON" -c 'import fastapi,uvicorn,httpx,cryptography,rfc8785,asyncpg,pytest'
@@ -36,7 +41,7 @@ cleanup() {
   exit "$code"
 }
 trap cleanup EXIT
-for name in POSTGRES_PASSWORD PLATFORM_MIGRATION_PASSWORD PLATFORM_RUNTIME_PASSWORD INTEL_MIGRATION_PASSWORD INTEL_RUNTIME_PASSWORD GEO_MIGRATION_PASSWORD GEO_RUNTIME_PASSWORD GEO_WORKER_PASSWORD REDIS_PASSWORD; do
+for name in POSTGRES_PASSWORD PLATFORM_MIGRATION_PASSWORD PLATFORM_RUNTIME_PASSWORD INTEL_MIGRATION_PASSWORD INTEL_RUNTIME_PASSWORD GEO_MIGRATION_PASSWORD GEO_RUNTIME_PASSWORD GEO_WORKER_PASSWORD PLATFORM_SYSTEM_PASSWORD INTEL_SYSTEM_PASSWORD REDIS_PASSWORD; do
   value=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
   if [[ ${GITHUB_ACTIONS:-} == true ]]; then printf '::add-mask::%s\n' "$value"; fi
   export "$name=$value"
@@ -60,7 +65,7 @@ export REDIS_URL="redis://:$REDIS_PASSWORD@127.0.0.1:${BASH_REMATCH[1]}/0"
 export IDENTITY_REDIS_IMAGE_ID="$(docker inspect --format '{{.Image}}' "$redis_container")"
 docker run -d --name "$container" --label "weavesense.ci.owner=$project" --network "$network" \
   -p 127.0.0.1::5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD \
-  -e PLATFORM_MIGRATION_PASSWORD -e PLATFORM_RUNTIME_PASSWORD -e INTEL_MIGRATION_PASSWORD \
+  -e PLATFORM_MIGRATION_PASSWORD -e PLATFORM_RUNTIME_PASSWORD -e INTEL_MIGRATION_PASSWORD -e PLATFORM_SYSTEM_PASSWORD -e INTEL_SYSTEM_PASSWORD \
   -e INTEL_RUNTIME_PASSWORD -e GEO_MIGRATION_PASSWORD -e GEO_RUNTIME_PASSWORD -e GEO_WORKER_PASSWORD \
   --mount "type=volume,source=$volume,target=/var/lib/postgresql/data" \
   --mount "type=bind,source=$PWD/deploy/agriculture/postgres/init.sh,target=/docker-entrypoint-initdb.d/10-agriculture.sh,readonly" \
@@ -113,6 +118,20 @@ Path('.local/evidence/identity-bootstrap.json').write_text(json.dumps({
  'redis_image_reference':'redis:7.4.2-alpine','redis_image_id':os.environ['IDENTITY_REDIS_IMAGE_ID'],
  'started_at':datetime.datetime.now(datetime.timezone.utc).isoformat()},indent=2)+'\n')
 PY
+if [[ ${AGRI_GEO_MIGRATION_ONLY:-0} == 1 ]]; then
+  # A separate invocation owns this new database. Never reset the historical
+  # component database to make an empty-schema migration test appear fresh.
+  cp .local/evidence/identity-bootstrap.json .local/evidence/identity-migration-bootstrap.json
+  set +e
+  (cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_migration.py tests/test_agriculture_migration_postgres.py --junitxml="$private/migration.xml" -q) > "$private/migration.log" 2>&1
+  migration_code=$?
+  python3 scripts/agriculture/identity-ci-result.py --kind migration --input "$private/migration.xml" --output .local/evidence/identity-migration-command.json
+  migration_gate=$?
+  set -e
+  [[ $migration_code == 0 && $migration_gate == 0 ]] || { echo 'Explicit GIS migration acceptance failed; inspect sanitized report'; exit 1; }
+  echo 'PASS: explicit GIS migration command on its own fresh database; fixture only'
+  exit 0
+fi
 set +e
 (cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_identity_canonical.py tests/test_agriculture_identity.py tests/test_agriculture_identity_postgres.py --junitxml="$private/python.xml" -q) > "$private/python.log" 2>&1
 python_code=$?
@@ -134,6 +153,33 @@ actors_gate=$?
 domain_code=$?
 python3 scripts/agriculture/identity-ci-result.py --kind domain --input "$private/domain.xml" --output .local/evidence/identity-domain.json
 domain_gate=$?
+(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_query_scope.py tests/test_agriculture_query_scope_postgres.py --junitxml="$private/query.xml" -q) > "$private/query.log" 2>&1
+query_code=$?
+python3 scripts/agriculture/identity-ci-result.py --kind query --input "$private/query.xml" --output .local/evidence/identity-query.json
+query_gate=$?
+export AGRI_TEST_GO_BIN AGRI_TEST_GO_MOD_CACHE
+AGRI_TEST_GO_BIN=$(command -v "${GO_BIN:-go}")
+AGRI_TEST_GO_MOD_CACHE=$("$AGRI_TEST_GO_BIN" env GOMODCACHE)
+(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_object_storage.py tests/test_agriculture_object_gateway.py tests/test_agriculture_objects_postgres.py tests/test_agriculture_objects_go_postgres.py --junitxml="$private/objects.xml" -q) > "$private/objects.log" 2>&1
+objects_code=$?
+python3 scripts/agriculture/identity-ci-result.py --kind objects --input "$private/objects.xml" --output .local/evidence/identity-objects.json
+objects_gate=$?
+(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_job_authority.py tests/test_agriculture_jobs_postgres.py --junitxml="$private/jobs.xml" -q) > "$private/jobs.log" 2>&1
+jobs_code=$?
+python3 scripts/agriculture/identity-ci-result.py --kind jobs --input "$private/jobs.xml" --output .local/evidence/identity-jobs.json
+jobs_gate=$?
+"${GO_BIN:-go}" -C backend test ./internal/agriculture -run '^Test(ScopedProjection|JobEvents|JobEventCursor)' -count=1 -json > "$private/scoped-stream.jsonl" 2> "$private/scoped-stream-stderr.log"
+scoped_stream_code=$?
+python3 scripts/agriculture/scope-stream-result.py --kind agriculture --input "$private/scoped-stream.jsonl" --output .local/evidence/scope-stream-agriculture.json
+scoped_stream_gate=$?
+"${GO_BIN:-go}" -C backend test ./internal/handler -run '^Test(ConnectedLegacyStreamsRevalidateAuthority|TaskStreamRevocationDuringConnectedFlush|TaskStreamRevocationBetweenBufferedEvents)$' -count=1 -json > "$private/legacy-stream.jsonl" 2> "$private/legacy-stream-stderr.log"
+legacy_stream_code=$?
+python3 scripts/agriculture/scope-stream-result.py --kind legacy --input "$private/legacy-stream.jsonl" --output .local/evidence/scope-stream-legacy.json
+legacy_stream_gate=$?
+"${GO_BIN:-go}" -C backend test ./internal/app -run '^TestCachedTextReplayIsolatesUsersCursorsAndCopies$' -count=1 -json > "$private/scoped-cache.jsonl" 2> "$private/scoped-cache-stderr.log"
+scoped_cache_code=$?
+python3 scripts/agriculture/scope-stream-result.py --kind cache --input "$private/scoped-cache.jsonl" --output .local/evidence/scope-stream-cache.json
+scoped_cache_gate=$?
 chain_code=0; chain_gate=0
 if [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} == 1 ]]; then
   "${GO_BIN:-go}" -C backend test ./internal/agriculture -run '^TestIdentityBrowserGISWriteChain$' -count=1 -timeout 12m -json > "$private/chain.jsonl" 2> "$private/chain-stderr.log"
@@ -142,5 +188,6 @@ if [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} == 1 ]]; then
   chain_gate=$?
 fi
 set -e
-[[ $python_code == 0 && $python_gate == 0 && $go_code == 0 && $go_gate == 0 && $actors_code == 0 && $actors_gate == 0 && $domain_code == 0 && $domain_gate == 0 && $chain_code == 0 && $chain_gate == 0 ]] || { echo 'Identity acceptance failed; inspect sanitized reports, no raw secrets exported'; exit 1; }
+[[ $scoped_stream_code == 0 && $scoped_stream_gate == 0 && $legacy_stream_code == 0 && $legacy_stream_gate == 0 && $scoped_cache_code == 0 && $scoped_cache_gate == 0 ]] || { echo 'Scoped cache/stream acceptance failed; inspect sanitized reports'; exit 1; }
+[[ $python_code == 0 && $python_gate == 0 && $go_code == 0 && $go_gate == 0 && $actors_code == 0 && $actors_gate == 0 && $domain_code == 0 && $domain_gate == 0 && $query_code == 0 && $query_gate == 0 && $objects_code == 0 && $objects_gate == 0 && $jobs_code == 0 && $jobs_gate == 0 && $chain_code == 0 && $chain_gate == 0 ]] || { echo 'Identity acceptance failed; inspect sanitized reports, no raw secrets exported'; exit 1; }
 echo 'PASS: actual Go/Python HTTP, PostgreSQL replay and legacy actor boundary; fixture-domain acceptance only'

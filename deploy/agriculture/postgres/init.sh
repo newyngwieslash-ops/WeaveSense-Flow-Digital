@@ -2,6 +2,8 @@
 # First boot only; SQL identifiers are fixed, passwords are psql literal variables.
 set -eu
 : "${GEO_WORKER_PASSWORD:?configure independent geo worker secret}"
+: "${PLATFORM_SYSTEM_PASSWORD:?configure independent platform dispatcher secret}"
+: "${INTEL_SYSTEM_PASSWORD:?configure independent knowledge dispatcher secret}"
 for domain in platform intel geo; do
   case "$domain" in
     platform) owner_password=$PLATFORM_MIGRATION_PASSWORD; runtime_password=$PLATFORM_RUNTIME_PASSWORD ;;
@@ -31,6 +33,25 @@ ALTER DEFAULT PRIVILEGES FOR ROLE :"owner" IN SCHEMA public GRANT USAGE, SELECT 
 ALTER DEFAULT PRIVILEGES FOR ROLE :"owner" IN SCHEMA public REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
 SQL
 done
+for domain in platform intel; do
+  case "$domain" in
+    platform) export AGRI_SYSTEM_PASSWORD="$PLATFORM_SYSTEM_PASSWORD";;
+    intel) export AGRI_SYSTEM_PASSWORD="$INTEL_SYSTEM_PASSWORD";;
+  esac
+  psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "flow_$domain" \
+    -v db="flow_$domain" -v owner="flow_${domain}_migrate" \
+    -v system="flow_${domain}_system" -v guard="flow_${domain}_guard" <<'SQL'
+\getenv system_password AGRI_SYSTEM_PASSWORD
+CREATE ROLE :"system" LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD :'system_password';
+CREATE ROLE :"guard" NOLOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+GRANT CONNECT ON DATABASE :"db" TO :"system";
+GRANT USAGE ON SCHEMA public TO :"system", :"guard";
+-- Only migrations may transfer ownership. Neither dispatcher nor app inherits
+-- guard rights or can SET ROLE; fixed functions are granted by audited migrations.
+GRANT :"guard" TO :"owner" WITH INHERIT FALSE, SET TRUE;
+SQL
+done
+unset AGRI_SYSTEM_PASSWORD
 psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d flow_platform <<'SQL'
 -- The resolver owner cannot log in or bypass RLS. Only the migration role may
 -- transfer function ownership; the application is never a member of this role.
@@ -48,6 +69,8 @@ GRANT CONNECT ON DATABASE flow_geo TO flow_geo_worker;
 GRANT USAGE ON SCHEMA public TO flow_geo_worker;
 CREATE ROLE flow_geo_actor_guard NOLOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
 GRANT flow_geo_actor_guard TO flow_geo_migrate WITH INHERIT FALSE;
+CREATE ROLE flow_geo_query_guard NOLOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+GRANT flow_geo_query_guard TO flow_geo_migrate WITH INHERIT FALSE, SET TRUE;
 CREATE EXTENSION IF NOT EXISTS postgis;
 GRANT USAGE ON SCHEMA public TO flow_geo_app;
 SQL

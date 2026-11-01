@@ -15,6 +15,7 @@ import stat
 import sys
 import traceback
 from contextlib import AsyncExitStack, asynccontextmanager
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from urllib.parse import parse_qsl, urlsplit
 
@@ -155,6 +156,19 @@ class DatabaseOwnership:
                     "set_config('app.workspace_id',$2,true)",
                     row["tenant_id"],
                     row["workspace_id"],
+                )
+                # This private metadata fixture uses independent catalog facts,
+                # not a business actor or claims-derived ownership. It has no
+                # write path; the actual route later requires Verified + actor.
+                await connection.execute(
+                    "SELECT set_config('app.query_parcels',$1,true), "
+                    "set_config('app.query_farms','[]',true), "
+                    "set_config('app.query_parent_farms',$2,true), "
+                    "set_config('app.query_actor','fixture_metadata',true), "
+                    "set_config('app.query_expiry',$3,true)",
+                    json.dumps([row["parcel_id"]]),
+                    json.dumps([row["farm_id"]]),
+                    (datetime.now(UTC) + timedelta(seconds=10)).isoformat(),
                 )
                 actual = await connection.fetchval(
                     "SELECT EXISTS(SELECT 1 FROM public.monitoring_tasks t "

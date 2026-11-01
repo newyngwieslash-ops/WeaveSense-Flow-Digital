@@ -59,9 +59,7 @@ def actor_query(tenant_id: str, workspace_id: str, actor_id: str, project_id: in
     )
 
 
-async def lock_binding(db, claims, project_id):
-    """The runtime cannot inherit the guard or own any protected binding table."""
-    readiness = """
+ACTOR_BINDING_READINESS = """
       EXISTS(SELECT 1 FROM pg_catalog.pg_roles r WHERE r.rolname=current_user
         AND r.rolcanlogin AND NOT(r.rolsuper OR r.rolbypassrls OR r.rolinherit
           OR r.rolcreatedb OR r.rolcreaterole OR r.rolreplication))
@@ -94,6 +92,11 @@ async def lock_binding(db, claims, project_id):
       AND NOT pg_catalog.has_any_column_privilege(current_user,
         'public.agriculture_project_bindings','UPDATE')
     """
+
+
+async def lock_binding(db, claims, project_id):
+    """The runtime cannot inherit the guard or own any protected binding table."""
+    readiness = ACTOR_BINDING_READINESS
     try:
         safe = (await db.execute(select(text(readiness)))).scalar_one()
         require(safe is True, "actor_binding_unavailable", 503)

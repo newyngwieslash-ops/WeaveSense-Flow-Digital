@@ -25,6 +25,8 @@ class IdentityServices:
     ownership: OwnershipProvider | None = None
     authority: AuthorityProvider | None = None
     replay: ReplayLedger | None = None
+    object_store: object | None = None
+    object_storage: object | None = None
 
 
 async def verify_request(request: Request, typ: str, action: str) -> Verified:
@@ -58,7 +60,7 @@ async def verify_request(request: Request, typ: str, action: str) -> Verified:
     )
 
 
-def delegation_dependency(action: str, resource_extractor):
+def delegation_dependency(action: str, resource_extractor, *, scope_guard=None):
     """Fixed route code extracts complete handler resources from path/body.
 
     An extractor never receives token claims. Missing configuration must fail
@@ -66,11 +68,20 @@ def delegation_dependency(action: str, resource_extractor):
     """
     if not callable(resource_extractor):
         raise ValueError("a route resource extractor is required")
+    if scope_guard is not None and not callable(scope_guard):
+        raise ValueError("route scope guard must be a fixed callable")
 
     async def verify(request: Request) -> Verified:
         services: IdentityServices = request.app.state.identity
         verified = await verify_request(request, BUSINESS_TYP, action)
         c = verified.claims
+        # A scoped locator route must reject a different path scope before its
+        # independent extractor touches any scoped database metadata. The
+        # extractor itself still never receives claims as ownership facts.
+        if scope_guard is not None:
+            require(
+                scope_guard(request, verified) is True, "request_scope_mismatch", 403
+            )
         try:
             actual = resource_extractor(request, verified.body)
             if inspect.isawaitable(actual):
@@ -81,6 +92,8 @@ def delegation_dependency(action: str, resource_extractor):
             actual = resource_refs(
                 sorted(actual, key=lambda ref: (ref["kind"], ref["id"]))
             )
+        except IdentityError:
+            raise
         except Exception:
             raise IdentityError("invalid_route_resources", 400) from None
         require(actual == c["resource_scope"], "request_scope_mismatch", 403)

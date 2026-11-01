@@ -200,7 +200,10 @@ class Verifier:
             require(request["payload_hash"] == hashlib.sha256(canonical).hexdigest())
             body = json.loads(canonical)
         if typ == SERVICE_TYP:
-            require(action == "ownership.resolve" and claims["capability"] == action)
+            require(
+                action in {"ownership.resolve", "object.resolve"}
+                and claims["capability"] == action
+            )
         else:
             require(
                 claims["scopes"] == [action]

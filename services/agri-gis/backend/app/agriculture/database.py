@@ -12,10 +12,15 @@ from datetime import UTC, datetime
 import asyncpg
 from sqlalchemy import event, text
 from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.sql import visitors
+from sqlalchemy.sql.elements import ColumnClause, TextClause
+from sqlalchemy.sql.functions import FunctionElement
 
 from .actor_session import AgricultureAsyncSession, AgricultureSession
+from .actors import ACTOR_BINDING_READINESS
 from .domain_boundary import require_domain_boundary
 from .identity.verify import ID, IdentityError, Verified
+from .query_scope import QueryScope, validate_reference_scope
 
 RUNTIME_ROLES = frozenset({"flow_geo_app", "flow_geo_worker"})
 ROLE_CHECK = """
@@ -105,16 +110,43 @@ class DatabaseScope:
 
 
 class ScopedAgricultureSession(AgricultureSession):
-    def __init__(self, *args, database_scope=None, **kwargs):
+    def __init__(self, *args, database_scope=None, query_scope=None, **kwargs):
         if not isinstance(database_scope, DatabaseScope):
             raise IdentityError("trusted_database_scope_required", 403)
         database_scope.validate()
         self._database_scope = database_scope
+        if query_scope is not None:
+            if not isinstance(query_scope, QueryScope) or (
+                query_scope.tenant_id,
+                query_scope.workspace_id,
+            ) != (database_scope.tenant_id, database_scope.workspace_id):
+                raise IdentityError("trusted_query_scope_required", 403)
+            query_scope.validate()
+        self._query_scope = query_scope
         super().__init__(*args, **kwargs)
 
 
 class ScopedAgricultureAsyncSession(AgricultureAsyncSession):
     sync_session_class = ScopedAgricultureSession
+
+
+@event.listens_for(ScopedAgricultureSession, "do_orm_execute")
+def reject_scope_mutating_queries(state):
+    # One fixed, parameter-free internal role probe is not an arbitrary SQL API.
+    # No other TextClause, extra projection, WHERE or suffix receives this path.
+    if str(state.statement) == "SELECT " + ACTOR_BINDING_READINESS:
+        return
+    for node in visitors.iterate(state.statement):
+        if isinstance(node, TextClause) and node is not state.statement:
+            raise IdentityError("unadapted_database_operation", 403)
+        if isinstance(node, FunctionElement):
+            name = str(getattr(node, "name", "")).lower()
+            if name in {"set_config", "setval", "nextval", "dblink", "dblink_exec"} or (
+                name.startswith("pg_") and name != "pg_backend_pid"
+            ):
+                raise IdentityError("query_scope_rebinding_denied", 403)
+        if isinstance(node, ColumnClause) and node.is_literal and node.name != "*":
+            raise IdentityError("unadapted_database_operation", 403)
 
 
 @event.listens_for(ScopedAgricultureSession, "after_begin")
@@ -129,6 +161,28 @@ def apply_transaction_scope(session, transaction, connection):
             "set_config('app.workspace_id', :workspace, true)"
         ),
         {"tenant": scope.tenant_id, "workspace": scope.workspace_id},
+    )
+    query = session._query_scope
+    parameters = (
+        query.parameters()
+        if query is not None
+        else {
+            "query_parcels": "[]",
+            "query_farms": "[]",
+            "query_parent_farms": "[]",
+            "query_actor": "",
+            "query_expiry": "",
+        }
+    )
+    connection.execute(
+        text(
+            "SELECT set_config('app.query_parcels', :query_parcels, true), "
+            "set_config('app.query_farms', :query_farms, true), "
+            "set_config('app.query_parent_farms', :query_parent_farms, true), "
+            "set_config('app.query_actor', :query_actor, true), "
+            "set_config('app.query_expiry', :query_expiry, true)"
+        ),
+        parameters,
     )
 
 
@@ -171,9 +225,22 @@ class GISRuntimeDatabase:
     @asynccontextmanager
     async def session(self, verified, *, audit_adapters=(), operation_adapters=()):
         scope = DatabaseScope.from_verified(verified)
+        query_scope = QueryScope.from_verified(verified)
+        # Only the production factory can construct the immutable resource scope.
+        # This independent reference read never derives facts from the token.
+        async with self._engine.begin() as connection:
+            await connection.execute(
+                text(
+                    "SELECT set_config('app.tenant_ids', :tenant, true), "
+                    "set_config('app.workspace_id', :workspace, true)"
+                ),
+                {"tenant": scope.tenant_id, "workspace": scope.workspace_id},
+            )
+            await validate_reference_scope(connection, query_scope)
         async with ScopedAgricultureAsyncSession(
             bind=self._engine,
             database_scope=scope,
+            query_scope=query_scope,
             audit_adapters=audit_adapters,
             expire_on_commit=False,
             autoflush=False,

@@ -35,6 +35,10 @@ func serviceDirection(capability string) (issuer, audience, path string, err err
 	switch capability {
 	case "ownership.resolve":
 		return "flow-platform", "agri-gis", ownershipResolvePath, nil
+	case "object.resolve":
+		return "flow-platform", "agri-gis", "/internal/agri/v1/objects/resolve", nil
+	case "job.authority.check":
+		return "agri-gis", "flow-platform", "/internal/agri/v1/jobs/authority/check", nil
 	case "authority.check":
 		return "agri-gis", "flow-platform", authorityCheckPath, nil
 	default:
@@ -54,7 +58,7 @@ func issueServiceAssertion(keys *ServiceKeyring, capability string, scope Owners
 	if err != nil {
 		return "", nil, err
 	}
-	now = now.Truncate(time.Second)
+	now = now.UTC().Truncate(time.Second)
 	expires := now.Add(30 * time.Second)
 	claims := serviceAssertion{SchemaVersion: "1.0", Issuer: issuer, Audience: audience, Subject: issuer, Capability: capability, TenantID: scope.TenantID, WorkspaceID: scope.WorkspaceID, IssuedAt: now.Format("2006-01-02T15:04:05Z"), ExpiresAt: expires.Format("2006-01-02T15:04:05Z"), JTI: flow.NewID("jti_"), TraceID: flow.NewID("trace_"), RequestID: flow.NewID("req_"), Request: request}
 	token, err := keys.sign(serviceAssertionType, claims, now, expires)
@@ -92,6 +96,7 @@ type authorityCheckBody struct {
 // public session API group. It authenticates only the independently keyed GIS
 // service. Current DB state is checked without invoking GIS or Authorize again.
 func (s Service) RegisterInternalAuthority(root gin.IRouter, gisKeys *ServiceKeyring) {
+	s.RegisterInternalJobAuthority(root, gisKeys)
 	root.POST(authorityCheckPath, func(c *gin.Context) {
 		c.Header("Cache-Control", "no-store")
 		fail := func(status int, code string) { c.JSON(status, gin.H{"error": gin.H{"code": code}}) }

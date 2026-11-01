@@ -22,8 +22,10 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?configure local secret}
       PLATFORM_MIGRATION_PASSWORD: ${PLATFORM_MIGRATION_PASSWORD:?configure local secret}
       PLATFORM_RUNTIME_PASSWORD: ${PLATFORM_RUNTIME_PASSWORD:?configure local secret}
+      PLATFORM_SYSTEM_PASSWORD: ${PLATFORM_SYSTEM_PASSWORD:?configure independent dispatcher secret}
       INTEL_MIGRATION_PASSWORD: ${INTEL_MIGRATION_PASSWORD:?configure local secret}
       INTEL_RUNTIME_PASSWORD: ${INTEL_RUNTIME_PASSWORD:?configure local secret}
+      INTEL_SYSTEM_PASSWORD: ${INTEL_SYSTEM_PASSWORD:?configure independent dispatcher secret}
       GEO_MIGRATION_PASSWORD: ${GEO_MIGRATION_PASSWORD:?configure local secret}
       GEO_RUNTIME_PASSWORD: ${GEO_RUNTIME_PASSWORD:?configure local secret}
       GEO_WORKER_PASSWORD: ${GEO_WORKER_PASSWORD:?configure independent worker secret}
@@ -94,6 +96,7 @@ services:
       FLOW_AGRICULTURE_CSRF_KEY_FILE: /run/secrets/agriculture-csrf.key
       CANVAS_CORS_ORIGINS: http://127.0.0.1:${AGRI_WEB_PORT:-8091}
       DATABASE_URL: postgres://flow_platform_app:${PLATFORM_RUNTIME_PASSWORD}@postgres:5432/flow_platform?sslmode=disable
+      FLOW_PLATFORM_SYSTEM_DSN: postgres://flow_platform_system:${PLATFORM_SYSTEM_PASSWORD}@postgres:5432/flow_platform?sslmode=disable
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       FLOW_INTERNAL_JWT_SIGNING_KEY: ${FLOW_INTERNAL_JWT_SIGNING_KEY:?configure local secret}
       FLOW_INTERNAL_JWT_ISSUER: flow-platform
@@ -109,7 +112,7 @@ services:
     profiles: [knowledge]
     build: {context: ./services/loom-engine, dockerfile: Dockerfile}
     environment:
-      DATABASE_URL: postgres://flow_intel_migrate:${INTEL_MIGRATION_PASSWORD}@postgres:5432/flow_intel
+      LOOM_MIGRATION_DATABASE_URL: postgres://flow_intel_migrate:${INTEL_MIGRATION_PASSWORD}@postgres:5432/flow_intel
     volumes: [./deploy/agriculture/loom-migrate.mjs:/app/agriculture-migrate.mjs:ro]
     command: [node, --experimental-strip-types, /app/agriculture-migrate.mjs]
     depends_on:
@@ -121,6 +124,8 @@ services:
     user: node
     environment:
       DATABASE_URL: postgres://flow_intel_app:${INTEL_RUNTIME_PASSWORD}@postgres:5432/flow_intel
+      LOOM_SYSTEM_DATABASE_URL: postgres://flow_intel_system:${INTEL_SYSTEM_PASSWORD}@postgres:5432/flow_intel
+      METRICS_TOKEN: ${METRICS_TOKEN:-}
       LOOM_AUTO_MIGRATE: "false"
       LOOM_ROLE: api
       LOOM_PORT: "8080"

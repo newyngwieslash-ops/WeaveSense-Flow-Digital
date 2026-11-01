@@ -1,12 +1,10 @@
 """Explicit isolated database provisioning; never imported by production code."""
 
-from pathlib import Path
-
-import asyncpg
 from sqlalchemy import text
 from test_agriculture_actors_postgres import engine_for
 
 from app.agriculture.domain_boundary import validate_model_inventory
+from app.agriculture.migrate import migrate_schema
 from app.models.plot import Base
 
 
@@ -27,17 +25,10 @@ async def install_domain_schema(owner_dsn):
             )
     finally:
         await engine.dispose()
-    connection = await asyncpg.connect(owner_dsn)
-    try:
-        directory = Path(__file__).parents[1] / "scripts/migrations"
-        for name in (
-            "20261029_agriculture_actor_bindings.sql",
-            "20261029_agriculture_identity_replay.sql",
-            "20261030_agriculture_domain_rls.sql",
-        ):
-            await connection.execute((directory / name).read_text())
-    finally:
-        await connection.close()
+    # The earlier isolated component phase may have created only project/member
+    # tables. Completing this explicit test baseline is not a production upgrade.
+    # Every current boundary/ledger is installed by the actual owner command.
+    await migrate_schema(owner_dsn, mode="existing")
 
 
 async def bind_fixture_plot(owner, fixture):
@@ -60,4 +51,31 @@ async def bind_fixture_plot(owner, fixture):
         fixture["tenant"],
         fixture["workspace"],
         fixture["project"],
+    )
+
+
+async def bind_fixture_reference(owner, fixture):
+    """Explicit test facts only; never infer a canonical ID from a request."""
+    values = (
+        fixture["plot_code"],
+        fixture["tenant"],
+        fixture["workspace"],
+        fixture["project"],
+        fixture["parcel_id"],
+        fixture["farm_id"],
+    )
+    existing = await owner.fetchrow(
+        "SELECT plot_code,tenant_id,workspace_id,project_id,parcel_id,farm_id "
+        "FROM agriculture_legacy_resource_references WHERE plot_code=$1",
+        values[0],
+    )
+    if existing is not None:
+        if tuple(existing) != values:
+            raise ValueError("explicit reference fixture conflict")
+        return
+    await owner.execute(
+        "INSERT INTO agriculture_legacy_resource_references "
+        "(plot_code,tenant_id,workspace_id,project_id,parcel_id,farm_id,state) "
+        "VALUES($1,$2,$3,$4,$5,$6,'active')",
+        *values,
     )

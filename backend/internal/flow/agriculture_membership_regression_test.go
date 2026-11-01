@@ -16,7 +16,8 @@ import (
 
 // DT010 regression specifications against the existing real SQLite repository.
 // These tests intentionally expose upstream defects; they are not PostgreSQL
-// RLS/admission acceptance and do not assert an email-recipient policy yet.
+// RLS/admission acceptance. Invitation fixtures now use verified recipients
+// so later DT018 admission does not mask these membership/rollback assertions.
 func agricultureMembershipFixture(t *testing.T) (*gorm.DB, model.Tenant, model.Workspace, Scope) {
 	t.Helper()
 	db := testDB(t)
@@ -112,7 +113,7 @@ func TestAgricultureMembershipInviteCannotReadmitInactiveMembership(t *testing.T
 	if err := db.Create(&model.Membership{ID: NewID("mb_"), TenantID: tenant.ID, UserID: "u_bob", Role: "member", Status: "removed"}).Error; err != nil {
 		t.Fatal(err)
 	}
-	invite, token, err := CreateInvite(db, owner, "u_alice", "", "viewer", time.Hour)
+	invite, token, err := CreateInvite(db, owner, "u_alice", "bob@x", "viewer", time.Hour)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -152,16 +153,19 @@ func TestAgricultureMembershipInviteReturnsOnlyPersistedRole(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	_, token, err := CreateInvite(db, owner, "u_alice", "", "admin", time.Hour)
+	_, token, err := CreateInvite(db, owner, "u_alice", "bob@x", "admin", time.Hour)
 	if err != nil {
 		t.Fatal(err)
 	}
 	returned, acceptErr := AcceptInvite(db, "u_bob", token)
+	if acceptErr != nil {
+		t.Fatalf("verified invitation failed before persisted-role assertion: %v", acceptErr)
+	}
 	persisted, err := ResolveScope(db, "u_bob", workspace.ID)
 	if err != nil {
 		t.Fatalf("invitation damaged existing membership: %v", err)
 	}
-	if acceptErr == nil && returned != persisted {
+	if returned != persisted {
 		t.Errorf("invitation reports ungranted authority: response=%+v persisted=%+v", returned, persisted)
 	}
 }
@@ -253,7 +257,7 @@ func TestAgricultureMembershipListErrorsAreNotInventedRoles(t *testing.T) {
 
 func TestAgricultureMembershipInviteDatabaseFailureRollsBack(t *testing.T) {
 	db, tenant, _, owner := agricultureMembershipFixture(t)
-	invite, token, err := CreateInvite(db, owner, "u_alice", "", "viewer", time.Hour)
+	invite, token, err := CreateInvite(db, owner, "u_alice", "bob@x", "viewer", time.Hour)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -280,7 +284,7 @@ func TestAgricultureMembershipInviteExpiredOrDisabledRejected(t *testing.T) {
 	for _, condition := range []string{"expired", "disabled", "revoked"} {
 		t.Run(condition, func(t *testing.T) {
 			db, tenant, _, owner := agricultureMembershipFixture(t)
-			invite, token, err := CreateInvite(db, owner, "u_alice", "", "viewer", time.Hour)
+			invite, token, err := CreateInvite(db, owner, "u_alice", "bob@x", "viewer", time.Hour)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -330,7 +334,7 @@ func TestAgricultureMembershipNoActiveTenantsCannotBecomeSystemScope(t *testing.
 
 func TestAgricultureMembershipLegacyCannotResolveProductWorkspaceOrConsumeInvite(t *testing.T) {
 	db, _, workspace, owner := agricultureMembershipFixture(t)
-	invite, token, err := CreateInvite(db, owner, "u_alice", "", "viewer", time.Hour)
+	invite, token, err := CreateInvite(db, owner, "u_alice", "bob@x", "viewer", time.Hour)
 	if err != nil {
 		t.Fatal(err)
 	}

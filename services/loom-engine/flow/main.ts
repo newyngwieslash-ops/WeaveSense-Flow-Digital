@@ -1,0 +1,133 @@
+// Loom Engine (WeaveSense-Flow) entrypoint. LOOM_ROLE=api|worker|scheduler|enrich|research|all.
+//  enrich:    attachment retry + OCR loops only (compose profile "extract")
+//  research:  periodic briefs only (compose profile "research")
+// With LOOM_SPLIT_ROLES=true the api/scheduler roles leave those loops to the dedicated roles.
+//  api:       internal HTTP API + collection worker + outbox dispatcher
+//  worker:    collection worker + outbox dispatcher
+//  scheduler: the single due-window scanner (guarded by a PG advisory lock)
+import { derivedTick, embedderFromEnv } from "./gaps9.ts";
+import { pgDb } from "./db.ts";
+import { pgTenantScanner, tenantDispatch } from "./tenant-dispatch.ts";
+import { runtimeRole } from "./runtime-role.ts";
+import { metricsSnapshot } from "./metrics-snapshot.ts";
+import { Engine } from "./engine.ts";
+import { createApiServer } from "./server.ts";
+import { Reports } from "./reports.ts";
+import { sign } from "./auth.ts";
+import { hostname } from "node:os";
+
+const env = (k: string, d?: string) => {
+  const v = process.env[k]?.trim();
+  if (v) return v;
+  if (d !== undefined) return d;
+  throw new Error(`missing env ${k}`);
+};
+const { role, runEnrich, runBriefs } = runtimeRole(process.env);
+const db = await pgDb(env("DATABASE_URL"));
+// Private startup-only scanner, never passed to Engine/handler/request context.
+const scanner = await pgTenantScanner(env("LOOM_SYSTEM_DATABASE_URL"));
+const engine = new Engine(db);
+const key = env("FLOW_INTERNAL_JWT_SIGNING_KEY");
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+let stopping = false;
+process.on("SIGTERM", () => { stopping = true; });
+
+async function loop(name: string, ms: number, fn: () => Promise<unknown>) {
+  if (!scanner) throw new Error("background scanner missing");
+  const dispatch = tenantDispatch(scanner);
+  while (!stopping) {
+    try { await dispatch(fn); } catch { console.error(`[loom:${name}] background iteration failed`); }
+    await sleep(ms);
+  }
+}
+
+// Platform hooks (re-check grants, LLM brief summarization). Service token, aud = platform issuer.
+const platformBase = env("FLOW_PLATFORM_INTERNAL_URL", "");
+const platformCall = async (path: string, sc: { tenant_id: string; workspace_id: string }, body: unknown) => {
+  const tok = sign(key, { iss: "loom-engine", aud: env("FLOW_INTERNAL_JWT_ISSUER", "flow-platform"), tenant_id: sc.tenant_id, workspace_id: sc.workspace_id,
+    actor: { type: "service_principal", id: "loom-engine" }, scopes: ["flow.grants.check"], policy_version: "policy_v1" });
+  return fetch(`${platformBase}${path}`, { method: "POST", headers: { authorization: `Bearer ${tok}`, "content-type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(120_000) });
+};
+if (platformBase) {
+  engine.authorize = async (sc, scope) => {
+    const r = await platformCall("/api/internal/flow/authorize", sc, { grant_actor: sc.grant_actor, workspace_id: sc.workspace_id, scope });
+    if (r.status === 403) return false;
+    if (!r.ok) throw new Error(`authorize ${r.status}`);
+    return true;
+  };
+}
+// PRD §9.2: scheduled windows reserve budget with the platform ledger; settled/released when the operation ends.
+if (platformBase) {
+  engine.budget = {
+    reserve: async (sc, key, amount, refId) => {
+      const r = await platformCall("/api/internal/flow/budget/reserve", sc, { grant_actor: sc.grant_actor, workspace_id: sc.workspace_id, key, amount_micro: amount, ref_id: refId });
+      if (r.status === 402 || r.status === 403) throw Object.assign(new Error(`budget denied ${r.status}`), { status: 402 });
+      if (!r.ok) throw new Error(`budget reserve ${r.status}`);
+      return { reservation_id: ((await r.json()) as any).data?.reservation_id };
+    },
+    close: async (sc, id, outcome, actual) => {
+      const r = await platformCall("/api/internal/flow/budget/close", sc, { reservation_id: id, outcome, actual_micro: actual });
+      if (!r.ok) throw new Error(`budget close ${r.status}`);
+    },
+  };
+}
+// LLM brief summarization through the platform (non-blocking). 202: the platform
+// enqueued a model task; the brief window stays parked. Completion is pushed
+// (POST /v1/briefs/wake when the task finishes); the scheduler tick re-submits
+// the same key as fallback.
+const summarize: Reports["summarize"] = platformBase ? async (input) => {
+  const r = await platformCall("/api/internal/flow/summarize", input, input);
+  if (r.status === 403) throw Object.assign(new Error("grant revoked"), { status: 403 });
+  if (r.status === 202) return { pending: true, task_id: ((await r.json()) as any).data?.task_id };
+  if (!r.ok) throw new Error(`summarize ${r.status}`);
+  return ((await r.json()) as any).data ?? null;
+} : undefined;
+if (role === "api" || role === "all") {
+  const port = Number(env("LOOM_PORT", "8080"));
+  const metrics = metricsSnapshot(db, scanner);
+  const metricsToken = env("METRICS_TOKEN", "");
+  if (metricsToken) void (async () => {
+    while (!stopping) {
+      try { await metrics.refresh(); } catch { console.error("[loom:metrics] snapshot unavailable"); }
+      await sleep(30_000);
+    }
+  })();
+  createApiServer(engine, { signingKey: key, audience: env("FLOW_INTERNAL_JWT_AUDIENCE", "loom-engine"), summarize,
+    metricsToken, metrics: metrics.read }).listen(port, () => console.log(`[loom] api on :${port}`));
+}
+if (role === "api" || role === "worker" || role === "all") {
+  const owner = `${hostname()}:${process.pid}`;
+  // One bounded claim per tenant per round; a busy tenant cannot drain forever.
+  void loop("worker", 1000, async () => { if (!stopping) await engine.workOnce(owner); });
+  const platform = env("FLOW_PLATFORM_EVENTS_URL", "");
+  if (platform) {
+    const iss = env("FLOW_INTERNAL_JWT_ISSUER", "flow-platform");
+    void loop("outbox", 2000, () => engine.dispatchOutbox(async (ev) => {
+      const tok = sign(key, { iss: "loom-engine", aud: iss, tenant_id: ev.tenant_id, workspace_id: ev.workspace_id,
+        actor: { type: "service_principal", id: "loom-engine" }, scopes: ["flow.events.write"], policy_version: "policy_v1" });
+      const r = await fetch(platform, { method: "POST", headers: { authorization: `Bearer ${tok}`, "content-type": "application/json" }, body: JSON.stringify(ev) });
+      if (!r.ok) throw new Error(`platform ${r.status}`);
+    }));
+  }
+}
+if (role === "scheduler" || role === "all") {
+  // schedulerTick takes a transaction-scoped advisory lock: one active scanner only.
+  void loop("scheduler", Number(env("LOOM_SCHEDULER_TICK_MS", "15000")), () => engine.schedulerTick());
+}
+if (runBriefs) {
+  // Periodic briefs: each (schedule, window) is idempotent, so overlapping ticks produce one report.
+  const reports = new Reports(engine);
+  reports.summarize = summarize;
+  void loop("briefs", Number(env("LOOM_SCHEDULER_TICK_MS", "15000")), () => reports.briefTick());
+}
+if (runEnrich) {
+  // §6.4: attachments not stored during a run are retried separately (bounded attempts), never by re-collecting.
+  // PRD §6.2: jobs whose commit outcome was unknown are settled from the outbox.
+  void loop("reconcile", Number(env("LOOM_RECONCILE_MS", "30000")), async () => { await engine.reconcile(); await engine.closeBudgets(); });
+  void loop("media-retry", Number(env("LOOM_MEDIA_RETRY_MS", "120000")), () => engine.retryMedia());
+  if (env("ASR_ENABLED", "false") === "true") void loop("asr", Number(env("LOOM_ASR_TICK_MS", "60000")), () => engine.asrTick());
+  // §6.4 embed + analyze run as their own jobs (unique per content hash). Embedding is pluggable (EMBED_PROVIDER=none|hash).
+  const embedder = embedderFromEnv();
+  void loop("derived", Number(env("LOOM_DERIVED_TICK_MS", "20000")), () => derivedTick(engine.db, embedder));
+  if (env("OCR_ENABLED", "false") === "true") void loop("ocr", Number(env("LOOM_OCR_TICK_MS", "30000")), () => engine.ocrTick());
+}

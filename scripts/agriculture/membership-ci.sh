@@ -4,7 +4,9 @@ set -euo pipefail
 set +x
 cd "$(dirname "$0")/../.."
 mkdir -p .local/evidence
-for report in membership-postgres membership-legacy-flow membership-bootstrap; do
+for report in membership-postgres membership-legacy-flow membership-bootstrap \
+  membership-flow-scope membership-flow-admission membership-flow-workers \
+  membership-flow-continuations membership-edu-artifacts membership-edu-onboarding membership-edu-ledger membership-flow-scanner; do
   printf '%s\n' '{"passed":false,"status":"not_run","data_class":"fixture"}' > ".local/evidence/$report.json"
 done
 command -v docker >/dev/null || { echo 'BLOCKED: Docker CLI is required' >&2; exit 2; }
@@ -39,7 +41,7 @@ PY
   exit "$code"
 }
 trap cleanup EXIT
-for name in POSTGRES_PASSWORD PLATFORM_MIGRATION_PASSWORD PLATFORM_RUNTIME_PASSWORD INTEL_MIGRATION_PASSWORD INTEL_RUNTIME_PASSWORD GEO_MIGRATION_PASSWORD GEO_RUNTIME_PASSWORD GEO_WORKER_PASSWORD; do
+for name in POSTGRES_PASSWORD PLATFORM_MIGRATION_PASSWORD PLATFORM_RUNTIME_PASSWORD INTEL_MIGRATION_PASSWORD INTEL_RUNTIME_PASSWORD GEO_MIGRATION_PASSWORD GEO_RUNTIME_PASSWORD GEO_WORKER_PASSWORD PLATFORM_SYSTEM_PASSWORD INTEL_SYSTEM_PASSWORD; do
   value=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
   if [[ ${GITHUB_ACTIONS:-} == true ]]; then printf '::add-mask::%s\n' "$value"; fi
   export "$name=$value"
@@ -49,7 +51,7 @@ docker volume create --label "weavesense.ci.owner=$project" "$volume" >/dev/null
 docker network create --label "weavesense.ci.owner=$project" "$network" >/dev/null
 docker run -d --name "$container" --label "weavesense.ci.owner=$project" --network "$network" \
   -p 127.0.0.1::5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD \
-  -e PLATFORM_MIGRATION_PASSWORD -e PLATFORM_RUNTIME_PASSWORD \
+  -e PLATFORM_MIGRATION_PASSWORD -e PLATFORM_RUNTIME_PASSWORD -e PLATFORM_SYSTEM_PASSWORD -e INTEL_SYSTEM_PASSWORD \
   -e INTEL_MIGRATION_PASSWORD -e INTEL_RUNTIME_PASSWORD -e GEO_MIGRATION_PASSWORD -e GEO_RUNTIME_PASSWORD -e GEO_WORKER_PASSWORD \
   --mount "type=volume,source=$volume,target=/var/lib/postgresql/data" \
   --mount "type=bind,source=$PWD/deploy/agriculture/postgres/init.sh,target=/docker-entrypoint-initdb.d/10-agriculture.sh,readonly" \
@@ -65,6 +67,7 @@ port=$(docker port "$container" 5432/tcp)
 port=${BASH_REMATCH[1]}
 export AGRI_TEST_PG_MIGRATION_DSN="postgres://flow_platform_migrate:$PLATFORM_MIGRATION_PASSWORD@127.0.0.1:$port/flow_platform?sslmode=disable"
 export AGRI_TEST_PG_RUNTIME_DSN="postgres://flow_platform_app:$PLATFORM_RUNTIME_PASSWORD@127.0.0.1:$port/flow_platform?sslmode=disable"
+export AGRI_TEST_PG_SYSTEM_DSN="postgres://flow_platform_system:$PLATFORM_SYSTEM_PASSWORD@127.0.0.1:$port/flow_platform?sslmode=disable"
 export AGRI_TEST_PG_ISOLATED=1
 export CANVAS_DATABASE_DRIVER=postgres DATABASE_URL="$AGRI_TEST_PG_MIGRATION_DSN"
 
@@ -138,6 +141,24 @@ go -C backend test -p 1 -count=1 -json ./internal/database ./internal/agricultur
   | python3 scripts/agriculture/membership-ci-result.py --suite postgres --output .local/evidence/membership-postgres.json
 go -C backend test -count=1 -json ./internal/flow -run '^Test(OrgInviteSingleUseAndGrantRevocation|P7MembersRoleEditing|AgricultureMembership)' \
   | python3 scripts/agriculture/membership-ci-result.py --suite legacy-flow --output .local/evidence/membership-legacy-flow.json
+# Exact current scope roots; each reducer rejects missing/skipped children.
+run_scope_suite() {
+  local suite=$1 package=$2 pattern=$3
+  go -C backend test -p 1 -count=1 -json "$package" -run "$pattern" \
+    | python3 scripts/agriculture/membership-ci-result.py --suite "$suite" --output ".local/evidence/membership-$suite.json"
+}
+run_scope_suite flow-scope ./internal/flow '^TestFlowPostgresStrictScopeAndProviderAtomicity$'
+run_scope_suite flow-admission ./internal/flow '^TestFlowPostgresCallbackAndLegacyAdmission$'
+run_scope_suite flow-workers ./internal/flow '^TestFlowPostgresWorkerShortTransactions$'
+run_scope_suite flow-continuations ./internal/flow '^TestFlowPostgresWaitAndNotificationScopes$'
+run_scope_suite edu-artifacts ./internal/edumath '^TestEduPostgresSignedArtifactAdmission$'
+run_scope_suite edu-onboarding ./internal/edumath '^TestEduPostgresOnboardingAdmission$'
+run_scope_suite edu-ledger ./internal/edumath '^TestEduPostgresDailyLedgerPagination$'
+# Only this isolated drift-negative process receives fixture bootstrap authority;
+# it constructs/restores bad grants. No product service receives this credential.
+AGRI_TEST_PG_FIXTURE_BOOTSTRAP_DSN="postgres://postgres:$POSTGRES_PASSWORD@127.0.0.1:$port/flow_platform?sslmode=disable" \
+  go -C backend test -p 1 -count=1 -json ./internal/flow -run '^TestFlowPostgresScannerAndRuntimeAdmission$' \
+  | python3 scripts/agriculture/membership-ci-result.py --suite flow-scanner --output .local/evidence/membership-flow-scanner.json
 python3 - <<'PY'
 import datetime,json
 from pathlib import Path

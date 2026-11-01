@@ -91,10 +91,6 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 		reply(c, http.StatusOK, gin.H{"account": acc, "reservations": rows}, "ok")
 	})
 	g.POST("/orgs", func(c *gin.Context) {
-		db := reqDB(c, db)
-		_ = db
-		billing := Billing{DB: db, Now: billing.Now}
-		_ = billing
 		u, ok := authed(c)
 		if !ok {
 			return
@@ -141,10 +137,6 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 		reply(c, http.StatusOK, gin.H{"invite": inv, "token": tok}, "ok")
 	})
 	g.POST("/invites/accept", func(c *gin.Context) {
-		db := reqDB(c, db)
-		_ = db
-		billing := Billing{DB: db, Now: billing.Now}
-		_ = billing
 		u, ok := authed(c)
 		if !ok {
 			return
@@ -187,10 +179,6 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 
 	// Engine → platform: does the schedule's grant actor still hold the scope?
 	api.POST("/internal/flow/authorize", func(c *gin.Context) {
-		db := reqDB(c, db)
-		_ = db
-		billing := Billing{DB: db, Now: billing.Now}
-		_ = billing
 		ctx, ok := internalServiceCtx(c, cfg)
 		if !ok {
 			return
@@ -204,7 +192,13 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 			reply(c, http.StatusBadRequest, nil, "bad request")
 			return
 		}
-		if err := AuthorizeGrant(db, body.GrantActor, ctx.TenantID, body.WorkspaceID, body.Scope); err != nil {
+		if body.WorkspaceID != ctx.WorkspaceID {
+			reply(c, http.StatusForbidden, nil, "workspace mismatch")
+			return
+		}
+		if err := TenantTx(db, ctx.TenantID, func(tx *gorm.DB) error {
+			return AuthorizeGrant(tx, body.GrantActor, ctx.TenantID, body.WorkspaceID, body.Scope)
+		}); err != nil {
 			reply(c, http.StatusForbidden, gin.H{"allowed": false}, "grant revoked")
 			return
 		}
@@ -213,7 +207,6 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 	// Engine → platform (PRD §9.2): budget reservation for one scheduled collection window,
 	// idempotent by key; 402 when the tenant's budget/quota denies it (schedule → blocked).
 	api.POST("/internal/flow/budget/reserve", func(c *gin.Context) {
-		db := reqDB(c, db)
 		ctx, ok := internalServiceCtx(c, cfg)
 		if !ok {
 			return
@@ -229,11 +222,23 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 			reply(c, http.StatusBadRequest, nil, "bad request")
 			return
 		}
-		if err := AuthorizeGrant(db, body.GrantActor, ctx.TenantID, body.WorkspaceID, "intel.collect"); err != nil {
+		if body.WorkspaceID != ctx.WorkspaceID {
+			reply(c, http.StatusForbidden, nil, "workspace mismatch")
+			return
+		}
+		var rsv model.FlowBudgetReservation
+		err := TenantTx(db, ctx.TenantID, func(tx *gorm.DB) error {
+			if err := AuthorizeGrant(tx, body.GrantActor, ctx.TenantID, body.WorkspaceID, "intel.collect"); err != nil {
+				return ErrForbidden
+			}
+			var err error
+			rsv, err = (Billing{DB: tx, Now: billing.Now}).Reserve(ctx.TenantID, body.Key, "schedule_window", body.RefID, body.AmountMicro)
+			return err
+		})
+		if errors.Is(err, ErrForbidden) {
 			reply(c, http.StatusForbidden, nil, "grant revoked")
 			return
 		}
-		rsv, err := Billing{DB: db, Now: billing.Now}.Reserve(ctx.TenantID, body.Key, "schedule_window", body.RefID, body.AmountMicro)
 		if errors.Is(err, ErrBudgetInsufficient) || errors.Is(err, ErrBudgetQuota) || errors.Is(err, ErrBudgetProvider) {
 			reply(c, http.StatusPaymentRequired, gin.H{"reason": err.Error()}, "budget denied")
 			return
@@ -246,7 +251,6 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 	})
 	// Engine → platform: settle (window ran) or release (nothing ran) a window reservation.
 	api.POST("/internal/flow/budget/close", func(c *gin.Context) {
-		db := reqDB(c, db)
 		ctx, ok := internalServiceCtx(c, cfg)
 		if !ok {
 			return
@@ -261,16 +265,22 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 			return
 		}
 		var r model.FlowBudgetReservation
-		if err := db.First(&r, "id = ? AND tenant_id = ? AND purpose = ?", body.ReservationID, ctx.TenantID, "schedule_window").Error; err != nil {
+		err := TenantTx(db, ctx.TenantID, func(tx *gorm.DB) error {
+			if err := tx.First(&r, "id = ? AND tenant_id = ? AND purpose = ?", body.ReservationID, ctx.TenantID, "schedule_window").Error; err != nil {
+				return err
+			}
+			b := Billing{DB: tx, Now: billing.Now}
+			var err error
+			if body.Outcome == "settle" {
+				r, err = b.Settle(r.ID, body.ActualMicro)
+			} else {
+				r, err = b.Release(r.ID)
+			}
+			return err
+		})
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			reply(c, http.StatusNotFound, nil, "reservation not found")
 			return
-		}
-		b := Billing{DB: db, Now: billing.Now}
-		var err error
-		if body.Outcome == "settle" {
-			r, err = b.Settle(r.ID, body.ActualMicro)
-		} else {
-			r, err = b.Release(r.ID)
 		}
 		if err != nil {
 			reply(c, http.StatusConflict, nil, err.Error())
@@ -281,10 +291,6 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 	// Engine → platform: LLM brief summarization through the Model Gateway,
 	// billed to the tenant and citation-validated before returning.
 	api.POST("/internal/flow/summarize", func(c *gin.Context) {
-		db := reqDB(c, db)
-		_ = db
-		billing := Billing{DB: db, Now: billing.Now}
-		_ = billing
 		ctx, ok := internalServiceCtx(c, cfg)
 		if !ok {
 			return
@@ -301,8 +307,8 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 			reply(c, http.StatusBadRequest, nil, "bad request")
 			return
 		}
-		if err := AuthorizeGrant(db, body.GrantActor, ctx.TenantID, body.WorkspaceID, "intel.reports.write"); err != nil {
-			reply(c, http.StatusForbidden, nil, "grant revoked")
+		if body.WorkspaceID != ctx.WorkspaceID {
+			reply(c, http.StatusForbidden, nil, "workspace mismatch")
 			return
 		}
 		if gw == nil {
@@ -314,8 +320,19 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 		// key on its next scheduler tick (the brief window stays parked until then)
 		// and receives the citation-validated result once the task succeeded.
 		req := SynthesisRequest{TenantID: ctx.TenantID, WorkspaceID: body.WorkspaceID, Key: "brief:" + body.Key, Purpose: "brief", Question: body.Topic, Evidence: body.Evidence, Scope: body.Scope}
-		_, task, err := StartSynthesis(gw, billing, req)
+		var task model.FlowModelTask
+		err := TenantTx(db, ctx.TenantID, func(tx *gorm.DB) error {
+			if err := AuthorizeGrant(tx, body.GrantActor, ctx.TenantID, body.WorkspaceID, "intel.reports.write"); err != nil {
+				return ErrForbidden
+			}
+			var err error
+			_, task, err = StartSynthesis(gw, Billing{DB: tx, Now: billing.Now}, req)
+			return err
+		})
 		switch {
+		case errors.Is(err, ErrForbidden):
+			reply(c, http.StatusForbidden, nil, "grant revoked")
+			return
 		case errors.Is(err, ErrBudgetInsufficient), errors.Is(err, ErrBudgetQuota):
 			reply(c, http.StatusPaymentRequired, nil, err.Error())
 			return
@@ -343,11 +360,13 @@ func RegisterP5Routes(api gin.IRouter, db *gorm.DB, cfg Config, user UserFunc, g
 // RunBillingMaintenance closes reservations of runs that died without
 // completing, and conservatively charges unknown outcomes older than 24h
 // (the gateway offers no status lookup, so the reserved amount is billed).
-func RunBillingMaintenance(ctx context.Context, db *gorm.DB, every time.Duration) {
+func RunBillingMaintenance(ctx context.Context, db *gorm.DB, every time.Duration, scanners ...*BackgroundScanner) {
 	t := time.NewTicker(every)
 	defer t.Stop()
 	for {
-		BillingMaintenancePass(db)
+		if err := BillingMaintenancePass(db.WithContext(ctx), scanners...); err != nil {
+			slog.Warn("flow: billing maintenance", "error", err)
+		}
 		select {
 		case <-ctx.Done():
 			return
@@ -359,23 +378,39 @@ func RunBillingMaintenance(ctx context.Context, db *gorm.DB, every time.Duration
 // BillingMaintenancePass sweeps stale reservations and conservatively charges
 // unknown outcomes older than 24h. The tenant list is discovered once; all
 // reads and writes then run per tenant inside TenantTx, so RLS applies.
-func BillingMaintenancePass(db *gorm.DB) {
+func BillingMaintenancePass(db *gorm.DB, scanners ...*BackgroundScanner) error {
 	var tenants []string
-	db.Model(&model.FlowBudgetReservation{}).Where("status IN ?", []string{"reserved", StatusReconciliation}).Distinct().Pluck("tenant_id", &tenants)
+	if db.Dialector.Name() == "postgres" {
+		var scanner *BackgroundScanner
+		if len(scanners) == 1 {
+			scanner = scanners[0]
+		}
+		var err error
+		tenants, err = scanner.Next(db.Statement.Context, ScanBilling)
+		if err != nil {
+			return err
+		}
+	} else if err := db.Model(&model.FlowBudgetReservation{}).Where("status IN ?", []string{"reserved", StatusReconciliation}).Distinct().Pluck("tenant_id", &tenants).Error; err != nil {
+		return err
+	}
 	for _, tenant := range tenants {
 		if tenant == "" {
 			continue
 		}
 		if err := TenantTx(db, tenant, func(tx *gorm.DB) error {
 			b := Billing{DB: tx}
-			_, _ = b.SweepStale(6 * time.Hour)
+			if _, err := b.SweepStale(6 * time.Hour); err != nil {
+				return err
+			}
 			// No status endpoint / still unknown after 24h: charge conservatively.
-			_, _ = b.Reconcile(24*time.Hour, func(r model.FlowBudgetReservation) (Outcome, error) {
+			_, err := b.Reconcile(24*time.Hour, func(r model.FlowBudgetReservation) (Outcome, error) {
 				return Outcome{Known: true, Succeeded: true, Cost: r.ReservedMicro}, nil
 			})
-			return nil
+			return err
 		}); err != nil {
 			slog.Warn("flow: billing maintenance", "tenant", tenant, "error", err)
+			return err
 		}
 	}
+	return nil
 }

@@ -25,6 +25,15 @@ BROWSER_CHECKS = {
     "all_database_checkpoints_acknowledged", "no_internal_credentials_identity_spoofing_or_external_requests",
 }
 BROWSER_STAGES = set("preflight react_login create_two_regions create_north_form create_north_preview create_north_confirm create_north_reload create_south_form create_south_preview create_south_confirm create_south_reload invalid_input_negatives ui_update_and_stale_revision archive_history cross_scope_negatives awaiting_revocation complete".split())
+BROWSER_STAGES.update({"react_login_" + phase for phase in ("navigation", "account", "password", "submit", "workspace")})
+UI_BOOL_KEYS = set("login account_input password_input submit_button session_ready session_loading session_error workspace workspace_context create_button editor preview busy validation".split())
+UI_ERROR_CODES = set("REVISION_CONFLICT STATE_CONFLICT INVALID_GEOMETRY INVALID_ARGUMENT INVALID_RESPONSE DEPENDENCY_UNAVAILABLE AUTHORITY_UNAVAILABLE NETWORK_ERROR TIMEOUT".split())
+UI_OPERATION_STATES = set("preview pending completed rejected reconciliation_required unknown".split())
+API_PATHS = {
+    "/api/auth/settings", "/api/auth/csrf", "/api/auth/login", "/api/auth/session", "/api/auth/logout",
+    "/api/agriculture/workspaces", "/api/agri/v1/context", "/api/agri/v1/farms", "/api/agri/v1/farm-previews",
+    "/api/agri/v1/farms/:farm_id", "/api/agri/v1/farms/:farm_id/archive", "/api/agri/v1/farm-operations/:operation_id",
+}
 GO_DIAGNOSTIC_FILES = {"farm_browser_chain_test.go", "identity_browser_chain_test.go"}
 GO_BROWSER_STAGES = set("browser_dependencies fixture_dependencies fixture_platform_database fixture_membership fixture_credentials fixture_service_keys fixture_gis_start fixture_gis_ready fixture_browser_policy fixture_runtime fixture_persisted_login browser_builds browser_node_lookup browser_private_config browser_child_start browser_child_finish browser_report_validate browser_evidence_write".split()) | {
     "browser_" + action + "_" + checkpoint for action in ("wait", "verify")
@@ -70,6 +79,27 @@ def failure_diagnostics(raw, browser, terminal):
             result["browser_failure_code"] = "fixture_failed"
         elif failure == "owned farm fixture interrupted":
             result["browser_failure_code"] = "interrupted"
+        flags = browser.get("ui_flags")
+        if isinstance(flags, dict):
+            safe = {k: flags[k] for k in sorted(UI_BOOL_KEYS & flags.keys()) if type(flags[k]) is bool}
+            for key, allowed in (("error_code", UI_ERROR_CODES), ("operation_state", UI_OPERATION_STATES)):
+                value = flags.get(key)
+                if key in flags and (value is None or isinstance(value, str) and value in allowed):
+                    safe[key] = value
+            if safe:
+                result["ui_flags"] = safe
+        for key, allowed in (("error_code", UI_ERROR_CODES), ("operation_state", UI_OPERATION_STATES)):
+            value = browser.get(key)
+            if key in browser and (value is None or isinstance(value, str) and value in allowed):
+                result[key] = value
+        rows = browser.get("api_statuses")
+        if isinstance(rows, list):
+            result["api_statuses"] = []
+            for row in rows[:80]:
+                if (isinstance(row, dict) and isinstance(row.get("path"), str) and row["path"] in API_PATHS
+                        and type(row.get("status")) is int and 100 <= row["status"] <= 599
+                        and type(row.get("completed")) is bool):
+                    result["api_statuses"].append({"path": row["path"], "status": row["status"], "completed": row["completed"]})
     return result
 
 

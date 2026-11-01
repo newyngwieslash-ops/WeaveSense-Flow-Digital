@@ -4,7 +4,7 @@ import { PassThrough } from 'node:stream';
 import { chmodSync, linkSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { CHECKPOINTS, REQUIRED_CHECKS, checkpointControl, readPrivateConfig, requestViolatesBoundary, safeFailure, validAck, validateConfig } from './farm-browser-e2e.mjs';
+import { API_PATHS, CHECKPOINTS, ERROR_CODES, LOGIN_STAGES, OPERATION_STATES, REQUIRED_CHECKS, UI_BOOLEAN_KEYS, checkpointControl, readPrivateConfig, requestViolatesBoundary, safeAPIPath, safeAPIStatuses, safeFailure, safeUIFlags, validAck, validateConfig } from './farm-browser-e2e.mjs';
 const fixture = directory => ({ platform_url:'http://127.0.0.1:18080',gateway_port:18081,username:'fixture_user',password:'not-a-real-fixture-password',workspace_id:'ws_main',foreign_workspace_id:'ws_foreign',second_workspace_id:'ws_second',actor_id:'actor_main',report_path:join(directory,'report.json'),dictionary_version:'fixture-v1',region_north:'fixture-north',region_south:'fixture-south',area_units:['m2','ha','mu'] });
 
 test('private configuration is exact literal-loopback schema, not extensible authority',()=>{
@@ -51,6 +51,27 @@ test('request observer allows explicit grantee/resource selectors but forbids in
 test('failure output never reflects raw credentials, request bodies or database messages',()=>{
  assert.equal(safeFailure(Error('assertion failed: invalid_geometry_no_write')),'assertion failed: invalid_geometry_no_write');
  for(const message of ['password=secret','Cookie: secret','postgres://role:secret@host/db','{"contact":{"email":"private@example.com"}}'])assert.equal(safeFailure(Error(message)),'farm browser fixture failed; private diagnostics withheld');
+});
+test('login diagnostics have five fixed stages and only typed UI booleans or closed enums',()=>{
+ assert.deepEqual(LOGIN_STAGES,['react_login_navigation','react_login_account','react_login_password','react_login_submit','react_login_workspace']);
+ const values=Object.fromEntries(UI_BOOLEAN_KEYS.map(key=>[key,true]));
+ assert.deepEqual(safeUIFlags({...values,error_code:'INVALID_RESPONSE',operation_state:'pending',password:'secret',body:{contact:'secret'}}),{...values,error_code:'INVALID_RESPONSE',operation_state:'pending'});
+ assert.deepEqual(safeUIFlags({login:'secret',workspace:1,error_code:'PASSWORD_SECRET',operation_state:'secret'}),{error_code:null,operation_state:null});
+ assert.deepEqual(safeUIFlags(null),{});assert.equal(UI_BOOLEAN_KEYS.length,14);assert.equal(ERROR_CODES.length,9);assert.equal(OPERATION_STATES.length,6);
+});
+test('API diagnostics retain only fixed paths and normalize known opaque IDs without query values',()=>{
+ const origin='http://127.0.0.1:18081',id='farm_'+'a'.repeat(32);
+ assert.equal(safeAPIPath(origin+'/api/agri/v1/context?workspace_id=private&token=secret',origin),'/api/agri/v1/context');
+ assert.equal(safeAPIPath(origin+'/api/agri/v1/farms/'+id+'?workspace_id=private',origin),'/api/agri/v1/farms/:farm_id');
+ assert.equal(safeAPIPath(origin+'/api/agri/v1/farms/'+id+'/archive',origin),'/api/agri/v1/farms/:farm_id/archive');
+ assert.equal(safeAPIPath(origin+'/api/agri/v1/farm-operations/fop_private?token=secret',origin),'/api/agri/v1/farm-operations/:operation_id');
+ for(const url of ['not a URL','https://external.invalid/api/auth/login',origin+'/api/agri/v1/farms/private',origin+'/api/agri/v1/farms/:farm_id',origin+'/internal/secret'])assert.equal(safeAPIPath(url,origin),null);
+ assert.equal(API_PATHS.length,12);
+});
+test('API status output is bounded and strips reflected fields, bodies and dynamic paths',()=>{
+ const good={path:'/api/agri/v1/context',status:503,completed:true,token:'secret',body:{contact:'secret'}};
+ assert.deepEqual(safeAPIStatuses([good,{...good,path:good.path+'?workspace_id=private'},{...good,status:'503'},{...good,status:0},{...good,completed:1}]),[{path:good.path,status:503,completed:true}]);
+ assert.equal(safeAPIStatuses(Array(100).fill(good)).length,80);assert.deepEqual(safeAPIStatuses(null),[]);
 });
 test('runner has fixed complete coverage, real form happy flows and sandboxed production nginx with no cookie injection',()=>{
  const source=readFileSync(new URL('./farm-browser-e2e.mjs',import.meta.url),'utf8');

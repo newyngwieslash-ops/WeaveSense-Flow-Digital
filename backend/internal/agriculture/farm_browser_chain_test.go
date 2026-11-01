@@ -247,6 +247,28 @@ func newFarmChainFixture(t *testing.T, browser bool, progress ...func(string)) *
 	f.server = httptest.NewServer(router)
 	t.Cleanup(f.server.Close)
 	login := func(id string) *http.Cookie {
+		if !component {
+			status, body, cookies := f.requestWithCookies(t, nil, "POST", "/api/auth/login", map[string]string{"username": id, "password": f.password}, "")
+			if status != http.StatusOK || body["code"] != float64(0) {
+				t.Fatalf("real farm HTTP login failed status=%d", status)
+			}
+			for _, cookie := range cookies {
+				if cookie.Name == auth.SessionCookieName && cookie.Value != "" && cookie.HttpOnly {
+					status, session := f.request(t, cookie, "GET", "/api/auth/session", nil, "")
+					if status != http.StatusOK || session["code"] != float64(0) {
+						t.Fatal("real farm HTTP session failed")
+					}
+					user, ok := farmData(t, session)["user"].(map[string]any)
+					if !ok || user["id"] != id {
+						t.Fatal("real farm HTTP session identity mismatch")
+					}
+					return cookie
+				}
+			}
+			t.Fatal("real farm HTTP login lacks HttpOnly session")
+		}
+		// Explicit local component mode has no Redis rate limiter. Full-runtime
+		// and browser acceptance above must use the actual HTTP auth routes.
 		result, e := svc.Login(auth.LoginRequest{Username: id, Password: f.password})
 		if e != nil {
 			t.Fatal("persisted farm session login failed")
@@ -255,10 +277,40 @@ func newFarmChainFixture(t *testing.T, browser bool, progress ...func(string)) *
 	}
 	stage("fixture_persisted_login")
 	f.actorCookie, f.ownerCookie = login(actor), login(owner)
+	status, contextBody := f.request(t, f.actorCookie, "GET", "/api/agri/v1/context?workspace_id="+f.org.Workspace.ID, nil, "")
+	if status != 200 {
+		t.Fatalf("real farm HTTP context failed status=%d", status)
+	}
+	contextData := farmData(t, contextBody)
+	if contextData["workspace_id"] != f.org.Workspace.ID || contextData["can_create"] != true || contextData["dictionary_version"] != "fixture-v1" {
+		t.Fatal("real farm context identity or creation contract mismatch")
+	}
+	bun, err := exec.LookPath("bun")
+	if err != nil {
+		t.Fatal("actual Vue context adapter runtime unavailable")
+	}
+	contextPath := filepath.Join(f.private, "actual-context.json")
+	status, listBody := f.request(t, f.actorCookie, "GET", "/api/agri/v1/farms?workspace_id="+f.org.Workspace.ID+"&status=active&limit=50", nil, "")
+	if status != 200 {
+		t.Fatalf("real empty farm list failed status=%d", status)
+	}
+	chainPrivate(t, contextPath, map[string]any{"workspace_id": f.org.Workspace.ID, "response": contextBody, "list": listBody})
+	adapter := exec.Command(bun, "-e", `import { contextFrom,pageFrom } from "./services/agri-gis/frontend/agriculture/farms/types.ts"; import { readFileSync } from "node:fs"; const v=JSON.parse(readFileSync(process.argv.at(-1),"utf8")); try { contextFrom(v.response.data,v.workspace_id); const page=pageFrom({items:v.list.data,next_cursor:v.list.next_cursor,has_more:v.list.has_more},v.workspace_id); if(page.items.length!==0)process.exit(1); } catch { process.exit(1); }`, contextPath)
+	adapter.Dir = f.root
+	adapter.Env = chainEnvironment(f.root, f.private)
+	if err := adapter.Run(); err != nil {
+		t.Fatal("actual context or empty list rejected by Vue adapter")
+	}
 	return f
 }
 
 func (f *farmChainFixture) request(t *testing.T, cookie *http.Cookie, method, path string, payload any, key string) (int, map[string]any) {
+	t.Helper()
+	status, body, _ := f.requestWithCookies(t, cookie, method, path, payload, key)
+	return status, body
+}
+
+func (f *farmChainFixture) requestWithCookies(t *testing.T, cookie *http.Cookie, method, path string, payload any, key string) (int, map[string]any, []*http.Cookie) {
 	t.Helper()
 	var body []byte
 	if payload != nil {
@@ -318,7 +370,7 @@ func (f *farmChainFixture) request(t *testing.T, cookie *http.Cookie, method, pa
 	if json.Unmarshal(raw, &out) != nil {
 		t.Fatalf("farm response not JSON, status=%d", response.StatusCode)
 	}
-	return response.StatusCode, out
+	return response.StatusCode, out, response.Cookies()
 }
 
 func (f *farmChainFixture) snapshot(t *testing.T) map[string]string {
@@ -727,8 +779,14 @@ func TestFarmBrowserPostgresChain(t *testing.T) {
 			return
 		}
 		var v struct {
-			Result  string `json:"result"`
-			Stage   string `json:"stage"`
+			Result      string                     `json:"result"`
+			Stage       string                     `json:"stage"`
+			UIFlags     map[string]json.RawMessage `json:"ui_flags"`
+			APIStatuses []struct {
+				Path      string `json:"path"`
+				Status    int    `json:"status"`
+				Completed bool   `json:"completed"`
+			} `json:"api_statuses"`
 			Results []struct {
 				Name   string `json:"name"`
 				Result string `json:"result"`
@@ -737,7 +795,7 @@ func TestFarmBrowserPostgresChain(t *testing.T) {
 		if json.Unmarshal(raw, &v) != nil || (v.Result != "pass" && v.Result != "fail") {
 			return
 		}
-		stages := strings.Fields("preflight react_login create_two_regions create_north_form create_north_preview create_north_confirm create_north_reload create_south_form create_south_preview create_south_confirm create_south_reload invalid_input_negatives ui_update_and_stale_revision archive_history cross_scope_negatives awaiting_revocation complete")
+		stages := strings.Fields("preflight react_login react_login_navigation react_login_account react_login_password react_login_submit react_login_workspace create_two_regions create_north_form create_north_preview create_north_confirm create_north_reload create_south_form create_south_preview create_south_confirm create_south_reload invalid_input_negatives ui_update_and_stale_revision archive_history cross_scope_negatives awaiting_revocation complete")
 		stageKnown := false
 		for _, stage := range stages {
 			if stage == v.Stage {
@@ -757,7 +815,50 @@ func TestFarmBrowserPostgresChain(t *testing.T) {
 			}
 			delete(allowed, check.Name)
 		}
-		clean, _ := json.Marshal(map[string]any{"schema_version": "1.0", "result": v.Result, "stage": v.Stage, "results": v.Results, "diagnostic_only": true, "data_class": "fixture", "production_acceptance": false})
+		flags := map[string]any{}
+		for _, key := range strings.Fields("login account_input password_input submit_button session_ready session_loading session_error workspace workspace_context create_button editor preview busy validation") {
+			if value, ok := v.UIFlags[key]; ok {
+				var flag bool
+				if string(value) == "null" || json.Unmarshal(value, &flag) != nil {
+					return
+				}
+				flags[key] = flag
+			}
+		}
+		known := func(value *string, values string) bool {
+			if value == nil {
+				return true
+			}
+			for _, item := range strings.Fields(values) {
+				if *value == item {
+					return true
+				}
+			}
+			return false
+		}
+		for name, values := range map[string]string{"error_code": "REVISION_CONFLICT STATE_CONFLICT INVALID_GEOMETRY INVALID_ARGUMENT INVALID_RESPONSE DEPENDENCY_UNAVAILABLE AUTHORITY_UNAVAILABLE NETWORK_ERROR TIMEOUT", "operation_state": "preview pending completed rejected reconciliation_required unknown"} {
+			var value *string
+			if raw, ok := v.UIFlags[name]; ok && json.Unmarshal(raw, &value) != nil {
+				return
+			}
+			if !known(value, values) {
+				return
+			}
+			flags[name] = value
+		}
+		if len(v.APIStatuses) > 80 {
+			return
+		}
+		paths := map[string]bool{}
+		for _, path := range strings.Fields("/api/auth/settings /api/auth/csrf /api/auth/login /api/auth/session /api/auth/logout /api/agriculture/workspaces /api/agri/v1/context /api/agri/v1/farms /api/agri/v1/farm-previews /api/agri/v1/farms/:farm_id /api/agri/v1/farms/:farm_id/archive /api/agri/v1/farm-operations/:operation_id") {
+			paths[path] = true
+		}
+		for _, row := range v.APIStatuses {
+			if !paths[row.Path] || row.Status < 100 || row.Status > 599 {
+				return
+			}
+		}
+		clean, _ := json.Marshal(map[string]any{"schema_version": "1.0", "result": v.Result, "stage": v.Stage, "results": v.Results, "diagnostic_only": true, "data_class": "fixture", "production_acceptance": false, "ui_flags": flags, "api_statuses": v.APIStatuses})
 		dir := filepath.Join(f.root, ".local/evidence")
 		if os.MkdirAll(dir, 0700) == nil {
 			_ = os.WriteFile(filepath.Join(dir, "farm-chain-browser.json"), clean, 0600)

@@ -1,10 +1,11 @@
 import test from 'node:test';
+import { runInNewContext } from 'node:vm';
 import assert from 'node:assert/strict';
 import { PassThrough } from 'node:stream';
 import { chmodSync, linkSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { API_PATHS, CHECKPOINTS, ERROR_CODES, LOGIN_STAGES, OPERATION_STATES, REQUIRED_CHECKS, UI_BOOLEAN_KEYS, checkpointControl, readPrivateConfig, requestViolatesBoundary, safeAPIPath, safeAPIStatuses, safeFailure, safeUIFlags, validAck, validateConfig } from './farm-browser-e2e.mjs';
+import { API_PATHS, CHECKPOINTS, ERROR_CODES, LOGIN_STAGES, OPERATION_STATES, REQUIRED_CHECKS, UI_BOOLEAN_KEYS, checkpointControl, readPrivateConfig, requestViolatesBoundary, safeAPIPath, safeAPIStatuses, safeFailure, safeUIFlags, selectOwnGrants, validAck, validateConfig } from './farm-browser-e2e.mjs';
 const fixture = directory => ({ platform_url:'http://127.0.0.1:18080',gateway_port:18081,username:'fixture_user',password:'not-a-real-fixture-password',workspace_id:'ws_main',foreign_workspace_id:'ws_foreign',second_workspace_id:'ws_second',actor_id:'actor_main',report_path:join(directory,'report.json'),dictionary_version:'fixture-v1',region_north:'fixture-north',region_south:'fixture-south',area_units:['m2','ha','mu'] });
 
 test('private configuration is exact literal-loopback schema, not extensible authority',()=>{
@@ -80,4 +81,16 @@ test('runner has fixed complete coverage, real form happy flows and sandboxed pr
  for(const literal of ['deploy/agriculture/nginx.conf.template',"cdp.fill('#login-password'",'await fillCreate(cdp,config,side)',"await click(cdp,'[data-testid=farm-confirm]'",'history.back()',"await control.wait('revoked-verified')"])assert.ok(source.includes(literal));
  for(const forbidden of ['Network.setCookie','--no-sandbox','--disable-setuid-sandbox','startProxy','workbench-attributes'])assert.ok(!source.includes(forbidden));
  assert.ok(source.includes("process.getuid?.()===0"));assert.ok(source.includes('if(process.argv[1]&&import.meta.url==='));
+});
+
+test('explicit grant selection yields between checkbox clicks and verifies all retained choices',async()=>{
+ let model=[],pending=false,clicks=0,polls=0;
+ const boxes=['agri.farm.read','agri.farm.update','agri.farm.archive'].map(value=>({value,checked:false,model:[],matches:()=>false,click(){clicks++;this.checked=true;model=this.model.concat(this.value);pending=true;}}));
+ const row={querySelector:()=>({textContent:'actor_main'}),querySelectorAll:()=>boxes};
+ const document={querySelectorAll:()=>[row]};
+ const evaluate=async expression=>{const result=runInNewContext(expression,{document});await Promise.resolve();if(pending){for(const box of boxes){box.model=model;box.checked=model.includes(box.value)}pending=false;}return result;};
+ const cdp={evaluate,poll:async expression=>{polls++;assert.equal(await evaluate(expression),true)}};
+ await selectOwnGrants(cdp,'actor_main');assert.deepEqual(model,boxes.map(e=>e.value));assert.equal(clicks,3);assert.equal(polls,3);
+ boxes[0].matches=()=>true;await assert.rejects(selectOwnGrants(cdp,'actor_main'));assert.equal(clicks,3);
+ await assert.rejects(selectOwnGrants(cdp,'missing_actor'));
 });

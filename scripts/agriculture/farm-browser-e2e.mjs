@@ -174,8 +174,18 @@ async function fillCreate(cdp, config, side, code = `browser-${side}`) {
   if (!await select(cdp,'region_code',config[`region_${side}`]) || !await select(cdp,'timezone',null) || !await select(cdp,'area_unit',unit) || !await select(cdp,'source_crs','EPSG:4326') || !await select(cdp,'data_class','demo')) throw Error('explicit configured option unavailable');
   const [x,y] = side === 'north' ? [121,31] : [113,23];
   await setInput(cdp,'[name=geometry]',JSON.stringify({type:'Polygon',coordinates:[[[x,y],[x+0.001,y],[x+0.001,y+0.001],[x,y+0.001],[x,y]]]}));
-  const granted = await cdp.evaluate(`(()=>{const row=[...document.querySelectorAll('.farm-grant')].find(row=>row.querySelector('code')?.textContent===${JSON.stringify(config.actor_id)});if(!row)return false;const boxes=[...row.querySelectorAll('input[type=checkbox]')];if(boxes.length!==3)return false;for(const e of boxes)if(!e.checked)e.click();return boxes.every(e=>e.checked)})()`);
-  if (!granted) throw Error('explicit member grant controls unavailable');
+  await selectOwnGrants(cdp, config.actor_id);
+}
+export async function selectOwnGrants(cdp, actorID) {
+  const boxes = `(()=>{const row=[...document.querySelectorAll('.farm-grant')].find(row=>row.querySelector('code')?.textContent===${JSON.stringify(actorID)});return row?[...row.querySelectorAll('input[type=checkbox]')]:[]})()`;
+  if (!await cdp.evaluate(`(()=>{const boxes=${boxes};return boxes.length===3 && ['agri.farm.read','agri.farm.update','agri.farm.archive'].every(cap=>boxes.some(e=>e.value===cap&&!e.matches(':disabled')))})()`)) throw Error('explicit member grant controls unavailable');
+  // Each browser command yields to Vue's render microtask. Synchronous clicks
+  // share stale v-model array values and can silently retain only the last grant.
+  for (let index=0;index<3;index++) {
+    if (!await cdp.evaluate(`(()=>{const boxes=${boxes};const e=boxes[${index}];if(!e||e.matches(':disabled'))return false;if(!e.checked)e.click();return true})()`)) throw Error('explicit member grant controls unavailable');
+    await cdp.poll(`(()=>{const boxes=${boxes};return boxes.length===3&&boxes.slice(0,${index+1}).every(e=>e.checked&&!e.matches(':disabled'))})()`, 'explicit grant retained after Vue update');
+  }
+  if (!await cdp.evaluate(`(()=>{const boxes=${boxes};return boxes.length===3&&boxes.every(e=>e.checked&&!e.matches(':disabled'))})()`)) throw Error('explicit member grants not retained');
 }
 async function sameCookieAPI(cdp, expression) {
   // Negative/race setup only; primary create/update/archive use rendered forms.

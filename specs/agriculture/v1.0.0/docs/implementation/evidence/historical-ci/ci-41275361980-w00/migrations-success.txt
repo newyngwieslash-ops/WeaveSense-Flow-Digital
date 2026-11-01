@@ -1,0 +1,10 @@
+Run 41275361980; job 124756383995; CI d77a5c36605b9da22f5a035412b3addb5c9e558e
+2026-11-01T05:03:05.6791454Z [36;1mprintf 'PASS: W00 %s Docker smoke. No tenant/business/live acceptance claimed.\n' "$SMOKE_MODE" >> "$GITHUB_STEP_SUMMARY"[0m
+2026-11-01T05:03:42.2420137Z PASS: restricted geo worker password connection, no membership, cross-database/DDL/table access denied even with scope
+2026-11-01T05:03:42.6393367Z PASS: fresh database roles, password connections, cross-database denial, runtime DDL denial, default DML privileges, PostGIS and bounded readiness
+2026-11-01T05:07:10.8004578Z {"current":85,"expected":85,"ready":true}
+2026-11-01T05:07:11.3741452Z {"current":85,"expected":85,"ready":true}
+2026-11-01T05:07:11.5875627Z PASS: platform-migrate applied and replayed, tables=190
+2026-11-01T05:07:12.8695315Z PASS: loom-migrate applied and replayed, tables=28
+2026-11-01T05:07:13.1207300Z {"current":85,"expected":85,"ready":true}
+2026-11-01T05:07:13.3399376Z PASS: W00 migrations smoke; NOT tenant isolation, GIS migration, live data or product acceptance

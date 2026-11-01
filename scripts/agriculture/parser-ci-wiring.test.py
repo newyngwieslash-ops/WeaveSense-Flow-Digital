@@ -12,6 +12,13 @@ spec.loader.exec_module(prepare)
 
 
 class ParserWiringTests(unittest.TestCase):
+    def test_native_runtime_is_pinned_and_import_checked_as_nonroot(self):
+        dockerfile = (ROOT / "deploy/agriculture/Dockerfile.parser").read_text()
+        self.assertIn("libexpat1=2.8.3-1~deb13u1", dockerfile)
+        self.assertIn("--no-install-recommends", dockerfile)
+        self.assertIn('RUN python -I -c "import rasterio, fiona;', dockerfile.split("USER 65534:65534", 1)[1])
+        self.assertNotIn("--allow-unauthenticated", dockerfile)
+
     def test_exact_ingestion_dependency_closure_is_allowlisted(self):
         modules = {"__init__", "source_policy", "download", "limits", "runner", "worker", "archive"}
         tests = {"ingestion_limit_probe", "test_agriculture_ingestion_docker", "test_agriculture_ingestion_download",

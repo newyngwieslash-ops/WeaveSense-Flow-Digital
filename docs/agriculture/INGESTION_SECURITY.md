@@ -42,6 +42,10 @@
 
 ## 可复现验证与证据边界
 
+解析镜像原生依赖：Debian trixie `libexpat1=2.8.3-1~deb13u1`（Expat MIT 许可，保留包内 copyright），通过已签名 APT 元数据安装固定版本。
+实际 CI `41275760183` 已确认 GDAL wheel 缺少外部 `libexpat.so.1` 导致 Rasterio 导入失败；修复不改变网络、文件系统、权限或资源限制。
+镜像在非 root 用户下执行 Rasterio/Fiona import 构建检查；它只证明动态库可加载，不能代替三项真实容器验收。
+
 锁定 GIS Python 环境下，从 `services/agri-gis/backend` 运行：
 
 ```sh

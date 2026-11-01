@@ -1,0 +1,2883 @@
+{
+  "verified_against": "ad4995c6e91b697dee396d933bcb7fa786dd3b9d",
+  "artifact_file_sha256": {
+    "identity-actors.json": "a73099290c7e0e3fa27c311a5213c517dee84643b48e4a81d336149c1e862a09",
+    "identity-actors.xml": "f369186c58df55a80e78d20c10128e9e04ce23bac39cfa960427d6f755c2ac4c",
+    "identity-bootstrap.json": "124fb20af2e15b2212fa8ec3f2e06a1f0f73f01436e0feeffa4808785e67860b",
+    "identity-chain-boundary.json": "691f0a9ea8215d21042262889cf777ab29d21d18953f8602cf1a3bfd449cb5dd",
+    "identity-chain-browser.json": "3643e1a1d7373649be9c82217a57bcdec700028a6d9ea6593bec21042b19fdf8",
+    "identity-chain-go.json": "8a7109723599d8433bfa18b2b8361ffc55742b4bfd933b122570d87411130891",
+    "identity-chain-nginx.json": "7b950b5633cddc8bbd8dec0f35b61b2ad5ed9420844877eb3d38452fa908de6a",
+    "identity-domain.json": "6dd4ae746bc70a263a973066315406520f37e0d727ff837f019f39fbfd435d9d",
+    "identity-domain.xml": "95ddcbe034765ef5080c898379502d607375a748ff75a6cd684b1e9ce1949346",
+    "identity-go.json": "94a459819a5c3396e76181d4a2068973f175f74bc49b64d9e05e8dd37920058c",
+    "identity-go.xml": "98ecd2fe47a60fe0ae8d2583147dcee140e492d3ba8c3a008eabafd015bea2cb",
+    "identity-jobs.json": "1353ee2b46a505e25a69f51357945817ce560ce958063b25ba3242e181c5dc9e",
+    "identity-jobs.xml": "d3e72fe971027b66a36f611ba1c28d812af31b2862314a287a60ecdf5051c19f",
+    "identity-migration-bootstrap.json": "ef527aeb4b9035349df029f838368b9307f7d28d9b0f60379d03740c8bde28b5",
+    "identity-migration-command.json": "692d7593c9b66afc61490aa357408e632d767d4a9b7bb92a3efbe3e9d97509f3",
+    "identity-migration-command.xml": "c4b57c6c1a477a0bc049d2fc85738dfb3c7983aad215782a05612ff0a179b42f",
+    "identity-objects.json": "4bdb49c11d2e63f97620f0e99feffac60a71184e1dcfa8bf1f4080c58a9926ae",
+    "identity-objects.xml": "b1b22046591ecf246e07061178f99bd39038101c9e6a537bf3fa6e1805dfcd95",
+    "identity-python.json": "88b4d6a09ec8cec223b5d7ea55b9221ea9e740881d37a10974ba48c7aa5afe2b",
+    "identity-python.xml": "480258781f3bbe8909dbe85e8652f686239bb2c79915adb61114bab10826bd61",
+    "identity-query.json": "acbf6ccb3f7f5b7d3fde1bedcf92dbd2c491326877b058ecf6fcea78364e81af",
+    "identity-query.xml": "447b69c85e2c3ac738af9336509af4fefc9281f27ff205d70a928518940f5ff0",
+    "scope-stream-agriculture.json": "9fe548a61b6a6f72121c1debfb977aaee0b9b8d57d7b14504ecaff610a8d01cf",
+    "scope-stream-cache.json": "2f2a56acf0afda83bf9bf6042fdd347d2dd542206b726f7ced68383fe7ae3297",
+    "scope-stream-legacy.json": "8b9a0ce1ffed2b1aac22666edb4a16901e4a4f3d15377253c0c768db0c7e5486",
+    "session-ci-provenance.json": "2013ee4880ee041a3a5e4d294f7448205bf52c29dae2436208d64861a3bb9988"
+  },
+  "source_checks": [
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/cmd/server/main.go",
+      "expected": "5b6694eae9ffb5ea1278d5a77b267fcda52c555fa788a974280a0d34cf944cc5",
+      "actual": "5b6694eae9ffb5ea1278d5a77b267fcda52c555fa788a974280a0d34cf944cc5",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/browsersecurity/policy.go",
+      "expected": "2239d7cf23feae6f9052e5884c6107882a377969e897d5aec4d7b782800e6580",
+      "actual": "2239d7cf23feae6f9052e5884c6107882a377969e897d5aec4d7b782800e6580",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/browsersecurity/middleware.go",
+      "expected": "db46217f90e01e4e25757233d1bc1e0dc84bf955b7462c7af7d41be7485d82b7",
+      "actual": "db46217f90e01e4e25757233d1bc1e0dc84bf955b7462c7af7d41be7485d82b7",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/browsersecurity/policy_test.go",
+      "expected": "601680ffc7c6e88b0d5fc5bd9bef1f1c0ee88005cb5a787e8924b9f58ad3b179",
+      "actual": "601680ffc7c6e88b0d5fc5bd9bef1f1c0ee88005cb5a787e8924b9f58ad3b179",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/handler/agriculture_browser_security_test.go",
+      "expected": "80a7edffeb5b9af4d6d8a8d23f9303f3e7affd315f615a001a3f0649cb06b9dd",
+      "actual": "80a7edffeb5b9af4d6d8a8d23f9303f3e7affd315f615a001a3f0649cb06b9dd",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/revocation_postgres_test.go",
+      "expected": "4067c1ee00bbc539887af728b18b3337dfe5fe28a95525af67cd914e6844565e",
+      "actual": "4067c1ee00bbc539887af728b18b3337dfe5fe28a95525af67cd914e6844565e",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/authority_fingerprint.go",
+      "expected": "423fe6cd0c7dbc0230877ec3da495f86b180a80240eedaad7629decf8488aa52",
+      "actual": "423fe6cd0c7dbc0230877ec3da495f86b180a80240eedaad7629decf8488aa52",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/authority_fingerprint_test.go",
+      "expected": "ec8499ee8573e1da4190d07997009c4fb869a64b69e8eba049519dee27da8562",
+      "actual": "ec8499ee8573e1da4190d07997009c4fb869a64b69e8eba049519dee27da8562",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/model/models_agriculture.go",
+      "expected": "0e519c4edd2213138675e2450c231bc0b7ccf16700ed798fe7d8a907b2373505",
+      "actual": "0e519c4edd2213138675e2450c231bc0b7ccf16700ed798fe7d8a907b2373505",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/model/models_agriculture_authorization.go",
+      "expected": "fa8588bb8dea7417f3dcf2a5866c600f6d6bd52d1c5490cd02aa68cfa845c6f0",
+      "actual": "fa8588bb8dea7417f3dcf2a5866c600f6d6bd52d1c5490cd02aa68cfa845c6f0",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/model/models_tenancy.go",
+      "expected": "68ebab18bd0bc2cef863fa3fd07991f9fa6540f092af6abaa7e414ec6f8e58bc",
+      "actual": "68ebab18bd0bc2cef863fa3fd07991f9fa6540f092af6abaa7e414ec6f8e58bc",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/model/models_flow_billing.go",
+      "expected": "be96cf5d7250b13f4528f2a9f35036d0e9fdc3dc0202af277f69fb424802ad2b",
+      "actual": "be96cf5d7250b13f4528f2a9f35036d0e9fdc3dc0202af277f69fb424802ad2b",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/database/migrations.go",
+      "expected": "cd6e1ea8800c91c90d0d47da1c8ec898b3f297fd4dabf9666fb7169851b35a14",
+      "actual": "cd6e1ea8800c91c90d0d47da1c8ec898b3f297fd4dabf9666fb7169851b35a14",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/database/migration_agriculture.go",
+      "expected": "d072c22577626174320f26637f26a1308ddf4c1b9e72fe8c0ad030c6b42c8844",
+      "actual": "d072c22577626174320f26637f26a1308ddf4c1b9e72fe8c0ad030c6b42c8844",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/database/migration_agriculture_test.go",
+      "expected": "d8b29eddc75d6087f370f580b3e21ec8a7d0e4e89cb94dd7dc14d1fdee1502cd",
+      "actual": "d8b29eddc75d6087f370f580b3e21ec8a7d0e4e89cb94dd7dc14d1fdee1502cd",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/database/migration_agriculture_postgres_test.go",
+      "expected": "2ca892447bb5a48f4a439d51a172b2a2ef533af0f03c7126f2f0ea6d7a39b67e",
+      "actual": "2ca892447bb5a48f4a439d51a172b2a2ef533af0f03c7126f2f0ea6d7a39b67e",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/database/migration_agriculture_authorization.go",
+      "expected": "a955c0c085e5948ff407e1568decf93cb6b220daf09f7f6e8033cc75898984b0",
+      "actual": "a955c0c085e5948ff407e1568decf93cb6b220daf09f7f6e8033cc75898984b0",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/database/migration_agriculture_authorization_test.go",
+      "expected": "71365f0b8ddf653999c48d490b7f69600e5d0d6ac434b6031d3e06dad08251f1",
+      "actual": "71365f0b8ddf653999c48d490b7f69600e5d0d6ac434b6031d3e06dad08251f1",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/database/migration_agriculture_authorization_postgres_test.go",
+      "expected": "60796e5ca2d42d89ea4cfb2093b703b8f5212bcbca9985fb0219508eb3cafc57",
+      "actual": "60796e5ca2d42d89ea4cfb2093b703b8f5212bcbca9985fb0219508eb3cafc57",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/roles.go",
+      "expected": "6bf35e1aa3407f1bc0a6387dcdcf16e55712fb9e51c68355af2047526c0f4d75",
+      "actual": "6bf35e1aa3407f1bc0a6387dcdcf16e55712fb9e51c68355af2047526c0f4d75",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/routes.go",
+      "expected": "6bee5859e2010c69b7cefc68feb51f24068e5bb739d51340e4688351013f2782",
+      "actual": "6bee5859e2010c69b7cefc68feb51f24068e5bb739d51340e4688351013f2782",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/service.go",
+      "expected": "151cffff5a36223a3db523ba621d83e09c024a4576037248dd255d37fb65826b",
+      "actual": "151cffff5a36223a3db523ba621d83e09c024a4576037248dd255d37fb65826b",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/service_test.go",
+      "expected": "7a9efa140a3c50b9695a5769564fc7ce49c7db0ecb69e9b7f5c51f82eaf16132",
+      "actual": "7a9efa140a3c50b9695a5769564fc7ce49c7db0ecb69e9b7f5c51f82eaf16132",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/postgres_test.go",
+      "expected": "5b8843f3751001454a7eef446f55e7dcc9e9114817c532a26617e192f4aa3b1b",
+      "actual": "5b8843f3751001454a7eef446f55e7dcc9e9114817c532a26617e192f4aa3b1b",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/authorization.go",
+      "expected": "742534dd9a8659e28d0e75999d6fd097436e45f719ca9c7e5c137f03a5e42212",
+      "actual": "742534dd9a8659e28d0e75999d6fd097436e45f719ca9c7e5c137f03a5e42212",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/authorization_test.go",
+      "expected": "c90275347216f6454c050ec04aad90023e0f45fbab23682356ee629b7323ef57",
+      "actual": "c90275347216f6454c050ec04aad90023e0f45fbab23682356ee629b7323ef57",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/authorization_http_test.go",
+      "expected": "35e4770416b2bd4958c5566333bf4c7d3f1476ff2ea97df3af48d2e32c5953d9",
+      "actual": "35e4770416b2bd4958c5566333bf4c7d3f1476ff2ea97df3af48d2e32c5953d9",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/authorization_v1.go",
+      "expected": "0b13b24211ad1f2bb429d57a6d6ce026e1718649ec1196ad849b40b9a5eb8e41",
+      "actual": "0b13b24211ad1f2bb429d57a6d6ce026e1718649ec1196ad849b40b9a5eb8e41",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/authorization_v1_test.go",
+      "expected": "251646a6f37583716df1fbb606aad594f565095d8d6a4f1608d0e60b35777940",
+      "actual": "251646a6f37583716df1fbb606aad594f565095d8d6a4f1608d0e60b35777940",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/binding_pagination.go",
+      "expected": "33a9467e64d0518ab656da48ad433d1321cf537e83856ef02d8b7492dc4e056b",
+      "actual": "33a9467e64d0518ab656da48ad433d1321cf537e83856ef02d8b7492dc4e056b",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/binding_pagination_test.go",
+      "expected": "b04d28ee69ac00da61079fdf60bcb5d576ef52b32c8d8247f367ec2a28cec8cf",
+      "actual": "b04d28ee69ac00da61079fdf60bcb5d576ef52b32c8d8247f367ec2a28cec8cf",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/authorization_postgres_test.go",
+      "expected": "c49489b149dae0868b5011717efe1a6ddbc73e426993784067d4fe2818176824",
+      "actual": "c49489b149dae0868b5011717efe1a6ddbc73e426993784067d4fe2818176824",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/resource_ownership.go",
+      "expected": "bfd8a89776fd28800bfbbf45d066c158e752cc5ae8ca4d0c8d706a2a4763bba4",
+      "actual": "bfd8a89776fd28800bfbbf45d066c158e752cc5ae8ca4d0c8d706a2a4763bba4",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/resource_ownership_test.go",
+      "expected": "c32a3485eb2ca2fb525a6cea612e6dd4a3a715c2d60bd3d1a3a8849c1fea6f86",
+      "actual": "c32a3485eb2ca2fb525a6cea612e6dd4a3a715c2d60bd3d1a3a8849c1fea6f86",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/resource_bindings.go",
+      "expected": "e87df2db92a9663f9fcb79d75998809d9a4ac73671053e394478774f24add2b3",
+      "actual": "e87df2db92a9663f9fcb79d75998809d9a4ac73671053e394478774f24add2b3",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/resource_bindings_test.go",
+      "expected": "26110127c3c6666360a0e49d1cf0bfffb1988ade87da1c5eb9c8c320ed9926de",
+      "actual": "26110127c3c6666360a0e49d1cf0bfffb1988ade87da1c5eb9c8c320ed9926de",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/policy.go",
+      "expected": "452838029162a664378873c03a6989b2a137ddcc8b4dc6a8f93dc78c62375286",
+      "actual": "452838029162a664378873c03a6989b2a137ddcc8b4dc6a8f93dc78c62375286",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/policy_test.go",
+      "expected": "a864cf896d131d6fe4be0d8431829af706bba81a29f10d4fa9452a255ce405eb",
+      "actual": "a864cf896d131d6fe4be0d8431829af706bba81a29f10d4fa9452a255ce405eb",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/orgs.go",
+      "expected": "e1f006473fcd96abe684399ef6d6b7055080802443462d14b96cbe5ae5396e10",
+      "actual": "e1f006473fcd96abe684399ef6d6b7055080802443462d14b96cbe5ae5396e10",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/p7.go",
+      "expected": "885dc5231bcd91293c01c05cabffc35af16973ac1c992adc3ac4cae8bc87b023",
+      "actual": "885dc5231bcd91293c01c05cabffc35af16973ac1c992adc3ac4cae8bc87b023",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/rls_runtime.go",
+      "expected": "c0a4ba268bcefce2b8c5b27cb23e9a56db5ff1752e9a54c6a7abef20612dc95c",
+      "actual": "c0a4ba268bcefce2b8c5b27cb23e9a56db5ff1752e9a54c6a7abef20612dc95c",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/routes.go",
+      "expected": "68fb7d681d0c186bc0f5e7e3ccf82f3b8fcb909434956579015c6ab53fe24066",
+      "actual": "68fb7d681d0c186bc0f5e7e3ccf82f3b8fcb909434956579015c6ab53fe24066",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/routes_p5.go",
+      "expected": "9cfab954b77ef36603df9c91e3f39836c260d2e0ae156057d8c8b1dc436efe19",
+      "actual": "9cfab954b77ef36603df9c91e3f39836c260d2e0ae156057d8c8b1dc436efe19",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/routes_p7.go",
+      "expected": "0d6fe278adef2d3a07812c7eb3daabb90711dcc960fdf0045b81b87190b2195e",
+      "actual": "0d6fe278adef2d3a07812c7eb3daabb90711dcc960fdf0045b81b87190b2195e",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/scope.go",
+      "expected": "8c7e390a1a83e96642f5e04ef47b169856ade7efb92cfd16d9d6fdaf9bb62b7a",
+      "actual": "8c7e390a1a83e96642f5e04ef47b169856ade7efb92cfd16d9d6fdaf9bb62b7a",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/agriculture_membership_regression_test.go",
+      "expected": "3d2bbc574001d80335a1e26fa9686d6054f6f1a2f388cae65754dcbdf8e92314",
+      "actual": "3d2bbc574001d80335a1e26fa9686d6054f6f1a2f388cae65754dcbdf8e92314",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "deploy/agriculture/postgres/init.sh",
+      "expected": "40be22d82631ae6cdc2ad3e1109ec3965c060f02d3e3d405ff4f256acd079015",
+      "actual": "40be22d82631ae6cdc2ad3e1109ec3965c060f02d3e3d405ff4f256acd079015",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/membership-ci.sh",
+      "expected": "fed68966f7ce015aa2fe2f60a41ff433b00b01c7daef9efbfbe04b1da04c5d4a",
+      "actual": "fed68966f7ce015aa2fe2f60a41ff433b00b01c7daef9efbfbe04b1da04c5d4a",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/membership-ci-result.py",
+      "expected": "e3d04641245513497427388067e24b75e579a86fd85b0fd861ba4f990aa11b44",
+      "actual": "e3d04641245513497427388067e24b75e579a86fd85b0fd861ba4f990aa11b44",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/membership-ci-result.test.py",
+      "expected": "3d8dd05f67b11d0f7b94e5b18fb4f73b470fa6d578706cfc71671d53ea11c568",
+      "actual": "3d8dd05f67b11d0f7b94e5b18fb4f73b470fa6d578706cfc71671d53ea11c568",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/auth/auth.go",
+      "expected": "597d6dce98d4e8a6f9f4e968652715df6d06dc4aa4ec6a6fd5cb8206f2069b2a",
+      "actual": "597d6dce98d4e8a6f9f4e968652715df6d06dc4aa4ec6a6fd5cb8206f2069b2a",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/auth/password_reset_test.go",
+      "expected": "49545261641fcbd7376551b9f364e42aff74abd1231cfa300c2d06e056acd736",
+      "actual": "49545261641fcbd7376551b9f364e42aff74abd1231cfa300c2d06e056acd736",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/auth/session_security_test.go",
+      "expected": "7b43b35eca30a31b6c4cb05f902445d244992e0f042354ad90dad24a9d94397e",
+      "actual": "7b43b35eca30a31b6c4cb05f902445d244992e0f042354ad90dad24a9d94397e",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/handler/auth.go",
+      "expected": "7abc3f42e131bf3a2a38462a39c3ad746bec89051ea74bbc82ca75efad6133b3",
+      "actual": "7abc3f42e131bf3a2a38462a39c3ad746bec89051ea74bbc82ca75efad6133b3",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/handler/logout_security_test.go",
+      "expected": "4354d6ff39c95d256df79b1e7385316367ef7ed58df03b2785062b278ea8aaac",
+      "actual": "4354d6ff39c95d256df79b1e7385316367ef7ed58df03b2785062b278ea8aaac",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/package.json",
+      "expected": "4d8928e67bafe1aac41c45a608942c078c3ba3bc0e78ec84edbf4db0824902af",
+      "actual": "4d8928e67bafe1aac41c45a608942c078c3ba3bc0e78ec84edbf4db0824902af",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/vite.agriculture.config.ts",
+      "expected": "096db3925699576173ef81f1e5ea4f615bb5851493e8e45d9e94bda018c11152",
+      "actual": "096db3925699576173ef81f1e5ea4f615bb5851493e8e45d9e94bda018c11152",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/tsconfig.agriculture.json",
+      "expected": "dbbe3ab9286e694fc66ff0595bf313f774c4599b1d7572ab15a68caf3e20e1fe",
+      "actual": "dbbe3ab9286e694fc66ff0595bf313f774c4599b1d7572ab15a68caf3e20e1fe",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/scripts/agriculture-build-policy.ts",
+      "expected": "5f320809bb5280f482bd4c930b58ac6d990965c315beb23450b0c5289b785cfa",
+      "actual": "5f320809bb5280f482bd4c930b58ac6d990965c315beb23450b0c5289b785cfa",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/scripts/check-agriculture-artifact.ts",
+      "expected": "4b429eb1d9723e404093696c0278e2299c227697b15c85eb7f322c66ba26fc84",
+      "actual": "4b429eb1d9723e404093696c0278e2299c227697b15c85eb7f322c66ba26fc84",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/src/features/agriculture/main.tsx",
+      "expected": "2ceb0041c5e90088a88f92a0fd5e9fda1fee4ccd7a15aed36f507724ca29c3af",
+      "actual": "2ceb0041c5e90088a88f92a0fd5e9fda1fee4ccd7a15aed36f507724ca29c3af",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/src/features/agriculture/session.ts",
+      "expected": "b9a509133d8f85fbfd6e03637caf2c9f8fca79def8bc86c71ee4fd77e19ecb77",
+      "actual": "b9a509133d8f85fbfd6e03637caf2c9f8fca79def8bc86c71ee4fd77e19ecb77",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/src/features/agriculture/profile.css",
+      "expected": "c81b775414e3d04dcb2562396a46cef626be70b8139e3e0b2878322d4ea1b8c9",
+      "actual": "c81b775414e3d04dcb2562396a46cef626be70b8139e3e0b2878322d4ea1b8c9",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/src/features/agriculture/organization-controller.ts",
+      "expected": "406041ae3b3bdea41ef5c6abfd00a0d330e8abfb6d91f224d945ecd926bf74b4",
+      "actual": "406041ae3b3bdea41ef5c6abfd00a0d330e8abfb6d91f224d945ecd926bf74b4",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/src/features/agriculture/organization.tsx",
+      "expected": "fe5310188f52ebde7e088420f3d81bc100db2c5bf64bfdb74187fd2958d4c6ef",
+      "actual": "fe5310188f52ebde7e088420f3d81bc100db2c5bf64bfdb74187fd2958d4c6ef",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/src/services/api/agriculture.ts",
+      "expected": "c688d908935f1ce1f903f9b69653fb4a74d072708b9cb11da46ea482596c21d3",
+      "actual": "c688d908935f1ce1f903f9b69653fb4a74d072708b9cb11da46ea482596c21d3",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/test/agriculture-api.test.ts",
+      "expected": "72d54af4ca7ece00b26fea5104253fc11757b8166569eb4eb8be1b19dab556ca",
+      "actual": "72d54af4ca7ece00b26fea5104253fc11757b8166569eb4eb8be1b19dab556ca",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/test/agriculture-organization.test.ts",
+      "expected": "23267cbfd2ef1f9375bc6fb639e6c62aa9e9c1a06ec6025cb5b424fbeed13780",
+      "actual": "23267cbfd2ef1f9375bc6fb639e6c62aa9e9c1a06ec6025cb5b424fbeed13780",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/src/lib/auth-return-path.ts",
+      "expected": "bf030dc293c22cf667306d7e592c9f7f54191d14db4e5e50f80b63dcdf8370b3",
+      "actual": "bf030dc293c22cf667306d7e592c9f7f54191d14db4e5e50f80b63dcdf8370b3",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/src/pages/auth/login.tsx",
+      "expected": "2b30a832b2d41a5ad5ea6716d113ebb4cdf6acdde7065be6f9436507c9af0029",
+      "actual": "2b30a832b2d41a5ad5ea6716d113ebb4cdf6acdde7065be6f9436507c9af0029",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/src/pages/auth/register.tsx",
+      "expected": "0d293877e1f86d52a5f110d1a443f834fb5133e0a309d58f7624350666a67885",
+      "actual": "0d293877e1f86d52a5f110d1a443f834fb5133e0a309d58f7624350666a67885",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/src/pages/auth/forgot-password.tsx",
+      "expected": "40b88d82a1cc3101dc77315874cdaf61eeafedd73fd0a29b7edb9b26623807dc",
+      "actual": "40b88d82a1cc3101dc77315874cdaf61eeafedd73fd0a29b7edb9b26623807dc",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/src/services/live2d-loader.ts",
+      "expected": "e4306077b95f89908efb613e5fc299089b01cd2c11eb02f6aedda82d29d2e4a2",
+      "actual": "e4306077b95f89908efb613e5fc299089b01cd2c11eb02f6aedda82d29d2e4a2",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/src/services/api/auth.ts",
+      "expected": "bca680b4d1d14d5ab9d3f605c846e45721982f0b27ff9d8373c446c542f032a1",
+      "actual": "bca680b4d1d14d5ab9d3f605c846e45721982f0b27ff9d8373c446c542f032a1",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/test/agriculture-profile.test.ts",
+      "expected": "ba6162d40b79b03b131a93058858cdc7bf12e732382a065e03cba760fec43560",
+      "actual": "ba6162d40b79b03b131a93058858cdc7bf12e732382a065e03cba760fec43560",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/test/auth-return-path.test.ts",
+      "expected": "362b19ae33f75a7df42958c8ae69ae2b2b79def10e917db117a71c86f5f89194",
+      "actual": "362b19ae33f75a7df42958c8ae69ae2b2b79def10e917db117a71c86f5f89194",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/test/auth-session-race.test.ts",
+      "expected": "0240a893fcd93177ff169b234dc133d951ea1ab2a129518f397b610fae0a595f",
+      "actual": "0240a893fcd93177ff169b234dc133d951ea1ab2a129518f397b610fae0a595f",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/test/live2d-loader-cleanup.test.ts",
+      "expected": "98e12dab3e8d3647a4b145701c9045ad77e70d6b667b1f22908d10ed4d9c2ca2",
+      "actual": "98e12dab3e8d3647a4b145701c9045ad77e70d6b667b1f22908d10ed4d9c2ca2",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "docs/agriculture/profile/licenses/ant-design-icons-svg-4.5.0.LICENSE",
+      "expected": "5d367fb0a07340571542eb4ee8eb1add62d37b71bad6786a57c2e9a86bf76c70",
+      "actual": "5d367fb0a07340571542eb4ee8eb1add62d37b71bad6786a57c2e9a86bf76c70",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/frontend/package.json",
+      "expected": "8754de04388d16bbacb9363c40138396b7c074f42535f4f7892469e41e434897",
+      "actual": "8754de04388d16bbacb9363c40138396b7c074f42535f4f7892469e41e434897",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/frontend/vite.agriculture.config.ts",
+      "expected": "882a8e2b9827aee136019a6fd761501cd0ab550ddf021f9935f3f4529c6280ae",
+      "actual": "882a8e2b9827aee136019a6fd761501cd0ab550ddf021f9935f3f4529c6280ae",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/frontend/tsconfig.agriculture.json",
+      "expected": "534dfa04edffd02148149df8ac11f51e37a96e46fc603fb019ab732c3f6e3343",
+      "actual": "534dfa04edffd02148149df8ac11f51e37a96e46fc603fb019ab732c3f6e3343",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/frontend/agriculture/main.ts",
+      "expected": "376d6b79d3eb52d0193d316f5b32e23251fc6d54ff0fa84094a3552e28e1286b",
+      "actual": "376d6b79d3eb52d0193d316f5b32e23251fc6d54ff0fa84094a3552e28e1286b",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/frontend/agriculture/App.vue",
+      "expected": "975b5a31ff401f91017454ba070c7f8c8b911a9b945b4d9897eba493e6449d82",
+      "actual": "975b5a31ff401f91017454ba070c7f8c8b911a9b945b4d9897eba493e6449d82",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/frontend/agriculture/session.ts",
+      "expected": "a6f669fca546f247ca30a701a8147c11c949c966a16c4092aaf65c7bac45d032",
+      "actual": "a6f669fca546f247ca30a701a8147c11c949c966a16c4092aaf65c7bac45d032",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/frontend/agriculture/session-lifecycle.ts",
+      "expected": "ef8ff310c1c26caa0c3325267f49fe7dd34865c923df89377c735d59cdd98610",
+      "actual": "ef8ff310c1c26caa0c3325267f49fe7dd34865c923df89377c735d59cdd98610",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/frontend/agriculture/session.test.ts",
+      "expected": "8c68582c3d540be8848cab47eb8893cd400153d6b0d354626be48500e4afd7ff",
+      "actual": "8c68582c3d540be8848cab47eb8893cd400153d6b0d354626be48500e4afd7ff",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/frontend/agriculture/index.html",
+      "expected": "d0c2ba2fa7ca54f5f2b6d12a36aff6b34e9e679bc37b00ab3c1c81e32c655e36",
+      "actual": "d0c2ba2fa7ca54f5f2b6d12a36aff6b34e9e679bc37b00ab3c1c81e32c655e36",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/frontend/agriculture/style.css",
+      "expected": "fb128ecc61549889507f1e5f4dfde3ce286822f0aa209182a7f4b0aff9dcad74",
+      "actual": "fb128ecc61549889507f1e5f4dfde3ce286822f0aa209182a7f4b0aff9dcad74",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/session-e2e.mjs",
+      "expected": "9458abc6bddbb87d28ed2b88242b466616c2df6289133b381f74d3cd87e84a2e",
+      "actual": "9458abc6bddbb87d28ed2b88242b466616c2df6289133b381f74d3cd87e84a2e",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/csrf-fixture.mjs",
+      "expected": "c0c6ff17f89c4b2d7bff45c3c50b78cdf1e4b44e3a96c6e051b6f2b2efd9ef7c",
+      "actual": "c0c6ff17f89c4b2d7bff45c3c50b78cdf1e4b44e3a96c6e051b6f2b2efd9ef7c",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/csrf-fixture.test.mjs",
+      "expected": "7d509b3bdde147ae024d4941fd376875e7b7c9c177c152d62d22ffb788e2f9aa",
+      "actual": "7d509b3bdde147ae024d4941fd376875e7b7c9c177c152d62d22ffb788e2f9aa",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "contracts/agriculture/session-hints.ts",
+      "expected": "e8fe546abda1d35c49b4faad0d859c1de369c4e983ee9fb14c01ba44ba955521",
+      "actual": "e8fe546abda1d35c49b4faad0d859c1de369c4e983ee9fb14c01ba44ba955521",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "contracts/agriculture/authority-snapshot.ts",
+      "expected": "1aeb97c893940938c06626ea8d2593d1cb5ca19e57101233112913e52cc83300",
+      "actual": "1aeb97c893940938c06626ea8d2593d1cb5ca19e57101233112913e52cc83300",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/src/features/agriculture/request-security.ts",
+      "expected": "2845496005fb9fb2d38aae5425978d5a5f3767b56a7ab93ccc92727a32e4b6ab",
+      "actual": "2845496005fb9fb2d38aae5425978d5a5f3767b56a7ab93ccc92727a32e4b6ab",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/src/features/agriculture/routine-session.ts",
+      "expected": "1bef9927b1035f43c53d661ca4ba2863778bdeb92adce238f8efcec6069b7582",
+      "actual": "1bef9927b1035f43c53d661ca4ba2863778bdeb92adce238f8efcec6069b7582",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/src/features/agriculture/confirmation-scope.ts",
+      "expected": "6a1b06744aa1bc349faae8b9c2e55f3f0d948c6a951af7a0e23719fad92e2818",
+      "actual": "6a1b06744aa1bc349faae8b9c2e55f3f0d948c6a951af7a0e23719fad92e2818",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/test/agriculture-session-security.test.ts",
+      "expected": "668249461cac5ac39df745232fe6a5c0ff96859b8d2ab2478c2989e87b0daf76",
+      "actual": "668249461cac5ac39df745232fe6a5c0ff96859b8d2ab2478c2989e87b0daf76",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "docs/agriculture/BROWSER_SECURITY.md",
+      "expected": "138464174ab3a630b246756c14868838d2a18b9336c2f4978b505c36f925133d",
+      "actual": "138464174ab3a630b246756c14868838d2a18b9336c2f4978b505c36f925133d",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "docs/agriculture/SESSION_REVALIDATION.md",
+      "expected": "01aeff3bbbec77b9180fe44810bd21719ec59c3e7dcae26e0eac6a86e4e8557e",
+      "actual": "01aeff3bbbec77b9180fe44810bd21719ec59c3e7dcae26e0eac6a86e4e8557e",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/browser-navigation.mjs",
+      "expected": "8df240e019e3ce4c3ed3f814a89ae21773955a3e33bafbd5eca88d3a6a684f2f",
+      "actual": "8df240e019e3ce4c3ed3f814a89ae21773955a3e33bafbd5eca88d3a6a684f2f",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/session-e2e.test.mjs",
+      "expected": "6e6dc09cdb3365edb872812950377b8276181123ca3c1d7bb0809dfd39846c0c",
+      "actual": "6e6dc09cdb3365edb872812950377b8276181123ca3c1d7bb0809dfd39846c0c",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/organization-e2e.mjs",
+      "expected": "2d991291e3455bc29d4b2a08254e2a1b79f86356a6d7060877587324c9e3179e",
+      "actual": "2d991291e3455bc29d4b2a08254e2a1b79f86356a6d7060877587324c9e3179e",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/organization-e2e.test.mjs",
+      "expected": "fdfdea18781269278f2441fd406d8593235f7197692b64ce734328c1439277d0",
+      "actual": "fdfdea18781269278f2441fd406d8593235f7197692b64ce734328c1439277d0",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/ORGANIZATION_E2E.md",
+      "expected": "a6f9e226d935bffe6b2a7b355fa768acaff5aa14a2f1dfc0960c782a5c481082",
+      "actual": "a6f9e226d935bffe6b2a7b355fa768acaff5aa14a2f1dfc0960c782a5c481082",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/session-ci-prepare.py",
+      "expected": "6dbdf381a8ea0cf67ea703d379744113a944e1ca9f7b978d464484325af57e2b",
+      "actual": "6dbdf381a8ea0cf67ea703d379744113a944e1ca9f7b978d464484325af57e2b",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/session-ci-prepare.test.py",
+      "expected": "8aea94a533594881da29f67b958c64cbc48c1008181655ff538aa59e1db7ac02",
+      "actual": "8aea94a533594881da29f67b958c64cbc48c1008181655ff538aa59e1db7ac02",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/SESSION_E2E.md",
+      "expected": "9d517afb59f0f144154d7403f7fc0c6849477f45cbae701c2b09cee0d4e2b8ff",
+      "actual": "9d517afb59f0f144154d7403f7fc0c6849477f45cbae701c2b09cee0d4e2b8ff",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/go.mod",
+      "expected": "c2458011cd426d7dac61d02f6dd212efa9dd5cceb5947bb1dfed10998687fd6e",
+      "actual": "c2458011cd426d7dac61d02f6dd212efa9dd5cceb5947bb1dfed10998687fd6e",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/go.sum",
+      "expected": "4840c140d5a1cb68eacf1057e85ad495bcd00c63c4f32fc465bcad5459fde684",
+      "actual": "4840c140d5a1cb68eacf1057e85ad495bcd00c63c4f32fc465bcad5459fde684",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agricanonical/canonical.go",
+      "expected": "ea3ed9d547db6b9bc0a5b254923e3f842025ce70b5b8d931a3d2ed28023699e0",
+      "actual": "ea3ed9d547db6b9bc0a5b254923e3f842025ce70b5b8d931a3d2ed28023699e0",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agricanonical/canonical_test.go",
+      "expected": "583581adbb8e6feb57cbe7a69d25bd3abae3055b51fc43e62533ea97853f2ed7",
+      "actual": "583581adbb8e6feb57cbe7a69d25bd3abae3055b51fc43e62533ea97853f2ed7",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/delegation.go",
+      "expected": "c4e416c5706513bec7c36c8994b2f2c37f9cc4beb8868c944d2b85147f8a978f",
+      "actual": "c4e416c5706513bec7c36c8994b2f2c37f9cc4beb8868c944d2b85147f8a978f",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/delegation_test.go",
+      "expected": "7d67c776bb9a09d790f2e8b1ccf47ed8d7804e6ad2e910473e14bc862ad0f509",
+      "actual": "7d67c776bb9a09d790f2e8b1ccf47ed8d7804e6ad2e910473e14bc862ad0f509",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/service_identity.go",
+      "expected": "b9bd35e6af82d985682142d154fdddff70154edc491018c0a98eca8c716ebdd0",
+      "actual": "b9bd35e6af82d985682142d154fdddff70154edc491018c0a98eca8c716ebdd0",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/service_identity_config.go",
+      "expected": "0089a340cb1efb269fde235e8a8e80932dbe8a08178f49d179dee682bd62117d",
+      "actual": "0089a340cb1efb269fde235e8a8e80932dbe8a08178f49d179dee682bd62117d",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/service_identity_keys.go",
+      "expected": "242f466b26d53c3a1a50929fbcf1620058bd87ac8ce83962f7f183d8abfe1f32",
+      "actual": "242f466b26d53c3a1a50929fbcf1620058bd87ac8ce83962f7f183d8abfe1f32",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/service_identity_test.go",
+      "expected": "7e38e7468e5a2c0f051a45d8205bbaf57581d151d2dec4dd8b710aaff90baee1",
+      "actual": "7e38e7468e5a2c0f051a45d8205bbaf57581d151d2dec4dd8b710aaff90baee1",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/service_identity_transport.go",
+      "expected": "0edeb0e02e963227764c14ee6d018759f0d86f8e5807c5a02be4034ba1a6cb64",
+      "actual": "0edeb0e02e963227764c14ee6d018759f0d86f8e5807c5a02be4034ba1a6cb64",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/service_identity_transport_test.go",
+      "expected": "fd113dc12ce3f45f7b18ce95b30ec1e3ccbf547ada0665c7fe2cd83f8624715c",
+      "actual": "fd113dc12ce3f45f7b18ce95b30ec1e3ccbf547ada0665c7fe2cd83f8624715c",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/identity_http_integration_test.go",
+      "expected": "2485eb98030270ae90a44ead98ef11cc356940ca41a6b265a561db00f52dd1d2",
+      "actual": "2485eb98030270ae90a44ead98ef11cc356940ca41a6b265a561db00f52dd1d2",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/pyproject.toml",
+      "expected": "25ba43f87576814128bffd8b19f1a1f5cf9a673a6da9aa1a01ed6d1837b7abd2",
+      "actual": "25ba43f87576814128bffd8b19f1a1f5cf9a673a6da9aa1a01ed6d1837b7abd2",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/poetry.lock",
+      "expected": "e5e287271ef6c5fb56185dfcd07f12eedae144a908ec1483ab877696259a26df",
+      "actual": "e5e287271ef6c5fb56185dfcd07f12eedae144a908ec1483ab877696259a26df",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/__init__.py",
+      "expected": "77951ad82dc95f2e08716330d61902e73a231f0e5f085d66bb41e5d78533d66a",
+      "actual": "77951ad82dc95f2e08716330d61902e73a231f0e5f085d66bb41e5d78533d66a",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/main.py",
+      "expected": "f33b42d48c3587fb08fa4e5d70db489352510a2252e011a629e9214e048dae89",
+      "actual": "f33b42d48c3587fb08fa4e5d70db489352510a2252e011a629e9214e048dae89",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/identity/__init__.py",
+      "expected": "d03d955b9eb9e56df428f42184a344f127292c29553a6183c34bc19224217cf2",
+      "actual": "d03d955b9eb9e56df428f42184a344f127292c29553a6183c34bc19224217cf2",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/identity/callback.py",
+      "expected": "fe99446e720f89e01147c55c8a0a47bfa57b613e5f75dd46ab4846bdeae83fee",
+      "actual": "fe99446e720f89e01147c55c8a0a47bfa57b613e5f75dd46ab4846bdeae83fee",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/identity/canonical.py",
+      "expected": "bd09a9c7fcdd20a783d09abd122f9c268c7e7f01a70a7d75f30d5d538b61c1d2",
+      "actual": "bd09a9c7fcdd20a783d09abd122f9c268c7e7f01a70a7d75f30d5d538b61c1d2",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/identity/config.py",
+      "expected": "205365a9257c49e9acd78ad454cb32e909005866e4236d1877a61fe43e26dafd",
+      "actual": "205365a9257c49e9acd78ad454cb32e909005866e4236d1877a61fe43e26dafd",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/identity/dependency.py",
+      "expected": "dafb3f0ac731f00d58f14963cf35d123c3b1219f4a209bcdb2db73c03eb75a21",
+      "actual": "dafb3f0ac731f00d58f14963cf35d123c3b1219f4a209bcdb2db73c03eb75a21",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/identity/keys.py",
+      "expected": "3153d9b0ef99dc38cdd8d124d090dcdfc74cebca735f22a4b5e9b0de44905f2e",
+      "actual": "3153d9b0ef99dc38cdd8d124d090dcdfc74cebca735f22a4b5e9b0de44905f2e",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/identity/providers.py",
+      "expected": "bc4953cfeeb7c28b7531a00c8297f2b3961126c5787241a04e96769f4b37c6af",
+      "actual": "bc4953cfeeb7c28b7531a00c8297f2b3961126c5787241a04e96769f4b37c6af",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/identity/replay.py",
+      "expected": "4d8cd1af86f6260602860f2635859e8cba83f5b69e7c53138dae18724a326f1d",
+      "actual": "4d8cd1af86f6260602860f2635859e8cba83f5b69e7c53138dae18724a326f1d",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/identity/verify.py",
+      "expected": "75a467a36fc34dd3599c352b95835d988b895cea53ea361ddf99475c36d026cf",
+      "actual": "75a467a36fc34dd3599c352b95835d988b895cea53ea361ddf99475c36d026cf",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/scripts/migrations/20261029_agriculture_identity_replay.sql",
+      "expected": "3986211d1fb38b711ed0c6071400b620e6bc12fe724628b8cdfdff17d019fcfa",
+      "actual": "3986211d1fb38b711ed0c6071400b620e6bc12fe724628b8cdfdff17d019fcfa",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/identity_http_fixture.py",
+      "expected": "64251d0daeb58342e7610132022ab26192308e9171db8fa37a58568d994b91ba",
+      "actual": "64251d0daeb58342e7610132022ab26192308e9171db8fa37a58568d994b91ba",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_identity_canonical.py",
+      "expected": "0380af33376c4646e8a1c05c62fd302a88bddb51174d31021945618b8985792d",
+      "actual": "0380af33376c4646e8a1c05c62fd302a88bddb51174d31021945618b8985792d",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_agriculture_identity.py",
+      "expected": "53b23497edd63a1b62bc89c7094d6df7d3e242ad961a94df93623350a37f8a81",
+      "actual": "53b23497edd63a1b62bc89c7094d6df7d3e242ad961a94df93623350a37f8a81",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_agriculture_identity_postgres.py",
+      "expected": "269d7e1e46629378d7c6259edf1c256321c060c55f366bfb5e43f88f639d682b",
+      "actual": "269d7e1e46629378d7c6259edf1c256321c060c55f366bfb5e43f88f639d682b",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/identity-ci.sh",
+      "expected": "b00764fa4e9eebccc7138ccc426391338b437c9007a00e4bf9d4261597a96185",
+      "actual": "b00764fa4e9eebccc7138ccc426391338b437c9007a00e4bf9d4261597a96185",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/identity-postgres-ci.sh",
+      "expected": "9dd2de4192dbb6520e2dfe0cb9b22e4f810a67b2120a250861fcc91b34332840",
+      "actual": "9dd2de4192dbb6520e2dfe0cb9b22e4f810a67b2120a250861fcc91b34332840",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/geo-worker-role-test.sh",
+      "expected": "9f3bf0fe9959a0eeba7e8c1a6aba1bd43997fd94ddff8d86356b53a75a69b380",
+      "actual": "9f3bf0fe9959a0eeba7e8c1a6aba1bd43997fd94ddff8d86356b53a75a69b380",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "tests/agriculture/test_geo_worker_role_policy.py",
+      "expected": "0c98272ff935a5b233e971f653b0323ef85cf2f56a17e4f0db5ac103c93b7706",
+      "actual": "0c98272ff935a5b233e971f653b0323ef85cf2f56a17e4f0db5ac103c93b7706",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/identity-ci-result.py",
+      "expected": "8726bcf3a0223cfd3c818abb295cd29c20da74a951aed98aa67aca3294150cf9",
+      "actual": "8726bcf3a0223cfd3c818abb295cd29c20da74a951aed98aa67aca3294150cf9",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/identity-ci-result.test.py",
+      "expected": "d2f82d0a8dbd3c1571508421a3b5fe75ea9c2b6f7c33a983e2ae035968b71236",
+      "actual": "d2f82d0a8dbd3c1571508421a3b5fe75ea9c2b6f7c33a983e2ae035968b71236",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/identity-chain-result.py",
+      "expected": "f0ff3f2c33509bccd24d67ff05ac3ce2e71ebfe508386862262a80b8978661d5",
+      "actual": "f0ff3f2c33509bccd24d67ff05ac3ce2e71ebfe508386862262a80b8978661d5",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/identity-chain-result.test.py",
+      "expected": "3dd2ebaf811856107206587016db6be81d0e5a1e3c08a03f1634a6898aeca86d",
+      "actual": "3dd2ebaf811856107206587016db6be81d0e5a1e3c08a03f1634a6898aeca86d",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/identity-chain-browser.mjs",
+      "expected": "1e44a13094c6006da70e013769ec026f41c9d0514c8503d96d3d490a75eb1411",
+      "actual": "1e44a13094c6006da70e013769ec026f41c9d0514c8503d96d3d490a75eb1411",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/identity-chain-browser.test.mjs",
+      "expected": "3b13596ebcf0990b93aecb09e741e5594c726fa7224b286efb21950653670223",
+      "actual": "3b13596ebcf0990b93aecb09e741e5594c726fa7224b286efb21950653670223",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/identity_browser_chain_test.go",
+      "expected": "7ce5562d337a2627676d469c7e63f84e45d192b5c88fe950580662d46e44370e",
+      "actual": "7ce5562d337a2627676d469c7e63f84e45d192b5c88fe950580662d46e44370e",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/identity_chain_fixture.py",
+      "expected": "ebc8f8752183417e9676f48b3028de211c5855273cde28bd41437e2e02d14488",
+      "actual": "ebc8f8752183417e9676f48b3028de211c5855273cde28bd41437e2e02d14488",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/database.py",
+      "expected": "559c70e1fd755fb332840984c5c48d448152a4ee7b5d7e3c1975134945c3985b",
+      "actual": "559c70e1fd755fb332840984c5c48d448152a4ee7b5d7e3c1975134945c3985b",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/domain_boundary.py",
+      "expected": "19cceb8b14476e628f037da3a662b12946a4db3361eb0cb6a1370eb49c294e6d",
+      "actual": "19cceb8b14476e628f037da3a662b12946a4db3361eb0cb6a1370eb49c294e6d",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/migrate.py",
+      "expected": "9cc72565396553b807d3ff8f227ed662f6d3b35b5b4969d490993a8479443d93",
+      "actual": "9cc72565396553b807d3ff8f227ed662f6d3b35b5b4969d490993a8479443d93",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_agriculture_migration.py",
+      "expected": "472b1b25fb171da75227ce0afb67e30abc4080f754d99d11e167a435bf914635",
+      "actual": "472b1b25fb171da75227ce0afb67e30abc4080f754d99d11e167a435bf914635",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_agriculture_migration_postgres.py",
+      "expected": "f76c8b7d77d7930a1ddb41d918ef116d2f5faf962a57d04ce6f0cab39cf8103e",
+      "actual": "f76c8b7d77d7930a1ddb41d918ef116d2f5faf962a57d04ce6f0cab39cf8103e",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/domain_table_inventory.json",
+      "expected": "6d94b373ff1bfb0c3c4924c25a8a116cd13ae1234b0357d966b7b0bf807010bd",
+      "actual": "6d94b373ff1bfb0c3c4924c25a8a116cd13ae1234b0357d966b7b0bf807010bd",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/scripts/migrations/20261030_agriculture_domain_rls.sql",
+      "expected": "8aa4057ff7cca2ee42bcf53e636cc363c0b55b0ecb21999c7a94591647d0f454",
+      "actual": "8aa4057ff7cca2ee42bcf53e636cc363c0b55b0ecb21999c7a94591647d0f454",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/domain_fixture_support.py",
+      "expected": "59933d13dfcb380079e3066286f969e7ab1cedd6c9d264aca2b6b04455d046a8",
+      "actual": "59933d13dfcb380079e3066286f969e7ab1cedd6c9d264aca2b6b04455d046a8",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_agriculture_domain_boundary.py",
+      "expected": "6579f1ad2882e91845489ad2d8beb47ed71c356b3f9da7c952d92d26f8029656",
+      "actual": "6579f1ad2882e91845489ad2d8beb47ed71c356b3f9da7c952d92d26f8029656",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_agriculture_domain_rls_postgres.py",
+      "expected": "2767f1d2c226acd08b6bea52e4cb35a21afdedba50e81d33ce040814d0f1a4d8",
+      "actual": "2767f1d2c226acd08b6bea52e4cb35a21afdedba50e81d33ce040814d0f1a4d8",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_agriculture_database.py",
+      "expected": "83a357352f89ee8bcceffd795de7f96274f90be68c4b455deb09f8b40f6740e8",
+      "actual": "83a357352f89ee8bcceffd795de7f96274f90be68c4b455deb09f8b40f6740e8",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_agriculture_database_postgres.py",
+      "expected": "9d62a0962c9e2682a9b9a06a8b8284e1e44c6f47224faeab38d0a603ed17a7a4",
+      "actual": "9d62a0962c9e2682a9b9a06a8b8284e1e44c6f47224faeab38d0a603ed17a7a4",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_identity_chain_fixture.py",
+      "expected": "b20053464ce119c3007cac989350f347f8d3154cc7c6e365ef86c0d3be6ad934",
+      "actual": "b20053464ce119c3007cac989350f347f8d3154cc7c6e365ef86c0d3be6ad934",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/export-python-lock.py",
+      "expected": "479108ab50874cb42c5e18798293f7595a511879d02d26e921193d2ee3a487e6",
+      "actual": "479108ab50874cb42c5e18798293f7595a511879d02d26e921193d2ee3a487e6",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/python-test-requirements.txt",
+      "expected": "c546aca9e8293cbfce086a58ea722c6c70a4665a7034732a2f287806d9dcbdce",
+      "actual": "c546aca9e8293cbfce086a58ea722c6c70a4665a7034732a2f287806d9dcbdce",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "deploy/agriculture/platform-identity.template.json",
+      "expected": "f4e3778f3535a79d6b4ea009c46e10ae749b41dcef0882bda524cd8b8a68f500",
+      "actual": "f4e3778f3535a79d6b4ea009c46e10ae749b41dcef0882bda524cd8b8a68f500",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "deploy/agriculture/gis-identity.template.json",
+      "expected": "c97dce09907636b1fb6d41d9d46c9fdbabbd68334458af773f0e54fe838b3d60",
+      "actual": "c97dce09907636b1fb6d41d9d46c9fdbabbd68334458af773f0e54fe838b3d60",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "docs/agriculture/SERVICE_IDENTITY.md",
+      "expected": "fafde15333f2104d9f17ebac197696a3ab21dbda147f8962e61050e8f9a4274f",
+      "actual": "fafde15333f2104d9f17ebac197696a3ab21dbda147f8962e61050e8f9a4274f",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "docs/agriculture/PLATFORM_SERVICE_IDENTITY.md",
+      "expected": "b8f3de5dbcc3b70fa1ec4f11711d3904d2cf6921a00e0790afef75e9f89896d4",
+      "actual": "b8f3de5dbcc3b70fa1ec4f11711d3904d2cf6921a00e0790afef75e9f89896d4",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "docs/agriculture/GIS_SERVICE_IDENTITY.md",
+      "expected": "2ff3621ef1b8e9acf18ef5e360b62a2213acab569d628def248dd038ed31bc33",
+      "actual": "2ff3621ef1b8e9acf18ef5e360b62a2213acab569d628def248dd038ed31bc33",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "tests/agriculture/fixtures/identity-canonical.json",
+      "expected": "13d5a9abf9b9cbbbee498abf63919a0073c47f676aa9ccaeb0ea681003cab060",
+      "actual": "13d5a9abf9b9cbbbee498abf63919a0073c47f676aa9ccaeb0ea681003cab060",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "tests/agriculture/test_contracts.py",
+      "expected": "daf1d65c65c9383ec99a1b890dc4850904e20333f660b2f090a9d1a3b4f40bef",
+      "actual": "daf1d65c65c9383ec99a1b890dc4850904e20333f660b2f090a9d1a3b4f40bef",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "tests/agriculture/test_python_lock_export.py",
+      "expected": "6d66debd4b52684f24255cad792d276e7381e36b632673e02abae221c84a1dd1",
+      "actual": "6d66debd4b52684f24255cad792d276e7381e36b632673e02abae221c84a1dd1",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "contracts/agriculture/README.md",
+      "expected": "76abbee0c802d370b13776da4d18632ec456aa8e8c052a2c1dbd3f31627463c0",
+      "actual": "76abbee0c802d370b13776da4d18632ec456aa8e8c052a2c1dbd3f31627463c0",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "contracts/agriculture/analysis-submit.schema.json",
+      "expected": "e1b442e6a40dddb18a582485dd9ef387fabcd6ce214297a4f0c4699e66794f43",
+      "actual": "e1b442e6a40dddb18a582485dd9ef387fabcd6ce214297a4f0c4699e66794f43",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "contracts/agriculture/common.schema.json",
+      "expected": "6d717f62e5988b075f1b9461f38e98fbc2ee746e82bf81b69f54a856771e604e",
+      "actual": "6d717f62e5988b075f1b9461f38e98fbc2ee746e82bf81b69f54a856771e604e",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "contracts/agriculture/delegation.schema.json",
+      "expected": "7996790cd15111dde37d93f31943987000393dec81ed8e68a8206b082fbb1817",
+      "actual": "7996790cd15111dde37d93f31943987000393dec81ed8e68a8206b082fbb1817",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "contracts/agriculture/event-envelope.schema.json",
+      "expected": "519943d3a4f71eb4497d81416d147e051c41bc4d996f771a0ed26b923fe511f2",
+      "actual": "519943d3a4f71eb4497d81416d147e051c41bc4d996f771a0ed26b923fe511f2",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "contracts/agriculture/job.schema.json",
+      "expected": "e1da22c8930672387db7a23c3d617a488272c90c30eed264ae8fbd7406545e9a",
+      "actual": "e1da22c8930672387db7a23c3d617a488272c90c30eed264ae8fbd7406545e9a",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "contracts/agriculture/manifest.schema.json",
+      "expected": "a0c61b96f4322e639b4bc209f13d837790f84e31986388462c7eb17bba7a4adf",
+      "actual": "a0c61b96f4322e639b4bc209f13d837790f84e31986388462c7eb17bba7a4adf",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "contracts/agriculture/result.schema.json",
+      "expected": "b358caba41bb2f1ebd101ce6501ce95aa87d9160388529a4a0582fef8bee0f37",
+      "actual": "b358caba41bb2f1ebd101ce6501ce95aa87d9160388529a4a0582fef8bee0f37",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "contracts/agriculture/service-request.schema.json",
+      "expected": "7ca175d48a32f2db317eabcbb9344010c4e3dcf693b2f35760676b245f61187e",
+      "actual": "7ca175d48a32f2db317eabcbb9344010c4e3dcf693b2f35760676b245f61187e",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "contracts/agriculture/source-rights.schema.json",
+      "expected": "543452243e26b328a996038dbfbd6024fae10a36bec144c7a755be57293c257d",
+      "actual": "543452243e26b328a996038dbfbd6024fae10a36bec144c7a755be57293c257d",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "contracts/agriculture/source-rights.py",
+      "expected": "117c28096e5d29e2831b5ad8590f6cd43017c92a2a57599f851e3feef17481c7",
+      "actual": "117c28096e5d29e2831b5ad8590f6cd43017c92a2a57599f851e3feef17481c7",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "contracts/agriculture/source-rights.template.json",
+      "expected": "519be63b860f65ee9ee8cb5f031e67d507d3bfc255d7ab66299f374d49cd120a",
+      "actual": "519be63b860f65ee9ee8cb5f031e67d507d3bfc255d7ab66299f374d49cd120a",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "contracts/agriculture/openapi.json",
+      "expected": "116c6dc019b8ae022b30e8b266231b89c886fee39c7843175f607f192a25e2ca",
+      "actual": "116c6dc019b8ae022b30e8b266231b89c886fee39c7843175f607f192a25e2ca",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "contracts/agriculture/examples/analysis-submit.json",
+      "expected": "16fd7b82c440fd130b1beb1bba8389672135be391524044672676f1f2793de68",
+      "actual": "16fd7b82c440fd130b1beb1bba8389672135be391524044672676f1f2793de68",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "contracts/agriculture/examples/delegation-read.json",
+      "expected": "50a4517d95ba085b9ae2bdd30d22eba8261c5a28a876023866e356fe31323804",
+      "actual": "50a4517d95ba085b9ae2bdd30d22eba8261c5a28a876023866e356fe31323804",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "contracts/agriculture/examples/delegation-write.json",
+      "expected": "a5f11537534e22a7856bd66880b2e7565d20e5a6ed8afff2a183b24d70de3f90",
+      "actual": "a5f11537534e22a7856bd66880b2e7565d20e5a6ed8afff2a183b24d70de3f90",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "contracts/agriculture/examples/event-envelope.json",
+      "expected": "f3a0ea024d74ae0a9055e0c7c7c0e46ef3bbc7426831165e902dc38edf166b4f",
+      "actual": "f3a0ea024d74ae0a9055e0c7c7c0e46ef3bbc7426831165e902dc38edf166b4f",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "contracts/agriculture/examples/job.json",
+      "expected": "bb3f76695289dc3c0fecc3daa51c8a5d83d952b00ec0bf5ee5e88ccb6aa58269",
+      "actual": "bb3f76695289dc3c0fecc3daa51c8a5d83d952b00ec0bf5ee5e88ccb6aa58269",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "contracts/agriculture/examples/manifest.json",
+      "expected": "6a9481a08e35b7106ce1dc50b4324c2537571d89c04d53b1782f7b5dbc491c54",
+      "actual": "6a9481a08e35b7106ce1dc50b4324c2537571d89c04d53b1782f7b5dbc491c54",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "contracts/agriculture/examples/result.json",
+      "expected": "b89e3a988287c81d8cf30ddc7ec7c930ebab31c15e4681d046eea451d8e20e62",
+      "actual": "b89e3a988287c81d8cf30ddc7ec7c930ebab31c15e4681d046eea451d8e20e62",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/main.py",
+      "expected": "bb846a1d2550a1799aa655c8e6cbb5249441ae7af8294f3833e1fae11480a45a",
+      "actual": "bb846a1d2550a1799aa655c8e6cbb5249441ae7af8294f3833e1fae11480a45a",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/actor_models.py",
+      "expected": "4fab33a9b4508fbf2eafc5155735ade7a6b16895933ecf16ae0cea8aef48567e",
+      "actual": "4fab33a9b4508fbf2eafc5155735ade7a6b16895933ecf16ae0cea8aef48567e",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/actor_session.py",
+      "expected": "9a99b632f6dacb3c9dbd2a4a6e75a1c5391c13f35f1b8cd7ed7e40a86c46990f",
+      "actual": "9a99b632f6dacb3c9dbd2a4a6e75a1c5391c13f35f1b8cd7ed7e40a86c46990f",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/actors.py",
+      "expected": "4f8a5993160c7c53ae95cf1f9dd8abc1289ed2c052f391f3aa3456d83d692434",
+      "actual": "4f8a5993160c7c53ae95cf1f9dd8abc1289ed2c052f391f3aa3456d83d692434",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/operation_authorization.py",
+      "expected": "88037f6e7fd71fbc80c9fb41533861c51d692669996abe274bd06f4606bfa83a",
+      "actual": "88037f6e7fd71fbc80c9fb41533861c51d692669996abe274bd06f4606bfa83a",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/services/project_user_service.py",
+      "expected": "6f36c4be95f8a69140d1da9e642fb91929439e32505e3d42d7d9e3a5971fbb2c",
+      "actual": "6f36c4be95f8a69140d1da9e642fb91929439e32505e3d42d7d9e3a5971fbb2c",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/services/service_sharing_service.py",
+      "expected": "2bbe43d66473d0f7af73cb3e2b02ae0d855d5d901827be5abaab5642034d99e7",
+      "actual": "2bbe43d66473d0f7af73cb3e2b02ae0d855d5d901827be5abaab5642034d99e7",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/services/workbench_service.py",
+      "expected": "5c9913dd03fe804a2f8f97e34f9b5346e3439bd78e73a677375a8086b8446e90",
+      "actual": "5c9913dd03fe804a2f8f97e34f9b5346e3439bd78e73a677375a8086b8446e90",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/dao/workbench_dao.py",
+      "expected": "f06ab69b815452029ca0d13be29463d40a634a68fe93bde9371c07bb39325469",
+      "actual": "f06ab69b815452029ca0d13be29463d40a634a68fe93bde9371c07bb39325469",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/scripts/migrations/20261029_agriculture_actor_bindings.sql",
+      "expected": "6508f3c646221ba3e2edec489015ec11849ad0a95fcac363bf422852cb698757",
+      "actual": "6508f3c646221ba3e2edec489015ec11849ad0a95fcac363bf422852cb698757",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_agriculture_actors.py",
+      "expected": "0c1053a09a70fda0136bc91414710ef22835f0efd39cd769a23a705a3b28544c",
+      "actual": "0c1053a09a70fda0136bc91414710ef22835f0efd39cd769a23a705a3b28544c",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_agriculture_actors_postgres.py",
+      "expected": "84371360104a8577f3e4a177f58278d92bfb034e306cadf492b46a6788d1e300",
+      "actual": "84371360104a8577f3e4a177f58278d92bfb034e306cadf492b46a6788d1e300",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_legacy_actor_gate.py",
+      "expected": "2abfd681d381e6c087ded71bf61a5cefb263d8146af54d31a71466a03f97645c",
+      "actual": "2abfd681d381e6c087ded71bf61a5cefb263d8146af54d31a71466a03f97645c",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_legacy_identity_contracts.py",
+      "expected": "58cb49dc94c4fb89b09fbddad8ba96a4a8fb27fa81221f8e908bae64fb234547",
+      "actual": "58cb49dc94c4fb89b09fbddad8ba96a4a8fb27fa81221f8e908bae64fb234547",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_agriculture_legacy_write_integration.py",
+      "expected": "81cb0c67eac42fab4112fba5fec2dd257ba74518bfd929082a3df98c652c0339",
+      "actual": "81cb0c67eac42fab4112fba5fec2dd257ba74518bfd929082a3df98c652c0339",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_boundary_delivery_services.py",
+      "expected": "82b0af3e1880237f2f3a535655c7e992a0c1939a16eed46be5c066f6b39f381c",
+      "actual": "82b0af3e1880237f2f3a535655c7e992a0c1939a16eed46be5c066f6b39f381c",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_rule_config.py",
+      "expected": "3ef72049503e347ef04b8295a3a9584b35a0537d1302f8bceede35cb872e1bf5",
+      "actual": "3ef72049503e347ef04b8295a3a9584b35a0537d1302f8bceede35cb872e1bf5",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_service_sharing.py",
+      "expected": "41b4e9ea910afb0e63a4def2a544734ff719aa51dbd9c69c31ee95c22fbd689e",
+      "actual": "41b4e9ea910afb0e63a4def2a544734ff719aa51dbd9c69c31ee95c22fbd689e",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_workbench.py",
+      "expected": "38427514ea980dec9f0c51e1820882ea212ab094efa072bba05d59c38cecad41",
+      "actual": "38427514ea980dec9f0c51e1820882ea212ab094efa072bba05d59c38cecad41",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/frontend/src/api/request.ts",
+      "expected": "3e579c12a9f123a17b4ead36c0a5b7e5005c672540c6bbc8d881828298f32610",
+      "actual": "3e579c12a9f123a17b4ead36c0a5b7e5005c672540c6bbc8d881828298f32610",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/frontend/src/main.ts",
+      "expected": "197592c09c7f72c849318ba0368b489e7a55dd9660f002dcb4d46b296a39fcd7",
+      "actual": "197592c09c7f72c849318ba0368b489e7a55dd9660f002dcb4d46b296a39fcd7",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/frontend/src/security/legacyIdentity.ts",
+      "expected": "84c8e3acc9dca7344baad02f5a3f95998142a23906f20dfeb0db05068f74efcf",
+      "actual": "84c8e3acc9dca7344baad02f5a3f95998142a23906f20dfeb0db05068f74efcf",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/frontend/src/store/userStore.ts",
+      "expected": "e5bd7e6894e713eb78a3f09e4195dc0d7c97a3d343f454533b980018c9355a57",
+      "actual": "e5bd7e6894e713eb78a3f09e4195dc0d7c97a3d343f454533b980018c9355a57",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/frontend/src/store/fieldCaptureStore.ts",
+      "expected": "759abd4f4559c0c92e474cfec15cd25ebc980866dd765ddbb84206775494f52a",
+      "actual": "759abd4f4559c0c92e474cfec15cd25ebc980866dd765ddbb84206775494f52a",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/frontend/src/store/uavCaptureStore.ts",
+      "expected": "765011b88e75d4dd020687ec0fe9c29d9a92c953115b4214333e36da9b3d9a33",
+      "actual": "765011b88e75d4dd020687ec0fe9c29d9a92c953115b4214333e36da9b3d9a33",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/frontend/src/components/layout/UserIdentitySwitcher.vue",
+      "expected": "fa0ce8a234f9741dac34d1a285f1987daf2e8d738586ea3b30cf0f6383e9889a",
+      "actual": "fa0ce8a234f9741dac34d1a285f1987daf2e8d738586ea3b30cf0f6383e9889a",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/frontend/src/components/field/mobile/MobileFieldCaptureForm.vue",
+      "expected": "430535c29a60d616468994659bd3a3611d6e4966092be3545f3fe4e640c3dec1",
+      "actual": "430535c29a60d616468994659bd3a3611d6e4966092be3545f3fe4e640c3dec1",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/frontend/src/components/uav/mobile/MobileUavCaptureForm.vue",
+      "expected": "4d8232c6157ce805631951acd7f720c97d6830acd6d6e479ed34535b19520938",
+      "actual": "4d8232c6157ce805631951acd7f720c97d6830acd6d6e479ed34535b19520938",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/frontend/src/views/FieldCaptureView.vue",
+      "expected": "ba51bd80cd9c957a493be1f6ddafbfa4f02e07b0d46ba07623dc150b1e84c752",
+      "actual": "ba51bd80cd9c957a493be1f6ddafbfa4f02e07b0d46ba07623dc150b1e84c752",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/frontend/src/views/UavCaptureView.vue",
+      "expected": "5e7645aee210e7e6928f8ca64edfb5b4824a86ffbf0f005cec841e4e8af077ba",
+      "actual": "5e7645aee210e7e6928f8ca64edfb5b4824a86ffbf0f005cec841e4e8af077ba",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/frontend/agriculture/legacy-identity.test.ts",
+      "expected": "ae22c43d7a6c33c0ccbc02212a27e6a951381349311f350390287e5fb7a33ce4",
+      "actual": "ae22c43d7a6c33c0ccbc02212a27e6a951381349311f350390287e5fb7a33ce4",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/legacy-identity-inventory.py",
+      "expected": "0ad742123f156583d262de98c5080a5d7e825c864943e513a8fa97e35b770326",
+      "actual": "0ad742123f156583d262de98c5080a5d7e825c864943e513a8fa97e35b770326",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/legacy-identity-inventory.test.py",
+      "expected": "56b3e43f888ba8a4289f33889f030c5abba48eb140febd12aed856edc3d976bc",
+      "actual": "56b3e43f888ba8a4289f33889f030c5abba48eb140febd12aed856edc3d976bc",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "docs/agriculture/evidence/w01/legacy-identity-inventory.json",
+      "expected": "71152d5bc1f49143d7a89f38f820f0fe0b9e38975a72e91a1b0cd75668463dcf",
+      "actual": "71152d5bc1f49143d7a89f38f820f0fe0b9e38975a72e91a1b0cd75668463dcf",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "docs/agriculture/LEGACY_ACTOR_MIGRATION.md",
+      "expected": "e1476c807119e6ce5f63bf7b3b2fb946356edb0fb08a3bab9db4c077c02a59a1",
+      "actual": "e1476c807119e6ce5f63bf7b3b2fb946356edb0fb08a3bab9db4c077c02a59a1",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "docs/agriculture/W01_LEGACY_ACTOR_GATE.md",
+      "expected": "27c9ea6d72ea13ba4132379bf83825a64cfe0cd4e7262eaf18aedcbe245b47a6",
+      "actual": "27c9ea6d72ea13ba4132379bf83825a64cfe0cd4e7262eaf18aedcbe245b47a6",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "docs/agriculture/GIS_ACTOR_BINDINGS.md",
+      "expected": "81241a8505b48fe8088f7ced95fc93518f629448795a3cd6cc105bf689726a84",
+      "actual": "81241a8505b48fe8088f7ced95fc93518f629448795a3cd6cc105bf689726a84",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "docs/agriculture/LEGACY_IDENTITY_INVENTORY.md",
+      "expected": "e233111c0ea9efa3eb626543dc8e7dbea303bcffdeecb866f8c1f1dc97e3a4c1",
+      "actual": "e233111c0ea9efa3eb626543dc8e7dbea303bcffdeecb866f8c1f1dc97e3a4c1",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "contracts/agriculture/navigation.ts",
+      "expected": "4fb1d786be8622592635b78a25628cd276b1845ef19969ef79702758b6fcd360",
+      "actual": "4fb1d786be8622592635b78a25628cd276b1845ef19969ef79702758b6fcd360",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "deploy/agriculture/Dockerfile.web",
+      "expected": "0af7b59cd81ded789c2ac9dc3b9fc2971cbc3fb3f4c4292c572a1c26a1953fe8",
+      "actual": "0af7b59cd81ded789c2ac9dc3b9fc2971cbc3fb3f4c4292c572a1c26a1953fe8",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "deploy/agriculture/Dockerfile.web.dockerignore",
+      "expected": "0361bcc47ca7d8b17f5c728b970d77e3d246f5b2d1a25af96cb94cd93b27e971",
+      "actual": "0361bcc47ca7d8b17f5c728b970d77e3d246f5b2d1a25af96cb94cd93b27e971",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "deploy/agriculture/nginx.conf.template",
+      "expected": "30a1b2fce7e5ec7eedb38d9bd5b8d459ee7bf850970da370631585a2d7b17782",
+      "actual": "30a1b2fce7e5ec7eedb38d9bd5b8d459ee7bf850970da370631585a2d7b17782",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "deploy/agriculture/web-entrypoint.sh",
+      "expected": "85063885b31599e3bd383869047a2db5d15c1540b08fc8a1327a28e888211e07",
+      "actual": "85063885b31599e3bd383869047a2db5d15c1540b08fc8a1327a28e888211e07",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "deploy/agriculture/env.example",
+      "expected": "1d60bc6d61d3cda49151ce3be72d265d7d9ec1790ac93885e9e0cd25c7040c0a",
+      "actual": "1d60bc6d61d3cda49151ce3be72d265d7d9ec1790ac93885e9e0cd25c7040c0a",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "deploy/agriculture/errors/404.html",
+      "expected": "76318cbbdc388a901ed478d4c47860481f6bdd70db45f999967436a6a5f0a0e8",
+      "actual": "76318cbbdc388a901ed478d4c47860481f6bdd70db45f999967436a6a5f0a0e8",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "deploy/agriculture/errors/50x.html",
+      "expected": "254f231c9cd6a243251c8698b33cb7212edf6c941bb4cfb3b022fac3d00aa6ec",
+      "actual": "254f231c9cd6a243251c8698b33cb7212edf6c941bb4cfb3b022fac3d00aa6ec",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "deploy/agriculture/README.md",
+      "expected": "2468d0515d581fba1c66af45b5ee2a520ddea9b8cb9ea089b36507a238d1a925",
+      "actual": "2468d0515d581fba1c66af45b5ee2a520ddea9b8cb9ea089b36507a238d1a925",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "docker-compose.agriculture.yml",
+      "expected": "0fbd9f6da0fd6024deffd9f3580d4452ed5d2f43a9ed2234ab0300990af8995a",
+      "actual": "0fbd9f6da0fd6024deffd9f3580d4452ed5d2f43a9ed2234ab0300990af8995a",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/gateway-browser-e2e.mjs",
+      "expected": "cfc8f21b26caf751e8e930abb5e746d6c3515bebee00b19e62280104eb621b1f",
+      "actual": "cfc8f21b26caf751e8e930abb5e746d6c3515bebee00b19e62280104eb621b1f",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/gateway-browser-e2e.test.mjs",
+      "expected": "9052ca14137253d3f09c9a663de3973b1237232b69ed4e098b23235a98e1a2e8",
+      "actual": "9052ca14137253d3f09c9a663de3973b1237232b69ed4e098b23235a98e1a2e8",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/gateway-container-smoke.py",
+      "expected": "38ec3ea787acb63d6faff51553489a4b2148ef088c7afb241ca1d994a40a1919",
+      "actual": "38ec3ea787acb63d6faff51553489a4b2148ef088c7afb241ca1d994a40a1919",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/gateway-container-smoke.test.py",
+      "expected": "f63f502f40fd47b4def9de7ef37c178eebac4062e2526103ab7b312d44f7de9e",
+      "actual": "f63f502f40fd47b4def9de7ef37c178eebac4062e2526103ab7b312d44f7de9e",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/native-gateway-test.py",
+      "expected": "4df7593fd7ee29207c9dfff8d054c22c674e3cfa1438ef62f6e930a8ce9f9536",
+      "actual": "4df7593fd7ee29207c9dfff8d054c22c674e3cfa1438ef62f6e930a8ce9f9536",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "tests/agriculture/test_gateway_configuration.py",
+      "expected": "01cf06c1f7e2da8b2d146a71ca38c4e4c33a478a598c9825dfd65d84b9e75876",
+      "actual": "01cf06c1f7e2da8b2d146a71ca38c4e4c33a478a598c9825dfd65d84b9e75876",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "docs/agriculture/SAME_ORIGIN_GATEWAY.md",
+      "expected": "3f3d3271ab6740aa851ab43e3e2c09f8bc0f6acd8e3f57ad0585120b9bcb2700",
+      "actual": "3f3d3271ab6740aa851ab43e3e2c09f8bc0f6acd8e3f57ad0585120b9bcb2700",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/app/cloud_agent_flow_p6.go",
+      "expected": "4827652843cfa6b7039a4d0f177cad3f2a2ae06a54f98c340d2e8319cf1a8c15",
+      "actual": "4827652843cfa6b7039a4d0f177cad3f2a2ae06a54f98c340d2e8319cf1a8c15",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/app/service.go",
+      "expected": "8585c8fe33a413de2109c69f2f262e4aee5818c3891ed5dee44ab93aaec2fcdc",
+      "actual": "8585c8fe33a413de2109c69f2f262e4aee5818c3891ed5dee44ab93aaec2fcdc",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/database/flow_rls_test.go",
+      "expected": "504ea705162bf0f2de0f886fb1e56eacd4c56b8303a441f020005f9d5df96871",
+      "actual": "504ea705162bf0f2de0f886fb1e56eacd4c56b8303a441f020005f9d5df96871",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/database/migration_flow_scope.go",
+      "expected": "4102c17ef0fcaeca85afaca21220c005484b31c1b3cc3c06549e1ff4bd00bc7c",
+      "actual": "4102c17ef0fcaeca85afaca21220c005484b31c1b3cc3c06549e1ff4bd00bc7c",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/database/migration_flow_scanner.go",
+      "expected": "bd9b5726d6880c3786fea08f0a97cafc5521d6b52d2feae4a5e69586a9c2f06e",
+      "actual": "bd9b5726d6880c3786fea08f0a97cafc5521d6b52d2feae4a5e69586a9c2f06e",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/background_scanner.go",
+      "expected": "6ecf656262ce2b9db483ae95e6e98974fe28b5edd54275060b8ef1f10ad3a30c",
+      "actual": "6ecf656262ce2b9db483ae95e6e98974fe28b5edd54275060b8ef1f10ad3a30c",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/billing.go",
+      "expected": "369ffd7f7bdd41f2fe3b5ad63d13c9301cf7f36537f9898b2b1eb5d5d8efd6e9",
+      "actual": "369ffd7f7bdd41f2fe3b5ad63d13c9301cf7f36537f9898b2b1eb5d5d8efd6e9",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/canvas_handoff_test.go",
+      "expected": "eac8a0256383e736c242851fa9232f4e527a1660fa7d3b87f0e2b7fb1c84d0b7",
+      "actual": "eac8a0256383e736c242851fa9232f4e527a1660fa7d3b87f0e2b7fb1c84d0b7",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/command_outbox.go",
+      "expected": "16a8117814afcc23bacf36132850a72fc42bc987a29d9ae0a161fbaf020e0d98",
+      "actual": "16a8117814afcc23bacf36132850a72fc42bc987a29d9ae0a161fbaf020e0d98",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/command_outbox_test.go",
+      "expected": "b7481bfa280d1afeac00d230f75cb4e351a79c91fdeb53241a1e7150752f60bd",
+      "actual": "b7481bfa280d1afeac00d230f75cb4e351a79c91fdeb53241a1e7150752f60bd",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/flow_test.go",
+      "expected": "327dfbf8fb69a491c6d33bf03778eab4111edb98c35464748206d5568718dd0a",
+      "actual": "327dfbf8fb69a491c6d33bf03778eab4111edb98c35464748206d5568718dd0a",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/gaps9_test.go",
+      "expected": "07ecd81b9997e87e9685bee7d0b556b9d0232ac191f1d5ecce8c4c39df3f0ac7",
+      "actual": "07ecd81b9997e87e9685bee7d0b556b9d0232ac191f1d5ecce8c4c39df3f0ac7",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/mcp_routes.go",
+      "expected": "4d19a4b2371a38778eab8bfdda6eccc3d713605ac2ab99607e647bc36926c7d1",
+      "actual": "4d19a4b2371a38778eab8bfdda6eccc3d713605ac2ab99607e647bc36926c7d1",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/mcp_secrets_test.go",
+      "expected": "961cbf2255142f6d2aba77c58987cf3245117dde2f688db6fa6df6e200fba49a",
+      "actual": "961cbf2255142f6d2aba77c58987cf3245117dde2f688db6fa6df6e200fba49a",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/model_tasks.go",
+      "expected": "2b96c2c8d2431351676030130f609267c71a2b06f052fa4bf46e68b54045e9d8",
+      "actual": "2b96c2c8d2431351676030130f609267c71a2b06f052fa4bf46e68b54045e9d8",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/notify.go",
+      "expected": "b6bab2b7bf8ae26b7d5f5c22904bed8b315d7ea874bf7f1bf7c94cf7efb615fa",
+      "actual": "b6bab2b7bf8ae26b7d5f5c22904bed8b315d7ea874bf7f1bf7c94cf7efb615fa",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/p5_test.go",
+      "expected": "c7eb9af095e8976e693f54f0dd413b0f444eca876f7925502b79f029ac3e75cd",
+      "actual": "c7eb9af095e8976e693f54f0dd413b0f444eca876f7925502b79f029ac3e75cd",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/routes_contract_test.go",
+      "expected": "a6d297055023c5e877cfae88e7f7ff21937812484105f569b85e19534f61917f",
+      "actual": "a6d297055023c5e877cfae88e7f7ff21937812484105f569b85e19534f61917f",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/scanner_scope_postgres_test.go",
+      "expected": "eb0bd2149228da85631c255f723c0bf3379522882ee2b8e7d7d48524cd832eaf",
+      "actual": "eb0bd2149228da85631c255f723c0bf3379522882ee2b8e7d7d48524cd832eaf",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/strict_admission_postgres_test.go",
+      "expected": "7b944a6715d4976b61bc9b6bce024fc32fcf2c4ac627ad02e529f2bb4c3f8b6e",
+      "actual": "7b944a6715d4976b61bc9b6bce024fc32fcf2c4ac627ad02e529f2bb4c3f8b6e",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/strict_admission_test.go",
+      "expected": "f13d7b10b8dd4a435016f310d45fecda39ea7b5338d6620ffa3bb8a8a42fc959",
+      "actual": "f13d7b10b8dd4a435016f310d45fecda39ea7b5338d6620ffa3bb8a8a42fc959",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/strict_scope_postgres_test.go",
+      "expected": "408111d0b367b8eb520e659cce2bca491c3df6b6792db3264ac8785322a2b5c1",
+      "actual": "408111d0b367b8eb520e659cce2bca491c3df6b6792db3264ac8785322a2b5c1",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/waits.go",
+      "expected": "bfecc38ee9a5b179aed756b1c9c2d77e1fc3444c808d4ca7758ca85966feaef6",
+      "actual": "bfecc38ee9a5b179aed756b1c9c2d77e1fc3444c808d4ca7758ca85966feaef6",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/worker_scope_postgres_test.go",
+      "expected": "eb2d234680af965e0a7ffd41b69c261b20e821e4bf254601fdf49a0816accb64",
+      "actual": "eb2d234680af965e0a7ffd41b69c261b20e821e4bf254601fdf49a0816accb64",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/flow/continuation_scope_postgres_test.go",
+      "expected": "92459d1b2b8e93e433c680e1bb1818a4f71693e5d2f98340ff979433ab0daf60",
+      "actual": "92459d1b2b8e93e433c680e1bb1818a4f71693e5d2f98340ff979433ab0daf60",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/edumath/artifacts.go",
+      "expected": "79f15e7cd13ebb15b7ea1549735d7639f5ea66291beb4c3e2b55c169cd892e54",
+      "actual": "79f15e7cd13ebb15b7ea1549735d7639f5ea66291beb4c3e2b55c169cd892e54",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/edumath/authz.go",
+      "expected": "d39dfca5ef475d90dbe8a0af1c95ee84793d119085521379b00b3fe4783ae9f8",
+      "actual": "d39dfca5ef475d90dbe8a0af1c95ee84793d119085521379b00b3fe4783ae9f8",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/edumath/classes.go",
+      "expected": "8a3d49d9c8a03624a3e856232c91c2a273b6d74a150ace0df5ff53b884051ebf",
+      "actual": "8a3d49d9c8a03624a3e856232c91c2a273b6d74a150ace0df5ff53b884051ebf",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/edumath/classes_test.go",
+      "expected": "cf9d3053c85dfc36d867e24ae31beafbadef9fa1ab4cb34a2791456e1eb9a576",
+      "actual": "cf9d3053c85dfc36d867e24ae31beafbadef9fa1ab4cb34a2791456e1eb9a576",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/edumath/e2e_test.go",
+      "expected": "d58d9094ecd4660722b67e47914539d35745d64c30e0ade0c254a37828faac9a",
+      "actual": "d58d9094ecd4660722b67e47914539d35745d64c30e0ade0c254a37828faac9a",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/edumath/handlers.go",
+      "expected": "988aa2e4837890ca812e3f19faaebada96bec45ad7c33cd9add39407003414fb",
+      "actual": "988aa2e4837890ca812e3f19faaebada96bec45ad7c33cd9add39407003414fb",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/edumath/help_test.go",
+      "expected": "cdf7671fac8676d1f1013bd62b5cb50d134de7e5a4eec8694f3e099f3c266ebd",
+      "actual": "cdf7671fac8676d1f1013bd62b5cb50d134de7e5a4eec8694f3e099f3c266ebd",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/edumath/roster.go",
+      "expected": "0ac7df0450a4d0e76f4dfc0287d6040f25973b9e1d2213f5a1c747d81cc21943",
+      "actual": "0ac7df0450a4d0e76f4dfc0287d6040f25973b9e1d2213f5a1c747d81cc21943",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/edumath/service.go",
+      "expected": "74a8e2cfbb2c4eb7a38e7694d574399b9f0eba073ad77d801e39bec97e07e755",
+      "actual": "74a8e2cfbb2c4eb7a38e7694d574399b9f0eba073ad77d801e39bec97e07e755",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/edumath/worker.go",
+      "expected": "3983f350083f479f531904ea5bf63e48cae4fde08ca36220835d4f42efd0ef2a",
+      "actual": "3983f350083f479f531904ea5bf63e48cae4fde08ca36220835d4f42efd0ef2a",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/edumath/signed_artifact_postgres_test.go",
+      "expected": "516f5c9f48e8c02e8c7619c99e01250dc697cfe80dccb5f859426b1d523baf51",
+      "actual": "516f5c9f48e8c02e8c7619c99e01250dc697cfe80dccb5f859426b1d523baf51",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/edumath/ledger_scanner_postgres_test.go",
+      "expected": "6d726dcfb9bdd03166b46bc7d953215cd269977ffabebcad4dc26f7a7337ac67",
+      "actual": "6d726dcfb9bdd03166b46bc7d953215cd269977ffabebcad4dc26f7a7337ac67",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/app/creation_test.go",
+      "expected": "9c72b2e2d617a316f7d2b77bb56a153e5e5a3042ef63465848c8af14fe946f4c",
+      "actual": "9c72b2e2d617a316f7d2b77bb56a153e5e5a3042ef63465848c8af14fe946f4c",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/app/cloud_agent_canvas_event_size_test.go",
+      "expected": "4e9bd33f2ca010cc3e4b4f5738e04b9c8ce24373080363ebc004efd8602a2afa",
+      "actual": "4e9bd33f2ca010cc3e4b4f5738e04b9c8ce24373080363ebc004efd8602a2afa",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/loom-engine/flow/a20.test.ts",
+      "expected": "6fd624fc861bfaa9a56c63e701a87e23777ee8c45676f042b7e86543a7b8dc17",
+      "actual": "6fd624fc861bfaa9a56c63e701a87e23777ee8c45676f042b7e86543a7b8dc17",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/loom-engine/flow/db.ts",
+      "expected": "44b6cb28280c16d9c03257db7f4ce773bceafa76d570526e39481923dc83eccc",
+      "actual": "44b6cb28280c16d9c03257db7f4ce773bceafa76d570526e39481923dc83eccc",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/loom-engine/flow/install-system-role.sql",
+      "expected": "4ecdb4da9769f10ad756803edc78171008d20170a9c1d22b9b591a5f073b1ae6",
+      "actual": "4ecdb4da9769f10ad756803edc78171008d20170a9c1d22b9b591a5f073b1ae6",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/loom-engine/flow/legacy-import-full.test.ts",
+      "expected": "5d756e1a221540e74f22ff4185b9ac73d76065fec864e35161e4fdc15f7baef1",
+      "actual": "5d756e1a221540e74f22ff4185b9ac73d76065fec864e35161e4fdc15f7baef1",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/loom-engine/flow/main.ts",
+      "expected": "74a9a9349e452eff6d68a3ed92829a549c57c238843a29e801911544df0ed068",
+      "actual": "74a9a9349e452eff6d68a3ed92829a549c57c238843a29e801911544df0ed068",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/loom-engine/flow/metrics-snapshot.test.ts",
+      "expected": "5ac559b6aecd849d25e35300fab9da365d4d2af5002f2f2f8990b4a299524ab6",
+      "actual": "5ac559b6aecd849d25e35300fab9da365d4d2af5002f2f2f8990b4a299524ab6",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/loom-engine/flow/metrics-snapshot.ts",
+      "expected": "e02ef34d4b09a1df149a7ac03bfbecc936dedabfbb767276866a8e6b83002b05",
+      "actual": "e02ef34d4b09a1df149a7ac03bfbecc936dedabfbb767276866a8e6b83002b05",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/loom-engine/flow/metrics.ts",
+      "expected": "c36e9998d1976fdd11ff211b992a2c27d4538c06efa3c405c44d3780b2d6ad47",
+      "actual": "c36e9998d1976fdd11ff211b992a2c27d4538c06efa3c405c44d3780b2d6ad47",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/loom-engine/flow/migrations/0019_scope_required.sql",
+      "expected": "c1b24be106e07852656a813096f97abe57197fbd89ddcf3e853e1a498b96e5de",
+      "actual": "c1b24be106e07852656a813096f97abe57197fbd89ddcf3e853e1a498b96e5de",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/loom-engine/flow/ops.test.ts",
+      "expected": "74cb3eae93942af6262749b0839d86afa22d51dda057adc46523144177e1c865",
+      "actual": "74cb3eae93942af6262749b0839d86afa22d51dda057adc46523144177e1c865",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/loom-engine/flow/pg.test.ts",
+      "expected": "a8315b72f7f0e6177ef30652e6eac17d470824b2b17c5e05ff0b61890b917175",
+      "actual": "a8315b72f7f0e6177ef30652e6eac17d470824b2b17c5e05ff0b61890b917175",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/loom-engine/flow/runtime-role.ts",
+      "expected": "01542b1f185759e6754e77263be2a07603bc04c55a62c8e07ad0ecaa185085b3",
+      "actual": "01542b1f185759e6754e77263be2a07603bc04c55a62c8e07ad0ecaa185085b3",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/loom-engine/flow/scope-postgres.test.ts",
+      "expected": "df1245626078456c40d0eb6c36cdb6467e14094bf8d3492149d3bf639bcee4f3",
+      "actual": "df1245626078456c40d0eb6c36cdb6467e14094bf8d3492149d3bf639bcee4f3",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/loom-engine/flow/server.ts",
+      "expected": "101e379ed4f2f54d3ae5c613b85cb93ddd5d114622e5819449b3aa2dd5a2ade2",
+      "actual": "101e379ed4f2f54d3ae5c613b85cb93ddd5d114622e5819449b3aa2dd5a2ade2",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/loom-engine/flow/tenant-dispatch.test.ts",
+      "expected": "3f94c7dcebf061ac521fd7ce1a638c6c61a9c9ce6e87b5d1f186d542513de61b",
+      "actual": "3f94c7dcebf061ac521fd7ce1a638c6c61a9c9ce6e87b5d1f186d542513de61b",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/loom-engine/flow/tenant-dispatch.ts",
+      "expected": "4bd09c25ef3f71eabac597c2bb06d11d98d5b316616108c88af1f5259cb18879",
+      "actual": "4bd09c25ef3f71eabac597c2bb06d11d98d5b316616108c88af1f5259cb18879",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/loom-engine/flow/tools/legacy-import.ts",
+      "expected": "0093689cc6b57fe3b4fd01c6be5fcb5abd766cc1880502c79a15f89881069812",
+      "actual": "0093689cc6b57fe3b4fd01c6be5fcb5abd766cc1880502c79a15f89881069812",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/loom-engine/flow/tools/media-keys.ts",
+      "expected": "fb875ae430334ae9d9cf9f703acacfaadefad5bcf81a528adba20621525fc208",
+      "actual": "fb875ae430334ae9d9cf9f703acacfaadefad5bcf81a528adba20621525fc208",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/loom-engine/flow/tools/migrate.ts",
+      "expected": "bbfece93b08208c56ce0b5bd21db2d4b24927c9862f2b2da18961f8f0e90cd9b",
+      "actual": "bbfece93b08208c56ce0b5bd21db2d4b24927c9862f2b2da18961f8f0e90cd9b",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "deploy/agriculture/loom-migrate.mjs",
+      "expected": "a0dfe0941880b5727e266855467ae09fdaa6253364de0af8d57e723177499c73",
+      "actual": "a0dfe0941880b5727e266855467ae09fdaa6253364de0af8d57e723177499c73",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "deploy/flow/postgres/init-databases.sh",
+      "expected": "c44a4364814ab4d0426b61684bb26078a143297d356a0c190c25005b9a7624c1",
+      "actual": "c44a4364814ab4d0426b61684bb26078a143297d356a0c190c25005b9a7624c1",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "deploy/flow/monitoring/prometheus.yml",
+      "expected": "a6896ff8ad6551c59143ef6e74a291690679e3721a08fc700bdbd3d7f5768648",
+      "actual": "a6896ff8ad6551c59143ef6e74a291690679e3721a08fc700bdbd3d7f5768648",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "deploy/flow/monitoring/.gitignore",
+      "expected": "6da3c2ae02097afff466c2f9a0809864b8af7b32bba46e8e44621fceb616262a",
+      "actual": "6da3c2ae02097afff466c2f9a0809864b8af7b32bba46e8e44621fceb616262a",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "docker-compose.flow.yml",
+      "expected": "3457eab3df80dd5a5692b2f045f97d7b134df0925a132f8812543dca5575345d",
+      "actual": "3457eab3df80dd5a5692b2f045f97d7b134df0925a132f8812543dca5575345d",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": ".env.flow.example",
+      "expected": "f46cd28f2d79e05f84b34be81b06942b9f87270d9ed4097ce19cae48250a6c7b",
+      "actual": "f46cd28f2d79e05f84b34be81b06942b9f87270d9ed4097ce19cae48250a6c7b",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": ".env.flow.runtime.example",
+      "expected": "2cc03c47e311622a429e689cae01c5dcfc6620b98c051142166bef7f7b71e44b",
+      "actual": "2cc03c47e311622a429e689cae01c5dcfc6620b98c051142166bef7f7b71e44b",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "tests/agriculture/test_flow_role_deployment.py",
+      "expected": "8a8a92b8a89e267552ab59861e213bb878d660ef615891716093fc4b388897c0",
+      "actual": "8a8a92b8a89e267552ab59861e213bb878d660ef615891716093fc4b388897c0",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/query_scope.py",
+      "expected": "5a7d3e9b04e7cf151fd0d59d2af97b490b327852e538eecc7b84c7365b437097",
+      "actual": "5a7d3e9b04e7cf151fd0d59d2af97b490b327852e538eecc7b84c7365b437097",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/query_inventory.json",
+      "expected": "7b325042ef4d76c0804209e054a603d8c81928563f43be9ad4279fc74fadd01e",
+      "actual": "7b325042ef4d76c0804209e054a603d8c81928563f43be9ad4279fc74fadd01e",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/dao/plot_dao.py",
+      "expected": "45952c647078bc2230c4987b9dccbe6865aaf515f848a380b778c446450dcb65",
+      "actual": "45952c647078bc2230c4987b9dccbe6865aaf515f848a380b778c446450dcb65",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/scripts/migrations/20261030_agriculture_query_scope.sql",
+      "expected": "1d9bc1ba962bcc6141158efbf419227c05262e3131d57c201641931583c3dfe0",
+      "actual": "1d9bc1ba962bcc6141158efbf419227c05262e3131d57c201641931583c3dfe0",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/scripts/query_scope_inventory.py",
+      "expected": "835caf16a369375fe577ccfa2d8617ccb2b16df4118d262cea3acf2bd7c4de79",
+      "actual": "835caf16a369375fe577ccfa2d8617ccb2b16df4118d262cea3acf2bd7c4de79",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_agriculture_query_scope.py",
+      "expected": "7cfee4706c22d6b08d7f2f381e520bc368bc8932efbb4f463bfd68139973b6a3",
+      "actual": "7cfee4706c22d6b08d7f2f381e520bc368bc8932efbb4f463bfd68139973b6a3",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_agriculture_query_scope_postgres.py",
+      "expected": "61e36d4c9bbda574a2d93afc9873e0fdae0a07d89805943226f3578c0492f8c0",
+      "actual": "61e36d4c9bbda574a2d93afc9873e0fdae0a07d89805943226f3578c0492f8c0",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_query_scope_inventory.py",
+      "expected": "49cc2267b2d70409a33e70f38527323666e4ab200441022e4626bca336359995",
+      "actual": "49cc2267b2d70409a33e70f38527323666e4ab200441022e4626bca336359995",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "tests/agriculture/test_identity_chain_configuration.py",
+      "expected": "e6a170b914a535dcdb575c2c0ebee8655f31af5ec8779ed476c249b384f3d105",
+      "actual": "e6a170b914a535dcdb575c2c0ebee8655f31af5ec8779ed476c249b384f3d105",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/object_gateway.go",
+      "expected": "e5197ba98391b46276f282c4173a7e4ad203f11694ac80b52745dc5898d9af50",
+      "actual": "e5197ba98391b46276f282c4173a7e4ad203f11694ac80b52745dc5898d9af50",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/object_gateway_test.go",
+      "expected": "164a318e5ff1414eaee47974f5de25515fd54c4fa64bfefc0495a566430bc18f",
+      "actual": "164a318e5ff1414eaee47974f5de25515fd54c4fa64bfefc0495a566430bc18f",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/object_gateway_integration_test.go",
+      "expected": "948b32d607653623b8634e9c5d0867f2978b853f3714add285f3a75a70da9948",
+      "actual": "948b32d607653623b8634e9c5d0867f2978b853f3714add285f3a75a70da9948",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/job_authority.go",
+      "expected": "2bcc2aeeddb6d65bafd494cdf4d33be354bb66549c08b32cfd1fad0b998e2f47",
+      "actual": "2bcc2aeeddb6d65bafd494cdf4d33be354bb66549c08b32cfd1fad0b998e2f47",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/job_authority_http.go",
+      "expected": "75e3a3728f87831edbd86dbcc6a7e6429ab9aad0f5113d2367c3ae8c5277574a",
+      "actual": "75e3a3728f87831edbd86dbcc6a7e6429ab9aad0f5113d2367c3ae8c5277574a",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/job_authority_transport.go",
+      "expected": "3bbb9955a8654c9f0313894c3d40ccfa69a6dadfe36b635897d6d49b5e063952",
+      "actual": "3bbb9955a8654c9f0313894c3d40ccfa69a6dadfe36b635897d6d49b5e063952",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/job_authority_test.go",
+      "expected": "1b9051bf9265ef1a6eaaaca9088a5265dfb0462d2c47fc1d22e055eca1374a89",
+      "actual": "1b9051bf9265ef1a6eaaaca9088a5265dfb0462d2c47fc1d22e055eca1374a89",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/job_authority_http_test.go",
+      "expected": "9d80364d99f75e6be74c4640b359d71e263acf0fa6eae41ac4952d3da37c7bdf",
+      "actual": "9d80364d99f75e6be74c4640b359d71e263acf0fa6eae41ac4952d3da37c7bdf",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/job_authority_integration_test.go",
+      "expected": "596c3f36b6744cab113b4e3326ffc85fe24241c58d4f092b97805d46677404ce",
+      "actual": "596c3f36b6744cab113b4e3326ffc85fe24241c58d4f092b97805d46677404ce",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/object_storage.py",
+      "expected": "f3669f51d8bc3649ddc19588dc6daf409f046472f4bb5a7641c3968eecb46461",
+      "actual": "f3669f51d8bc3649ddc19588dc6daf409f046472f4bb5a7641c3968eecb46461",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/object_store.py",
+      "expected": "92a5ecbde7ad50b2f043609e84e6e0ac33aaf4a40d265703e052a3a0a3209077",
+      "actual": "92a5ecbde7ad50b2f043609e84e6e0ac33aaf4a40d265703e052a3a0a3209077",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/object_gateway.py",
+      "expected": "b5d8b72cb79b7aa2128bb9081f4564e20e82c13003ad0661f946ead6e7525be5",
+      "actual": "b5d8b72cb79b7aa2128bb9081f4564e20e82c13003ad0661f946ead6e7525be5",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/job_authority.py",
+      "expected": "64ef9b9b7446bb531171ed55bf04332edd1307fc34c083b2814177ec4d5f8d72",
+      "actual": "64ef9b9b7446bb531171ed55bf04332edd1307fc34c083b2814177ec4d5f8d72",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/job_callback.py",
+      "expected": "a601ea65b51f71ee323b012ef28e16cbfb609b9b9fc25783cdabef920315fb29",
+      "actual": "a601ea65b51f71ee323b012ef28e16cbfb609b9b9fc25783cdabef920315fb29",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/job_store.py",
+      "expected": "f56f5eb9d3aa09b834fed9d0dc6fffe6b4ae8f7c14a42fbfba5b118ec30a3ba4",
+      "actual": "f56f5eb9d3aa09b834fed9d0dc6fffe6b4ae8f7c14a42fbfba5b118ec30a3ba4",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/job_routes.py",
+      "expected": "54b012c541daf9e13a094991961804f7a3f6eeb0ae8b9efaf016a34f9d69468f",
+      "actual": "54b012c541daf9e13a094991961804f7a3f6eeb0ae8b9efaf016a34f9d69468f",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/scripts/migrations/20261030_agriculture_private_objects.sql",
+      "expected": "483ebd3051114d111363a0c2f81349c7f30643eeb1bf419007af2c4b9816b5ea",
+      "actual": "483ebd3051114d111363a0c2f81349c7f30643eeb1bf419007af2c4b9816b5ea",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/scripts/migrations/20261030_agriculture_job_authority.sql",
+      "expected": "6e9182abde654ea7c35b99c85d290901e272c42d6cdd5838b39245827b0895aa",
+      "actual": "6e9182abde654ea7c35b99c85d290901e272c42d6cdd5838b39245827b0895aa",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_agriculture_object_storage.py",
+      "expected": "4eab2fcd9cc21cd8565351649d9a0a756eb1b4964677b8bee6fe05e8dc6af2e4",
+      "actual": "4eab2fcd9cc21cd8565351649d9a0a756eb1b4964677b8bee6fe05e8dc6af2e4",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_agriculture_object_gateway.py",
+      "expected": "d108c7cb8e6c6b2f1637a8b2f448c2704f7b819bbb20324993d59c0d378fc0de",
+      "actual": "d108c7cb8e6c6b2f1637a8b2f448c2704f7b819bbb20324993d59c0d378fc0de",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_agriculture_objects_postgres.py",
+      "expected": "e691c6502af14320de5e55b1bc95dceb49ec3cc43c29c444b1e7fa4c7340b6e3",
+      "actual": "e691c6502af14320de5e55b1bc95dceb49ec3cc43c29c444b1e7fa4c7340b6e3",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_agriculture_objects_go_postgres.py",
+      "expected": "5bd3daea2315fe7541ab969806ef3a4c03f4f0915df7f652766bfb80cdc4f568",
+      "actual": "5bd3daea2315fe7541ab969806ef3a4c03f4f0915df7f652766bfb80cdc4f568",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/object_http_fixture.py",
+      "expected": "dfd42dd30244eedf866e7a0d9a578696d7894401c2496cdd3ae7238570e3cb38",
+      "actual": "dfd42dd30244eedf866e7a0d9a578696d7894401c2496cdd3ae7238570e3cb38",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_agriculture_job_authority.py",
+      "expected": "53bc0230e6f4b3addf24714ec488913a8037e021845affd056a1897f9d1cf43a",
+      "actual": "53bc0230e6f4b3addf24714ec488913a8037e021845affd056a1897f9d1cf43a",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_agriculture_jobs_postgres.py",
+      "expected": "9e9ff30e864546f04185e49be8079982ba27faaa6c81631c91beea6f91445290",
+      "actual": "9e9ff30e864546f04185e49be8079982ba27faaa6c81631c91beea6f91445290",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/job_fixture_support.py",
+      "expected": "f00d9adef68f18676b3d1d4af6d8cdfc838e246d67890046ec10e5212f76dd1b",
+      "actual": "f00d9adef68f18676b3d1d4af6d8cdfc838e246d67890046ec10e5212f76dd1b",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/job_http_fixture.py",
+      "expected": "6e39fa8f1dbaf272bcbb75df8d76ffbf7a45cfdb897b7215a62f2af84b12cd7a",
+      "actual": "6e39fa8f1dbaf272bcbb75df8d76ffbf7a45cfdb897b7215a62f2af84b12cd7a",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/handler/routes.go",
+      "expected": "658ac60eb1c94e4c47a0c93933d35949f8a9c3d91baa48938ad32eb83e596457",
+      "actual": "658ac60eb1c94e4c47a0c93933d35949f8a9c3d91baa48938ad32eb83e596457",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/handler/agent.go",
+      "expected": "8b3a70cf8f9155c948121436e3d9fc631d1605a77c06ac396c3b4db9f8faf027",
+      "actual": "8b3a70cf8f9155c948121436e3d9fc631d1605a77c06ac396c3b4db9f8faf027",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/handler/text_events_test.go",
+      "expected": "cc764e5df4e29de724f74bbe7e912d8c189137d6e5b65f2b76e834fd2e854d3f",
+      "actual": "cc764e5df4e29de724f74bbe7e912d8c189137d6e5b65f2b76e834fd2e854d3f",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/handler/stream_revocation_test.go",
+      "expected": "e92baa259260f254dfa54d3e32f2e8d8e304a7ffb68716d40cd99a2ab5c0f920",
+      "actual": "e92baa259260f254dfa54d3e32f2e8d8e304a7ffb68716d40cd99a2ab5c0f920",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/app/text_replay_cache.go",
+      "expected": "f3e87165f91b621fbccf7c1c85062a56dba5bfc763728cd0609e426e6245fc75",
+      "actual": "f3e87165f91b621fbccf7c1c85062a56dba5bfc763728cd0609e426e6245fc75",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/app/read_cache_integration_test.go",
+      "expected": "e7afb14cce9014e5ac9c84a3e3701f829076d434a568db453c6a5bf39769d68d",
+      "actual": "e7afb14cce9014e5ac9c84a3e3701f829076d434a568db453c6a5bf39769d68d",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/job_events.go",
+      "expected": "cf357837473219c529f2dee679a4766dba3531b23a84a6acfd9e2342ced6ffa1",
+      "actual": "cf357837473219c529f2dee679a4766dba3531b23a84a6acfd9e2342ced6ffa1",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/job_events_test.go",
+      "expected": "dd2b04750b6c82d3e098344eb9939656497d7c0fcad5a4b2ab1513bf338f2eba",
+      "actual": "dd2b04750b6c82d3e098344eb9939656497d7c0fcad5a4b2ab1513bf338f2eba",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/scoped_projection.go",
+      "expected": "44d961b660e4f1d8bcd7fcf917c3ace369e279e4d8af0bf7010a79b90a56a872",
+      "actual": "44d961b660e4f1d8bcd7fcf917c3ace369e279e4d8af0bf7010a79b90a56a872",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/agriculture/scoped_projection_test.go",
+      "expected": "ebacba44aaf1960d5e709e0d98024ee0650846c8b7a3dbf48111638072c29345",
+      "actual": "ebacba44aaf1960d5e709e0d98024ee0650846c8b7a3dbf48111638072c29345",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "backend/internal/platform/read_cache.go",
+      "expected": "d712d39f5457be3e7047679709a1259cbb1b8cc44f71a3ab4d54d668c9844e7d",
+      "actual": "d712d39f5457be3e7047679709a1259cbb1b8cc44f71a3ab4d54d668c9844e7d",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/src/features/agriculture/projection-query-key.ts",
+      "expected": "7c87296f570fc1580a1ae1e6b9b3526e3c60e02edb7f8116ff7d5af2d7b17ede",
+      "actual": "7c87296f570fc1580a1ae1e6b9b3526e3c60e02edb7f8116ff7d5af2d7b17ede",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "web/test/agriculture-projection-query-key.test.ts",
+      "expected": "259f1220b379f917220f50426fcf458b544b4eebdeb825e634e1c8877e543f40",
+      "actual": "259f1220b379f917220f50426fcf458b544b4eebdeb825e634e1c8877e543f40",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/scope-stream-result.py",
+      "expected": "5d64812cdcc971ad037eb06754c959759d84802b02c3d8cb092eb06155690b72",
+      "actual": "5d64812cdcc971ad037eb06754c959759d84802b02c3d8cb092eb06155690b72",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/scope-stream-result.test.py",
+      "expected": "ab1231724e99d6eef382e77db9447769a5e095ea32ea11030d7bf8a75b20b533",
+      "actual": "ab1231724e99d6eef382e77db9447769a5e095ea32ea11030d7bf8a75b20b533",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/parser-ci-wiring.test.py",
+      "expected": "d9c268d78193a3321ddddd4b40b16057ce0abc325665bc435655c14b0e73f2e7",
+      "actual": "d9c268d78193a3321ddddd4b40b16057ce0abc325665bc435655c14b0e73f2e7",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "scripts/agriculture/parser-docker-ci.sh",
+      "expected": "9300e3785f28b5aa71461f82c2c9dea3aa36ae9dc8b933ede256977e0b886c30",
+      "actual": "9300e3785f28b5aa71461f82c2c9dea3aa36ae9dc8b933ede256977e0b886c30",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "deploy/agriculture/Dockerfile.parser",
+      "expected": "48448f728cff02e9c32ed38b267c51f04b68fa342d4763d58bbc1bf9a877f14a",
+      "actual": "48448f728cff02e9c32ed38b267c51f04b68fa342d4763d58bbc1bf9a877f14a",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "docs/agriculture/INGESTION_SECURITY.md",
+      "expected": "e4d34c61523c327903da3d6c98b08d23611caca6064d55614070276beea3e00c",
+      "actual": "e4d34c61523c327903da3d6c98b08d23611caca6064d55614070276beea3e00c",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/ingestion/__init__.py",
+      "expected": "d01c018733658b4ad68b33339d255db9d6d2d898cc53460aaa16c890c9551b26",
+      "actual": "d01c018733658b4ad68b33339d255db9d6d2d898cc53460aaa16c890c9551b26",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/ingestion/source_policy.py",
+      "expected": "0ae55b1e2cd30661bac0f87e4ece2d5768bccbdd1f78d076c09db26c786f3871",
+      "actual": "0ae55b1e2cd30661bac0f87e4ece2d5768bccbdd1f78d076c09db26c786f3871",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/ingestion/download.py",
+      "expected": "c7a06716a4bde8799601df91282bff1027a329b4165adc4278ad96e792c99409",
+      "actual": "c7a06716a4bde8799601df91282bff1027a329b4165adc4278ad96e792c99409",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/ingestion/limits.py",
+      "expected": "5eab552bbff53366d8de5fec7e56f6b8b65ee5ef3f9f7bf95cbda55568585713",
+      "actual": "5eab552bbff53366d8de5fec7e56f6b8b65ee5ef3f9f7bf95cbda55568585713",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/ingestion/runner.py",
+      "expected": "31a0c1c1e9f7b41eb4ff65c3be71bcad2194509aac47656ecf94c551a1a8582b",
+      "actual": "31a0c1c1e9f7b41eb4ff65c3be71bcad2194509aac47656ecf94c551a1a8582b",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/ingestion/worker.py",
+      "expected": "906456b43b10f8750cfd2d058e8f7a2225e102847dad0742e13380eb49789441",
+      "actual": "906456b43b10f8750cfd2d058e8f7a2225e102847dad0742e13380eb49789441",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/app/agriculture/ingestion/archive.py",
+      "expected": "50b85959d2a00b0f640749b32591a2cad93d761df8108fa241990835072f970b",
+      "actual": "50b85959d2a00b0f640749b32591a2cad93d761df8108fa241990835072f970b",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/ingestion_limit_probe.py",
+      "expected": "38dffa9af0240cb3a4ce5f005973665d3a57de4f88c0c0107781f6dfe169670b",
+      "actual": "38dffa9af0240cb3a4ce5f005973665d3a57de4f88c0c0107781f6dfe169670b",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_agriculture_ingestion_docker.py",
+      "expected": "6d63706664ea7ba85293da582bca69c90962af9a768d74fea63fbdadb485a601",
+      "actual": "6d63706664ea7ba85293da582bca69c90962af9a768d74fea63fbdadb485a601",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_agriculture_ingestion_download.py",
+      "expected": "b31b846c47b8176762df9ecd126655f8293657f946c72648d06c4c1b60e16a8d",
+      "actual": "b31b846c47b8176762df9ecd126655f8293657f946c72648d06c4c1b60e16a8d",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_agriculture_ingestion_limits.py",
+      "expected": "03e9b1a7ca2e5aa219c0e1059cd366353a3e12a3f1977a5827ffa09a9ac4df77",
+      "actual": "03e9b1a7ca2e5aa219c0e1059cd366353a3e12a3f1977a5827ffa09a9ac4df77",
+      "match": true
+    },
+    {
+      "origin": "session-ci-provenance.json",
+      "path": "services/agri-gis/backend/tests/test_agriculture_ingestion_parser.py",
+      "expected": "fcf4fd0b0838c5e39bdfd23474423e872b766ff9899e537378e95ad65c32521b",
+      "actual": "fcf4fd0b0838c5e39bdfd23474423e872b766ff9899e537378e95ad65c32521b",
+      "match": true
+    },
+    {
+      "origin": "identity-chain-browser.json",
+      "path": "deploy/agriculture/nginx.conf.template",
+      "expected": "30a1b2fce7e5ec7eedb38d9bd5b8d459ee7bf850970da370631585a2d7b17782",
+      "actual": "30a1b2fce7e5ec7eedb38d9bd5b8d459ee7bf850970da370631585a2d7b17782",
+      "match": true
+    }
+  ],
+  "source_check_count": 383,
+  "source_mismatches": [],
+  "json_source_maps": [],
+  "json_test_summaries": {
+    "identity-actors.json": {
+      "counts": {
+        "pass": 62
+      },
+      "reported_passed": true,
+      "reported_count": 62,
+      "failure_locations": [],
+      "missing": null
+    },
+    "identity-chain-go.json": {
+      "counts": {
+        "pass": 5
+      },
+      "reported_passed": true,
+      "reported_count": null,
+      "failure_locations": [],
+      "missing": []
+    },
+    "identity-domain.json": {
+      "counts": {
+        "pass": 29
+      },
+      "reported_passed": true,
+      "reported_count": 29,
+      "failure_locations": [],
+      "missing": null
+    },
+    "identity-go.json": {
+      "counts": {
+        "pass": 15
+      },
+      "reported_passed": true,
+      "reported_count": 15,
+      "failure_locations": [],
+      "missing": null
+    },
+    "identity-jobs.json": {
+      "counts": {
+        "pass": 7
+      },
+      "reported_passed": true,
+      "reported_count": 7,
+      "failure_locations": [],
+      "missing": null
+    },
+    "identity-migration-command.json": {
+      "counts": {
+        "pass": 6
+      },
+      "reported_passed": true,
+      "reported_count": 6,
+      "failure_locations": [],
+      "missing": null
+    },
+    "identity-objects.json": {
+      "counts": {
+        "pass": 47
+      },
+      "reported_passed": true,
+      "reported_count": 47,
+      "failure_locations": [],
+      "missing": null
+    },
+    "identity-python.json": {
+      "counts": {
+        "pass": 75
+      },
+      "reported_passed": true,
+      "reported_count": 75,
+      "failure_locations": [],
+      "missing": null
+    },
+    "identity-query.json": {
+      "counts": {
+        "pass": 17
+      },
+      "reported_passed": true,
+      "reported_count": 17,
+      "failure_locations": [],
+      "missing": null
+    },
+    "scope-stream-agriculture.json": {
+      "counts": {
+        "pass": 20
+      },
+      "reported_passed": true,
+      "reported_count": null,
+      "failure_locations": [],
+      "missing": []
+    },
+    "scope-stream-cache.json": {
+      "counts": {
+        "pass": 1
+      },
+      "reported_passed": true,
+      "reported_count": null,
+      "failure_locations": [],
+      "missing": []
+    },
+    "scope-stream-legacy.json": {
+      "counts": {
+        "pass": 15
+      },
+      "reported_passed": true,
+      "reported_count": null,
+      "failure_locations": [],
+      "missing": []
+    }
+  },
+  "xml_test_counts": {
+    "identity-actors.xml": {
+      "pass": 62
+    },
+    "identity-domain.xml": {
+      "pass": 29
+    },
+    "identity-go.xml": {
+      "pass": 15
+    },
+    "identity-jobs.xml": {
+      "pass": 7
+    },
+    "identity-migration-command.xml": {
+      "pass": 6
+    },
+    "identity-objects.xml": {
+      "pass": 47
+    },
+    "identity-python.xml": {
+      "pass": 75
+    },
+    "identity-query.xml": {
+      "pass": 17
+    }
+  },
+  "browser_results": {
+    "pass": 15
+  },
+  "browser_provenance_hash_match": true,
+  "operation_correlation_match": true,
+  "limitations": [
+    "Only downloaded artifact contents were checked, not GitHub artifact attestation.",
+    "No separately listed source_sha256/source_hashes maps exist in these suite JSON files; source binding is centralized in overlay manifest.",
+    "Built React/Vue index bytes absent from this artifact; their declared hashes cannot be recomputed.",
+    "Counts include parameterized cases and Go parent/subtests; do not add XML and JSON counts together.",
+    "Fixture and test-only bridge evidence; not production, live farm, DT023 Docker parser or complete DT024 route matrix acceptance."
+  ],
+  "overlay_allowlist_check": {
+    "expected": 382,
+    "observed": 382,
+    "missing": [],
+    "unexpected": [],
+    "duplicates": 0,
+    "basis": "ast literal OVERLAY at ad4995c6:scripts/agriculture/session-ci-prepare.py"
+  },
+  "test_totals": {
+    "xml_pass": 258,
+    "xml_skip": 0,
+    "xml_fail": 0,
+    "json_tests_pass": 299,
+    "json_skip": 0,
+    "json_fail": 0,
+    "browser_assertion_pass": 15,
+    "note": "JSON total includes the same 258 XML cases plus 41 chain/stream cases; never sum both totals."
+  }
+}

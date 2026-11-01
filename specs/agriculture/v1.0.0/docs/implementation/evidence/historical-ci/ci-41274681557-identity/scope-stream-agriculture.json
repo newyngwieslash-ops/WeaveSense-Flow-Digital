@@ -1,0 +1,90 @@
+{
+  "suite": "scoped_cache_sse_agriculture",
+  "passed": true,
+  "data_class": "fixture",
+  "production_acceptance": false,
+  "tests": [
+    {
+      "name": "TestJobEventCursorIntegrityAndRestart",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsCrossTenantAndDefaultUnavailable",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsEachWriteRechecksCurrentAuthority",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsEachWriteRechecksCurrentAuthority/logout",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsEachWriteRechecksCurrentAuthority/membership",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsEstablishedStreamStopsOnLogoutOrRevocation",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsEstablishedStreamStopsOnLogoutOrRevocation/disconnect",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsEstablishedStreamStopsOnLogoutOrRevocation/generation",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsEstablishedStreamStopsOnLogoutOrRevocation/logout",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsEstablishedStreamStopsOnLogoutOrRevocation/membership",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsEstablishedStreamStopsOnLogoutOrRevocation/resource_version",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsProviderCancellationAndMalformedBatch",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsProviderCancellationAndMalformedBatch/provider_observes_request_cancellation",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsProviderCancellationAndMalformedBatch/whole_batch_rejected_before_first_byte",
+      "result": "pass"
+    },
+    {
+      "name": "TestJobEventsRealSessionScopeReplayAndRevocation",
+      "result": "pass"
+    },
+    {
+      "name": "TestScopedProjectionCacheActualAuthority",
+      "result": "pass"
+    },
+    {
+      "name": "TestScopedProjectionCacheActualTwoTenantSameInputs",
+      "result": "pass"
+    },
+    {
+      "name": "TestScopedProjectionCacheCrossTenantAndVersionKeys",
+      "result": "pass"
+    },
+    {
+      "name": "TestScopedProjectionRejectsWriteAndPostDescriptionRevocation",
+      "result": "pass"
+    },
+    {
+      "name": "TestScopedProjectionWaitingFillCannotReviveRevokedActor",
+      "result": "pass"
+    }
+  ],
+  "missing": [],
+  "failure_locations": []
+}

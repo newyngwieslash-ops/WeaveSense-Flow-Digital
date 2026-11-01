@@ -1,0 +1,16 @@
+{
+  "source": "Ubuntu runner official apt repositories",
+  "packages": [
+    {
+      "name": "nginx-common_1.24.0-2ubuntu7.19_all.deb",
+      "sha256": "e105e2ea8029bed125c0185e414f5e67e0a4c1e19de48653ac5c9f1cbb32617c",
+      "version": "1.24.0-2ubuntu7.19"
+    },
+    {
+      "name": "nginx_1.24.0-2ubuntu7.19_amd64.deb",
+      "sha256": "b9c3476a504c963d8c3cab6540127fa4100ccf6ddf8ee978780bb32f128968d5",
+      "version": "1.24.0-2ubuntu7.19"
+    }
+  ],
+  "same_version_as_docker_image": false
+}

@@ -1,0 +1,49 @@
+{
+  "reviewer": "fix_w00_migration_assembly",
+  "source_commit": "2cfe8d8ce89a524b9a5f236d10e5bfd000cd88c9",
+  "ci_commit": "d77a5c36605b9da22f5a035412b3addb5c9e558e",
+  "run_id": 41275361980,
+  "migrations_job_id": 124756383995,
+  "source_checks": [
+    {
+      "mode": "core",
+      "provenance_sha256": "ccc072824a8d9e904543529789d75fce62cf919c784268d7935a84eaba700790",
+      "overlay_count": 388,
+      "matches_fixed_commit": true,
+      "mismatches": []
+    },
+    {
+      "mode": "migrations",
+      "provenance_sha256": "ccc072824a8d9e904543529789d75fce62cf919c784268d7935a84eaba700790",
+      "overlay_count": 388,
+      "matches_fixed_commit": true,
+      "mismatches": []
+    }
+  ],
+  "log_excerpt_sha256": "6de734f80b8116908c3b0364c6913a5f9c82170101cc1f98b80aed3b009b16d6",
+  "log_markers_verified": [
+    "\"current\":85,\"expected\":85,\"ready\":true",
+    "platform-migrate applied and replayed, tables=190",
+    "loom-migrate applied and replayed, tables=28",
+    "PASS: restricted geo worker password connection, no membership, cross-database/DDL/table access denied even with scope",
+    "PASS: fresh database roles, password connections, cross-database denial, runtime DDL denial, default DML privileges, PostGIS and bounded readiness",
+    "PASS: W00 migrations smoke; NOT tenant isolation, GIS migration, live data or product acceptance"
+  ],
+  "schema_ready_observations": 3,
+  "source_semantics_reviewed": [
+    "set -euo pipefail",
+    "TCP/password role checks and explicit rejection assertions",
+    "both migrations invoked twice and table counts unchanged",
+    "platform migrate-schema verify",
+    "intel app role reads nonempty flow_schema_migrations",
+    "geo worker no inherited membership and object DML/DDL denied even with tenant scope"
+  ],
+  "limitations": [
+    "Artifact and sanitized log supplied by publisher; remote job status not independently queried in this review",
+    "Sanitized log is an excerpt, not full logs or cryptographic execution attestation",
+    "85/85 is platform schema readiness marker, not assertion of 85 separate test cases",
+    "Core artifact verifies source closure; separate core execution log not included in supplied directory",
+    "This is disposable Docker W00 dependency/migration smoke, not tenant RLS, GIS migrations, business/live data, product acceptance or full-history publication",
+    "Replay proves unchanged table count and successful execution, not exhaustive data/schema equivalence"
+  ]
+}

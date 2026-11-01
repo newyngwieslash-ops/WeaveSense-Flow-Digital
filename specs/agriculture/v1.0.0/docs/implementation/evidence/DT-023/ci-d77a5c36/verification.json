@@ -1,0 +1,16 @@
+{
+  "source_commit": "2cfe8d8ce89a524b9a5f236d10e5bfd000cd88c9",
+  "remote_ci_commit": "d77a5c36605b9da22f5a035412b3addb5c9e558e",
+  "run_id": 41275361944,
+  "artifact_id": 13071327081,
+  "verified_source_files": 24,
+  "mismatches": [],
+  "result": "failed",
+  "diagnostic": {
+    "stage": "valid_raster",
+    "probe_exception": "ImportError",
+    "probe_line": 8,
+    "failure_kind": "failure",
+    "reason": "parser_rejected_input"
+  }
+}

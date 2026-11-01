@@ -1,0 +1,17 @@
+{
+  "fresh_volume": true,
+  "six_roles_checked": true,
+  "runtime_not_owner_checked": true,
+  "cross_database_denial_checked": true,
+  "data_class": "fixture",
+  "production_deployment": false,
+  "postgres_version": "PostgreSQL 17.5 (Debian 17.5-1.pgdg110+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 10.2.1-6) 10.2.1 20210110, 64-bit",
+  "image_id": "sha256:2ed748fc602dd3031c6724db8cb289e1578c2deb552a4f6e291f6f7e5e6e4f69",
+  "image_reference": "postgis/postgis:17-3.5",
+  "python": "3.12.15",
+  "redis_authenticated_ping": true,
+  "redis_loopback_binding": true,
+  "redis_image_reference": "redis:7.4.2-alpine",
+  "redis_image_id": "sha256:8f5c54441eb93183170be8c9fc2d8e8275171a6866ca1b4ae682a2ced6a98889",
+  "started_at": "2026-11-01T04:54:17.593083+00:00"
+}

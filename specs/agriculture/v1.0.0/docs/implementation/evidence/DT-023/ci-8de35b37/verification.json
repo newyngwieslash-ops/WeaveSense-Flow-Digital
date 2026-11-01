@@ -1,0 +1,17 @@
+{
+  "source_commit": "403384198faafddde84593394593d7814fa2a0a0",
+  "remote_ci_commit": "8de35b37c51dafbd91a2d50ccfe9733cc84287ef",
+  "run_id": 41275760183,
+  "artifact_id": 13071471847,
+  "verified_source_files": 24,
+  "mismatches": [],
+  "result": "failed",
+  "diagnostic": {
+    "stage": "valid_raster",
+    "probe_exception": "ImportError",
+    "missing_library": "libexpat.so.1",
+    "probe_line": 8,
+    "failure_kind": "failure",
+    "reason": "parser_rejected_input"
+  }
+}

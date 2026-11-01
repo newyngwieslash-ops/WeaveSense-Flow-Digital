@@ -1,6 +1,22 @@
 # DT-023 验收检查点：in_progress
 
-## 2026-11-01 真实 CI 首轮失败（当前状态）
+## 2026-11-01 第三轮已定位缺库，修复待容器复验
+
+[实际运行 41275760183](https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/runs/41275760183) 对应 CI `8de35b37`、产品 `40338419`；仍 2 pass / 1 not_pass，固定诊断明确 `missing_library=libexpat.so.1`。
+原报告、24 输入哈希映射和固定 Debian 包元数据保留于 `ci-8de35b37/`。
+镜像仅补 `libexpat1=2.8.3-1~deb13u1` 并增加非 root Rasterio/Fiona import 构建检查；保留原运行时网络/文件/权限/资源限制和所有验收断言。
+本地修复后组件 77 passed、0 skipped（19.73 秒、退出 0）；reporter 3、wiring 5、prepare 8 项通过。独立代码审查通过；这里没有 Docker，因此实际三项复验由真实 CI 执行，通过前不标完成。
+
+## 2026-11-01 第二轮诊断
+
+CI `d77a5c36605b9da22f5a035412b3addb5c9e558e` 对应产品源码 `2cfe8d8ce89a524b9a5f236d10e5bfd000cd88c9`。
+[实际运行 41275361944](https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/runs/41275361944) 的三项仍为 2 pass / 1 not_pass。
+固定诊断为 valid_raster、ImportError、代码行 8、parser_rejected_input；即 rasterio 导入阶段失败，不能归因为外部凭据或未执行。
+24 个解析源码哈希逐个匹配固定产品提交；原始 JSON 和独立核验保存在 `ci-d77a5c36/`。
+下一诊断增量 `40338419` 仅允许输出四个预定系统动态库 basename，且必须完整匹配固定 loader 错误句；不输出任意异常，不更改生产沙箱或断言。
+本地 wheel 的 readelf 确认这四项为实际外部依赖，但缺少哪一个必须由真实容器证明，不能猜装或声称修复成功。
+
+## 2026-11-01 真实 CI 首轮失败
 
 远端 CI `0040b606ec136c52b1d666c448a87a779411743c` 对应冻结产品 `ad4995c6e91b697dee396d933bcb7fa786dd3b9d`。
 [实际运行 41274681614](https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/runs/41274681614)，job `124754346704`，artifact `13069649989`。

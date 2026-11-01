@@ -1,0 +1,19 @@
+{
+  "source_commit": "72aa1c01b083bacdd458a71c56b4064668a46d76",
+  "ci_commit": "11a380f5dd927a263438ed1bc49be9d944c4e5d0",
+  "run_id": 41296300730,
+  "artifact_id": 13079916864,
+  "overlay_verified": 456,
+  "mismatches": [],
+  "passed": false,
+  "browser_stage": "react_login_workspace",
+  "findings": [
+    "real React login, platform session and workspaces returned 200",
+    "Vue session ready and workspace mounted",
+    "farm NETWORK_ERROR, create button absent, context/list requests absent",
+    "controlled ordinary-function receiver probe rejects FarmTransport receiver in GET and POST CSRF; neutral receiver control passes"
+  ],
+  "limitation": "Probe is JavaScript receiver contract evidence, not native browser reproduction. Fixed production source must pass unchanged actual browser gates.",
+  "done": 24,
+  "task_status": "in_progress"
+}

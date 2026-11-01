@@ -1,0 +1,54 @@
+{
+  "scope": "controlled WebIDL-style receiver contract probe; not native browser",
+  "production_source_changed": false,
+  "rows": [
+    {
+      "mode": "current_method_receiver",
+      "method": "GET",
+      "result": "TypeError",
+      "calls": [
+        {
+          "path": "/api/agri/v1/context",
+          "receiver": "FarmTransport"
+        }
+      ]
+    },
+    {
+      "mode": "current_method_receiver",
+      "method": "POST",
+      "result": "TypeError",
+      "calls": [
+        {
+          "path": "/api/auth/csrf",
+          "receiver": "FarmTransport"
+        }
+      ]
+    },
+    {
+      "mode": "detached_control",
+      "method": "GET",
+      "result": "pass",
+      "calls": [
+        {
+          "path": "/api/agri/v1/context",
+          "receiver": "undefined"
+        }
+      ]
+    },
+    {
+      "mode": "detached_control",
+      "method": "POST",
+      "result": "pass",
+      "calls": [
+        {
+          "path": "/api/auth/csrf",
+          "receiver": "undefined"
+        },
+        {
+          "path": "/api/agri/v1/farms",
+          "receiver": "undefined"
+        }
+      ]
+    }
+  ]
+}

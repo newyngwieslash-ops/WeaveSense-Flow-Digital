@@ -1,0 +1,228 @@
+{
+  "suite": "actual_farm_http_browser_dual_postgres",
+  "passed": false,
+  "data_class": "fixture",
+  "production_acceptance": false,
+  "go_gate_passed": false,
+  "browser_gate_passed": false,
+  "runtime_gate_passed": true,
+  "tests": [
+    {
+      "name": "TestFarmBrowserPostgresChain",
+      "result": "fail"
+    },
+    {
+      "name": "TestFarmHTTPPostgresChain",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmHTTPPostgresChain/create_explicit_grants_and_regions",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmHTTPPostgresChain/cross_tenant_and_workspace",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmHTTPPostgresChain/current_revocation_blocks_replay",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmHTTPPostgresChain/governance_without_content_grant",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmHTTPPostgresChain/idempotent_and_conflicting_requests",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmHTTPPostgresChain/preview_hash_expiry_and_scope",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmHTTPPostgresChain/revision_race_and_archive",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmHTTPPostgresChain/signed_workspace_profiles_current_authority",
+      "result": "pass"
+    }
+  ],
+  "browser_checks": [
+    {
+      "name": "all_database_checkpoints_acknowledged",
+      "result": "not_run"
+    },
+    {
+      "name": "archive_ui_history_readonly",
+      "result": "not_run"
+    },
+    {
+      "name": "concurrent_real_api_update_revision_three",
+      "result": "not_run"
+    },
+    {
+      "name": "created_farms_survive_reload",
+      "result": "not_run"
+    },
+    {
+      "name": "duplicate_click_single_create",
+      "result": "not_run"
+    },
+    {
+      "name": "duplicate_external_code_rejected",
+      "result": "not_run"
+    },
+    {
+      "name": "explicit_region_unit_crs_demo",
+      "result": "not_run"
+    },
+    {
+      "name": "foreign_workspace_denied",
+      "result": "not_run"
+    },
+    {
+      "name": "http_only_platform_cookie",
+      "result": "not_run"
+    },
+    {
+      "name": "invalid_geometry_no_write",
+      "result": "not_run"
+    },
+    {
+      "name": "missing_crs_no_preview",
+      "result": "not_run"
+    },
+    {
+      "name": "no_internal_credentials_identity_spoofing_or_external_requests",
+      "result": "not_run"
+    },
+    {
+      "name": "north_created_with_explicit_grants",
+      "result": "not_run"
+    },
+    {
+      "name": "north_ui_update_revision_two",
+      "result": "not_run"
+    },
+    {
+      "name": "openlayers_real_canvas",
+      "result": "not_run"
+    },
+    {
+      "name": "production_nginx_configuration_valid",
+      "result": "pass"
+    },
+    {
+      "name": "real_react_login_shared_vue_session",
+      "result": "not_run"
+    },
+    {
+      "name": "revoked_history_navigation_no_content",
+      "result": "not_run"
+    },
+    {
+      "name": "revoked_old_page_clears_content",
+      "result": "not_run"
+    },
+    {
+      "name": "same_cookie_after_revocation",
+      "result": "not_run"
+    },
+    {
+      "name": "same_tenant_other_workspace_denied",
+      "result": "not_run"
+    },
+    {
+      "name": "south_created_with_explicit_grants",
+      "result": "not_run"
+    },
+    {
+      "name": "stale_revision_409_preserves_draft",
+      "result": "not_run"
+    }
+  ],
+  "browser_evidence": {},
+  "failure_diagnostics": {
+    "go_locations": [
+      {
+        "test": "TestFarmBrowserPostgresChain",
+        "locations": [
+          {
+            "file": "farm_browser_chain_test.go",
+            "line": 749
+          },
+          {
+            "file": "farm_browser_chain_test.go",
+            "line": 880
+          }
+        ]
+      }
+    ],
+    "go_stages": [
+      {
+        "test": "TestFarmBrowserPostgresChain",
+        "stages": [
+          "browser_wait_created"
+        ]
+      }
+    ],
+    "browser_stage": "react_login_workspace",
+    "ui_flags": {
+      "account_input": false,
+      "busy": false,
+      "create_button": false,
+      "editor": false,
+      "login": false,
+      "password_input": false,
+      "preview": false,
+      "session_error": false,
+      "session_loading": false,
+      "session_ready": true,
+      "submit_button": false,
+      "validation": false,
+      "workspace": true,
+      "workspace_context": true,
+      "error_code": "NETWORK_ERROR",
+      "operation_state": null
+    },
+    "api_statuses": [
+      {
+        "path": "/api/auth/session",
+        "status": 200,
+        "completed": true
+      },
+      {
+        "path": "/api/auth/settings",
+        "status": 200,
+        "completed": true
+      },
+      {
+        "path": "/api/auth/csrf",
+        "status": 200,
+        "completed": true
+      },
+      {
+        "path": "/api/auth/login",
+        "status": 200,
+        "completed": true
+      },
+      {
+        "path": "/api/auth/session",
+        "status": 200,
+        "completed": true
+      },
+      {
+        "path": "/api/auth/session",
+        "status": 200,
+        "completed": true
+      },
+      {
+        "path": "/api/agriculture/workspaces",
+        "status": 200,
+        "completed": true
+      }
+    ]
+  },
+  "passed_count": 9
+}

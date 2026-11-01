@@ -22,10 +22,12 @@ export class FarmTransport {
   constructor(private readonly fetcher: Fetcher = fetch) {}
   async request(path: string, signal: AbortSignal, method: 'GET' | 'POST' | 'PATCH' = 'GET', body?: unknown, key?: string): Promise<{ status: number; envelope: Envelope }> {
     if (!/^\/api\/agri\/v1\/(?:context|farm-previews|farms(?:\/[A-Za-z0-9_-]+(?:\/archive)?)?|farm-operations\/[A-Za-z0-9_-]+)(?:\?[^#]*)?$/.test(path)) throw invalid()
+    // Invoke native Window.fetch without binding this transport as its receiver.
+    const fetcher = this.fetcher
     const headers: Record<string, string> = { Accept: 'application/json' }
     const options: RequestInit = { credentials: 'same-origin', cache: 'no-store', redirect: 'error', signal }
     if (method !== 'GET') {
-      const response = await this.fetcher('/api/auth/csrf', { ...options, method: 'GET', headers })
+      const response = await fetcher('/api/auth/csrf', { ...options, method: 'GET', headers })
       if (!response.ok) throw new FarmError(response.status, 'CSRF_UNAVAILABLE', messages[response.status] ?? '无法确认请求安全凭据，请重新验证会话。')
       const csrf = await json(response)
       if (!record(csrf) || csrf.code !== 0 || !record(csrf.data) || typeof csrf.data.token !== 'string' || !/^[a-f0-9]{64}$/.test(csrf.data.token)) throw invalid()
@@ -33,7 +35,7 @@ export class FarmTransport {
       headers['Content-Type'] = 'application/json'
       if (key) { if (!safeID(key)) throw invalid(); headers['Idempotency-Key'] = key }
     }
-    const response = await this.fetcher(path, { ...options, method, headers, ...(method === 'GET' ? {} : { body: JSON.stringify(body) }) })
+    const response = await fetcher(path, { ...options, method, headers, ...(method === 'GET' ? {} : { body: JSON.stringify(body) }) })
     if ([401, 403, 404].includes(response.status)) throw new FarmError(response.status, 'AUTHORITY_UNAVAILABLE', messages[response.status]!)
     const payload = await json(response)
     if (!response.ok) {

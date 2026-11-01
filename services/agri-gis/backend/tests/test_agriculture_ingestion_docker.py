@@ -1,6 +1,7 @@
 """Mandatory CI container evidence. Explicit opt-in only; never fake a pass."""
 
 import io
+import json
 import os
 import socket
 
@@ -20,26 +21,65 @@ def sandbox():
     return DockerSandbox(image)
 
 
-def test_docker_actual_raster_and_malformed_inputs(sandbox, tmp_path):
+def test_docker_actual_raster_and_malformed_inputs(sandbox, tmp_path, record_property):
     parser = SafeParser(tmp_path / "owned", sandbox)
-    result = parser.inspect_stream(
-        io.BytesIO(raster()), asset_type="imagery", filename="a.tif"
-    )
+    record_property("parser_stage", "valid_raster")
+    try:
+        result = parser.inspect_stream(
+            io.BytesIO(raster()), asset_type="imagery", filename="a.tif"
+        )
+    except Exception:
+        # A second, test-only probe supplies structural diagnostics, never a
+        # replacement result. The original production-path exception is raised.
+        try:
+            diagnostic = SafeParser(
+                tmp_path / "diagnostic", DockerProbe(sandbox, RASTER_DIAGNOSTIC)
+            ).inspect_stream(io.BytesIO(raster()), asset_type="imagery", filename="a.tif")
+            record_property("parser_diagnostic", json.dumps(diagnostic["inspection"]))
+        except Exception:
+            record_property("parser_diagnostic", '{"exception":"probe_unavailable"}')
+        raise
     assert result["inspection"]["metadata"]["width"] == 4
     assert result["isolation"] == "container-network-none-readonly"
-    for data, name, kind in [
-        (raster()[:20], "a.tif", "imagery"),
-        (raster(crs=None), "a.tif", "imagery"),
-        (zipped([("../escape", b"x")]), "a.zip", "table"),
-        (zipped([("bomb", b"0" * 200000)]), "a.zip", "table"),
+    for stage, data, name, kind in [
+        ("corrupt_raster", raster()[:20], "a.tif", "imagery"),
+        ("missing_crs", raster(crs=None), "a.tif", "imagery"),
+        ("archive_traversal", zipped([("../escape", b"x")]), "a.zip", "table"),
+        ("archive_bomb", zipped([("bomb", b"0" * 200000)]), "a.zip", "table"),
     ]:
+        record_property("parser_stage", stage)
         with pytest.raises(IngestionDenied):
             parser.inspect_stream(io.BytesIO(data), asset_type=kind, filename=name)
         assert not list((tmp_path / "owned").iterdir())
+    record_property("parser_stage", "pixel_limit")
     with pytest.raises(IngestionDenied, match="raster_pixels_limit"):
         SafeParser(tmp_path / "owned", sandbox, ParseLimits(pixels=2)).inspect_stream(
             io.BytesIO(raster()), asset_type="imagery", filename="a.tif"
         )
+
+
+RASTER_DIAGNOSTIC = """
+import contextlib,io,json,sys,traceback
+sys.path.insert(0,'/opt/parser')
+diagnostic={'exception':'none'}
+try:
+    from app.agriculture.ingestion import worker
+    sys.argv=['worker','/input/request.json']
+    with contextlib.redirect_stdout(io.StringIO()): worker.main()
+except BaseException as error:
+    allowed={'ImportError','ModuleNotFoundError','OSError','PermissionError',
+             'MemoryError','RuntimeError','ValueError','TypeError','KeyError',
+             'IngestionDenied','RasterioIOError'}
+    kind=type(error).__name__
+    diagnostic={'exception':kind if kind in allowed else 'other'}
+    frames=traceback.extract_tb(error.__traceback__)
+    for frame in frames:
+        if frame.filename in {'/opt/parser/app/agriculture/ingestion/worker.py',
+                              '/opt/parser/app/core/dataset_files.py'}:
+            diagnostic['line']=frame.lineno
+    # No exception message, traceback, file contents, environment, or paths.
+print(json.dumps({'ok':True,'result':diagnostic}))
+"""
 
 
 class DockerProbe:

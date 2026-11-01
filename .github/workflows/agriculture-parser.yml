@@ -32,6 +32,7 @@ jobs:
         run: |
           python3 scaffold/scripts/agriculture/session-ci-prepare.test.py
           python3 scaffold/scripts/agriculture/parser-ci-wiring.test.py
+          python3 scaffold/scripts/agriculture/parser-ci-result.test.py
       - name: Assemble pinned sources and explicitly reviewed overlay
         env:
           SCAFFOLD_MODE: ${{ github.ref_name == 'ci/agriculture-w00' || github.head_ref == 'ci/agriculture-w00' }}

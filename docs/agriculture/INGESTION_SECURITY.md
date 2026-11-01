@@ -26,7 +26,7 @@
 
 解析入口只接受已经完成的本地普通文件或内存字节流，不在启动监督前读取任意网络流/管道；上传传输自身的限流与超时是调用端的独立责任。文件与源代码由可信服务进程拥有，不声称防御同时控制该服务 UID 的宿主攻击者。
 
-普通非 root 子进程加 rlimit **不是内核文件系统/网络沙箱**。本地 `LocalResourceFixture` 和资源探针只在测试代码中显式装配，标签明确区分，不可当作生产隔离证据。当前执行环境无 Docker，正常 bwrap 隔离尝试被环境权限拒绝；未绕过该限制，因此 Docker 实测仍需支持 Docker 的只读 CI。
+普通非 root 子进程加 rlimit **不是内核文件系统/网络沙箱**。本地 `LocalResourceFixture` 和资源探针只在测试代码中显式装配，标签明确区分，不可当作生产隔离证据。当前执行环境无 Docker，正常 bwrap 隔离尝试被环境权限拒绝；未绕过该限制。2026-11-01 只读 CI 首次实际运行三项容器测试，隔离与超时清理通过，栅格输入项失败，完整容器验收尚未通过；历史组件证据不替代该失败。
 
 支持的收窄格式：GTiff、GeoJSON/GPKG、CSV、XLSX、DOCX、PDF、仅检查不解包的 ZIP。无 CRS 拒绝；不猜单位或轴序；拒绝 VRT、远程子数据集等不在固定名单的格式。实际 GDAL/Rasterio/Fiona 解码在限制内进行。ZIP 逐字节累计实际展开大小、CRC 校验、拒绝路径穿越/符号链接/重复名/嵌套归档/外部 OOXML 关系/DTD/实体；不向宿主解压文件。Office/PDF 实际解析并返回有界摘要，不执行宏、公式或文档动作。
 
@@ -58,6 +58,6 @@ AGRI_IDENTITY_PYTHON=/absolute/locked/venv/bin/python \
   bash scripts/agriculture/parser-docker-ci.sh
 ```
 
-脚本沿用官方锁文件导出工具和 hashes，构造显式白名单临时 build context；官方 Python 版本镜像先解析 digest 后构建，实际执行使用本地不可变 image ID。产物 `.local/evidence/parser-docker.json` 包含真实镜像、代码哈希和三项严格测试，不上传原始输入或日志。三项必须执行通过，skip 不算通过；包括实际容器解析/异常清理、未挂载宿主 canary 不可读、宿主自有 loopback 服务不可达、无默认路由、输入/根只读及超时清理。本地无 Docker 时此证据为 **not_run**，不能以配置检查替代。
+脚本沿用官方锁文件导出工具和 hashes，构造显式白名单临时 build context；官方 Python 版本镜像先解析 digest 后构建，实际执行使用本地不可变 image ID。产物 `.local/evidence/parser-docker.json` 包含真实镜像、代码哈希和三项严格测试，不上传原始输入或日志。三项必须执行通过，skip 不算通过；包括实际容器解析/异常清理、未挂载宿主 canary 不可读、宿主自有 loopback 服务不可达、无默认路由、输入/根只读及超时清理。本地无 Docker 时此证据为 **not_run**，不能以配置检查替代；已运行的远程失败单独保留，不写回 not_run。失败诊断仅记录固定阶段、白名单异常类和固定代码内行号，测试探针不替换生产路径结果或原异常。
 
 参照：[Python resource](https://docs.python.org/3/library/resource.html)、[Docker run](https://docs.docker.com/reference/cli/docker/container/run/)。rlimit 证明与容器隔离证明分别记录；没有宣称 VM 隔离、实时外部采集、业务上传端到端或商业可发布。

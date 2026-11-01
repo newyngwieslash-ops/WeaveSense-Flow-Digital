@@ -1,0 +1,25 @@
+{
+  "source_commit": "f281a8d436055343c1bdd145490d72ae646287bb",
+  "ci_commit": "79f25d19827dfa7b10e96ae5649b263bebf044a5",
+  "run": 41297700980,
+  "artifact": 13080466396,
+  "overlay_verified": 456,
+  "gate_counts": {
+    "farm_go": 10,
+    "farm_browser": 23,
+    "farm_python": 81,
+    "farm_flow": 10,
+    "isolation": 156
+  },
+  "all_pass": true,
+  "provenance_and_runner_nginx_hashes_match": true,
+  "redis_real": true,
+  "auth_component_only": false,
+  "race_enabled": true,
+  "production_acceptance": false,
+  "limits": [
+    "Fixture data on real PostgreSQL/PostGIS/Redis/Chromium; not live farms or commercial acceptance",
+    "Session/membership/gateway successful on prior 8ff commit; subsequent changes limited to identity workflow/input check and farm browser runner, not runtime product",
+    "Full product history not delivered by CI scaffold"
+  ]
+}

@@ -1,0 +1,156 @@
+{
+  "suite": "domain",
+  "schema_phase": "post_domain_current",
+  "passed": true,
+  "data_class": "fixture",
+  "production_acceptance": false,
+  "tests": [
+    {
+      "name": "test_no_unverified_or_absent_scope",
+      "module": "test_agriculture_database",
+      "result": "pass"
+    },
+    {
+      "name": "test_no_unverified_or_absent_scope",
+      "module": "test_agriculture_database",
+      "result": "pass"
+    },
+    {
+      "name": "test_no_unverified_or_absent_scope",
+      "module": "test_agriculture_database",
+      "result": "pass"
+    },
+    {
+      "name": "test_single_tenant_and_workspace_only",
+      "module": "test_agriculture_database",
+      "result": "pass"
+    },
+    {
+      "name": "test_single_tenant_and_workspace_only",
+      "module": "test_agriculture_database",
+      "result": "pass"
+    },
+    {
+      "name": "test_single_tenant_and_workspace_only",
+      "module": "test_agriculture_database",
+      "result": "pass"
+    },
+    {
+      "name": "test_single_tenant_and_workspace_only",
+      "module": "test_agriculture_database",
+      "result": "pass"
+    },
+    {
+      "name": "test_single_tenant_and_workspace_only",
+      "module": "test_agriculture_database",
+      "result": "pass"
+    },
+    {
+      "name": "test_single_tenant_and_workspace_only",
+      "module": "test_agriculture_database",
+      "result": "pass"
+    },
+    {
+      "name": "test_service_assertion_not_business_session_and_no_mutable_alias",
+      "module": "test_agriculture_database",
+      "result": "pass"
+    },
+    {
+      "name": "test_expired_and_naive_scope_rejected",
+      "module": "test_agriculture_database",
+      "result": "pass"
+    },
+    {
+      "name": "test_fixed_session_scope_cannot_be_rebound_by_later_verified_actor_call",
+      "module": "test_agriculture_database",
+      "result": "pass"
+    },
+    {
+      "name": "test_each_transaction_uses_parameterized_local_scope_without_actor_rebinding",
+      "module": "test_agriculture_database",
+      "result": "pass"
+    },
+    {
+      "name": "test_role_guard_requires_exact_true_and_sanitizes_driver_error",
+      "module": "test_agriculture_database",
+      "result": "pass"
+    },
+    {
+      "name": "test_no_dsn_or_migration_role_fallback",
+      "module": "test_agriculture_database",
+      "result": "pass"
+    },
+    {
+      "name": "test_domain_factory_requires_role_specific_boundary_before_use",
+      "module": "test_agriculture_database",
+      "result": "pass"
+    },
+    {
+      "name": "test_domain_factory_requires_role_specific_boundary_before_use",
+      "module": "test_agriculture_database",
+      "result": "pass"
+    },
+    {
+      "name": "test_postgres_runtime_factory_role_admission",
+      "module": "test_agriculture_database_postgres",
+      "result": "pass"
+    },
+    {
+      "name": "test_postgres_worker_factory_admission_without_business_privileges",
+      "module": "test_agriculture_database_postgres",
+      "result": "pass"
+    },
+    {
+      "name": "test_postgres_runtime_scope_pool_reuse_and_rollback",
+      "module": "test_agriculture_database_postgres",
+      "result": "pass"
+    },
+    {
+      "name": "test_postgres_domain_factory_rejects_incomplete_boundary",
+      "module": "test_agriculture_database_postgres",
+      "result": "pass"
+    },
+    {
+      "name": "test_all_legacy_models_and_foreign_keys_are_in_explicit_inventory",
+      "module": "test_agriculture_domain_boundary",
+      "result": "pass"
+    },
+    {
+      "name": "test_missing_model_or_changed_parent_contract_fails_closed",
+      "module": "test_agriculture_domain_boundary",
+      "result": "pass"
+    },
+    {
+      "name": "test_migration_covers_inventory_and_restricts_existing_permissive_policies",
+      "module": "test_agriculture_domain_boundary",
+      "result": "pass"
+    },
+    {
+      "name": "test_inventory_file_is_data_not_an_executable_policy_source",
+      "module": "test_agriculture_domain_boundary",
+      "result": "pass"
+    },
+    {
+      "name": "test_identity_metadata_requires_new_restrictive_single_scope",
+      "module": "test_agriculture_domain_boundary",
+      "result": "pass"
+    },
+    {
+      "name": "test_postgres_domain_scope_inventory_and_unmapped_denial",
+      "module": "test_agriculture_domain_rls_postgres",
+      "result": "pass"
+    },
+    {
+      "name": "test_postgres_domain_cross_workspace_parent_and_policy_denial",
+      "module": "test_agriculture_domain_rls_postgres",
+      "result": "pass"
+    },
+    {
+      "name": "test_postgres_domain_workbench_commit_and_audit_rollback",
+      "module": "test_agriculture_domain_rls_postgres",
+      "result": "pass"
+    }
+  ],
+  "failure_locations": [],
+  "passed_count": 29
+}

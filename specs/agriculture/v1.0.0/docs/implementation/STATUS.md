@@ -6,9 +6,9 @@
 
 应用实现状态：in_progress
 
-当前工作包：W03；DT-001 至 DT-024 已按各自原范围完成，共 24/144 项；DT025实施中。W02当前开放路径隔离基线完成，不等于完整G0或产品商用验收。
+当前工作包：W03/W05；DT-001 至 DT-025 已按各自原范围完成，共 25/144 项。下一依赖就绪任务为DT026稳定地块修订与DT041资产权利目录，可并行实施；不等于完整G0或产品商用验收。
 
-当前任务：DT-025 农场档案和区域配置；依赖已齐备，按Go可信授权、现有Flow持久派发适配、GIS事实/面积与Vue工作台互不冲突路径并行推进。ADR-035与项目FARMS_CONTRACT记录初建治理和显式授权分离、真实分库回执、版本化区域配置；尚未验收，不计入done。
+DT025已验收：冻结产品`f281a8d4`→CI `79f25d19`，run `41297700980`真实Go农场10项、浏览器23项、Python81项、Flow10项、隔离156项全部通过。真实Redis、双PostgreSQL/PostGIS、Chromium/nginx、race开启且component关闭；两个独立复核均验证456源哈希、精确集合及数据库checkpoint。保留全部失败历史，范围与限制见`evidence/DT-025/README.md`。以下候选记录均为历史过程，不覆盖最终结果。
 
 DT025候选进展（2026-11-01 07:00 UTC）：真实fresh PostgreSQL/PostGIS农场Python整包81/81通过、零跳过、源稳定、关闭0；本地双PG Go→GIS HTTP八个子项通过，明确为auth组件模式。扩展隔离矩阵156/156通过，平台30路/229请求/260 Go记录、GIS20路，race开启；并行源码改动使该轮仅作诊断，不作冻结证明。完整CI门禁如预期拒绝本地component模式。Vue71项与实际构建、浏览器runner单测通过，但真实Redis/Chromium整链和最终冻结CI尚未验收。独立审查正在修正未知结果操作HTTP语义，并加严签名撤权负例的有效前置控制。证据见`evidence/DT-025/local-candidate/`；不据此增加done数，不启动DT026。
 
@@ -123,12 +123,11 @@ DT-015 已按原任务范围完成：冻结 `574d48f02e96b43c01f0cd3ee2b90a95671
 
 | 状态 | 数量 |
 | --- | ---: |
-| done | 24 |
-| in_progress | 1 |
+| done | 25 |
 | not_started | 119 |
 
 历史 done、恢复证据待补验：无。
-依赖状态就绪但仍须检查恢复条件：无。
+依赖状态就绪但仍须检查恢复条件：DT-026、DT-041。
 
 | 任务 | 状态 |
 | --- | --- |
@@ -156,7 +155,7 @@ DT-015 已按原任务范围完成：冻结 `574d48f02e96b43c01f0cd3ee2b90a95671
 | DT-022 | done |
 | DT-023 | done |
 | DT-024 | done |
-| DT-025 | in_progress |
+| DT-025 | done |
 | DT-026 | not_started |
 | DT-027 | not_started |
 | DT-028 | not_started |

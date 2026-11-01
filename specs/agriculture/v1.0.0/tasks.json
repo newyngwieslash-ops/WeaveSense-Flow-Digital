@@ -1396,7 +1396,7 @@
         "校验非法边界、重复业务编号和停用状态"
       ],
       "blockers": [],
-      "status": "in_progress"
+      "status": "done"
     },
     {
       "id": "DT-026",

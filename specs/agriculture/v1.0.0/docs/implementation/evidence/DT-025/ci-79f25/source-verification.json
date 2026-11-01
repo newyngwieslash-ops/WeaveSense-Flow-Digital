@@ -1,0 +1,50 @@
+[
+  {
+    "artifact_directory": "agriculture-parser-sanitized-evidence",
+    "ci": "79f25d19827dfa7b10e96ae5649b263bebf044a5",
+    "source": "f281a8d436055343c1bdd145490d72ae646287bb",
+    "verified_overlay": 456
+  },
+  {
+    "artifact_directory": "agriculture-membership-sanitized-evidence",
+    "ci": "8ff749f5b73e6537dba5a10d40351bfa858ce6f8",
+    "source": "f5ea0758c476ed0994aaa67254810534d54660ba",
+    "verified_overlay": 456
+  },
+  {
+    "artifact_directory": "agriculture-gateway-sanitized-evidence",
+    "ci": "8ff749f5b73e6537dba5a10d40351bfa858ce6f8",
+    "source": "f5ea0758c476ed0994aaa67254810534d54660ba",
+    "verified_overlay": 456
+  },
+  {
+    "artifact_directory": "agriculture-w00-core-source-evidence",
+    "ci": "79f25d19827dfa7b10e96ae5649b263bebf044a5",
+    "source": "f281a8d436055343c1bdd145490d72ae646287bb",
+    "verified_overlay": 456
+  },
+  {
+    "artifact_directory": "agriculture-w00-migrations-source-evidence",
+    "ci": "79f25d19827dfa7b10e96ae5649b263bebf044a5",
+    "source": "f281a8d436055343c1bdd145490d72ae646287bb",
+    "verified_overlay": 456
+  },
+  {
+    "artifact_directory": "agriculture-organization-browser-sanitized-evidence",
+    "ci": "8ff749f5b73e6537dba5a10d40351bfa858ce6f8",
+    "source": "f5ea0758c476ed0994aaa67254810534d54660ba",
+    "verified_overlay": 456
+  },
+  {
+    "artifact_directory": "identity-79f25",
+    "ci": "79f25d19827dfa7b10e96ae5649b263bebf044a5",
+    "source": "f281a8d436055343c1bdd145490d72ae646287bb",
+    "verified_overlay": 456
+  },
+  {
+    "artifact_directory": "agriculture-session-sanitized-evidence",
+    "ci": "8ff749f5b73e6537dba5a10d40351bfa858ce6f8",
+    "source": "f5ea0758c476ed0994aaa67254810534d54660ba",
+    "verified_overlay": 456
+  }
+]

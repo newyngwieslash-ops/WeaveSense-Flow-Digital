@@ -1,0 +1,71 @@
+{
+  "suite": "go",
+  "schema_phase": "identity_component",
+  "passed": true,
+  "data_class": "fixture",
+  "production_acceptance": false,
+  "tests": [
+    {
+      "name": "TestIdentityRealHTTPGoPython",
+      "result": "pass"
+    },
+    {
+      "name": "TestIdentityRealHTTPGoPython/actor",
+      "result": "pass"
+    },
+    {
+      "name": "TestIdentityRealHTTPGoPython/audience",
+      "result": "pass"
+    },
+    {
+      "name": "TestIdentityRealHTTPGoPython/body",
+      "result": "pass"
+    },
+    {
+      "name": "TestIdentityRealHTTPGoPython/epoch",
+      "result": "pass"
+    },
+    {
+      "name": "TestIdentityRealHTTPGoPython/expired",
+      "result": "pass"
+    },
+    {
+      "name": "TestIdentityRealHTTPGoPython/method",
+      "result": "pass"
+    },
+    {
+      "name": "TestIdentityRealHTTPGoPython/path",
+      "result": "pass"
+    },
+    {
+      "name": "TestIdentityRealHTTPGoPython/query",
+      "result": "pass"
+    },
+    {
+      "name": "TestIdentityRealHTTPGoPython/revoked_binding_old_ticket",
+      "result": "pass"
+    },
+    {
+      "name": "TestIdentityRealHTTPGoPython/revoked_signing_key",
+      "result": "pass"
+    },
+    {
+      "name": "TestIdentityRealHTTPGoPython/scope_path_mismatch",
+      "result": "pass"
+    },
+    {
+      "name": "TestIdentityRealHTTPGoPython/signature",
+      "result": "pass"
+    },
+    {
+      "name": "TestIdentityRealHTTPGoPython/valid_read",
+      "result": "pass"
+    },
+    {
+      "name": "TestIdentityRealHTTPGoPython/write_payload_hash",
+      "result": "pass"
+    }
+  ],
+  "failure_locations": [],
+  "passed_count": 15
+}

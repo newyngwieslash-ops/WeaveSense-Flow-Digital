@@ -1,5 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "include": ["agriculture/**/*.ts", "agriculture/**/*.vue"],
-  "exclude": ["node_modules", "agriculture/**/*.test.ts"]
-}

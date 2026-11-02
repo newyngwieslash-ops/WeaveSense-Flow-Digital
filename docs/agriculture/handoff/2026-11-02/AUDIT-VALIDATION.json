@@ -1,0 +1,57 @@
+{
+  "source_commit": "7c6e0229e3e708ab540f338a7e01cb0f24d25a12",
+  "ledger_cutoff_utc": "2026-11-02T05:51:50Z",
+  "ci_candidate_commit": "52d6e3f43899a1f6412f5e4c5be0e5bc428ae1ec",
+  "formal_counts": {
+    "done": 25,
+    "in_progress": 2,
+    "not_started": 117
+  },
+  "task_records": 144,
+  "remaining_records": 119,
+  "functional_requirements": 80,
+  "nonfunctional_requirements": 20,
+  "acceptance_entries": 80,
+  "source_task_fields_preserved": true,
+  "spec_status_check": {
+    "command": "python scripts/agriculture/spec_status.py --check --require-evidence",
+    "exit_code": 0,
+    "scope": "status/evidence structure, not product acceptance"
+  },
+  "source_files": [
+    {
+      "path": "specs/agriculture/v1.0.0/tasks.json",
+      "sha256": "e3d1a19b7712d537028b983d1ad02bd03aab1492a6c68a4a32cadb92980f3add"
+    },
+    {
+      "path": "specs/agriculture/v1.0.0/requirements.json",
+      "sha256": "1da296aa0230eb6223f5cd9c367ad50755eb46425fb91668569d6276f7b5db31"
+    },
+    {
+      "path": "specs/agriculture/v1.0.0/docs/ACCEPTANCE_MATRIX.md",
+      "sha256": "840bbc4876b0ed297ffaccf11d4b6e7bdf082ed9e82efd5b1098345d4d89bef9"
+    },
+    {
+      "path": "specs/agriculture/v1.0.0/docs/implementation/RECOVERY_STATUS.json",
+      "sha256": "c8a72bc7d45c27016ec9fd9ec90d9210629ca0bcac97397b2eea52cde5cfc18e"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "PRD-IMPLEMENTATION-AUDIT.md",
+      "sha256": "1e7f99be7f462f01003e50d5f23709f088322ec87d570f9cb447ceb955aa0bae"
+    },
+    {
+      "path": "REMAINING-TASKS.md",
+      "sha256": "dd165910f8adb6837008c179864e8d2befd0de2e5733330dc8ac42c222e6f56b"
+    },
+    {
+      "path": "TASK-AUDIT.json",
+      "sha256": "7c3402830c14a50fe4147beac6ae9b5b4e707afe0d8ba57cd8142216039b2ce9"
+    },
+    {
+      "path": "REQUIREMENT-TRACEABILITY.json",
+      "sha256": "796ddcfe4637f40935db42d900e48c67f946ab8b312dd56e4024e129631a32fd"
+    }
+  ]
+}

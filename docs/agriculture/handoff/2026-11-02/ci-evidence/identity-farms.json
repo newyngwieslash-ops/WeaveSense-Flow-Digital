@@ -1,0 +1,165 @@
+{
+  "suite": "actual_farm_http_browser_dual_postgres",
+  "passed": true,
+  "data_class": "fixture",
+  "production_acceptance": false,
+  "go_gate_passed": true,
+  "browser_gate_passed": true,
+  "runtime_gate_passed": true,
+  "tests": [
+    {
+      "name": "TestFarmBrowserPostgresChain",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmHTTPPostgresChain",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmHTTPPostgresChain/create_explicit_grants_and_regions",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmHTTPPostgresChain/cross_tenant_and_workspace",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmHTTPPostgresChain/current_revocation_blocks_replay",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmHTTPPostgresChain/governance_without_content_grant",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmHTTPPostgresChain/idempotent_and_conflicting_requests",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmHTTPPostgresChain/preview_hash_expiry_and_scope",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmHTTPPostgresChain/revision_race_and_archive",
+      "result": "pass"
+    },
+    {
+      "name": "TestFarmHTTPPostgresChain/signed_workspace_profiles_current_authority",
+      "result": "pass"
+    }
+  ],
+  "browser_checks": [
+    {
+      "name": "all_database_checkpoints_acknowledged",
+      "result": "pass"
+    },
+    {
+      "name": "archive_ui_history_readonly",
+      "result": "pass"
+    },
+    {
+      "name": "concurrent_real_api_update_revision_three",
+      "result": "pass"
+    },
+    {
+      "name": "created_farms_survive_reload",
+      "result": "pass"
+    },
+    {
+      "name": "duplicate_click_single_create",
+      "result": "pass"
+    },
+    {
+      "name": "duplicate_external_code_rejected",
+      "result": "pass"
+    },
+    {
+      "name": "explicit_region_unit_crs_demo",
+      "result": "pass"
+    },
+    {
+      "name": "foreign_workspace_denied",
+      "result": "pass"
+    },
+    {
+      "name": "http_only_platform_cookie",
+      "result": "pass"
+    },
+    {
+      "name": "invalid_geometry_no_write",
+      "result": "pass"
+    },
+    {
+      "name": "missing_crs_no_preview",
+      "result": "pass"
+    },
+    {
+      "name": "no_internal_credentials_identity_spoofing_or_external_requests",
+      "result": "pass"
+    },
+    {
+      "name": "north_created_with_explicit_grants",
+      "result": "pass"
+    },
+    {
+      "name": "north_ui_update_revision_two",
+      "result": "pass"
+    },
+    {
+      "name": "openlayers_real_canvas",
+      "result": "pass"
+    },
+    {
+      "name": "production_nginx_configuration_valid",
+      "result": "pass"
+    },
+    {
+      "name": "real_react_login_shared_vue_session",
+      "result": "pass"
+    },
+    {
+      "name": "revoked_history_navigation_no_content",
+      "result": "pass"
+    },
+    {
+      "name": "revoked_old_page_clears_content",
+      "result": "pass"
+    },
+    {
+      "name": "same_cookie_after_revocation",
+      "result": "pass"
+    },
+    {
+      "name": "same_tenant_other_workspace_denied",
+      "result": "pass"
+    },
+    {
+      "name": "south_created_with_explicit_grants",
+      "result": "pass"
+    },
+    {
+      "name": "stale_revision_409_preserves_draft",
+      "result": "pass"
+    }
+  ],
+  "browser_evidence": {
+    "source_commit": "52d6e3f43899a1f6412f5e4c5be0e5bc428ae1ec",
+    "artifact_hashes": {
+      "nginx_template": "30a1b2fce7e5ec7eedb38d9bd5b8d459ee7bf850970da370631585a2d7b17782",
+      "react_index": "20f6d8368895dd51204d31b2223894ece180d2502d2517b866af7fc133e7c814",
+      "vue_index": "9aa42e88c7c44ed6e52f6608250a1cef0cc238a98c2bd8deeae3f4c0f3a2a4a8",
+      "runner": "08f872f17e37a3aa26a3d7d630a456dadadacd81998e00d55f987f4d2e0be129"
+    },
+    "network": {
+      "observed": 192,
+      "violations": 0,
+      "previews": 7,
+      "creates": 3,
+      "updates": 2,
+      "archives": 1
+    },
+    "ci_provenance_sha256": "fa56e1c4e2e36e509acf456da9845b12acdd7450a27413501291e31e6eb99d3f"
+  },
+  "failure_diagnostics": {},
+  "passed_count": 10
+}

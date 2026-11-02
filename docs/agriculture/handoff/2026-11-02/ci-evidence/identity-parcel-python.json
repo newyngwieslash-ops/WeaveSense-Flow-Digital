@@ -1,0 +1,220 @@
+{
+  "suite": "parcel_python_domain_and_postgis",
+  "passed": true,
+  "data_class": "fixture",
+  "production_acceptance": false,
+  "live_farm_data": false,
+  "required_count": 52,
+  "observed_count": 52,
+  "tests": [
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_profile_valid_and_exactly_metadata_only",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_profile_rejects_mutations[extra]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_profile_rejects_mutations[empty_business_scope]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_profile_rejects_mutations[actor]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_profile_rejects_mutations[tenant]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_profile_rejects_mutations[workspace]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_profile_rejects_mutations[audience]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_profile_rejects_mutations[issuer]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_profile_rejects_mutations[policy]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_profile_rejects_mutations[expired]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_profile_rejects_mutations[long_lifetime]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_profile_rejects_mutations[operation]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_profile_rejects_mutations[hash]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_profile_rejects_mutations[body_hash]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_profile_rejects_mutations[path]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_profile_rejects_mutations[method]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_profile_rejects_mutations[epoch_boolean]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_profile_rejects_mutations[bad_signature]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_profile_rejects_mutations[other_typ]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_profile_rejects_mutations[content_path]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_profile_rejects_mutations[write_action]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_profile_rejects_mutations[altered_body]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_callback_actual_signature_component",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_callback_failclosed_component[403-body0]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_callback_failclosed_component[302-body1]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_callback_failclosed_component[200-body2]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_callback_failclosed_component[200-body3]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_identity.py::test_parcel_receipt_callback_failclosed_component[200-body4]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_store_postgres.py::test_parcel_store_create_atomic_idempotent_receipt_and_spheroid",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_store_postgres.py::test_parcel_store_concurrent_revision_history_exact_time_and_immutability",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_store_postgres.py::test_parcel_store_scope_denials_and_pool_reuse",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_store_postgres.py::test_parcel_store_hole_outside_and_valid_multipolygon",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_store_postgres.py::test_parcel_store_invalid_inputs_and_external_conflict_no_partial_writes",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_store_postgres.py::test_parcel_store_receipt_wrong_actor_hash_farm_and_parcel",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_store_postgres.py::test_parcel_store_database_append_only_pointer_and_identity_guards",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_parcels_store_postgres.py::test_parcel_store_database_revision_chronology_rejects_without_side_effect",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farm_parcel_guard_postgres.py::test_farm_shrink_rejects_current_parcel_without_any_domain_write",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farm_parcel_guard_postgres.py::test_farm_boundary_uses_only_current_revision_and_preserves_history",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farm_parcel_guard_postgres.py::test_farm_update_ignores_other_farms_and_workspaces",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farm_parcel_guard_postgres.py::test_parcel_pending_create_cannot_escape_new_parent_boundary",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_farm_parcel_guard_postgres.py::test_farm_pending_update_rechecks_parcel_created_after_preparation",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_domain_ownership.py::test_domain_dispatch_is_exact_and_preserves_requested_order",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_domain_ownership.py::test_missing_domain_does_not_call_other_domain_or_fall_back",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_domain_ownership.py::test_domain_result_cannot_weaken_ordinary_ownership_validation[facts0]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_domain_ownership.py::test_domain_result_cannot_weaken_ordinary_ownership_validation[facts1]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_domain_ownership.py::test_domain_result_cannot_weaken_ordinary_ownership_validation[facts2]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_domain_ownership.py::test_domain_result_cannot_weaken_ordinary_ownership_validation[facts3]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_domain_ownership.py::test_domain_result_cannot_weaken_ordinary_ownership_validation[facts4]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_domain_ownership.py::test_domain_result_cannot_weaken_ordinary_ownership_validation[facts5]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_domain_ownership.py::test_domain_result_cannot_weaken_ordinary_ownership_validation[facts6]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_domain_ownership.py::test_domain_result_cannot_weaken_ordinary_ownership_validation[facts7]",
+      "passed": true
+    },
+    {
+      "name": "test_agriculture_domain_ownership.py::test_empty_duplicate_or_unknown_resource_requests_rejected",
+      "passed": true
+    }
+  ],
+  "contract_sha256": "e0a57368c945e265b6285134488d68c460d639a89a9ce8a97059e9f2bbea42fd"
+}

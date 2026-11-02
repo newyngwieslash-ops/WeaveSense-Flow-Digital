@@ -1,0 +1,210 @@
+{
+  "suite": "actual_asset_http_browser_dual_postgres",
+  "passed": false,
+  "data_class": "fixture",
+  "production_acceptance": false,
+  "go_gate_passed": false,
+  "browser_gate_passed": false,
+  "runtime_gate_passed": true,
+  "artifact_verification_passed": false,
+  "tests": [
+    {
+      "name": "TestAssetBrowserPostgresChain",
+      "result": "fail"
+    },
+    {
+      "name": "TestAssetCatalogDownloadPostgresChain",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogDownloadPostgresChain/binding_revocation_during_read_emits_no_bytes",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogDownloadPostgresChain/farm_scoped_real_entity_bytes",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogDownloadPostgresChain/foreign_tenant_and_same_tenant_workspace_denied",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogDownloadPostgresChain/get_head_range_and_immutable_content_hash",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogDownloadPostgresChain/historical_entity_requires_current_version_grant",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogDownloadPostgresChain/real_logout_during_read_emits_no_bytes",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogDownloadPostgresChain/real_unscoped_ready_entity_requires_fresh_grant",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogDownloadPostgresChain/rights_withdrawal_during_read_emits_no_bytes",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogDownloadPostgresChain/signed_download_stale_epoch_denied",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogHTTPPostgresChain",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogHTTPPostgresChain/context_and_pending_creation",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogHTTPPostgresChain/cross_scope_and_invalid_source_no_writes",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogHTTPPostgresChain/farm_scoped_creation_requires_grant_and_plan",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogHTTPPostgresChain/idempotent_receipt_and_real_frontend_contract",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogHTTPPostgresChain/revocation_no_content_or_mutation",
+      "result": "pass"
+    },
+    {
+      "name": "TestAssetCatalogHTTPPostgresChain/version_conflict_and_explicit_reauthorization",
+      "result": "pass"
+    }
+  ],
+  "browser_checks": [
+    {
+      "name": "all_database_checkpoints_acknowledged",
+      "result": "not_run"
+    },
+    {
+      "name": "asset_survives_reload",
+      "result": "not_run"
+    },
+    {
+      "name": "duplicate_click_single_create",
+      "result": "not_run"
+    },
+    {
+      "name": "explicit_asset_registration_capability",
+      "result": "not_run"
+    },
+    {
+      "name": "explicit_initial_grant_plan",
+      "result": "not_run"
+    },
+    {
+      "name": "explicit_regrant_restores_version_two",
+      "result": "not_run"
+    },
+    {
+      "name": "foreign_workspace_denied",
+      "result": "not_run"
+    },
+    {
+      "name": "historical_version_one_readonly",
+      "result": "not_run"
+    },
+    {
+      "name": "history_uses_current_authority",
+      "result": "not_run"
+    },
+    {
+      "name": "http_only_platform_cookie",
+      "result": "not_run"
+    },
+    {
+      "name": "metadata_not_ready_without_entity",
+      "result": "not_run"
+    },
+    {
+      "name": "no_internal_credentials_identity_spoofing_or_external_requests",
+      "result": "not_run"
+    },
+    {
+      "name": "not_ready_download_denied",
+      "result": "not_run"
+    },
+    {
+      "name": "old_grant_denies_current_and_history",
+      "result": "not_run"
+    },
+    {
+      "name": "pending_rights_metadata_only_preview",
+      "result": "not_run"
+    },
+    {
+      "name": "production_nginx_configuration_valid",
+      "result": "not_run"
+    },
+    {
+      "name": "real_react_login_shared_vue_session",
+      "result": "not_run"
+    },
+    {
+      "name": "revoked_history_navigation_no_content",
+      "result": "not_run"
+    },
+    {
+      "name": "revoked_old_page_clears_content",
+      "result": "not_run"
+    },
+    {
+      "name": "same_cookie_after_revocation",
+      "result": "not_run"
+    },
+    {
+      "name": "same_tenant_other_workspace_denied",
+      "result": "not_run"
+    },
+    {
+      "name": "unknown_source_rights_pending",
+      "result": "not_run"
+    },
+    {
+      "name": "version_two_committed",
+      "result": "not_run"
+    }
+  ],
+  "browser_evidence": {},
+  "failure_diagnostics": {
+    "go_locations": [
+      {
+        "test": "TestAssetBrowserPostgresChain",
+        "locations": [
+          {
+            "file": "asset_browser_chain_test.go",
+            "line": 89
+          },
+          {
+            "file": "asset_browser_chain_test.go",
+            "line": 254
+          },
+          {
+            "file": "farm_browser_chain_test.go",
+            "line": 461
+          }
+        ]
+      }
+    ],
+    "go_stages": [
+      {
+        "test": "TestAssetBrowserPostgresChain",
+        "stages": [
+          "verify_created"
+        ]
+      }
+    ],
+    "error_code": null
+  },
+  "passed_count": 17
+}

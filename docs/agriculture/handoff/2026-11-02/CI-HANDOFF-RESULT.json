@@ -1,0 +1,673 @@
+{
+  "schema_version": "1.0",
+  "observed_at_utc": "2026-11-02T06:08:08Z",
+  "source_commit": "7c6e0229e3e708ab540f338a7e01cb0f24d25a12",
+  "ci_commit": "52d6e3f43899a1f6412f5e4c5be0e5bc428ae1ec",
+  "repository": "newyngwieslash-ops/WeaveSense-Flow-Digital",
+  "identity_run": 41396200447,
+  "identity_job": 125117951099,
+  "conclusion": "failure",
+  "artifact": {
+    "id": 13119669079,
+    "size_bytes": 59454,
+    "sha256": "0222ae055217e6285974a6d97e2483c7238488f61dcd9d33cb9d01d7dc13aec9",
+    "raw_sanitized_file_count": 38
+  },
+  "other_successful_workflows": [
+    {
+      "id": 41396200471,
+      "name": "Agriculture isolated parser container acceptance",
+      "conclusion": "success",
+      "html_url": "https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/runs/41396200471",
+      "jobs": [
+        {
+          "id": 125117951060,
+          "name": "parser-container",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 41396200498,
+      "name": "Agriculture W00 dependency evidence",
+      "conclusion": "success",
+      "html_url": "https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/runs/41396200498",
+      "jobs": [
+        {
+          "id": 125117951370,
+          "name": "contracts",
+          "conclusion": "success"
+        },
+        {
+          "id": 125118016909,
+          "name": "compose (migrations)",
+          "conclusion": "success"
+        },
+        {
+          "id": 125118016911,
+          "name": "compose (core)",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 41396200517,
+      "name": "Agriculture gateway browser and disposable image",
+      "conclusion": "success",
+      "html_url": "https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/runs/41396200517",
+      "jobs": [
+        {
+          "id": 125117951185,
+          "name": "gateway",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 41396200398,
+      "name": "Agriculture membership PostgreSQL and browser acceptance",
+      "conclusion": "success",
+      "html_url": "https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/runs/41396200398",
+      "jobs": [
+        {
+          "id": 125117951163,
+          "name": "membership-postgres",
+          "conclusion": "success"
+        },
+        {
+          "id": 125117951369,
+          "name": "organization-browser",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 41396200568,
+      "name": "Agriculture real browser session",
+      "conclusion": "success",
+      "html_url": "https://github.com/newyngwieslash-ops/WeaveSense-Flow-Digital/actions/runs/41396200568",
+      "jobs": [
+        {
+          "id": 125117951345,
+          "name": "browser-session",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "formal_counts": {
+    "done": 25,
+    "in_progress": 2,
+    "not_started": 117
+  },
+  "status_changes": false,
+  "root_cause": "undetermined; exact failed assertions identified; no fixes or retries",
+  "nonpassing_test_entries": [
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "section": "tests",
+      "name": "TestAssetBrowserPostgresChain",
+      "result": "fail"
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "section": "browser_checks",
+      "name": "all_database_checkpoints_acknowledged",
+      "result": "not_run"
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "section": "browser_checks",
+      "name": "asset_survives_reload",
+      "result": "not_run"
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "section": "browser_checks",
+      "name": "duplicate_click_single_create",
+      "result": "not_run"
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "section": "browser_checks",
+      "name": "explicit_asset_registration_capability",
+      "result": "not_run"
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "section": "browser_checks",
+      "name": "explicit_initial_grant_plan",
+      "result": "not_run"
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "section": "browser_checks",
+      "name": "explicit_regrant_restores_version_two",
+      "result": "not_run"
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "section": "browser_checks",
+      "name": "foreign_workspace_denied",
+      "result": "not_run"
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "section": "browser_checks",
+      "name": "historical_version_one_readonly",
+      "result": "not_run"
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "section": "browser_checks",
+      "name": "history_uses_current_authority",
+      "result": "not_run"
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "section": "browser_checks",
+      "name": "http_only_platform_cookie",
+      "result": "not_run"
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "section": "browser_checks",
+      "name": "metadata_not_ready_without_entity",
+      "result": "not_run"
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "section": "browser_checks",
+      "name": "no_internal_credentials_identity_spoofing_or_external_requests",
+      "result": "not_run"
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "section": "browser_checks",
+      "name": "not_ready_download_denied",
+      "result": "not_run"
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "section": "browser_checks",
+      "name": "old_grant_denies_current_and_history",
+      "result": "not_run"
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "section": "browser_checks",
+      "name": "pending_rights_metadata_only_preview",
+      "result": "not_run"
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "section": "browser_checks",
+      "name": "production_nginx_configuration_valid",
+      "result": "not_run"
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "section": "browser_checks",
+      "name": "real_react_login_shared_vue_session",
+      "result": "not_run"
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "section": "browser_checks",
+      "name": "revoked_history_navigation_no_content",
+      "result": "not_run"
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "section": "browser_checks",
+      "name": "revoked_old_page_clears_content",
+      "result": "not_run"
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "section": "browser_checks",
+      "name": "same_cookie_after_revocation",
+      "result": "not_run"
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "section": "browser_checks",
+      "name": "same_tenant_other_workspace_denied",
+      "result": "not_run"
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "section": "browser_checks",
+      "name": "unknown_source_rights_pending",
+      "result": "not_run"
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "section": "browser_checks",
+      "name": "version_two_committed",
+      "result": "not_run"
+    },
+    {
+      "path": "ci-evidence/identity-python.json",
+      "section": "tests",
+      "name": "test_signed_actual_path_cannot_authorize_a_different_resource",
+      "module": "test_agriculture_identity",
+      "result": "fail"
+    }
+  ],
+  "report_summary": [
+    {
+      "path": "ci-evidence/identity-actors.json",
+      "passed": true,
+      "suite": "actors",
+      "passed_count": 62
+    },
+    {
+      "path": "ci-evidence/identity-asset-python.json",
+      "passed": true,
+      "suite": "asset_python_rights_domain_and_objects",
+      "passed_count": null
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "passed": false,
+      "suite": "actual_asset_http_browser_dual_postgres",
+      "passed_count": 17
+    },
+    {
+      "path": "ci-evidence/identity-bootstrap.json",
+      "passed": null,
+      "suite": null,
+      "passed_count": null
+    },
+    {
+      "path": "ci-evidence/identity-chain-boundary.json",
+      "passed": null,
+      "suite": null,
+      "passed_count": null
+    },
+    {
+      "path": "ci-evidence/identity-chain-browser.json",
+      "passed": null,
+      "suite": null,
+      "passed_count": null
+    },
+    {
+      "path": "ci-evidence/identity-chain-go.json",
+      "passed": true,
+      "suite": "actual_browser_go_gis_write_chain",
+      "passed_count": null
+    },
+    {
+      "path": "ci-evidence/identity-chain-nginx.json",
+      "passed": null,
+      "suite": null,
+      "passed_count": null
+    },
+    {
+      "path": "ci-evidence/identity-domain.json",
+      "passed": true,
+      "suite": "domain",
+      "passed_count": 29
+    },
+    {
+      "path": "ci-evidence/identity-farm-flow.json",
+      "passed": true,
+      "suite": "real_postgres_flow_adapter_and_legacy_worker",
+      "passed_count": 10
+    },
+    {
+      "path": "ci-evidence/identity-farm-python.json",
+      "passed": true,
+      "suite": null,
+      "passed_count": null
+    },
+    {
+      "path": "ci-evidence/identity-farms.json",
+      "passed": true,
+      "suite": "actual_farm_http_browser_dual_postgres",
+      "passed_count": 10
+    },
+    {
+      "path": "ci-evidence/identity-go.json",
+      "passed": true,
+      "suite": "go",
+      "passed_count": 15
+    },
+    {
+      "path": "ci-evidence/identity-isolation.json",
+      "passed": true,
+      "suite": "isolation_matrix",
+      "passed_count": null
+    },
+    {
+      "path": "ci-evidence/identity-jobs.json",
+      "passed": true,
+      "suite": "jobs",
+      "passed_count": 7
+    },
+    {
+      "path": "ci-evidence/identity-migration-bootstrap.json",
+      "passed": null,
+      "suite": null,
+      "passed_count": null
+    },
+    {
+      "path": "ci-evidence/identity-migration-command.json",
+      "passed": true,
+      "suite": "migration",
+      "passed_count": 6
+    },
+    {
+      "path": "ci-evidence/identity-objects.json",
+      "passed": true,
+      "suite": "objects",
+      "passed_count": 49
+    },
+    {
+      "path": "ci-evidence/identity-parcel-python.json",
+      "passed": true,
+      "suite": "parcel_python_domain_and_postgis",
+      "passed_count": null
+    },
+    {
+      "path": "ci-evidence/identity-parcels.json",
+      "passed": true,
+      "suite": "actual_parcel_http_browser_dual_postgres",
+      "passed_count": 9
+    },
+    {
+      "path": "ci-evidence/identity-python.json",
+      "passed": false,
+      "suite": "python",
+      "passed_count": 74
+    },
+    {
+      "path": "ci-evidence/identity-query.json",
+      "passed": true,
+      "suite": "query",
+      "passed_count": 17
+    },
+    {
+      "path": "ci-evidence/isolation-go-matrix.json",
+      "passed": true,
+      "suite": "matrix",
+      "passed_count": null
+    },
+    {
+      "path": "ci-evidence/isolation-go-objects.json",
+      "passed": true,
+      "suite": "objects",
+      "passed_count": null
+    },
+    {
+      "path": "ci-evidence/isolation-go-projections.json",
+      "passed": true,
+      "suite": "projections",
+      "passed_count": null
+    },
+    {
+      "path": "ci-evidence/isolation-routes-go.json",
+      "passed": true,
+      "suite": "platform_postgres_route_matrix",
+      "passed_count": null
+    },
+    {
+      "path": "ci-evidence/scope-stream-agriculture.json",
+      "passed": true,
+      "suite": "scoped_cache_sse_agriculture",
+      "passed_count": null
+    },
+    {
+      "path": "ci-evidence/scope-stream-cache.json",
+      "passed": true,
+      "suite": "scoped_cache_sse_cache",
+      "passed_count": null
+    },
+    {
+      "path": "ci-evidence/scope-stream-legacy.json",
+      "passed": true,
+      "suite": "scoped_cache_sse_legacy",
+      "passed_count": null
+    },
+    {
+      "path": "ci-evidence/session-ci-provenance.json",
+      "passed": null,
+      "suite": null,
+      "passed_count": null
+    }
+  ],
+  "asset_failure_diagnostics": {
+    "go_locations": [
+      {
+        "test": "TestAssetBrowserPostgresChain",
+        "locations": [
+          {
+            "file": "asset_browser_chain_test.go",
+            "line": 89
+          },
+          {
+            "file": "asset_browser_chain_test.go",
+            "line": 254
+          },
+          {
+            "file": "farm_browser_chain_test.go",
+            "line": 461
+          }
+        ]
+      }
+    ],
+    "go_stages": [
+      {
+        "test": "TestAssetBrowserPostgresChain",
+        "stages": [
+          "verify_created"
+        ]
+      }
+    ],
+    "error_code": null
+  },
+  "python_failure_locations": [
+    {
+      "test": "test_signed_actual_path_cannot_authorize_a_different_resource",
+      "locations": [
+        {
+          "file": "test_agriculture_identity.py",
+          "line": 494
+        }
+      ]
+    }
+  ],
+  "evidence_files": [
+    {
+      "path": "ci-evidence/identity-actors.json",
+      "size_bytes": 9849,
+      "sha256": "a73099290c7e0e3fa27c311a5213c517dee84643b48e4a81d336149c1e862a09"
+    },
+    {
+      "path": "ci-evidence/identity-actors.xml",
+      "size_bytes": 4719,
+      "sha256": "f369186c58df55a80e78d20c10128e9e04ce23bac39cfa960427d6f755c2ac4c"
+    },
+    {
+      "path": "ci-evidence/identity-asset-python.json",
+      "size_bytes": 18073,
+      "sha256": "ff68926d6895c50e4858c796a404ebe63b590c4ce9f683c3bed2a0eea5e3227a"
+    },
+    {
+      "path": "ci-evidence/identity-assets.json",
+      "size_bytes": 5264,
+      "sha256": "611aa02989397ffc14e9f6ef96204e0e6eda2e7a50ff6707a5e4fd4cebf7576b"
+    },
+    {
+      "path": "ci-evidence/identity-bootstrap.json",
+      "size_bytes": 769,
+      "sha256": "8fa6a5338aea3a8949dbff6fa3d3dcf898e5a86d0f0d3f705514e7c751cda917"
+    },
+    {
+      "path": "ci-evidence/identity-chain-boundary.json",
+      "size_bytes": 4127,
+      "sha256": "754eacbeb48319978c4ea0e9c9401499c3b7bfbad9fdc0e88ca7ceb7f320057b"
+    },
+    {
+      "path": "ci-evidence/identity-chain-browser.json",
+      "size_bytes": 2356,
+      "sha256": "52128e73d6a5fef87b7cb0f9957fe6f2c70c63fc9d6b52885554657bbd5263ae"
+    },
+    {
+      "path": "ci-evidence/identity-chain-go.json",
+      "size_bytes": 782,
+      "sha256": "8a7109723599d8433bfa18b2b8361ffc55742b4bfd933b122570d87411130891"
+    },
+    {
+      "path": "ci-evidence/identity-chain-nginx.json",
+      "size_bytes": 498,
+      "sha256": "7b950b5633cddc8bbd8dec0f35b61b2ad5ed9420844877eb3d38452fa908de6a"
+    },
+    {
+      "path": "ci-evidence/identity-domain.json",
+      "size_bytes": 4687,
+      "sha256": "6dd4ae746bc70a263a973066315406520f37e0d727ff837f019f39fbfd435d9d"
+    },
+    {
+      "path": "ci-evidence/identity-domain.xml",
+      "size_bytes": 2178,
+      "sha256": "95ddcbe034765ef5080c898379502d607375a748ff75a6cd684b1e9ce1949346"
+    },
+    {
+      "path": "ci-evidence/identity-farm-flow.json",
+      "size_bytes": 1378,
+      "sha256": "ec1a8d025b3642ca8c228d98b4007887f4d8eb6c4ee9254629fe96371144e4c4"
+    },
+    {
+      "path": "ci-evidence/identity-farm-python.json",
+      "size_bytes": 12400,
+      "sha256": "43262cc01f5de1664fa6fbd9143358a25a2dc6c78048800d4d769d50817fb104"
+    },
+    {
+      "path": "ci-evidence/identity-farms.json",
+      "size_bytes": 4073,
+      "sha256": "4c9099a0cf9851999b99f0bb1e2e8351db52275f2cef0d72576ab294d44767ed"
+    },
+    {
+      "path": "ci-evidence/identity-go.json",
+      "size_bytes": 1594,
+      "sha256": "94a459819a5c3396e76181d4a2068973f175f74bc49b64d9e05e8dd37920058c"
+    },
+    {
+      "path": "ci-evidence/identity-go.xml",
+      "size_bytes": 971,
+      "sha256": "98ecd2fe47a60fe0ae8d2583147dcee140e492d3ba8c3a008eabafd015bea2cb"
+    },
+    {
+      "path": "ci-evidence/identity-isolation.json",
+      "size_bytes": 55788,
+      "sha256": "292c8acebfa8968697dedc956fc21f4caaea415f212201020e4d5fba426669a4"
+    },
+    {
+      "path": "ci-evidence/identity-jobs.json",
+      "size_bytes": 1320,
+      "sha256": "1353ee2b46a505e25a69f51357945817ce560ce958063b25ba3242e181c5dc9e"
+    },
+    {
+      "path": "ci-evidence/identity-jobs.xml",
+      "size_bytes": 616,
+      "sha256": "d3e72fe971027b66a36f611ba1c28d812af31b2862314a287a60ecdf5051c19f"
+    },
+    {
+      "path": "ci-evidence/identity-migration-bootstrap.json",
+      "size_bytes": 769,
+      "sha256": "ac0d402ff5486373931d59978fbca366615897891d65d0287b7c3cb9dab46ab6"
+    },
+    {
+      "path": "ci-evidence/identity-migration-command.json",
+      "size_bytes": 1179,
+      "sha256": "692d7593c9b66afc61490aa357408e632d767d4a9b7bb92a3efbe3e9d97509f3"
+    },
+    {
+      "path": "ci-evidence/identity-migration-command.xml",
+      "size_bytes": 559,
+      "sha256": "c4b57c6c1a477a0bc049d2fc85738dfb3c7983aad215782a05612ff0a179b42f"
+    },
+    {
+      "path": "ci-evidence/identity-objects.json",
+      "size_bytes": 7079,
+      "sha256": "9bc6c9448f2c0198029755894e0ec527e744a80c954c3c2c6ad1b1f4d5705ae8"
+    },
+    {
+      "path": "ci-evidence/identity-objects.xml",
+      "size_bytes": 2787,
+      "sha256": "fcaf4b8f2fef69bb29a3b93a46f2d98db6c21486aa2643ef44f11a092b46c99f"
+    },
+    {
+      "path": "ci-evidence/identity-parcel-python.json",
+      "size_bytes": 8226,
+      "sha256": "560d17d5f2f9ce328f21ab8a27bf1fc6d002300fc96ac11297dfd553191562a3"
+    },
+    {
+      "path": "ci-evidence/identity-parcels.json",
+      "size_bytes": 3856,
+      "sha256": "5d4783b543931919495a225a8a359b074120d9fd9874524559c8c050c3d967cf"
+    },
+    {
+      "path": "ci-evidence/identity-python.json",
+      "size_bytes": 10317,
+      "sha256": "be45dd2c1b05cc443d709ac29d3ecbff4f2e8184a83ff5a1d311a2d67f1da441"
+    },
+    {
+      "path": "ci-evidence/identity-python.xml",
+      "size_bytes": 4274,
+      "sha256": "55e6f910374b30064ed3e7a65b533997c12dd4ff2a407e5d490c4cc16af8fc7b"
+    },
+    {
+      "path": "ci-evidence/identity-query.json",
+      "size_bytes": 2892,
+      "sha256": "acbf6ccb3f7f5b7d3fde1bedcf92dbd2c491326877b058ecf6fcea78364e81af"
+    },
+    {
+      "path": "ci-evidence/identity-query.xml",
+      "size_bytes": 1358,
+      "sha256": "447b69c85e2c3ac738af9336509af4fefc9281f27ff205d70a928518940f5ff0"
+    },
+    {
+      "path": "ci-evidence/isolation-go-matrix.json",
+      "size_bytes": 31232,
+      "sha256": "b4001a01019787427df05c4f04830bb47a5ff9785677303bb2d43e5db43f563b"
+    },
+    {
+      "path": "ci-evidence/isolation-go-objects.json",
+      "size_bytes": 583,
+      "sha256": "c0b85a0d7bf4fbec50a174064b2cbfffd353ad69cf47ede3ce823cab508ccd00"
+    },
+    {
+      "path": "ci-evidence/isolation-go-projections.json",
+      "size_bytes": 694,
+      "sha256": "b3e51193851c4b9b3dff234bf2b69e82396a1b1ac27ecd7c542a255d8d1a9022"
+    },
+    {
+      "path": "ci-evidence/isolation-routes-go.json",
+      "size_bytes": 53605,
+      "sha256": "3a757feab30f15b40c692dfc57d3b9ccc96d4c4700897fd3192d26e68a7e9755"
+    },
+    {
+      "path": "ci-evidence/scope-stream-agriculture.json",
+      "size_bytes": 2422,
+      "sha256": "9fe548a61b6a6f72121c1debfb977aaee0b9b8d57d7b14504ecaff610a8d01cf"
+    },
+    {
+      "path": "ci-evidence/scope-stream-cache.json",
+      "size_bytes": 283,
+      "sha256": "2f2a56acf0afda83bf9bf6042fdd347d2dd542206b726f7ced68383fe7ae3297"
+    },
+    {
+      "path": "ci-evidence/scope-stream-legacy.json",
+      "size_bytes": 1841,
+      "sha256": "8b9a0ce1ffed2b1aac22666edb4a16901e4a4f3d15377253c0c768db0c7e5486"
+    },
+    {
+      "path": "ci-evidence/session-ci-provenance.json",
+      "size_bytes": 90493,
+      "sha256": "fa56e1c4e2e36e509acf456da9845b12acdd7450a27413501291e31e6eb99d3f"
+    }
+  ]
+}

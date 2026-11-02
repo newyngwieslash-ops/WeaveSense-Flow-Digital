@@ -1,0 +1,2329 @@
+{
+  "auth_component_only": false,
+  "data_class": "fixture",
+  "domain_provider": "explicit_fixture_receipts; object and job event production providers unavailable",
+  "exact_routes": [
+    "GET /api/agri/v1/asset-context",
+    "GET /api/agri/v1/asset-operations/:operation_id",
+    "GET /api/agri/v1/assets",
+    "GET /api/agri/v1/assets/:asset_id/versions/:version",
+    "GET /api/agri/v1/context",
+    "GET /api/agri/v1/farm-operations/:operation_id",
+    "GET /api/agri/v1/farms",
+    "GET /api/agri/v1/farms/:farm_id",
+    "GET /api/agri/v1/farms/:farm_id/parcel-context",
+    "GET /api/agri/v1/farms/:farm_id/parcels",
+    "GET /api/agri/v1/parcel-farms",
+    "GET /api/agri/v1/parcel-operations/:operation_id",
+    "GET /api/agri/v1/parcels/:parcel_id",
+    "GET /api/agri/v1/parcels/:parcel_id/history",
+    "GET /api/agri/v1/workspaces/:workspace_id/jobs/:job_id/events",
+    "GET /api/agri/v1/workspaces/:workspace_id/objects/:object_id/versions/:version",
+    "GET /api/agri/v1/workspaces/:workspace_id/resource-bindings",
+    "GET /api/agriculture/workspaces",
+    "GET /api/agriculture/workspaces/:workspaceId/members",
+    "GET /api/agriculture/workspaces/:workspaceId/resource-bindings",
+    "HEAD /api/agri/v1/workspaces/:workspace_id/objects/:object_id/versions/:version",
+    "PATCH /api/agri/v1/farms/:farm_id",
+    "PATCH /api/agriculture/workspaces/:workspaceId/members/:userId",
+    "PATCH /api/agriculture/workspaces/:workspaceId/organization",
+    "POST /api/agri/v1/asset-previews",
+    "POST /api/agri/v1/assets",
+    "POST /api/agri/v1/assets/:asset_id/versions",
+    "POST /api/agri/v1/farm-previews",
+    "POST /api/agri/v1/farms",
+    "POST /api/agri/v1/farms/:farm_id/archive",
+    "POST /api/agri/v1/farms/:farm_id/parcels",
+    "POST /api/agri/v1/parcel-previews",
+    "POST /api/agri/v1/parcels/:parcel_id/revisions",
+    "POST /api/agri/v1/workspaces/:workspace_id/authorization",
+    "POST /api/agri/v1/workspaces/:workspace_id/resource-bindings",
+    "POST /api/agri/v1/workspaces/:workspace_id/resource-bindings/:binding_id/revoke",
+    "POST /api/agriculture/invites/accept",
+    "POST /api/agriculture/organizations",
+    "POST /api/agriculture/workspaces/:workspaceId/authorize",
+    "POST /api/agriculture/workspaces/:workspaceId/invites",
+    "POST /api/agriculture/workspaces/:workspaceId/invites/:inviteId/revoke",
+    "POST /api/agriculture/workspaces/:workspaceId/resource-bindings",
+    "POST /api/agriculture/workspaces/:workspaceId/resource-bindings/:bindingId/revoke",
+    "POST /internal/agri/v1/assets/authority/check",
+    "POST /internal/agri/v1/assets/download/authority/check",
+    "POST /internal/agri/v1/authority/check",
+    "POST /internal/agri/v1/farms/authority/check",
+    "POST /internal/agri/v1/jobs/authority/check",
+    "POST /internal/agri/v1/parcels/authority/check"
+  ],
+  "observations": [
+    {
+      "route": "P01",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P01",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P01",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P01",
+      "case": "scope_filter",
+      "status": 200,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P02",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P02",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P02",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P02",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P02",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P02",
+      "case": "viewer_role",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P03",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P03",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P03",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P03",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P03",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P03",
+      "case": "viewer_role",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P04",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P04",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P04",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P04",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P04",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P04",
+      "case": "viewer_role",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P05",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P05",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P05",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P05",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P05",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P05",
+      "case": "viewer_role",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P06",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P06",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P06",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P06",
+      "case": "forged_body_identity",
+      "status": 400,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P07",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P07",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P07",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P07",
+      "case": "wrong_recipient",
+      "status": 400,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P07",
+      "case": "accepted_token_replay_by_other_user",
+      "status": 400,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P08",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P08",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P08",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P08",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P08",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P08",
+      "case": "viewer_role",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P09",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P09",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P09",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P09",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P09",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P09",
+      "case": "viewer_role",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P10",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P10",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P10",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P10",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P10",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P10",
+      "case": "viewer_role",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P11",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P11",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P11",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P11",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P11",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P11",
+      "case": "viewer_role",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P12",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P12",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P12",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P12",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P12",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P12",
+      "case": "viewer_role",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P13",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P13",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P13",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P13",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P13",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P13",
+      "case": "viewer_role",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P14",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P14",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P14",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P14",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P14",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P14",
+      "case": "viewer_role",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P15",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P15",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P15",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P15",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P15",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P15",
+      "case": "viewer_role",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P16",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P16",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P16",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P16",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P16",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P16",
+      "case": "viewer_role",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P17",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P17",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P17",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P17",
+      "case": "production_provider_closed",
+      "status": 503,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P18",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P18",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P18",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P18",
+      "case": "production_provider_closed",
+      "status": 503,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P19",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P19",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P19",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P19",
+      "case": "production_provider_closed",
+      "status": 503,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I01",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I01",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I02",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I02",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P20",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P20",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P20",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P20",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P20",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P20",
+      "case": "current_scope_boundary",
+      "status": 503,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P21",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P21",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P21",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P21",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P21",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P21",
+      "case": "current_scope_boundary",
+      "status": 503,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P22",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P22",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P22",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P22",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P22",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P22",
+      "case": "current_scope_boundary",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P23",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P23",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P23",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P23",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P23",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P23",
+      "case": "current_scope_boundary",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P24",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P24",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P24",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P24",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P24",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P24",
+      "case": "current_scope_boundary",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P25",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P25",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P25",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P25",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P25",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P25",
+      "case": "current_scope_boundary",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P26",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P26",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P26",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P26",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P26",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P26",
+      "case": "current_scope_boundary",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P27",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P27",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P27",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P27",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P27",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P27",
+      "case": "current_scope_boundary",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I03",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I03",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P28",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P28",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P28",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P28",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P28",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P28",
+      "case": "current_scope_boundary",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P29",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P29",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P29",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P29",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P29",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P29",
+      "case": "current_scope_boundary",
+      "status": 200,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P30",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P30",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P30",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P30",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P30",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P30",
+      "case": "current_scope_boundary",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P31",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P31",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P31",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P31",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P31",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P31",
+      "case": "current_scope_boundary",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P32",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P32",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P32",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P32",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P32",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P32",
+      "case": "current_scope_boundary",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P33",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P33",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P33",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P33",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P33",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P33",
+      "case": "current_scope_boundary",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P34",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P34",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P34",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P34",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P34",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P34",
+      "case": "current_scope_boundary",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P35",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P35",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P35",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P35",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P35",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P35",
+      "case": "current_scope_boundary",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I04",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I04",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P36",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P36",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P36",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P36",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P36",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P36",
+      "case": "current_scope_boundary",
+      "status": 200,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P37",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P37",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P37",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P37",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P37",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P37",
+      "case": "current_scope_boundary",
+      "status": 503,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P38",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P38",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P38",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P38",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P38",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P38",
+      "case": "current_scope_boundary",
+      "status": 200,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P39",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P39",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P39",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P39",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P39",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P39",
+      "case": "current_scope_boundary",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P40",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P40",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P40",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P40",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P40",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P40",
+      "case": "current_scope_boundary",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P41",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P41",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P41",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P41",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P41",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P41",
+      "case": "current_scope_boundary",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P42",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P42",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P42",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P42",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P42",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P42",
+      "case": "current_scope_boundary",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P43",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P43",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P43",
+      "case": "expired_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P43",
+      "case": "foreign_tenant",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P43",
+      "case": "unjoined_same_tenant_workspace",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P43",
+      "case": "current_scope_boundary",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I05",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I05",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I06",
+      "case": "anonymous",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I06",
+      "case": "forged_session",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P02",
+      "case": "explicit_read_control",
+      "status": 200,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P13",
+      "case": "explicit_read_control",
+      "status": 200,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P03",
+      "case": "admin_control",
+      "status": 200,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P08",
+      "case": "admin_control",
+      "status": 200,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P14",
+      "case": "admin_control",
+      "status": 200,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P06",
+      "case": "idempotent_owner_control",
+      "status": 200,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I01",
+      "case": "signed_control",
+      "status": 200,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I01",
+      "case": "wrong_signer",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I01",
+      "case": "signed_scope_mismatch",
+      "status": 400,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I01",
+      "case": "wrong_direction",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I02",
+      "case": "signed_control",
+      "status": 200,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I02",
+      "case": "wrong_signer",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I02",
+      "case": "signed_scope_mismatch",
+      "status": 400,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I02",
+      "case": "wrong_direction",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I03",
+      "case": "signed_control",
+      "status": 200,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I03",
+      "case": "wrong_signer",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I03",
+      "case": "signed_scope_mismatch",
+      "status": 400,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I03",
+      "case": "wrong_direction",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I04",
+      "case": "signed_missing_intent",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I04",
+      "case": "wrong_signer",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I04",
+      "case": "signed_scope_mismatch",
+      "status": 400,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I04",
+      "case": "wrong_direction",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I05",
+      "case": "signed_control",
+      "status": 200,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I05",
+      "case": "wrong_signer",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I05",
+      "case": "signed_scope_mismatch",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I05",
+      "case": "wrong_direction",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I06",
+      "case": "signed_missing_asset",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I06",
+      "case": "wrong_signer",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I06",
+      "case": "signed_scope_mismatch",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I06",
+      "case": "wrong_direction",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I01",
+      "case": "stale_epoch",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I01",
+      "case": "unjoined_workspace",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I02",
+      "case": "substituted_snapshot",
+      "status": 400,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P02",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P03",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P04",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P05",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P08",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P09",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P10",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P11",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P12",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P13",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P14",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P15",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P16",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P20",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P21",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P22",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P23",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P24",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P25",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P26",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P27",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P28",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P29",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P30",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P31",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P32",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P33",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P34",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P35",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P36",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P37",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P38",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P39",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P40",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P41",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P42",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P43",
+      "case": "revoked_member_same_session",
+      "status": 404,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I01",
+      "case": "revoked_actor",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I02",
+      "case": "revoked_actor",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I03",
+      "case": "revoked_actor",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I04",
+      "case": "revoked_actor",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I05",
+      "case": "revoked_actor",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "I06",
+      "case": "revoked_actor",
+      "status": 403,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P01",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P02",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P03",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P04",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P05",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P06",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P07",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P08",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P09",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P10",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P11",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P12",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P13",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P14",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P15",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P16",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P17",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P18",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P19",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P20",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P21",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P22",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P23",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P24",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P25",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P26",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P27",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P28",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P29",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P30",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P31",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P32",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P33",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P34",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P35",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P36",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P37",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P38",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P39",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P40",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P41",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P42",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    },
+    {
+      "route": "P43",
+      "case": "logged_out_same_cookie",
+      "status": 401,
+      "business_snapshot_unchanged": true
+    }
+  ],
+  "passed": true,
+  "production_acceptance": false,
+  "suite": "platform_postgres_route_matrix"
+}

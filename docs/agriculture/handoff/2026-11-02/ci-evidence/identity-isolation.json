@@ -1,0 +1,1463 @@
+{
+  "suite": "isolation_matrix",
+  "passed": true,
+  "data_class": "fixture",
+  "production_acceptance": false,
+  "auth_component_only": false,
+  "race_enabled": true,
+  "tests": [
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_exact_production_route_manifest",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[unsigned-ownership]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[unsigned-metadata]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[unsigned-asset_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[unsigned-asset_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[unsigned-report_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[unsigned-report_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[unsigned-job_accept]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[unsigned-job_checkpoint]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[wrong_signature-ownership]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[wrong_signature-metadata]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[wrong_signature-asset_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[wrong_signature-asset_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[wrong_signature-report_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[wrong_signature-report_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[wrong_signature-job_accept]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[wrong_signature-job_checkpoint]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[audience-ownership]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[audience-metadata]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[audience-asset_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[audience-asset_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[audience-report_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[audience-report_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[audience-job_accept]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[audience-job_checkpoint]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[path-ownership]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[path-metadata]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[path-asset_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[path-asset_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[path-report_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[path-report_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[path-job_accept]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[path-job_checkpoint]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[body-ownership]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[body-metadata]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[body-asset_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[body-asset_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[body-report_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[body-report_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[body-job_accept]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[body-job_checkpoint]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[expired-ownership]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[expired-metadata]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[expired-asset_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[expired-asset_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[expired-report_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[expired-report_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[expired-job_accept]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[expired-job_checkpoint]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[tenant-ownership]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[tenant-metadata]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[tenant-asset_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[tenant-asset_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[tenant-report_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[tenant-report_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[tenant-job_accept]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[tenant-job_checkpoint]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[workspace-ownership]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[workspace-metadata]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[workspace-asset_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[workspace-asset_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[workspace-report_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[workspace-report_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[workspace-job_accept]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_signed_route_negative_no_domain_effect[workspace-job_checkpoint]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[unsigned-farm_preview_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[unsigned-farm_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[unsigned-farm_receipt]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[unsigned-farm_context]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[unsigned-farm_list]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[unsigned-farm_history]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[unsigned-farm_read]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[unsigned-farm_preview_update]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[unsigned-farm_preview_archive]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[unsigned-farm_update]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[unsigned-farm_archive]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[wrong_signature-farm_preview_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[wrong_signature-farm_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[wrong_signature-farm_receipt]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[wrong_signature-farm_context]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[wrong_signature-farm_list]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[wrong_signature-farm_history]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[wrong_signature-farm_read]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[wrong_signature-farm_preview_update]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[wrong_signature-farm_preview_archive]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[wrong_signature-farm_update]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[wrong_signature-farm_archive]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[audience-farm_preview_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[audience-farm_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[audience-farm_receipt]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[audience-farm_context]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[audience-farm_list]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[audience-farm_history]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[audience-farm_read]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[audience-farm_preview_update]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[audience-farm_preview_archive]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[audience-farm_update]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[audience-farm_archive]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[path-farm_preview_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[path-farm_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[path-farm_receipt]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[path-farm_context]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[path-farm_list]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[path-farm_history]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[path-farm_read]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[path-farm_preview_update]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[path-farm_preview_archive]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[path-farm_update]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[path-farm_archive]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[body-farm_preview_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[body-farm_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[body-farm_receipt]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[body-farm_context]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[body-farm_list]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[body-farm_history]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[body-farm_read]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[body-farm_preview_update]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[body-farm_preview_archive]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[body-farm_update]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[body-farm_archive]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[expired-farm_preview_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[expired-farm_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[expired-farm_receipt]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[expired-farm_context]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[expired-farm_list]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[expired-farm_history]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[expired-farm_read]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[expired-farm_preview_update]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[expired-farm_preview_archive]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[expired-farm_update]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_signature_negative_no_domain_effect[expired-farm_archive]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_missing_provider_closed[farm_preview_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_missing_provider_closed[farm_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_missing_provider_closed[farm_receipt]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_missing_provider_closed[farm_context]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_missing_provider_closed[farm_list]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_missing_provider_closed[farm_history]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_missing_provider_closed[farm_read]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_missing_provider_closed[farm_preview_update]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_missing_provider_closed[farm_preview_archive]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_missing_provider_closed[farm_update]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_farm_missing_provider_closed[farm_archive]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[unsigned-parcel_preview_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[unsigned-parcel_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[unsigned-parcel_list]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[unsigned-parcel_preview_revise]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[unsigned-parcel_revise]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[unsigned-parcel_read]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[unsigned-parcel_history]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[unsigned-parcel_receipt]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[wrong_signature-parcel_preview_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[wrong_signature-parcel_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[wrong_signature-parcel_list]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[wrong_signature-parcel_preview_revise]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[wrong_signature-parcel_revise]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[wrong_signature-parcel_read]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[wrong_signature-parcel_history]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[wrong_signature-parcel_receipt]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[audience-parcel_preview_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[audience-parcel_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[audience-parcel_list]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[audience-parcel_preview_revise]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[audience-parcel_revise]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[audience-parcel_read]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[audience-parcel_history]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[audience-parcel_receipt]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[path-parcel_preview_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[path-parcel_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[path-parcel_list]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[path-parcel_preview_revise]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[path-parcel_revise]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[path-parcel_read]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[path-parcel_history]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[path-parcel_receipt]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[body-parcel_preview_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[body-parcel_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[body-parcel_list]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[body-parcel_preview_revise]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[body-parcel_revise]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[body-parcel_read]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[body-parcel_history]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[body-parcel_receipt]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[expired-parcel_preview_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[expired-parcel_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[expired-parcel_list]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[expired-parcel_preview_revise]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[expired-parcel_revise]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[expired-parcel_read]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[expired-parcel_history]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_signature_negative_no_domain_effect[expired-parcel_receipt]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_missing_provider_closed[parcel_preview_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_missing_provider_closed[parcel_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_missing_provider_closed[parcel_list]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_missing_provider_closed[parcel_preview_revise]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_missing_provider_closed[parcel_revise]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_missing_provider_closed[parcel_read]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_missing_provider_closed[parcel_history]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_parcel_missing_provider_closed[parcel_receipt]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[unsigned-catalog_context]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[unsigned-catalog_ownership]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[unsigned-catalog_preview_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[unsigned-catalog_preview_version]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[unsigned-catalog_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[unsigned-catalog_version]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[unsigned-catalog_receipt]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[unsigned-catalog_list]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[unsigned-catalog_read]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[wrong_signature-catalog_context]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[wrong_signature-catalog_ownership]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[wrong_signature-catalog_preview_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[wrong_signature-catalog_preview_version]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[wrong_signature-catalog_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[wrong_signature-catalog_version]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[wrong_signature-catalog_receipt]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[wrong_signature-catalog_list]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[wrong_signature-catalog_read]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[audience-catalog_context]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[audience-catalog_ownership]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[audience-catalog_preview_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[audience-catalog_preview_version]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[audience-catalog_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[audience-catalog_version]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[audience-catalog_receipt]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[audience-catalog_list]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[audience-catalog_read]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[path-catalog_context]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[path-catalog_ownership]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[path-catalog_preview_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[path-catalog_preview_version]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[path-catalog_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[path-catalog_version]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[path-catalog_receipt]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[path-catalog_list]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[path-catalog_read]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[body-catalog_context]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[body-catalog_ownership]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[body-catalog_preview_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[body-catalog_preview_version]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[body-catalog_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[body-catalog_version]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[body-catalog_receipt]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[body-catalog_list]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[body-catalog_read]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[expired-catalog_context]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[expired-catalog_ownership]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[expired-catalog_preview_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[expired-catalog_preview_version]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[expired-catalog_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[expired-catalog_version]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[expired-catalog_receipt]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[expired-catalog_list]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_signature_negative_no_domain_effect[expired-catalog_read]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_missing_provider_closed[catalog_context]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_missing_provider_closed[catalog_ownership]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_missing_provider_closed[catalog_preview_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_missing_provider_closed[catalog_preview_version]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_missing_provider_closed[catalog_create]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_missing_provider_closed[catalog_version]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_missing_provider_closed[catalog_receipt]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_missing_provider_closed[catalog_list]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_catalog_missing_provider_closed[catalog_read]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_asset_object_signature_negative_no_domain_effect[unsigned-catalog_object_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_asset_object_signature_negative_no_domain_effect[unsigned-catalog_object_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_asset_object_signature_negative_no_domain_effect[wrong_signature-catalog_object_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_asset_object_signature_negative_no_domain_effect[wrong_signature-catalog_object_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_asset_object_signature_negative_no_domain_effect[audience-catalog_object_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_asset_object_signature_negative_no_domain_effect[audience-catalog_object_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_asset_object_signature_negative_no_domain_effect[path-catalog_object_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_asset_object_signature_negative_no_domain_effect[path-catalog_object_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_asset_object_signature_negative_no_domain_effect[body-catalog_object_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_asset_object_signature_negative_no_domain_effect[body-catalog_object_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_asset_object_signature_negative_no_domain_effect[expired-catalog_object_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_asset_object_signature_negative_no_domain_effect[expired-catalog_object_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_asset_object_missing_provider_closed[catalog_object_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_asset_object_missing_provider_closed[catalog_object_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_job_snapshot_epoch_no_domain_effect[job_accept]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_job_snapshot_epoch_no_domain_effect[job_checkpoint]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_production_missing_dependencies_closed[ownership]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_production_missing_dependencies_closed[metadata]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_production_missing_dependencies_closed[asset_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_production_missing_dependencies_closed[asset_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_production_missing_dependencies_closed[report_get]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_production_missing_dependencies_closed[report_head]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_production_missing_dependencies_closed[job_accept]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_production_missing_dependencies_closed[job_checkpoint]",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_matrix_postgres",
+      "name": "test_isolation_public_health_legacy_absent_and_pg_controls",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_go_postgres",
+      "name": "test_isolation_go_route_matrix",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_go_postgres",
+      "name": "test_isolation_go_double_postgres_objects",
+      "passed": true
+    },
+    {
+      "module": "test_agriculture_isolation_go_postgres",
+      "name": "test_isolation_go_postgres_projections",
+      "passed": true
+    }
+  ],
+  "required_count": 289,
+  "observed_count": 289,
+  "platform_route_count": 49,
+  "gis_route_count": 39,
+  "expected_request_cases": 378,
+  "contract_sha256": "124ee07488d829056fd06c134197cd21db2c790aece35824b50c2b924ef961ff",
+  "denial_snapshot_observations": 364,
+  "scope": "Current agricultural routes and explicit PG fixture adapters; not future domain APIs or W06 runtime."
+}

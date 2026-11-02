@@ -1,0 +1,30 @@
+{
+  "suite": "actual_browser_go_gis_write_chain",
+  "passed": true,
+  "data_class": "fixture",
+  "production_acceptance": false,
+  "tests": [
+    {
+      "name": "TestIdentityBrowserGISWriteChain",
+      "result": "pass"
+    },
+    {
+      "name": "TestIdentityBrowserGISWriteChain/browser_login_signed_write_and_actor_audit",
+      "result": "pass"
+    },
+    {
+      "name": "TestIdentityBrowserGISWriteChain/forged_cookie_has_no_domain_effect",
+      "result": "pass"
+    },
+    {
+      "name": "TestIdentityBrowserGISWriteChain/revoked_browser_write_has_no_domain_effect",
+      "result": "pass"
+    },
+    {
+      "name": "TestIdentityBrowserGISWriteChain/unauthenticated_open_endpoint_inventory",
+      "result": "pass"
+    }
+  ],
+  "missing": [],
+  "failure_locations": []
+}

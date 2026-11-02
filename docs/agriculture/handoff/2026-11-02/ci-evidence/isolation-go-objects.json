@@ -1,0 +1,17 @@
+{
+  "suite": "objects",
+  "passed": true,
+  "exit_code": 0,
+  "auth_component_only": false,
+  "data_class": "fixture",
+  "race_enabled": true,
+  "tests": {
+    "TestObjectGatewayDoublePostgresIsolation/session_get_head_ranges": "pass",
+    "TestObjectGatewayDoublePostgresIsolation/scope_and_current_resource_withdrawal": "pass",
+    "TestObjectGatewayDoublePostgresIsolation/platform_membership_and_object_revocation": "pass",
+    "TestObjectGatewayDoublePostgresIsolation": "pass"
+  },
+  "missing_required": [],
+  "source_failure_locations": [],
+  "production_acceptance": false
+}

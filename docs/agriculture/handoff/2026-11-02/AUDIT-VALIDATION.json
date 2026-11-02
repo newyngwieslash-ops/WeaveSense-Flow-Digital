@@ -39,11 +39,11 @@
   "artifacts": [
     {
       "path": "PRD-IMPLEMENTATION-AUDIT.md",
-      "sha256": "1e7f99be7f462f01003e50d5f23709f088322ec87d570f9cb447ceb955aa0bae"
+      "sha256": "0ed0baf441b8ba07244317de0b915f5ca65a0e7eeb7411d2152faf39e15ec2c2"
     },
     {
       "path": "REMAINING-TASKS.md",
-      "sha256": "dd165910f8adb6837008c179864e8d2befd0de2e5733330dc8ac42c222e6f56b"
+      "sha256": "b2a24ae8bf9c77ed5916fd2b1ed60d0811113ed6f1f677cbad8d0120114c8c7b"
     },
     {
       "path": "TASK-AUDIT.json",
@@ -53,5 +53,10 @@
       "path": "REQUIREMENT-TRACEABILITY.json",
       "sha256": "796ddcfe4637f40935db42d900e48c67f946ab8b312dd56e4024e129631a32fd"
     }
-  ]
+  ],
+  "ci_addendum": {
+    "path": "CI-HANDOFF-RESULT.json",
+    "note": "原台账快照未改变；Markdown仅追加终态指针",
+    "sha256": "53c89e42ed20fe78944f25971b0ee3b36f6be66a1527cf52d68485be840d8c49"
+  }
 }

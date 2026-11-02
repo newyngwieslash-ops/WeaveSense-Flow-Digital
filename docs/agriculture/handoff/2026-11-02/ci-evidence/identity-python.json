@@ -1,0 +1,396 @@
+{
+  "suite": "python",
+  "schema_phase": "identity_component",
+  "passed": false,
+  "data_class": "fixture",
+  "production_acceptance": false,
+  "tests": [
+    {
+      "name": "test_golden",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_golden",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_golden",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_golden",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_golden",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_golden",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_golden",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_golden",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_golden",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_golden",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid_utf8",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_bounds",
+      "module": "test_identity_canonical",
+      "result": "pass"
+    },
+    {
+      "name": "test_valid_signature_raw_numeric_first_actor_and_replay",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_signed_but_invalid_or_stale_claims",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_signed_but_invalid_or_stale_claims",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_signed_but_invalid_or_stale_claims",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_signed_but_invalid_or_stale_claims",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_signed_but_invalid_or_stale_claims",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_signed_but_invalid_or_stale_claims",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_signed_but_invalid_or_stale_claims",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_signed_but_invalid_or_stale_claims",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_signed_but_invalid_or_stale_claims",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_algorithm_type_and_untrusted_key_headers",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_algorithm_type_and_untrusted_key_headers",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_algorithm_type_and_untrusted_key_headers",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_algorithm_type_and_untrusted_key_headers",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_algorithm_type_and_untrusted_key_headers",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_request_time_key_binding_failures",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_request_time_key_binding_failures",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_request_time_key_binding_failures",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_request_time_key_binding_failures",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_request_time_key_binding_failures",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_request_time_key_binding_failures",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_request_time_key_binding_failures",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_authority_and_domain_revalidation_precede_nonce",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_missing_dependency_fails_closed",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_missing_dependency_fails_closed",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_missing_dependency_fails_closed",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_claim_before_handler_failure_is_not_rolled_back",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_get_empty_body_does_not_claim_write_nonce",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_production_profile_has_no_probe_or_legacy_routes",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_service_metadata_credential_cannot_be_business_ticket",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_key_rotation_overlap_and_explicit_revocation",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_duplicate_json_fields_even_with_valid_signature_rejected",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_duplicate_json_fields_even_with_valid_signature_rejected",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_decoded_claim_limit_is_enforced_without_truncation",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_expiry_during_claim_never_enters_handler_or_releases_nonce",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_callback_origin_requires_tls_or_literal_loopback",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_callback_origin_requires_tls_or_literal_loopback",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_callback_origin_requires_tls_or_literal_loopback",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_callback_origin_requires_tls_or_literal_loopback",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_callback_origin_requires_tls_or_literal_loopback",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_callback_origin_requires_tls_or_literal_loopback",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_route_extractor_is_mandatory_configuration",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_signed_actual_path_cannot_authorize_a_different_resource",
+      "module": "test_agriculture_identity",
+      "result": "fail"
+    },
+    {
+      "name": "test_custom_payload_extractor_checks_complete_batch",
+      "module": "test_agriculture_identity",
+      "result": "pass"
+    },
+    {
+      "name": "test_postgres_replay_parallel_persistence_scope_and_fail_closed",
+      "module": "test_agriculture_identity_postgres",
+      "result": "pass"
+    },
+    {
+      "name": "test_postgres_actual_verifier_dependency_nonce_order_and_parallel_http",
+      "module": "test_agriculture_identity_postgres",
+      "result": "pass"
+    }
+  ],
+  "failure_locations": [
+    {
+      "test": "test_signed_actual_path_cannot_authorize_a_different_resource",
+      "locations": [
+        {
+          "file": "test_agriculture_identity.py",
+          "line": 494
+        }
+      ]
+    }
+  ],
+  "passed_count": 74
+}

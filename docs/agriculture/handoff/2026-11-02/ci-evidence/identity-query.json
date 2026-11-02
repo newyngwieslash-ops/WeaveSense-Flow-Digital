@@ -1,0 +1,96 @@
+{
+  "suite": "query",
+  "schema_phase": "post_query_current",
+  "passed": true,
+  "data_class": "fixture",
+  "production_acceptance": false,
+  "tests": [
+    {
+      "name": "test_query_scope_copies_claims_and_cannot_be_rebound",
+      "module": "test_agriculture_query_scope",
+      "result": "pass"
+    },
+    {
+      "name": "test_empty_unsupported_duplicate_or_client_scope_denied",
+      "module": "test_agriculture_query_scope",
+      "result": "pass"
+    },
+    {
+      "name": "test_empty_unsupported_duplicate_or_client_scope_denied",
+      "module": "test_agriculture_query_scope",
+      "result": "pass"
+    },
+    {
+      "name": "test_empty_unsupported_duplicate_or_client_scope_denied",
+      "module": "test_agriculture_query_scope",
+      "result": "pass"
+    },
+    {
+      "name": "test_empty_unsupported_duplicate_or_client_scope_denied",
+      "module": "test_agriculture_query_scope",
+      "result": "pass"
+    },
+    {
+      "name": "test_empty_unsupported_duplicate_or_client_scope_denied",
+      "module": "test_agriculture_query_scope",
+      "result": "pass"
+    },
+    {
+      "name": "test_empty_unsupported_duplicate_or_client_scope_denied",
+      "module": "test_agriculture_query_scope",
+      "result": "pass"
+    },
+    {
+      "name": "test_orm_and_core_scope_mutation_is_not_a_select_loophole",
+      "module": "test_agriculture_query_scope",
+      "result": "pass"
+    },
+    {
+      "name": "test_orm_and_core_scope_mutation_is_not_a_select_loophole",
+      "module": "test_agriculture_query_scope",
+      "result": "pass"
+    },
+    {
+      "name": "test_orm_and_core_scope_mutation_is_not_a_select_loophole",
+      "module": "test_agriculture_query_scope",
+      "result": "pass"
+    },
+    {
+      "name": "test_orm_and_core_scope_mutation_is_not_a_select_loophole",
+      "module": "test_agriculture_query_scope",
+      "result": "pass"
+    },
+    {
+      "name": "test_orm_and_core_scope_mutation_is_not_a_select_loophole",
+      "module": "test_agriculture_query_scope",
+      "result": "pass"
+    },
+    {
+      "name": "test_parameterized_spatial_aggregation_is_not_blocked",
+      "module": "test_agriculture_query_scope",
+      "result": "pass"
+    },
+    {
+      "name": "test_only_exact_internal_readiness_statement_allows_text",
+      "module": "test_agriculture_query_scope",
+      "result": "pass"
+    },
+    {
+      "name": "test_postgres_query_scope_same_bbox_and_history",
+      "module": "test_agriculture_query_scope_postgres",
+      "result": "pass"
+    },
+    {
+      "name": "test_postgres_query_scope_mixed_task_and_core",
+      "module": "test_agriculture_query_scope_postgres",
+      "result": "pass"
+    },
+    {
+      "name": "test_postgres_query_scope_missing_mapping_and_rebinding",
+      "module": "test_agriculture_query_scope_postgres",
+      "result": "pass"
+    }
+  ],
+  "failure_locations": [],
+  "passed_count": 17
+}

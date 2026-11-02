@@ -1,0 +1,256 @@
+{
+  "suite": "objects",
+  "schema_phase": "private_objects_current",
+  "passed": true,
+  "data_class": "fixture",
+  "production_acceptance": false,
+  "tests": [
+    {
+      "name": "test_private_bytes_and_version_binding",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_key_not_a_user_path",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_key_not_a_user_path",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_key_not_a_user_path",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_key_not_a_user_path",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_key_not_a_user_path",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_key_not_a_user_path",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_key_not_a_user_path",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_file_and_parent_symlinks_refused",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_root_ancestor_replaced_after_configuration_is_refused",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_single_range",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_single_range",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_single_range",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_single_range",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_single_range",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid_ranges",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid_ranges",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid_ranges",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid_ranges",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid_ranges",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid_ranges",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_canonical_ids",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_canonical_ids",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_canonical_ids",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_canonical_ids",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_canonical_ids",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_canonical_ids",
+      "module": "test_agriculture_object_storage",
+      "result": "pass"
+    },
+    {
+      "name": "test_catalog_namespace_never_uses_ordinary_asset_profile",
+      "module": "test_agriculture_object_gateway",
+      "result": "pass"
+    },
+    {
+      "name": "test_catalog_namespace_never_uses_ordinary_asset_profile",
+      "module": "test_agriculture_object_gateway",
+      "result": "pass"
+    },
+    {
+      "name": "test_actual_bytes_range_head_no_public_cache",
+      "module": "test_agriculture_object_gateway",
+      "result": "pass"
+    },
+    {
+      "name": "test_signed_path_alias_and_object_swap_denied",
+      "module": "test_agriculture_object_gateway",
+      "result": "pass"
+    },
+    {
+      "name": "test_signed_path_alias_and_object_swap_denied",
+      "module": "test_agriculture_object_gateway",
+      "result": "pass"
+    },
+    {
+      "name": "test_signed_path_alias_and_object_swap_denied",
+      "module": "test_agriculture_object_gateway",
+      "result": "pass"
+    },
+    {
+      "name": "test_signed_path_alias_and_object_swap_denied",
+      "module": "test_agriculture_object_gateway",
+      "result": "pass"
+    },
+    {
+      "name": "test_signed_path_alias_and_object_swap_denied",
+      "module": "test_agriculture_object_gateway",
+      "result": "pass"
+    },
+    {
+      "name": "test_signed_path_alias_and_object_swap_denied",
+      "module": "test_agriculture_object_gateway",
+      "result": "pass"
+    },
+    {
+      "name": "test_signed_path_alias_and_object_swap_denied",
+      "module": "test_agriculture_object_gateway",
+      "result": "pass"
+    },
+    {
+      "name": "test_signed_path_alias_and_object_swap_denied",
+      "module": "test_agriculture_object_gateway",
+      "result": "pass"
+    },
+    {
+      "name": "test_current_owner_epoch_withdrawal_and_missing_provider",
+      "module": "test_agriculture_object_gateway",
+      "result": "pass"
+    },
+    {
+      "name": "test_revoked_during_actual_storage_read_sends_no_bytes",
+      "module": "test_agriculture_object_gateway",
+      "result": "pass"
+    },
+    {
+      "name": "test_service_metadata_minimal_and_scope_bound",
+      "module": "test_agriculture_object_gateway",
+      "result": "pass"
+    },
+    {
+      "name": "test_unconfigured_object_store_is_503_not_fake_missing",
+      "module": "test_agriculture_object_gateway",
+      "result": "pass"
+    },
+    {
+      "name": "test_old_signed_request_cannot_replay_at_other_version_or_tenant",
+      "module": "test_agriculture_object_gateway",
+      "result": "pass"
+    },
+    {
+      "name": "test_report_route_has_independent_fixed_action",
+      "module": "test_agriculture_object_gateway",
+      "result": "pass"
+    },
+    {
+      "name": "test_signed_foreign_path_scope_denied_before_any_metadata_read",
+      "module": "test_agriculture_object_gateway",
+      "result": "pass"
+    },
+    {
+      "name": "test_cross_language_fixture_configuration_requires_private_file",
+      "module": "test_agriculture_object_gateway",
+      "result": "pass"
+    },
+    {
+      "name": "test_postgres_private_objects_scope_immutability",
+      "module": "test_agriculture_objects_postgres",
+      "result": "pass"
+    },
+    {
+      "name": "test_postgres_private_object_http_bytes_and_withdrawal",
+      "module": "test_agriculture_objects_postgres",
+      "result": "pass"
+    },
+    {
+      "name": "test_real_go_python_object_gateway_chain",
+      "module": "test_agriculture_objects_go_postgres",
+      "result": "pass"
+    }
+  ],
+  "failure_locations": [],
+  "passed_count": 49
+}

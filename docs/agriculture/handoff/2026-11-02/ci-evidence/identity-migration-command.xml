@@ -1,0 +1,2 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuite name="identity-migration" tests="6"><testcase name="test_fixed_migrations_have_one_outer_transaction_and_hash_original_bytes" /><testcase name="test_invalid_configuration_rejected_before_connection" /><testcase name="test_invalid_configuration_rejected_before_connection" /><testcase name="test_invalid_configuration_rejected_before_connection" /><testcase name="test_cli_requires_explicit_mode_and_never_uses_runtime_dsn" /><testcase name="test_postgres_migration_command_new_repeat_and_drift" /></testsuite>

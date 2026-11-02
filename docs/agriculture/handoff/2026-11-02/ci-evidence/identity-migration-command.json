@@ -1,0 +1,41 @@
+{
+  "suite": "migration",
+  "schema_phase": "independent_fresh_database_migration",
+  "passed": true,
+  "data_class": "fixture",
+  "production_acceptance": false,
+  "tests": [
+    {
+      "name": "test_fixed_migrations_have_one_outer_transaction_and_hash_original_bytes",
+      "module": "test_agriculture_migration",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid_configuration_rejected_before_connection",
+      "module": "test_agriculture_migration",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid_configuration_rejected_before_connection",
+      "module": "test_agriculture_migration",
+      "result": "pass"
+    },
+    {
+      "name": "test_invalid_configuration_rejected_before_connection",
+      "module": "test_agriculture_migration",
+      "result": "pass"
+    },
+    {
+      "name": "test_cli_requires_explicit_mode_and_never_uses_runtime_dsn",
+      "module": "test_agriculture_migration",
+      "result": "pass"
+    },
+    {
+      "name": "test_postgres_migration_command_new_repeat_and_drift",
+      "module": "test_agriculture_migration_postgres",
+      "result": "pass"
+    }
+  ],
+  "failure_locations": [],
+  "passed_count": 6
+}

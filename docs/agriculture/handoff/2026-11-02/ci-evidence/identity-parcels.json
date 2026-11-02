@@ -1,0 +1,151 @@
+{
+  "suite": "actual_parcel_http_browser_dual_postgres",
+  "passed": true,
+  "data_class": "fixture",
+  "production_acceptance": false,
+  "go_gate_passed": true,
+  "browser_gate_passed": true,
+  "runtime_gate_passed": true,
+  "tests": [
+    {
+      "name": "TestParcelBrowserPostgresChain",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelHTTPPostgresChain",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelHTTPPostgresChain/context_list_detail_history_current",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelHTTPPostgresChain/direct_grants_mixed_context_cursor_and_version_staleness",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelHTTPPostgresChain/preview_create_receipt_and_replay",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelHTTPPostgresChain/real_response_frontend_contract",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelHTTPPostgresChain/reject_foreign_workspace_and_invalid_geometry_without_writes",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelHTTPPostgresChain/revision_history_and_stale_preview_conflict",
+      "result": "pass"
+    },
+    {
+      "name": "TestParcelHTTPPostgresChain/revoke_current_grant_blocks_content_and_preview",
+      "result": "pass"
+    }
+  ],
+  "browser_checks": [
+    {
+      "name": "all_database_checkpoints_acknowledged",
+      "result": "pass"
+    },
+    {
+      "name": "concurrent_api_revision_three",
+      "result": "pass"
+    },
+    {
+      "name": "create_preview_bound_to_parent",
+      "result": "pass"
+    },
+    {
+      "name": "current_geometry_crs_area_hash",
+      "result": "pass"
+    },
+    {
+      "name": "current_revision_restored",
+      "result": "pass"
+    },
+    {
+      "name": "duplicate_click_single_create",
+      "result": "pass"
+    },
+    {
+      "name": "explicit_parent_parcel_capabilities",
+      "result": "pass"
+    },
+    {
+      "name": "foreign_workspace_denied",
+      "result": "pass"
+    },
+    {
+      "name": "historical_at_selector_version_one",
+      "result": "pass"
+    },
+    {
+      "name": "historical_revision_one_readonly",
+      "result": "pass"
+    },
+    {
+      "name": "http_only_platform_cookie",
+      "result": "pass"
+    },
+    {
+      "name": "no_internal_credentials_identity_spoofing_or_external_requests",
+      "result": "pass"
+    },
+    {
+      "name": "parcel_survives_reload",
+      "result": "pass"
+    },
+    {
+      "name": "production_nginx_configuration_valid",
+      "result": "pass"
+    },
+    {
+      "name": "real_react_login_shared_vue_session",
+      "result": "pass"
+    },
+    {
+      "name": "revoked_history_navigation_no_content",
+      "result": "pass"
+    },
+    {
+      "name": "revoked_old_page_clears_content",
+      "result": "pass"
+    },
+    {
+      "name": "same_cookie_after_revocation",
+      "result": "pass"
+    },
+    {
+      "name": "same_tenant_other_workspace_denied",
+      "result": "pass"
+    },
+    {
+      "name": "stale_revision_409_preserves_draft",
+      "result": "pass"
+    },
+    {
+      "name": "ui_revision_two_same_identity",
+      "result": "pass"
+    }
+  ],
+  "browser_evidence": {
+    "source_commit": "52d6e3f43899a1f6412f5e4c5be0e5bc428ae1ec",
+    "artifact_hashes": {
+      "nginx_template": "30a1b2fce7e5ec7eedb38d9bd5b8d459ee7bf850970da370631585a2d7b17782",
+      "react_index": "20f6d8368895dd51204d31b2223894ece180d2502d2517b866af7fc133e7c814",
+      "vue_index": "9aa42e88c7c44ed6e52f6608250a1cef0cc238a98c2bd8deeae3f4c0f3a2a4a8",
+      "runner": "5d5c8fbb0c77e29e8f4512add93b35cbdfc51bee4490063d51b4517456a25a3a"
+    },
+    "network": {
+      "observed": 94,
+      "violations": 0,
+      "creates": 1,
+      "revisions": 2
+    },
+    "ci_provenance_sha256": "fa56e1c4e2e36e509acf456da9845b12acdd7450a27413501291e31e6eb99d3f"
+  },
+  "failure_diagnostics": {},
+  "passed_count": 9
+}

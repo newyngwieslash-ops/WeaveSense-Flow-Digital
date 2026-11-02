@@ -1,0 +1,70 @@
+{
+  "suite": "scoped_cache_sse_legacy",
+  "passed": true,
+  "data_class": "fixture",
+  "production_acceptance": false,
+  "tests": [
+    {
+      "name": "TestConnectedLegacyStreamsRevalidateAuthority",
+      "result": "pass"
+    },
+    {
+      "name": "TestConnectedLegacyStreamsRevalidateAuthority/agent/disabled",
+      "result": "pass"
+    },
+    {
+      "name": "TestConnectedLegacyStreamsRevalidateAuthority/agent/expired",
+      "result": "pass"
+    },
+    {
+      "name": "TestConnectedLegacyStreamsRevalidateAuthority/agent/logout",
+      "result": "pass"
+    },
+    {
+      "name": "TestConnectedLegacyStreamsRevalidateAuthority/agent/other_cookie",
+      "result": "pass"
+    },
+    {
+      "name": "TestConnectedLegacyStreamsRevalidateAuthority/agent/ownership",
+      "result": "pass"
+    },
+    {
+      "name": "TestConnectedLegacyStreamsRevalidateAuthority/agent/success",
+      "result": "pass"
+    },
+    {
+      "name": "TestConnectedLegacyStreamsRevalidateAuthority/text/disabled",
+      "result": "pass"
+    },
+    {
+      "name": "TestConnectedLegacyStreamsRevalidateAuthority/text/expired",
+      "result": "pass"
+    },
+    {
+      "name": "TestConnectedLegacyStreamsRevalidateAuthority/text/logout",
+      "result": "pass"
+    },
+    {
+      "name": "TestConnectedLegacyStreamsRevalidateAuthority/text/other_cookie",
+      "result": "pass"
+    },
+    {
+      "name": "TestConnectedLegacyStreamsRevalidateAuthority/text/ownership",
+      "result": "pass"
+    },
+    {
+      "name": "TestConnectedLegacyStreamsRevalidateAuthority/text/success",
+      "result": "pass"
+    },
+    {
+      "name": "TestTaskStreamRevocationBetweenBufferedEvents",
+      "result": "pass"
+    },
+    {
+      "name": "TestTaskStreamRevocationDuringConnectedFlush",
+      "result": "pass"
+    }
+  ],
+  "missing": [],
+  "failure_locations": []
+}

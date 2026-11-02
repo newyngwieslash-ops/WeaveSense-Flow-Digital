@@ -1,0 +1,49 @@
+{
+  "suite": "real_postgres_flow_adapter_and_legacy_worker",
+  "passed": true,
+  "data_class": "fixture",
+  "production_acceptance": false,
+  "tests": [
+    {
+      "name": "TestCommandAdapterPostgres",
+      "result": "pass"
+    },
+    {
+      "name": "TestCommandAdapterPostgres/cancelled_before_receipt_no_apply",
+      "result": "pass"
+    },
+    {
+      "name": "TestCommandAdapterPostgres/concurrent_enqueue_no_orphan",
+      "result": "pass"
+    },
+    {
+      "name": "TestCommandAdapterPostgres/cross_tenant_and_empty_scope_denied",
+      "result": "pass"
+    },
+    {
+      "name": "TestCommandAdapterPostgres/expired_worker_fenced_and_io_outside_transaction",
+      "result": "pass"
+    },
+    {
+      "name": "TestFlowPostgresWorkerShortTransactions",
+      "result": "pass"
+    },
+    {
+      "name": "TestFlowPostgresWorkerShortTransactions/command_http_outside_transaction_and_retry_receipt_commits",
+      "result": "pass"
+    },
+    {
+      "name": "TestFlowPostgresWorkerShortTransactions/missing_scanner_fails_closed",
+      "result": "pass"
+    },
+    {
+      "name": "TestFlowPostgresWorkerShortTransactions/model_gateway_and_notification_outside_transaction",
+      "result": "pass"
+    },
+    {
+      "name": "TestFlowPostgresWorkerShortTransactions/model_reconciliation_http_outside_transaction",
+      "result": "pass"
+    }
+  ],
+  "passed_count": 10
+}

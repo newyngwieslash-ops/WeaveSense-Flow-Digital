@@ -1,5 +1,7 @@
 # WeaveSense DigitalTwin 本地继续开发完整提示词
 
+> **后续CI终态（2026-11-02）**：先读 [CI-HANDOFF-RESULT.md](CI-HANDOFF-RESULT.md)。五个工作流成功，identity有两处真实失败：身份资源绑定负例返回体断言、资产创建平台回执检查点。地块实际链通过；资产浏览器完整结果缺失，23检查not_run。正式25项done不变。请先定位两处失败并保留原证据，再推进依赖任务。
+
 将下方“开始复制”到“复制结束”的全部内容提交给能访问本地仓库和终端的 Zcode 或 Codex 会话。先按同目录 [本地拉取与恢复指南](LOCAL-SETUP-AND-RESUME.md) 校验完整产品分支，再打开仓库根目录。无需把 144 项任务手工粘贴到聊天中，Agent 必须读取仓库内完整规格和证据。
 
 本文审查的实现源码为 `7c6e0229e3e708ab540f338a7e01cb0f24d25a12`，不是最终交付文档提交，也不是 GitHub 推送成功凭证。目标远程为 `newyngwieslash-ops/WeaveSense-Flow-Digital`，计划完整产品分支为 `feat/agriculture-v1`；最终已发布 SHA 以交付回执和实际远程核验为准。`ci/agriculture-w00` 是缩减 CI 装配分支，不能作为完整项目继续开发。

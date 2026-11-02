@@ -27,8 +27,24 @@ func RegisterFromEnv(root, api gin.IRouter, db *gorm.DB, user flow.UserFunc) err
 	return err
 }
 
-// RegisterFromEnvWithFarms returns adapters for the existing shared dispatcher.
+// RegisterFromEnvWithFarms preserves the original farm integration surface.
 func RegisterFromEnvWithFarms(root, api gin.IRouter, db *gorm.DB, user flow.UserFunc) (*FarmPlatform, error) {
+	domains, err := RegisterFromEnvWithDomains(root, api, db, user)
+	if err != nil || domains == nil {
+		return nil, err
+	}
+	return domains.Farms, nil
+}
+
+type DomainPlatforms struct {
+	Farms    *FarmPlatform
+	Parcels  *ParcelPlatform
+	Assets   *AssetCatalogPlatform
+	Adapters map[string]flow.CommandAdapter
+}
+
+// RegisterFromEnvWithDomains registers typed domains on one shared dispatcher.
+func RegisterFromEnvWithDomains(root, api gin.IRouter, db *gorm.DB, user flow.UserFunc) (*DomainPlatforms, error) {
 	enabled, err := strconv.ParseBool(envDefault("FLOW_AGRICULTURE_ENABLED", "false"))
 	if err != nil {
 		return nil, errors.New("invalid agriculture enablement configuration")
@@ -48,6 +64,8 @@ func RegisterFromEnvWithFarms(root, api gin.IRouter, db *gorm.DB, user flow.User
 	}
 	service := Service{DB: db}
 	var farms *FarmPlatform
+	var parcels *ParcelPlatform
+	var assets *AssetCatalogPlatform
 	if path := os.Getenv("FLOW_AGRICULTURE_SERVICE_IDENTITY_CONFIG"); path != "" {
 		client, gisKeys, err := loadServiceIdentity(path)
 		if err != nil {
@@ -57,13 +75,30 @@ func RegisterFromEnvWithFarms(root, api gin.IRouter, db *gorm.DB, user flow.User
 		service.RegisterInternalAuthority(root, gisKeys)
 		farms = NewFarmPlatform(service, client)
 		farms.RegisterInternal(root, gisKeys)
+		parcels = NewParcelPlatform(service, client)
+		parcels.RegisterInternal(root, gisKeys)
+		assets = NewAssetCatalogPlatform(service, client)
+		assets.RegisterInternal(root, gisKeys)
 	}
 	if farms == nil {
 		farms = NewFarmPlatform(service, nil)
 		farms.RegisterInternal(root, nil)
+		parcels = NewParcelPlatform(service, nil)
+		parcels.RegisterInternal(root, nil)
+		assets = NewAssetCatalogPlatform(service, nil)
+		assets.RegisterInternal(root, nil)
 	}
-	API{Service: service, User: user, Farms: farms}.Register(api)
-	return farms, nil
+	API{Service: service, User: user, Farms: farms, Parcels: parcels, Assets: assets}.Register(api)
+	adapters := make(map[string]flow.CommandAdapter)
+	for _, source := range []map[string]flow.CommandAdapter{farms.Dispatcher.Adapters, parcels.Dispatcher.Adapters, assets.Dispatcher.Adapters} {
+		for name, adapter := range source {
+			if _, exists := adapters[name]; exists {
+				return nil, errors.New("duplicate agricultural command adapter")
+			}
+			adapters[name] = adapter
+		}
+	}
+	return &DomainPlatforms{Farms: farms, Parcels: parcels, Assets: assets, Adapters: adapters}, nil
 }
 func envDefault(name, value string) string {
 	if v := os.Getenv(name); v != "" {
@@ -76,6 +111,8 @@ type API struct {
 	Service Service
 	User    flow.UserFunc
 	Farms   *FarmPlatform
+	Parcels *ParcelPlatform
+	Assets  *AssetCatalogPlatform
 	// Trusted server composition only. Production has no W06 event adapter yet;
 	// nil keeps the authenticated route closed instead of fabricating events.
 	JobEvents *JobEventStream
@@ -184,6 +221,8 @@ func (a API) sessionMiddleware(response func(*gin.Context, any, error)) gin.Hand
 
 func (a API) Register(api gin.IRouter) {
 	a.registerFarms(api)
+	a.registerParcels(api)
+	a.registerAssetCatalog(api)
 	a.registerAuthorizationV1(api)
 	a.registerObjectGateway(api)
 	RegisterJobEvents(api, a, a.JobEvents)

@@ -121,7 +121,10 @@ func resourceAccess(ref ResourceRef, proof ResourceOwnership, bindings map[Resou
 	if direct.ExpiresAt != nil && direct.ExpiresAt.Before(directUntil) {
 		directUntil = *direct.ExpiresAt
 	}
-	farmVisible, farmAllowed := true, true
+	// A no-farm typed resource has no inherited authorization path. Ordinary
+	// ownership already rejects empty farm sets; keep this primitive fail-closed
+	// too so governance/delegation callers cannot turn an empty loop into a grant.
+	farmVisible, farmAllowed := len(proof.FarmIDs) > 0, len(proof.FarmIDs) > 0
 	farmUntil := base
 	for _, farm := range proof.FarmIDs {
 		binding, exists := bindings[ResourceRef{"farm", farm}]

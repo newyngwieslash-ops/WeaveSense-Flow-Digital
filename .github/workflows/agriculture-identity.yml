@@ -57,6 +57,10 @@ jobs:
           python3 scaffold/scripts/agriculture/identity-ci-result.test.py
           python3 scaffold/scripts/agriculture/isolation-matrix-result.test.py
           python3 scaffold/scripts/agriculture/farm-ci-result.test.py
+          python3 scaffold/scripts/agriculture/parcel-ci-result.test.py
+          python3 scaffold/scripts/agriculture/asset-ci-result.test.py
+          python3 scaffold/scripts/agriculture/parcel-python-result.test.py
+          python3 scaffold/scripts/agriculture/asset-python-result.test.py
           python3 scaffold/scripts/agriculture/farm-flow-result.test.py
           python3 scaffold/scripts/agriculture/farm-python-result.test.py
           python3 scaffold/tests/agriculture/test_farm_deployment_policy.py
@@ -66,6 +70,8 @@ jobs:
           python3 scaffold/tests/agriculture/test_identity_chain_configuration.py
           node --test scaffold/scripts/agriculture/identity-chain-browser.test.mjs
           node --test scaffold/scripts/agriculture/farm-browser-e2e.test.mjs
+          node --test scaffold/scripts/agriculture/parcel-browser-e2e.test.mjs
+          node --test scaffold/scripts/agriculture/asset-browser-e2e.test.mjs
       - name: Assemble pinned upstreams and explicit reviewed overlay
         env:
           SCAFFOLD_MODE: ${{ github.ref_name == 'ci/agriculture-w00' || github.head_ref == 'ci/agriculture-w00' }}
@@ -93,6 +99,7 @@ jobs:
         run: |
           set -euo pipefail
           go -C backend test ./internal/agriculture -run '^TestIdentityChain(ChildEnvironment|SafeDiagnostic)$' -count=1
+          go -C backend test ./internal/agriculture -run '^Test(ResourceAccessEmptyFarmNeverImplicitGrant|ResourceAccessNonemptyExplicitParentUnchanged|AssetCatalogOwnershipProfile|AssetCatalogOwnershipHashGolden|AssetCatalogPayloadContract|AssetCatalogOperationHTTPContract|ParcelPayloadContract|ParcelNullableHistoryContract|ParcelOperationHTTPContract)$' -count=1
           (cd web && bun install --frozen-lockfile --ignore-scripts && bun run build:agriculture)
           (cd services/agri-gis/frontend && npm ci --ignore-scripts --no-audit --no-fund && npm run build:agriculture)
       - name: Obtain runner nginx without starting a daemon

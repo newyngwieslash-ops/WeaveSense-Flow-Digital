@@ -15264,6 +15264,16 @@
   "method": "python_ast_static_inventory_not_runtime_authorization_proof",
   "route_registrations": [
     {
+      "evidence": "app.add_api_route(path, handler(action), methods=['POST'])",
+      "line": 94,
+      "path": "services/agri-gis/backend/app/agriculture/asset_catalog_routes.py"
+    },
+    {
+      "evidence": "app.add_api_route(ROUTE, content, methods=['GET', 'HEAD'])",
+      "line": 110,
+      "path": "services/agri-gis/backend/app/agriculture/asset_object_gateway.py"
+    },
+    {
       "evidence": "app.add_api_route(path, guarded(workspace_endpoint(action)), methods=['POST'])",
       "line": 136,
       "path": "services/agri-gis/backend/app/agriculture/farms_routes.py"
@@ -15275,8 +15285,18 @@
     },
     {
       "evidence": "app.add_api_route(PREFIX + f'/{kind}s/objects/{{object}}/versions/{{version}}', content, methods=['GET', 'HEAD'])",
-      "line": 171,
+      "line": 179,
       "path": "services/agri-gis/backend/app/agriculture/object_gateway.py"
+    },
+    {
+      "evidence": "app.add_api_route(RECEIPT_PATH, guarded(receipt), methods=['POST'])",
+      "line": 93,
+      "path": "services/agri-gis/backend/app/agriculture/parcels_routes.py"
+    },
+    {
+      "evidence": "app.add_api_route(path, guarded(endpoint_for(mode)), methods=['POST'])",
+      "line": 250,
+      "path": "services/agri-gis/backend/app/agriculture/parcels_routes.py"
     },
     {
       "evidence": "app.include_router(health.router)",
@@ -15285,6 +15305,62 @@
     }
   ],
   "routes": [
+    {
+      "calls": [
+        "(now + timedelta(seconds=30)).isoformat",
+        "(now + timedelta(seconds=30)).isoformat().replace",
+        "ASSET_ID.fullmatch",
+        "FARM_ID.fullmatch",
+        "IdentityError",
+        "JSONResponse",
+        "all",
+        "app.post",
+        "asyncio.wait_for",
+        "datetime.now",
+        "datetime.now(UTC).replace",
+        "integer",
+        "isinstance",
+        "len",
+        "list",
+        "now.isoformat",
+        "now.isoformat().replace",
+        "provider.resolve_asset",
+        "require",
+        "result.append",
+        "set",
+        "sorted",
+        "timedelta",
+        "uuid4",
+        "verify_request"
+      ],
+      "direct_identity_parameters": [],
+      "function": "install_asset_ownership_route.ownership",
+      "imports": {
+        "ASSET_ID": "app.agriculture.asset_catalog_rules.ASSET_ID",
+        "FARM_ID": "app.agriculture.asset_catalog_rules.FARM_ID",
+        "IdentityError": "app.agriculture.identity.verify.IdentityError",
+        "JSONResponse": "fastapi.responses.JSONResponse",
+        "Request": "fastapi.Request",
+        "SERVICE_TYP": "app.agriculture.identity.verify.SERVICE_TYP",
+        "UTC": "datetime.UTC",
+        "asyncio": "asyncio",
+        "datetime": "datetime.datetime",
+        "integer": "app.agriculture.identity.verify.integer",
+        "require": "app.agriculture.identity.verify.require",
+        "timedelta": "datetime.timedelta",
+        "uuid4": "uuid.uuid4",
+        "verify_request": "app.agriculture.identity.dependency.verify_request"
+      },
+      "line": 19,
+      "methods": [
+        "POST"
+      ],
+      "no_caller_identity_field": true,
+      "path": "services/agri-gis/backend/app/agriculture/asset_catalog_ownership.py",
+      "route": "<dynamic><dynamic>",
+      "router": "app",
+      "schema_identity_fields": []
+    },
     {
       "calls": [
         "IdentityError",
@@ -15366,8 +15442,12 @@
         "asynccontextmanager": "contextlib.asynccontextmanager",
         "configured_services": "app.agriculture.identity.config.configured_services",
         "datetime": "datetime.datetime",
+        "install_asset_catalog_routes": "app.agriculture.asset_catalog_routes.install_asset_catalog_routes",
+        "install_asset_object_routes": "app.agriculture.asset_object_gateway.install_asset_object_routes",
+        "install_asset_ownership_route": "app.agriculture.asset_catalog_ownership.install_asset_ownership_route",
         "install_farm_routes": "app.agriculture.farms_routes.install_farm_routes",
         "install_job_routes": "app.agriculture.job_routes.install_job_routes",
+        "install_parcel_routes": "app.agriculture.parcels_routes.install_parcel_routes",
         "register_object_routes": "app.agriculture.object_gateway.register_object_routes",
         "require": "app.agriculture.identity.verify.require",
         "resolve_owned": "app.agriculture.identity.providers.resolve_owned",
@@ -15376,7 +15456,7 @@
         "uuid": "uuid",
         "verify_request": "app.agriculture.identity.dependency.verify_request"
       },
-      "line": 60,
+      "line": 70,
       "methods": [
         "GET"
       ],
@@ -15419,8 +15499,12 @@
         "asynccontextmanager": "contextlib.asynccontextmanager",
         "configured_services": "app.agriculture.identity.config.configured_services",
         "datetime": "datetime.datetime",
+        "install_asset_catalog_routes": "app.agriculture.asset_catalog_routes.install_asset_catalog_routes",
+        "install_asset_object_routes": "app.agriculture.asset_object_gateway.install_asset_object_routes",
+        "install_asset_ownership_route": "app.agriculture.asset_catalog_ownership.install_asset_ownership_route",
         "install_farm_routes": "app.agriculture.farms_routes.install_farm_routes",
         "install_job_routes": "app.agriculture.job_routes.install_job_routes",
+        "install_parcel_routes": "app.agriculture.parcels_routes.install_parcel_routes",
         "register_object_routes": "app.agriculture.object_gateway.register_object_routes",
         "require": "app.agriculture.identity.verify.require",
         "resolve_owned": "app.agriculture.identity.providers.resolve_owned",
@@ -15429,7 +15513,7 @@
         "uuid": "uuid",
         "verify_request": "app.agriculture.identity.dependency.verify_request"
       },
-      "line": 70,
+      "line": 80,
       "methods": [
         "POST"
       ],
@@ -15455,6 +15539,7 @@
       "direct_identity_parameters": [],
       "function": "register_object_routes.metadata",
       "imports": {
+        "ASSET_ID": "app.agriculture.asset_catalog_rules.ASSET_ID",
         "IdentityError": "app.agriculture.identity.verify.IdentityError",
         "JSONResponse": "fastapi.responses.JSONResponse",
         "Request": "fastapi.Request",
@@ -15469,7 +15554,7 @@
         "resolve_owned": "app.agriculture.identity.providers.resolve_owned",
         "verify_request": "app.agriculture.identity.dependency.verify_request"
       },
-      "line": 53,
+      "line": 54,
       "methods": [
         "POST"
       ],
@@ -23439,12 +23524,52 @@
       "sha256": "4f8a5993160c7c53ae95cf1f9dd8abc1289ed2c052f391f3aa3456d83d692434"
     },
     {
+      "path": "services/agri-gis/backend/app/agriculture/asset_catalog_config.py",
+      "sha256": "f1ae54406506dce8bfe41d6bd6739aae4e1bc11514aade139e8e64e133093ee0"
+    },
+    {
+      "path": "services/agri-gis/backend/app/agriculture/asset_catalog_identity.py",
+      "sha256": "aad2a2aa43e6fd520f42cd0fecfd72a4966b927e7bec2eda417debe9490236dd"
+    },
+    {
+      "path": "services/agri-gis/backend/app/agriculture/asset_catalog_objects.py",
+      "sha256": "a3613ab687497529c665db96b32de75e15c943ae300d5717e4073b1fa7083d62"
+    },
+    {
+      "path": "services/agri-gis/backend/app/agriculture/asset_catalog_ownership.py",
+      "sha256": "c7d56e476f0e4f58f4091a39c2c64601fadc91826ba0b493c1fa1fc60b448b65"
+    },
+    {
+      "path": "services/agri-gis/backend/app/agriculture/asset_catalog_routes.py",
+      "sha256": "986266813e96b64dc71f2e13446d80fbbdcf4356d9d711c889ce67b478715fbc"
+    },
+    {
+      "path": "services/agri-gis/backend/app/agriculture/asset_catalog_rules.py",
+      "sha256": "34b99d93de8218a35d200dd4cd6d3e06d5de61a3e1b7d8a58c7ee507990ff69a"
+    },
+    {
+      "path": "services/agri-gis/backend/app/agriculture/asset_catalog_store.py",
+      "sha256": "ae5354bec3ee9e1d7fda9fb7183f5fe87ce2738af1779a0d0431c03f8deebe56"
+    },
+    {
+      "path": "services/agri-gis/backend/app/agriculture/asset_object_gateway.py",
+      "sha256": "459e770c194ec7d13733b253152032133b894c18a882573958bf891101d0dda1"
+    },
+    {
+      "path": "services/agri-gis/backend/app/agriculture/asset_object_identity.py",
+      "sha256": "2bc604a3ef1506e3699d4f96926024d7e682db978b59f8f8c7999961371fbc9e"
+    },
+    {
       "path": "services/agri-gis/backend/app/agriculture/database.py",
       "sha256": "559c70e1fd755fb332840984c5c48d448152a4ee7b5d7e3c1975134945c3985b"
     },
     {
       "path": "services/agri-gis/backend/app/agriculture/domain_boundary.py",
-      "sha256": "6709a6eac3c3cc9fd74b76f0e72866cd3c13cfecd239bdad5f19a163dedf2234"
+      "sha256": "9dfb4f3e2f88ba89521d6fa8c6fb3902729d4e8ba980d66c2d251a379ab3e014"
+    },
+    {
+      "path": "services/agri-gis/backend/app/agriculture/domain_ownership.py",
+      "sha256": "2ce564bca9c33b81790b4f89df04296f86de206c051938fe3cfb8d90546b6192"
     },
     {
       "path": "services/agri-gis/backend/app/agriculture/farms_config.py",
@@ -23464,7 +23589,7 @@
     },
     {
       "path": "services/agri-gis/backend/app/agriculture/farms_store.py",
-      "sha256": "a2844b20506e4490ce8ade26b9fedd0cf11d7b578997776d33f430310ad4001a"
+      "sha256": "58da9c5c04f213dd0b272a56e7e995ccc5732d67f513a303eec8c5278683fc8e"
     },
     {
       "path": "services/agri-gis/backend/app/agriculture/identity/__init__.py",
@@ -23480,11 +23605,11 @@
     },
     {
       "path": "services/agri-gis/backend/app/agriculture/identity/config.py",
-      "sha256": "ecab11bdc640ce19b36bdf29199a9b04c5e68e91c4b80c504b2a0f898fa1adc9"
+      "sha256": "6192792b7e23465ce819f13566d4e02848bdbbb094553839a044a0a2d5f835ad"
     },
     {
       "path": "services/agri-gis/backend/app/agriculture/identity/dependency.py",
-      "sha256": "ac0d075e6b8ece5e5b635466ee376990ae714f9b77e41d225b2bef390d3742b3"
+      "sha256": "77fe82e41f16e41705feab59c6988bdba77de700ebdaa60b1bfdc6d50e3c26f1"
     },
     {
       "path": "services/agri-gis/backend/app/agriculture/identity/keys.py",
@@ -23500,7 +23625,7 @@
     },
     {
       "path": "services/agri-gis/backend/app/agriculture/identity/verify.py",
-      "sha256": "8bd5bc7d87e35ea6d76797a435a4b21ba13529f1eed0b742669d56f92bb841ea"
+      "sha256": "e1eba377fd65a73639a0dedc8fdc78c5fd77670c891ff70f4238ea21a2292dd4"
     },
     {
       "path": "services/agri-gis/backend/app/agriculture/ingestion/__init__.py",
@@ -23548,15 +23673,15 @@
     },
     {
       "path": "services/agri-gis/backend/app/agriculture/main.py",
-      "sha256": "e1dc5ffb752a5c69d861f021407fc59a1f05fb3baf53ecbfa5a22bd8b22a0d71"
+      "sha256": "d5898e1cd971f42f3fc6eec675cbf77f853461475839ada77a5b97143373da90"
     },
     {
       "path": "services/agri-gis/backend/app/agriculture/migrate.py",
-      "sha256": "f02e1e32cee2b156c7e5b7c62f425ea37a640e5835da987ff22591a244e0e40d"
+      "sha256": "be0afdf4f9565426f4441453e61b81aca21505b4b24a6c1c4c6c63c200d1bdf2"
     },
     {
       "path": "services/agri-gis/backend/app/agriculture/object_gateway.py",
-      "sha256": "b5d8b72cb79b7aa2128bb9081f4564e20e82c13003ad0661f946ead6e7525be5"
+      "sha256": "f4b7c2176f0d989fc997c88a88ba1d30792f9563d4841c4cba4e51ca4179ff69"
     },
     {
       "path": "services/agri-gis/backend/app/agriculture/object_storage.py",
@@ -23569,6 +23694,18 @@
     {
       "path": "services/agri-gis/backend/app/agriculture/operation_authorization.py",
       "sha256": "88037f6e7fd71fbc80c9fb41533861c51d692669996abe274bd06f4606bfa83a"
+    },
+    {
+      "path": "services/agri-gis/backend/app/agriculture/parcels_identity.py",
+      "sha256": "ea7596b3e4c0951358ac6042eaa3d4c10e06b0f907ab7af19fab9e7e39e8385c"
+    },
+    {
+      "path": "services/agri-gis/backend/app/agriculture/parcels_routes.py",
+      "sha256": "8ddd3d26809e25f37c866f67d9a6c26a23fee2afbd2d620dc774e3850372dcd0"
+    },
+    {
+      "path": "services/agri-gis/backend/app/agriculture/parcels_store.py",
+      "sha256": "38af7a0398e6aea2032543cd251aab9e041f142d92a15027cf7abebb8050af33"
     },
     {
       "path": "services/agri-gis/backend/app/agriculture/query_scope.py",
@@ -24356,9 +24493,9 @@
     }
   ],
   "summary": {
-    "declared_routes": 179,
+    "declared_routes": 180,
     "identity_sites": 1526,
-    "route_registrations": 4,
-    "routes_without_caller_identity": 52
+    "route_registrations": 8,
+    "routes_without_caller_identity": 53
   }
 }

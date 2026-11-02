@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import FarmEditor from './FarmEditor.vue'
 import FarmBoundaryMap from './FarmBoundaryMap.vue'
+import ParcelWorkspace from '../parcels/ParcelWorkspace.vue'
 import { FarmController } from './farm-controller'
 import type { FarmSummary, Intent } from './types'
 const props = defineProps<{ workspace: string; checking: boolean }>()
@@ -16,6 +17,8 @@ const status = ref<'active' | 'archived'>('active')
 const reason = ref('')
 const recoveryID = ref('')
 const expired = ref(false)
+const showParcels = ref(false)
+const parcelDirty = ref(false)
 let timer: ReturnType<typeof setInterval> | undefined
 onMounted(() => {
   controller.setChecking(props.checking); void controller.initialize()
@@ -23,14 +26,25 @@ onMounted(() => {
 })
 watch(() => props.checking, checking => controller.setChecking(checking))
 onUnmounted(() => { clearInterval(timer); controller.dispose() })
-function discard() { return !dirty.value || window.confirm('放弃尚未提交的本地草稿？操作记录不会删除。') }
+function discard() { return !(dirty.value || parcelDirty.value) || window.confirm('放弃尚未提交的本地草稿？已提交操作不会撤销，操作记录不会删除。') }
+function toggleParcels() {
+  if (showParcels.value && !discard()) return
+  showParcels.value = !showParcels.value; parcelDirty.value = false
+}
+function editFarm() {
+  if (!discard()) return
+  showParcels.value = false; parcelDirty.value = false; mode.value = 'edit'
+}
 async function open(row: FarmSummary) {
   if (controller.locked || controller.unresolved || !discard()) return
   await controller.select(row.id); mode.value = 'view'; dirty.value = false; reason.value = ''
+  showParcels.value = false
+  parcelDirty.value = false
 }
 function create() {
   if (controller.locked || controller.unresolved || !discard()) return
   controller.create(); mode.value = 'create'; dirty.value = false; reason.value = ''
+  showParcels.value = false; parcelDirty.value = false
 }
 function changed() { dirty.value = true; controller.draftChanged() }
 function prepare(intent: Intent) { void controller.prepare(intent) }
@@ -40,7 +54,7 @@ function adopt() {
 }
 function archive() {
   const farm = state.value.selected
-  if (!farm || !reason.value.trim() || controller.locked || controller.unresolved) return
+  if (!farm || !reason.value.trim() || controller.locked || controller.unresolved || !discard()) return
   void controller.prepare({ action: 'archive', farm_id: farm.id, expected_revision: farm.revision, reason: reason.value })
 }
 </script>
@@ -76,7 +90,9 @@ function archive() {
         <h3>{{ state.selected.name }} <strong>{{ state.selected.data_class === 'demo' ? '演示数据' : '正式业务数据' }}</strong></h3>
         <dl class="farm-facts"><dt>编号 / 状态 / 版本</dt><dd>{{ state.selected.external_code }} / {{ state.selected.status }} / {{ state.selected.revision }}</dd><dt>经营主体</dt><dd>{{ state.selected.operator_name }}</dd><dt>区域与时区</dt><dd>{{ state.selected.region_code }} · {{ state.selected.timezone }}</dd><dt>服务器面积</dt><dd>{{ state.selected.area_m2 }} m² / {{ state.selected.area_ha }} ha / {{ state.selected.area_mu }} 亩</dd><dt>坐标来源</dt><dd>{{ state.selected.source_crs }} · {{ state.selected.coordinate_order }}</dd><dt>更新时间</dt><dd>{{ state.selected.updated_at }}</dd></dl>
         <FarmBoundaryMap v-if="mode === 'view'" :geometry="state.selected.geometry" />
-        <button v-if="state.selected.status === 'active' && state.selected.allowed_actions.includes('agri.farm.update') && mode === 'view'" type="button" data-testid="farm-edit" :disabled="controller.locked || controller.unresolved" @click="mode = 'edit'">编辑当前版本</button>
+        <button v-if="state.selected.status === 'active' && mode === 'view'" type="button" data-testid="parcel-workspace-toggle" :disabled="controller.locked" :aria-expanded="showParcels" @click="toggleParcels">{{ showParcels ? '关闭地块版本工作台' : '打开地块版本工作台' }}</button>
+        <ParcelWorkspace v-if="showParcels && state.selected.status === 'active' && mode === 'view'" :key="`${workspace}:${state.selected.id}`" :workspace="workspace" :farm-i-d="state.selected.id" :checking="checking" @dirty="parcelDirty = $event" @revalidate="emit('revalidate')" />
+        <button v-if="state.selected.status === 'active' && state.selected.allowed_actions.includes('agri.farm.update') && mode === 'view'" type="button" data-testid="farm-edit" :disabled="controller.locked || controller.unresolved" @click="editFarm">编辑当前版本</button>
         <form v-if="state.selected.status === 'active' && state.selected.allowed_actions.includes('agri.farm.archive') && mode === 'view'" class="farm-archive" @submit.prevent="archive">
           <label>归档原因<textarea v-model="reason" name="archive_reason" required maxlength="500" :disabled="controller.locked || controller.unresolved" @input="controller.draftChanged()"></textarea></label>
           <button type="submit" data-testid="farm-archive-preview" :disabled="controller.locked || controller.unresolved">预览归档影响（保留编号与历史）</button>

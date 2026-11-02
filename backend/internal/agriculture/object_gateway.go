@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 
+	"yingce/backend/internal/kernel"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -135,6 +137,19 @@ func (g *GISClient) readObject(ctx context.Context, s Service, actor string, dec
 	if err != nil {
 		return out, err
 	}
+	return g.readSignedObject(ctx, path, token, method, byteRange)
+}
+
+// Only trusted typed profiles construct path/token. Keep transport validation,
+// byte limits and response-header policy common to both authorization profiles.
+func (g *GISClient) readSignedObject(ctx context.Context, path, token, method, byteRange string) (objectBytes, error) {
+	var out objectBytes
+	if g == nil || g.base == nil || g.client == nil || token == "" || (method != "GET" && method != "HEAD") {
+		return out, ErrDependencyUnavailable
+	}
+	if err := validateObjectRange(byteRange); err != nil {
+		return out, err
+	}
 	endpoint := *g.base
 	endpoint.Path = path
 	req, err := http.NewRequestWithContext(ctx, method, endpoint.String(), nil)
@@ -232,7 +247,15 @@ func (a API) registerObjectGateway(api gin.IRouter) {
 		c.Header("X-Content-Type-Options", "nosniff")
 		c.Header("Content-Security-Policy", "default-src 'none'; sandbox")
 		c.Next()
-	}, a.sessionMiddleware(respond))
+	}, a.sessionMiddleware(func(c *gin.Context, data any, err error) {
+		c.Header("Cache-Control", "private, no-store")
+		respond(c, data, err)
+	}), func(c *gin.Context) {
+		// sessionMiddleware sets a shared no-store default; this byte gateway
+		// retains the stricter private policy on successes and all denials.
+		c.Header("Cache-Control", "private, no-store")
+		c.Next()
+	})
 	handler := func(c *gin.Context) {
 		if c.Request.URL.RawQuery != "" || c.Request.URL.ForceQuery || c.Request.URL.RawPath != "" || c.Request.ContentLength > 0 || len(c.Request.TransferEncoding) != 0 || len(c.Request.Header.Values("Range")) > 1 || len(c.Request.Header.Values("If-Range")) != 0 {
 			respond(c, nil, ErrInvalid)
@@ -269,8 +292,18 @@ func (a API) registerObjectGateway(api gin.IRouter) {
 			respond(c, nil, err)
 			return
 		}
-		decision, err := a.Service.Authorize(c.Request.Context(), actor, workspace, action, []ResourceRef{ref.Resource})
-		if err == nil && (len(decision.ResourceVersions) != 1 || decision.ResourceVersions[0].Revision != ref.ResourceRevision) {
+		catalogAsset := ref.Resource.Kind == "asset" && assetCatalogID.MatchString(ref.Resource.ID)
+		var decision AuthorizationDecision
+		if catalogAsset {
+			if a.Assets == nil {
+				respond(c, nil, ErrDependencyUnavailable)
+				return
+			}
+			decision, err = a.Assets.AuthorizeAssetDownload(c.Request.Context(), actor, workspace, ref.Resource.ID)
+		} else {
+			decision, err = a.Service.Authorize(c.Request.Context(), actor, workspace, action, []ResourceRef{ref.Resource})
+		}
+		if err == nil && (len(decision.ResourceVersions) != 1 || (!catalogAsset && decision.ResourceVersions[0].Revision != ref.ResourceRevision) || (catalogAsset && decision.ResourceVersions[0].Revision < ref.ResourceRevision)) {
 			err = ErrConflict
 		}
 		if err != nil {
@@ -286,9 +319,30 @@ func (a API) registerObjectGateway(api gin.IRouter) {
 			respond(c, nil, ErrDependencyUnavailable)
 			return
 		}
-		data, err := client.readObject(c.Request.Context(), a.Service, actor, decision, ref, c.Request.Method, c.GetHeader("Range"))
+		var data objectBytes
+		if catalogAsset {
+			data, err = a.Assets.readAssetCatalogObject(c.Request.Context(), actor, workspace, ref, c.Request.Method, c.GetHeader("Range"))
+		} else {
+			data, err = client.readObject(c.Request.Context(), a.Service, actor, decision, ref, c.Request.Method, c.GetHeader("Range"))
+		}
 		if err != nil {
 			respond(c, nil, err)
+			return
+		}
+		// Logout/session expiry does not necessarily change a tenant epoch.
+		// Re-read the actual trusted session after buffered I/O, before bytes or
+		// content headers can leave the platform. Never reuse the entry actor.
+		current, sessionErr := a.User(c)
+		if sessionErr != nil {
+			var appErr *kernel.AppError
+			if errors.As(sessionErr, &appErr) && (appErr.Status == 401 || appErr.Status == 403) {
+				sessionErr = ErrUnauthenticated
+			}
+			respond(c, nil, sessionErr)
+			return
+		}
+		if current == nil || current.ID != actor {
+			respond(c, nil, ErrUnauthenticated)
 			return
 		}
 		c.Header("Content-Type", data.mime)

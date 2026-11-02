@@ -29,6 +29,12 @@ class IdentityServices:
     object_storage: object | None = None
     farm_store: object | None = None
     farm_authority: object | None = None
+    parcel_store: object | None = None
+    parcel_authority: object | None = None
+    asset_catalog_store: object | None = None
+    asset_catalog_authority: object | None = None
+    asset_catalog_ownership: object | None = None
+    asset_object_authority: object | None = None
 
 
 async def verify_request(request: Request, typ: str, action: str) -> Verified:

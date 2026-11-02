@@ -38,6 +38,8 @@ type farmChainFixture struct {
 	root, private, owner, actor, password, origin, second string
 	org, foreign                                          OrganizationResult
 	platform                                              *FarmPlatform
+	parcels                                               *ParcelPlatform
+	assets                                                *AssetCatalogPlatform
 	seed, geo                                             *gorm.DB
 	server                                                *httptest.Server
 	actorCookie, ownerCookie                              *http.Cookie
@@ -76,6 +78,12 @@ func TestFarmFixturePrivateDirectory(t *testing.T) {
 }
 
 func newFarmChainFixture(t *testing.T, browser bool, progress ...func(string)) *farmChainFixture {
+	return newFarmChainFixtureWithAssetObjects(t, browser, nil, progress...)
+}
+
+// setup is an internal test-only composition hook, before the GIS subprocess
+// starts. The default farm/parcel/metadata fixture remains unchanged.
+func newFarmChainFixtureWithAssetObjects(t *testing.T, browser bool, setup func(*farmChainFixture), progress ...func(string)) *farmChainFixture {
 	t.Helper()
 	stage := func(value string) {
 		if len(progress) == 1 {
@@ -174,7 +182,12 @@ func newFarmChainFixture(t *testing.T, browser bool, progress ...func(string)) *
 	}
 	config := filepath.Join(f.private, "farm-gis.json")
 	dictionary := map[string]any{"schema_version": "agriculture-farm-dictionary/1", "dictionary_version": "fixture-v1", "regions": []any{map[string]any{"code": "fixture-north", "name": "Northern fixture", "timezones": []string{"Asia/Shanghai"}, "area_units": []string{"m2", "ha", "mu"}}, map[string]any{"code": "fixture-south", "name": "Southern fixture", "timezones": []string{"Asia/Shanghai", "UTC"}, "area_units": []string{"m2", "ha", "mu"}}}}
-	chainPrivate(t, config, map[string]any{"platform": callback.URL, "platform_keys": []any{keyJSON(platformKey, false)}, "callback_key": keyJSON(gisKey, true), "geo_migration_dsn": os.Getenv("AGRI_TEST_GEO_MIGRATION_DSN"), "geo_runtime_dsn": os.Getenv("AGRI_TEST_GEO_RUNTIME_DSN"), "dictionary": dictionary})
+	configuration := map[string]any{"platform": callback.URL, "platform_keys": []any{keyJSON(platformKey, false)}, "callback_key": keyJSON(gisKey, true), "geo_migration_dsn": os.Getenv("AGRI_TEST_GEO_MIGRATION_DSN"), "geo_runtime_dsn": os.Getenv("AGRI_TEST_GEO_RUNTIME_DSN"), "dictionary": dictionary}
+	if setup != nil {
+		setup(f)
+		configuration["asset_object_fixture"] = true
+	}
+	chainPrivate(t, config, configuration)
 	stage("fixture_gis_start")
 	child := chainStart(t, os.Getenv("AGRI_IDENTITY_PYTHON"), filepath.Join(root, "services/agri-gis/backend"), filepath.Join(root, "services/agri-gis/backend/tests/farm_http_fixture.py"), config)
 	var ready struct {
@@ -195,8 +208,12 @@ func newFarmChainFixture(t *testing.T, browser bool, progress ...func(string)) *
 	client.client.Transport = farmChainTransport{base: client.client.Transport, t: t}
 	f.platform.Client = client
 	f.platform.Service.Ownership = client
+	f.parcels = NewParcelPlatform(f.platform.Service, client)
+	f.assets = NewAssetCatalogPlatform(f.platform.Service, client)
 	f.platform.Service.RegisterInternalAuthority(callbackRouter, gisKeys)
 	f.platform.RegisterInternal(callbackRouter, gisKeys)
+	f.parcels.RegisterInternal(callbackRouter, gisKeys)
+	f.assets.RegisterInternal(callbackRouter, gisKeys)
 	f.geo, e = gorm.Open(postgres.Open(os.Getenv("AGRI_TEST_GEO_MIGRATION_DSN")), &gorm.Config{Logger: logger.Discard})
 	if e != nil {
 		t.Fatal("GIS assertion connection unavailable")
@@ -240,7 +257,7 @@ func newFarmChainFixture(t *testing.T, browser bool, progress ...func(string)) *
 	router := gin.New()
 	router.Use(policy.Middleware())
 	handler.RegisterAuthRoutes(router.Group("/api"), svc)
-	API{Service: f.platform.Service, Farms: f.platform, User: func(c *gin.Context) (*model.User, error) {
+	API{Service: f.platform.Service, Farms: f.platform, Parcels: f.parcels, Assets: f.assets, User: func(c *gin.Context) (*model.User, error) {
 		cookie, _ := c.Cookie(auth.SessionCookieName)
 		return svc.CurrentUser(cookie)
 	}}.Register(router.Group("/api"))

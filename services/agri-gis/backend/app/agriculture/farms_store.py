@@ -488,6 +488,28 @@ class FarmStore:
                     )
                 else:
                     value, geometry = prepared
+                    if kind == "farm.update":
+                        # Parcel mutations hold a shared parent lock before any
+                        # child lock. Our exclusive farm lock therefore keeps
+                        # this current-revision containment snapshot stable.
+                        covered = await conn.fetchval(
+                            "SELECT NOT EXISTS (SELECT 1 FROM agriculture_parcels p "
+                            "LEFT JOIN agriculture_parcel_revisions r "
+                            "ON r.tenant_id=p.tenant_id "
+                            "AND r.workspace_id=p.workspace_id "
+                            "AND r.parcel_id=p.parcel_id "
+                            "AND r.revision=p.current_revision "
+                            "WHERE p.tenant_id=$1 AND p.workspace_id=$2 "
+                            "AND p.farm_id=$3 "
+                            "AND p.status='active' AND "
+                            "ST_CoveredBy(r.geom,ST_SetSRID("
+                            "ST_GeomFromGeoJSON($4::text),4326)) IS NOT TRUE)",
+                            c["tenant_id"],
+                            c["workspace_id"],
+                            farm_id,
+                            canonical(value["geometry"]).decode(),
+                        )
+                        require(covered is True, "STATE_CONFLICT", 409)
                     await self._dictionary(conn, verified)
                     provenance = {
                         k: v

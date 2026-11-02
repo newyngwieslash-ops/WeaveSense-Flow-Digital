@@ -49,6 +49,22 @@ FARM_TABLES = frozenset(
         "agriculture_farm_dictionaries",
     }
 )
+PARCEL_TABLES = frozenset(
+    {
+        "agriculture_parcels",
+        "agriculture_parcel_revisions",
+        "agriculture_parcel_commands",
+        "agriculture_parcel_outbox",
+    }
+)
+ASSET_CATALOG_TABLES = frozenset(
+    {
+        "agriculture_asset_catalog",
+        "agriculture_asset_catalog_versions",
+        "agriculture_asset_catalog_commands",
+        "agriculture_asset_catalog_outbox",
+    }
+)
 
 
 def actual_model_inventory():
@@ -95,6 +111,8 @@ async def require_domain_boundary(connection, role="flow_geo_app"):
             | {OWNERSHIP_TABLE, REFERENCE_TABLE, OBJECT_TABLE}
             | JOB_AUTHORITY_TABLES
             | FARM_TABLES
+            | PARCEL_TABLES
+            | ASSET_CATALOG_TABLES
         )
         rows = await connection.fetch(
             "SELECT c.relname,c.relrowsecurity,c.relforcerowsecurity,"
@@ -117,11 +135,11 @@ async def require_domain_boundary(connection, role="flow_geo_app"):
                 raise ValueError("domain RLS required")
             if row["owner"] != "flow_geo_migrate":
                 raise ValueError("unexpected domain owner")
-            if name in FARM_TABLES:
+            if name in FARM_TABLES | PARCEL_TABLES | ASSET_CATALOG_TABLES:
                 expected_access = (
                     True,
                     True,
-                    name == "agriculture_farms",
+                    name in {"agriculture_farms", "agriculture_parcels"},
                     False,
                     False,
                 )
@@ -219,6 +237,42 @@ async def require_domain_boundary(connection, role="flow_geo_app"):
         )
         if farm_policies != len(FARM_TABLES):
             raise ValueError("restrictive farm policy required")
+        parcel_policies = await connection.fetchval(
+            "SELECT count(*) FROM pg_catalog.pg_policy p "
+            "JOIN pg_catalog.pg_class c ON c.oid=p.polrelid "
+            "JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace "
+            "WHERE n.nspname='public' AND c.relname=ANY($1) "
+            "AND NOT p.polpermissive AND p.polname='agriculture_parcel_scope'",
+            sorted(PARCEL_TABLES),
+        )
+        if parcel_policies != len(PARCEL_TABLES):
+            raise ValueError("restrictive parcel policy required")
+        asset_policies = await connection.fetchval(
+            "SELECT count(*) FROM pg_catalog.pg_policy p "
+            "JOIN pg_catalog.pg_class c ON c.oid=p.polrelid "
+            "JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace "
+            "WHERE n.nspname='public' AND c.relname=ANY($1) "
+            "AND NOT p.polpermissive AND p.polname='agriculture_asset_scope'",
+            sorted(ASSET_CATALOG_TABLES),
+        )
+        if asset_policies != len(ASSET_CATALOG_TABLES):
+            raise ValueError("restrictive asset policy required")
+        asset_columns = await connection.fetch(
+            "SELECT attname,has_column_privilege(current_user,attrelid,"
+            "attnum,'UPDATE') AS allowed "
+            "FROM pg_catalog.pg_attribute WHERE "
+            "attrelid='public.agriculture_asset_catalog'::regclass "
+            "AND attnum>0 AND NOT attisdropped"
+        )
+        allowed_asset_updates = (
+            {"current_revision", "current_version_id", "status", "updated_at"}
+            if role == "flow_geo_app"
+            else set()
+        )
+        if {
+            row["attname"] for row in asset_columns if row["allowed"]
+        } != allowed_asset_updates:
+            raise ValueError("asset column privilege boundary mismatch")
         object_policy = await connection.fetchval(
             "SELECT EXISTS(SELECT 1 FROM pg_catalog.pg_policy "
             "WHERE polrelid='public.agriculture_private_objects'::regclass "

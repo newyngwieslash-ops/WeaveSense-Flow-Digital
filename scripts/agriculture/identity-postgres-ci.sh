@@ -17,6 +17,12 @@ for suite in agriculture legacy cache; do
 done
 printf '%s\n' '{"passed":false,"status":"not_run"}' > .local/evidence/identity-isolation.json
 printf '%s\n' '{"passed":false,"status":"not_run"}' > .local/evidence/identity-farms.json
+printf '%s\n' '{"passed":false,"status":"not_run"}' > .local/evidence/identity-parcels.json
+printf '%s\n' '{"passed":false,"status":"not_run"}' > .local/evidence/identity-assets.json
+printf '%s\n' '{"result":"not_run","results":[]}' > .local/evidence/asset-chain-browser.json
+printf '%s\n' '{"passed":false,"status":"not_run"}' > .local/evidence/identity-parcel-python.json
+printf '%s\n' '{"passed":false,"status":"not_run"}' > .local/evidence/identity-asset-python.json
+printf '%s\n' '{"result":"not_run","results":[]}' > .local/evidence/parcel-chain-browser.json
 printf '%s\n' '{"passed":false,"status":"not_run"}' > .local/evidence/identity-farm-flow.json
 printf '%s\n' '{"result":"not_run","results":[]}' > .local/evidence/farm-chain-browser.json
 if [[ ${AGRI_IDENTITY_CHAIN_REQUIRED:-0} == 1 ]]; then
@@ -207,6 +213,15 @@ isolation_gate=$?
 farm_python_code=$?
 python3 scripts/agriculture/farm-python-result.py --input "$private/farm-python.xml" --output .local/evidence/identity-farm-python.json
 farm_python_gate=$?
+(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_parcels_identity.py tests/test_agriculture_parcels_store_postgres.py tests/test_agriculture_farm_parcel_guard_postgres.py tests/test_agriculture_domain_ownership.py --junitxml="$private/parcel-python.xml" -q) > "$private/parcel-python.log" 2>&1
+parcel_python_code=$?
+python3 scripts/agriculture/parcel-python-result.py --input "$private/parcel-python.xml" --output .local/evidence/identity-parcel-python.json
+parcel_python_gate=$?
+# Exact asset source-rights, signed profiles, real PG and private-byte components.
+(cd services/agri-gis/backend && "$AGRI_IDENTITY_PYTHON" -m pytest tests/test_agriculture_asset_catalog_rules.py tests/test_agriculture_asset_catalog_identity.py tests/test_agriculture_asset_catalog_config.py tests/test_agriculture_asset_catalog_postgres.py tests/test_agriculture_asset_object_identity.py tests/test_agriculture_asset_object_postgres.py tests/test_agriculture_asset_download_fixture.py --junitxml="$private/asset-python.xml" -q) > "$private/asset-python.log" 2>&1
+asset_python_code=$?
+python3 scripts/agriculture/asset-python-result.py --input "$private/asset-python.xml" --output .local/evidence/identity-asset-python.json
+asset_python_gate=$?
 # Farm acceptance always uses the actual runtime, two owned databases, Redis,
 # real browser and the race detector. Raw Go/browser logs stay private.
 export AGRI_FARM_CHAIN_REQUIRED=1
@@ -229,7 +244,43 @@ farms_gate=$?
 farm_flow_code=$?
 python3 scripts/agriculture/farm-flow-result.py --input "$private/farm-flow.jsonl" --output .local/evidence/identity-farm-flow.json
 farm_flow_gate=$?
+export AGRI_PARCEL_CHAIN_REQUIRED=1
+export AGRI_FARM_AUTH_COMPONENT_ONLY=0
+python3 - "$private/parcel-mode.json" <<'PY'
+import json, os, sys
+from pathlib import Path
+Path(sys.argv[1]).write_text(json.dumps({
+    'auth_component_only': os.environ['AGRI_FARM_AUTH_COMPONENT_ONLY'] != '0',
+    'race': True, 'required': os.environ['AGRI_PARCEL_CHAIN_REQUIRED'] == '1',
+}) + '\n')
+PY
+"${GO_BIN:-go}" -C backend test -race ./internal/agriculture -run '^TestParcel(HTTP|Browser)PostgresChain$' -count=1 -timeout 15m -json > "$private/parcels.jsonl" 2> "$private/parcels-stderr.log"
+parcels_code=$?
+python3 scripts/agriculture/parcel-ci-result.py --input "$private/parcels.jsonl" \
+  --browser .local/evidence/parcel-chain-browser.json --bootstrap .local/evidence/identity-bootstrap.json \
+  --mode "$private/parcel-mode.json" --output .local/evidence/identity-parcels.json
+parcels_gate=$?
+export AGRI_ASSET_CHAIN_REQUIRED=1
+export AGRI_FARM_AUTH_COMPONENT_ONLY=0
+python3 - "$private/asset-mode.json" <<'PY'
+import json, os, sys
+from pathlib import Path
+Path(sys.argv[1]).write_text(json.dumps({
+    'auth_component_only': os.environ['AGRI_FARM_AUTH_COMPONENT_ONLY'] != '0',
+    'race': True, 'required': os.environ['AGRI_ASSET_CHAIN_REQUIRED'] == '1',
+}) + '\n')
+PY
+"${GO_BIN:-go}" -C backend test -race ./internal/agriculture -run '^TestAsset(CatalogHTTP|CatalogDownload|Browser)PostgresChain$' -count=1 -timeout 15m -json > "$private/assets.jsonl" 2> "$private/assets-stderr.log"
+assets_code=$?
+python3 scripts/agriculture/asset-ci-result.py --input "$private/assets.jsonl" \
+  --browser .local/evidence/asset-chain-browser.json --bootstrap .local/evidence/identity-bootstrap.json \
+  --mode "$private/asset-mode.json" --output .local/evidence/identity-assets.json
+assets_gate=$?
 set -e
+[[ $assets_code == 0 && $assets_gate == 0 ]] || { echo 'Real asset HTTP/browser acceptance failed; inspect sanitized evidence'; exit 1; }
+[[ $parcels_code == 0 && $parcels_gate == 0 ]] || { echo 'Real parcel HTTP/browser acceptance failed; inspect sanitized evidence'; exit 1; }
+[[ $parcel_python_code == 0 && $parcel_python_gate == 0 ]] || { echo 'Parcel Python/PostGIS acceptance failed; inspect sanitized evidence'; exit 1; }
+[[ $asset_python_code == 0 && $asset_python_gate == 0 ]] || { echo 'Asset Python/PostGIS acceptance failed; inspect sanitized evidence'; exit 1; }
 [[ $farm_flow_code == 0 && $farm_flow_gate == 0 ]] || { echo 'Farm dispatcher and legacy worker acceptance failed; inspect sanitized evidence'; exit 1; }
 [[ $farm_python_code == 0 && $farm_python_gate == 0 ]] || { echo 'Farm Python/PostGIS acceptance failed; inspect sanitized evidence'; exit 1; }
 [[ $farms_code == 0 && $farms_gate == 0 ]] || { echo 'Real farm HTTP/browser acceptance failed; inspect sanitized evidence'; exit 1; }

@@ -3,6 +3,27 @@ import { FarmError, FarmTransport, type Fetcher } from './transport'
 const response = (payload: unknown, status = 200) => new Response(JSON.stringify(payload), { status, headers: { 'Content-Type': 'application/json' } })
 const success = { data: [], meta: { request_id: 'req_1', schema_version: '1.0' } }
 describe('same-origin farm transport component', () => {
+  test('asset metadata transport permits only the bounded public contract, not approval or entity upload', async () => {
+    const seen: string[] = []
+    const api = new FarmTransport(async (path) => { seen.push(path); return response(success) })
+    for (const path of ['/api/agri/v1/asset-context', '/api/agri/v1/asset-previews', '/api/agri/v1/asset-operations/aop_1', '/api/agri/v1/assets', '/api/agri/v1/assets/asset_1/versions', '/api/agri/v1/assets/asset_1/versions/1']) {
+      await api.request(`${path}?workspace_id=w1`, new AbortController().signal)
+    }
+    expect(seen.length).toBe(6)
+    for (const path of ['/api/agri/v1/assets/asset_1/approve', '/api/agri/v1/assets/upload', '/api/agri/v1/assets/asset_1/versions/0', '/api/agri/v1/assets/asset_1/versions/1/ready', '/internal/agri/v1/assets/read']) {
+      await expect(api.request(path, new AbortController().signal)).rejects.toBeInstanceOf(FarmError)
+    }
+    expect(seen.length).toBe(6)
+  })
+  test('independent parcel parent directory uses same-origin transport without farm-read identity', async () => {
+    const api = new FarmTransport(async (path, init) => {
+      expect(path).toBe('/api/agri/v1/parcel-farms?workspace_id=w1')
+      expect(init.credentials).toBe('same-origin')
+      expect(init.headers).toEqual({ Accept: 'application/json' })
+      return response(success)
+    })
+    expect((await api.request('/api/agri/v1/parcel-farms?workspace_id=w1', new AbortController().signal)).envelope.data).toEqual([])
+  })
   test('GET uses real-cookie contract, no-store and abort signal without identity headers', async () => {
     const abort = new AbortController()
     const api = new FarmTransport(async (path, init) => {
